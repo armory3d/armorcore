@@ -29,7 +29,7 @@ if (platform === Platform.Windows) {
 }
 
 if (platform === Platform.OSX) {
-	project.addLib(libdir + 'libv8_monolith.dylib');
+	project.addLib(libdir + 'libv8_monolith.a');
 }
 
 if (platform === Platform.Linux) {
