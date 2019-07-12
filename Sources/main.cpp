@@ -44,6 +44,13 @@
 #include <Windows.h> // AttachConsole
 #endif
 
+#ifdef KORE_DIRECT3D
+#include <d3d11.h>
+#include <D3Dcompiler.h>
+#include <strstream>
+#endif
+#include <nfd.h>
+
 using namespace v8;
 
 const int KROM_API = 3;
@@ -60,6 +67,9 @@ Isolate* isolate;
 extern std::unique_ptr<v8_inspector::V8Inspector> v8inspector;
 
 const char* getExeDir();
+
+bool saveAndQuit = false;
+void armorySaveAndQuit() { saveAndQuit = true; }
 
 namespace {
 	int _argc;
@@ -93,6 +103,7 @@ namespace {
 	Global<Function> gamepadAxisFunction;
 	Global<Function> gamepadButtonFunction;
 	Global<Function> audioFunction;
+	Global<Function> saveAndQuitFunction;
 	std::map<std::string, bool> imageChanges;
 	std::map<std::string, bool> shaderChanges;
 	std::map<std::string, std::string> shaderFileNames;
@@ -588,11 +599,113 @@ namespace {
 	}
 
 	void krom_create_vertex_shader_from_source(const FunctionCallbackInfo<Value>& args) {
+
+		#ifdef KORE_DIRECT3D
+
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_value(isolate, args[0]);
+		//char* tempStringVS = new char[strlen(*utf8_value) + 1];
+		char* tempStringVS = new char[1024 * 1024]; // TODO: LEAK
+		strcpy(tempStringVS, *utf8_value);
+		
+		ID3DBlob* errorMessage;
+		ID3DBlob* shaderBuffer;
+		UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
+		HRESULT hr = D3DCompile(tempStringVS, strlen(*utf8_value) + 1, nullptr, nullptr, nullptr, "main", "vs_5_0", flags, 0, &shaderBuffer, &errorMessage);
+		if (hr != S_OK) {
+			Kore::log(Kore::Info, "%s", (char*)errorMessage->GetBufferPointer());
+			return;
+		}
+
+		// bool hasBone = strstr(tempStringVS, "bone :") != NULL;
+		// bool hasCol = strstr(tempStringVS, "col :") != NULL;
+		bool hasNor = strstr(tempStringVS, "nor :") != NULL;
+		bool hasPos = strstr(tempStringVS, "pos :") != NULL;
+		// bool hasTang = strstr(tempStringVS, "tang :") != NULL;
+		bool hasTex = strstr(tempStringVS, "tex :") != NULL;
+		// bool hasWeight = strstr(tempStringVS, "weight :") != NULL;
+
+		std::map<std::string, int> attributes;
+		int index = 0;
+		// if (hasBone) attributes["bone"] = index++;
+		// if (hasCol) attributes["col"] = index++;
+		if (hasNor) attributes["nor"] = index++;
+		if (hasPos) attributes["pos"] = index++;
+		// if (hasTang) attributes["tang"] = index++;
+		if (hasTex) attributes["tex"] = index++;
+		// if (hasWeight) attributes["weight"] = index++;
+
+		char* output = tempStringVS;
+		std::ostrstream file(output, 1024 * 1024);
+		int outputlength = 0;
+
+		file.put((char)attributes.size()); outputlength += 1;
+		for (std::map<std::string, int>::const_iterator attribute = attributes.begin(); attribute != attributes.end(); ++attribute) {
+			(file) << attribute->first.c_str(); outputlength += attribute->first.length();
+			file.put(0); outputlength += 1;
+			file.put(attribute->second); outputlength += 1;
+		}
+
+		ID3D11ShaderReflection* reflector = nullptr;
+		D3DReflect(shaderBuffer->GetBufferPointer(), shaderBuffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflector);
+
+		D3D11_SHADER_DESC desc;
+		reflector->GetDesc(&desc);
+
+		file.put(desc.BoundResources); outputlength += 1;
+		for (unsigned i = 0; i < desc.BoundResources; ++i) {
+			D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+			reflector->GetResourceBindingDesc(i, &bindDesc);
+			(file) << bindDesc.Name; outputlength += strlen(bindDesc.Name);
+			file.put(0); outputlength += 1;
+			file.put(bindDesc.BindPoint); outputlength += 1;
+		}
+
+		ID3D11ShaderReflectionConstantBuffer* constants = reflector->GetConstantBufferByName("$Globals");
+		D3D11_SHADER_BUFFER_DESC bufferDesc;
+		hr = constants->GetDesc(&bufferDesc);
+		if (hr == S_OK) {
+			file.put(bufferDesc.Variables); outputlength += 1;
+			for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
+				ID3D11ShaderReflectionVariable* variable = constants->GetVariableByIndex(i);
+				D3D11_SHADER_VARIABLE_DESC variableDesc;
+				hr = variable->GetDesc(&variableDesc);
+				if (hr == S_OK) {
+					(file) << variableDesc.Name; outputlength += strlen(variableDesc.Name);
+					file.put(0); outputlength += 1;
+					file.write((char*)&variableDesc.StartOffset, 4); outputlength += 4;
+					file.write((char*)&variableDesc.Size, 4); outputlength += 4;
+					D3D11_SHADER_TYPE_DESC typeDesc;
+					hr = variable->GetType()->GetDesc(&typeDesc);
+					if (hr == S_OK) {
+						file.put(typeDesc.Columns); outputlength += 1;
+						file.put(typeDesc.Rows); outputlength += 1;
+					}
+					else {
+						file.put(0); outputlength += 1;
+						file.put(0); outputlength += 1;
+					}
+				}
+			}
+		}
+		else {
+			file.put(0); outputlength += 1;
+		}
+		file.write((char*)shaderBuffer->GetBufferPointer(), shaderBuffer->GetBufferSize()); outputlength += shaderBuffer->GetBufferSize();
+		shaderBuffer->Release();
+		reflector->Release();
+
+		Kore::Graphics4::Shader* shader = new Kore::Graphics4::Shader(output, outputlength, Kore::Graphics4::VertexShader);
+
+		#else
+
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		char* source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
 		Kore::Graphics4::Shader* shader = new Kore::Graphics4::Shader(source, Kore::Graphics4::VertexShader);
+
+		#endif
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -622,11 +735,92 @@ namespace {
 	}
 
 	void krom_create_fragment_shader_from_source(const FunctionCallbackInfo<Value>& args) {
+
+		#ifdef KORE_DIRECT3D
+
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_value(isolate, args[0]);
+		//char* tempStringFS = new char[strlen(*utf8_value) + 1];
+		char* tempStringFS = new char[1024 * 1024];  // TODO: LEAK
+		strcpy(tempStringFS, *utf8_value);
+		
+		ID3DBlob* errorMessage;
+		ID3DBlob* shaderBuffer;
+		UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
+		HRESULT hr = D3DCompile(tempStringFS, strlen(*utf8_value) + 1, nullptr, nullptr, nullptr, "main", "ps_5_0", flags, 0, &shaderBuffer, &errorMessage);
+		if (hr != S_OK) {
+			Kore::log(Kore::Info, "%s", (char*)errorMessage->GetBufferPointer());
+			return;
+		}
+
+		std::map<std::string, int> attributes;
+
+		char* output = tempStringFS;
+		std::ostrstream file(output, 1024 * 1024);
+		int outputlength = 0;
+
+		file.put((char)attributes.size()); outputlength += 1;
+
+		ID3D11ShaderReflection* reflector = nullptr;
+		D3DReflect(shaderBuffer->GetBufferPointer(), shaderBuffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflector);
+
+		D3D11_SHADER_DESC desc;
+		reflector->GetDesc(&desc);
+
+		file.put(desc.BoundResources); outputlength += 1;
+		for (unsigned i = 0; i < desc.BoundResources; ++i) {
+			D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+			reflector->GetResourceBindingDesc(i, &bindDesc);
+			(file) << bindDesc.Name; outputlength += strlen(bindDesc.Name);
+			file.put(0); outputlength += 1;
+			file.put(bindDesc.BindPoint); outputlength += 1;
+		}
+
+		ID3D11ShaderReflectionConstantBuffer* constants = reflector->GetConstantBufferByName("$Globals");
+		D3D11_SHADER_BUFFER_DESC bufferDesc;
+		hr = constants->GetDesc(&bufferDesc);
+		if (hr == S_OK) {
+			file.put(bufferDesc.Variables); outputlength += 1;
+			for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
+				ID3D11ShaderReflectionVariable* variable = constants->GetVariableByIndex(i);
+				D3D11_SHADER_VARIABLE_DESC variableDesc;
+				hr = variable->GetDesc(&variableDesc);
+				if (hr == S_OK) {
+					(file) << variableDesc.Name; outputlength += strlen(variableDesc.Name);
+					file.put(0); outputlength += 1;
+					file.write((char*)&variableDesc.StartOffset, 4); outputlength += 4;
+					file.write((char*)&variableDesc.Size, 4); outputlength += 4;
+					D3D11_SHADER_TYPE_DESC typeDesc;
+					hr = variable->GetType()->GetDesc(&typeDesc);
+					if (hr == S_OK) {
+						file.put(typeDesc.Columns); outputlength += 1;
+						file.put(typeDesc.Rows); outputlength += 1;
+					}
+					else {
+						file.put(0); outputlength += 1;
+						file.put(0); outputlength += 1;
+					}
+				}
+			}
+		}
+		else {
+			file.put(0); outputlength += 1;
+		}
+		file.write((char*)shaderBuffer->GetBufferPointer(), shaderBuffer->GetBufferSize()); outputlength += shaderBuffer->GetBufferSize();
+		shaderBuffer->Release();
+		reflector->Release();
+
+		Kore::Graphics4::Shader* shader = new Kore::Graphics4::Shader(output, outputlength, Kore::Graphics4::FragmentShader);
+
+		#else
+
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		char* source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
 		Kore::Graphics4::Shader* shader = new Kore::Graphics4::Shader(source, Kore::Graphics4::FragmentShader);
+
+		#endif
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -2045,6 +2239,45 @@ namespace {
 		Kore::Compute::compute(x, y, z);
 	}
 
+	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value filterList(isolate, args[0]);
+		String::Utf8Value defaultPath(isolate, args[1]);
+		nfdchar_t *outPath = NULL;
+		nfdresult_t result = NFD_OpenDialog(*filterList, *defaultPath, &outPath);
+		if (result == NFD_OKAY) {
+			args.GetReturnValue().Set(String::NewFromUtf8(isolate, outPath).ToLocalChecked());
+			free(outPath);
+		}
+		else if (result == NFD_CANCEL) {}
+		else {
+			Kore::log(Kore::Info, "Error: %s\n", NFD_GetError());
+		}
+	}
+
+	void krom_save_dialog(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value filterList(isolate, args[0]);
+		String::Utf8Value defaultPath(isolate, args[1]);
+		nfdchar_t *outPath = NULL;
+		nfdresult_t result = NFD_SaveDialog(*filterList, *defaultPath, &outPath);
+		if (result == NFD_OKAY) {
+			args.GetReturnValue().Set(String::NewFromUtf8(isolate, outPath).ToLocalChecked());
+			free(outPath);
+		}
+		else if (result == NFD_CANCEL) {}
+		else {
+			Kore::log(Kore::Info, "Error: %s\n", NFD_GetError());
+		}
+	}
+
+	void krom_set_save_and_quit_callback(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		saveAndQuitFunction.Reset(isolate, func);
+	}
+
 	void startV8(const char* bindir) {
 #if defined(KORE_MACOS)
 		char filepath[256];
@@ -2211,6 +2444,9 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "getConstantLocationCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_constant_location_compute));
 		krom->Set(String::NewFromUtf8(isolate, "getTextureUnitCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_texture_unit_compute));
 		krom->Set(String::NewFromUtf8(isolate, "compute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_compute));
+		krom->Set(String::NewFromUtf8(isolate, "openDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_open_dialog));
+		krom->Set(String::NewFromUtf8(isolate, "saveDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_save_dialog));
+		krom->Set(String::NewFromUtf8(isolate, "setSaveAndQuitCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_save_and_quit_callback));
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
@@ -2274,6 +2510,16 @@ namespace {
 			sendLogMessage("Trace: %s", *stack_trace);
 		}
 		//**if (debugMode) v8inspector->didExecuteScript(context);
+
+		if (saveAndQuit) {
+			v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, saveAndQuitFunction);
+			Local<Value> result;
+			if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+				v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
+				sendLogMessage("Trace: %s", *stack_trace);
+			}
+			saveAndQuit = false;
+		}
 	}
 
 	void endV8() {

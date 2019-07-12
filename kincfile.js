@@ -18,6 +18,23 @@ project.addFile('Sources/**');
 project.addIncludeDir('V8/include');
 
 if (platform === Platform.Windows) {
+	project.addLib("d3d11");
+	project.addLib("d3dcompiler");
+}
+
+project.addIncludeDir("Libraries/nfd/include");
+project.addFile('Libraries/nfd/nfd_common.c');
+if (platform === Platform.Windows) {
+	project.addFile('Libraries/nfd/nfd_win.cpp');
+}
+else if (platform === Platform.Linux) {
+	project.addFile('Libraries/nfd/nfd_zenity.c');
+}
+else {
+	project.addFile('Libraries/nfd/nfd_cocoa.m');
+}
+
+if (platform === Platform.Windows) {
 	// if (!release) { //!
 		project.addLib('Dbghelp');
 		project.addLib('Shlwapi');
@@ -42,4 +59,3 @@ if (platform === Platform.Linux) {
 project.setDebugDir('Deployment/' + build + '/' + system);
 
 resolve(project);
-
