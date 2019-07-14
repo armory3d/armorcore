@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "pch.h"
 #include <Kore/IO/FileReader.h>
 #include <Kore/IO/FileWriter.h>
@@ -23,20 +19,12 @@
 #include <Kore/Log.h>
 #include <Kore/Threads/Thread.h>
 #include <Kore/Threads/Mutex.h>
-
 #include <kinc/io/filereader.h>
-
-#include "debug.h"
 
 #include "../V8/include/libplatform/libplatform.h"
 #include "../V8/include/v8.h"
-#include <v8-inspector.h>
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <fstream>
 #include <map>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -55,8 +43,6 @@ using namespace v8;
 
 const int KROM_API = 3;
 
-void sendMessage(const char* message);
-
 #ifdef KORE_MACOS
 const char* macgetresourcepath();
 #endif
@@ -64,18 +50,12 @@ const char* macgetresourcepath();
 Global<Context> globalContext;
 Isolate* isolate;
 
-extern std::unique_ptr<v8_inspector::V8Inspector> v8inspector;
-
-const char* getExeDir();
-
 bool saveAndQuit = false;
 void armorySaveAndQuit() { saveAndQuit = true; }
 
 namespace {
 	int _argc;
 	char** _argv;
-	bool debugMode = false;
-	bool watch = false;
 	bool nosound = false;
 	bool nowindow = false;
 
@@ -104,9 +84,6 @@ namespace {
 	Global<Function> gamepadButtonFunction;
 	Global<Function> audioFunction;
 	Global<Function> saveAndQuitFunction;
-	std::map<std::string, bool> imageChanges;
-	std::map<std::string, bool> shaderChanges;
-	std::map<std::string, std::string> shaderFileNames;
 
 	Kore::Mutex mutex;
 
@@ -145,14 +122,6 @@ namespace {
 		char message[4096];
 		vsnprintf(message, sizeof(message) - 2, format, args);
 		Kore::log(Kore::Info, "%s", message);
-
-		if (debugMode) {
-			char json[4096];
-			strcpy(json, "{\"method\":\"Log.entryAdded\",\"params\":{\"entry\":{\"source\":\"javascript\",\"level\":\"log\",\"text\":\"");
-			strcat(json, message);
-			strcat(json, "\",\"timestamp\":0}}}");
-			sendMessage(json);
-		}
 	}
 
 	void sendLogMessage(const char* format, ...) {
@@ -239,7 +208,7 @@ namespace {
 		Kore::Gamepad::get(3)->Button = gamepad4Button;
 	}
 
-	void LogCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	void krom_log(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		if (args.Length() < 1) return;
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
@@ -574,13 +543,6 @@ namespace {
 		else Kore::Graphics4::drawIndexedVerticesInstanced(instanceCount, start, count);
 	}
 
-	std::string replace(std::string str, char a, char b) {
-		for (size_t i = 0; i < str.size(); ++i) {
-			if (str[i] == a) str[i] = b;
-		}
-		return str;
-	}
-
 	void krom_create_vertex_shader(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
@@ -910,51 +872,6 @@ namespace {
 		delete pipeline;
 	}
 
-	void recompilePipeline(Local<Object> projobj) {
-		Local<External> structsfield = Local<External>::Cast(projobj->GetInternalField(1));
-		Kore::Graphics4::VertexStructure** structures = (Kore::Graphics4::VertexStructure**)structsfield->Value();
-
-		Local<External> sizefield = Local<External>::Cast(projobj->GetInternalField(2));
-		int32_t size = sizefield->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		Local<External> vsfield = Local<External>::Cast(projobj->GetInternalField(3));
-		Kore::Graphics4::Shader* vs = (Kore::Graphics4::Shader*)vsfield->Value();
-
-		Local<External> fsfield = Local<External>::Cast(projobj->GetInternalField(4));
-		Kore::Graphics4::Shader* fs = (Kore::Graphics4::Shader*)fsfield->Value();
-
-		Kore::Graphics4::PipelineState* pipeline = new Kore::Graphics4::PipelineState;
-		pipeline->vertexShader = vs;
-		pipeline->fragmentShader = fs;
-
-		Local<External> gsfield = Local<External>::Cast(projobj->GetInternalField(5));
-		if (!gsfield->IsNull() && !gsfield->IsUndefined()) {
-			Kore::Graphics4::Shader* gs = (Kore::Graphics4::Shader*)gsfield->Value();
-			pipeline->geometryShader = gs;
-		}
-
-		Local<External> tcsfield = Local<External>::Cast(projobj->GetInternalField(6));
-		if (!tcsfield->IsNull() && !tcsfield->IsUndefined()) {
-			Kore::Graphics4::Shader* tcs = (Kore::Graphics4::Shader*)tcsfield->Value();
-			pipeline->tessellationControlShader = tcs;
-		}
-
-		Local<External> tesfield = Local<External>::Cast(projobj->GetInternalField(7));
-		if (!tesfield->IsNull() && !tesfield->IsUndefined()) {
-			Kore::Graphics4::Shader* tes = (Kore::Graphics4::Shader*)tesfield->Value();
-			pipeline->tessellationEvaluationShader = tes;
-		}
-
-		for (int i = 0; i < size; ++i) {
-			pipeline->inputLayout[i] = structures[i];
-		}
-		pipeline->inputLayout[size] = nullptr;
-
-		pipeline->compile();
-
-		projobj->SetInternalField(0, External::New(isolate, pipeline));
-	}
-
 	void krom_compile_pipeline(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 
@@ -1063,97 +980,11 @@ namespace {
 		pipeline->compile();
 	}
 
-	std::string shadersdir;
-
 	void krom_set_pipeline(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> progobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		Local<External> progfield = Local<External>::Cast(progobj->GetInternalField(0));
 		Kore::Graphics4::PipelineState* pipeline = (Kore::Graphics4::PipelineState*)progfield->Value();
-
-		if (debugMode) {
-			Local<Value> vsnameobj = progobj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "vsname").ToLocalChecked()).ToLocalChecked();
-			String::Utf8Value vsname(isolate, vsnameobj);
-
-			Local<Value> fsnameobj = progobj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "fsname").ToLocalChecked()).ToLocalChecked();
-			String::Utf8Value fsname(isolate, fsnameobj);
-
-			bool shaderChanged = false;
-
-			if (shaderChanges[*vsname]) {
-				shaderChanged = true;
-				sendLogMessage("Reloading shader %s.", *vsname);
-				std::string filename = shaderFileNames[*vsname];
-				std::ifstream input((shadersdir + "/" + filename).c_str(), std::ios::binary);
-				std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-				Kore::Graphics4::Shader* vertexShader = new Kore::Graphics4::Shader(buffer.data(), (int)buffer.size(), Kore::Graphics4::VertexShader);
-				progobj->SetInternalField(3, External::New(isolate, vertexShader));
-				shaderChanges[*vsname] = false;
-			}
-
-			if (shaderChanges[*fsname]) {
-				shaderChanged = true;
-				sendLogMessage("Reloading shader %s.", *fsname);
-				std::string filename = shaderFileNames[*fsname];
-				std::ifstream input((shadersdir + "/" + filename).c_str(), std::ios::binary);
-				std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-				Kore::Graphics4::Shader* fragmentShader = new Kore::Graphics4::Shader(buffer.data(), (int)buffer.size(), Kore::Graphics4::FragmentShader);
-				progobj->SetInternalField(4, External::New(isolate, fragmentShader));
-				shaderChanges[*fsname] = false;
-			}
-
-			Local<Value> gsnameobj = progobj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "gsname").ToLocalChecked()).ToLocalChecked();
-			if (!gsnameobj->IsNull() && !gsnameobj->IsUndefined()) {
-				String::Utf8Value gsname(isolate, gsnameobj);
-				if (shaderChanges[*gsname]) {
-					shaderChanged = true;
-					sendLogMessage("Reloading shader %s.", *gsname);
-					std::string filename = shaderFileNames[*gsname];
-					std::ifstream input((shadersdir + "/" + filename).c_str(), std::ios::binary);
-					std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-					Kore::Graphics4::Shader* geometryShader = new Kore::Graphics4::Shader(buffer.data(), (int)buffer.size(), Kore::Graphics4::GeometryShader);
-					progobj->SetInternalField(5, External::New(isolate, geometryShader));
-					shaderChanges[*gsname] = false;
-				}
-			}
-
-			Local<Value> tcsnameobj = progobj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "tcsname").ToLocalChecked()).ToLocalChecked();
-			if (!tcsnameobj->IsNull() && !tcsnameobj->IsUndefined()) {
-				String::Utf8Value tcsname(isolate, tcsnameobj);
-				if (shaderChanges[*tcsname]) {
-					shaderChanged = true;
-					sendLogMessage("Reloading shader %s.", *tcsname);
-					std::string filename = shaderFileNames[*tcsname];
-					std::ifstream input((shadersdir + "/" + filename).c_str(), std::ios::binary);
-					std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-					Kore::Graphics4::Shader* tessellationControlShader = new Kore::Graphics4::Shader(buffer.data(), (int)buffer.size(), Kore::Graphics4::TessellationControlShader);
-					progobj->SetInternalField(6, External::New(isolate, tessellationControlShader));
-					shaderChanges[*tcsname] = false;
-				}
-			}
-
-			Local<Value> tesnameobj = progobj->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "tesname").ToLocalChecked()).ToLocalChecked();
-			if (!tesnameobj->IsNull() && !tesnameobj->IsUndefined()) {
-				String::Utf8Value tesname(isolate, tesnameobj);
-				if (shaderChanges[*tesname]) {
-					shaderChanged = true;
-					sendLogMessage("Reloading shader %s.", *tesname);
-					std::string filename = shaderFileNames[*tesname];
-					std::ifstream input((shadersdir + "/" + filename).c_str(), std::ios::binary);
-					std::vector<char> buffer((std::istreambuf_iterator<char>(input)), (std::istreambuf_iterator<char>()));
-					Kore::Graphics4::Shader* tessellationEvaluationShader = new Kore::Graphics4::Shader(buffer.data(), (int)buffer.size(), Kore::Graphics4::TessellationEvaluationShader);
-					progobj->SetInternalField(7, External::New(isolate, tessellationEvaluationShader));
-					shaderChanges[*tesname] = false;
-				}
-			}
-
-			if (shaderChanged) {
-				recompilePipeline(progobj);
-				Local<External> progfield = Local<External>::Cast(progobj->GetInternalField(0));
-				pipeline = (Kore::Graphics4::PipelineState*)progfield->Value();
-			}
-		}
-
 		Kore::Graphics4::setPipeline(pipeline);
 	}
 
@@ -1285,21 +1116,6 @@ namespace {
 
 		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		Kore::Graphics4::Texture* texture = (Kore::Graphics4::Texture*)texfield->Value();
-		
-		// bool imageChanged = false;
-		// if (debugMode) {
-		// 	String::Utf8Value filename(isolate, tex->ToObject(isolate->GetCurrentContext())->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "filename").ToLocalChecked()));
-		// 	if (imageChanges[*filename]) {
-		// 		imageChanges[*filename] = false;
-		// 		sendLogMessage("Image %s changed.", *filename);
-		// 		texture = new Kore::Graphics4::Texture(*filename);
-		// 		tex->ToObject(isolate->GetCurrentContext())->SetInternalField(0, External::New(isolate, texture));
-		// 		imageChanged = true;
-		// 	}
-		// }
-		// if (!imageChanged) {
-		// 	texture = (Kore::Graphics4::Texture*)texfield->Value();
-		// }
 
 		Kore::Graphics4::setTexture(*unit, texture);
 	}
@@ -2304,7 +2120,7 @@ namespace {
 
 		Local<ObjectTemplate> krom = ObjectTemplate::New(isolate);
 		krom->Set(String::NewFromUtf8(isolate, "init").ToLocalChecked(), FunctionTemplate::New(isolate, krom_init));
-		krom->Set(String::NewFromUtf8(isolate, "log").ToLocalChecked(), FunctionTemplate::New(isolate, LogCallback));
+		krom->Set(String::NewFromUtf8(isolate, "log").ToLocalChecked(), FunctionTemplate::New(isolate, krom_log));
 		krom->Set(String::NewFromUtf8(isolate, "clear").ToLocalChecked(), FunctionTemplate::New(isolate, graphics_clear));
 		krom->Set(String::NewFromUtf8(isolate, "setCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setDropFilesCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_drop_files_callback));
@@ -2464,11 +2280,9 @@ namespace {
 		Context::Scope context_scope(context);
 
 		Local<String> source = String::NewFromUtf8(isolate, scriptfile, NewStringType::kNormal).ToLocalChecked();
-		//Local<String> filename = String::NewFromUtf8(isolate, "krom.js", NewStringType::kNormal).ToLocalChecked();
 
 		TryCatch try_catch(isolate);
 		Local<Script> compiled_script = Script::Compile(isolate->GetCurrentContext(), source).ToLocalChecked();
-		//Local<Script> compiled_script = Script::Compile(source, filename).ToLocalChecked();
 
 		Local<Value> result;
 		if (!compiled_script->Run(context).ToLocal(&result)) {
@@ -2480,18 +2294,7 @@ namespace {
 		return true;
 	}
 
-	bool codechanged = false;
-
-	void parseCode();
-
 	void runV8() {
-		if (messageLoopPaused) return;
-
-		if (codechanged) {
-			parseCode();
-			codechanged = false;
-		}
-
 		v8::Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -2504,12 +2307,10 @@ namespace {
 		Local<v8::Function> func = Local<v8::Function>::New(isolate, updateFunction);
 		Local<Value> result;
 
-		//**if (debugMode) v8inspector->willExecuteScript(context, func->ScriptId());
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			sendLogMessage("Trace: %s", *stack_trace);
 		}
-		//**if (debugMode) v8inspector->didExecuteScript(context);
 
 		if (saveAndQuit) {
 			v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, saveAndQuitFunction);
@@ -2570,11 +2371,6 @@ namespace {
 		runV8();
 		//mutex.Unlock();
 
-		if (debugMode) {
-			do {
-				tickDebugger();
-			} while (messageLoopPaused);
-		}
 		Kore::Graphics4::end();
 		Kore::Graphics4::swapBuffers();
 	}
@@ -3013,398 +2809,8 @@ namespace {
 		gamepadButton(3, button, value);
 	}
 
-	bool startsWith(std::string str, std::string start) {
-		return str.substr(0, start.size()) == start;
-	}
-
-	bool endsWith(std::string str, std::string end) {
-		if (str.size() < end.size()) return false;
-		for (size_t i = str.size() - end.size(); i < str.size(); ++i) {
-			if (str[i] != end[i - (str.size() - end.size())]) return false;
-		}
-		return true;
-	}
-
-	std::string replaceAll(std::string str, const std::string& from, const std::string& to) {
-		size_t start_pos = 0;
-		while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
-			str.replace(start_pos, from.length(), to);
-			start_pos += to.length();
-		}
-		return str;
-	}
-
 	std::string assetsdir;
-	std::string kromjs;
-
-	struct Function {
-		std::string name;
-		std::vector<std::string> parameters;
-		std::string body;
-	};
-
-	struct Klass {
-		std::string name;
-		std::string internal_name;
-		std::string parent;
-		std::string interfaces;
-		std::map<std::string, Function*> methods;
-		std::map<std::string, Function*> functions;
-	};
-
-	std::map<std::string, Klass*> classes;
-
-	enum ParseMode {
-		ParseRegular,
-		ParseMethods,
-		ParseMethod,
-		ParseFunction,
-		ParseConstructor
-	};
-	void patchCode(std::string script) {
-
-		v8::Locker locker{ isolate };
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, globalContext);
-		Context::Scope context_scope(context);
-
-		Local<String> source = String::NewFromUtf8(isolate, script.c_str(), NewStringType::kNormal).ToLocalChecked();
-
-		TryCatch try_catch(isolate);
-
-		Local<Script> compiled_script;
-		if (!Script::Compile(context, source).ToLocal(&compiled_script)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			sendLogMessage("Trace: %s", *stack_trace);
-		}
-
-		Local<Value> result;
-		if (!compiled_script->Run(context).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			sendLogMessage("Trace: %s", *stack_trace);
-		}
-	}
-	void parseCode() {
-		int types = 0;
-		ParseMode mode = ParseRegular;
-		Klass* currentClass = nullptr;
-		Function* currentFunction = nullptr;
-		std::string currentBody;
-		int brackets = 1;
-
-		std::ifstream infile(kromjs.c_str());
-		std::string line;
-		while (std::getline(infile, line)) {
-			switch (mode) {
-				case ParseRegular: {
-					if (line.find("__super__ =") != std::string::npos) {
-						size_t first = line.find_last_of(' = ');
-						size_t last = line.find_last_of(';');
-						currentClass->parent = line.substr(first+1, last-first-1);
-					}
-					else if (line.find("__interfaces__ =") != std::string::npos) {
-						size_t first = line.find_last_of(' = ');
-						size_t last = line.find_last_of(';');
-						currentClass->interfaces = line.substr(first+1, last - first-1);
-					}
-					else if (endsWith(line, ".prototype = {") || line.find(".prototype = $extend(") != std::string::npos) { // parse methods
-						mode = ParseMethods;
-					}
-					else if (line.find("$hxClasses[\"") != std::string::npos) { 
-						size_t first = line.find('\"');
-						size_t last = line.find_last_of('\"');
-						std::string name = line.substr(first + 1, last - first - 1);
-						first = line.find('var')+1;
-						last = line.find('=', first + 1)-1;
-						std::string internal_name = line.substr(first + 1, last - first - 1);
-						if (classes.find(internal_name) == classes.end()) {
-							currentClass = new Klass;
-							currentClass->name = name;
-							currentClass->interfaces = "";
-							currentClass->parent = "";
-							currentClass->internal_name = internal_name;
-							classes[internal_name] = currentClass;
-							++types;
-						}
-						else {
-							currentClass = classes[internal_name];
-							currentClass->name = name;
-						}
-						//constructor
-						if (line.find(" = function(") != std::string::npos){
-							if (currentClass->methods.find(internal_name) == currentClass->methods.end()) {
-								currentFunction = new Function;
-								currentFunction->name = internal_name;
-								first = line.find('(') + 1;
-								last = line.find_last_of(')');
-								size_t last_param_start = first;
-								for (size_t i = first; i <= last; ++i) {
-									if (line[i] == ',') {
-										currentFunction->parameters.push_back(line.substr(last_param_start, i - last_param_start));
-											last_param_start = i + 1;
-									}
-									if (line[i] == ')') {
-										currentFunction->parameters.push_back(line.substr(last_param_start, i - last_param_start));
-										break;
-									}
-								}
-								currentClass->methods[internal_name] = currentFunction;
-							}
-							else {
-								currentFunction = currentClass->methods[internal_name];
-							}
-							if (line.find("};") == std::string::npos) {
-								mode = ParseConstructor;
-								currentBody = "";
-								brackets = 1;
-							}
-						}
-					}
-					else if (line.find(" = function(") != std::string::npos && line.find("if") == std::string::npos) {
-						if (line.find("var ") == std::string::npos) {
-							size_t first = 0;
-							size_t last = line.find('.');
-							if (last == std::string::npos) {
-								last = line.find('[');
-							}
-							std::string internal_name = line.substr(first, last - first);
-							currentClass = classes[internal_name];
-
-							first = line.find('.') + 1;
-							last = line.find(' ');
-							std::string methodname = line.substr(first, last - first);
-							if (currentClass->methods.find(methodname) == currentClass->methods.end()) {
-								currentFunction = new Function;
-								currentFunction->name = methodname;
-								first = line.find('(') + 1;
-								last = line.find_last_of(')');
-								size_t last_param_start = first;
-								for (size_t i = first; i <= last; ++i) {
-									if (line[i] == ',') {
-										currentFunction->parameters.push_back(line.substr(last_param_start, i - last_param_start));
-										last_param_start = i + 1;
-									}
-									if (line[i] == ')') {
-										currentFunction->parameters.push_back(line.substr(last_param_start, i - last_param_start));
-										break;
-									}
-								}
-								currentClass->methods[methodname] = currentFunction;
-							}
-							else {
-								currentFunction = currentClass->methods[methodname];
-							}
-							mode = ParseFunction;
-							currentBody = "";
-							brackets = 1;
-						}
-					}
-					break;
-				}
-				case ParseMethods: {
-					if (endsWith(line, "{")) {
-						size_t first = 0;
-						while (line[first] == ' ' || line[first] == '\t' || line[first] == ',') {
-							++first;
-						}
-						size_t last = line.find(':');
-						std::string methodname = line.substr(first, last - first);
-						if (currentClass->methods.find(methodname) == currentClass->methods.end()) {
-							currentFunction = new Function;
-							currentFunction->name = methodname;
-							first = line.find('(') + 1;
-							if (first == std::string::npos) {
-								first=0;
-							}
-							last = line.find_last_of(')');
-							if (last == std::string::npos) {
-								last = 0;
-							}
-							size_t last_param_start = first;
-							for (size_t i = first; i <= last; ++i) {
-								if (line[i] == ',') {
-									currentFunction->parameters.push_back(line.substr(last_param_start, i - last_param_start));
-									last_param_start = i + 1;
-								}
-								if (line[i] == ')') {
-									currentFunction->parameters.push_back(line.substr(last_param_start, i - last_param_start));
-									break;
-								}
-							}
-							currentClass->methods[methodname] = currentFunction;
-						}
-						else {
-							currentFunction = currentClass->methods[methodname];
-						}
-						mode = ParseMethod;
-						currentBody = "";
-						brackets = 1;
-					}
-					else if (endsWith(line, "};") || endsWith(line, "});")) { // Base or extended class
-						mode = ParseRegular;
-					}
-					break;
-				}
-				case ParseMethod: {
-					brackets += std::count(line.begin(),line.end(),'{');
-					brackets -= std::count(line.begin(), line.end(), '}');
-					if (brackets > 0) {
-						currentBody += line + " ";
-					}
-					else {
-						if (currentFunction->body == "") {
-							currentFunction->body = currentBody;
-						}
-						else if (currentFunction->body != currentBody) {
-							currentFunction->body = currentBody;
-
-							std::string script;
-							script += currentClass->internal_name;
-							script += ".prototype.";
-							script += currentFunction->name;
-							script += " = new Function([";
-							for (size_t i = 0; i < currentFunction->parameters.size(); ++i) {
-								script += "\"" + currentFunction->parameters[i] + "\"";
-								if (i < currentFunction->parameters.size() - 1) script += ",";
-							}
-							script += "], \"";
-							script += replaceAll(currentFunction->body, "\"", "\\\"");
-							script += "\");";
-
-							sendLogMessage("Patching method %s in class %s.", currentFunction->name.c_str(), currentClass->name.c_str());
-
-							patchCode(script);
-							
-						}
-						mode = ParseMethods;
-					}
-					break;
-				}
-				case ParseFunction: {
-					brackets += std::count(line.begin(), line.end(), '{');
-					brackets -= std::count(line.begin(), line.end(), '}');
-					if (brackets > 0) {
-						currentBody += line + " ";
-					}
-					else {
-						if (currentFunction->body == "") {
-							currentFunction->body = currentBody;
-						}
-						else if (currentFunction->body != currentBody) {
-							currentFunction->body = currentBody;
-
-							std::string script;
-							script += currentClass->internal_name;
-							script += ".";
-							script += currentFunction->name;
-							script += " = new Function([";
-							for (size_t i = 0; i < currentFunction->parameters.size(); ++i) {
-								script += "\"" + currentFunction->parameters[i] + "\"";
-								if (i < currentFunction->parameters.size() - 1) script += ",";
-							}
-							script += "], \"";
-							script += replaceAll(currentFunction->body, "\"", "\\\"");
-							script += "\");";
-
-							sendLogMessage("Patching function %s in class %s.", currentFunction->name.c_str(), currentClass->name.c_str());
-
-							patchCode(script);
-						}
-						mode = ParseRegular;
-					}
-					break;
-				}
-				case ParseConstructor: {
-					brackets += std::count(line.begin(), line.end(), '{');
-					brackets -= std::count(line.begin(), line.end(), '}');
-					if (brackets > 0) {
-						currentBody += line + " ";
-					}
-					else {
-						if (currentFunction->body == "") {
-							currentFunction->body = currentBody;
-						}
-						else if (currentFunction->body != currentBody) {
-
-							std::map<std::string, Function*>::iterator it;
-							for (it = currentClass->methods.begin(); it != currentClass->methods.end(); it++)
-							{
-								it->second->body = "invalidate it";
-							}
-
-							currentFunction->body = currentBody;
-
-							std::string script;
-							script += "var ";
-							script += currentClass->internal_name;
-							script += " = $hxClasses[\""+currentClass->name+"\"]";
-							script += " = new Function([";
-							for (size_t i = 0; i < currentFunction->parameters.size(); ++i) {
-								script += "\"" + currentFunction->parameters[i] + "\"";
-								if (i < currentFunction->parameters.size() - 1) script += ",";
-							}
-							script += "], \"";
-							script += replaceAll(currentFunction->body, "\"", "\\\"");
-							script += "\");";
-							
-							
-		
-							sendLogMessage("Patching constructor in class %s.", currentFunction->name.c_str());
-
-							script += currentClass->internal_name;
-							script += ".__name__ = \"" + currentClass->name + "\";";
-
-							if (currentClass->parent != "") {
-								script += currentClass->internal_name;
-								script += ".__super__ = " + currentClass->parent + ";";
-								script += currentClass->internal_name;
-								script += ".prototype = $extend(" + currentClass->parent + ".prototype , {__class__: "+ currentClass->internal_name +"});";
-								
-							}
-							if (currentClass->interfaces != "") {
-								script += currentClass->internal_name;
-								script += ".__interfaces__ = " + currentClass->interfaces + ";";
-							}
-							patchCode(script);
-						}
-						mode = ParseRegular;
-					}
-					break;
-				}
-			}
-		}
-		sendLogMessage("%i new types found.", types);
-		infile.close();
-	}
-	
 }
-
-extern "C" void watchDirectories(char* path1, char* path2);
-
-extern "C" void filechanged(char* path) {
-	std::string strpath = path;
-	if (endsWith(strpath, ".png")) {
-		std::string name = strpath.substr(strpath.find_last_of('/') + 1);
-		imageChanges[name] = true;
-	}
-	else if (endsWith(strpath, ".essl") || endsWith(strpath, ".glsl") || endsWith(strpath, ".d3d11")) {
-		std::string name = strpath.substr(strpath.find_last_of('/') + 1);
-		name = name.substr(0, name.find_last_of('.'));
-		name = replace(name, '.', '_');
-		name = replace(name, '-', '_');
-		sendLogMessage("Shader changed: %s.", name.c_str());
-		shaderFileNames[name] = strpath;
-		shaderChanges[name] = true;
-	}
-	else if (endsWith(strpath, "krom.js")) {
-		sendLogMessage("Code changed.");
-		codechanged = true;
-	}
-}
-
-//__declspec(dllimport) extern "C" void __stdcall Sleep(unsigned long milliseconds);
 
 int kickstart(int argc, char** argv) {
 	_argc = argc;
@@ -3416,25 +2822,12 @@ int kickstart(int argc, char** argv) {
 	bindir = bindir.substr(0, bindir.find_last_of("/"));
 #endif
 	assetsdir = argc > 1 ? argv[1] : bindir;
-	shadersdir = argc > 2 ? argv[2] : bindir;
+	// shadersdir = argc > 2 ? argv[2] : bindir;
 
 	bool readStdoutPath = false;
 	bool readConsolePid = false;
-	bool readPort = false;
-	int port = 0;
 	for (int i = 3; i < argc; ++i) {
-		if (readPort) {
-			port = atoi(argv[i]);
-			readPort = false;
-		}
-		else if (strcmp(argv[i], "--debug") == 0) {
-			debugMode = true;
-			readPort = true;
-		}
-		else if (strcmp(argv[i], "--watch") == 0) {
-			watch = true;
-		}
-		else if (strcmp(argv[i], "--nosound") == 0) {
+		if (strcmp(argv[i], "--nosound") == 0) {
 			nosound = true;
 		}
 		else if (strcmp(argv[i], "--nowindow") == 0) {
@@ -3458,7 +2851,6 @@ int kickstart(int argc, char** argv) {
 		}
 	}
 
-	kromjs = assetsdir + "/krom.js";
 	kinc_internal_set_files_location(&assetsdir[0u]);
 
 	Kore::FileReader reader;
@@ -3475,28 +2867,12 @@ int kickstart(int argc, char** argv) {
 	#endif
 	startV8((bindir + dirsep).c_str());
 
-	if (watch) {
-		parseCode();
-	}
-
 	Kore::threadsInit();
-
-	if (watch) {
-		watchDirectories(argv[1], argv[2]);
-	}
-
-	if (debugMode) {
-		startDebugger(isolate, port);
-		while (!tickDebugger()) {}
-		//Sleep(1000);
-	}
 
 	startKrom(code);
 	Kore::System::start();
 
 	exit(0); // TODO
-
 	endV8();
-
 	return 0;
 }

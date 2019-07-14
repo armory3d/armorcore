@@ -24,6 +24,7 @@ if (platform === Platform.Windows) {
 
 project.addIncludeDir("Libraries/nfd/include");
 project.addFile('Libraries/nfd/nfd_common.c');
+
 if (platform === Platform.Windows) {
 	project.addFile('Libraries/nfd/nfd_win.cpp');
 }
@@ -35,27 +36,16 @@ else {
 }
 
 if (platform === Platform.Windows) {
-	// if (!release) { //!
-		project.addLib('Dbghelp');
-		project.addLib('Shlwapi');
-	// } //!
-	project.addLib('bcrypt');
-	project.addLib('Crypt32');
-	project.addLib('Winmm');
+	project.addLib('Dbghelp'); // Stack walk
 	project.addLib(libdir + 'v8_monolith');
 }
-
-if (platform === Platform.OSX) {
+else if (platform === Platform.Linux) {
+	project.addLib('../' + libdir + 'libv8_monolith.so');
+}
+else if (platform === Platform.OSX) {
 	project.addLib(libdir + 'libv8_monolith.a');
 }
 
-if (platform === Platform.Linux) {
-	project.addLib('../' + libdir + 'libv8_monolith.so');
-	project.addLib('../' + libdir + 'libc++.so');
-	project.addLib('libssl');
-	project.addLib('libcrypto');
-}
-
-project.setDebugDir('Deployment/' + build + '/' + system);
+project.setDebugDir('Deployment');
 
 resolve(project);
