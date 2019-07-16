@@ -40,10 +40,10 @@ if (platform === Platform.Windows) {
 	project.addLib(libdir + 'v8_monolith');
 }
 else if (platform === Platform.Linux) {
-	project.addLib('../' + libdir + 'libv8_monolith.so');
+	project.addLib('v8_monolith -L../../' + libdir);
 }
 else if (platform === Platform.OSX) {
-	project.addLib(libdir + 'libv8_monolith.a');
+	project.addLib('libv8_monolith.a');
 }
 
 project.setDebugDir('Deployment');
