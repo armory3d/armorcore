@@ -57,7 +57,7 @@ void armorySaveAndQuit() { saveAndQuit = true; }
 namespace {
 	int _argc;
 	char** _argv;
-	bool nosound = false;
+	bool enableSound = false;
 	bool nowindow = false;
 
 	std::unique_ptr<Platform> plat;
@@ -119,6 +119,10 @@ namespace {
 	void gamepad4Axis(int axis, float value);
 	void gamepad4Button(int button, float value);
 
+	const int tempStringSize = 1024 * 1024 - 1;
+	char tempStringVS[tempStringSize + 1];
+	char tempStringFS[tempStringSize + 1];
+
 	void sendLogMessageArgs(const char* format, va_list args) {
 		char message[4096];
 		vsnprintf(message, sizeof(message) - 2, format, args);
@@ -171,7 +175,7 @@ namespace {
 		Kore::System::init(*title, width, height, &win, &frame);
 
 		mutex.create();
-		if (!nosound) {
+		if (enableSound) {
 			Kore::Audio2::audioCallback = mix;
 			Kore::Audio2::init();
 			initAudioBuffer();
@@ -410,9 +414,9 @@ namespace {
 
 	void krom_delete_indexbuffer(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
-		//Local<External> field = Local<External>(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		//Kore::Graphics4::IndexBuffer* buffer = (Kore::Graphics4::IndexBuffer*)field->Value();
-		//delete buffer;
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		Kore::Graphics4::IndexBuffer* buffer = (Kore::Graphics4::IndexBuffer*)field->Value();
+		delete buffer;
 	}
 
 	void krom_lock_index_buffer(const FunctionCallbackInfo<Value>& args) {
@@ -568,7 +572,6 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		//char* tempStringVS = new char[strlen(*utf8_value) + 1];
-		char* tempStringVS = new char[1024 * 1024]; // TODO: LEAK
 		strcpy(tempStringVS, *utf8_value);
 		
 		ID3DBlob* errorMessage;
@@ -704,7 +707,6 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		//char* tempStringFS = new char[strlen(*utf8_value) + 1];
-		char* tempStringFS = new char[1024 * 1024];  // TODO: LEAK
 		strcpy(tempStringFS, *utf8_value);
 		
 		ID3DBlob* errorMessage;
@@ -2365,7 +2367,7 @@ namespace {
 	}
 
 	void update() {
-		if (!nosound) Kore::Audio2::update();
+		if (enableSound ) Kore::Audio2::update();
 		Kore::Graphics4::begin();
 
 		//mutex.Lock();
@@ -2828,8 +2830,8 @@ int kickstart(int argc, char** argv) {
 	bool readStdoutPath = false;
 	bool readConsolePid = false;
 	for (int i = 3; i < argc; ++i) {
-		if (strcmp(argv[i], "--nosound") == 0) {
-			nosound = true;
+		if (strcmp(argv[i], "--sound") == 0) {
+			enableSound = true;
 		}
 		else if (strcmp(argv[i], "--nowindow") == 0) {
 			nowindow = true;
@@ -2855,7 +2857,13 @@ int kickstart(int argc, char** argv) {
 	kinc_internal_set_files_location(&assetsdir[0u]);
 
 	Kore::FileReader reader;
-	reader.open("krom.js");
+	if (!reader.open("krom.bin")) {
+		if (!reader.open("krom.js")) {
+			fprintf(stderr, "Could not load krom.js, aborting.\n");
+			exit(1);
+		}
+	}
+
 	char* code = new char[reader.size() + 1];
 	memcpy(code, reader.readAll(), reader.size());
 	code[reader.size()] = 0;
