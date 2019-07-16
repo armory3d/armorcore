@@ -14,7 +14,7 @@ else if (os.platform() === 'win32') {
 const libdir = 'V8/Libraries/' + system + '/' + build + '/';
 
 project.cpp11 = true;
-project.addFile('Sources/**');
+project.addFile('Sources/*');
 project.addIncludeDir('V8/include');
 
 if (platform === Platform.Windows) {
