@@ -1,0 +1,9 @@
+*.js.map
+/.vscode/.BROWSE.VC.DB
+/.vscode/.BROWSE.VC.DB-shm
+/.vscode/.BROWSE.VC.DB-wal
+/node_modules/typescript
+/node_modules/.bin/tsserver.cmd
+/node_modules/.bin/tsc
+/node_modules/.bin/tsc.cmd
+/node_modules/.bin/tsserver
