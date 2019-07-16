@@ -27,6 +27,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <stdarg.h>
 
 #ifdef KORE_WINDOWS
 #include <Windows.h> // AttachConsole
