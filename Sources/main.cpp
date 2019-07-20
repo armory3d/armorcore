@@ -1,6 +1,5 @@
 #include "pch.h"
 #include <Kore/Graphics4/Graphics.h>
-#include <Kore/Audio1/Audio.h>
 #include <kinc/log.h>
 #include <kinc/io/filereader.h>
 #include <kinc/io/filewriter.h>
@@ -86,7 +85,7 @@ namespace {
 
 	void update();
 	void init_audio_buffer();
-	void update_audio(int samples);
+	void update_audio(kinc_a2_buffer_t *buffer, int samples);
 	void drop_files(wchar_t* file_path);
 	char* cut();
 	char* copy();
@@ -160,8 +159,8 @@ namespace {
 		kinc_random_init((int)(kinc_time() * 1000));
 
 		if (enable_sound) {
-			Kore::Audio2::audioCallback = update_audio;
-			Kore::Audio2::init();
+			kinc_a2_set_callback(update_audio);
+			kinc_a2_init();
 			init_audio_buffer();
 		}
 
@@ -1098,11 +1097,10 @@ namespace {
 
 	void write_audio_buffer(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
-		float value = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		*(float*)&Kore::Audio2::buffer.data[Kore::Audio2::buffer.writeLocation] = value;
-		Kore::Audio2::buffer.writeLocation += 4;
-		if (Kore::Audio2::buffer.writeLocation >= Kore::Audio2::buffer.dataSize) Kore::Audio2::buffer.writeLocation = 0;
+		// float value = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		// a2_buffer.read_location += 4;
+		// if (a2_buffer.read_location >= a2_buffer.data_size) a2_buffer.read_location = 0;
+		// *(float*)buffer = value;
 	}
 
 	void krom_load_blob(const FunctionCallbackInfo<Value>& args) {
@@ -2332,12 +2330,12 @@ namespace {
 	}
 
 	void init_audio_buffer() {
-		for (int i = 0; i < Kore::Audio2::buffer.dataSize; i++) {
-			*(float*)&Kore::Audio2::buffer.data[i] = 0;
-		}
+		// for (int i = 0; i < a2_buffer.dataSize; i++) {
+			// *(float*)&a2_buffer.data[i] = 0;
+		// }
 	}
 
-	void update_audio(int samples) {
+	void update_audio(kinc_a2_buffer_t *buffer, int samples) {
 		// kinc_mutex_lock(&mutex);
 		v8::Locker locker{isolate};
 
