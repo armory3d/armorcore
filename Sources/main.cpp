@@ -197,7 +197,7 @@ namespace {
 		kinc_log(KINC_LOG_LEVEL_INFO, *value);
 	}
 
-	void graphics_clear(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	void krom_clear(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		int flags = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int color = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -2119,7 +2119,7 @@ namespace {
 		Local<ObjectTemplate> krom = ObjectTemplate::New(isolate);
 		krom->Set(String::NewFromUtf8(isolate, "init").ToLocalChecked(), FunctionTemplate::New(isolate, krom_init));
 		krom->Set(String::NewFromUtf8(isolate, "log").ToLocalChecked(), FunctionTemplate::New(isolate, krom_log));
-		krom->Set(String::NewFromUtf8(isolate, "clear").ToLocalChecked(), FunctionTemplate::New(isolate, graphics_clear));
+		krom->Set(String::NewFromUtf8(isolate, "clear").ToLocalChecked(), FunctionTemplate::New(isolate, krom_clear));
 		krom->Set(String::NewFromUtf8(isolate, "setCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setDropFilesCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_drop_files_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setCutCopyPasteCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_cut_copy_paste_callback));
