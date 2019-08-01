@@ -38,6 +38,11 @@
 #include <D3Dcompiler.h>
 #include <strstream>
 #endif
+#ifdef KORE_DIRECT3D12
+#include <kinc/graphics5/constantbuffer.h>
+#include <kinc/graphics5/commandlist.h>
+#include <kinc/graphics5/raytrace.h>
+#endif
 #include <nfd.h>
 
 using namespace v8;
@@ -46,6 +51,23 @@ const int KROM_API = 3;
 
 bool save_and_quit = false;
 void armory_save_and_quit() { save_and_quit = true; }
+
+#ifdef KORE_DIRECT3D12
+#ifdef __cplusplus
+extern "C" {
+#endif
+	extern kinc_g5_command_list_t commandList;
+	kinc_g5_constant_buffer_t constant_buffer;
+	kinc_g5_vertex_buffer_t vertex_buffer;
+	kinc_g5_index_buffer_t index_buffer;
+	kinc_g4_render_target_t* render_target;
+	kinc_raytrace_target_t target;
+	kinc_raytrace_pipeline_t pipeline;
+	kinc_raytrace_acceleration_structure_t accel;
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 namespace {
 	int _argc;
@@ -2104,6 +2126,102 @@ namespace {
 		save_and_quit_func.Reset(isolate, func);
 	}
 
+	#ifdef KORE_DIRECT3D12
+	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		Local<ArrayBuffer> shader_buffer = Local<ArrayBuffer>::Cast(args[0]);
+		ArrayBuffer::Contents shader_content;
+		// if (shader_buffer->IsExternal()) shader_content = shader_buffer->GetContents();
+		// else shader_content = shader_buffer->Externalize();
+		shader_content = shader_buffer->GetContents();
+
+		Local<ArrayBuffer> vb_buffer = Local<ArrayBuffer>::Cast(args[1]);
+		ArrayBuffer::Contents vb_content;
+		// if (vb_buffer->IsExternal()) vb_content = vb_buffer->GetContents();
+		// else vb_content = vb_buffer->Externalize();
+		vb_content = vb_buffer->GetContents();
+		float* vb = (float*)vb_content.Data();
+
+		Local<ArrayBuffer> ib_buffer = Local<ArrayBuffer>::Cast(args[2]);
+		ArrayBuffer::Contents ib_content;
+		// if (ib_buffer->IsExternal()) ib_content = ib_buffer->GetContents();
+		// else ib_content = ib_buffer->Externalize();
+		ib_content = ib_buffer->GetContents();
+		int* ib = (int*)ib_content.Data();
+
+		kinc_g5_constant_buffer_init(&constant_buffer, 21 * 4);
+
+		kinc_raytrace_pipeline_init(&pipeline, &commandList, shader_content.Data(), (int)shader_content.ByteLength(), &constant_buffer);
+
+		kinc_g5_vertex_structure_t structure;
+		kinc_g4_vertex_structure_init(&structure);
+		kinc_g4_vertex_structure_add(&structure, "pos", KINC_G4_VERTEX_DATA_FLOAT3);
+		kinc_g4_vertex_structure_add(&structure, "nor", KINC_G4_VERTEX_DATA_FLOAT3);
+		kinc_g4_vertex_structure_add(&structure, "tex", KINC_G4_VERTEX_DATA_FLOAT2);
+
+		int vcount = vb_content.ByteLength() / 4;
+		kinc_g5_vertex_buffer_init(&vertex_buffer, vcount / 8, &structure, true, 0);
+		float *vertices = kinc_g5_vertex_buffer_lock_all(&vertex_buffer);
+		for (int i = 0; i < vcount; ++i) {
+			vertices[i] = vb[i];
+		}
+		kinc_g5_vertex_buffer_unlock_all(&vertex_buffer);
+
+		int icount = ib_content.ByteLength() / 4;
+		kinc_g5_index_buffer_init(&index_buffer, icount, true);
+		int *indices = kinc_g5_index_buffer_lock(&index_buffer);
+		for (int i = 0; i < icount; ++i) {
+			indices[i] = ib[i];
+		}
+		kinc_g5_index_buffer_unlock(&index_buffer);
+
+		kinc_raytrace_acceleration_structure_init(&accel, &commandList, &vertex_buffer, &index_buffer);
+
+		int32_t target_w = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int32_t target_h = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
+		Local<External> rtfield0 = Local<External>::Cast(args[5]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t* texpaint0 = (kinc_g4_render_target_t*)rtfield0->Value();
+
+		Local<External> rtfield1 = Local<External>::Cast(args[6]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t* texpaint1 = (kinc_g4_render_target_t*)rtfield1->Value();
+
+		Local<External> rtfield2 = Local<External>::Cast(args[7]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t* texpaint2 = (kinc_g4_render_target_t*)rtfield2->Value();
+
+		Local<External> envfield = Local<External>::Cast(args[8]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t* texenv = (kinc_g4_texture_t*)envfield->Value();
+
+		kinc_raytrace_target_init(&target, target_w, target_h, &texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture);
+	}
+
+	void krom_raytrace_dispatch_rays(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+
+		Local<External> rtfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		render_target = (kinc_g4_render_target_t*)rtfield->Value();
+
+		Local<ArrayBuffer> cb_buffer = Local<ArrayBuffer>::Cast(args[1]);
+		ArrayBuffer::Contents cb_content;
+		// if (cb_buffer->IsExternal()) cb_content = cb_buffer->GetContents();
+		// else cb_content = cb_buffer->Externalize();
+		cb_content = cb_buffer->GetContents();
+		float* cb = (float*)cb_content.Data();
+
+		kinc_g5_constant_buffer_lock_all(&constant_buffer);
+		for (int i = 0; i < 21; ++i) {
+			kinc_g5_constant_buffer_set_float(&constant_buffer, i * 4, cb[i]);
+		}
+		kinc_g5_constant_buffer_unlock(&constant_buffer);
+
+		kinc_raytrace_set_acceleration_structure(&accel);
+		kinc_raytrace_set_pipeline(&pipeline);
+		kinc_raytrace_set_target(&target);
+		kinc_raytrace_dispatch_rays(&commandList);
+		kinc_raytrace_copy_target(&commandList, &render_target->impl._renderTarget, &target);
+	}
+	#endif
+
 	void start_v8(const char* bindir) {
 		plat = platform::NewDefaultPlatform();
 		V8::InitializePlatform(plat.get());
@@ -2261,6 +2379,10 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "openDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_open_dialog));
 		krom->Set(String::NewFromUtf8(isolate, "saveDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_save_dialog));
 		krom->Set(String::NewFromUtf8(isolate, "setSaveAndQuitCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_save_and_quit_callback));
+		#ifdef KORE_DIRECT3D12
+		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));
+		krom->Set(String::NewFromUtf8(isolate, "raytraceDispatchRays").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_dispatch_rays));
+		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
@@ -2359,6 +2481,7 @@ namespace {
 
 	void update() {
 		if (enable_sound ) kinc_a2_update();
+
 		kinc_g4_begin(0);
 
 		// kinc_mutex_lock(&mutex);
