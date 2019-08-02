@@ -33,7 +33,7 @@
 #include <Windows.h> // AttachConsole
 #endif
 
-#ifdef KORE_DIRECT3D
+#ifdef WITH_D3DCOMPILER
 #include <d3d11.h>
 #include <D3Dcompiler.h>
 #include <strstream>
@@ -43,7 +43,9 @@
 #include <kinc/graphics5/commandlist.h>
 #include <kinc/graphics5/raytrace.h>
 #endif
+#ifdef WITH_NFD
 #include <nfd.h>
+#endif
 
 using namespace v8;
 
@@ -566,7 +568,7 @@ namespace {
 
 	void krom_create_vertex_shader_from_source(const FunctionCallbackInfo<Value>& args) {
 
-		#ifdef KORE_DIRECT3D
+		#ifdef WITH_D3DCOMPILER
 
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
@@ -723,7 +725,7 @@ namespace {
 
 	void krom_create_fragment_shader_from_source(const FunctionCallbackInfo<Value>& args) {
 
-		#ifdef KORE_DIRECT3D
+		#ifdef WITH_D3DCOMPILER
 
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
@@ -2088,6 +2090,14 @@ namespace {
 		kinc_compute(x, y, z);
 	}
 
+	void krom_set_save_and_quit_callback(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		save_and_quit_func.Reset(isolate, func);
+	}
+
+	#ifdef WITH_NFD
 	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value filterList(isolate, args[0]);
@@ -2119,13 +2129,7 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Error: %s\n", NFD_GetError());
 		}
 	}
-
-	void krom_set_save_and_quit_callback(const FunctionCallbackInfo<Value>& args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		save_and_quit_func.Reset(isolate, func);
-	}
+	#endif
 
 	#ifdef KORE_DIRECT3D12
 	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
@@ -2377,9 +2381,11 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "getConstantLocationCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_constant_location_compute));
 		krom->Set(String::NewFromUtf8(isolate, "getTextureUnitCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_texture_unit_compute));
 		krom->Set(String::NewFromUtf8(isolate, "compute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_compute));
+		krom->Set(String::NewFromUtf8(isolate, "setSaveAndQuitCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_save_and_quit_callback));
+		#ifdef WITH_NFD
 		krom->Set(String::NewFromUtf8(isolate, "openDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_open_dialog));
 		krom->Set(String::NewFromUtf8(isolate, "saveDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_save_dialog));
-		krom->Set(String::NewFromUtf8(isolate, "setSaveAndQuitCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_save_and_quit_callback));
+		#endif
 		#ifdef KORE_DIRECT3D12
 		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));
 		krom->Set(String::NewFromUtf8(isolate, "raytraceDispatchRays").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_dispatch_rays));

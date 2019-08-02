@@ -1,39 +1,18 @@
-const os = require('os');
-
-let project = new Project('Krom');
 
 const release = true;
-const build = release ? 'release' : 'debug';
-let system = 'linux';
-if (os.platform() === 'darwin') {
-	system = 'macos';
-}
-else if (os.platform() === 'win32') {
-	system = 'win32';
-}
-const libdir = 'V8/Libraries/' + system + '/' + build + '/';
+const with_d3dcompiler = true;
+const with_nfd = true;
 
+let project = new Project('Krom');
 project.cpp11 = true;
 project.addFile('Sources/*');
 project.addIncludeDir('V8/include');
 
-if (platform === Platform.Windows) {
-	project.addLib("d3d11");
-	project.addLib("d3dcompiler");
-}
+let system = platform === Platform.Windows ? "win32" :
+			 platform === Platform.Linux ? "linux" : "macos";
 
-project.addIncludeDir("Libraries/nfd/include");
-project.addFile('Libraries/nfd/nfd_common.c');
-
-if (platform === Platform.Windows) {
-	project.addFile('Libraries/nfd/nfd_win.cpp');
-}
-else if (platform === Platform.Linux) {
-	project.addFile('Libraries/nfd/nfd_zenity.c');
-}
-else {
-	project.addFile('Libraries/nfd/nfd_cocoa.m');
-}
+const build = release ? 'release' : 'debug';
+const libdir = 'V8/Libraries/' + system + '/' + build + '/';
 
 if (platform === Platform.Windows) {
 	project.addLib('Dbghelp'); // Stack walk
@@ -47,5 +26,27 @@ else if (platform === Platform.OSX) {
 }
 
 project.setDebugDir('Deployment');
+
+if (with_d3dcompiler && platform === Platform.Windows) {
+	project.addDefine('WITH_D3DCOMPILER');
+	project.addLib("d3d11");
+	project.addLib("d3dcompiler");
+}
+
+if (with_nfd) {
+	project.addDefine('WITH_NFD');
+	project.addIncludeDir("Libraries/nfd/include");
+	project.addFile('Libraries/nfd/nfd_common.c');
+
+	if (platform === Platform.Windows) {
+		project.addFile('Libraries/nfd/nfd_win.cpp');
+	}
+	else if (platform === Platform.Linux) {
+		project.addFile('Libraries/nfd/nfd_zenity.c');
+	}
+	else {
+		project.addFile('Libraries/nfd/nfd_cocoa.m');
+	}
+}
 
 resolve(project);
