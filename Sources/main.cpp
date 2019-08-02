@@ -64,6 +64,7 @@ extern "C" {
 	kinc_raytrace_target_t target;
 	kinc_raytrace_pipeline_t pipeline;
 	kinc_raytrace_acceleration_structure_t accel;
+	const int constant_buffer_size = 20;
 #ifdef __cplusplus
 }
 #endif
@@ -2149,7 +2150,7 @@ namespace {
 		ib_content = ib_buffer->GetContents();
 		int* ib = (int*)ib_content.Data();
 
-		kinc_g5_constant_buffer_init(&constant_buffer, 21 * 4);
+		kinc_g5_constant_buffer_init(&constant_buffer, constant_buffer_size * 4);
 
 		kinc_raytrace_pipeline_init(&pipeline, &commandList, shader_content.Data(), (int)shader_content.ByteLength(), &constant_buffer);
 
@@ -2209,7 +2210,7 @@ namespace {
 		float* cb = (float*)cb_content.Data();
 
 		kinc_g5_constant_buffer_lock_all(&constant_buffer);
-		for (int i = 0; i < 21; ++i) {
+		for (int i = 0; i < constant_buffer_size; ++i) {
 			kinc_g5_constant_buffer_set_float(&constant_buffer, i * 4, cb[i]);
 		}
 		kinc_g5_constant_buffer_unlock(&constant_buffer);
@@ -2521,8 +2522,6 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
 		}
 	}
-
-	char cutCopyString[4096];
 
 	char* copy() {
 		v8::Locker locker{isolate};
