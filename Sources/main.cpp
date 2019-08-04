@@ -2944,7 +2944,7 @@ int kickstart(int argc, char** argv) {
 	kinc_file_reader_t reader;
 	if (!kinc_file_reader_open(&reader, "krom.bin", KINC_FILE_TYPE_ASSET)) {
 		if (!kinc_file_reader_open(&reader, "krom.js", KINC_FILE_TYPE_ASSET)) {
-			fprintf(stderr, "Could not load krom.js, aborting.\n");
+			kinc_log(KINC_LOG_LEVEL_ERROR, "Could not load krom.js, aborting.");
 			exit(1);
 		}
 	}
