@@ -2,6 +2,7 @@
 const release = true;
 const with_d3dcompiler = true;
 const with_nfd = true;
+const with_audio = false;
 
 let project = new Project('Krom');
 project.cpp11 = true;
@@ -47,6 +48,10 @@ if (with_nfd) {
 	else {
 		project.addFile('Libraries/nfd/nfd_cocoa.m');
 	}
+}
+
+if (with_audio) {
+	project.addDefine('WITH_AUDIO');
 }
 
 resolve(project);
