@@ -1,5 +1,4 @@
 #include "pch.h"
-#include <Kore/Graphics4/Graphics.h>
 #include <kinc/log.h>
 #include <kinc/io/filereader.h>
 #include <kinc/io/filewriter.h>
@@ -20,6 +19,8 @@
 #include <kinc/graphics4/indexbuffer.h>
 #include <kinc/graphics4/graphics.h>
 #include <kinc/graphics4/pipeline.h>
+#include <kinc/graphics4/rendertarget.h>
+#include <kinc/graphics4/texture.h>
 #include <kinc/compute/compute.h>
 
 #include "../V8/include/libplatform/libplatform.h"
@@ -1055,20 +1056,17 @@ namespace {
 		String::Utf8Value utf8_value(isolate, args[0]);
 		bool readable = args[1]->ToBoolean(isolate)->Value();
 
-		Kore::Graphics1::Image* kore_image = new Kore::Graphics1::Image(*utf8_value, readable); // TODO
 		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t* image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
-		// void* memory = nullptr;
-		// kinc_image_init_from_file(image, memory, *utf8_value);
-		kinc_image_init(image, kore_image->data, kore_image->width, kore_image->height, (kinc_image_format_t)kore_image->format);
+		size_t byte_size = kinc_image_size_from_file(*utf8_value);
+		void* memory = malloc(byte_size);
+		kinc_image_init_from_file(image, memory, *utf8_value);
 		kinc_g4_texture_init_from_image(texture, image);
 		if (!readable) {
-			delete[] image->data;
-			image->data = nullptr;
+			kinc_image_destroy(image);
+			free(image);
+			free(memory);
 		}
-		// delete kore_image;
-		// kinc_image_destroy(image);
-		// free(image);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(2);
@@ -1606,35 +1604,7 @@ namespace {
 		else content = buffer->Externalize();
 		// content = buffer->GetContents();
 		String::Utf8Value format(isolate, args[1]);
-
-		Kore::Graphics4::Texture* kore_texture = new Kore::Graphics4::Texture(content.Data(), (int)content.ByteLength(), *format, args[2]->ToBoolean(isolate)->Value()); // TODO
-		kinc_g4_texture_t* texture = &kore_texture->kincTexture;
-
-		// bool readable = args[2]->ToBoolean(isolate)->Value();
-		// Kore::BufferReader reader(content.Data(), (int)content.ByteLength());
-		// Kore::Graphics1::Image kore_image = new Kore::Graphics1::Image();
-		// kore_image = Image::init(reader, *format, readable);
-		// kinc_image_t image;
-		// kinc_image_init(&image, kore_image->data, width, height, (kinc_image_format_t)kore_image->format);
-		// kinc_g4_texture_init_from_image(&texture, &image);
-		// texWidth = texture.tex_width;
-		// texHeight = texture.tex_height;
-		// texDepth = 1;
-		// kinc_image_destroy(&image);
-		// delete kore_image;
-		// if (!readable) {
-		// 	delete[] content.Data();
-		// }
-
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, texture));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		args.GetReturnValue().Set(obj);
+		// TODO
 	}
 
 	int format_byte_size(kinc_image_format_t format) {
@@ -2183,7 +2153,7 @@ namespace {
 		kinc_g4_vertex_structure_add(&structure, "nor", KINC_G4_VERTEX_DATA_FLOAT3);
 		kinc_g4_vertex_structure_add(&structure, "tex", KINC_G4_VERTEX_DATA_FLOAT2);
 
-		int vcount = vb_content.ByteLength() / 4;
+		int vcount = (int)vb_content.ByteLength() / 4;
 		kinc_g5_vertex_buffer_init(&vertex_buffer, vcount / 8, &structure, true, 0);
 		float *vertices = kinc_g5_vertex_buffer_lock_all(&vertex_buffer);
 		for (int i = 0; i < vcount; ++i) {
@@ -2191,7 +2161,7 @@ namespace {
 		}
 		kinc_g5_vertex_buffer_unlock_all(&vertex_buffer);
 
-		int icount = ib_content.ByteLength() / 4;
+		int icount = (int)ib_content.ByteLength() / 4;
 		kinc_g5_index_buffer_init(&index_buffer, icount, true);
 		int *indices = kinc_g5_index_buffer_lock(&index_buffer);
 		for (int i = 0; i < icount; ++i) {
