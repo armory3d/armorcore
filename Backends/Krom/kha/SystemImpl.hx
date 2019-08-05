@@ -122,11 +122,13 @@ class SystemImpl {
 		gamepads[gamepad].sendButtonEvent(button, value);
 	}
 
+	#if arm_audio
 	private static function audioCallback(samples: Int) : Void {
 		kha.audio2.Audio._callCallback(samples);
 		var buffer = @:privateAccess kha.audio2.Audio.buffer;
 		Krom.writeAudioBuffer(buffer.data.buffer, samples);
 	}
+	#end
 
 	public static function init(options: SystemOptions, callback: Window -> Void): Void {
 		Krom.init(options.title, options.width, options.height, options.framebuffer.samplesPerPixel, options.framebuffer.verticalSync, cast options.window.mode, options.window.windowFeatures, Krom.KROM_API);
@@ -171,9 +173,11 @@ class SystemImpl {
 		Krom.setGamepadAxisCallback(gamepadAxisCallback);
 		Krom.setGamepadButtonCallback(gamepadButtonCallback);
 
+		#if arm_audio
 		kha.audio2.Audio._init();
 		kha.audio1.Audio._init();
 		Krom.setAudioCallback(audioCallback);
+		#end
 
 		Scheduler.start();
 
