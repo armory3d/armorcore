@@ -22,6 +22,7 @@
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
 #include <kinc/compute/compute.h>
+#include <Kore/Graphics1/Image.h>
 
 #include "../V8/include/libplatform/libplatform.h"
 #include "../V8/include/v8.h"
@@ -1058,14 +1059,18 @@ namespace {
 
 		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t* image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
-		size_t byte_size = kinc_image_size_from_file(*utf8_value);
-		void* memory = malloc(byte_size);
-		kinc_image_init_from_file(image, memory, *utf8_value);
+		// TODO: make kinc_image load faster
+		// size_t byte_size = kinc_image_size_from_file(*utf8_value);
+		// void* memory = malloc(byte_size);
+		// kinc_image_init_from_file(image, memory, *utf8_value);
+		Kore::Graphics1::Image* kore_image = new Kore::Graphics1::Image(*utf8_value, readable);
+		kinc_image_init(image, kore_image->data, kore_image->width, kore_image->height, (kinc_image_format_t)kore_image->format);
 		kinc_g4_texture_init_from_image(texture, image);
 		if (!readable) {
+			delete[] image->data;
 			kinc_image_destroy(image);
 			free(image);
-			free(memory);
+			// free(memory);
 		}
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);

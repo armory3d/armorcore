@@ -8,6 +8,7 @@ let project = new Project('Krom');
 project.cpp11 = true;
 project.addFile('Sources/*');
 project.addIncludeDir('V8/include');
+project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 
 let system = platform === Platform.Windows ? "win32" :
 			 platform === Platform.Linux ? "linux" : "macos";
