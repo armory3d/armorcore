@@ -8,4 +8,5 @@ steps:
 - script: |
     git submodule update --init --recursive --remote
     git clone https://github.com/armory3d/nodejs_bin
+    sudo apt-get install make g++ libxinerama-dev libasound2-dev libxi-dev mesa-common-dev libgl-dev libvulkan-dev
     nodejs_bin/node-linux64 Kinc/make.js --compiler clang --compile
