@@ -2091,6 +2091,24 @@ namespace {
 		save_and_quit_func.Reset(isolate, func);
 	}
 
+	void krom_set_mouse_cursor(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int i = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		#ifdef KORE_WINDOWS
+		SetCursor(LoadCursor(NULL,
+			i == 1 ? IDC_HAND     :
+			i == 2 ? IDC_CROSS    :
+			i == 3 ? IDC_IBEAM    :
+			i == 4 ? IDC_WAIT     :
+			i == 5 ? IDC_SIZENS   :
+			i == 6 ? IDC_SIZEWE   :
+			i == 7 ? IDC_SIZENWSE :
+			i == 8 ? IDC_SIZENESW :
+					 IDC_ARROW
+		));
+		#endif
+	}
+
 	#ifdef WITH_NFD
 	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
@@ -2375,7 +2393,9 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "getConstantLocationCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_constant_location_compute));
 		krom->Set(String::NewFromUtf8(isolate, "getTextureUnitCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_texture_unit_compute));
 		krom->Set(String::NewFromUtf8(isolate, "compute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_compute));
+		//
 		krom->Set(String::NewFromUtf8(isolate, "setSaveAndQuitCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_save_and_quit_callback));
+		krom->Set(String::NewFromUtf8(isolate, "setMouseCursor").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_cursor));
 		#ifdef WITH_NFD
 		krom->Set(String::NewFromUtf8(isolate, "openDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_open_dialog));
 		krom->Set(String::NewFromUtf8(isolate, "saveDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_save_dialog));
