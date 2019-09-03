@@ -39,7 +39,7 @@ class Window {
 	public var x(get, set): Int;
 
 	function get_x(): Int {
-		return 0;
+		return Krom.windowX(num);
 	}
 
 	function set_x(value: Int): Int {
@@ -49,7 +49,7 @@ class Window {
 	public var y(get, set): Int;
 
 	function get_y(): Int {
-		return 0;
+		return Krom.windowY(num);
 	}
 
 	function set_y(value: Int): Int {

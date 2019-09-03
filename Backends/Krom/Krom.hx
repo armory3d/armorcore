@@ -156,4 +156,6 @@ extern class Krom {
 	static function raytraceDispatchRays(target: Dynamic, cb: js.lib.ArrayBuffer): Void;
 	static function saveDialog(filterList: String, defaultPath: String): String;
 	static function openDialog(filterList: String, defaultPath: String): String;
+	static function windowX(id: Int): Int;
+	static function windowY(id: Int): Int;
 }

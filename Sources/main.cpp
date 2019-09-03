@@ -33,6 +33,7 @@
 
 #ifdef KORE_WINDOWS
 #include <Windows.h> // AttachConsole
+#include <Kore/Windows.h> // kinc_windows_window_handle
 #endif
 
 #ifdef WITH_D3DCOMPILER
@@ -2239,6 +2240,28 @@ namespace {
 	}
 	#endif
 
+	void krom_window_x(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		// args.GetReturnValue().Set(Int32::New(isolate, kinc_window_x(windowId))); // Returns window creation pos
+		#if KORE_WINDOWS
+		RECT rect;
+		GetWindowRect(kinc_windows_window_handle(windowId), &rect);
+		args.GetReturnValue().Set(Int32::New(isolate, rect.left));
+		#endif
+	}
+
+	void krom_window_y(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		// args.GetReturnValue().Set(Int32::New(isolate, kinc_window_y(windowId)));
+		#if KORE_WINDOWS
+		RECT rect;
+		GetWindowRect(kinc_windows_window_handle(windowId), &rect);
+		args.GetReturnValue().Set(Int32::New(isolate, rect.top));
+		#endif
+	}
+
 	void start_v8(const char* bindir) {
 		plat = platform::NewDefaultPlatform();
 		V8::InitializePlatform(plat.get());
@@ -2404,6 +2427,8 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));
 		krom->Set(String::NewFromUtf8(isolate, "raytraceDispatchRays").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_dispatch_rays));
 		#endif
+		krom->Set(String::NewFromUtf8(isolate, "windowX").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_x));
+		krom->Set(String::NewFromUtf8(isolate, "windowY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_y));
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
