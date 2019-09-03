@@ -153,6 +153,8 @@ namespace {
 		int window_mode = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int window_features = args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int api_version = args[7]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int x = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int y = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		if (api_version != KROM_API) {
 			const char* outdated;
@@ -168,8 +170,8 @@ namespace {
 
 		kinc_window_options_t win;
 		win.title = *title;
-		win.x = -1;
-		win.y = -1;
+		win.x = x;
+		win.y = y;
 		win.width = width;
 		win.height = height;
 		win.display_index = -1;
