@@ -1,5 +1,7 @@
 package kha.compute;
 
-extern class ConstantLocation {
-	
+class ConstantLocation {
+	public function new() {
+		
+	}
 }

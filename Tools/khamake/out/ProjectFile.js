@@ -2,14 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const path = require("path");
-const Platform_1 = require("./Platform");
 const Project_1 = require("./Project");
 exports.Callbacks = {
     preAssetConversion: [() => { }],
     preShaderCompilation: [() => { }],
     preHaxeCompilation: [() => { }],
-    postHaxeCompilation: [() => { }],
-    postCppCompilation: [() => { }]
+    postHaxeCompilation: [() => { }]
 };
 async function loadProject(from, projectfile, platform) {
     return new Promise((resolve, reject) => {
@@ -22,8 +20,7 @@ async function loadProject(from, projectfile, platform) {
                 preAssetConversion: () => { },
                 preShaderCompilation: () => { },
                 preHaxeCompilation: () => { },
-                postHaxeCompilation: () => { },
-                postCppCompilation: () => { }
+                postHaxeCompilation: () => { }
             };
             let resolver = (project) => {
                 resolved = true;
@@ -31,7 +28,6 @@ async function loadProject(from, projectfile, platform) {
                 exports.Callbacks.preShaderCompilation.push(callbacks.preShaderCompilation);
                 exports.Callbacks.preHaxeCompilation.push(callbacks.preHaxeCompilation);
                 exports.Callbacks.postHaxeCompilation.push(callbacks.postHaxeCompilation);
-                exports.Callbacks.postCppCompilation.push(callbacks.postCppCompilation);
                 resolve(project);
             };
             process.on('exit', (code) => {
@@ -43,7 +39,7 @@ async function loadProject(from, projectfile, platform) {
             Project_1.Project.scriptdir = from;
             try {
                 let AsyncFunction = Object.getPrototypeOf(async () => { }).constructor;
-                new AsyncFunction('Project', 'Platform', 'platform', 'require', 'process', 'resolve', 'reject', 'callbacks', data)(Project_1.Project, Platform_1.Platform, platform, require, process, resolver, reject, callbacks);
+                new AsyncFunction('Project', 'platform', 'require', 'process', 'resolve', 'reject', 'callbacks', data)(Project_1.Project, platform, require, process, resolver, reject, callbacks);
             }
             catch (error) {
                 reject(error);

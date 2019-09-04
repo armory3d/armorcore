@@ -1,13 +1,22 @@
 package kha.graphics4;
 
-import kha.Blob;
+class FragmentShader {
+	public var shader: Dynamic;
+	
+	public function new(sources: Array<Blob>, names: Array<String>) {
+		if (sources != null) {
+			shader = Krom.createFragmentShader(sources[0].bytes.getData(), names[0]);
+		}
+	}
 
-extern class FragmentShader {
-	public function new(source: Blob, file: String);
-	public function delete(): Void;
+	public static function fromSource(source: String): FragmentShader {
+		var shader = new FragmentShader(null, null);
+		shader.shader = Krom.createFragmentShaderFromSource(source);
+		return shader;
+	}
 
-	/**
-	Beware: This function is not portable.
-	**/
-	public static function fromSource(source: String): FragmentShader;
+	public function delete() {
+		Krom.deleteShader(shader);
+		shader = null;
+	}
 }

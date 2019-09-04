@@ -103,13 +103,6 @@ class AssetConverter {
                     files.push(file);
                 }
             });
-            if (watch) {
-                this.watcher.on('change', (file) => {
-                    if (ready) {
-                        onFileChange(file);
-                    }
-                });
-            }
             this.watcher.on('ready', async () => {
                 ready = true;
                 let parsedFiles = [];

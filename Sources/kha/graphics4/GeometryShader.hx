@@ -1,20 +1,14 @@
 package kha.graphics4;
 
-import kha.Blob;
-
-#if cpp
-extern class GeometryShader {
-	public function new(source: Blob);
-	public function delete(): Void;
-}
-#else
 class GeometryShader {
-	public function new(source: Blob) {
-		
-	}
+	public var shader: Dynamic;
 	
-	public function delete(): Void {
-		
+	public function new(sources: Array<Blob>, names: Array<String>) {
+		shader = Krom.createGeometryShader(sources[0].bytes.getData(), names[0]);
+	}
+
+	public function delete() {
+		Krom.deleteShader(shader);
+		shader = null;
 	}
 }
-#end

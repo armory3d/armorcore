@@ -1,4 +1,3 @@
-#include "pch.h"
 #include <kinc/log.h>
 #include <kinc/io/filereader.h>
 #include <kinc/io/filewriter.h>

@@ -21,11 +21,6 @@ function set(log) {
     myError = log.error;
 }
 exports.set = set;
-function silent() {
-    myInfo = function () { };
-    myError = function () { };
-}
-exports.silent = silent;
 function info(text, newline = true) {
     myInfo(text, newline);
 }

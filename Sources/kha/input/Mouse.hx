@@ -1,10 +1,8 @@
 package kha.input;
 
-import kha.netsync.Controller;
-
 @:allow(kha.SystemImpl)
 @:expose
-class Mouse extends Controller {
+class Mouse {
 	/**
 	 * Get current Mouse.
 	 * @param num (optional) mouse id (0 by default).
@@ -238,7 +236,6 @@ class Mouse extends Controller {
 	var windowLeaveListeners: Array<Array<Void->Void>>;
 
 	private function new() {
-		super();
 		instance = this;
 	}
 

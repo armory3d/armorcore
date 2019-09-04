@@ -1,10 +1,8 @@
 package kha.input;
 
-import kha.netsync.Controller;
-
 @:allow(kha.SystemImpl)
 @:expose
-class Keyboard extends Controller {
+class Keyboard {
 	/**
 	 * Get current Keyboard.
 	 * @param num (optional) keyboard id (0 by default).
@@ -54,7 +52,6 @@ class Keyboard extends Controller {
 	private var pressListeners: Array<String->Void>;
 	
 	private function new() {
-		super();
 		downListeners = [];
 		upListeners = [];
 		pressListeners = [];

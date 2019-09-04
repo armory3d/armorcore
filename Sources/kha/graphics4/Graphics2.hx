@@ -23,11 +23,7 @@ import kha.graphics4.VertexStructure;
 import kha.math.FastMatrix3;
 import kha.math.FastMatrix4;
 import kha.math.FastVector2;
-import kha.math.Matrix3;
-import kha.math.Matrix4;
-import kha.math.Vector2;
 import kha.Shaders;
-import kha.simd.Float32x4;
 
 class PipelineCache {
 	public var pipeline: PipelineState;

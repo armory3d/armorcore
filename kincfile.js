@@ -6,7 +6,7 @@ const with_audio = false;
 
 let project = new Project('Krom');
 project.cpp11 = true;
-project.addFile('Sources/*');
+project.addFile('Sources/main.cpp');
 project.addIncludeDir('V8/include');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 

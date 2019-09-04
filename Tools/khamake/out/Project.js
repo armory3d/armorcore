@@ -30,7 +30,7 @@ class Project {
         this.name = name;
         this.version = '1.0';
         this.sources = [];
-        this.defines = ['hxcpp_smart_strings'];
+        this.defines = [];
         this.cdefines = [];
         this.parameters = [];
         this.scriptdir = Project.scriptdir;
@@ -41,13 +41,7 @@ class Project {
         this.customTargets = new Map();
         this.stackSize = 0;
         this.windowOptions = {};
-        this.targetOptions = {
-            html5: {},
-            flash: {},
-            android: {},
-            android_native: {},
-            ios: {}
-        };
+        this.targetOptions = {};
     }
     async addProject(projectDir) {
         let project = await ProjectFile_1.loadProject(projectDir, 'khafile.js', Project.platform);
@@ -136,31 +130,9 @@ class Project {
             if (fs.existsSync(libpath) && fs.statSync(libpath).isDirectory()) {
                 return { libpath: path.resolve(libpath), libroot: self.localLibraryPath + '/' + name };
             }
-            // If the library couldn't be found in Libraries folder, try
-            // looking in the haxelib folders.
-            // e.g. addLibrary('hxcpp') => '/usr/lib/haxelib/hxcpp/3,2,193'
-            try {
-                libpath = path.join(child_process.execSync('haxelib config', { encoding: 'utf8' }).trim(), name.replace(/\./g, ','));
-            }
-            catch (error) {
-                if (process.env.HAXEPATH) {
-                    libpath = path.join(process.env.HAXEPATH, 'lib', name.toLowerCase());
-                }
-            }
-            if (fs.existsSync(libpath) && fs.statSync(libpath).isDirectory()) {
-                if (fs.existsSync(path.join(libpath, '.dev'))) {
-                    return { libpath: fs.readFileSync(path.join(libpath, '.dev'), 'utf8'), libroot: libpath };
-                }
-                else if (fs.existsSync(path.join(libpath, '.current'))) {
-                    // Get the latest version of the haxelib path,
-                    // e.g. for 'hxcpp', latest version '3,2,193'
-                    let current = fs.readFileSync(path.join(libpath, '.current'), 'utf8');
-                    return { libpath: path.join(libpath, current.replace(/\./g, ',')), libroot: libpath };
-                }
-            }
             // Show error if library isn't found in Libraries or haxelib folder
             log.error('Error: Library ' + name + ' not found.');
-            log.error('Add it to the \'Libraries\' subdirectory of your project. You may also install it via haxelib but that\'s less cool.');
+            log.error('Add it to the \'Libraries\' subdirectory of your project.');
             throw 'Library ' + name + ' not found.';
         }
         let libInfo = findLibraryDirectory(library);
@@ -170,54 +142,7 @@ class Project {
                 libpath: dir,
                 libroot: libInfo.libroot
             });
-            // If this is a haxelib library, there must be a haxelib.json
-            if (fs.existsSync(path.join(dir, 'haxelib.json'))) {
-                let options = JSON.parse(fs.readFileSync(path.join(dir, 'haxelib.json'), 'utf8'));
-                // If there is a classPath value, add that directory to be loaded.
-                // Otherwise, just load the current path.
-                if (options.classPath) {
-                    // TODO find an example haxelib that has a classPath value
-                    this.sources.push(path.join(dir, options.classPath));
-                }
-                else {
-                    // e.g. '/usr/lib/haxelib/hxcpp/3,2,193'
-                    this.sources.push(dir);
-                }
-                // If this haxelib has other library dependencies, add them too
-                if (options.dependencies) {
-                    for (let dependency in options.dependencies) {
-                        if (dependency.toLowerCase() !== 'kha') {
-                            this.addLibrary(dependency);
-                        }
-                    }
-                }
-            }
-            else {
-                // If there is no haxelib.json file, then just load the library
-                // by the Sources folder.
-                // e.g. Libraries/wyngine/Sources
-                if (!fs.existsSync(path.join(dir, 'Sources'))) {
-                    log.info('Warning: No haxelib.json and no Sources directory found in library ' + library + '.');
-                }
-                this.sources.push(path.join(dir, 'Sources'));
-            }
-            if (fs.existsSync(path.join(dir, 'extraParams.hxml'))) {
-                let params = fs.readFileSync(path.join(dir, 'extraParams.hxml'), 'utf8');
-                for (let parameter of params.split('\n')) {
-                    let param = parameter.trim();
-                    if (param !== '') {
-                        if (param.startsWith('-lib')) {
-                            // (DK)
-                            //  - '-lib xxx' is for linking a library via haxe, it forces the use of the haxelib version
-                            //  - this should be handled by khamake though, as it tracks the dependencies better (local folder or haxelib)
-                            log.info('Ignoring ' + dir + '/extraParams.hxml "' + param + '"');
-                        }
-                        else {
-                            this.addParameter(param);
-                        }
-                    }
-                }
-            }
+            this.sources.push(path.join(dir, 'Sources'));
             this.addShaders(dir + '/Sources/Shaders/**', {});
         }
     }

@@ -2,12 +2,23 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const child_process = require("child_process");
 const fs = require("fs-extra");
+const os = require("os");
 const path = require("path");
 const log = require("./log");
-const exec_1 = require("./exec");
+function exec_sys() {
+    if (os.platform() === 'linux') {
+        return '-linux64';
+    }
+    else if (os.platform() === 'win32') {
+        return '.exe';
+    }
+    else {
+        return '-osx';
+    }
+}
 function getWidthAndHeight(kha, from, to, options, format, prealpha) {
     return new Promise((resolve, reject) => {
-        const exe = 'kraffiti' + exec_1.sys();
+        const exe = 'kraffiti' + exec_sys();
         let params = ['from=' + from, 'to=' + to, 'format=' + format, 'donothing'];
         if (options.scale !== undefined && options.scale !== 1) {
             params.push('scale=' + options.scale);
@@ -138,7 +149,7 @@ async function exportImage(kha, from, to, options, format, prealpha, poweroftwo,
         options.original_height = wh.h;
         return outputformat;
     }
-    const exe = 'kraffiti' + exec_1.sys();
+    const exe = 'kraffiti' + exec_sys();
     let params = ['from=' + from, 'to=' + temp, 'format=' + format];
     if (!poweroftwo) {
         params.push('filter=nearest');

@@ -216,12 +216,6 @@ class System {
 		return Window.all[window].height;
 	}
 
-	public static var screenRotation(get, null): ScreenRotation;
-
-	static function get_screenRotation(): ScreenRotation {
-		return RotationNone;
-	}
-
 	public static var systemId(get, null): String;
 
 	static function get_systemId(): String {

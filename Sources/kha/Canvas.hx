@@ -14,11 +14,6 @@ interface Canvas {
 	 */
 	var height(get, null): Int;
 	/**
-	 * The Graphics1 interface object.<br>
-	 * Basic setPixel operation.
-	 */
-	var g1(get, null): kha.graphics1.Graphics;
-	/**
 	 * The Graphics2 interface object.<br>
 	 * Use this for 2D operations.
 	 */

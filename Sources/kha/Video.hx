@@ -3,7 +3,7 @@ package kha;
 /**
  * This represents a Video file.
  */
-class Video implements Resource {
+class Video {
 	/**
 	 * The width of the video file in pixels.
 	 */

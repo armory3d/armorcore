@@ -128,7 +128,7 @@ class KravurImage {
 	}
 }
 
-class Kravur implements Resource {
+class Kravur {
 	// Do not put static data in Kravur because it is overwritten
 	// when <canvas> is used - but it's still used by the overwriting class.
 
