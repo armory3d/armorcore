@@ -11,6 +11,7 @@
 #include <kinc/input/pen.h>
 #include <kinc/input/gamepad.h>
 #include <kinc/math/random.h>
+#include <kinc/math/core.h>
 #include <kinc/threads/thread.h>
 #include <kinc/threads/mutex.h>
 #include <kinc/graphics4/shader.h>
@@ -21,7 +22,7 @@
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
 #include <kinc/compute/compute.h>
-#include <Kore/Graphics1/Image.h>
+#include <kinc/libs/stb_image.h>
 
 #include "../V8/include/libplatform/libplatform.h"
 #include "../V8/include/v8.h"
@@ -1054,6 +1055,58 @@ namespace {
 		kinc_g4_set_pipeline(pipeline);
 	}
 
+	bool ends_with(const char* str, const char* suffix) {
+		if (!str || !suffix) return 0;
+		size_t lenstr = strlen(str);
+		size_t lensuffix = strlen(suffix);
+		if (lensuffix > lenstr) return 0;
+		return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+	}
+
+	void load_image(kinc_file_reader_t& reader, const char* filename, unsigned char*& output, int& width, int& height, kinc_image_format_t& format) {
+		format = KINC_IMAGE_FORMAT_RGBA32;
+		int size = (int)kinc_file_reader_size(&reader);
+		int comp;
+		unsigned char* data = (unsigned char*)malloc(size);
+		kinc_file_reader_read(&reader, data, size);
+		if (ends_with(filename, "png")) {
+			output = stbi_load_from_memory(data, size, &width, &height, &comp, 4);
+			if (output == nullptr) {
+				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+			}
+			for (int y = 0; y < height; ++y) {
+				int row = y * width * 4;
+				for (int x = 0; x < width; ++x) {
+					int col = x * 4;
+					unsigned char r = output[row + col    ];
+					unsigned char g = output[row + col + 1];
+					unsigned char b = output[row + col + 2];
+					float         a = output[row + col + 3] / 255.0f;
+					b = (unsigned char)(b * a);
+					g = (unsigned char)(g * a);
+					r = (unsigned char)(r * a);
+					output[row + col    ] = r;
+					output[row + col + 1] = g;
+					output[row + col + 2] = b;
+				}
+			}
+		}
+		else if (ends_with(filename, "hdr")) {
+			output = (unsigned char*)stbi_loadf_from_memory(data, size, &width, &height, &comp, 4);
+			if (output == nullptr) {
+				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+			}
+			format = KINC_IMAGE_FORMAT_RGBA128;
+		}
+		else {
+			output = stbi_load_from_memory(data, size, &width, &height, &comp, 4);
+			if (output == nullptr) {
+				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+			}
+		}
+		free(data);
+	}
+
 	void krom_load_image(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
@@ -1061,12 +1114,21 @@ namespace {
 
 		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t* image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
+
 		// TODO: make kinc_image load faster
 		// size_t byte_size = kinc_image_size_from_file(*utf8_value);
 		// void* memory = malloc(byte_size);
 		// kinc_image_init_from_file(image, memory, *utf8_value);
-		Kore::Graphics1::Image* kore_image = new Kore::Graphics1::Image(*utf8_value, readable);
-		kinc_image_init(image, kore_image->data, kore_image->width, kore_image->height, (kinc_image_format_t)kore_image->format);
+
+		kinc_file_reader_t reader;
+		kinc_file_reader_open(&reader, *utf8_value, KINC_FILE_TYPE_ASSET);
+		unsigned char* image_data;
+		int image_width;
+		int image_height;
+		kinc_image_format_t image_format;
+		load_image(reader, *utf8_value, image_data, image_width, image_height, image_format);
+		kinc_image_init(image, image_data, image_width, image_height, image_format);
+
 		kinc_g4_texture_init_from_image(texture, image);
 		if (!readable) {
 			delete[] image->data;
