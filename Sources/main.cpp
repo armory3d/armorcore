@@ -139,7 +139,7 @@ namespace {
 
 	char temp_string_vs[1024 * 1024];
 	char temp_string_fs[1024 * 1024];
-	char temp_string_vstruct[32][32];
+	char temp_string_vstruct[4][32][32];
 	std::string assetsdir;
 
 	void krom_init(const v8::FunctionCallbackInfo<v8::Value>& args) {
@@ -487,8 +487,8 @@ namespace {
 			Local<Value> str = element->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked()).ToLocalChecked();
 			String::Utf8Value utf8_value(isolate, str);
 			int32_t data = element->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "data").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			strcpy(temp_string_vstruct[i], *utf8_value);
-			kinc_g4_vertex_structure_add(&structure, temp_string_vstruct[i], convert_vertex_data(data));
+			strcpy(temp_string_vstruct[0][i], *utf8_value);
+			kinc_g4_vertex_structure_add(&structure, temp_string_vstruct[0][i], convert_vertex_data(data));
 		}
 		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)malloc(sizeof(kinc_g4_vertex_buffer_t));
 		kinc_g4_vertex_buffer_init(buffer, args[0]->Int32Value(isolate->GetCurrentContext()).FromJust(), &structure, (kinc_g4_usage_t)args[2]->Int32Value(isolate->GetCurrentContext()).FromJust(), args[3]->Int32Value(isolate->GetCurrentContext()).FromJust());
@@ -962,8 +962,8 @@ namespace {
 				String::Utf8Value utf8_value(isolate, str);
 				int32_t data = element->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "data").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 				
-				strcpy(temp_string_vstruct[i2], *utf8_value);
-				kinc_g4_vertex_structure_add(structures[i1], temp_string_vstruct[i2], convert_vertex_data(data));
+				strcpy(temp_string_vstruct[i1][i2], *utf8_value);
+				kinc_g4_vertex_structure_add(structures[i1], temp_string_vstruct[i1][i2], convert_vertex_data(data));
 			}
 		}
 
