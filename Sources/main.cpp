@@ -54,8 +54,8 @@ using namespace v8;
 
 const int KROM_API = 3;
 
-bool save_and_quit = false;
-void armory_save_and_quit() { save_and_quit = true; }
+int save_and_quit = 0; // off, save, nosave
+void armory_save_and_quit(bool save) { save_and_quit = save ? 1 : 2; }
 
 #ifdef KORE_DIRECT3D12
 #ifdef __cplusplus
@@ -2541,14 +2541,16 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
 		}
 
-		if (save_and_quit) {
+		if (save_and_quit > 0) {
 			v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, save_and_quit_func);
 			Local<Value> result;
-			if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+			const int argc = 1;
+			Local<Value> argv[argc] = {Boolean::New(isolate, save_and_quit == 1)};
+			if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 				v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 				kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
 			}
-			save_and_quit = false;
+			save_and_quit = 0;
 		}
 	}
 

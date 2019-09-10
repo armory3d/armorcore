@@ -249,7 +249,7 @@ static bool detectGamepad = true;
 static bool gamepadFound = false;
 static unsigned r = 0;
 
-void armory_save_and_quit();
+void armory_save_and_quit(bool save);
 
 namespace {
 	wchar_t toUnicode(WPARAM wParam, LPARAM lParam) {
@@ -304,8 +304,7 @@ extern "C" LRESULT WINAPI KoreWindowsMessageProcedure(HWND hWnd, UINT msg, WPARA
 		if (dirty) {
 			res = MessageBox(hWnd, L"Project has been modified, save changes?", L"Save Changes?", MB_YESNOCANCEL | MB_ICONEXCLAMATION );
 		}
-		if (res == IDYES) armory_save_and_quit();
-		else if (res == IDNO) DestroyWindow(hWnd);
+		if (res != IDCANCEL) armory_save_and_quit(res == IDYES);
 		return 0;
 	}
 	case WM_DESTROY:
