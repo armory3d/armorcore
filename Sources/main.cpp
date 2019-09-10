@@ -3027,11 +3027,18 @@ int kickstart(int argc, char** argv) {
 	bindir = bindir.substr(0, bindir.find_last_of("/"));
 #endif
 	assetsdir = argc > 1 ? argv[1] : bindir;
-	// shadersdir = argc > 2 ? argv[2] : bindir;
+
+	// Opening a file
+	int l = assetsdir.length();
+	if ((l > 6 && assetsdir[l - 6] == '.') ||
+		(l > 5 && assetsdir[l - 5] == '.') ||
+		(l > 4 && assetsdir[l - 4] == '.')) {
+		assetsdir = bindir;
+	}
 
 	bool read_stdout_path = false;
 	bool read_console_pid = false;
-	for (int i = 3; i < argc; ++i) {
+	for (int i = 2; i < argc; ++i) {
 		if (strcmp(argv[i], "--nosound") == 0) {
 			enable_sound = false;
 		}
