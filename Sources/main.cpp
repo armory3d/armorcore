@@ -1138,10 +1138,10 @@ namespace {
 		}
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(2);
+		templ->SetInternalFieldCount(readable ? 2 : 1);
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 		obj->SetInternalField(0, External::New(isolate, texture));
-		obj->SetInternalField(1, External::New(isolate, image));
+		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
@@ -1616,19 +1616,21 @@ namespace {
 		else content = buffer->Externalize();
 		// content = buffer->GetContents();
 		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
-		kinc_image_t image;
-		kinc_image_init(&image, content.Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
-		kinc_g4_texture_init_from_image(texture, &image);
-		kinc_image_destroy(&image);
+		kinc_image_t* image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
+		kinc_image_init(image, content.Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
+		kinc_g4_texture_init_from_image(texture, image);
 		bool readable = args[4]->ToBoolean(isolate)->Value();
 		if (!readable) {
 			delete[] content.Data();
+			kinc_image_destroy(image);
+			free(image);
 		}
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
+		templ->SetInternalFieldCount(readable ? 2 : 1);
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 		obj->SetInternalField(0, External::New(isolate, texture));
+		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
@@ -3029,7 +3031,7 @@ int kickstart(int argc, char** argv) {
 	assetsdir = argc > 1 ? argv[1] : bindir;
 
 	// Opening a file
-	int l = assetsdir.length();
+	int l = (int)assetsdir.length();
 	if ((l > 6 && assetsdir[l - 6] == '.') ||
 		(l > 5 && assetsdir[l - 5] == '.') ||
 		(l > 4 && assetsdir[l - 4] == '.')) {
