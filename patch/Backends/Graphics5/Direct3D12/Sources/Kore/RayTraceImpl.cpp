@@ -38,6 +38,9 @@ D3D12_GPU_DESCRIPTOR_HANDLE tex0gpuDescriptorHandle; //
 D3D12_GPU_DESCRIPTOR_HANDLE tex1gpuDescriptorHandle; //
 D3D12_GPU_DESCRIPTOR_HANDLE tex2gpuDescriptorHandle; //
 D3D12_GPU_DESCRIPTOR_HANDLE texenvgpuDescriptorHandle; //
+D3D12_GPU_DESCRIPTOR_HANDLE texsobolgpuDescriptorHandle; //
+D3D12_GPU_DESCRIPTOR_HANDLE texscramblegpuDescriptorHandle; //
+D3D12_GPU_DESCRIPTOR_HANDLE texrankgpuDescriptorHandle; //
 int descriptorsAllocated = 0; //
 
 void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list *command_list, void *ray_shader, int ray_shader_size, kinc_g5_constant_buffer_t *constant_buffer) {
@@ -45,7 +48,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	pipeline->_constant_buffer = constant_buffer;
 	// Descriptor heap
 	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
-	descriptorHeapDesc.NumDescriptors = 9; //
+	descriptorHeapDesc.NumDescriptors = 12; //
 	descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	descriptorHeapDesc.NodeMask = 0;
@@ -72,8 +75,14 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	SRVDescriptor2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 5); //
 	CD3DX12_DESCRIPTOR_RANGE SRVDescriptorEnv; //
 	SRVDescriptorEnv.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 6); //
+	CD3DX12_DESCRIPTOR_RANGE SRVDescriptorSobol; //
+	SRVDescriptorSobol.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 7); //
+	CD3DX12_DESCRIPTOR_RANGE SRVDescriptorScramble; //
+	SRVDescriptorScramble.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 8); //
+	CD3DX12_DESCRIPTOR_RANGE SRVDescriptorRank; //
+	SRVDescriptorRank.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 9); //
 
-	CD3DX12_ROOT_PARAMETER rootParameters[9]; //
+	CD3DX12_ROOT_PARAMETER rootParameters[12]; //
 	rootParameters[0].InitAsDescriptorTable(1, &UAVDescriptor); //
 	rootParameters[1].InitAsShaderResourceView(0); //
 	rootParameters[2].InitAsDescriptorTable(1, &SRVDescriptorA); //
@@ -83,6 +92,9 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	rootParameters[6].InitAsDescriptorTable(1, &SRVDescriptor1); //
 	rootParameters[7].InitAsDescriptorTable(1, &SRVDescriptor2); //
 	rootParameters[8].InitAsDescriptorTable(1, &SRVDescriptorEnv); //
+	rootParameters[9].InitAsDescriptorTable(1, &SRVDescriptorSobol); //
+	rootParameters[10].InitAsDescriptorTable(1, &SRVDescriptorScramble); //
+	rootParameters[11].InitAsDescriptorTable(1, &SRVDescriptorRank); //
 
 	CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
 	ID3DBlob* blob = nullptr;
@@ -327,7 +339,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 	// fenceValues[currentBackBuffer]++;
 }
 
-void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int height, kinc_g5_render_target_t* texpaint0, kinc_g5_render_target_t* texpaint1, kinc_g5_render_target_t* texpaint2, kinc_g5_texture_t* texenv) {
+void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int height, kinc_g5_render_target_t* texpaint0, kinc_g5_render_target_t* texpaint1, kinc_g5_render_target_t* texpaint2, kinc_g5_texture_t* texenv, kinc_g5_texture_t* texsobol, kinc_g5_texture_t* texscramble, kinc_g5_texture_t* texrank) {
 	target->_width = width;
 	target->_height = height;
 
@@ -367,6 +379,21 @@ void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int he
 	sourceCpu = texenv->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	texenvgpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 8, descriptorSize);
+
+	cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 9, descriptorSize);
+	sourceCpu = texsobol->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	texsobolgpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 9, descriptorSize);
+
+	cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 10, descriptorSize);
+	sourceCpu = texscramble->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	texscramblegpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 10, descriptorSize);
+
+	cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 11, descriptorSize);
+	sourceCpu = texrank->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	texrankgpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 11, descriptorSize);
 }
 
 void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *_accel) {
@@ -395,6 +422,9 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
 	command_list->impl._commandList->SetComputeRootDescriptorTable(6, tex1gpuDescriptorHandle);
 	command_list->impl._commandList->SetComputeRootDescriptorTable(7, tex2gpuDescriptorHandle);
 	command_list->impl._commandList->SetComputeRootDescriptorTable(8, texenvgpuDescriptorHandle);
+	command_list->impl._commandList->SetComputeRootDescriptorTable(9, texsobolgpuDescriptorHandle);
+	command_list->impl._commandList->SetComputeRootDescriptorTable(10, texscramblegpuDescriptorHandle);
+	command_list->impl._commandList->SetComputeRootDescriptorTable(11, texrankgpuDescriptorHandle);
 	//
 
 	// Since each shader table has only one shader record, the stride is same as the size.

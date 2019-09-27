@@ -2275,7 +2275,16 @@ namespace {
 		Local<External> envfield = Local<External>::Cast(args[8]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_t* texenv = (kinc_g4_texture_t*)envfield->Value();
 
-		kinc_raytrace_target_init(&target, target_w, target_h, &texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture);
+		Local<External> sobolfield = Local<External>::Cast(args[9]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t* texsobol = (kinc_g4_texture_t*)sobolfield->Value();
+
+		Local<External> scramblefield = Local<External>::Cast(args[10]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t* texscramble = (kinc_g4_texture_t*)scramblefield->Value();
+
+		Local<External> rankfield = Local<External>::Cast(args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t* texrank = (kinc_g4_texture_t*)rankfield->Value();
+
+		kinc_raytrace_target_init(&target, target_w, target_h, &texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture, &texsobol->impl._texture, &texscramble->impl._texture, &texrank->impl._texture);
 	}
 
 	void krom_raytrace_dispatch_rays(const FunctionCallbackInfo<Value>& args) {
