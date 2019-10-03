@@ -339,7 +339,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 	// fenceValues[currentBackBuffer]++;
 }
 
-void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int height, kinc_g5_render_target_t* texpaint0, kinc_g5_render_target_t* texpaint1, kinc_g5_render_target_t* texpaint2, kinc_g5_texture_t* texenv, kinc_g5_texture_t* texsobol, kinc_g5_texture_t* texscramble, kinc_g5_texture_t* texrank) {
+void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int height, kinc_g5_render_target_t* texpaint0, kinc_g5_render_target_t* texpaint1, kinc_g5_render_target_t* texpaint2, kinc_g5_texture_t* texenv, kinc_g5_render_target_t* texsobol, kinc_g5_render_target_t* texscramble, kinc_g5_render_target_t* texrank) {
 	target->_width = width;
 	target->_height = height;
 
@@ -348,7 +348,7 @@ void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int he
 	device->CreateCommittedResource(&defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&target->impl._texture));
 
 	D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle;
-	
+
 	uavDescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), descriptorsAllocated, descriptorSize);
 	int descriptorHeapIndex = descriptorsAllocated++;
 

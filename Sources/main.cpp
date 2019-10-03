@@ -584,7 +584,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		strcpy(temp_string_vs, *utf8_value);
-		
+
 		ID3DBlob* error_message;
 		ID3DBlob* shader_buffer;
 		UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
@@ -741,7 +741,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		strcpy(temp_string_fs, *utf8_value);
-		
+
 		ID3DBlob* error_message;
 		ID3DBlob* shader_buffer;
 		UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
@@ -961,7 +961,7 @@ namespace {
 				Local<Value> str = element->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked()).ToLocalChecked();
 				String::Utf8Value utf8_value(isolate, str);
 				int32_t data = element->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "data").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-				
+
 				strcpy(temp_string_vstruct[i1][i2], *utf8_value);
 				kinc_g4_vertex_structure_add(structures[i1], temp_string_vstruct[i1][i2], convert_vertex_data(data));
 			}
@@ -1305,7 +1305,7 @@ namespace {
 	void krom_set_texture_parameters(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();	
+		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
 		kinc_g4_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_g4_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_g4_set_texture_minification_filter(*unit, (kinc_g4_texture_filter_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
@@ -1403,7 +1403,7 @@ namespace {
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		
+
 		float* from = (float*)content.Data();
 		kinc_g4_set_floats(*location, from, int(content.ByteLength() / 4));
 	}
@@ -2276,15 +2276,15 @@ namespace {
 		kinc_g4_texture_t* texenv = (kinc_g4_texture_t*)envfield->Value();
 
 		Local<External> sobolfield = Local<External>::Cast(args[9]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texsobol = (kinc_g4_texture_t*)sobolfield->Value();
+		kinc_g4_render_target_t* texsobol = (kinc_g4_render_target_t*)sobolfield->Value();
 
 		Local<External> scramblefield = Local<External>::Cast(args[10]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texscramble = (kinc_g4_texture_t*)scramblefield->Value();
+		kinc_g4_render_target_t* texscramble = (kinc_g4_render_target_t*)scramblefield->Value();
 
 		Local<External> rankfield = Local<External>::Cast(args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texrank = (kinc_g4_texture_t*)rankfield->Value();
+		kinc_g4_render_target_t* texrank = (kinc_g4_render_target_t*)rankfield->Value();
 
-		kinc_raytrace_target_init(&target, target_w, target_h, &texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture, &texsobol->impl._texture, &texscramble->impl._texture, &texrank->impl._texture);
+		kinc_raytrace_target_init(&target, target_w, target_h, &texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture, &texsobol->impl._renderTarget, &texscramble->impl._renderTarget, &texrank->impl._renderTarget);
 	}
 
 	void krom_raytrace_dispatch_rays(const FunctionCallbackInfo<Value>& args) {
@@ -2711,7 +2711,7 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
-		} 		
+		}
 	}
 
 	void foreground() {
