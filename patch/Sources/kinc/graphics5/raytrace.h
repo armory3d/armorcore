@@ -27,8 +27,9 @@ typedef struct kinc_raytrace_target {
 	kinc_raytrace_target_impl_t impl;
 } kinc_raytrace_target_t;
 
-void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int height, kinc_g5_render_target_t* texsobol, kinc_g5_render_target_t* texscramble, kinc_g5_render_target_t* texrank);
-void kinc_raytrace_set_textures(kinc_g5_render_target_t* texpaint0, kinc_g5_render_target_t* texpaint1, kinc_g5_render_target_t* texpaint2, kinc_g5_render_target_t* texenv);
+void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int height, kinc_g5_render_target_t *texsobol, kinc_g5_render_target_t *texscramble, kinc_g5_render_target_t *texrank);
+void kinc_raytrace_target_resize(kinc_raytrace_target_t *target, int width, int height);
+void kinc_raytrace_set_textures(kinc_g5_render_target_t* texpaint0, kinc_g5_render_target_t *texpaint1, kinc_g5_render_target_t *texpaint2, kinc_g5_render_target_t *texenv);
 
 void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *accel);
 void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *pipeline);

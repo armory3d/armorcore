@@ -32,6 +32,7 @@ kinc_raytrace_acceleration_structure_t* accel;
 kinc_raytrace_pipeline_t* pipeline;
 kinc_raytrace_target_t* output;
 
+D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle; //
 D3D12_GPU_DESCRIPTOR_HANDLE vbgpuDescriptorHandle; //
 D3D12_GPU_DESCRIPTOR_HANDLE ibgpuDescriptorHandle; //
 D3D12_GPU_DESCRIPTOR_HANDLE tex0gpuDescriptorHandle; //
@@ -340,24 +341,15 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 }
 
 void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int height, kinc_g5_render_target_t* texsobol, kinc_g5_render_target_t* texscramble, kinc_g5_render_target_t* texrank) {
-	target->_width = width;
-	target->_height = height;
-
-	auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	device->CreateCommittedResource(&defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&target->impl._texture));
-
-	D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle;
 
 	uavDescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), descriptorsAllocated, descriptorSize);
 	int descriptorHeapIndex = descriptorsAllocated++;
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
-	UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-	device->CreateUnorderedAccessView(target->impl._texture, nullptr, &UAVDesc, uavDescriptorHandle);
-
 	int descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	target->impl._texture_handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorHeapIndex, descriptorSize);
+
+	target->impl._texture = nullptr;
+	kinc_raytrace_target_resize(target, width, height);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 9, descriptorSize);
 	D3D12_CPU_DESCRIPTOR_HANDLE sourceCpu = texsobol->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
@@ -373,6 +365,21 @@ void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int he
 	sourceCpu = texrank->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	texrankgpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 11, descriptorSize);
+}
+
+void kinc_raytrace_target_resize(kinc_raytrace_target_t *target, int width, int height) {
+	if (target->impl._texture != nullptr) target->impl._texture->Release();
+
+	target->_width = width;
+	target->_height = height;
+
+	auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	device->CreateCommittedResource(&defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&target->impl._texture));
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
+	UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+	device->CreateUnorderedAccessView(target->impl._texture, nullptr, &UAVDesc, uavDescriptorHandle);
 }
 
 void kinc_raytrace_set_textures(kinc_g5_render_target_t* texpaint0, kinc_g5_render_target_t* texpaint1, kinc_g5_render_target_t* texpaint2, kinc_g5_render_target_t* texenv) {

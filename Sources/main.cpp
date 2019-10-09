@@ -2316,6 +2316,10 @@ namespace {
 		}
 		kinc_g5_constant_buffer_unlock(&constant_buffer);
 
+		if (target._width != render_target->texWidth || target._height != render_target->texHeight) {
+			kinc_raytrace_target_resize(&target, render_target->texWidth, render_target->texHeight);
+		}
+
 		kinc_raytrace_set_acceleration_structure(&accel);
 		kinc_raytrace_set_pipeline(&pipeline);
 		kinc_raytrace_set_target(&target);
