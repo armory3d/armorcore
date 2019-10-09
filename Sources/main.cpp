@@ -1052,6 +1052,9 @@ namespace {
 		Local<Object> pipeobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		Local<External> pipefield = Local<External>::Cast(pipeobj->GetInternalField(0));
 		kinc_g4_pipeline_t* pipeline = (kinc_g4_pipeline_t*)pipefield->Value();
+		#if KORE_DIRECT3D12
+		if (pipeline->impl._pipeline.impl.pso == nullptr) return; // TODO: pso not yet compiled?
+		#endif
 		kinc_g4_set_pipeline(pipeline);
 	}
 
