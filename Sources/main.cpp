@@ -1886,7 +1886,15 @@ namespace {
 	void krom_sys_command(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_cmd(isolate, args[0]);
+		#ifdef KORE_WINDOWS
+		int wlen = MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, NULL, 0);
+		wchar_t* wstr = new wchar_t[wlen];
+		MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, wstr, wlen);
+		int result = _wsystem(wstr);
+		delete[] wstr;
+		#else
 		int result = system(*utf8_cmd);
+		#endif
 		args.GetReturnValue().Set(Int32::New(isolate, result));
 	}
 
