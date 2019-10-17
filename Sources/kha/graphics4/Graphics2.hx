@@ -1019,12 +1019,14 @@ class Graphics2 extends kha.graphics2.Graphics {
 		//}
 	}
 
+	static var thrown = false;
+
 	override public function begin(clear: Bool = true, clearColor: Color = null): Void {
 		if (current == null) {
 			current = this;
 		}
 		else {
-			throw "End before you begin";
+			if (!thrown) { thrown = true; throw "End before you begin"; }
 		}
 
 		g.begin();
@@ -1051,7 +1053,7 @@ class Graphics2 extends kha.graphics2.Graphics {
 			current = null;
 		}
 		else {
-			throw "Begin before you end";
+			if (!thrown) { thrown = true; throw "Begin before you end"; }
 		}
 	}
 
