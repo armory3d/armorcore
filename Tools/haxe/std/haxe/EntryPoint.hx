@@ -29,7 +29,7 @@ private class Thread {
 #end
 
 /**
-	If haxe.MainLoop is kept from DCE, then we will insert an haxe.EntryPoint.run() call just at then end of main().
+	If `haxe.MainLoop` is kept from DCE, then we will insert an `haxe.EntryPoint.run()` call just at then end of `main()`.
 	This class can be redefined by custom frameworks so they can handle their own main loop logic.
 **/
 class EntryPoint {
@@ -41,7 +41,7 @@ class EntryPoint {
 	public static var threadCount(default, null):Int = 0;
 
 	/**
-		Wakeup a sleeping run()
+		Wakeup a sleeping `run()`
 	**/
 	public static function wakeup() {
 		#if sys
@@ -112,7 +112,7 @@ class EntryPoint {
 		#if nodejs
 		if (nextTick < 0)
 			return;
-		(untyped setTimeout) (run, nextTick);
+		(untyped setTimeout)(run, nextTick);
 		#else
 		var window:Dynamic = js.Browser.window;
 		var rqf:Dynamic = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame;
