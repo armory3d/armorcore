@@ -594,23 +594,17 @@ namespace {
 			return;
 		}
 
-		// bool hasBone = strstr(temp_string_vs, "bone :") != NULL;
-		// bool hasCol = strstr(temp_string_vs, "col :") != NULL;
+		bool hasCol = strstr(temp_string_vs, "col :") != NULL;
 		bool hasNor = strstr(temp_string_vs, "nor :") != NULL;
 		bool hasPos = strstr(temp_string_vs, "pos :") != NULL;
-		// bool hasTang = strstr(temp_string_vs, "tang :") != NULL;
 		bool hasTex = strstr(temp_string_vs, "tex :") != NULL;
-		// bool hasWeight = strstr(temp_string_vs, "weight :") != NULL;
 
 		std::map<std::string, int> attributes;
 		int index = 0;
-		// if (hasBone) attributes["bone"] = index++;
-		// if (hasCol) attributes["col"] = index++;
+		if (hasCol) attributes["col"] = index++;
 		if (hasNor) attributes["nor"] = index++;
 		if (hasPos) attributes["pos"] = index++;
-		// if (hasTang) attributes["tang"] = index++;
 		if (hasTex) attributes["tex"] = index++;
-		// if (hasWeight) attributes["weight"] = index++;
 
 		char* output = temp_string_vs;
 		std::ostrstream file(output, 1024 * 1024);
