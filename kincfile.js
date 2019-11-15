@@ -27,6 +27,10 @@ if (platform === Platform.Windows) {
 		project.addLib("d3d11");
 		project.addLib("d3dcompiler");
 	}
+	if (!release) {
+		project.addDefine('_HAS_ITERATOR_DEBUGGING=0');
+		project.addDefine('_ITERATOR_DEBUG_LEVEL=0');
+	}
 }
 else if (platform === Platform.Linux) {
 	project.addLib('v8_monolith -L../../' + libdir);
