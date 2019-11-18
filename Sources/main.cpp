@@ -137,6 +137,7 @@ namespace {
 	void gamepad_axis(int gamepad, int axis, float value);
 	void gamepad_button(int gamepad, int button, float value);
 
+	char temp_string[4096];
 	char temp_string_vs[1024 * 1024];
 	char temp_string_fs[1024 * 1024];
 	char temp_string_vstruct[4][32][32];
@@ -2690,7 +2691,8 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
 		}
 		String::Utf8Value cutCopyString(isolate, result);
-		return *cutCopyString;
+		strcpy(temp_string, *cutCopyString);
+		return temp_string;
 	}
 
 	char* cut() {
@@ -2709,7 +2711,8 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
 		}
 		String::Utf8Value cutCopyString(isolate, result);
-		return *cutCopyString;
+		strcpy(temp_string, *cutCopyString);
+		return temp_string;
 	}
 
 	void paste(char* data) {
