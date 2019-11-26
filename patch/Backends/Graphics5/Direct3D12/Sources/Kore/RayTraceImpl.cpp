@@ -329,15 +329,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 	command_list->impl._commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(accel->impl.bottom_level_accel));
 	dxrCommandList->BuildRaytracingAccelerationStructure(&topLevelBuildDesc, 0, nullptr);
 
-	command_list->impl._commandList->Close();
-	ID3D12CommandList* commandLists[] = {command_list->impl._commandList};
-	commandQueue->ExecuteCommandLists(ARRAYSIZE(commandLists), commandLists);
-
-	// Wait for GPU to finish
-	// commandQueue->Signal(frameFences[currentBackBuffer], fenceValues[currentBackBuffer]);
-	// frameFences[currentBackBuffer]->SetEventOnCompletion(fenceValues[currentBackBuffer], frameFenceEvents[currentBackBuffer]);
-	// WaitForSingleObjectEx(frameFenceEvents[currentBackBuffer], INFINITE, FALSE);
-	// fenceValues[currentBackBuffer]++;
+	kinc_g5_command_list_execute_and_wait(command_list);
 }
 
 void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int height, kinc_g5_render_target_t* texsobol, kinc_g5_render_target_t* texscramble, kinc_g5_render_target_t* texrank) {
