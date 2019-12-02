@@ -595,6 +595,7 @@ namespace {
 			return;
 		}
 
+		bool hasBone = strstr(temp_string_vs, "bone :") != NULL;
 		bool hasCol = strstr(temp_string_vs, "col :") != NULL;
 		bool hasNor = strstr(temp_string_vs, "nor :") != NULL;
 		bool hasPos = strstr(temp_string_vs, "pos :") != NULL;
@@ -602,10 +603,12 @@ namespace {
 
 		std::map<std::string, int> attributes;
 		int index = 0;
+		if (hasBone) attributes["bone"] = index++;
 		if (hasCol) attributes["col"] = index++;
 		if (hasNor) attributes["nor"] = index++;
 		if (hasPos) attributes["pos"] = index++;
 		if (hasTex) attributes["tex"] = index++;
+		if (hasBone) attributes["weight"] = index++;
 
 		char* output = temp_string_vs;
 		std::ostrstream file(output, 1024 * 1024);
