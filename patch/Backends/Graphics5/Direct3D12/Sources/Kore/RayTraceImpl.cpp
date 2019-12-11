@@ -30,9 +30,8 @@ ID3D12DescriptorHeap* descriptorHeap;
 UINT descriptorSize;
 kinc_raytrace_acceleration_structure_t* accel;
 kinc_raytrace_pipeline_t* pipeline;
-kinc_raytrace_target_t* output;
-
-D3D12_CPU_DESCRIPTOR_HANDLE uavDescriptorHandle; //
+kinc_g5_render_target_t* output;
+D3D12_GPU_DESCRIPTOR_HANDLE outputDescriptorHandle;
 D3D12_GPU_DESCRIPTOR_HANDLE vbgpuDescriptorHandle; //
 D3D12_GPU_DESCRIPTOR_HANDLE ibgpuDescriptorHandle; //
 D3D12_GPU_DESCRIPTOR_HANDLE tex0gpuDescriptorHandle; //
@@ -332,49 +331,12 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 	kinc_g5_command_list_execute_and_wait(command_list);
 }
 
-void kinc_raytrace_target_init(kinc_raytrace_target_t *target, int width, int height, kinc_g5_render_target_t* texsobol, kinc_g5_render_target_t* texscramble, kinc_g5_render_target_t* texrank) {
-
-	uavDescriptorHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), descriptorsAllocated, descriptorSize);
-	int descriptorHeapIndex = descriptorsAllocated++;
-
-	int descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	target->impl._texture_handle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorHeapIndex, descriptorSize);
-
-	target->impl._texture = nullptr;
-	kinc_raytrace_target_resize(target, width, height);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 9, descriptorSize);
-	D3D12_CPU_DESCRIPTOR_HANDLE sourceCpu = texsobol->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	texsobolgpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 9, descriptorSize);
-
-	cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 10, descriptorSize);
-	sourceCpu = texscramble->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	texscramblegpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 10, descriptorSize);
-
-	cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 11, descriptorSize);
-	sourceCpu = texrank->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	texrankgpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 11, descriptorSize);
+void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_structure_t *accel) {
+	accel->impl.bottom_level_accel->Release();
+	accel->impl.top_level_accel->Release();
 }
 
-void kinc_raytrace_target_resize(kinc_raytrace_target_t *target, int width, int height) {
-	if (target->impl._texture != nullptr) target->impl._texture->Release();
-
-	target->_width = width;
-	target->_height = height;
-
-	auto uavDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	auto defaultHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	device->CreateCommittedResource(&defaultHeapProperties, D3D12_HEAP_FLAG_NONE, &uavDesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&target->impl._texture));
-
-	D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
-	UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-	device->CreateUnorderedAccessView(target->impl._texture, nullptr, &UAVDesc, uavDescriptorHandle);
-}
-
-void kinc_raytrace_set_textures(kinc_g5_render_target_t* texpaint0, kinc_g5_render_target_t* texpaint1, kinc_g5_render_target_t* texpaint2, kinc_g5_render_target_t* texenv) {
+void kinc_raytrace_set_textures(kinc_g5_render_target_t* texpaint0, kinc_g5_render_target_t* texpaint1, kinc_g5_render_target_t* texpaint2, kinc_g5_texture_t* texenv, kinc_g5_texture_t* texsobol, kinc_g5_texture_t* texscramble, kinc_g5_texture_t* texrank) {
 	D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 5, descriptorSize);
 	D3D12_CPU_DESCRIPTOR_HANDLE sourceCpu = texpaint0->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -394,6 +356,21 @@ void kinc_raytrace_set_textures(kinc_g5_render_target_t* texpaint0, kinc_g5_rend
 	sourceCpu = texenv->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	texenvgpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 8, descriptorSize);
+
+	cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 9, descriptorSize);
+	sourceCpu = texsobol->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	texsobolgpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 9, descriptorSize);
+
+	cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 10, descriptorSize);
+	sourceCpu = texscramble->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	texscramblegpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 10, descriptorSize);
+
+	cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), 11, descriptorSize);
+	sourceCpu = texrank->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	device->CopyDescriptorsSimple(1, cpuDescriptor, sourceCpu, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	texrankgpuDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), 11, descriptorSize);
 }
 
 void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *_accel) {
@@ -404,7 +381,64 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
 	pipeline = _pipeline;
 }
 
-void kinc_raytrace_set_target(kinc_raytrace_target_t *_output) {
+void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
+	if (_output != output) {
+		D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), descriptorsAllocated, descriptorSize);
+		int descriptorHeapIndex = descriptorsAllocated++;
+		outputDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorHeapIndex, descriptorSize);
+
+		_output->impl.renderTarget->Release();
+		_output->impl.renderTargetDescriptorHeap->Release();
+		_output->impl.srvDescriptorHeap->Release();
+
+		// DXGI_FORMAT dxgiFormat = convertFormat(format);
+		DXGI_FORMAT dxgiFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		D3D12_CLEAR_VALUE clearValue;
+		clearValue.Format = dxgiFormat;
+		clearValue.Color[0] = 0.0f;
+		clearValue.Color[1] = 0.0f;
+		clearValue.Color[2] = 0.0f;
+		clearValue.Color[3] = 1.0f;
+		auto desc =
+		device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Tex2D(dxgiFormat, _output->texWidth, _output->texHeight, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+			D3D12_RESOURCE_STATE_COMMON, &clearValue, IID_GRAPHICS_PPV_ARGS(&_output->impl.renderTarget));
+
+		D3D12_RENDER_TARGET_VIEW_DESC view;
+		const D3D12_RESOURCE_DESC resourceDesc = _output->impl.renderTarget->GetDesc();
+		view.Format = dxgiFormat;
+		view.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+		view.Texture2D.MipSlice = 0;
+		view.Texture2D.PlaneSlice = 0;
+		D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+		heapDesc.NumDescriptors = 1;
+		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		device->CreateDescriptorHeap(&heapDesc, IID_GRAPHICS_PPV_ARGS(&_output->impl.renderTargetDescriptorHeap));
+		device->CreateRenderTargetView(_output->impl.renderTarget, &view,
+		                               _output->impl.renderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+		D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
+		descriptorHeapDesc.NumDescriptors = 1;
+		descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		descriptorHeapDesc.NodeMask = 0;
+		descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		device->CreateDescriptorHeap(&descriptorHeapDesc, IID_GRAPHICS_PPV_ARGS(&_output->impl.srvDescriptorHeap));
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc = {};
+		shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		shaderResourceViewDesc.Format = dxgiFormat;
+		shaderResourceViewDesc.Texture2D.MipLevels = 1;
+		shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+		shaderResourceViewDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+		device->CreateShaderResourceView(_output->impl.renderTarget, &shaderResourceViewDesc,
+		                                 _output->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
+		UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		device->CreateUnorderedAccessView(_output->impl.renderTarget, nullptr, &UAVDesc, cpuDescriptor);
+	}
 	output = _output;
 }
 
@@ -413,7 +447,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
 
 	// Bind the heaps, acceleration structure and dispatch rays
 	command_list->impl._commandList->SetDescriptorHeaps(1, &descriptorHeap);
-	command_list->impl._commandList->SetComputeRootDescriptorTable(0, output->impl._texture_handle);
+	command_list->impl._commandList->SetComputeRootDescriptorTable(0, outputDescriptorHandle);
 	command_list->impl._commandList->SetComputeRootShaderResourceView(1, accel->impl.top_level_accel->GetGPUVirtualAddress());
 	command_list->impl._commandList->SetComputeRootDescriptorTable(2, ibgpuDescriptorHandle);
 	command_list->impl._commandList->SetComputeRootDescriptorTable(3, vbgpuDescriptorHandle);
@@ -437,25 +471,11 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
 	dispatchDesc.MissShaderTable.StrideInBytes = dispatchDesc.MissShaderTable.SizeInBytes;
 	dispatchDesc.RayGenerationShaderRecord.StartAddress = pipeline->impl.raygen_shader_table->GetGPUVirtualAddress();
 	dispatchDesc.RayGenerationShaderRecord.SizeInBytes = pipeline->impl.raygen_shader_table->GetDesc().Width;
-	dispatchDesc.Width = output->_width;
-	dispatchDesc.Height = output->_height;
+	dispatchDesc.Width = output->texWidth;
+	dispatchDesc.Height = output->texHeight;
 	dispatchDesc.Depth = 1;
 	dxrCommandList->SetPipelineState1(pipeline->impl.dxr_state);
 	dxrCommandList->DispatchRays(&dispatchDesc);
-}
-
-void kinc_raytrace_copy_target(kinc_g5_command_list_t *command_list, kinc_g5_render_target_t* render_target, kinc_raytrace_target_t *output) {
-	D3D12_RESOURCE_BARRIER preCopyBarriers[2];
-	preCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(render_target->impl.renderTarget, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_DEST);
-	preCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(output->impl._texture, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-	command_list->impl._commandList->ResourceBarrier(ARRAYSIZE(preCopyBarriers), preCopyBarriers);
-
-	command_list->impl._commandList->CopyResource(render_target->impl.renderTarget, output->impl._texture);
-
-	D3D12_RESOURCE_BARRIER postCopyBarriers[2];
-	postCopyBarriers[0] = CD3DX12_RESOURCE_BARRIER::Transition(render_target->impl.renderTarget, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_RENDER_TARGET);
-	postCopyBarriers[1] = CD3DX12_RESOURCE_BARRIER::Transition(output->impl._texture, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	command_list->impl._commandList->ResourceBarrier(ARRAYSIZE(postCopyBarriers), postCopyBarriers);
 }
 
 #endif // KORE_DXR

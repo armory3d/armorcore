@@ -66,9 +66,9 @@ extern "C" {
 	kinc_g5_vertex_buffer_t vertex_buffer;
 	kinc_g5_index_buffer_t index_buffer;
 	kinc_g4_render_target_t* render_target;
-	kinc_raytrace_target_t target;
 	kinc_raytrace_pipeline_t pipeline;
 	kinc_raytrace_acceleration_structure_t accel;
+	bool accel_created = false;
 	const int constant_buffer_size = 24;
 #ifdef __cplusplus
 }
@@ -2222,23 +2222,23 @@ namespace {
 	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 
+		if (accel_created) {
+			kinc_g5_index_buffer_destroy(&index_buffer);
+			kinc_g5_vertex_buffer_destroy(&vertex_buffer);
+			kinc_raytrace_acceleration_structure_destroy(&accel);
+		}
+
 		Local<ArrayBuffer> shader_buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents shader_content;
-		// if (shader_buffer->IsExternal()) shader_content = shader_buffer->GetContents();
-		// else shader_content = shader_buffer->Externalize();
 		shader_content = shader_buffer->GetContents();
 
 		Local<ArrayBuffer> vb_buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents vb_content;
-		// if (vb_buffer->IsExternal()) vb_content = vb_buffer->GetContents();
-		// else vb_content = vb_buffer->Externalize();
 		vb_content = vb_buffer->GetContents();
 		float* vb = (float*)vb_content.Data();
 
 		Local<ArrayBuffer> ib_buffer = Local<ArrayBuffer>::Cast(args[2]);
 		ArrayBuffer::Contents ib_content;
-		// if (ib_buffer->IsExternal()) ib_content = ib_buffer->GetContents();
-		// else ib_content = ib_buffer->Externalize();
 		ib_content = ib_buffer->GetContents();
 		int* ib = (int*)ib_content.Data();
 
@@ -2269,20 +2269,7 @@ namespace {
 		kinc_g5_index_buffer_unlock(&index_buffer);
 
 		kinc_raytrace_acceleration_structure_init(&accel, &commandList, &vertex_buffer, &index_buffer);
-
-		int32_t target_w = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int32_t target_h = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		Local<External> sobolfield = Local<External>::Cast(args[5]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* texsobol = (kinc_g4_render_target_t*)sobolfield->Value();
-
-		Local<External> scramblefield = Local<External>::Cast(args[6]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* texscramble = (kinc_g4_render_target_t*)scramblefield->Value();
-
-		Local<External> rankfield = Local<External>::Cast(args[7]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* texrank = (kinc_g4_render_target_t*)rankfield->Value();
-
-		kinc_raytrace_target_init(&target, target_w, target_h, &texsobol->impl._renderTarget, &texscramble->impl._renderTarget, &texrank->impl._renderTarget);
+		accel_created = true;
 	}
 
 	void krom_raytrace_set_textures(const FunctionCallbackInfo<Value>& args) {
@@ -2298,9 +2285,35 @@ namespace {
 		kinc_g4_render_target_t* texpaint2 = (kinc_g4_render_target_t*)rtfield2->Value();
 
 		Local<External> envfield = Local<External>::Cast(args[3]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* texenv = (kinc_g4_render_target_t*)envfield->Value();
+		kinc_g4_texture_t* texenv = (kinc_g4_texture_t*)envfield->Value();
 
-		kinc_raytrace_set_textures(&texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._renderTarget);
+		Local<External> sobolfield = Local<External>::Cast(args[4]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t* texsobol = (kinc_g4_texture_t*)sobolfield->Value();
+
+		Local<External> scramblefield = Local<External>::Cast(args[5]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t* texscramble = (kinc_g4_texture_t*)scramblefield->Value();
+
+		Local<External> rankfield = Local<External>::Cast(args[6]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t* texrank = (kinc_g4_texture_t*)rankfield->Value();
+
+		if (!texenv->impl._uploaded) {
+			kinc_g5_command_list_upload_texture(&commandList, &texenv->impl._texture);
+			texenv->impl._uploaded = true;
+		}
+		if (!texsobol->impl._uploaded) {
+			kinc_g5_command_list_upload_texture(&commandList, &texsobol->impl._texture);
+			texsobol->impl._uploaded = true;
+		}
+		if (!texscramble->impl._uploaded) {
+			kinc_g5_command_list_upload_texture(&commandList, &texscramble->impl._texture);
+			texscramble->impl._uploaded = true;
+		}
+		if (!texrank->impl._uploaded) {
+			kinc_g5_command_list_upload_texture(&commandList, &texrank->impl._texture);
+			texrank->impl._uploaded = true;
+		}
+
+		kinc_raytrace_set_textures(&texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture, &texsobol->impl._texture, &texscramble->impl._texture, &texrank->impl._texture);
 	}
 
 	void krom_raytrace_dispatch_rays(const FunctionCallbackInfo<Value>& args) {
@@ -2311,8 +2324,6 @@ namespace {
 
 		Local<ArrayBuffer> cb_buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents cb_content;
-		// if (cb_buffer->IsExternal()) cb_content = cb_buffer->GetContents();
-		// else cb_content = cb_buffer->Externalize();
 		cb_content = cb_buffer->GetContents();
 		float* cb = (float*)cb_content.Data();
 
@@ -2322,15 +2333,10 @@ namespace {
 		}
 		kinc_g5_constant_buffer_unlock(&constant_buffer);
 
-		if (target._width != render_target->texWidth || target._height != render_target->texHeight) {
-			kinc_raytrace_target_resize(&target, render_target->texWidth, render_target->texHeight);
-		}
-
 		kinc_raytrace_set_acceleration_structure(&accel);
 		kinc_raytrace_set_pipeline(&pipeline);
-		kinc_raytrace_set_target(&target);
+		kinc_raytrace_set_target(&render_target->impl._renderTarget);
 		kinc_raytrace_dispatch_rays(&commandList);
-		kinc_raytrace_copy_target(&commandList, &render_target->impl._renderTarget, &target);
 	}
 	#endif
 
