@@ -123,7 +123,8 @@ class KromExporter {
         }
     }
     async copyImage(platform, from, to, options, cache) {
-        let format = await ImageTool_1.exportImage(this.options.kha, from, path.join(this.options.to, this.sysdir(), to), options, undefined, false, false, cache);
+        // let format = await ImageTool_1.exportImage(this.options.kha, from, path.join(this.options.to, this.sysdir(), to), options, undefined, false, false, cache);
+        let format = await ImageTool_1.exportImage(this.options.kha, from, path.join(this.options.to, this.sysdir(), to), options, 'lz4', true, false, cache);
         return [to + '.' + format];
     }
     async copyBlob(platform, from, to) {

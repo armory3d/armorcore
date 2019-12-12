@@ -23,6 +23,7 @@
 #include <kinc/graphics4/texture.h>
 #include <kinc/compute/compute.h>
 #include <kinc/libs/stb_image.h>
+#include <kinc/io/lz4/lz4.h>
 
 #include "../V8/include/libplatform/libplatform.h"
 #include "../V8/include/v8.h"
@@ -1070,26 +1071,27 @@ namespace {
 		int comp;
 		unsigned char* data = (unsigned char*)malloc(size);
 		kinc_file_reader_read(&reader, data, size);
-		if (ends_with(filename, "png")) {
-			output = stbi_load_from_memory(data, size, &width, &height, &comp, 4);
-			if (output == nullptr) {
-				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+
+		if (ends_with(filename, "k")) {
+			width = kinc_read_s32le(data);
+			height = kinc_read_s32le(data + 4);
+			char fourcc[5];
+			fourcc[0] = data[8];
+			fourcc[1] = data[9];
+			fourcc[2] = data[10];
+			fourcc[3] = data[11];
+			fourcc[4] = 0;
+			int compressedSize = size - 12;
+			if (strcmp(fourcc, "LZ4 ") == 0) {
+				int outputSize = width * height * 4;
+				output = (unsigned char*)malloc(outputSize);
+				LZ4_decompress_fast((char *)(data + 12), (char *)output, outputSize);
 			}
-			for (int y = 0; y < height; ++y) {
-				int row = y * width * 4;
-				for (int x = 0; x < width; ++x) {
-					int col = x * 4;
-					unsigned char r = output[row + col    ];
-					unsigned char g = output[row + col + 1];
-					unsigned char b = output[row + col + 2];
-					float         a = output[row + col + 3] / 255.0f;
-					b = (unsigned char)(b * a);
-					g = (unsigned char)(g * a);
-					r = (unsigned char)(r * a);
-					output[row + col    ] = r;
-					output[row + col + 1] = g;
-					output[row + col + 2] = b;
-				}
+			else if (strcmp(fourcc, "LZ4F") == 0) {
+				int outputSize = width * height * 16;
+				output = (unsigned char*)malloc(outputSize);
+				LZ4_decompress_fast((char *)(data + 12), (char *)output, outputSize);
+				format = KINC_IMAGE_FORMAT_RGBA128;
 			}
 		}
 		else if (ends_with(filename, "hdr")) {
@@ -1099,7 +1101,7 @@ namespace {
 			}
 			format = KINC_IMAGE_FORMAT_RGBA128;
 		}
-		else {
+		else { // jpg, png, ..
 			output = stbi_load_from_memory(data, size, &width, &height, &comp, 4);
 			if (output == nullptr) {
 				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
