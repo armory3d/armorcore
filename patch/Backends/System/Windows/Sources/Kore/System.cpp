@@ -141,9 +141,9 @@ static void initKeyTranslation() {
 	keyTranslated[0x58] = KINC_KEY_X;
 	keyTranslated[0x59] = KINC_KEY_Y;
 	keyTranslated[0x5A] = KINC_KEY_Z;
-	// keyTranslated[VK_LWIN
-	// keyTranslated[VK_RWIN
-	// keyTranslated[VK_APPS
+	keyTranslated[VK_LWIN] = KINC_KEY_WIN;
+	keyTranslated[VK_RWIN] = KINC_KEY_WIN;
+	keyTranslated[VK_APPS] = KINC_KEY_CONTEXT_MENU;
 	// keyTranslated[VK_SLEEP
 	keyTranslated[VK_NUMPAD0] = KINC_KEY_NUMPAD_0;
 	keyTranslated[VK_NUMPAD1] = KINC_KEY_NUMPAD_1;
@@ -156,11 +156,11 @@ static void initKeyTranslation() {
 	keyTranslated[VK_NUMPAD8] = KINC_KEY_NUMPAD_8;
 	keyTranslated[VK_NUMPAD9] = KINC_KEY_NUMPAD_9;
 	keyTranslated[VK_MULTIPLY] = KINC_KEY_MULTIPLY;
-	// keyTranslated[VK_ADD]
+	keyTranslated[VK_ADD] = KINC_KEY_ADD;
 	// keyTranslated[VK_SEPARATOR
-	// keyTranslated[VK_SUBTRACT
-	// keyTranslated[VK_DECIMAL
-	// keyTranslated[VK_DIVIDE
+	keyTranslated[VK_SUBTRACT] = KINC_KEY_SUBTRACT;
+	keyTranslated[VK_DECIMAL] = KINC_KEY_DECIMAL;
+	keyTranslated[VK_DIVIDE] = KINC_KEY_DIVIDE;
 	keyTranslated[VK_F1] = KINC_KEY_F1;
 	keyTranslated[VK_F2] = KINC_KEY_F2;
 	keyTranslated[VK_F3] = KINC_KEY_F3;
@@ -212,24 +212,20 @@ static void initKeyTranslation() {
 	// keyTranslated[VK_LAUNCH_MEDIA_SELECT
 	// keyTranslated[VK_LAUNCH_APP1
 	// keyTranslated[VK_LAUNCH_APP2
-	// keyTranslated[VK_OEM_1 //Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the ';:' key
+	keyTranslated[VK_OEM_1] = KINC_KEY_SEMICOLON; // Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the ';:' key
 	keyTranslated[VK_OEM_PLUS] = KINC_KEY_PLUS;
 	keyTranslated[VK_OEM_COMMA] = KINC_KEY_COMMA;
 	keyTranslated[VK_OEM_MINUS] = KINC_KEY_HYPHEN_MINUS;
 	keyTranslated[VK_OEM_PERIOD] = KINC_KEY_PERIOD;
-	// keyTranslated[VK_OEM_2 //Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '/?' key
-	// keyTranslated[VK_OEM_3 //Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '`~' key
-	// keyTranslated[VK_OEM_4 //Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '[{' key
-	// keyTranslated[VK_OEM_5 //Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '\|' key
-	// keyTranslated[VK_OEM_6 //Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the ']}' key
-	// keyTranslated[VK_OEM_7 //Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the 'single-quote/double-quote'
-	// key
-	// keyTranslated[VK_OEM_8 //Used for miscellaneous characters; it can vary by keyboard.
-	// keyTranslated[0xE1 //OEM specific
-	// keyTranslated[VK_OEM_102 //Either the angle bracket key or the backslash key on the RT 102-key keyboard
-	// 0xE3-E4 //OEM specific
-	// keyTranslated[VK_PROCESSKEY
-	// 0xE6 //OEM specific
+	keyTranslated[VK_OEM_2] = KINC_KEY_SLASH;         // Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '/?' key
+	keyTranslated[VK_OEM_3] = KINC_KEY_BACK_QUOTE;    // Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '`~' key
+	keyTranslated[VK_OEM_4] = KINC_KEY_OPEN_BRACKET;  // Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '[{' key
+	keyTranslated[VK_OEM_5] = KINC_KEY_BACK_SLASH;    // Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the '\|' key
+	keyTranslated[VK_OEM_6] = KINC_KEY_CLOSE_BRACKET; // Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the ']}' key
+	keyTranslated[VK_OEM_7] = KINC_KEY_QUOTE;         // Used for miscellaneous characters; it can vary by keyboard. For the US standard keyboard, the
+	                                          // 'single-quote/double-quote' key keyTranslated[VK_OEM_8 //Used for miscellaneous characters; it can vary by
+	                                          // keyboard. keyTranslated[0xE1 //OEM specific keyTranslated[VK_OEM_102 //Either the angle bracket key or the
+	                                          // backslash key on the RT 102-key keyboard 0xE3-E4 //OEM specific keyTranslated[VK_PROCESSKEY 0xE6 //OEM specific
 	// keyTranslated[VK_PACKET //Used to pass Unicode characters as if they were keystrokes. The VK_PACKET key is the low word of a 32-bit Virtual Key value
 	// used for non-keyboard input methods.
 	// 0xE9-F5 //OEM specific
@@ -538,10 +534,10 @@ extern "C" LRESULT WINAPI KoreWindowsMessageProcedure(HWND hWnd, UINT msg, WPARA
 		break;
 	case WM_DROPFILES:
 		HDROP hDrop = (HDROP)wParam;
-		unsigned count = DragQueryFile(hDrop, 0xFFFFFFFF, NULL, NULL);
-		for (int i = 0; i < count; ++i) {
+		unsigned count = DragQueryFileW(hDrop, 0xFFFFFFFF, NULL, NULL);
+		for (unsigned i = 0; i < count; ++i) {
 			wchar_t filePath[260];
-			if (DragQueryFile(hDrop, i, filePath, 260)) {
+			if (DragQueryFileW(hDrop, i, filePath, 260)) {
 				kinc_internal_drop_files_callback(filePath);
 			}
 		}
@@ -1036,13 +1032,9 @@ const char **kinc_video_formats() {
 	return ::videoFormats;
 }
 
-void kinc_login() {
+void kinc_login() {}
 
-}
-
-void kinc_unlock_achievement(int id) {
-
-}
+void kinc_unlock_achievement(int id) {}
 
 bool kinc_gamepad_connected(int num) {
 	return true;
