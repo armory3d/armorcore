@@ -186,6 +186,13 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	}
 }
 
+void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline) {
+	pipeline->impl.dxr_state->Release();
+	pipeline->impl.raygen_shader_table->Release();
+	pipeline->impl.miss_shader_table->Release();
+	pipeline->impl.hitgroup_shader_table->Release();
+}
+
 UINT create_srv_vb(kinc_g5_vertex_buffer_t* vb, UINT numElements, UINT elementSize) { //
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;

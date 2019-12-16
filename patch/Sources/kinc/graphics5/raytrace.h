@@ -14,6 +14,7 @@ typedef struct kinc_raytrace_pipeline {
 } kinc_raytrace_pipeline_t;
 
 void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list_t *command_list, void *ray_shader, int ray_shader_size, kinc_g5_constant_buffer_t *constant_buffer);
+void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline);
 
 typedef struct kinc_raytrace_acceleration_structure {
 	kinc_raytrace_acceleration_structure_impl_t impl;

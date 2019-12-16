@@ -2227,7 +2227,9 @@ namespace {
 		if (accel_created) {
 			kinc_g5_index_buffer_destroy(&index_buffer);
 			kinc_g5_vertex_buffer_destroy(&vertex_buffer);
+			kinc_g5_constant_buffer_destroy(&constant_buffer);
 			kinc_raytrace_acceleration_structure_destroy(&accel);
+			kinc_raytrace_pipeline_destroy(&pipeline);
 		}
 
 		Local<ArrayBuffer> shader_buffer = Local<ArrayBuffer>::Cast(args[0]);
