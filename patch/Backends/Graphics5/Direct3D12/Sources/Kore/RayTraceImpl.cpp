@@ -31,6 +31,7 @@ UINT descriptorSize;
 kinc_raytrace_acceleration_structure_t* accel;
 kinc_raytrace_pipeline_t* pipeline;
 kinc_g5_render_target_t* output;
+D3D12_CPU_DESCRIPTOR_HANDLE outputCpuDescriptor; //
 D3D12_GPU_DESCRIPTOR_HANDLE outputDescriptorHandle;
 D3D12_GPU_DESCRIPTOR_HANDLE vbgpuDescriptorHandle; //
 D3D12_GPU_DESCRIPTOR_HANDLE ibgpuDescriptorHandle; //
@@ -184,6 +185,11 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 		memcpy(byteDest, hitGroupShaderId, size);
 		pipeline->impl.hitgroup_shader_table->Unmap(0, nullptr);
 	}
+
+	// Output descriptor
+	outputCpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), descriptorsAllocated, descriptorSize);
+	int descriptorHeapIndex = descriptorsAllocated++;
+	outputDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorHeapIndex, descriptorSize);
 }
 
 void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline) {
@@ -390,10 +396,6 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
 
 void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 	if (_output != output) {
-		D3D12_CPU_DESCRIPTOR_HANDLE cpuDescriptor = CD3DX12_CPU_DESCRIPTOR_HANDLE(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), descriptorsAllocated, descriptorSize);
-		int descriptorHeapIndex = descriptorsAllocated++;
-		outputDescriptorHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(descriptorHeap->GetGPUDescriptorHandleForHeapStart(), descriptorHeapIndex, descriptorSize);
-
 		_output->impl.renderTarget->Release();
 		_output->impl.renderTargetDescriptorHeap->Release();
 		_output->impl.srvDescriptorHeap->Release();
@@ -406,7 +408,6 @@ void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 		clearValue.Color[1] = 0.0f;
 		clearValue.Color[2] = 0.0f;
 		clearValue.Color[3] = 1.0f;
-		auto desc =
 		device->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
 			&CD3DX12_RESOURCE_DESC::Tex2D(dxgiFormat, _output->texWidth, _output->texHeight, 1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
 			D3D12_RESOURCE_STATE_COMMON, &clearValue, IID_GRAPHICS_PPV_ARGS(&_output->impl.renderTarget));
@@ -444,7 +445,7 @@ void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 
 		D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
 		UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-		device->CreateUnorderedAccessView(_output->impl.renderTarget, nullptr, &UAVDesc, cpuDescriptor);
+		device->CreateUnorderedAccessView(_output->impl.renderTarget, nullptr, &UAVDesc, outputCpuDescriptor);
 	}
 	output = _output;
 }
