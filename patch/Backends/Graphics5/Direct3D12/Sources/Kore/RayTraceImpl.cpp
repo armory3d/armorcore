@@ -30,7 +30,7 @@ ID3D12DescriptorHeap* descriptorHeap;
 UINT descriptorSize;
 kinc_raytrace_acceleration_structure_t* accel;
 kinc_raytrace_pipeline_t* pipeline;
-kinc_g5_render_target_t* output;
+kinc_g5_render_target_t* output = nullptr;
 D3D12_CPU_DESCRIPTOR_HANDLE outputCpuDescriptor; //
 D3D12_GPU_DESCRIPTOR_HANDLE outputDescriptorHandle;
 D3D12_GPU_DESCRIPTOR_HANDLE vbgpuDescriptorHandle; //
@@ -45,6 +45,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE texrankgpuDescriptorHandle; //
 int descriptorsAllocated = 0; //
 
 void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list *command_list, void *ray_shader, int ray_shader_size, kinc_g5_constant_buffer_t *constant_buffer) {
+	output = nullptr;
 	descriptorsAllocated = 0; //
 	pipeline->_constant_buffer = constant_buffer;
 	// Descriptor heap
