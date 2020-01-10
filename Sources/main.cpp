@@ -23,7 +23,11 @@
 #include <kinc/graphics4/texture.h>
 #include <kinc/compute/compute.h>
 #include <kinc/libs/stb_image.h>
+#ifdef KORE_LZ4X
+extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int maxOutputSize);
+#else
 #include <kinc/io/lz4/lz4.h>
+#endif
 
 #include "../V8/include/libplatform/libplatform.h"
 #include "../V8/include/v8.h"
@@ -1085,12 +1089,12 @@ namespace {
 			if (strcmp(fourcc, "LZ4 ") == 0) {
 				int outputSize = width * height * 4;
 				output = (unsigned char*)malloc(outputSize);
-				LZ4_decompress_fast((char *)(data + 12), (char *)output, outputSize);
+				LZ4_decompress_safe((char *)(data + 12), (char *)output, compressedSize, outputSize);
 			}
 			else if (strcmp(fourcc, "LZ4F") == 0) {
 				int outputSize = width * height * 16;
 				output = (unsigned char*)malloc(outputSize);
-				LZ4_decompress_fast((char *)(data + 12), (char *)output, outputSize);
+				LZ4_decompress_safe((char *)(data + 12), (char *)output, compressedSize, outputSize);
 				format = KINC_IMAGE_FORMAT_RGBA128;
 			}
 		}
