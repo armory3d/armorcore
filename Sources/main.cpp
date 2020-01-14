@@ -2563,6 +2563,15 @@ namespace {
 		if (!compiled_script->Run(context).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+
+			#ifdef KORE_WINDOWS
+			FILE* file = fopen("stderr.txt", "w");
+			if (file != nullptr) {
+				fwrite(*stack_trace, 1, strlen(*stack_trace), file);
+				fclose(file);
+			}
+			#endif
+
 			return false;
 		}
 
@@ -2585,6 +2594,14 @@ namespace {
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+
+			#ifdef KORE_WINDOWS
+			FILE* file = fopen("stderr.txt", "w");
+			if (file != nullptr) {
+				fwrite(*stack_trace, 1, strlen(*stack_trace), file);
+				fclose(file);
+			}
+			#endif
 		}
 
 		if (save_and_quit > 0) {
