@@ -148,6 +148,10 @@ namespace {
 	char temp_string_fs[1024 * 1024];
 	char temp_string_vstruct[4][32][32];
 	std::string assetsdir;
+	#ifdef KORE_WINDOWS
+	wchar_t temp_wstring[1024];
+	wchar_t temp_wstring1[1024];
+	#endif
 
 	void write_stack_trace(char* stack_trace) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", stack_trace);
@@ -2385,7 +2389,26 @@ namespace {
 		#endif
 	}
 
-	void start_v8(const char* bindir) {
+	#ifdef KORE_WINDOWS
+	wchar_t* get_short_path_name(wchar_t* long_path) {
+		// To ascii path
+		long length = GetShortPathNameW(long_path, NULL, 0);
+		if (length == 0 || length > 4096) return NULL;
+		GetShortPathNameW(long_path, temp_wstring1, length);
+		return temp_wstring1;
+	}
+
+	void krom_get_short_path_name(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value long_path(isolate, args[0]);
+		MultiByteToWideChar(CP_UTF8, 0, *long_path, -1, temp_wstring, 1024);
+		wchar_t* short_path = get_short_path_name(temp_wstring);
+		if (short_path == NULL) return;
+		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)short_path).ToLocalChecked());
+	}
+	#endif
+
+	void start_v8() {
 		plat = platform::NewDefaultPlatform();
 		V8::InitializePlatform(plat.get());
 		V8::Initialize();
@@ -2553,6 +2576,9 @@ namespace {
 		#endif
 		krom->Set(String::NewFromUtf8(isolate, "windowX").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_x));
 		krom->Set(String::NewFromUtf8(isolate, "windowY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_y));
+		#ifdef KORE_WINDOWS
+		krom->Set(String::NewFromUtf8(isolate, "getShortPathName").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_short_path_name));
+		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
@@ -3084,6 +3110,21 @@ int kickstart(int argc, char** argv) {
 	_argc = argc;
 	_argv = argv;
 	std::string bindir(argv[0]);
+
+#ifdef KORE_WINDOWS
+	// Krom.exe located in non-ascii path
+	HMODULE hModule = GetModuleHandleW(NULL);
+	GetModuleFileNameW(hModule, temp_wstring, MAX_PATH);
+	for (int i = 0; i < wcslen(temp_wstring); ++i) {
+		if (temp_wstring[i] > 127) {
+			wchar_t* short_path = get_short_path_name(temp_wstring);
+			sprintf(temp_string, "%ls", temp_wstring1);
+			bindir = temp_string;
+			break;
+		}
+	}
+#endif
+
 #ifdef KORE_WINDOWS
 	bindir = bindir.substr(0, bindir.find_last_of("\\"));
 #else
@@ -3147,7 +3188,7 @@ int kickstart(int argc, char** argv) {
 	#else
 	char dirsep = '/';
 	#endif
-	start_v8((bindir + dirsep).c_str());
+	start_v8();
 
 	kinc_threads_init();
 

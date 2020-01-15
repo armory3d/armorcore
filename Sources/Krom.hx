@@ -159,4 +159,8 @@ extern class Krom {
 	static function openDialog(filterList: String, defaultPath: String): String;
 	static function windowX(id: Int): Int;
 	static function windowY(id: Int): Int;
+
+	#if krom_windows
+	static function getShortPathName(longPath: String): String;
+	#end
 }
