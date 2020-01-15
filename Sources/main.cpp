@@ -149,6 +149,20 @@ namespace {
 	char temp_string_vstruct[4][32][32];
 	std::string assetsdir;
 
+	void write_stack_trace(char* stack_trace) {
+		kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", stack_trace);
+
+		#ifdef KORE_WINDOWS
+		FILE* file = fopen("stderr.txt", stderr_created ? "a" : "w");
+		if (file != nullptr) {
+			stderr_created = true;
+			fwrite(stack_trace, 1, strlen(stack_trace), file);
+			fwrite("\n", 1, 1, file);
+			fclose(file);
+		}
+		#endif
+	}
+
 	void krom_init(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
@@ -2563,17 +2577,7 @@ namespace {
 		Local<Value> result;
 		if (!compiled_script->Run(context).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
-
-			#ifdef KORE_WINDOWS
-			FILE* file = fopen("stderr.txt", stderr_created ? "a" : "w");
-			if (file != nullptr) {
-				stderr_created = true;
-				fwrite(*stack_trace, 1, strlen(*stack_trace), file);
-				fclose(file);
-			}
-			#endif
-
+			write_stack_trace(*stack_trace);
 			return false;
 		}
 
@@ -2595,17 +2599,7 @@ namespace {
 
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
-
-			#ifdef KORE_WINDOWS
-			FILE* file = fopen("stderr.txt", stderr_created ? "a" : "w");
-			if (file != nullptr) {
-				stderr_created = true;
-				fwrite(*stack_trace, 1, strlen(*stack_trace), file);
-				fwrite("\n", 1, 1, file);
-				fclose(file);
-			}
-			#endif
+			write_stack_trace(*stack_trace);
 		}
 
 		if (save_and_quit > 0) {
@@ -2615,7 +2609,7 @@ namespace {
 			Local<Value> argv[argc] = {Boolean::New(isolate, save_and_quit == 1)};
 			if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 				v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-				kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+				write_stack_trace(*stack_trace);
 			}
 			save_and_quit = 0;
 		}
@@ -2647,7 +2641,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, samples)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 
 		for (int i = 0; i < samples; ++i) {
@@ -2709,7 +2703,7 @@ namespace {
 		}
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2726,7 +2720,7 @@ namespace {
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 		String::Utf8Value cutCopyString(isolate, result);
 		strcpy(temp_string, *cutCopyString);
@@ -2746,7 +2740,7 @@ namespace {
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 		String::Utf8Value cutCopyString(isolate, result);
 		strcpy(temp_string, *cutCopyString);
@@ -2768,7 +2762,7 @@ namespace {
 		Local<Value> argv[argc] = {String::NewFromUtf8(isolate, data).ToLocalChecked()};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2785,7 +2779,7 @@ namespace {
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2802,7 +2796,7 @@ namespace {
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2819,7 +2813,7 @@ namespace {
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2836,7 +2830,7 @@ namespace {
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2853,7 +2847,7 @@ namespace {
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2872,7 +2866,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, code)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2891,7 +2885,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, code)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2910,7 +2904,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, character)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2929,7 +2923,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Int32::New(isolate, mx), Int32::New(isolate, my)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2948,7 +2942,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, button), Int32::New(isolate, x), Int32::New(isolate, y)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2967,7 +2961,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, button), Int32::New(isolate, x), Int32::New(isolate, y)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -2986,7 +2980,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, delta)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -3005,7 +2999,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Number::New(isolate, pressure)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -3024,7 +3018,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Number::New(isolate, pressure)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -3043,7 +3037,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Number::New(isolate, pressure)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -3062,7 +3056,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, gamepad), Int32::New(isolate, axis), Number::New(isolate, value)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 
@@ -3081,7 +3075,7 @@ namespace {
 		Local<Value> argv[argc] = {Int32::New(isolate, gamepad), Int32::New(isolate, button), Number::New(isolate, value)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
+			write_stack_trace(*stack_trace);
 		}
 	}
 }
