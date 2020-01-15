@@ -85,6 +85,7 @@ namespace {
 	char** _argv;
 	bool enable_sound = true;
 	bool enable_window = true;
+	bool stderr_created = false;
 
 	Global<Context> global_context;
 	Isolate* isolate;
@@ -2565,8 +2566,9 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
 
 			#ifdef KORE_WINDOWS
-			FILE* file = fopen("stderr.txt", "w");
+			FILE* file = fopen("stderr.txt", stderr_created ? "a" : "w");
 			if (file != nullptr) {
+				stderr_created = true;
 				fwrite(*stack_trace, 1, strlen(*stack_trace), file);
 				fclose(file);
 			}
@@ -2596,9 +2598,11 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", *stack_trace);
 
 			#ifdef KORE_WINDOWS
-			FILE* file = fopen("stderr.txt", "w");
+			FILE* file = fopen("stderr.txt", stderr_created ? "a" : "w");
 			if (file != nullptr) {
+				stderr_created = true;
 				fwrite(*stack_trace, 1, strlen(*stack_trace), file);
+				fwrite("\n", 1, 1, file);
 				fclose(file);
 			}
 			#endif
