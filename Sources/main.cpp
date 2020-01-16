@@ -1902,7 +1902,7 @@ namespace {
 
 		#ifdef KORE_WINDOWS
 		MultiByteToWideChar(CP_UTF8, 0, *utf8_path, -1, temp_wstring, 1024);
-		FILE* file = _wfopen(temp_wstring, L"rb");
+		FILE* file = _wfopen(temp_wstring, L"wb");
 		#else
 		FILE* file = fopen(*utf8_path, "wb");
 		#endif
