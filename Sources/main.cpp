@@ -1900,7 +1900,12 @@ namespace {
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
 
+		#ifdef KORE_WINDOWS
+		MultiByteToWideChar(CP_UTF8, 0, *utf8_path, -1, temp_wstring, 1024);
+		FILE* file = _wfopen(temp_wstring, L"rb");
+		#else
 		FILE* file = fopen(*utf8_path, "wb");
+		#endif
 		if (file == nullptr) return;
 		fwrite(content.Data(), 1, (int)content.ByteLength(), file);
 		fclose(file);
@@ -2389,25 +2394,6 @@ namespace {
 		#endif
 	}
 
-	#ifdef KORE_WINDOWS
-	wchar_t* get_short_path_name(wchar_t* long_path) {
-		// To ascii path
-		long length = GetShortPathNameW(long_path, NULL, 0);
-		if (length == 0 || length > 4096) return NULL;
-		GetShortPathNameW(long_path, temp_wstring1, length);
-		return temp_wstring1;
-	}
-
-	void krom_get_short_path_name(const FunctionCallbackInfo<Value>& args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value long_path(isolate, args[0]);
-		MultiByteToWideChar(CP_UTF8, 0, *long_path, -1, temp_wstring, 1024);
-		wchar_t* short_path = get_short_path_name(temp_wstring);
-		if (short_path == NULL) return;
-		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)short_path).ToLocalChecked());
-	}
-	#endif
-
 	void start_v8() {
 		plat = platform::NewDefaultPlatform();
 		V8::InitializePlatform(plat.get());
@@ -2576,9 +2562,6 @@ namespace {
 		#endif
 		krom->Set(String::NewFromUtf8(isolate, "windowX").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_x));
 		krom->Set(String::NewFromUtf8(isolate, "windowY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_y));
-		#ifdef KORE_WINDOWS
-		krom->Set(String::NewFromUtf8(isolate, "getShortPathName").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_short_path_name));
-		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
@@ -3111,18 +3094,11 @@ int kickstart(int argc, char** argv) {
 	_argv = argv;
 	std::string bindir(argv[0]);
 
-#ifdef KORE_WINDOWS
-	// Krom.exe located in non-ascii path
+#ifdef KORE_WINDOWS // Handle non-ascii path
 	HMODULE hModule = GetModuleHandleW(NULL);
-	GetModuleFileNameW(hModule, temp_wstring, MAX_PATH);
-	for (int i = 0; i < wcslen(temp_wstring); ++i) {
-		if (temp_wstring[i] > 127) {
-			wchar_t* short_path = get_short_path_name(temp_wstring);
-			sprintf(temp_string, "%ls", temp_wstring1);
-			bindir = temp_string;
-			break;
-		}
-	}
+	GetModuleFileNameW(hModule, temp_wstring, 1024);
+	WideCharToMultiByte(CP_UTF8, 0, temp_wstring, -1, temp_string, 4096, nullptr, nullptr);
+	bindir = temp_string;
 #endif
 
 #ifdef KORE_WINDOWS
