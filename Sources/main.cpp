@@ -54,6 +54,9 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #ifdef WITH_NFD
 #include <nfd.h>
 #endif
+#ifdef WITH_TINYDIR
+#include <tinydir.h>
+#endif
 
 using namespace v8;
 
@@ -2248,6 +2251,52 @@ namespace {
 	}
 	#endif
 
+	#ifdef WITH_TINYDIR
+	void krom_read_directory(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value path(isolate, args[0]);
+		bool foldersOnly = args[1]->ToBoolean(isolate)->Value();
+
+		tinydir_dir dir;
+		#ifdef KORE_WINDOWS
+		MultiByteToWideChar(CP_UTF8, 0, *path, -1, temp_wstring, 1023);
+		tinydir_open_sorted(&dir, temp_wstring);
+		#else
+		tinydir_open_sorted(&dir, *path);
+		#endif
+
+		#ifdef KORE_WINDOWS
+		temp_wstring[0] = 0;
+		#else
+		temp_string[0] = 0;
+		#endif
+
+		for (int i = 0; i < dir.n_files; i++) {
+			tinydir_file file;
+			tinydir_readfile_n(&dir, &file, i);
+
+			if (!file.is_dir || !foldersOnly) {
+				#ifdef KORE_WINDOWS
+				if (wcslen(temp_wstring) + wcslen(file.name) + 1 > 1023) break;
+				wcscat(temp_wstring, file.name);
+				if (i < dir.n_files - 1) wcscat(temp_wstring, L"\n"); // Separator
+				#else
+				if(strlen(temp_string) + strlen(file.name) + 1 > 1023) break;
+				strcat(temp_string, file.name);
+				if (i < dir.n_files - 1) strcat(temp_string, "\n"); // Separator
+				#endif
+			}
+		}
+
+		tinydir_close(&dir);
+		#ifdef KORE_WINDOWS
+		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)temp_wstring).ToLocalChecked());
+		#else
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, temp_string).ToLocalChecked());
+		#endif
+	}
+	#endif
+
 	#ifdef KORE_DIRECT3D12
 	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
@@ -2554,6 +2603,9 @@ namespace {
 		#ifdef WITH_NFD
 		krom->Set(String::NewFromUtf8(isolate, "openDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_open_dialog));
 		krom->Set(String::NewFromUtf8(isolate, "saveDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_save_dialog));
+		#endif
+		#ifdef WITH_TINYDIR
+		krom->Set(String::NewFromUtf8(isolate, "readDirectory").ToLocalChecked(), FunctionTemplate::New(isolate, krom_read_directory));
 		#endif
 		#ifdef KORE_DIRECT3D12
 		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));

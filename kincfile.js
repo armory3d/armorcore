@@ -2,6 +2,7 @@
 const release = true;
 const with_d3dcompiler = true;
 const with_nfd = true;
+const with_tinydir = true;
 const with_audio = false;
 
 const system = platform === Platform.Windows ? "win32" :
@@ -45,19 +46,25 @@ else if (platform === Platform.OSX) {
 	project.addLib('libv8_monolith.a');
 }
 
-if (with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
-	project.addDefine('WITH_NFD');
-	project.addIncludeDir("Libraries/nfd/include");
-	project.addFile('Libraries/nfd/nfd_common.c');
+if (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX) {
+	if (with_nfd) {
+		project.addDefine('WITH_NFD');
+		project.addIncludeDir("Libraries/nfd/include");
+		project.addFile('Libraries/nfd/nfd_common.c');
 
-	if (platform === Platform.Windows) {
-		project.addFile('Libraries/nfd/nfd_win.cpp');
+		if (platform === Platform.Windows) {
+			project.addFile('Libraries/nfd/nfd_win.cpp');
+		}
+		else if (platform === Platform.Linux) {
+			project.addFile('Libraries/nfd/nfd_zenity.c');
+		}
+		else {
+			project.addFile('Libraries/nfd/nfd_cocoa.m');
+		}
 	}
-	else if (platform === Platform.Linux) {
-		project.addFile('Libraries/nfd/nfd_zenity.c');
-	}
-	else {
-		project.addFile('Libraries/nfd/nfd_cocoa.m');
+	if (with_tinydir) {
+		project.addDefine('WITH_TINYDIR');
+		project.addIncludeDir("Libraries/tinydir/include");
 	}
 }
 
