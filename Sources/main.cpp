@@ -2277,10 +2277,12 @@ namespace {
 
 			if (!file.is_dir || !foldersOnly) {
 				#ifdef KORE_WINDOWS
+				if (wcscmp(file.name, L".") == 0 || wcscmp(file.name, L"..") == 0) continue;
 				if (wcslen(temp_wstring) + wcslen(file.name) + 1 > 1023) break;
 				wcscat(temp_wstring, file.name);
 				if (i < dir.n_files - 1) wcscat(temp_wstring, L"\n"); // Separator
 				#else
+				if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0) continue;
 				if(strlen(temp_string) + strlen(file.name) + 1 > 1023) break;
 				strcat(temp_string, file.name);
 				if (i < dir.n_files - 1) strcat(temp_string, "\n"); // Separator
