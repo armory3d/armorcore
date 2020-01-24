@@ -253,6 +253,13 @@ namespace {
 		kinc_gamepad_button_callback = gamepad_button;
 	}
 
+	void krom_set_application_name(const v8::FunctionCallbackInfo<v8::Value>& args) {
+		// Name used by kinc_internal_save_path()
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value name(isolate, args[0]);
+		kinc_set_application_name(*name);
+	}
+
 	void krom_log(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		if (args.Length() < 1) return;
 		HandleScope scope(args.GetIsolate());
@@ -2459,6 +2466,7 @@ namespace {
 
 		Local<ObjectTemplate> krom = ObjectTemplate::New(isolate);
 		krom->Set(String::NewFromUtf8(isolate, "init").ToLocalChecked(), FunctionTemplate::New(isolate, krom_init));
+		krom->Set(String::NewFromUtf8(isolate, "setApplicationName").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_application_name));
 		krom->Set(String::NewFromUtf8(isolate, "log").ToLocalChecked(), FunctionTemplate::New(isolate, krom_log));
 		krom->Set(String::NewFromUtf8(isolate, "clear").ToLocalChecked(), FunctionTemplate::New(isolate, krom_clear));
 		krom->Set(String::NewFromUtf8(isolate, "setCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_callback));

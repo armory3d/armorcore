@@ -2,7 +2,6 @@ extern class Krom {
 	static inline var KROM_API: Int = 3;
 
 	static function clear(flags: Int, color: Int, depth: Float, stencil: Int): Void;
-
 	static function createVertexShader(data: haxe.io.BytesData, name: String): Dynamic;
 	static function createVertexShaderFromSource(source: String): Dynamic;
 	static function createFragmentShader(data: haxe.io.BytesData, name: String): Dynamic;
@@ -79,6 +78,7 @@ extern class Krom {
 	static function loadBlob(file: String): js.lib.ArrayBuffer;
 
 	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int): Void;
+	static function setApplicationName(name: String): Void;
 	static function log(v: Dynamic): Void;
 	static function setCallback(callback: Void->Void): Void;
 	static function setDropFilesCallback(callback: String->Void): Void;
