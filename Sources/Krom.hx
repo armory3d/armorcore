@@ -152,7 +152,7 @@ extern class Krom {
 
 	static function setSaveAndQuitCallback(callback: Bool->Void): Void;
 	static function setMouseCursor(id: Int): Void;
-	static function raytraceInit(shader: haxe.io.BytesData, vb: js.lib.ArrayBuffer, ib: js.lib.ArrayBuffer): Void;
+	static function raytraceInit(shader: haxe.io.BytesData, vb: Dynamic, ib: Dynamic, scale: Float): Void;
 	static function raytraceSetTextures(tex0: Dynamic, tex1: Dynamic, tex2: Dynamic, texenv: Dynamic, tex_sobol: Dynamic, tex_scramble: Dynamic, tex_rank: Dynamic): Void;
 	static function raytraceDispatchRays(target: Dynamic, cb: js.lib.ArrayBuffer): Void;
 	static function saveDialog(filterList: String, defaultPath: String): String;

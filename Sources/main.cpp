@@ -71,8 +71,6 @@ extern "C" {
 #endif
 	extern kinc_g5_command_list_t commandList;
 	kinc_g5_constant_buffer_t constant_buffer;
-	kinc_g5_vertex_buffer_t vertex_buffer;
-	kinc_g5_index_buffer_t index_buffer;
 	kinc_g4_render_target_t* render_target;
 	kinc_raytrace_pipeline_t pipeline;
 	kinc_raytrace_acceleration_structure_t accel;
@@ -2311,8 +2309,6 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 
 		if (accel_created) {
-			kinc_g5_index_buffer_destroy(&index_buffer);
-			kinc_g5_vertex_buffer_destroy(&vertex_buffer);
 			kinc_g5_constant_buffer_destroy(&constant_buffer);
 			kinc_raytrace_acceleration_structure_destroy(&accel);
 			kinc_raytrace_pipeline_destroy(&pipeline);
@@ -2322,43 +2318,21 @@ namespace {
 		ArrayBuffer::Contents shader_content;
 		shader_content = shader_buffer->GetContents();
 
-		Local<ArrayBuffer> vb_buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents vb_content;
-		vb_content = vb_buffer->GetContents();
-		float* vb = (float*)vb_content.Data();
+		Local<External> vb_field = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_vertex_buffer_t* vertex_buffer4 = (kinc_g4_vertex_buffer_t*)vb_field->Value();
+		kinc_g5_vertex_buffer_t* vertex_buffer = &vertex_buffer4->impl._buffer;
 
-		Local<ArrayBuffer> ib_buffer = Local<ArrayBuffer>::Cast(args[2]);
-		ArrayBuffer::Contents ib_content;
-		ib_content = ib_buffer->GetContents();
-		int* ib = (int*)ib_content.Data();
+		Local<External> ib_field = Local<External>::Cast(args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_index_buffer_t* index_buffer4 = (kinc_g4_index_buffer_t*)ib_field->Value();
+		kinc_g5_index_buffer_t* index_buffer = &index_buffer4->impl._buffer;
+
+		float scale = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		kinc_g5_constant_buffer_init(&constant_buffer, constant_buffer_size * 4);
 
 		kinc_raytrace_pipeline_init(&pipeline, &commandList, shader_content.Data(), (int)shader_content.ByteLength(), &constant_buffer);
 
-		kinc_g5_vertex_structure_t structure;
-		kinc_g4_vertex_structure_init(&structure);
-		kinc_g4_vertex_structure_add(&structure, "pos", KINC_G4_VERTEX_DATA_FLOAT3);
-		kinc_g4_vertex_structure_add(&structure, "nor", KINC_G4_VERTEX_DATA_FLOAT3);
-		kinc_g4_vertex_structure_add(&structure, "tex", KINC_G4_VERTEX_DATA_FLOAT2);
-
-		int vcount = (int)vb_content.ByteLength() / 4;
-		kinc_g5_vertex_buffer_init(&vertex_buffer, vcount / 8, &structure, true, 0);
-		float *vertices = kinc_g5_vertex_buffer_lock_all(&vertex_buffer);
-		for (int i = 0; i < vcount; ++i) {
-			vertices[i] = vb[i];
-		}
-		kinc_g5_vertex_buffer_unlock_all(&vertex_buffer);
-
-		int icount = (int)ib_content.ByteLength() / 4;
-		kinc_g5_index_buffer_init(&index_buffer, icount, true);
-		int *indices = kinc_g5_index_buffer_lock(&index_buffer);
-		for (int i = 0; i < icount; ++i) {
-			indices[i] = ib[i];
-		}
-		kinc_g5_index_buffer_unlock(&index_buffer);
-
-		kinc_raytrace_acceleration_structure_init(&accel, &commandList, &vertex_buffer, &index_buffer);
+		kinc_raytrace_acceleration_structure_init(&accel, &commandList, vertex_buffer, index_buffer, scale);
 		accel_created = true;
 	}
 
