@@ -120,7 +120,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 
 	auto shaderConfig = raytracingPipeline.CreateSubobject<CD3D12_RAYTRACING_SHADER_CONFIG_SUBOBJECT>();
 	UINT payloadSize = 10 * sizeof(float); //
-	UINT attributeSize = 8 * sizeof(float); //
+	UINT attributeSize = 8 * (sizeof(float) / 2); //
 	shaderConfig->Config(payloadSize, attributeSize);
 
 	auto globalRootSignatureSubobject = raytracingPipeline.CreateSubobject<CD3D12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
@@ -248,10 +248,10 @@ UINT create_srv_ib(kinc_g5_index_buffer_t* ib, UINT numElements, UINT elementSiz
 	return descriptorIndex;
 }
 
-void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *vb, kinc_g5_index_buffer_t *ib) {
+void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *vb, kinc_g5_index_buffer_t *ib, float scale) {
 
 	create_srv_ib(ib, ib->impl.myCount, 0); //
-	create_srv_vb(vb, vb->impl.myCount, 8 * 4); //
+	create_srv_vb(vb, vb->impl.myCount, 8 * 2); //
 
 	// Reset the command list for the acceleration structure construction
 	command_list->impl._commandList->Reset(command_list->impl._commandAllocator, nullptr);
@@ -262,7 +262,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 	geometryDesc.Triangles.IndexCount = ib->impl.myCount;
 	geometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
 	geometryDesc.Triangles.Transform3x4 = 0;
-	geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
+	geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R16G16B16A16_SNORM;
 	geometryDesc.Triangles.VertexCount = vb->impl.myCount;
 	geometryDesc.Triangles.VertexBuffer.StartAddress = vb->impl.uploadBuffer->GetGPUVirtualAddress();
 	geometryDesc.Triangles.VertexBuffer.StrideInBytes = vb->impl.uploadBuffer->GetDesc().Width / vb->impl.myCount;
@@ -312,7 +312,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 	// Create an instance desc for the bottom-level acceleration structure
 	ID3D12Resource* instanceDescs;
 	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc = {};
-	instanceDesc.Transform[0][0] = instanceDesc.Transform[1][1] = instanceDesc.Transform[2][2] = 1;
+	instanceDesc.Transform[0][0] = instanceDesc.Transform[1][1] = instanceDesc.Transform[2][2] = scale;
 	instanceDesc.InstanceMask = 1;
 	instanceDesc.AccelerationStructure = accel->impl.bottom_level_accel->GetGPUVirtualAddress();
 
