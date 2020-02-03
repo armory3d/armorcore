@@ -2629,7 +2629,7 @@ namespace {
 		return true;
 	}
 
-	void runV8() {
+	void run_v8() {
 		v8::Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -2715,7 +2715,7 @@ namespace {
 		kinc_g4_begin(0);
 
 		// kinc_mutex_lock(&mutex);
-		runV8();
+		run_v8();
 		// kinc_mutex_unlock(&mutex);
 
 		kinc_g4_end(0);
@@ -3152,7 +3152,6 @@ int kickstart(int argc, char** argv) {
 		assetsdir = bindir;
 	}
 
-	bool read_stdout_path = false;
 	bool read_console_pid = false;
 	for (int i = 2; i < argc; ++i) {
 		if (strcmp(argv[i], "--nosound") == 0) {
@@ -3160,13 +3159,6 @@ int kickstart(int argc, char** argv) {
 		}
 		else if (strcmp(argv[i], "--nowindow") == 0) {
 			enable_window = false;
-		}
-		else if (read_stdout_path) {
-			freopen(argv[i], "w", stdout);
-			read_stdout_path = false;
-		}
-		else if (strcmp(argv[i], "--stdout") == 0) {
-			read_stdout_path = true;
 		}
 		else if (read_console_pid) {
 			#ifdef KORE_WINDOWS
