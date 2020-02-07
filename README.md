@@ -8,7 +8,7 @@ cd Kromx
 ```
 ```bash
 # Windows
-# Unpack `V8\Libraries\win32\release\v8_monolith.7z` using 7-Zip (exceeds 100MB)
+# Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip (exceeds 100MB)
 node Kinc/make -g direct3d11 --noshaders
 # Open generated Visual Studio project
 # Build for x64 & release
@@ -23,6 +23,6 @@ strip Krom
 # macOS
 node Kinc/make -g opengl --noshaders
 # Open generated Xcode project
-# Add `path/to/Kromx/V8/Libraries/macos/release` into Library Search Paths
+# Add `path/to/Kromx/v8/Libraries/macos/release` into Library Search Paths
 # Build
 ```
