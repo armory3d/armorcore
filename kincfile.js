@@ -11,13 +11,13 @@ const system = platform === Platform.Windows ? "win32" :
 			   platform === Platform.iOS ? "ios" : "macos";
 
 const build = release ? 'release' : 'debug';
-const libdir = 'V8/Libraries/' + system + '/' + build + '/';
+const libdir = 'v8/libraries/' + system + '/' + build + '/';
 
 let project = new Project('Krom');
 project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addFile('Sources/main.cpp');
-project.addIncludeDir('V8/include');
+project.addIncludeDir('v8/include');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 
 if (platform === Platform.Windows) {
