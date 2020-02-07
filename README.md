@@ -23,6 +23,6 @@ strip Krom
 # macOS
 node Kinc/make -g opengl --noshaders
 # Open generated Xcode project
-# Add `path/to/Kromx/v8/Libraries/macos/release` into Library Search Paths
+# Add `path/to/Kromx/v8/libraries/macos/release` into Library Search Paths
 # Build
 ```
