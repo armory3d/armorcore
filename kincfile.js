@@ -17,8 +17,15 @@ let project = new Project('Krom');
 project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addFile('Sources/main.cpp');
-project.addIncludeDir('v8/include');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
+
+if (platform === Platform.Android) {
+	// Using newer V8 on Android, other platforms need to be updated
+	project.addIncludeDir('v8/include_android');
+}
+else {
+	project.addIncludeDir('v8/include');
+}
 
 if (platform === Platform.Windows) {
 	project.addLib('Dbghelp'); // Stack walk
@@ -37,7 +44,15 @@ else if (platform === Platform.Linux) {
 	project.addLib('v8_monolith -L../../' + libdir);
 }
 else if (platform === Platform.Android) {
-	project.addLib(libdir + 'libv8_monolith.a');
+	// project.addLib(libdir + 'libv8_monolith.a');
+
+	// Some manual tweaking is required for now:
+	// In app/CMakeLists.txt:
+	//   add_library(v8_monolith STATIC IMPORTED)
+	//   set_target_properties(v8_monolith PROPERTIES IMPORTED_LOCATION ../../../V8/Libraries/android/release/libv8_monolith.a)
+	//   target_link_libraries(kore v8_monolith ...)
+	// In app/build.gradle:
+	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
 }
 else if (platform === Platform.iOS) {
 	project.addLib('libv8_monolith.a');

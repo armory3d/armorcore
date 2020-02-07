@@ -29,8 +29,8 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #include <kinc/io/lz4/lz4.h>
 #endif
 
-#include "../V8/include/libplatform/libplatform.h"
-#include "../V8/include/v8.h"
+#include <libplatform/libplatform.h>
+#include <v8.h>
 
 #include <map>
 #include <string>
@@ -3128,7 +3128,11 @@ namespace {
 int kickstart(int argc, char** argv) {
 	_argc = argc;
 	_argv = argv;
+#ifdef KORE_ANDROID
+	std::string bindir("/");
+#else
 	std::string bindir(argv[0]);
+#endif
 
 #ifdef KORE_WINDOWS // Handle non-ascii path
 	HMODULE hModule = GetModuleHandleW(NULL);
@@ -3187,13 +3191,7 @@ int kickstart(int argc, char** argv) {
 	code[reader_size] = 0;
 	kinc_file_reader_close(&reader);
 
-	#ifdef KORE_WINDOWS
-	char dirsep = '\\';
-	#else
-	char dirsep = '/';
-	#endif
 	start_v8();
-
 	kinc_threads_init();
 
 	start_krom(code);
