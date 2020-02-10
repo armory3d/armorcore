@@ -430,6 +430,11 @@ namespace {
 		args[0]->ToBoolean(isolate)->Value() ? kinc_mouse_show() : kinc_mouse_hide();
 	}
 
+	void krom_show_keyboard(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		args[0]->ToBoolean(isolate)->Value() ? kinc_keyboard_show() : kinc_keyboard_hide();
+	}
+
 	void krom_set_audio_callback(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
@@ -612,10 +617,11 @@ namespace {
 
 	void krom_create_vertex_shader_from_source(const FunctionCallbackInfo<Value>& args) {
 
-		#ifdef WITH_D3DCOMPILER
-
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
+
+		#ifdef WITH_D3DCOMPILER
+
 		strcpy(temp_string_vs, *utf8_value);
 
 		ID3DBlob* error_message;
@@ -726,8 +732,6 @@ namespace {
 
 		#else
 
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value utf8_value(isolate, args[0]);
 		char* source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
 		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
@@ -766,10 +770,11 @@ namespace {
 
 	void krom_create_fragment_shader_from_source(const FunctionCallbackInfo<Value>& args) {
 
-		#ifdef WITH_D3DCOMPILER
-
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
+
+		#ifdef WITH_D3DCOMPILER
+
 		strcpy(temp_string_fs, *utf8_value);
 
 		ID3DBlob* error_message;
@@ -859,8 +864,6 @@ namespace {
 
 		#else
 
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value utf8_value(isolate, args[0]);
 		char* source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
 		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
@@ -2464,6 +2467,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "canLockMouse").ToLocalChecked(), FunctionTemplate::New(isolate, krom_can_lock_mouse));
 		krom->Set(String::NewFromUtf8(isolate, "isMouseLocked").ToLocalChecked(), FunctionTemplate::New(isolate, krom_is_mouse_locked));
 		krom->Set(String::NewFromUtf8(isolate, "showMouse").ToLocalChecked(), FunctionTemplate::New(isolate, krom_show_mouse));
+		krom->Set(String::NewFromUtf8(isolate, "showKeyboard").ToLocalChecked(), FunctionTemplate::New(isolate, krom_show_keyboard));
 		krom->Set(String::NewFromUtf8(isolate, "createIndexBuffer").ToLocalChecked(), FunctionTemplate::New(isolate, krom_create_indexbuffer));
 		krom->Set(String::NewFromUtf8(isolate, "deleteIndexBuffer").ToLocalChecked(), FunctionTemplate::New(isolate, krom_delete_indexbuffer));
 		krom->Set(String::NewFromUtf8(isolate, "lockIndexBuffer").ToLocalChecked(), FunctionTemplate::New(isolate, krom_lock_indexbuffer));

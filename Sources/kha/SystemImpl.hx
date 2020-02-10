@@ -241,6 +241,14 @@ class SystemImpl {
 		return keyboard;
 	}
 
+	public static function showKeyboard() {
+		Krom.showKeyboard(true);
+	}
+
+	public static function hideKeyboard() {
+		Krom.showKeyboard(false);
+	}
+
 	public static function lockMouse(): Void {
 		if(!isMouseLocked()){
 			Krom.lockMouse();
