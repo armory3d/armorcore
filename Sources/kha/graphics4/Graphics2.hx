@@ -168,9 +168,9 @@ class ImageShaderPainter {
 
 	private function drawBuffer(): Void {
 		rectVertexBuffer.unlock(bufferIndex * 4);
+		g.setPipeline(myPipeline.pipeline);
 		g.setVertexBuffer(rectVertexBuffer);
 		g.setIndexBuffer(indexBuffer);
-		g.setPipeline(myPipeline.pipeline);
 		g.setTextureParameters(myPipeline.textureLocation, TextureAddressing.Clamp, TextureAddressing.Clamp, bilinear ? TextureFilter.LinearFilter : TextureFilter.PointFilter, bilinear ? TextureFilter.LinearFilter : TextureFilter.PointFilter, bilinearMipmaps ? MipMapFilter.LinearMipFilter : MipMapFilter.NoMipFilter);
 		g.setTexture(myPipeline.textureLocation, lastTexture);
 		g.setMatrix(myPipeline.projectionLocation, projectionMatrix);
@@ -424,9 +424,9 @@ class ColoredShaderPainter {
 		if (!trisDone) endTris(true);
 
 		rectVertexBuffer.unlock(bufferIndex * 4);
+		g.setPipeline(myPipeline.pipeline);
 		g.setVertexBuffer(rectVertexBuffer);
 		g.setIndexBuffer(indexBuffer);
-		g.setPipeline(myPipeline.pipeline);
 		g.setMatrix(myPipeline.projectionLocation, projectionMatrix);
 
 		g.drawIndexedVertices(0, bufferIndex * 2 * 3);
@@ -439,9 +439,9 @@ class ColoredShaderPainter {
 		if (!rectsDone) endRects(true);
 
 		triangleVertexBuffer.unlock(triangleBufferIndex * 3);
+		g.setPipeline(myPipeline.pipeline);
 		g.setVertexBuffer(triangleVertexBuffer);
 		g.setIndexBuffer(triangleIndexBuffer);
-		g.setPipeline(myPipeline.pipeline);
 		g.setMatrix(myPipeline.projectionLocation, projectionMatrix);
 
 		g.drawIndexedVertices(0, triangleBufferIndex * 3);
@@ -620,9 +620,9 @@ class TextShaderPainter {
 
 	private function drawBuffer(): Void {
 		rectVertexBuffer.unlock(bufferIndex * 4);
+		g.setPipeline(myPipeline.pipeline);
 		g.setVertexBuffer(rectVertexBuffer);
 		g.setIndexBuffer(indexBuffer);
-		g.setPipeline(myPipeline.pipeline);
 		g.setMatrix(myPipeline.projectionLocation, projectionMatrix);
 		g.setTextureParameters(myPipeline.textureLocation, TextureAddressing.Clamp, TextureAddressing.Clamp, bilinear ? TextureFilter.LinearFilter : TextureFilter.PointFilter, bilinear ? TextureFilter.LinearFilter : TextureFilter.PointFilter, MipMapFilter.NoMipFilter);
 		g.setTexture(myPipeline.textureLocation, lastTexture);
