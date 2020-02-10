@@ -49,10 +49,15 @@ else if (platform === Platform.Android) {
 	// Some manual tweaking is required for now:
 	// In app/CMakeLists.txt:
 	//   add_library(v8_monolith STATIC IMPORTED)
-	//   set_target_properties(v8_monolith PROPERTIES IMPORTED_LOCATION ../../../V8/Libraries/android/release/libv8_monolith.a)
+	//   set_target_properties(v8_monolith PROPERTIES IMPORTED_LOCATION ../../../v8/libraries/android/release/libv8_monolith.a)
 	//   target_link_libraries(kore v8_monolith ...)
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
+	// In Kinc/kincfile.js:
+	//   project.addDefine('KORE_ANDROID_API=18');
+	// AndroidManifest.xml:
+	//   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+	//   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 }
 else if (platform === Platform.iOS) {
 	project.addLib('libv8_monolith.a');
@@ -61,8 +66,8 @@ else if (platform === Platform.OSX) {
 	project.addLib('libv8_monolith.a');
 }
 
-if (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX) {
-	if (with_nfd) {
+if (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX || platform === Platform.Android) {
+	if (with_nfd && platform !== Platform.Android) {
 		project.addDefine('WITH_NFD');
 		project.addIncludeDir("Libraries/nfd/include");
 		project.addFile('Libraries/nfd/nfd_common.c');

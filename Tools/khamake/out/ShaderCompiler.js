@@ -41,7 +41,7 @@ class ShaderCompiler {
                 return 'metal';
             }
             else {
-                return 'glsl';
+                return options.shaderversion == 300 ? 'essl' : 'glsl'; // TODO: pass gles flag
             }
         }
         else if (options.graphics === GraphicsApi_1.GraphicsApi.Vulkan) {
@@ -51,7 +51,7 @@ class ShaderCompiler {
             return 'metal';
         }
         else if (options.graphics === GraphicsApi_1.GraphicsApi.OpenGL) {
-            return 'glsl';
+            return options.shaderversion == 300 ? 'essl' : 'glsl'; // TODO: pass gles flag
         }
         else if (options.graphics === GraphicsApi_1.GraphicsApi.Direct3D11 || options.graphics === GraphicsApi_1.GraphicsApi.Direct3D12) {
             return 'd3d11';
@@ -215,7 +215,7 @@ class ShaderCompiler {
                                 for (let char of str) {
                                     if (char === '\n') {
                                         if (errorData) {
-                                            
+
                                         }
                                         else {
                                             log.error(errorLine.trim());
@@ -237,7 +237,7 @@ class ShaderCompiler {
                             child.on('close', (code) => {
                                 if (errorLine.trim().length > 0) {
                                     if (errorData) {
-                                        
+
                                     }
                                     else {
                                         log.error(errorLine.trim());
