@@ -30,7 +30,7 @@ else {
 if (platform === Platform.Windows) {
 	project.addLib('Dbghelp'); // Stack walk
 	project.addLib(libdir + 'v8_monolith');
-	if (with_d3dcompiler) {
+	if (with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
 		project.addDefine('WITH_D3DCOMPILER');
 		project.addLib("d3d11");
 		project.addLib("d3dcompiler");
