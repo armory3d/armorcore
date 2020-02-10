@@ -333,7 +333,7 @@ class SystemImpl {
 	}
 
 	public static function loadUrl(url: String): Void {
-
+		Krom.loadUrl(url);
 	}
 
 	public static function getGamepadId(index: Int): String {

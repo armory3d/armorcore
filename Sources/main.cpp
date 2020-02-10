@@ -1267,6 +1267,12 @@ namespace {
 		args.GetReturnValue().Set(buffer);
 	}
 
+	void krom_load_url(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_value(isolate, args[0]);
+		kinc_load_url(*utf8_value);
+	}
+
 	void krom_get_constant_location(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> pipefield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -2500,6 +2506,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "audioThread").ToLocalChecked(), FunctionTemplate::New(isolate, krom_audio_thread));
 		krom->Set(String::NewFromUtf8(isolate, "writeAudioBuffer").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_audio_buffer));
 		krom->Set(String::NewFromUtf8(isolate, "loadBlob").ToLocalChecked(), FunctionTemplate::New(isolate, krom_load_blob));
+		krom->Set(String::NewFromUtf8(isolate, "loadUrl").ToLocalChecked(), FunctionTemplate::New(isolate, krom_load_url));
 		krom->Set(String::NewFromUtf8(isolate, "getConstantLocation").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_constant_location));
 		krom->Set(String::NewFromUtf8(isolate, "getTextureUnit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_texture_unit));
 		krom->Set(String::NewFromUtf8(isolate, "setTexture").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_texture));
