@@ -4,3 +4,4 @@
 [submodule "v8"]
 	path = v8
 	url = https://github.com/armory3d/v8_bin
+	shallow = true
