@@ -425,6 +425,13 @@ namespace {
 		args.GetReturnValue().Set(Boolean::New(isolate, kinc_mouse_is_locked(0)));
 	}
 
+	void krom_set_mouse_position(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_mouse_set_position(0, x, y);
+	}
+
 	void krom_show_mouse(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		args[0]->ToBoolean(isolate)->Value() ? kinc_mouse_show() : kinc_mouse_hide();
@@ -2472,6 +2479,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "unlockMouse").ToLocalChecked(), FunctionTemplate::New(isolate, krom_unlock_mouse));
 		krom->Set(String::NewFromUtf8(isolate, "canLockMouse").ToLocalChecked(), FunctionTemplate::New(isolate, krom_can_lock_mouse));
 		krom->Set(String::NewFromUtf8(isolate, "isMouseLocked").ToLocalChecked(), FunctionTemplate::New(isolate, krom_is_mouse_locked));
+		krom->Set(String::NewFromUtf8(isolate, "setMousePosition").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_position));
 		krom->Set(String::NewFromUtf8(isolate, "showMouse").ToLocalChecked(), FunctionTemplate::New(isolate, krom_show_mouse));
 		krom->Set(String::NewFromUtf8(isolate, "showKeyboard").ToLocalChecked(), FunctionTemplate::New(isolate, krom_show_keyboard));
 		krom->Set(String::NewFromUtf8(isolate, "createIndexBuffer").ToLocalChecked(), FunctionTemplate::New(isolate, krom_create_indexbuffer));
