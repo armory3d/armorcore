@@ -6,9 +6,12 @@ const with_tinydir = true;
 const with_audio = false;
 
 const system = platform === Platform.Windows ? "win32" :
-			   platform === Platform.Linux ? "linux" :
+			   platform === Platform.Linux   ? "linux" :
+			   platform === Platform.OSX     ? "macos" :
+			   platform === Platform.HTML5   ? "html5" :
 			   platform === Platform.Android ? "android" :
-			   platform === Platform.iOS ? "ios" : "macos";
+			   platform === Platform.iOS     ? "ios" :
+			   								   "unknown";
 
 const build = release ? 'release' : 'debug';
 const libdir = 'v8/libraries/' + system + '/' + build + '/';
@@ -16,8 +19,21 @@ const libdir = 'v8/libraries/' + system + '/' + build + '/';
 let project = new Project('Krom');
 project.cpp11 = true;
 project.setDebugDir('Deployment');
-project.addFile('Sources/main.cpp');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
+
+if (with_audio) {
+	project.addDefine('WITH_AUDIO');
+}
+
+if (platform === Platform.HTML5) {
+	project.addFile('Sources/main_html5.c');
+	// EmscriptenExporter.js:
+	// -s EXTRA_EXPORTED_RUNTIME_METHODS=["cwrap"] -s ALLOW_TABLE_GROWTH
+	// -s USE_WEBGL2=1 or -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2
+}
+else {
+	project.addFile('Sources/main.cpp');
+}
 
 if (platform === Platform.Android) {
 	// Using newer V8 on Android, other platforms need to be updated
@@ -86,10 +102,6 @@ if (platform === Platform.Windows || platform === Platform.Linux || platform ===
 		project.addDefine('WITH_TINYDIR');
 		project.addIncludeDir("Libraries/tinydir/include");
 	}
-}
-
-if (with_audio) {
-	project.addDefine('WITH_AUDIO');
 }
 
 resolve(project);
