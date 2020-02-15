@@ -991,7 +991,7 @@ namespace {
 	char savePath[2048] = {0};
 
 	void findSavePath() {
-		// CoInitialize(NULL);
+		CoInitialize(NULL);
 		IKnownFolderManager *folders = nullptr;
 		CoCreateInstance(CLSID_KnownFolderManager, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&folders));
 		IKnownFolder *folder = nullptr;
@@ -1100,6 +1100,9 @@ int kinc_init(const char *name, int width, int height, kinc_window_options_t *wi
 	}
 	win->width = width;
 	win->height = height;
+	if (win->title == NULL) {
+		win->title = name;
+	}
 	int window = kinc_window_create(win, frame);
 	loadXInput();
 	initializeDirectInput();

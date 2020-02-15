@@ -25,7 +25,7 @@ const wchar_t* miss_shader_name = L"miss";
 
 ID3D12Device5* dxrDevice;
 ID3D12GraphicsCommandList4* dxrCommandList;
-ID3D12RootSignature* globalRootSignature;
+ID3D12RootSignature* raytracingRootSignature;
 ID3D12DescriptorHeap* descriptorHeap;
 UINT descriptorSize;
 kinc_raytrace_acceleration_structure_t* accel;
@@ -98,11 +98,11 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	rootParameters[10].InitAsDescriptorTable(1, &SRVDescriptorScramble); //
 	rootParameters[11].InitAsDescriptorTable(1, &SRVDescriptorRank); //
 
-	CD3DX12_ROOT_SIGNATURE_DESC globalRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
+	CD3DX12_ROOT_SIGNATURE_DESC raytracingRootSignatureDesc(ARRAYSIZE(rootParameters), rootParameters);
 	ID3DBlob* blob = nullptr;
 	ID3DBlob* error = nullptr;
-	D3D12SerializeRootSignature(&globalRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, &error);
-	device->CreateRootSignature(1, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(&globalRootSignature));
+	D3D12SerializeRootSignature(&raytracingRootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &blob, &error);
+	device->CreateRootSignature(1, blob->GetBufferPointer(), blob->GetBufferSize(), IID_PPV_ARGS(&raytracingRootSignature));
 
 	// Pipeline
 	CD3D12_STATE_OBJECT_DESC raytracingPipeline{D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE};
@@ -123,8 +123,8 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	UINT attributeSize = 8 * (sizeof(float) / 2); //
 	shaderConfig->Config(payloadSize, attributeSize);
 
-	auto globalRootSignatureSubobject = raytracingPipeline.CreateSubobject<CD3D12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
-	globalRootSignatureSubobject->SetRootSignature(globalRootSignature);
+	auto raytracingRootSignatureSubobject = raytracingPipeline.CreateSubobject<CD3D12_GLOBAL_ROOT_SIGNATURE_SUBOBJECT>();
+	raytracingRootSignatureSubobject->SetRootSignature(raytracingRootSignature);
 
 	auto pipelineConfig = raytracingPipeline.CreateSubobject<CD3D12_RAYTRACING_PIPELINE_CONFIG_SUBOBJECT>();
 	UINT maxRecursionDepth = 1; // ~ primary rays only
@@ -153,7 +153,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 		uint8_t* byteDest;
 		pipeline->impl.raygen_shader_table->Map(0, &CD3DX12_RANGE(0, 0), reinterpret_cast<void **>(&byteDest));
 		void* constantBufferData;
-		constant_buffer->impl._buffer->Map(0, &CD3DX12_RANGE(0, constant_buffer->impl.mySize), (void**)&constantBufferData);
+		constant_buffer->impl.constant_buffer->Map(0, &CD3DX12_RANGE(0, constant_buffer->impl.mySize), (void**)&constantBufferData);
 		memcpy(byteDest, rayGenShaderId, size);
 		memcpy(byteDest + size, constantBufferData, constant_buffer->impl.mySize);
 		pipeline->impl.raygen_shader_table->Unmap(0, nullptr);
@@ -452,7 +452,7 @@ void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 }
 
 void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
-	command_list->impl._commandList->SetComputeRootSignature(globalRootSignature);
+	command_list->impl._commandList->SetComputeRootSignature(raytracingRootSignature);
 
 	// Bind the heaps, acceleration structure and dispatch rays
 	command_list->impl._commandList->SetDescriptorHeaps(1, &descriptorHeap);
@@ -460,7 +460,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
 	command_list->impl._commandList->SetComputeRootShaderResourceView(1, accel->impl.top_level_accel->GetGPUVirtualAddress());
 	command_list->impl._commandList->SetComputeRootDescriptorTable(2, ibgpuDescriptorHandle);
 	command_list->impl._commandList->SetComputeRootDescriptorTable(3, vbgpuDescriptorHandle);
-	command_list->impl._commandList->SetComputeRootConstantBufferView(4, pipeline->_constant_buffer->impl._buffer->GetGPUVirtualAddress());
+	command_list->impl._commandList->SetComputeRootConstantBufferView(4, pipeline->_constant_buffer->impl.constant_buffer->GetGPUVirtualAddress());
 	command_list->impl._commandList->SetComputeRootDescriptorTable(5, tex0gpuDescriptorHandle);
 	command_list->impl._commandList->SetComputeRootDescriptorTable(6, tex1gpuDescriptorHandle);
 	command_list->impl._commandList->SetComputeRootDescriptorTable(7, tex2gpuDescriptorHandle);
