@@ -3,6 +3,7 @@ package kha;
 import kha.graphics4.TextureFormat;
 import kha.input.Gamepad;
 import kha.input.Keyboard;
+import kha.input.Surface;
 import kha.input.Mouse;
 import kha.input.MouseImpl;
 import kha.input.Pen;
@@ -16,6 +17,7 @@ class SystemImpl {
 	private static var framebuffer: Framebuffer;
 	private static var keyboard: Keyboard;
 	private static var mouse: Mouse;
+	private static var surface: Surface;
 	private static var pen: Pen;
 	private static var maxGamepads: Int = 4;
 	private static var gamepads: Array<Gamepad>;
@@ -102,6 +104,18 @@ class SystemImpl {
 		mouse.sendWheelEvent(0, delta);
 	}
 
+	private static function touchDownCallback(index: Int, x: Int, y: Int): Void {
+		surface.sendTouchStartEvent(index, x, y);
+	}
+
+	private static function touchUpCallback(index: Int, x: Int, y: Int): Void {
+		surface.sendTouchEndEvent(index, x, y);
+	}
+
+	private static function touchMoveCallback(index: Int, x: Int, y: Int): Void {
+		surface.sendMoveEvent(index, x, y);
+	}
+
 	private static function penDownCallback(x: Int, y: Int, pressure: Float): Void {
 		pen.sendDownEvent(0, x, y, pressure);
 	}
@@ -154,6 +168,7 @@ class SystemImpl {
 
 		keyboard = new Keyboard();
 		mouse = new MouseImpl();
+		surface = new Surface();
 		pen = new Pen();
 		gamepads = new Array<Gamepad>();
 		for (i in 0...maxGamepads) {
@@ -167,6 +182,9 @@ class SystemImpl {
 		Krom.setMouseUpCallback(mouseUpCallback);
 		Krom.setMouseMoveCallback(mouseMoveCallback);
 		Krom.setMouseWheelCallback(mouseWheelCallback);
+		Krom.setTouchDownCallback(touchDownCallback);
+		Krom.setTouchUpCallback(touchUpCallback);
+		Krom.setTouchMoveCallback(touchMoveCallback);
 		Krom.setPenDownCallback(penDownCallback);
 		Krom.setPenUpCallback(penUpCallback);
 		Krom.setPenMoveCallback(penMoveCallback);
@@ -231,6 +249,10 @@ class SystemImpl {
 
 	public static function getMouse(num: Int): Mouse {
 		return mouse;
+	}
+
+	public static function getSurface(num: Int): Surface {
+		return surface;
 	}
 
 	public static function getPen(num: Int): Pen {

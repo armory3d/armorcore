@@ -7,6 +7,7 @@
 #include <kinc/window.h>
 #include <kinc/display.h>
 #include <kinc/input/mouse.h>
+#include <kinc/input/surface.h>
 #include <kinc/input/keyboard.h>
 #include <kinc/input/pen.h>
 #include <kinc/input/gamepad.h>
@@ -107,6 +108,9 @@ namespace {
 	Global<Function> mouse_down_func;
 	Global<Function> mouse_up_func;
 	Global<Function> mouse_move_func;
+	Global<Function> touch_down_func;
+	Global<Function> touch_up_func;
+	Global<Function> touch_move_func;
 	Global<Function> mouse_wheel_func;
 	Global<Function> pen_down_func;
 	Global<Function> pen_up_func;
@@ -138,6 +142,9 @@ namespace {
 	void mouse_down(int window, int button, int x, int y);
 	void mouse_up(int window, int button, int x, int y);
 	void mouse_wheel(int window, int delta);
+	void touch_move(int index, int x, int y);
+	void touch_down(int index, int x, int y);
+	void touch_up(int index, int x, int y);
 	void pen_down(int window, int x, int y, float pressure);
 	void pen_up(int window, int x, int y, float pressure);
 	void pen_move(int window, int x, int y, float pressure);
@@ -244,6 +251,9 @@ namespace {
 		kinc_mouse_press_callback = mouse_down;
 		kinc_mouse_release_callback = mouse_up;
 		kinc_mouse_scroll_callback = mouse_wheel;
+		kinc_surface_move_callback = touch_move;
+		kinc_surface_touch_start_callback = touch_down;
+		kinc_surface_touch_end_callback = touch_up;
 		kinc_pen_press_callback = pen_down;
 		kinc_pen_move_callback = pen_move;
 		kinc_pen_release_callback = pen_up;
@@ -361,6 +371,27 @@ namespace {
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		mouse_move_func.Reset(isolate, func);
+	}
+
+	void krom_set_touch_down_callback(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		touch_down_func.Reset(isolate, func);
+	}
+
+	void krom_set_touch_up_callback(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		touch_up_func.Reset(isolate, func);
+	}
+
+	void krom_set_touch_move_callback(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		touch_move_func.Reset(isolate, func);
 	}
 
 	void krom_set_mouse_wheel_callback(const FunctionCallbackInfo<Value>& args) {
@@ -2469,6 +2500,9 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "setMouseDownCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_down_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setMouseUpCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_up_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setMouseMoveCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_move_callback));
+		krom->Set(String::NewFromUtf8(isolate, "setTouchDownCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_touch_down_callback));
+		krom->Set(String::NewFromUtf8(isolate, "setTouchUpCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_touch_up_callback));
+		krom->Set(String::NewFromUtf8(isolate, "setTouchMoveCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_touch_move_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setMouseWheelCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_wheel_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setPenDownCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_pen_down_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setPenUpCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_pen_up_callback));
@@ -3042,6 +3076,63 @@ namespace {
 		Local<Value> result;
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, delta)};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
+			write_stack_trace(*stack_trace);
+		}
+	}
+
+	void touch_move(int index, int x, int y) {
+		v8::Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, touch_move_func);
+		Local<Value> result;
+		const int argc = 3;
+		Local<Value> argv[argc] = {Int32::New(isolate, index), Int32::New(isolate, x), Int32::New(isolate, y)};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
+			write_stack_trace(*stack_trace);
+		}
+	}
+
+	void touch_down(int index, int x, int y) {
+		v8::Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, touch_down_func);
+		Local<Value> result;
+		const int argc = 3;
+		Local<Value> argv[argc] = {Int32::New(isolate, index), Int32::New(isolate, x), Int32::New(isolate, y)};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
+			write_stack_trace(*stack_trace);
+		}
+	}
+
+	void touch_up(int index, int x, int y) {
+		v8::Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, touch_up_func);
+		Local<Value> result;
+		const int argc = 3;
+		Local<Value> argv[argc] = {Int32::New(isolate, index), Int32::New(isolate, x), Int32::New(isolate, y)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
