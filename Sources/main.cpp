@@ -1975,6 +1975,8 @@ namespace {
 		MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, wstr, wlen);
 		int result = _wsystem(wstr);
 		delete[] wstr;
+		#elif KORE_IOS
+		int result = 0;
 		#else
 		int result = system(*utf8_cmd);
 		#endif
@@ -3240,6 +3242,8 @@ int kickstart(int argc, char** argv) {
 	_argv = argv;
 #ifdef KORE_ANDROID
 	std::string bindir("/");
+#elif KORE_IOS
+	std::string bindir("");
 #else
 	std::string bindir(argv[0]);
 #endif
@@ -3285,7 +3289,9 @@ int kickstart(int argc, char** argv) {
 		}
 	}
 
+#ifndef KORE_IOS
 	kinc_internal_set_files_location(&assetsdir[0u]);
+#endif
 
 	kinc_file_reader_t reader;
 	if (!kinc_file_reader_open(&reader, "krom.bin", KINC_FILE_TYPE_ASSET)) {

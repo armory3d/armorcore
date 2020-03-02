@@ -35,9 +35,12 @@ else {
 	project.addFile('Sources/main.cpp');
 }
 
+// Using newer V8 on Android and iOS, other platforms need to be updated
 if (platform === Platform.Android) {
-	// Using newer V8 on Android, other platforms need to be updated
 	project.addIncludeDir('v8/include_android');
+}
+else if (platform === Platform.iOS) {
+	project.addIncludeDir('v8/include_ios');
 }
 else {
 	project.addIncludeDir('v8/include');
@@ -77,6 +80,11 @@ else if (platform === Platform.Android) {
 }
 else if (platform === Platform.iOS) {
 	project.addLib('libv8_monolith.a');
+
+	// Some manual tweaking is required for now:
+	// In GLview.mm:
+	// kEAGLRenderingAPIOpenGLES2 -> kEAGLRenderingAPIOpenGLES3
+	// GL_RED -> GL_R8
 }
 else if (platform === Platform.OSX) {
 	project.addLib('libv8_monolith.a');
