@@ -83,8 +83,9 @@ else if (platform === Platform.iOS) {
 
 	// Some manual tweaking is required for now:
 	// In GLview.mm:
-	// kEAGLRenderingAPIOpenGLES2 -> kEAGLRenderingAPIOpenGLES3
-	// GL_RED -> GL_R8
+	//   Replace kEAGLRenderingAPIOpenGLES2 -> kEAGLRenderingAPIOpenGLES3
+	// In RenderTargetImpl.c, TextureImpl.c:
+	//   Replace GL_RED -> GL_R8
 }
 else if (platform === Platform.OSX) {
 	project.addLib('libv8_monolith.a');

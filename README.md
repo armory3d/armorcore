@@ -26,3 +26,20 @@ node Kinc/make -g opengl --noshaders
 # Add `path/to/Kromx/v8/libraries/macos/release` into `Project - Krom - Build Settings - Search Paths - Library Search Paths`
 # Build
 ```
+```bash
+# Android - wip
+node Kinc/make android -g opengl --noshaders
+# Manual tweaking is required for now:
+# https://github.com/armory3d/Kromx/blob/master/kincfile.js#L68
+# Open generated Android Studio project
+# Build for device
+```
+```bash
+# iOS - wip
+node Kinc/make ios -g opengl --noshaders
+# Manual tweaking is required for now:
+# https://github.com/armory3d/Kromx/blob/master/kincfile.js#L84
+# Open generated Xcode project
+# Add `path/to/Kromx/v8/libraries/ios/release` into `Project - Krom - Build Settings - Search Paths - Library Search Paths`
+# Build for device
+```
