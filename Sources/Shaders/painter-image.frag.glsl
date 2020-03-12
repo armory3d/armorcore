@@ -7,6 +7,6 @@ out vec4 FragColor;
 
 void main() {
 	vec4 texcolor = texture(tex, texCoord) * color;
-	texcolor.rgb *= color.a;
+	texcolor.rgb = texcolor.rgb * texcolor.a * color.a;
 	FragColor = texcolor;
 }
