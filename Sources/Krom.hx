@@ -166,4 +166,5 @@ extern class Krom {
 	static function readDirectory(path: String, foldersOnly: Bool): String;
 	static function windowX(id: Int): Int;
 	static function windowY(id: Int): Int;
+	static function language(): String;
 }

@@ -2475,6 +2475,11 @@ namespace {
 		#endif
 	}
 
+	void krom_language(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_language()).ToLocalChecked());
+	}
+
 	void start_v8() {
 		plat = platform::NewDefaultPlatform();
 		V8::InitializePlatform(plat.get());
@@ -2653,6 +2658,7 @@ namespace {
 		#endif
 		krom->Set(String::NewFromUtf8(isolate, "windowX").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_x));
 		krom->Set(String::NewFromUtf8(isolate, "windowY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_y));
+		krom->Set(String::NewFromUtf8(isolate, "language").ToLocalChecked(), FunctionTemplate::New(isolate, krom_language));
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
