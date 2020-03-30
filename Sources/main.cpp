@@ -2789,6 +2789,14 @@ namespace {
 	}
 
 	void drop_files(wchar_t* file_path) {
+		// Update mouse position
+		#ifdef KORE_WINDOWS
+		POINT p;
+		GetCursorPos(&p);
+		ScreenToClient(kinc_windows_window_handle(0), &p);
+		mouse_move(0, p.x, p.y, 0, 0);
+		#endif
+
 		v8::Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
