@@ -88,6 +88,7 @@ namespace {
 	bool enable_sound = true;
 	bool enable_window = true;
 	bool stderr_created = false;
+	bool paused = false;
 
 	Global<Context> global_context;
 	Isolate* isolate;
@@ -2769,6 +2770,10 @@ namespace {
 	#endif
 
 	void update() {
+		#if KORE_WINDOWS
+		if (paused) { Sleep(1); return; }
+		#endif
+
 		#ifdef WITH_AUDIO
 		if (enable_sound) kinc_a2_update();
 		#endif
@@ -2811,6 +2816,8 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		paused = false;
 	}
 
 	char* copy() {
@@ -2887,6 +2894,8 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		paused = false;
 	}
 
 	void resume() {
@@ -2938,6 +2947,8 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		paused = true;
 	}
 
 	void shutdown() {
