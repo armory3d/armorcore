@@ -89,6 +89,7 @@ namespace {
 	bool enable_window = true;
 	bool stderr_created = false;
 	bool paused = false;
+	int pausedFrames = 0;
 
 	Global<Context> global_context;
 	Isolate* isolate;
@@ -2771,7 +2772,7 @@ namespace {
 
 	void update() {
 		#if KORE_WINDOWS
-		if (paused) { Sleep(1); return; }
+		if (paused && ++pausedFrames > 2) { Sleep(1); return; }
 		#endif
 
 		#ifdef WITH_AUDIO
@@ -2957,6 +2958,7 @@ namespace {
 		}
 
 		paused = true;
+		pausedFrames = 0;
 	}
 
 	void shutdown() {
