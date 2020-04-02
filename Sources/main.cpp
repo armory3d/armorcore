@@ -2772,7 +2772,7 @@ namespace {
 
 	void update() {
 		#if KORE_WINDOWS
-		if (paused && ++pausedFrames > 2) { Sleep(1); return; }
+		if (paused && ++pausedFrames > 3) { Sleep(1); return; }
 		#endif
 
 		#ifdef WITH_AUDIO
