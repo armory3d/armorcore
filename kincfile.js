@@ -84,8 +84,13 @@ else if (platform === Platform.iOS) {
 	// Some manual tweaking is required for now:
 	// In GLview.mm:
 	//   Replace kEAGLRenderingAPIOpenGLES2 -> kEAGLRenderingAPIOpenGLES3
+	//   Register kinc_acceleration_callback
 	// In RenderTargetImpl.c, TextureImpl.c:
 	//   Replace GL_RED -> GL_R8
+	//   Replace GL_DEPTH_COMPONENT -> GL_DEPTH_COMPONENT32_OES
+	// In OpenGL.cpp:
+	//   Enable glDrawBuffers
+	//   Enable Kinc_Internal_SupportsDepthTexture
 }
 else if (platform === Platform.OSX) {
 	project.addLib('libv8_monolith.a');
