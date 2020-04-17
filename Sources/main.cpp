@@ -59,6 +59,14 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #include <tinydir.h>
 #endif
 
+#ifdef KORE_MACOS
+extern const char* macgetresourcepath();
+#endif
+
+#ifdef KORE_IOS
+extern const char* iphonegetresourcepath();
+#endif
+
 using namespace v8;
 
 const int KROM_API = 3;
@@ -2003,7 +2011,23 @@ namespace {
 
 	void krom_get_files_location(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
+		#ifdef KORE_MACOS
+		char path[1024];
+		strcpy(path, macgetresourcepath());
+		strcat(path, "/");
+		strcat(path, KORE_DEBUGDIR);
+		strcat(path, "/");
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, path).ToLocalChecked());
+		#elif KORE_IOS
+		char path[1024];
+		strcpy(path, iphonegetresourcepath());
+		strcat(path, "/");
+		strcat(path, KORE_DEBUGDIR);
+		strcat(path, "/");
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, path).ToLocalChecked());
+		#else
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_internal_get_files_location()).ToLocalChecked());
+		#endif
 	}
 
 	void krom_set_bool_compute(const FunctionCallbackInfo<Value>& args) {
@@ -3316,7 +3340,7 @@ int kickstart(int argc, char** argv) {
 		}
 	}
 
-#ifndef KORE_IOS
+#if !defined(KORE_MACOS) && !defined(KORE_IOS)
 	kinc_internal_set_files_location(&assetsdir[0u]);
 #endif
 
