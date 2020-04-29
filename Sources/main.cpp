@@ -2511,6 +2511,11 @@ namespace {
 		V8::InitializePlatform(plat.get());
 		V8::Initialize();
 
+		#if KORE_IOS
+		std::string flags = "--jitless";
+		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
+		#endif
+
 		Isolate::CreateParams create_params;
 		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
 		isolate = Isolate::New(create_params);
