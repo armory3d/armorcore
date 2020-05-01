@@ -95,6 +95,7 @@ namespace {
 	char** _argv;
 	bool enable_sound = true;
 	bool enable_window = true;
+	bool profile = false;
 	bool stderr_created = false;
 	bool paused = false;
 	int pausedFrames = 0;
@@ -2511,10 +2512,12 @@ namespace {
 		V8::InitializePlatform(plat.get());
 		V8::Initialize();
 
+		std::string flags = "";
 		#if KORE_IOS
-		std::string flags = "--jitless";
-		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
+		flags += "--jitless ";
 		#endif
+		if (profile) flags += "--logfile=krom-v8.log --prof ";
+		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
 
 		Isolate::CreateParams create_params;
 		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
@@ -3333,6 +3336,9 @@ int kickstart(int argc, char** argv) {
 		}
 		else if (strcmp(argv[i], "--nowindow") == 0) {
 			enable_window = false;
+		}
+		else if (strcmp(argv[i], "--prof") == 0) {
+			profile = true;
 		}
 		else if (read_console_pid) {
 			#ifdef KORE_WINDOWS
