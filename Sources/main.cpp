@@ -2516,7 +2516,7 @@ namespace {
 		#if KORE_IOS
 		flags += "--jitless ";
 		#endif
-		if (profile) flags += "--logfile=krom-v8.log --prof ";
+		if (profile) flags += "--logfile=krom-v8.log --prof --log-source-code ";
 		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
 
 		Isolate::CreateParams create_params;
