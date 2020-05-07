@@ -660,6 +660,9 @@ namespace {
 		strcpy(temp_string_vs, "// ");
 		strcat(temp_string_vs, *utf8_name);
 		temp_string_vs[strlen(*utf8_name) - 8] = 0;
+		for (int i = 0; i < strlen(temp_string_vs); ++i) {
+			if (temp_string_vs[i] == '-') temp_string_vs[i] = '_';
+		}
 		strcat(temp_string_vs, "_vert_main");
 		strcat(temp_string_vs, (char*)content.Data());
 		kinc_g4_shader_init(shader, temp_string_vs, strlen(temp_string_vs), KINC_G4_SHADER_TYPE_VERTEX);
@@ -825,6 +828,9 @@ namespace {
 		strcpy(temp_string_fs, "// ");
 		strcat(temp_string_fs, *utf8_name);
 		temp_string_fs[strlen(*utf8_name) - 8] = 0;
+		for (int i = 0; i < strlen(temp_string_fs); ++i) {
+			if (temp_string_fs[i] == '-') temp_string_fs[i] = '_';
+		}
 		strcat(temp_string_fs, "_frag_main");
 		strcat(temp_string_fs, (char*)content.Data());
 		kinc_g4_shader_init(shader, temp_string_fs, strlen(temp_string_fs), KINC_G4_SHADER_TYPE_FRAGMENT);
