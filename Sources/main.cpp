@@ -653,7 +653,19 @@ namespace {
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
 		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+
+		#ifdef KORE_METAL
+		// Prepend entry point name, used by kinc
+		String::Utf8Value utf8_name(isolate, args[1]);
+		strcpy(temp_string_vs, "// ");
+		strcat(temp_string_vs, *utf8_name);
+		temp_string_vs[strlen(*utf8_name) - 8] = 0;
+		strcat(temp_string_vs, "_vert_main");
+		strcat(temp_string_vs, (char*)content.Data());
+		kinc_g4_shader_init(shader, temp_string_vs, strlen(temp_string_vs), KINC_G4_SHADER_TYPE_VERTEX);
+		#else
 		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_VERTEX);
+		#endif
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -806,7 +818,19 @@ namespace {
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
 		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+
+		#ifdef KORE_METAL
+		// Prepend entry point name, used by kinc
+		String::Utf8Value utf8_name(isolate, args[1]);
+		strcpy(temp_string_fs, "// ");
+		strcat(temp_string_fs, *utf8_name);
+		temp_string_fs[strlen(*utf8_name) - 8] = 0;
+		strcat(temp_string_fs, "_frag_main");
+		strcat(temp_string_fs, (char*)content.Data());
+		kinc_g4_shader_init(shader, temp_string_fs, strlen(temp_string_fs), KINC_G4_SHADER_TYPE_FRAGMENT);
+		#else
 		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_FRAGMENT);
+		#endif
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
