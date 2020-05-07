@@ -794,6 +794,13 @@ namespace {
 		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
 
+		#elif KORE_METAL
+
+		strcpy(temp_string_vs, "// my_main\n");
+		strcat(temp_string_vs, *utf8_value);
+		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_init(shader, temp_string_vs, strlen(temp_string_vs), KINC_G4_SHADER_TYPE_VERTEX);
+
 		#else
 
 		char* source = new char[strlen(*utf8_value) + 1];
@@ -940,6 +947,13 @@ namespace {
 
 		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
+
+		#elif KORE_METAL
+
+		strcpy(temp_string_fs, "// my_main\n");
+		strcat(temp_string_fs, *utf8_value);
+		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_init(shader, temp_string_fs, strlen(temp_string_fs), KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		#else
 
