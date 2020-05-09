@@ -1138,28 +1138,29 @@ namespace {
 		}
 		pipeline->input_layout[size] = nullptr;
 
-		pipeline->cull_mode = (kinc_g4_cull_mode_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "cullMode").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		Local<Object> args11 = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		pipeline->cull_mode = (kinc_g4_cull_mode_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "cullMode").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 
-		pipeline->depth_write = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthWrite").ToLocalChecked()).ToLocalChecked()->BooleanValue(isolate);
-		pipeline->depth_mode = (kinc_g4_compare_mode_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthMode").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->depth_write = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthWrite").ToLocalChecked()).ToLocalChecked()->BooleanValue(isolate);
+		pipeline->depth_mode = (kinc_g4_compare_mode_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthMode").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 
-		pipeline->stencil_mode = (kinc_g4_compare_mode_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilMode").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_both_pass = (kinc_g4_stencil_action_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilBothPass").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_depth_fail = (kinc_g4_stencil_action_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilDepthFail").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_fail = (kinc_g4_stencil_action_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilFail").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_reference_value = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilReferenceValue").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_read_mask = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilReadMask").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_write_mask = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilWriteMask").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->stencil_mode = (kinc_g4_compare_mode_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilMode").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->stencil_both_pass = (kinc_g4_stencil_action_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilBothPass").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->stencil_depth_fail = (kinc_g4_stencil_action_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilDepthFail").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->stencil_fail = (kinc_g4_stencil_action_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilFail").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->stencil_reference_value = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilReferenceValue").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->stencil_read_mask = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilReadMask").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->stencil_write_mask = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilWriteMask").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 
-		pipeline->blend_source = (kinc_g4_blending_operation_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "blendSource").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->blend_destination = (kinc_g4_blending_operation_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "blendDestination").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->alpha_blend_source = (kinc_g4_blending_operation_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "alphaBlendSource").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->alpha_blend_destination = (kinc_g4_blending_operation_t)args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "alphaBlendDestination").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->blend_source = (kinc_g4_blending_operation_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "blendSource").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->blend_destination = (kinc_g4_blending_operation_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "blendDestination").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->alpha_blend_source = (kinc_g4_blending_operation_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "alphaBlendSource").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->alpha_blend_destination = (kinc_g4_blending_operation_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "alphaBlendDestination").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 
-		Local<Object> maskRedArray = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorWriteMaskRed").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		Local<Object> maskGreenArray = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorWriteMaskGreen").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		Local<Object> maskBlueArray = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorWriteMaskBlue").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		Local<Object> maskAlphaArray = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorWriteMaskAlpha").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<Object> maskRedArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorWriteMaskRed").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<Object> maskGreenArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorWriteMaskGreen").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<Object> maskBlueArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorWriteMaskBlue").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<Object> maskAlphaArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorWriteMaskAlpha").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 
 		for (int i = 0; i < 8; ++i) {
 			pipeline->color_write_mask_red[i] = maskRedArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->BooleanValue(isolate);
@@ -1168,7 +1169,13 @@ namespace {
 			pipeline->color_write_mask_alpha[i] = maskAlphaArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->BooleanValue(isolate);
 		}
 
-		pipeline->conservative_rasterization = args[11]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "conservativeRasterization").ToLocalChecked()).ToLocalChecked()->BooleanValue(isolate);
+		pipeline->color_attachment_count = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachmentCount").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		Local<Object> colorAttachmentArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachments").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		for (int i = 0; i < 8; ++i) {
+			pipeline->color_attachment[i] = (kinc_g4_render_target_format_t)colorAttachmentArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		}
+
+		pipeline->conservative_rasterization = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "conservativeRasterization").ToLocalChecked()).ToLocalChecked()->BooleanValue(isolate);
 
 		kinc_g4_pipeline_compile(pipeline);
 	}

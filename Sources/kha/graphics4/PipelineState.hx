@@ -7,7 +7,28 @@ import kha.graphics4.VertexStructure;
 
 class PipelineState extends PipelineStateBase {
 	private var pipeline: Dynamic;
-	
+
+	private static function getRenderTargetFormat(format: TextureFormat): Int {
+		switch (format) {
+		case RGBA32:	// Target32Bit
+			return 0;
+		case RGBA64:	// Target64BitFloat
+			return 1;
+		case A32:		// Target32BitRedFloat
+			return 2;
+		case RGBA128:	// Target128BitFloat
+			return 3;
+		case DEPTH16:	// Target16BitDepth
+			return 4;
+		case L8:
+			return 5;	// Target8BitRed
+		case A16:
+			return 6;	// Target16BitRedFloat
+		default:
+			return 0;
+		}
+	}
+
 	public function new() {
 		super();
 		pipeline = Krom.createPipeline();
@@ -17,7 +38,7 @@ class PipelineState extends PipelineStateBase {
 		Krom.deletePipeline(pipeline);
 		pipeline = null;
 	}
-	
+
 	public function compile(): Void {
 		var structure0 = inputLayout.length > 0 ? inputLayout[0] : null;
 		var structure1 = inputLayout.length > 1 ? inputLayout[1] : null;
@@ -27,6 +48,10 @@ class PipelineState extends PipelineStateBase {
 		var tcs = tessellationControlShader != null ? tessellationControlShader.shader : null;
 		var tes = tessellationEvaluationShader != null ? tessellationEvaluationShader.shader : null;
 		var stencilReferenceValue = 0;
+		var colorAttachments: Array<Int> = [];
+		for (i in 0...8) {
+			colorAttachments.push(getRenderTargetFormat(this.colorAttachments[i]));
+		}
 		switch (this.stencilReferenceValue) {
 			case Static(value):
 				stencilReferenceValue = value;
@@ -51,18 +76,20 @@ class PipelineState extends PipelineStateBase {
 			colorWriteMaskGreen: colorWriteMasksGreen,
 			colorWriteMaskBlue: colorWriteMasksBlue,
 			colorWriteMaskAlpha: colorWriteMasksAlpha,
+			colorAttachmentCount: colorAttachmentCount,
+			colorAttachments: colorAttachments,
 			conservativeRasterization: conservativeRasterization
 		});
 	}
-	
+
 	public function set(): Void {
 		Krom.setPipeline(pipeline);
 	}
-	
+
 	public function getConstantLocation(name: String): kha.graphics4.ConstantLocation {
 		return Krom.getConstantLocation(pipeline, name);
 	}
-	
+
 	public function getTextureUnit(name: String): kha.graphics4.TextureUnit {
 		return Krom.getTextureUnit(pipeline, name);
 	}
@@ -77,7 +104,7 @@ class PipelineState extends PipelineStateBase {
 				return 2;
 		}
 	}
-	
+
 	private static function convertCompareMode(mode: CompareMode): Int {
 		switch (mode) {
 			case Always:
