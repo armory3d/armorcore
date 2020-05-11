@@ -1035,6 +1035,10 @@ class Graphics2 extends kha.graphics2.Graphics {
 	}
 
 	override public function clear(color: Color = null): Void {
+		#if kha_metal // Metal has no g.clear yet
+		this.color = color;
+		fillRect(0, 0, canvas.width, canvas.height);
+		#end
 		flush();
 		g.clear(color == null ? Color.Black : color);
 	}
