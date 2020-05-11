@@ -1413,6 +1413,9 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		#if KORE_METAL
+		if (unit->impl._unit.impl.index == -1) return;
+		#endif
 		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)texfield->Value();
 		kinc_g4_set_texture(*unit, texture);
@@ -1422,6 +1425,9 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		#if KORE_METAL
+		if (unit->impl._unit.impl.index == -1) return;
+		#endif
 		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)rtfield->Value();
 		kinc_g4_render_target_use_color_as_texture(render_target, *unit);
