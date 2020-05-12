@@ -71,7 +71,8 @@ class Graphics implements kha.graphics4.Graphics {
 		var raw = new iron.RenderPath.RenderTargetRaw();
 		raw.width = renderTarget.width;
 		raw.height = renderTarget.height;
-		raw.format = "RGBA32";
+		var format = @:privateAccess cast(renderTarget, Image).format;
+		raw.format = format == TextureFormat.RGBA32 ? "RGBA32" : format == TextureFormat.RGBA64 ? "RGBA64" : "R8";
 		var target = new iron.RenderPath.RenderTarget(raw);
 		target.image = cast renderTarget;
 		path.renderTargets.set("clearTarget", target);
