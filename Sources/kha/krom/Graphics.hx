@@ -63,11 +63,32 @@ class Graphics implements kha.graphics4.Graphics {
 	}
 
 	public function clear(?color: Color, ?depth: Float, ?stencil: Int): Void {
+		#if (kha_metal && iron) // Metal has no clear yet
+
+		var current = @:privateAccess kha.graphics4.Graphics2.current;
+		if (current != null) current.end();
+		var path = iron.RenderPath.active;
+		var raw = new iron.RenderPath.RenderTargetRaw();
+		raw.width = renderTarget.width;
+		raw.height = renderTarget.height;
+		raw.format = "RGBA32";
+		var target = new iron.RenderPath.RenderTarget(raw);
+		target.image = cast renderTarget;
+		path.renderTargets.set("clearTarget", target);
+		path.setTarget("clearTarget");
+		path.clearTarget(color);
+		path.renderTargets.remove("clearTarget");
+		if (current != null) current.begin(false);
+
+		#else
+
 		var flags: Int = 0;
 		if (color != null) flags |= 1;
 		if (depth != null) flags |= 2;
 		if (stencil != null) flags |= 4;
 		Krom.clear(flags, color == null ? 0 : color.value, depth, stencil);
+
+		#end
 	}
 
 	public function viewport(x: Int, y: Int, width: Int, height: Int): Void {
