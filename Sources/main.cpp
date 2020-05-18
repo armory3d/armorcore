@@ -54,6 +54,8 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 #ifdef WITH_NFD
 #include <nfd.h>
+#elif KORE_IOS
+#include "IOSFileDialog.h"
 #endif
 #ifdef WITH_TINYDIR
 #include <tinydir.h>
@@ -2390,6 +2392,28 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Error: %s\n", NFD_GetError());
 		}
 	}
+	#elif KORE_IOS
+	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value filterList(isolate, args[0]);
+		String::Utf8Value defaultPath(isolate, args[1]);
+		// Once finished drop_files callback is called
+		IOSFileDialogOpen();
+	}
+
+	void krom_save_dialog(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value filterList(isolate, args[0]);
+		String::Utf8Value defaultPath(isolate, args[1]);
+		// Path to app document directory
+		wchar_t* outPath = IOSFileDialogSave();
+		size_t len = wcslen(outPath);
+		uint16_t* str = new uint16_t[len + 1];
+		for (int i = 0; i < len; i++) str[i] = outPath[i];
+		str[len] = 0;
+		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)str).ToLocalChecked());
+		delete str;
+	}
 	#endif
 
 	#ifdef WITH_TINYDIR
@@ -2738,7 +2762,7 @@ namespace {
 		//
 		krom->Set(String::NewFromUtf8(isolate, "setSaveAndQuitCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_save_and_quit_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setMouseCursor").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_cursor));
-		#ifdef WITH_NFD
+		#if defined(WITH_NFD) || defined(KORE_IOS)
 		krom->Set(String::NewFromUtf8(isolate, "openDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_open_dialog));
 		krom->Set(String::NewFromUtf8(isolate, "saveDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_save_dialog));
 		#endif

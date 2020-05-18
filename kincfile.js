@@ -40,6 +40,7 @@ if (platform === Platform.Android) {
 	project.addIncludeDir('v8/include_android');
 }
 else if (platform === Platform.iOS) {
+	project.addFile('Sources/IOSFileDialog.mm');
 	project.addIncludeDir('v8/include_ios');
 }
 else {
