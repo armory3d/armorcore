@@ -77,7 +77,7 @@ class Graphics implements kha.graphics4.Graphics {
 		target.image = cast renderTarget;
 		path.renderTargets.set("clearTarget", target);
 		path.setTarget("clearTarget");
-		path.clearTarget(color);
+		path.clearTarget(color, depth);
 		path.renderTargets.remove("clearTarget");
 		if (current != null) current.begin(false);
 
