@@ -60,6 +60,9 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #ifdef WITH_TINYDIR
 #include <tinydir.h>
 #endif
+#ifdef IDLE_SLEEP
+#include <unistd.h>
+#endif
 
 #ifdef KORE_MACOS
 extern const char* macgetresourcepath();
@@ -2896,6 +2899,10 @@ namespace {
 		if (paused && ++pausedFrames > 3) { Sleep(1); return; }
 		#endif
 
+		#ifdef IDLE_SLEEP
+		if (++pausedFrames > 120) { usleep(1000); return; }
+		#endif
+
 		#ifdef WITH_AUDIO
 		if (enable_sound) kinc_a2_update();
 		#endif
@@ -3116,6 +3123,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void key_up(int code) {
@@ -3135,6 +3146,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void key_press(unsigned int character) {
@@ -3154,6 +3169,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void mouse_move(int window, int x, int y, int mx, int my) {
@@ -3173,6 +3192,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void mouse_down(int window, int button, int x, int y) {
@@ -3192,6 +3215,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void mouse_up(int window, int button, int x, int y) {
@@ -3211,6 +3238,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void mouse_wheel(int window, int delta) {
@@ -3230,6 +3261,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void touch_move(int index, int x, int y) {
@@ -3249,6 +3284,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void touch_down(int index, int x, int y) {
@@ -3268,6 +3307,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void touch_up(int index, int x, int y) {
@@ -3287,6 +3330,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void pen_down(int window, int x, int y, float pressure) {
@@ -3306,6 +3353,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void pen_up(int window, int x, int y, float pressure) {
@@ -3325,6 +3376,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void pen_move(int window, int x, int y, float pressure) {
@@ -3344,6 +3399,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void gamepad_axis(int gamepad, int axis, float value) {
@@ -3363,6 +3422,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	void gamepad_button(int gamepad, int button, float value) {
@@ -3382,6 +3445,10 @@ namespace {
 			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 }
 

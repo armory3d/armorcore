@@ -38,10 +38,12 @@ else {
 // Using newer V8 on Android and iOS, other platforms need to be updated
 if (platform === Platform.Android) {
 	project.addIncludeDir('v8/include_android');
+	project.addDefine('IDLE_SLEEP');
 }
 else if (platform === Platform.iOS) {
 	project.addFile('Sources/IOSFileDialog.mm');
 	project.addIncludeDir('v8/include_ios');
+	project.addDefine('IDLE_SLEEP');
 }
 else {
 	project.addIncludeDir('v8/include');
