@@ -72,7 +72,7 @@ else if (platform === Platform.Android) {
 	// In app/CMakeLists.txt:
 	//   add_library(v8_monolith STATIC IMPORTED)
 	//   set_target_properties(v8_monolith PROPERTIES IMPORTED_LOCATION ../../../v8/libraries/android/release/libv8_monolith.a)
-	//   target_link_libraries(kore v8_monolith ...)
+	//   target_link_libraries(v8_monolith)
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
 	// In Kinc/kincfile.js:
@@ -88,26 +88,24 @@ else if (platform === Platform.OSX) {
 	project.addLib('libv8_monolith.a');
 }
 
-if (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX || platform === Platform.Android) {
-	if (with_nfd && platform !== Platform.Android) {
-		project.addDefine('WITH_NFD');
-		project.addIncludeDir("Libraries/nfd/include");
-		project.addFile('Libraries/nfd/nfd_common.c');
+if (with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
+	project.addDefine('WITH_NFD');
+	project.addIncludeDir("Libraries/nfd/include");
+	project.addFile('Libraries/nfd/nfd_common.c');
 
-		if (platform === Platform.Windows) {
-			project.addFile('Libraries/nfd/nfd_win.cpp');
-		}
-		else if (platform === Platform.Linux) {
-			project.addFile('Libraries/nfd/nfd_zenity.c');
-		}
-		else {
-			project.addFile('Libraries/nfd/nfd_cocoa.m');
-		}
+	if (platform === Platform.Windows) {
+		project.addFile('Libraries/nfd/nfd_win.cpp');
 	}
-	if (with_tinydir) {
-		project.addDefine('WITH_TINYDIR');
-		project.addIncludeDir("Libraries/tinydir/include");
+	else if (platform === Platform.Linux) {
+		project.addFile('Libraries/nfd/nfd_zenity.c');
 	}
+	else {
+		project.addFile('Libraries/nfd/nfd_cocoa.m');
+	}
+}
+if (with_tinydir) {
+	project.addDefine('WITH_TINYDIR');
+	project.addIncludeDir("Libraries/tinydir/include");
 }
 
 resolve(project);

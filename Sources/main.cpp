@@ -2465,11 +2465,6 @@ namespace {
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, temp_string).ToLocalChecked());
 		#endif
 	}
-	#elif KORE_IOS
-	void krom_read_directory(const FunctionCallbackInfo<Value>& args) {
-		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(String::NewFromUtf8(isolate, "").ToLocalChecked());
-	}
 	#endif
 
 	#ifdef KORE_DIRECT3D12
@@ -2774,7 +2769,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "openDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_open_dialog));
 		krom->Set(String::NewFromUtf8(isolate, "saveDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_save_dialog));
 		#endif
-		#if defined(WITH_TINYDIR) || defined(KORE_IOS)
+		#ifdef WITH_TINYDIR
 		krom->Set(String::NewFromUtf8(isolate, "readDirectory").ToLocalChecked(), FunctionTemplate::New(isolate, krom_read_directory));
 		#endif
 		#ifdef KORE_DIRECT3D12
