@@ -29,6 +29,28 @@ class PipelineState extends PipelineStateBase {
 		}
 	}
 
+	private static function getDepthBufferBits(depthAndStencil: DepthStencilFormat): Int {
+		return switch (depthAndStencil) {
+			case NoDepthAndStencil: 0;
+			case DepthOnly: 24;
+			case DepthAutoStencilAuto: 24;
+			case Depth24Stencil8: 24;
+			case Depth32Stencil8: 32;
+			case Depth16: 16;
+		}
+	}
+
+	private static function getStencilBufferBits(depthAndStencil: DepthStencilFormat): Int {
+		return switch (depthAndStencil) {
+			case NoDepthAndStencil: 0;
+			case DepthOnly: 0;
+			case DepthAutoStencilAuto: 8;
+			case Depth24Stencil8: 8;
+			case Depth32Stencil8: 8;
+			case Depth16: 0;
+		}
+	}
+
 	public function new() {
 		super();
 		pipeline = Krom.createPipeline();
@@ -78,6 +100,8 @@ class PipelineState extends PipelineStateBase {
 			colorWriteMaskAlpha: colorWriteMasksAlpha,
 			colorAttachmentCount: colorAttachmentCount,
 			colorAttachments: colorAttachments,
+			depthAttachmentBits: getDepthBufferBits(depthStencilAttachment),
+			stencilAttachmentBits: getStencilBufferBits(depthStencilAttachment),
 			conservativeRasterization: conservativeRasterization
 		});
 	}
