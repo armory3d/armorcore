@@ -231,8 +231,8 @@ namespace {
 		frame.frequency = 60;
 		frame.vertical_sync = vertical_sync;
 		frame.color_bits = 32;
-		frame.depth_bits = 16;
-		frame.stencil_bits = 8;
+		frame.depth_bits = 0;
+		frame.stencil_bits = 0;
 		frame.samples_per_pixel = samples_per_pixel;
 		kinc_init(*title, width, height, &win, &frame);
 		kinc_mutex_init(&mutex);
