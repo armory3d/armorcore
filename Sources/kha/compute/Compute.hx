@@ -71,10 +71,6 @@ class Compute {
 		Krom.setMatrix3Compute(location, mat.buffer);
 	}
 
-	public static function setBuffer(buffer: ShaderStorageBuffer, index: Int) {
-		
-	}
-
 	public static function setTexture(unit: TextureUnit, texture: Image, access: Access) {
 		if (texture == null) return;
 		texture.texture_ != null ? Krom.setTextureCompute(unit, texture.texture_, access.getIndex()) : Krom.setRenderTargetCompute(unit, texture.renderTarget_, access.getIndex());

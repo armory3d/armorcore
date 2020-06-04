@@ -1,12 +1,82 @@
 package kha.graphics4;
 
-import kha.graphics4.FragmentShader;
-import kha.graphics4.VertexData;
-import kha.graphics4.VertexShader;
-import kha.graphics4.VertexStructure;
-
-class PipelineState extends PipelineStateBase {
+class PipelineState {
 	private var pipeline: Dynamic;
+
+	public var inputLayout: Array<VertexStructure>;
+	public var vertexShader: VertexShader;
+	public var fragmentShader: FragmentShader;
+	public var geometryShader: GeometryShader;
+	public var tessellationControlShader: TessellationControlShader;
+	public var tessellationEvaluationShader: TessellationEvaluationShader;
+
+	public var cullMode: CullMode;
+
+	public var depthWrite: Bool;
+	public var depthMode: CompareMode;
+
+
+	// One, Zero deactivates blending
+	public var blendSource: BlendingFactor;
+	public var blendDestination: BlendingFactor;
+	public var blendOperation: BlendingOperation;
+	public var alphaBlendSource: BlendingFactor;
+	public var alphaBlendDestination: BlendingFactor;
+	public var alphaBlendOperation: BlendingOperation;
+
+	public var colorWriteMask(never, set): Bool;
+	public var colorWriteMaskRed(get, set): Bool;
+	public var colorWriteMaskGreen(get, set): Bool;
+	public var colorWriteMaskBlue(get, set): Bool;
+	public var colorWriteMaskAlpha(get, set): Bool;
+
+	public var colorWriteMasksRed: Array<Bool>;
+	public var colorWriteMasksGreen: Array<Bool>;
+	public var colorWriteMasksBlue: Array<Bool>;
+	public var colorWriteMasksAlpha: Array<Bool>;
+
+	public var colorAttachmentCount: Int;
+	public var colorAttachments: Array<TextureFormat>;
+
+	public var depthStencilAttachment: DepthStencilFormat;
+
+	inline function set_colorWriteMask(value: Bool): Bool {
+		return colorWriteMaskRed = colorWriteMaskBlue = colorWriteMaskGreen = colorWriteMaskAlpha = value;
+	}
+
+	inline function get_colorWriteMaskRed(): Bool {
+		return colorWriteMasksRed[0];
+	}
+
+	inline function set_colorWriteMaskRed(value: Bool): Bool {
+		return colorWriteMasksRed[0] = value;
+	}
+
+	inline function get_colorWriteMaskGreen(): Bool {
+		return colorWriteMasksGreen[0];
+	}
+
+	inline function set_colorWriteMaskGreen(value: Bool): Bool {
+		return colorWriteMasksGreen[0] = value;
+	}
+
+	inline function get_colorWriteMaskBlue(): Bool {
+		return colorWriteMasksBlue[0];
+	}
+
+	inline function set_colorWriteMaskBlue(value: Bool): Bool {
+		return colorWriteMasksBlue[0] = value;
+	}
+
+	inline function get_colorWriteMaskAlpha(): Bool {
+		return colorWriteMasksAlpha[0];
+	}
+
+	inline function set_colorWriteMaskAlpha(value: Bool): Bool {
+		return colorWriteMasksAlpha[0] = value;
+	}
+
+	public var conservativeRasterization: Bool;
 
 	private static function getRenderTargetFormat(format: TextureFormat): Int {
 		switch (format) {
@@ -52,7 +122,42 @@ class PipelineState extends PipelineStateBase {
 	}
 
 	public function new() {
-		super();
+		inputLayout = null;
+		vertexShader = null;
+		fragmentShader = null;
+		geometryShader = null;
+		tessellationControlShader = null;
+		tessellationEvaluationShader = null;
+
+		cullMode = CullMode.None;
+
+		depthWrite = false;
+		depthMode = CompareMode.Always;
+
+		blendSource = BlendingFactor.BlendOne;
+		blendDestination = BlendingFactor.BlendZero;
+		blendOperation = BlendingOperation.Add;
+		alphaBlendSource = BlendingFactor.BlendOne;
+		alphaBlendDestination = BlendingFactor.BlendZero;
+		alphaBlendOperation = BlendingOperation.Add;
+
+		colorWriteMasksRed = [];
+		colorWriteMasksGreen = [];
+		colorWriteMasksBlue = [];
+		colorWriteMasksAlpha = [];
+		for (i in 0...8) colorWriteMasksRed.push(true);
+		for (i in 0...8) colorWriteMasksGreen.push(true);
+		for (i in 0...8) colorWriteMasksBlue.push(true);
+		for (i in 0...8) colorWriteMasksAlpha.push(true);
+
+		colorAttachmentCount = 1;
+		colorAttachments = [];
+		for (i in 0...8) colorAttachments.push(TextureFormat.RGBA32);
+
+		depthStencilAttachment = DepthStencilFormat.NoDepthAndStencil;
+
+		conservativeRasterization = false;
+
 		pipeline = Krom.createPipeline();
 	}
 
@@ -69,27 +174,14 @@ class PipelineState extends PipelineStateBase {
 		var gs = geometryShader != null ? geometryShader.shader : null;
 		var tcs = tessellationControlShader != null ? tessellationControlShader.shader : null;
 		var tes = tessellationEvaluationShader != null ? tessellationEvaluationShader.shader : null;
-		var stencilReferenceValue = 0;
 		var colorAttachments: Array<Int> = [];
 		for (i in 0...8) {
 			colorAttachments.push(getRenderTargetFormat(this.colorAttachments[i]));
-		}
-		switch (this.stencilReferenceValue) {
-			case Static(value):
-				stencilReferenceValue = value;
-			default:
 		}
 		Krom.compilePipeline(pipeline, structure0, structure1, structure2, structure3, inputLayout.length, vertexShader.shader, fragmentShader.shader, gs, tcs, tes, {
 			cullMode: convertCullMode(cullMode),
 			depthWrite: this.depthWrite,
 			depthMode: convertCompareMode(depthMode),
-			stencilMode: convertCompareMode(stencilMode),
-			stencilBothPass: convertStencilAction(stencilBothPass),
-			stencilDepthFail: convertStencilAction(stencilDepthFail),
-			stencilFail: convertStencilAction(stencilFail),
-			stencilReferenceValue: stencilReferenceValue,
-			stencilReadMask: stencilReadMask,
-			stencilWriteMask: stencilWriteMask,
 			blendSource: convertBlendingFactor(blendSource),
 			blendDestination: convertBlendingFactor(blendDestination),
 			alphaBlendSource: convertBlendingFactor(alphaBlendSource),
@@ -146,27 +238,6 @@ class PipelineState extends PipelineStateBase {
 			case Greater:
 				return 6;
 			case GreaterEqual:
-				return 7;
-		}
-	}
-
-	private static function convertStencilAction(action: StencilAction): Int {
-		switch (action) {
-			case Keep:
-				return 0;
-			case Zero:
-				return 1;
-			case Replace:
-				return 2;
-			case Increment:
-				return 3;
-			case IncrementWrap:
-				return 4;
-			case Decrement:
-				return 5;
-			case DecrementWrap:
-				return 6;
-			case Invert:
 				return 7;
 		}
 	}

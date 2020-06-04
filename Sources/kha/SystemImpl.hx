@@ -5,11 +5,9 @@ import kha.input.Gamepad;
 import kha.input.Keyboard;
 import kha.input.Surface;
 import kha.input.Mouse;
-import kha.input.MouseImpl;
 import kha.input.Pen;
 import kha.input.Surface;
 import kha.System;
-
 import haxe.ds.Vector;
 
 class SystemImpl {
@@ -158,7 +156,7 @@ class SystemImpl {
 		Scheduler.init();
 		Shaders.init();
 
-		var g4 = new kha.krom.Graphics();
+		var g4 = new kha.graphics4.Graphics();
 		framebuffer = new Framebuffer(0, null, g4);
 		framebuffer.init(new kha.graphics4.Graphics2(framebuffer), g4);
 		Krom.setCallback(renderCallback);
@@ -167,7 +165,7 @@ class SystemImpl {
 		Krom.setApplicationStateCallback(foregroundCallback, resumeCallback, pauseCallback, backgroundCallback, shutdownCallback);
 
 		keyboard = new Keyboard();
-		mouse = new MouseImpl();
+		mouse = new Mouse();
 		surface = new Surface();
 		pen = new Pen();
 		gamepads = new Array<Gamepad>();
@@ -200,22 +198,6 @@ class SystemImpl {
 		Scheduler.start();
 
 		callback(Window.get(0));
-	}
-
-	public static function initEx(title: String, options: Array<WindowOptions>, windowCallback: Int -> Void, callback: Void -> Void): Void {
-
-	}
-
-	static function translateWindowMode(value: Null<WindowMode>): Int {
-		if (value == null) {
-			return 0;
-		}
-
-		return switch (value) {
-			case Windowed: 0;
-			case Fullscreen: 1;
-			case ExclusiveFullscreen: 2;
-		}
 	}
 
 	public static function getTime(): Float {

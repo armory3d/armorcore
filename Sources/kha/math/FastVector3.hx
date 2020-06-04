@@ -56,11 +56,6 @@ class FastVector3 {
 		return new FastVector3(_x, _y, _z);
 	}
 
-	@:deprecated("normalize() will be deprecated soon, use the immutable normalized() instead")
-	@:extern public inline function normalize(): Void {
-		#if haxe4 inline #end set_length(1);
-	}
-
 	@:extern public inline function normalized(): FastVector3 {
 		var v = new FastVector3(x, y, z);
 		#if haxe4 inline #end v.set_length(1);

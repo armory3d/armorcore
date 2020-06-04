@@ -11,10 +11,10 @@ class Image implements Canvas {
 
 	private var format: TextureFormat;
 	private var readable: Bool;
-	
+
 	private var graphics2: kha.graphics2.Graphics;
 	private var graphics4: kha.graphics4.Graphics;
-	
+
 	private function new(texture: Dynamic) {
 		texture_ = texture;
 	}
@@ -78,7 +78,7 @@ class Image implements Canvas {
 			return 1; // Grey8
 		}
 	}
-	
+
 	public static function _fromTexture(texture: Dynamic): Image {
 		return new Image(texture);
 	}
@@ -106,7 +106,7 @@ class Image implements Canvas {
 		image.texture_ = Krom.createTextureFromEncodedBytes(bytes.getData(), format, readable);
 		doneCallback(image);
 	}
-	
+
 	public static function create(width: Int, height: Int, format: TextureFormat = null, usage: Usage = null): Image {
 		if (format == null) format = TextureFormat.RGBA32;
 		var image = new Image(null);
@@ -145,7 +145,7 @@ class Image implements Canvas {
 
 	public function isOpaque(x: Int, y: Int): Bool { return false; }
 	public function at(x: Int, y: Int): Color { return Color.Black; }
-	
+
 	public function unload(): Void {
 		Krom.unloadImage(this);
 		texture_ = null;
@@ -185,11 +185,11 @@ class Image implements Canvas {
 			default: 4;
 		}
 	}
-	
+
 	public function generateMipmaps(levels: Int): Void {
 		texture_ == null ? Krom.generateRenderTargetMipmaps(renderTarget_, levels) : Krom.generateTextureMipmaps(texture_, levels);
 	}
-	
+
 	public function setMipmaps(mipmaps: Array<Image>): Void {
 		Krom.setMipmaps(texture_, mipmaps);
 	}
@@ -212,7 +212,7 @@ class Image implements Canvas {
 	private function get_realWidth(): Int { return texture_ == null ? renderTarget_.width : texture_.realWidth; }
 	public var realHeight(get, null): Int;
 	private function get_realHeight(): Int { return texture_ == null ? renderTarget_.height : texture_.realHeight; }
-	
+
 	public var g2(get, null): kha.graphics2.Graphics;
 
 	private function get_g2(): kha.graphics2.Graphics {
@@ -226,7 +226,7 @@ class Image implements Canvas {
 
 	private function get_g4(): kha.graphics4.Graphics {
 		if (graphics4 == null) {
-			graphics4 = new kha.krom.Graphics(this);
+			graphics4 = new kha.graphics4.Graphics(this);
 		}
 		return graphics4;
 	}

@@ -10,37 +10,37 @@ class Video {
 	public function width(): Int {
 		return 100;
 	}
-	
+
 	/**
 	 * The height of the video file in pixels.
 	 */
 	public function height(): Int {
 		return 100;
 	}
-	
+
 	/**
 	 * Create a new media object instance.
 	 */
 	public function new() : Void {
 
 	}
-	
+
 	/**
 	 * Play / resume the media element.
-	 * 
+	 *
 	 * @param loop		If playing it looped, default = false.
 	 */
 	public function play(loop: Bool = false) : Void {
 
 	}
-	
+
 	/**
 	 * Pause the media element.
 	 */
 	public function pause() : Void {
 
 	}
-	
+
 	/**
 	 * Pause the stop element.
 	 */
@@ -54,7 +54,7 @@ class Video {
 	public function getLength() : Int { // Milliseconds
 		return 0;
 	}
-	
+
 	/**
 	 * Return the media position, in milliseconds.
 	 * Deprecated.
@@ -73,7 +73,7 @@ class Video {
 		return 0;
 	}
 
-	/**	
+	/**
 	 * Return the media volume, between 0 and 1.
 	 */
 	public function getVolume() : Float { // [0, 1]
@@ -88,7 +88,7 @@ class Video {
 	public function setVolume(volume : Float) : Void { // [0, 1]
 
 	}
-	
+
 	/**
 	 * If the media has finished or not.
 	 */
@@ -100,6 +100,6 @@ class Video {
 	 * Unload the resource from memory.
 	 */
 	public function unload(): Void {
-		
+
 	}
 }

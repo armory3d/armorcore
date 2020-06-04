@@ -47,18 +47,6 @@ class SystemOptions {
 	}
 }
 
-typedef OldSystemOptions = {
-	?title: String,
-	?width: Int,
-	?height: Int,
-	?samplesPerPixel: Int,
-	?vSync: Bool,
-	?windowMode: WindowMode,
-	?resizable: Bool,
-	?maximizable: Bool,
-	?minimizable: Bool
-}
-
 @:allow(kha.SystemImpl)
 class System {
 	static var renderListeners: Array<Array<Framebuffer> -> Void> = [];
@@ -71,51 +59,9 @@ class System {
 	static var cutListener: Void->String = null;
 	static var copyListener: Void->String = null;
 	static var pasteListener: String->Void = null;
-	static var theTitle: String;
-
-	@:deprecated("Use System.start instead")
-	public static function init(options: OldSystemOptions, callback: Void -> Void): Void {
-		var features:WindowFeatures = None;
-		if (options.resizable) features |= WindowFeatures.FeatureResizable;
-		if (options.maximizable) features |= WindowFeatures.FeatureMaximizable;
-		if (options.minimizable) features |= WindowFeatures.FeatureMinimizable;
-
-		var newOptions: SystemOptions = {
-			title: options.title,
-			width: options.width,
-			height: options.height,
-			window: {
-				mode: options.windowMode,
-				windowFeatures: features
-			},
-			framebuffer: {
-				samplesPerPixel: options.samplesPerPixel,
-				verticalSync: options.vSync
-			}
-		};
-		start(newOptions, function (_) {
-			callback();
-		});
-	}
 
 	public static function start(options: SystemOptions, callback: Window -> Void): Void {
-		theTitle = options.title;
 		SystemImpl.init(options, callback);
-	}
-
-	public static var title(get, never): String;
-
-	private static function get_title(): String {
-		return theTitle;
-	}
-
-	@:deprecated("Use System.notifyOnFrames instead")
-	public static function notifyOnRender(listener: Framebuffer -> Void, id: Int = 0): Void {
-		renderListeners.push(function (framebuffers: Array<Framebuffer>) {
-			if (id < framebuffers.length) {
-				listener(framebuffers[id]);
-			}
-		});
 	}
 
 	/**
@@ -238,7 +184,7 @@ class System {
 		return SystemImpl.getLanguage();
 	}
 
-  /**
+	/**
 	 * Schedules the application to stop as soon as possible. This is not possible on all targets.
 	 * @return Returns true if the application can be stopped
 	 */
@@ -248,65 +194,6 @@ class System {
 
 	public static function loadUrl(url: String): Void {
 		SystemImpl.loadUrl(url);
-	}
-
-	@:deprecated("This only returns a default value")
-	public static function canSwitchFullscreen(): Bool {
-		return true;
-	}
-
-	@:deprecated("Use the kha.Window API instead")
-	public static function isFullscreen(): Bool {
-		return Window.get(0).mode == WindowMode.Fullscreen || Window.get(0).mode == WindowMode.ExclusiveFullscreen;
-	}
-
-	@:deprecated("Use the kha.Window API instead")
-	public static function requestFullscreen(): Void {
-		Window.get(0).mode = WindowMode.Fullscreen;
-	}
-
-	@:deprecated("Use the kha.Window API instead")
-	public static function exitFullscreen(): Void {
-		Window.get(0).mode = WindowMode.Windowed;
-	}
-
-	@:deprecated("This does nothing")
-	public static function notifyOnFullscreenChange(func: Void -> Void, error: Void -> Void): Void {
-
-	}
-
-	@:deprecated("This does nothing")
-	public static function removeFullscreenListener(func: Void -> Void, error: Void -> Void): Void {
-
-	}
-
-	@:deprecated("This does nothing. On Windows you can use Window.resize instead after setting the mode to ExclusiveFullscreen")
-	public static function changeResolution(width: Int, height: Int): Void {
-
-	}
-
-	@:deprecated("Use System.stop instead")
-	public static function requestShutdown(): Void {
-		stop();
-	}
-
-	@:deprecated("Use the kha.Window API instead")
-	public static var vsync(get, null): Bool;
-
-	private static function get_vsync(): Bool {
-		return Window.get(0).vSynced;
-	}
-
-	@:deprecated("Use the kha.Display API instead")
-	public static var refreshRate(get, null): Int;
-
-	private static function get_refreshRate(): Int {
-		return Display.primary.frequency;
-	}
-
-	@:deprecated("Use the kha.Display API instead")
-	public static function screenDpi(): Int {
-		return Display.primary.pixelsPerInch;
 	}
 
 	public static function safeZone(): Float {

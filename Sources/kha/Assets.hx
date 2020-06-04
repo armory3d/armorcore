@@ -14,16 +14,16 @@ class Assets {
 
 	public static function loadSoundFromPath(path: String, done: Sound -> Void): Void {
 		var description = { files: [ path ] };
-		return LoaderImpl.loadSoundFromDescription(description, done);
+		LoaderImpl.loadSoundFromDescription(description, done);
 	}
 
 	public static function loadFontFromPath(path: String, done: Font -> Void): Void {
 		var description = { files: [ path ] };
-		return LoaderImpl.loadFontFromDescription(description, done);
+		LoaderImpl.loadFontFromDescription(description, done);
 	}
 
 	public static function loadVideoFromPath(path: String, done: Video -> Void): Void {
 		var description = { files: [ path ] };
-		return LoaderImpl.loadVideoFromDescription(description, done);
+		LoaderImpl.loadVideoFromDescription(description, done);
 	}
 }

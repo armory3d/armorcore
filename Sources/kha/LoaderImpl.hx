@@ -1,8 +1,8 @@
 package kha;
 
-import kha.FontStyle;
 import kha.Blob;
 import kha.Kravur;
+import kha.Sound;
 import haxe.io.Bytes;
 import haxe.io.BytesData;
 
@@ -14,7 +14,7 @@ class LoaderImpl {
 	}
 
 	public static function loadSoundFromDescription(desc: Dynamic, done: kha.Sound -> Void) {
-		done(new kha.krom.Sound(Bytes.ofData(Krom.loadSound(desc.files[0]))));
+		done(new Sound(Bytes.ofData(Krom.loadSound(desc.files[0]))));
 	}
 
 	public static function loadVideoFromDescription(desc: Dynamic, done: kha.Video -> Void): Void {

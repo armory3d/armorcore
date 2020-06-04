@@ -1149,14 +1149,6 @@ namespace {
 		pipeline->depth_write = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthWrite").ToLocalChecked()).ToLocalChecked()->BooleanValue(isolate);
 		pipeline->depth_mode = (kinc_g4_compare_mode_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthMode").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 
-		pipeline->stencil_mode = (kinc_g4_compare_mode_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilMode").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_both_pass = (kinc_g4_stencil_action_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilBothPass").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_depth_fail = (kinc_g4_stencil_action_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilDepthFail").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_fail = (kinc_g4_stencil_action_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilFail").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_reference_value = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilReferenceValue").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_read_mask = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilReadMask").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_write_mask = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilWriteMask").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-
 		pipeline->blend_source = (kinc_g4_blending_operation_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "blendSource").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		pipeline->blend_destination = (kinc_g4_blending_operation_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "blendDestination").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		pipeline->alpha_blend_source = (kinc_g4_blending_operation_t)args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "alphaBlendSource").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();

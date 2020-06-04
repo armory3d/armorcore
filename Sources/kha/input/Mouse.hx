@@ -81,16 +81,16 @@ class Mouse {
 
 			windowWheelListeners[windowId].push(wheelListener);
 		}
-		
+
 		if (leaveListener != null) {
 			if (windowLeaveListeners == null) {
 				windowLeaveListeners = new Array();
 			}
-			
+
 			while (windowLeaveListeners.length <= windowId) {
 				windowLeaveListeners.push(new Array());
 			}
-			
+
 			windowLeaveListeners[windowId].push(leaveListener);
 		}
 	}
@@ -154,7 +154,7 @@ class Mouse {
 				trace('no wheelListeners were ever registered');
 			}
 		}
-		
+
 		if (leaveListener != null) {
 			if (windowLeaveListeners != null) {
 				if (windowId < windowLeaveListeners.length) {
@@ -174,28 +174,28 @@ class Mouse {
 	 * Locks the cursor position and hides it. For catching movements, use the `moveX`/`moveY` arguments of your `moveListener` handler.
 	 */
 	public function lock(): Void {
-
+		SystemImpl.lockMouse();
 	}
 
 	/**
 	 * Unlock the cursor position and hides it. For catching movements, use the `moveX`/`moveY` arguments of your `moveListener` handler.
 	 */
 	public function unlock(): Void {
-
+		SystemImpl.unlockMouse();
 	}
 
 	/**
 	 * Unlocks the cursor position and displays it.
 	 */
 	public function canLock(): Bool {
-		return false;
+		return SystemImpl.canLockMouse();
 	}
 
 	/**
 	 * Returns the status of the cursor lock
 	 */
 	public function isLocked(): Bool {
-		return false;
+		return SystemImpl.isMouseLocked();
 	}
 
 	/**
@@ -204,28 +204,28 @@ class Mouse {
 	 * @param error function fired when a toggle error occurs.
 	 */
 	public function notifyOnLockChange(change: Void -> Void, error: Void -> Void): Void {
-
+		SystemImpl.notifyOfMouseLockChange(change, error);
 	}
 
 	/**
 	 * Removes event handlers from the passed functions that were passed to `notifyOnLockChange` function.
 	 */
 	public function removeFromLockChange(change: Void -> Void, error: Void -> Void): Void{
-
+		SystemImpl.removeFromMouseLockChange(change, error);
 	}
 
 	/**
 	 * Hides the system cursor (without locking)
 	 */
 	public function hideSystemCursor(): Void {
-
+		SystemImpl.hideSystemCursor();
 	}
 
 	/**
 	 * Show the system cursor
 	 */
 	public function showSystemCursor(): Void {
-
+		SystemImpl.showSystemCursor();
 	}
 
 	private static var instance: Mouse;
@@ -247,7 +247,7 @@ class Mouse {
 			}
 		}
 	}
-	
+
 	@input
 	private function sendDownEvent(windowId: Int, button: Int, x: Int, y: Int): Void {
 		if (windowDownListeners != null) {

@@ -89,7 +89,7 @@ class CubeMap implements Canvas {
 	public var g4(get, null): kha.graphics4.Graphics;
 	private function get_g4(): kha.graphics4.Graphics {
 		if (graphics4 == null) {
-			graphics4 = new kha.krom.Graphics(this);
+			graphics4 = new kha.graphics4.Graphics(this);
 		}
 		return graphics4;
 	}
