@@ -60,6 +60,9 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #ifdef WITH_TINYDIR
 #include <tinydir.h>
 #endif
+#ifdef WITH_ZLIB
+#include <zlib.h>
+#endif
 #ifdef IDLE_SLEEP
 #include <unistd.h>
 #endif
@@ -2462,6 +2465,87 @@ namespace {
 	}
 	#endif
 
+	#ifdef WITH_ZLIB
+	void krom_inflate(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		ArrayBuffer::Contents content;
+		// if (buffer->IsExternal()) content = buffer->GetContents();
+		// else content = buffer->Externalize();
+		content = buffer->GetContents();
+		bool raw = args[1]->ToBoolean(isolate)->Value();
+
+		unsigned char* inflated = (unsigned char*)malloc(content.ByteLength());
+
+		z_stream infstream;
+		infstream.zalloc = Z_NULL;
+		infstream.zfree = Z_NULL;
+		infstream.opaque = Z_NULL;
+		infstream.avail_in = (uInt)content.ByteLength();
+		infstream.next_in = (Bytef *)content.Data();
+		infstream.avail_out = content.ByteLength();
+		infstream.next_out = (Bytef *)inflated;
+
+		inflateInit2(&infstream, raw ? -15 : 15 + 32);
+
+		int i = 2;
+		while (true) {
+			int res = inflate(&infstream, Z_NO_FLUSH);
+			if (res == Z_STREAM_END) break;
+			if (infstream.avail_out == 0) {
+				inflated = (unsigned char*)realloc(inflated, content.ByteLength() * i);
+				infstream.avail_out = content.ByteLength();
+				infstream.next_out = (Bytef *)(inflated + content.ByteLength() * (i - 1));
+				i++;
+			}
+		}
+
+		inflateEnd(&infstream);
+
+		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, infstream.total_out);
+		ArrayBuffer::Contents outputContent = output->GetContents();
+		memcpy(outputContent.Data(), inflated, infstream.total_out);
+		free(inflated);
+
+		args.GetReturnValue().Set(output);
+	}
+
+	void krom_deflate(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		ArrayBuffer::Contents content;
+		// if (buffer->IsExternal()) content = buffer->GetContents();
+		// else content = buffer->Externalize();
+		content = buffer->GetContents();
+		bool raw = args[1]->ToBoolean(isolate)->Value();
+
+		int deflatedSize = compressBound(content.ByteLength());
+		void* deflated = malloc(deflatedSize);
+
+		z_stream defstream;
+		defstream.zalloc = Z_NULL;
+		defstream.zfree = Z_NULL;
+		defstream.opaque = Z_NULL;
+		defstream.avail_in = (uInt)content.ByteLength();
+		defstream.next_in = (Bytef *)content.Data();
+		defstream.avail_out = deflatedSize;
+		defstream.next_out = (Bytef *)deflated;
+
+		deflateInit2(&defstream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, raw ? -15 : 15, 5, Z_DEFAULT_STRATEGY);
+		deflate(&defstream, Z_FINISH);
+		deflateEnd(&defstream);
+
+		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, defstream.total_out);
+		ArrayBuffer::Contents outputContent = output->GetContents();
+		memcpy(outputContent.Data(), deflated, defstream.total_out);
+		free(deflated);
+
+		args.GetReturnValue().Set(output);
+	}
+	#endif
+
 	#ifdef KORE_DIRECT3D12
 	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
@@ -2766,6 +2850,10 @@ namespace {
 		#endif
 		#ifdef WITH_TINYDIR
 		krom->Set(String::NewFromUtf8(isolate, "readDirectory").ToLocalChecked(), FunctionTemplate::New(isolate, krom_read_directory));
+		#endif
+		#ifdef WITH_ZLIB
+		krom->Set(String::NewFromUtf8(isolate, "inflate").ToLocalChecked(), FunctionTemplate::New(isolate, krom_inflate));
+		krom->Set(String::NewFromUtf8(isolate, "deflate").ToLocalChecked(), FunctionTemplate::New(isolate, krom_deflate));
 		#endif
 		#ifdef KORE_DIRECT3D12
 		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));

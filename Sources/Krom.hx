@@ -2,13 +2,13 @@ extern class Krom {
 	static inline var KROM_API: Int = 3;
 
 	static function clear(flags: Int, color: Int, depth: Float, stencil: Int): Void;
-	static function createVertexShader(data: haxe.io.BytesData, name: String): Dynamic;
+	static function createVertexShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
 	static function createVertexShaderFromSource(source: String): Dynamic;
-	static function createFragmentShader(data: haxe.io.BytesData, name: String): Dynamic;
+	static function createFragmentShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
 	static function createFragmentShaderFromSource(source: String): Dynamic;
-	static function createGeometryShader(data: haxe.io.BytesData, name: String): Dynamic;
-	static function createTessellationControlShader(data: haxe.io.BytesData, name: String): Dynamic;
-	static function createTessellationEvaluationShader(data: haxe.io.BytesData, name: String): Dynamic;
+	static function createGeometryShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
+	static function createTessellationControlShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
+	static function createTessellationEvaluationShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
 	static function deleteShader(shader: Dynamic): Dynamic;
 	static function createPipeline(): Dynamic;
 	static function deletePipeline(pipeline: Dynamic): Dynamic;
@@ -45,11 +45,11 @@ extern class Krom {
 	static function createRenderTargetCubeMap(cubeMapSize: Int, depthBufferBits: Int, format: Int, stencilBufferBits: Int, contextId: Int): Dynamic;
 	static function createTexture(width: Int, height: Int, format: Int): Dynamic;
 	static function createTexture3D(width: Int, height: Int, depth: Int, format: Int): Dynamic;
-	static function createTextureFromBytes(data: haxe.io.BytesData, width: Int, height: Int, format: Int, readable: Bool): Dynamic;
-	static function createTextureFromBytes3D(data: haxe.io.BytesData, width: Int, height: Int, depth: Int, format: Int, readable: Bool): Dynamic;
-	static function createTextureFromEncodedBytes(data: haxe.io.BytesData, format: String, readable: Bool): Dynamic;
-	static function getTexturePixels(texture: Dynamic): haxe.io.BytesData;
-	static function getRenderTargetPixels(renderTarget: Dynamic, data: haxe.io.BytesData): Void;
+	static function createTextureFromBytes(data: js.lib.ArrayBuffer, width: Int, height: Int, format: Int, readable: Bool): Dynamic;
+	static function createTextureFromBytes3D(data: js.lib.ArrayBuffer, width: Int, height: Int, depth: Int, format: Int, readable: Bool): Dynamic;
+	static function createTextureFromEncodedBytes(data: js.lib.ArrayBuffer, format: String, readable: Bool): Dynamic;
+	static function getTexturePixels(texture: Dynamic): js.lib.ArrayBuffer;
+	static function getRenderTargetPixels(renderTarget: Dynamic, data: js.lib.ArrayBuffer): Void;
 	static function lockTexture(texture: Dynamic, level: Int): js.lib.ArrayBuffer;
 	static function unlockTexture(texture: Dynamic): Void;
 	static function generateTextureMipmaps(texture: Dynamic, levels: Int): Void;
@@ -121,10 +121,10 @@ extern class Krom {
 	static function displayX(index: Int): Int;
 	static function displayY(index: Int): Int;
 	static function displayIsPrimary(index: Int): Bool;
-	static function writeStorage(name: String, data: haxe.io.BytesData): Void;
-	static function readStorage(name: String): haxe.io.BytesData;
+	static function writeStorage(name: String, data: js.lib.ArrayBuffer): Void;
+	static function readStorage(name: String): js.lib.ArrayBuffer;
 
-	static function fileSaveBytes(path: String, bytes: haxe.io.BytesData): Void;
+	static function fileSaveBytes(path: String, bytes: js.lib.ArrayBuffer): Void;
 	static function sysCommand(cmd: String, ?args: Array<String>): Int;
 	static function savePath(): String;
 	static function getArgCount(): Int;
@@ -149,7 +149,7 @@ extern class Krom {
 	static function setTexture3DParametersCompute(texunit: kha.compute.TextureUnit, uAddressing: Int, vAddressing: Int, wAddressing: Int, minificationFilter: Int, magnificationFilter: Int, mipmapFilter: Int): Void;
 	static function setShaderCompute(shader: Dynamic): Void;
 	static function deleteShaderCompute(shader: Dynamic): Void;
-	static function createShaderCompute(bytes: haxe.io.BytesData): Dynamic;
+	static function createShaderCompute(bytes: js.lib.ArrayBuffer): Dynamic;
 	static function getConstantLocationCompute(shader: Dynamic, name: String): Dynamic;
 	static function getTextureUnitCompute(shader: Dynamic, name: String): Dynamic;
 	static function compute(x: Int, y: Int, z: Int): Void;
@@ -158,12 +158,14 @@ extern class Krom {
 
 	static function setSaveAndQuitCallback(callback: Bool->Void): Void;
 	static function setMouseCursor(id: Int): Void;
-	static function raytraceInit(shader: haxe.io.BytesData, vb: Dynamic, ib: Dynamic, scale: Float): Void;
+	static function raytraceInit(shader: js.lib.ArrayBuffer, vb: Dynamic, ib: Dynamic, scale: Float): Void;
 	static function raytraceSetTextures(tex0: Dynamic, tex1: Dynamic, tex2: Dynamic, texenv: Dynamic, tex_sobol: Dynamic, tex_scramble: Dynamic, tex_rank: Dynamic): Void;
 	static function raytraceDispatchRays(target: Dynamic, cb: js.lib.ArrayBuffer): Void;
 	static function saveDialog(filterList: String, defaultPath: String): String;
 	static function openDialog(filterList: String, defaultPath: String): String;
 	static function readDirectory(path: String, foldersOnly: Bool): String;
+	static function inflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
+	static function deflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
 	static function windowX(id: Int): Int;
 	static function windowY(id: Int): Int;
 	static function language(): String;

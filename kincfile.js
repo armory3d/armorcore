@@ -3,6 +3,7 @@ const release = true;
 const with_d3dcompiler = true;
 const with_nfd = true;
 const with_tinydir = true;
+const with_zlib = true;
 const with_audio = false;
 
 const system = platform === Platform.Windows ? "win32" :
@@ -106,6 +107,16 @@ if (with_nfd && (platform === Platform.Windows || platform === Platform.Linux ||
 if (with_tinydir) {
 	project.addDefine('WITH_TINYDIR');
 	project.addIncludeDir("Libraries/tinydir/include");
+}
+if (with_zlib) {
+	project.addDefine('WITH_ZLIB');
+	project.addIncludeDir("Libraries/zlib");
+	project.addFile("Libraries/zlib/*.h");
+	project.addFile("Libraries/zlib/*.c");
+	project.addExclude("Libraries/zlib/gzlib.c");
+	project.addExclude("Libraries/zlib/gzclose.c");
+	project.addExclude("Libraries/zlib/gzwrite.c");
+	project.addExclude("Libraries/zlib/gzread.c");
 }
 
 resolve(project);
