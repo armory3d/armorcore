@@ -63,6 +63,10 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #ifdef WITH_ZLIB
 #include <zlib.h>
 #endif
+#ifdef WITH_STB_IMAGE_WRITE
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+#endif
 #ifdef IDLE_SLEEP
 #include <unistd.h>
 #endif
@@ -2546,6 +2550,16 @@ namespace {
 	}
 	#endif
 
+	#ifdef WITH_STB_IMAGE_WRITE
+	void krom_write_png(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+	}
+
+	void krom_write_jpg(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+	}
+	#endif
+
 	#ifdef KORE_DIRECT3D12
 	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
@@ -2854,6 +2868,10 @@ namespace {
 		#ifdef WITH_ZLIB
 		krom->Set(String::NewFromUtf8(isolate, "inflate").ToLocalChecked(), FunctionTemplate::New(isolate, krom_inflate));
 		krom->Set(String::NewFromUtf8(isolate, "deflate").ToLocalChecked(), FunctionTemplate::New(isolate, krom_deflate));
+		#endif
+		#ifdef WITH_STB_IMAGE_WRITE
+		krom->Set(String::NewFromUtf8(isolate, "writePng").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_png));
+		krom->Set(String::NewFromUtf8(isolate, "writeJpg").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_jpg));
 		#endif
 		#ifdef KORE_DIRECT3D12
 		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));

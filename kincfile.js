@@ -4,6 +4,7 @@ const with_d3dcompiler = true;
 const with_nfd = true;
 const with_tinydir = true;
 const with_zlib = true;
+const with_stb_image_write = false;
 const with_audio = false;
 
 const system = platform === Platform.Windows ? "win32" :
@@ -117,6 +118,11 @@ if (with_zlib) {
 	project.addExclude("Libraries/zlib/gzclose.c");
 	project.addExclude("Libraries/zlib/gzwrite.c");
 	project.addExclude("Libraries/zlib/gzread.c");
+}
+if (with_stb_image_write) {
+	project.addDefine('WITH_STB_IMAGE_WRITE');
+	project.addIncludeDir("Libraries/stb");
+	project.addFile("Libraries/stb/stb_image_write.h");
 }
 
 resolve(project);
