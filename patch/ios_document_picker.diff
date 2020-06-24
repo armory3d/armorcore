@@ -1,0 +1,52 @@
+diff --git a/Backends/System/iOS/Sources/Kore/GLViewController.h b/Backends/System/iOS/Sources/Kore/GLViewController.h
+index ecfbf793..cb1c3161 100644
+--- a/Backends/System/iOS/Sources/Kore/GLViewController.h
++++ b/Backends/System/iOS/Sources/Kore/GLViewController.h
+@@ -6,7 +6,7 @@
+ #import <CoreMotion/CMMotionManager.h>
+ #endif
+
+-@interface GLViewController : UIViewController {
++@interface GLViewController : UIViewController <UIDocumentPickerDelegate> {
+ @private
+ }
+
+diff --git a/Backends/System/iOS/Sources/Kore/GLViewController.mm b/Backends/System/iOS/Sources/Kore/GLViewController.mm
+index a6246f94..5e9f09c7 100644
+--- a/Backends/System/iOS/Sources/Kore/GLViewController.mm
++++ b/Backends/System/iOS/Sources/Kore/GLViewController.mm
+@@ -7,6 +7,7 @@
+
+ #include <kinc/graphics5/rendertarget.h>
+ #include <kinc/math/core.h>
++#include <kinc/system.h>
+
+ #include <objc/runtime.h>
+
+@@ -71,4 +72,12 @@ - (void)setVisible:(BOOL)value {
+ 	visible = value;
+ }
+
++- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentAtURL:(NSURL *)url {
++	wchar_t* filePath = (wchar_t*)[url.path cStringUsingEncoding:NSUTF32LittleEndianStringEncoding];
++	CFURLRef cfurl = (__bridge CFURLRef)url;
++	CFURLStartAccessingSecurityScopedResource(cfurl);
++ 	kinc_internal_drop_files_callback(filePath);
++	CFURLStopAccessingSecurityScopedResource(cfurl);
++}
++
+ @end
+diff --git a/Backends/System/iOS/Sources/Kore/ios.plist b/Backends/System/iOS/Sources/Kore/ios.plist
+index 4cb77811..1f760ac4 100644
+--- a/Backends/System/iOS/Sources/Kore/ios.plist
++++ b/Backends/System/iOS/Sources/Kore/ios.plist
+@@ -45,5 +45,9 @@
+ 		<string>UIInterfaceOrientationLandscapeLeft</string>
+ 		<string>UIInterfaceOrientationLandscapeRight</string>
+ 	</array>
++	<key>UIFileSharingEnabled</key>
++	<true/>
++	<key>LSSupportsOpeningDocumentsInPlace</key>
++	<true/>
+ </dict>
+ </plist>
