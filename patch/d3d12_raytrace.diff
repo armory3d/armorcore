@@ -1,4 +1,4 @@
-diff --git a/Backends/Graphics5/Direct3D12/Sources/Kore/RayTraceImpl.cpp b/Backends/Graphics5/Direct3D12/Sources/Kore/RayTraceImpl.cpp
+﻿diff --git a/Backends/Graphics5/Direct3D12/Sources/Kore/RayTraceImpl.cpp b/Backends/Graphics5/Direct3D12/Sources/Kore/RayTraceImpl.cpp
 index 64e335d7..f9802b33 100644
 --- a/Backends/Graphics5/Direct3D12/Sources/Kore/RayTraceImpl.cpp
 +++ b/Backends/Graphics5/Direct3D12/Sources/Kore/RayTraceImpl.cpp

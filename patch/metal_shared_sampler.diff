@@ -1,4 +1,4 @@
-diff --git a/Backends/Graphics5/Metal/Sources/Kore/RenderTarget5Impl.mm b/Backends/Graphics5/Metal/Sources/Kore/RenderTarget5Impl.mm
+﻿diff --git a/Backends/Graphics5/Metal/Sources/Kore/RenderTarget5Impl.mm b/Backends/Graphics5/Metal/Sources/Kore/RenderTarget5Impl.mm
 index e4024418..49f324c9 100644
 --- a/Backends/Graphics5/Metal/Sources/Kore/RenderTarget5Impl.mm
 +++ b/Backends/Graphics5/Metal/Sources/Kore/RenderTarget5Impl.mm

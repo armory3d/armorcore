@@ -1,4 +1,4 @@
-diff --git a/Backends/System/iOS/Sources/Kore/GLViewController.h b/Backends/System/iOS/Sources/Kore/GLViewController.h
+﻿diff --git a/Backends/System/iOS/Sources/Kore/GLViewController.h b/Backends/System/iOS/Sources/Kore/GLViewController.h
 index ecfbf793..cb1c3161 100644
 --- a/Backends/System/iOS/Sources/Kore/GLViewController.h
 +++ b/Backends/System/iOS/Sources/Kore/GLViewController.h

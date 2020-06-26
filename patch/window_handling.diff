@@ -1,11 +1,11 @@
-diff --git a/Backends/System/Windows/Sources/Kore/System.cpp b/Backends/System/Windows/Sources/Kore/System.cpp
+﻿diff --git a/Backends/System/Windows/Sources/Kore/System.cpp b/Backends/System/Windows/Sources/Kore/System.cpp
 index 11a4f885..8c585fc4 100644
 --- a/Backends/System/Windows/Sources/Kore/System.cpp
 +++ b/Backends/System/Windows/Sources/Kore/System.cpp
 @@ -245,6 +245,8 @@ static bool detectGamepad = true;
  static bool gamepadFound = false;
  static unsigned r = 0;
- 
+
 +void armory_save_and_quit(bool save);
 +
  namespace {
@@ -34,7 +34,7 @@ index d603129d..2560966d 100644
 --- a/Backends/System/Windows/Sources/Kore/Window.c
 +++ b/Backends/System/Windows/Sources/Kore/Window.c
 @@ -196,8 +196,10 @@ static int createWindow(const wchar_t *title, int x, int y, int width, int heigh
- 
+
  	switch (windowMode) {
  	case KINC_WINDOW_MODE_WINDOW:
 -		dstx += x < 0 ? (display_mode.width - width) / 2 : x;
