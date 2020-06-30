@@ -23,8 +23,13 @@ class VertexBuffer {
 		buffer = null;
 	}
 
+	var lastLockCount: Int = 0;
+
 	public function lock(?start: Int, ?count: Int): Float32Array {
-		_data = Krom.lockVertexBuffer(buffer);
+		if (start == null) start = 0;
+		if (count == null) count = this.count();
+		lastLockCount = count;
+		_data = Krom.lockVertexBuffer(buffer, start, count);
 		return _data;
 	}
 
@@ -33,7 +38,7 @@ class VertexBuffer {
 	}
 
 	public function unlock(?count: Int): Void {
-		Krom.unlockVertexBuffer(buffer);
+		Krom.unlockVertexBuffer(buffer, count == null ? lastLockCount : count);
 	}
 
 	public function stride(): Int {

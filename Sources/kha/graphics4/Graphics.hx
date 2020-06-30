@@ -238,8 +238,4 @@ class Graphics {
 	public function disableScissor(): Void {
 		Krom.disableScissor();
 	}
-
-	public function renderTargetsInvertedY(): Bool {
-		return Krom.renderTargetsInvertedY();
-	}
 }

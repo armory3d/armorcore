@@ -607,16 +607,19 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)field->Value();
-		float* vertices = kinc_g4_vertex_buffer_lock_all(buffer);
-		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, kinc_g4_vertex_buffer_count(buffer) * kinc_g4_vertex_buffer_stride(buffer));
-		args.GetReturnValue().Set(Float32Array::New(abuffer, 0, kinc_g4_vertex_buffer_count(buffer) * kinc_g4_vertex_buffer_stride(buffer) / 4));
+		int start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
+		int count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
+		float* vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
+		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, (count - start) * kinc_g4_vertex_buffer_stride(buffer));
+		args.GetReturnValue().Set(Float32Array::New(abuffer, 0, (count - start) * kinc_g4_vertex_buffer_stride(buffer) / 4));
 	}
 
 	void krom_unlock_vertex_buffer(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)field->Value();
-		kinc_g4_vertex_buffer_unlock_all(buffer);
+		int count = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
+		kinc_g4_vertex_buffer_unlock(buffer, count);
 	}
 
 	void krom_set_vertexbuffer(const FunctionCallbackInfo<Value>& args) {
@@ -1892,7 +1895,7 @@ namespace {
 		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)field->Value();
 		uint8_t* tex = kinc_g4_texture_lock(texture);
 
-		int byteLength = format_byte_size(texture->format) * texture->tex_width * texture->tex_height * texture->tex_depth;
+		int byteLength = kinc_g4_texture_stride(texture) * texture->tex_height * texture->tex_depth;
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, tex, byteLength);
 		args.GetReturnValue().Set(abuffer);
 	}
@@ -2488,7 +2491,7 @@ namespace {
 		infstream.opaque = Z_NULL;
 		infstream.avail_in = (uInt)content.ByteLength();
 		infstream.next_in = (Bytef *)content.Data();
-		infstream.avail_out = content.ByteLength();
+		infstream.avail_out = (uInt)content.ByteLength();
 		infstream.next_out = (Bytef *)inflated;
 
 		inflateInit2(&infstream, raw ? -15 : 15 + 32);
@@ -2499,7 +2502,7 @@ namespace {
 			if (res == Z_STREAM_END) break;
 			if (infstream.avail_out == 0) {
 				inflated = (unsigned char*)realloc(inflated, content.ByteLength() * i);
-				infstream.avail_out = content.ByteLength();
+				infstream.avail_out = (uInt)content.ByteLength();
 				infstream.next_out = (Bytef *)(inflated + content.ByteLength() * (i - 1));
 				i++;
 			}
@@ -2525,7 +2528,7 @@ namespace {
 		content = buffer->GetContents();
 		bool raw = args[1]->ToBoolean(isolate)->Value();
 
-		int deflatedSize = compressBound(content.ByteLength());
+		int deflatedSize = compressBound((uInt)content.ByteLength());
 		void* deflated = malloc(deflatedSize);
 
 		z_stream defstream;

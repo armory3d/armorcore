@@ -143,6 +143,10 @@ class Image implements Canvas {
 		return true;
 	}
 
+	public static function renderTargetsInvertedY(): Bool {
+		return Krom.renderTargetsInvertedY();
+	}
+
 	public function isOpaque(x: Int, y: Int): Bool { return false; }
 	public function at(x: Int, y: Int): Color { return Color.Black; }
 
