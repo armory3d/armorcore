@@ -206,11 +206,12 @@ namespace {
 		int height = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int samples_per_pixel = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		bool vertical_sync = args[4]->ToBoolean(isolate)->Value();
-		int window_mode = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int window_features = args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int api_version = args[7]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int x = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int y = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int frequency = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int window_mode = args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int window_features = args[7]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int api_version = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int x = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int y = args[10]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		if (api_version != KROM_API) {
 			const char* outdated;
@@ -235,7 +236,7 @@ namespace {
 		win.window_features = window_features;
 		win.mode = (kinc_window_mode_t)window_mode;
 		kinc_framebuffer_options_t frame;
-		frame.frequency = 60;
+		frame.frequency = frequency;
 		frame.vertical_sync = vertical_sync;
 		frame.color_bits = 32;
 		frame.depth_bits = 0;
@@ -1667,6 +1668,12 @@ namespace {
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_display_current_mode(index).y));
 	}
 
+	void krom_display_frequency(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		args.GetReturnValue().Set(Int32::New(isolate, kinc_display_current_mode(index).frequency));
+	}
+
 	void krom_display_is_primary(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -2804,6 +2811,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "displayHeight").ToLocalChecked(), FunctionTemplate::New(isolate, krom_display_height));
 		krom->Set(String::NewFromUtf8(isolate, "displayX").ToLocalChecked(), FunctionTemplate::New(isolate, krom_display_x));
 		krom->Set(String::NewFromUtf8(isolate, "displayY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_display_y));
+		krom->Set(String::NewFromUtf8(isolate, "displayFrequency").ToLocalChecked(), FunctionTemplate::New(isolate, krom_display_frequency));
 		krom->Set(String::NewFromUtf8(isolate, "displayIsPrimary").ToLocalChecked(), FunctionTemplate::New(isolate, krom_display_is_primary));
 		krom->Set(String::NewFromUtf8(isolate, "writeStorage").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_storage));
 		krom->Set(String::NewFromUtf8(isolate, "readStorage").ToLocalChecked(), FunctionTemplate::New(isolate, krom_read_storage));

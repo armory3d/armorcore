@@ -78,7 +78,7 @@ extern class Krom {
 	static function loadBlob(file: String): js.lib.ArrayBuffer;
 	static function loadUrl(url: String): Void;
 
-	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int): Void;
+	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, frequency: Int, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int): Void;
 	static function setApplicationName(name: String): Void;
 	static function log(v: Dynamic): Void;
 	static function setCallback(callback: Void->Void): Void;
@@ -120,6 +120,7 @@ extern class Krom {
 	static function displayHeight(index: Int): Int;
 	static function displayX(index: Int): Int;
 	static function displayY(index: Int): Int;
+	static function displayFrequency(index: Int): Int;
 	static function displayIsPrimary(index: Int): Bool;
 	static function writeStorage(name: String, data: js.lib.ArrayBuffer): Void;
 	static function readStorage(name: String): js.lib.ArrayBuffer;

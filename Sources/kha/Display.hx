@@ -74,7 +74,7 @@ class Display {
 	public var frequency(get, never): Int;
 
 	function get_frequency(): Int {
-		return 60;
+		return Krom.displayFrequency(num);
 	}
 
 	public var pixelsPerInch(get, never): Int;
