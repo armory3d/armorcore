@@ -1216,6 +1216,7 @@ namespace {
 		int comp;
 		unsigned char* data = (unsigned char*)malloc(size);
 		kinc_file_reader_read(&reader, data, size);
+		kinc_file_reader_close(&reader);
 
 		if (ends_with(filename, "k")) {
 			width = kinc_read_s32le(data);
