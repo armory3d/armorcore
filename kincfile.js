@@ -71,14 +71,14 @@ else if (platform === Platform.Android) {
 	// project.addLib(libdir + 'libv8_monolith.a');
 
 	// Some manual tweaking is required for now:
+	// In Kinc/kincfile.js, before node Kinc/make is run:
+	//   project.addDefine('KORE_ANDROID_API=18');
 	// In app/CMakeLists.txt:
 	//   add_library(v8_monolith STATIC IMPORTED)
 	//   set_target_properties(v8_monolith PROPERTIES IMPORTED_LOCATION ../../../v8/libraries/android/release/libv8_monolith.a)
 	//   target_link_libraries(v8_monolith)
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
-	// In Kinc/kincfile.js:
-	//   project.addDefine('KORE_ANDROID_API=18');
 	// AndroidManifest.xml:
 	//   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 	//   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
