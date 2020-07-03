@@ -414,7 +414,7 @@ class StbTruetype {
 		}
 	}
 
-	private static inline function stbtt__cff_index_count(b: Stbtt__buf): Int 
+	private static inline function stbtt__cff_index_count(b: Stbtt__buf): Int
 	{
 		stbtt__buf_seek(b, 0);
 		return stbtt__buf_get16(b);
