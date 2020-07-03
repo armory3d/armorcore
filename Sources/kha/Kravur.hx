@@ -142,8 +142,8 @@ class Kravur {
 		this.fontIndex = fontIndex;
 	}
 
-	public static function fromBytes(bytes: Bytes): Kravur {
-		return new Kravur(Blob.fromBytes(bytes));
+	public static function fromBytes(bytes: Bytes, fontIndex: Int = 0): Kravur {
+		return new Kravur(Blob.fromBytes(bytes), fontIndex);
 	}
 
 	public function _get(fontSize: Int): KravurImage {
