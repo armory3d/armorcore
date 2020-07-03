@@ -176,6 +176,9 @@ class Kravur {
 			var pixels: Blob = null;
 
 			var offset = StbTruetype.stbtt_GetFontOffsetForIndex(blob, fontIndex);
+			if (offset == -1) {
+				offset = StbTruetype.stbtt_GetFontOffsetForIndex(blob, 0);
+			}
 			var status: Int = -1;
 			while (status <= 0) {
 				if (height < width) height *= 2;
