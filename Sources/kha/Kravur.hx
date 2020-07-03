@@ -135,9 +135,11 @@ class Kravur {
 	private var oldGlyphs: Array<Int>;
 	private var blob: Blob;
 	private var images: Map<Int, KravurImage> = new Map();
+	private var fontIndex: Int;
 
-	public function new(blob: Blob) {
+	public function new(blob: Blob, fontIndex: Int = 0) {
 		this.blob = blob;
+		this.fontIndex = fontIndex;
 	}
 
 	public static function fromBytes(bytes: Bytes): Kravur {
@@ -173,18 +175,19 @@ class Kravur {
 
 			var pixels: Blob = null;
 
+			var offset = StbTruetype.stbtt_GetFontOffsetForIndex(blob, fontIndex);
 			var status: Int = -1;
 			while (status <= 0) {
 				if (height < width) height *= 2;
 				else width *= 2;
 				pixels = Blob.alloc(width * height);
-				status = StbTruetype.stbtt_BakeFontBitmap(blob, 0, fontSize, pixels, width, height, glyphs, baked);
+				status = StbTruetype.stbtt_BakeFontBitmap(blob, offset, fontSize, pixels, width, height, glyphs, baked);
 			}
 
 			// TODO: Scale pixels down if they exceed the supported texture size
 
 			var info = new Stbtt_fontinfo();
-			StbTruetype.stbtt_InitFont(info, blob, 0);
+			StbTruetype.stbtt_InitFont(info, blob, offset);
 
 			var metrics = StbTruetype.stbtt_GetFontVMetrics(info);
 			var scale = StbTruetype.stbtt_ScaleForPixelHeight(info, fontSize);
