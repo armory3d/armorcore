@@ -183,6 +183,9 @@ namespace {
 	wchar_t temp_wstring[1024];
 	wchar_t temp_wstring1[1024];
 	#endif
+	#ifdef KROMX_PROFILE
+	double startup_time = 0.0;
+	#endif
 
 	void write_stack_trace(char* stack_trace) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", stack_trace);
@@ -3023,6 +3026,13 @@ namespace {
 
 		kinc_g4_end(0);
 		kinc_g4_swap_buffers();
+
+		#ifdef KROMX_PROFILE
+		if (startup_time > 0) {
+			kinc_log(KINC_LOG_LEVEL_INFO, "Startup time: %f", kinc_time() - startup_time);
+			startup_time = 0.0;
+		}
+		#endif
 	}
 
 	void drop_files(wchar_t* file_path) {
@@ -3619,6 +3629,10 @@ int kickstart(int argc, char** argv) {
 	kinc_internal_set_files_location(&assetsdir[0u]);
 #endif
 
+#ifdef KROMX_PROFILE
+	startup_time = kinc_time();
+#endif
+
 	kinc_file_reader_t reader;
 	if (!kinc_file_reader_open(&reader, "krom.bin", KINC_FILE_TYPE_ASSET)) {
 		if (!kinc_file_reader_open(&reader, "krom.js", KINC_FILE_TYPE_ASSET)) {
@@ -3637,6 +3651,7 @@ int kickstart(int argc, char** argv) {
 	kinc_threads_init();
 
 	start_krom(code);
+
 	kinc_start();
 
 	// #ifdef WITH_AUDIO
