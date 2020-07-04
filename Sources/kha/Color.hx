@@ -39,7 +39,7 @@ abstract Color(Int) from Int from UInt to Int to UInt {
 	 * Creates a new Color object from components in the range 0 - 1.
 	 */
 	public static function fromFloats(r: FastFloat, g: FastFloat, b: FastFloat, a: FastFloat = 1): Color {
-		return new Color((Std.int(a * 255) << 24) | (Std.int(r * 255) << 16) | (Std.int(g * 255) << 8) | Std.int(b * 255));
+		return new Color((Math.round(a * 255) << 24) | (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255));
 	}
 
 	/**
@@ -162,22 +162,22 @@ abstract Color(Int) from Int from UInt to Int to UInt {
 	}
 
 	private inline function set_R(f: FastFloat): FastFloat {
-		this = (Std.int(A * 255) << 24) | (Std.int(f * 255) << 16) | (Std.int(G * 255) << 8) | Std.int(B * 255);
+		this = (Math.round(A * 255) << 24) | (Math.round(f * 255) << 16) | (Math.round(G * 255) << 8) | Math.round(B * 255);
 		return f;
 	}
 
 	private inline function set_G(f: FastFloat): FastFloat {
-		this = (Std.int(A * 255) << 24) | (Std.int(R * 255) << 16) | (Std.int(f * 255) << 8) | Std.int(B * 255);
+		this = (Math.round(A * 255) << 24) | (Math.round(R * 255) << 16) | (Math.round(f * 255) << 8) | Math.round(B * 255);
 		return f;
 	}
 
 	private inline function set_B(f: FastFloat): FastFloat {
-		this = (Std.int(A * 255) << 24) | (Std.int(R * 255) << 16) | (Std.int(G * 255) << 8) | Std.int(f * 255);
+		this = (Math.round(A * 255) << 24) | (Math.round(R * 255) << 16) | (Math.round(G * 255) << 8) | Math.round(f * 255);
 		return f;
 	}
 
 	private inline function set_A(f: FastFloat): FastFloat {
-		this = (Std.int(f * 255) << 24) | (Std.int(R * 255) << 16) | (Std.int(G * 255) << 8) | Std.int(B * 255);
+		this = (Math.round(f * 255) << 24) | (Math.round(R * 255) << 16) | (Math.round(G * 255) << 8) | Math.round(B * 255);
 		return f;
 	}
 }
