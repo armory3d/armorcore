@@ -237,6 +237,7 @@ class AssetConverter {
 					}
 					case '.ttf':
 					case '.ttc':
+					case '.otf':
 						this.exporter.copyFont(this.platform, file, outPath + fileinfo.ext, {});
 						break;
 					default:
@@ -298,7 +299,8 @@ class AssetConverter {
 							break;
 						}
 						case '.ttf':
-						case '.ttc': {
+						case '.ttc':
+						case '.otf': {
 							let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
 							let fonts;
 							if (options.noprocessing) {
