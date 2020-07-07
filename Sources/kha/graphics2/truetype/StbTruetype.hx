@@ -316,7 +316,7 @@ class StbTruetype {
 		stbtt__buf_seek(b, b.cursor + o);
 	}
 
-	private static inline function stbtt__buf_get(b: Stbtt__buf, n: Int): Stbtt_uint32 {
+	private static /*inline*/ function stbtt__buf_get(b: Stbtt__buf, n: Int): Stbtt_uint32 {
 		var v: Stbtt_uint32 = 0;
 		STBTT_assert(n >= 1 && n <= 4);
 		for (i in 0...n)
@@ -324,7 +324,7 @@ class StbTruetype {
 		return v;
 	}
 
-	private static inline function stbtt__new_buf(p: Blob, size: Int): Stbtt__buf {
+	private static /*inline*/ function stbtt__new_buf(p: Blob, size: Int): Stbtt__buf {
 		var r: Stbtt__buf = new Stbtt__buf();
 		STBTT_assert(size < 0x40000000);
 		r.data = p;
@@ -340,14 +340,14 @@ class StbTruetype {
 		return stbtt__buf_get(b, 4);
 	}
 
-	private static inline function stbtt__buf_range(b: Stbtt__buf, o: Int, s: Int): Stbtt__buf {
+	private static /*inline*/ function stbtt__buf_range(b: Stbtt__buf, o: Int, s: Int): Stbtt__buf {
 		var r = stbtt__new_buf(null, 0);
 		if (o < 0 || s < 0 || o > b.data.length || s > b.data.length - o) return r;
 		r.data = b.data.sub(o, s);
 		return r;
 	}
 
-	private static inline function stbtt__cff_get_index(b: Stbtt__buf): Stbtt__buf {
+	private static /*inline*/ function stbtt__cff_get_index(b: Stbtt__buf): Stbtt__buf {
 		var start = b.cursor;
 		var count = stbtt__buf_get16(b);
 		if (count > 0) {
@@ -360,7 +360,7 @@ class StbTruetype {
 		return b;
 	}
 
-	private static inline function stbtt__cff_int(b: Stbtt__buf): Stbtt_uint32 {
+	private static /*inline*/ function stbtt__cff_int(b: Stbtt__buf): Stbtt_uint32 {
 		var b0: Stbtt_uint8 = stbtt__buf_get8(b);
 		if (b0 >= 32 && b0 <= 246)       return b0 - 139;
 		else if (b0 >= 247 && b0 <= 250) return (b0 - 247)*256 + stbtt__buf_get8(b) + 108;
@@ -406,7 +406,7 @@ class StbTruetype {
 		return ret != null ? ret : stbtt__buf_range(b, 0, 0);
 	}
 
-	private static inline function stbtt__dict_get_ints(b: Stbtt__buf, key: Int, outcount: Int, out: Array<Stbtt_uint32>): Void {
+	private static /*inline*/ function stbtt__dict_get_ints(b: Stbtt__buf, key: Int, outcount: Int, out: Array<Stbtt_uint32>): Void {
 		var i: Int = 0, operands = stbtt__dict_get(b, key);
 		while (i < outcount && operands.cursor < operands.data.length) {
 			out[i] = stbtt__cff_int(operands);
@@ -420,7 +420,7 @@ class StbTruetype {
 		return stbtt__buf_get16(b);
 	}
 
-	private static inline function stbtt__cff_index_get(b: Stbtt__buf, i: Int): Stbtt__buf {
+	private static /*inline*/ function stbtt__cff_index_get(b: Stbtt__buf, i: Int): Stbtt__buf {
 		stbtt__buf_seek(b, 0);
 		var count: Int = stbtt__buf_get16(b);
 		var offsize: Int = stbtt__buf_get8(b);
@@ -436,20 +436,20 @@ class StbTruetype {
 		return p.readU8(pos);
 	}
 
-	private static inline function ttCHAR(p: Blob, pos: Int = 0): Stbtt_int8 {
+	private static /*inline*/ function ttCHAR(p: Blob, pos: Int = 0): Stbtt_int8 {
 		var n = p.readU8(pos);
 		if (n >= 128)
 			return n - 256;
 		return n;
 	}
 
-	private static inline function ttUSHORT(p: Blob, pos: Int = 0): Stbtt_uint16 {
+	private static /*inline*/ function ttUSHORT(p: Blob, pos: Int = 0): Stbtt_uint16 {
 		var ch1 = p.readU8(pos + 0);
 		var ch2 = p.readU8(pos + 1);
 		return ch2 | (ch1 << 8);
 	}
 
-	private static inline function ttSHORT(p: Blob, pos: Int = 0): Stbtt_int16 {
+	private static /*inline*/ function ttSHORT(p: Blob, pos: Int = 0): Stbtt_int16 {
 		var ch1 = p.readU8(pos + 0);
 		var ch2 = p.readU8(pos + 1);
 		var n = ch2 | (ch1 << 8);
@@ -460,7 +460,7 @@ class StbTruetype {
 
 	private static inline function ttULONG(p: Blob, pos: Int = 0): Stbtt_uint32 { return ttLONG(p, pos); }
 
-	private static inline function ttLONG(p: Blob, pos: Int = 0): Stbtt_int32 {
+	private static /*inline*/ function ttLONG(p: Blob, pos: Int = 0): Stbtt_int32 {
 		var ch1 = p.readU8(pos + 0);
 		var ch2 = p.readU8(pos + 1);
 		var ch3 = p.readU8(pos + 2);
@@ -532,7 +532,7 @@ class StbTruetype {
 		return 0;
 	}
 
-	private static inline function stbtt__get_subrs(cff: Stbtt__buf, fontdict: Stbtt__buf): Stbtt__buf {
+	private static /*inline*/ function stbtt__get_subrs(cff: Stbtt__buf, fontdict: Stbtt__buf): Stbtt__buf {
 		var subrsoff: Array<Stbtt_uint32> = [ 0 ];
 		var private_loc: Array<Stbtt_uint32> = [ 0, 0 ];
 		stbtt__dict_get_ints(fontdict, 18, 2, private_loc);
@@ -1078,7 +1078,7 @@ class StbTruetype {
 		}
 	}
 
-	private static inline function STBTT__CSCTX_INIT(bounds: Bool): Stbtt__csctx {
+	private static /*inline*/ function STBTT__CSCTX_INIT(bounds: Bool): Stbtt__csctx {
 		var tmp = new Stbtt__csctx();
 		tmp.bounds = bounds;
 		tmp.started = false;
@@ -1096,7 +1096,7 @@ class StbTruetype {
 		return tmp;
 	}
 
-	private static inline function stbtt__track_vertex(c: Stbtt__csctx, x: Stbtt_int32, y: Stbtt_int32): Void {
+	private static /*inline*/ function stbtt__track_vertex(c: Stbtt__csctx, x: Stbtt_int32, y: Stbtt_int32): Void {
 		if (x > c.max_x || !c.started) c.max_x = x;
 		if (y > c.max_y || !c.started) c.max_y = y;
 		if (x < c.min_x || !c.started) c.min_x = x;
@@ -1104,7 +1104,7 @@ class StbTruetype {
 		c.started = true;
 	}
 
-	private static inline function stbtt__csctx_v(c: Stbtt__csctx, type: Stbtt_uint8, x: Stbtt_int32, y: Stbtt_int32, cx: Stbtt_int32, cy: Stbtt_int32, cx1: Stbtt_int32, cy1: Stbtt_int32): Void {
+	private static /*inline*/ function stbtt__csctx_v(c: Stbtt__csctx, type: Stbtt_uint8, x: Stbtt_int32, y: Stbtt_int32, cx: Stbtt_int32, cy: Stbtt_int32, cx1: Stbtt_int32, cy1: Stbtt_int32): Void {
 		if (c.bounds) {
 			stbtt__track_vertex(c, x, y);
 			if (type == STBTT_vcubic) {
@@ -1119,25 +1119,25 @@ class StbTruetype {
 		c.num_vertices++;
 	}
 
-	private static inline function stbtt__csctx_close_shape(ctx: Stbtt__csctx): Void {
+	private static /*inline*/ function stbtt__csctx_close_shape(ctx: Stbtt__csctx): Void {
 		if (ctx.first_x != ctx.x || ctx.first_y != ctx.y)
 			stbtt__csctx_v(ctx, STBTT_vline, Std.int(ctx.first_x), Std.int(ctx.first_y), 0, 0, 0, 0);
 	}
 
-	private static inline function stbtt__csctx_rmove_to(ctx: Stbtt__csctx, dx: Float, dy: Float): Void {
+	private static /*inline*/ function stbtt__csctx_rmove_to(ctx: Stbtt__csctx, dx: Float, dy: Float): Void {
 		stbtt__csctx_close_shape(ctx);
 		ctx.first_x = ctx.x = ctx.x + dx;
 		ctx.first_y = ctx.y = ctx.y + dy;
 		stbtt__csctx_v(ctx, STBTT_vmove, Std.int(ctx.x), Std.int(ctx.y), 0, 0, 0, 0);
 	}
 
-	private static inline function stbtt__csctx_rline_to(ctx: Stbtt__csctx, dx: Float, dy: Float): Void {
+	private static /*inline*/ function stbtt__csctx_rline_to(ctx: Stbtt__csctx, dx: Float, dy: Float): Void {
 		ctx.x += dx;
 		ctx.y += dy;
 		stbtt__csctx_v(ctx, STBTT_vline, Std.int(ctx.x), Std.int(ctx.y), 0, 0, 0, 0);
 	}
 
-	private static inline function stbtt__csctx_rccurve_to(ctx: Stbtt__csctx, dx1: Float, dy1: Float, dx2: Float, dy2: Float, dx3: Float, dy3: Float): Void {
+	private static /*inline*/ function stbtt__csctx_rccurve_to(ctx: Stbtt__csctx, dx1: Float, dy1: Float, dx2: Float, dy2: Float, dx3: Float, dy3: Float): Void {
 		var cx1: Float = ctx.x + dx1;
 		var cy1: Float = ctx.y + dy1;
 		var cx2: Float = cx1 + dx2;
@@ -1147,7 +1147,7 @@ class StbTruetype {
 		stbtt__csctx_v(ctx, STBTT_vcubic, Std.int(ctx.x), Std.int(ctx.y), Std.int(cx1), Std.int(cy1), Std.int(cx2), Std.int(cy2));
 	}
 
-	private static inline function stbtt__get_subr(idx: Stbtt__buf, n: Int): Stbtt__buf 
+	private static /*inline*/ function stbtt__get_subr(idx: Stbtt__buf, n: Int): Stbtt__buf
 	{
 		var count: Int = stbtt__cff_index_count(idx);
 		var bias: Int = 107;
