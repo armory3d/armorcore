@@ -236,7 +236,9 @@ class AssetConverter {
 						break;
 					}
 					case '.ttf':
-						this.exporter.copyFont(this.platform, file, outPath, {});
+					case '.ttc':
+					case '.otf':
+						this.exporter.copyFont(this.platform, file, outPath + fileinfo.ext, {});
 						break;
 					default:
 						this.exporter.copyBlob(this.platform, file, outPath + fileinfo.ext, {});
@@ -296,14 +298,16 @@ class AssetConverter {
 							}
 							break;
 						}
-						case '.ttf': {
+						case '.ttf':
+						case '.ttc':
+						case '.otf': {
 							let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
 							let fonts;
 							if (options.noprocessing) {
 								fonts = await self.exporter.copyBlob(self.platform, file, exportInfo.destination, options);
 							}
 							else {
-								fonts = await self.exporter.copyFont(self.platform, file, exportInfo.destination, options);
+								fonts = await self.exporter.copyFont(self.platform, file, exportInfo.destination + fileinfo.ext, options);
 							}
 							if (!options.notinlist) {
 								parsedFiles.push({ name: exportInfo.name, from: file, type: 'font', files: fonts, original_width: undefined, original_height: undefined, readable: undefined });
@@ -822,7 +826,7 @@ class KromExporter {
 	}
 
 	async copyFont(platform, from, to, options) {
-		return await this.copyBlob(platform, from, to + '.ttf', options);
+		return await this.copyBlob(platform, from, to, options);
 	}
 }
 
