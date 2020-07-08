@@ -225,6 +225,40 @@ class Kravur {
 		this.fontIndex = fontIndex;
 	}
 
+	public function getFontNames(): Vector<String> {
+		var info = new Stbtt_fontinfo();
+		info.data = blob;
+		var count = StbTruetype.stbtt_GetNumberOfFonts(blob);
+		var fontNames = new Vector<String>(count);
+		var nameIdFullFontName: Int = 4;
+		for (i in 0...count) {
+			info.fontstart = StbTruetype.stbtt_GetFontOffsetForIndex(blob, i);
+
+			// mac font
+			var fontName = StbTruetype.stbtt_GetFontNameString(info,
+				StbTruetype.STBTT_PLATFORM_ID_MAC,
+				StbTruetype.STBTT_MAC_EID_ROMAN,
+				StbTruetype.STBTT_MAC_LANG_ENGLISH,
+				nameIdFullFontName);
+
+			// windows font (unicode bmp)
+			if (fontName == null) {
+				fontName = StbTruetype.stbtt_GetFontNameString(info,
+					StbTruetype.STBTT_PLATFORM_ID_MICROSOFT,
+					StbTruetype.STBTT_MS_EID_UNICODE_BMP,
+					StbTruetype.STBTT_MS_LANG_ENGLISH,
+					nameIdFullFontName);
+			}
+
+			fontNames[i] = fontName;
+		}
+		return fontNames;
+	}
+
+	public function clone(): Kravur {
+		return new Kravur(blob, fontIndex);
+	}
+
 	public function unload(): Void {
 		blob = null;
 		images = null;
