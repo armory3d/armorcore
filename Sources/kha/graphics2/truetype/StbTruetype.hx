@@ -2411,6 +2411,60 @@ class StbTruetype {
 
 		xpos.value += b.xadvance;
 	}
+
+	private static function UTF16BEtoString(data: Blob, length: Int): String {
+		var name = "";
+		var pos: Int = 0;
+		while (pos < length) {
+			var ch = data.readU16BE(pos);
+			if (ch < 0x80) {
+				name += String.fromCharCode(ch);
+			} else if (ch < 0x800) {
+				name += String.fromCharCode(0xc0 + (ch >> 6));
+				name += String.fromCharCode(0x80 + (ch & 0x3f));
+			} else if (ch >= 0xd800 && ch < 0xdc00) {
+				var c = data.readU32BE(pos);
+				name += String.fromCharCode(0xf0 + (c >> 18));
+				name += String.fromCharCode(0x80 + (c >> 12));
+				name += String.fromCharCode(0x80 + (c >>  6));
+				name += String.fromCharCode(0x80 + (c      ));
+				pos += 2;
+			} else if (ch >= 0xe000) {
+				name += String.fromCharCode(0xe0 + (ch >> 12));
+				name += String.fromCharCode(0x80 + (ch >>  6));
+				name += String.fromCharCode(0x80 + (ch      ));
+			}
+			pos += 2;
+		}
+		return name;
+	}
+
+	public static function stbtt_GetFontNameString(font: Stbtt_fontinfo, platformID: Int, encodingID: Int, languageID: Int, nameID: Int): String {
+		var fc = font.data;
+		var offset = font.fontstart;
+		var nm = stbtt__find_table(fc, offset, "name");
+		if (nm == 0) return null;
+
+		var count = ttUSHORT(fc, nm+2);
+		var stringOffset = nm + ttUSHORT(fc, nm+4);
+		for (i in 0...count) {
+			var loc: Stbtt_uint32 = nm + 6 + 12 * i;
+			if (platformID == ttUSHORT(fc, loc+0) && encodingID == ttUSHORT(fc, loc+2)
+				&& languageID == ttUSHORT(fc, loc+4) && nameID == ttUSHORT(fc, loc+6)) {
+				var length = ttUSHORT(fc, loc+8);
+				var nameBytes = fc.sub(stringOffset + ttUSHORT(fc, loc+10), length);
+				if ((platformID == STBTT_PLATFORM_ID_MICROSOFT
+					&& (encodingID == STBTT_MS_EID_UNICODE_BMP || encodingID == STBTT_MS_EID_UNICODE_FULL))
+					|| platformID == STBTT_PLATFORM_ID_UNICODE) {
+					return UTF16BEtoString(nameBytes, length);
+				} else {
+					return nameBytes.toString();
+				}
+			}
+		}
+		return null;
+	}
+
 /*
 //////////////////////////////////////////////////////////////////////////////
 //
