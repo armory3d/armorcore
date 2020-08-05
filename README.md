@@ -48,3 +48,9 @@ node Kinc/make -g direct3d12 --raytrace dxr
 # Open generated Visual Studio project
 # Build for x64 & release
 ```
+```bash
+# Vulkan VKRT - wip
+node Kinc/make -g vulkan --raytrace vkrt --compiler clang --compile
+cd Deployment
+strip Krom
+```
