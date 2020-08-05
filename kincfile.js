@@ -7,6 +7,9 @@ const with_zlib = true;
 const with_stb_image_write = false;
 const with_audio = false;
 
+let vulkan = process.argv.indexOf("vulkan") >= 0;
+let with_krafix = vulkan; // glsl to spirv for vulkan
+
 const system = platform === Platform.Windows ? "win32" :
 			   platform === Platform.Linux   ? "linux" :
 			   platform === Platform.OSX     ? "macos" :
@@ -123,6 +126,9 @@ if (with_stb_image_write) {
 	project.addDefine('WITH_STB_IMAGE_WRITE');
 	project.addIncludeDir("Libraries/stb");
 	project.addFile("Libraries/stb/stb_image_write.h");
+}
+if (with_krafix) {
+	await project.addProject('Libraries/krafix');
 }
 
 resolve(project);

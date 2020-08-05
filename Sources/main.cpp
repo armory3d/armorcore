@@ -86,6 +86,10 @@ const int KROM_API = 3;
 int save_and_quit = 0; // off, save, nosave
 void armory_save_and_quit(bool save) { save_and_quit = save ? 1 : 2; }
 
+#if defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
+extern void krafix_compile(const char* source, char* output, int* length, const char* targetlang, const char* system, const char* shadertype);
+#endif
+
 #ifdef KORE_DIRECT3D12
 #ifdef __cplusplus
 extern "C" {
@@ -820,6 +824,14 @@ namespace {
 		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, temp_string_vs, strlen(temp_string_vs), KINC_G4_SHADER_TYPE_VERTEX);
 
+		#elif defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
+
+		char* output = new char[1024 * 1024];
+		int length;
+		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "vert");
+		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_VERTEX);
+
 		#else
 
 		char* source = new char[strlen(*utf8_value) + 1];
@@ -973,6 +985,14 @@ namespace {
 		strcat(temp_string_fs, *utf8_value);
 		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, temp_string_fs, strlen(temp_string_fs), KINC_G4_SHADER_TYPE_FRAGMENT);
+
+		#elif defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
+
+		char* output = new char[1024 * 1024];
+		int length;
+		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "frag");
+		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		#else
 
