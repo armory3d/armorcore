@@ -52,6 +52,9 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #include <kinc/graphics5/commandlist.h>
 #include <kinc/graphics5/raytrace.h>
 #endif
+#ifdef KORE_VR
+#include <kinc/vr/vrinterface.h>
+#endif
 #ifdef WITH_NFD
 #include <nfd.h>
 #elif KORE_IOS
@@ -2694,6 +2697,82 @@ namespace {
 	}
 	#endif
 
+	#ifdef KORE_VR
+	void krom_vr_begin(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		kinc_vr_interface_begin();
+	}
+
+	void krom_vr_begin_render(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_vr_interface_begin_render(eye);
+	}
+
+	void krom_vr_end_render(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_vr_interface_end_render(eye);
+	}
+
+	void krom_vr_warp_swap(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		kinc_vr_interface_warp_swap();
+	}
+
+	void krom_vr_get_sensor_state_view(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(eye);
+		kinc_matrix4x4_t view = state.pose.vrPose.eye;
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_00").ToLocalChecked(), Number::New(isolate, view.m[0]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_01").ToLocalChecked(), Number::New(isolate, view.m[1]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_02").ToLocalChecked(), Number::New(isolate, view.m[2]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_03").ToLocalChecked(), Number::New(isolate, view.m[3]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_10").ToLocalChecked(), Number::New(isolate, view.m[4]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_11").ToLocalChecked(), Number::New(isolate, view.m[5]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_12").ToLocalChecked(), Number::New(isolate, view.m[6]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_13").ToLocalChecked(), Number::New(isolate, view.m[7]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_20").ToLocalChecked(), Number::New(isolate, view.m[8]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_21").ToLocalChecked(), Number::New(isolate, view.m[9]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_22").ToLocalChecked(), Number::New(isolate, view.m[10]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_23").ToLocalChecked(), Number::New(isolate, view.m[11]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_30").ToLocalChecked(), Number::New(isolate, view.m[12]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_31").ToLocalChecked(), Number::New(isolate, view.m[13]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_32").ToLocalChecked(), Number::New(isolate, view.m[14]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_33").ToLocalChecked(), Number::New(isolate, view.m[15]));
+		args.GetReturnValue().Set(obj);
+	}
+
+	void krom_vr_get_sensor_state_projection(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(eye);
+		kinc_matrix4x4_t proj = state.pose.vrPose.projection;
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_00").ToLocalChecked(), Number::New(isolate, proj.m[0]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_01").ToLocalChecked(), Number::New(isolate, proj.m[1]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_02").ToLocalChecked(), Number::New(isolate, proj.m[2]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_03").ToLocalChecked(), Number::New(isolate, proj.m[3]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_10").ToLocalChecked(), Number::New(isolate, proj.m[4]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_11").ToLocalChecked(), Number::New(isolate, proj.m[5]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_12").ToLocalChecked(), Number::New(isolate, proj.m[6]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_13").ToLocalChecked(), Number::New(isolate, proj.m[7]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_20").ToLocalChecked(), Number::New(isolate, proj.m[8]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_21").ToLocalChecked(), Number::New(isolate, proj.m[9]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_22").ToLocalChecked(), Number::New(isolate, proj.m[10]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_23").ToLocalChecked(), Number::New(isolate, proj.m[11]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_30").ToLocalChecked(), Number::New(isolate, proj.m[12]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_31").ToLocalChecked(), Number::New(isolate, proj.m[13]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_32").ToLocalChecked(), Number::New(isolate, proj.m[14]));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_33").ToLocalChecked(), Number::New(isolate, proj.m[15]));
+		args.GetReturnValue().Set(obj);
+	}
+	#endif
+
 	void krom_window_x(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -2913,6 +2992,14 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "raytraceSetTextures").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_set_textures));
 		krom->Set(String::NewFromUtf8(isolate, "raytraceDispatchRays").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_dispatch_rays));
 		#endif
+		#ifdef KORE_VR
+		krom->Set(String::NewFromUtf8(isolate, "vrBegin").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_begin));
+		krom->Set(String::NewFromUtf8(isolate, "vrBeginRender").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_begin_render));
+		krom->Set(String::NewFromUtf8(isolate, "vrEndRender").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_end_render));
+		krom->Set(String::NewFromUtf8(isolate, "vrWarpSwap").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_warp_swap));
+		krom->Set(String::NewFromUtf8(isolate, "vrGetSensorStateView").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_get_sensor_state_view));
+		krom->Set(String::NewFromUtf8(isolate, "vrGetSensorStateProjection").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_get_sensor_state_projection));
+		#endif
 		krom->Set(String::NewFromUtf8(isolate, "windowX").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_x));
 		krom->Set(String::NewFromUtf8(isolate, "windowY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_y));
 		krom->Set(String::NewFromUtf8(isolate, "language").ToLocalChecked(), FunctionTemplate::New(isolate, krom_language));
@@ -3039,11 +3126,7 @@ namespace {
 		#endif
 
 		kinc_g4_begin(0);
-
-		// kinc_mutex_lock(&mutex);
 		run_v8();
-		// kinc_mutex_unlock(&mutex);
-
 		kinc_g4_end(0);
 		kinc_g4_swap_buffers();
 

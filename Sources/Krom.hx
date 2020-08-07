@@ -162,6 +162,12 @@ extern class Krom {
 	static function raytraceInit(shader: js.lib.ArrayBuffer, vb: Dynamic, ib: Dynamic, scale: Float): Void;
 	static function raytraceSetTextures(tex0: Dynamic, tex1: Dynamic, tex2: Dynamic, texenv: Dynamic, tex_sobol: Dynamic, tex_scramble: Dynamic, tex_rank: Dynamic): Void;
 	static function raytraceDispatchRays(target: Dynamic, cb: js.lib.ArrayBuffer): Void;
+	static function vrBegin(): Void;
+	static function vrBeginRender(eye: Int): Void;
+	static function vrEndRender(eye: Int): Void;
+	static function vrWarpSwap(): Void;
+	static function vrGetSensorStateView(eye: Int): Dynamic;
+	static function vrGetSensorStateProjection(eye: Int): Dynamic;
 	static function saveDialog(filterList: String, defaultPath: String): String;
 	static function openDialog(filterList: String, defaultPath: String): String;
 	static function readDirectory(path: String, foldersOnly: Bool): String;
