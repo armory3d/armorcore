@@ -6,9 +6,7 @@ const with_tinydir = true;
 const with_zlib = true;
 const with_stb_image_write = false;
 const with_audio = false;
-
-let vulkan = process.argv.indexOf("vulkan") >= 0;
-let with_krafix = vulkan; // glsl to spirv for vulkan
+let with_krafix = graphics === GraphicsApi.Vulkan; // glsl to spirv for vulkan
 
 const system = platform === Platform.Windows ? "win32" :
 			   platform === Platform.Linux   ? "linux" :
