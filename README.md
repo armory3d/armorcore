@@ -8,7 +8,7 @@ cd Kromx
 ```
 ```bash
 # Windows
-# Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip (exceeds 100MB)
+# Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
 node Kinc/make -g direct3d11
 # Open generated Visual Studio project
 # Build for x64 & release
@@ -43,7 +43,7 @@ node Kinc/make ios -g metal
 ```
 ```bash
 # Windows DXR - wip
-# Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip (exceeds 100MB)
+# Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
 node Kinc/make -g direct3d12 --raytrace dxr
 # Open generated Visual Studio project
 # Build for x64 & release
@@ -53,4 +53,11 @@ node Kinc/make -g direct3d12 --raytrace dxr
 node Kinc/make -g vulkan --raytrace vkrt --compiler clang --compile
 cd Deployment
 strip Krom
+```
+```bash
+# Windows VR - wip
+# Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
+node Kinc/make -g direct3d11 --vr oculus
+# Open generated Visual Studio project
+# Build for x64 & release
 ```
