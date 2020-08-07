@@ -47,7 +47,7 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #include <D3Dcompiler.h>
 #include <strstream>
 #endif
-#ifdef KORE_DIRECT3D12
+#ifdef KORE_RAYTRACE
 #include <kinc/graphics5/constantbuffer.h>
 #include <kinc/graphics5/commandlist.h>
 #include <kinc/graphics5/raytrace.h>
@@ -93,7 +93,7 @@ void armory_save_and_quit(bool save) { save_and_quit = save ? 1 : 2; }
 extern void krafix_compile(const char* source, char* output, int* length, const char* targetlang, const char* system, const char* shadertype);
 #endif
 
-#ifdef KORE_DIRECT3D12
+#ifdef KORE_RAYTRACE
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -2597,7 +2597,7 @@ namespace {
 	}
 	#endif
 
-	#ifdef KORE_DIRECT3D12
+	#ifdef KORE_RAYTRACE
 	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 
@@ -2987,7 +2987,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "writePng").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_png));
 		krom->Set(String::NewFromUtf8(isolate, "writeJpg").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_jpg));
 		#endif
-		#ifdef KORE_DIRECT3D12
+		#ifdef KORE_RAYTRACE
 		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));
 		krom->Set(String::NewFromUtf8(isolate, "raytraceSetTextures").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_set_textures));
 		krom->Set(String::NewFromUtf8(isolate, "raytraceDispatchRays").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_dispatch_rays));
