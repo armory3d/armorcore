@@ -2771,6 +2771,12 @@ namespace {
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_33").ToLocalChecked(), Number::New(isolate, proj.m[15]));
 		args.GetReturnValue().Set(obj);
 	}
+
+	void krom_vr_get_sensor_state_hmd_mounted(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(0);
+		args.GetReturnValue().Set(Boolean::New(isolate, state.pose.hmdMounted));
+	}
 	#endif
 
 	void krom_window_x(const FunctionCallbackInfo<Value>& args) {
@@ -2999,6 +3005,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "vrWarpSwap").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_warp_swap));
 		krom->Set(String::NewFromUtf8(isolate, "vrGetSensorStateView").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_get_sensor_state_view));
 		krom->Set(String::NewFromUtf8(isolate, "vrGetSensorStateProjection").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_get_sensor_state_projection));
+		krom->Set(String::NewFromUtf8(isolate, "vrGetSensorStateHmdMounted").ToLocalChecked(), FunctionTemplate::New(isolate, krom_vr_get_sensor_state_hmd_mounted));
 		#endif
 		krom->Set(String::NewFromUtf8(isolate, "windowX").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_x));
 		krom->Set(String::NewFromUtf8(isolate, "windowY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_y));

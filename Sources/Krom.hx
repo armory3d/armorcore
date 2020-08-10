@@ -168,6 +168,7 @@ extern class Krom {
 	static function vrWarpSwap(): Void;
 	static function vrGetSensorStateView(eye: Int): Dynamic;
 	static function vrGetSensorStateProjection(eye: Int): Dynamic;
+	static function vrGetSensorStateHmdMounted(): Bool;
 	static function saveDialog(filterList: String, defaultPath: String): String;
 	static function openDialog(filterList: String, defaultPath: String): String;
 	static function readDirectory(path: String, foldersOnly: Bool): String;
