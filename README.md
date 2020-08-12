@@ -49,7 +49,7 @@ node Kinc/make -g direct3d12 --raytrace dxr
 # Build for x64 & release
 ```
 ```bash
-# Vulkan VKRT - wip
+# Linux VKRT - wip
 node Kinc/make -g vulkan --raytrace vkrt --compiler clang --compile
 cd Deployment
 strip Krom
