@@ -1,10 +1,12 @@
-# Kromx
+# armorcore
 
-Krom Experiment
+3D engine core for C with embedded V8. ArmorCore is designed for the [Graphics5](https://github.com/Kode/Kinc/tree/master/Backends/Graphics5) api and targets Direct3D12, Vulkan, Metal and WebGPU. *(wip!)*
+
+Based on [Krom](https://github.com/Kode/Krom). Powered by [Kinc](https://github.com/Kode/Kinc). Powering [ArmorPaint](https://github.com/armory3d/armorpaint).
 
 ```bash
-git clone --recursive https://github.com/armory3d/Kromx
-cd Kromx
+git clone --recursive https://github.com/armory3d/armorcore
+cd armorcore
 ```
 ```bash
 # Windows
@@ -23,14 +25,14 @@ strip Krom
 # macOS
 node Kinc/make -g metal
 # Open generated Xcode project
-# Add `path/to/Kromx/v8/libraries/macos/release` into `Project - Krom - Build Settings - Search Paths - Library Search Paths`
+# Add `path/to/armorcore/v8/libraries/macos/release` into `Project - Krom - Build Settings - Search Paths - Library Search Paths`
 # Build
 ```
 ```bash
 # Android - wip
 node Kinc/make android -g opengl
 # Manual tweaking is required for now:
-# https://github.com/armory3d/Kromx/blob/master/kincfile.js#L68
+# https://github.com/armory3d/armorcore/blob/master/kincfile.js#L68
 # Open generated Android Studio project
 # Build for device
 ```
@@ -38,7 +40,7 @@ node Kinc/make android -g opengl
 # iOS - wip
 node Kinc/make ios -g metal
 # Open generated Xcode project
-# Add `path/to/Kromx/v8/libraries/ios/release` into `Project - Krom - Build Settings - Search Paths - Library Search Paths`
+# Add `path/to/armorcore/v8/libraries/ios/release` into `Project - Krom - Build Settings - Search Paths - Library Search Paths`
 # Build for device
 ```
 ```bash
