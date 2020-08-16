@@ -2386,19 +2386,11 @@ namespace {
 
 	void krom_set_mouse_cursor(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
-		int i = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int id = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_mouse_set_cursor(id);
 		#ifdef KORE_WINDOWS
-		SetCursor(LoadCursor(NULL,
-			i == 1 ? IDC_HAND     :
-			i == 2 ? IDC_CROSS    :
-			i == 3 ? IDC_IBEAM    :
-			i == 4 ? IDC_WAIT     :
-			i == 5 ? IDC_SIZENS   :
-			i == 6 ? IDC_SIZEWE   :
-			i == 7 ? IDC_SIZENWSE :
-			i == 8 ? IDC_SIZENESW :
-					 IDC_ARROW
-		));
+		// Set hand icon for drag even when mouse button is pressed
+		if (id == 1) SetCursor(LoadCursor(NULL, IDC_HAND));
 		#endif
 	}
 
