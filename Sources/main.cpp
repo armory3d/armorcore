@@ -190,7 +190,7 @@ namespace {
 	wchar_t temp_wstring[1024];
 	wchar_t temp_wstring1[1024];
 	#endif
-	#ifdef KROMX_PROFILE
+	#ifdef ARM_PROFILE
 	double startup_time = 0.0;
 	#endif
 
@@ -3137,7 +3137,7 @@ namespace {
 		kinc_g4_end(0);
 		kinc_g4_swap_buffers();
 
-		#ifdef KROMX_PROFILE
+		#ifdef ARM_PROFILE
 		if (startup_time > 0) {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Startup time: %f", kinc_time() - startup_time);
 			startup_time = 0.0;
@@ -3739,7 +3739,7 @@ int kickstart(int argc, char** argv) {
 	kinc_internal_set_files_location(&assetsdir[0u]);
 #endif
 
-#ifdef KROMX_PROFILE
+#ifdef ARM_PROFILE
 	startup_time = kinc_time();
 #endif
 
