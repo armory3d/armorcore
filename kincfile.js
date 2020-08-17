@@ -1,5 +1,5 @@
 
-const release = true;
+const release = process.argv.indexOf("--debug") == -1;
 const with_d3dcompiler = true;
 const with_nfd = true;
 const with_tinydir = true;
