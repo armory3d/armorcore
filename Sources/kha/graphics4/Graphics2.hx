@@ -187,15 +187,15 @@ class ImageShaderPainter {
 
 		g.setTexture(myPipeline.textureLocation, null);
 
-		if (end || (bufferStart + bufferIndex + 1) * 4 >= bufferSize) {
+		// if (end || (bufferStart + bufferIndex + 1) * 4 >= bufferSize) {
 			bufferStart = 0;
 			bufferIndex = 0;
 			rectVertices = rectVertexBuffer.lock(0);
-		}
-		else {
-			bufferStart = bufferIndex;
-			rectVertices = rectVertexBuffer.lock(bufferStart * 4);
-		}
+		// }
+		// else {
+		// 	bufferStart = bufferIndex;
+		// 	rectVertices = rectVertexBuffer.lock(bufferStart * 4);
+		// }
 	}
 
 	public function setBilinearFilter(bilinear: Bool): Void {
