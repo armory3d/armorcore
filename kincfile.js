@@ -126,6 +126,7 @@ if (with_stb_image_write) {
 	project.addFile("Libraries/stb/stb_image_write.h");
 }
 if (with_krafix) {
+	// Set library to true in Libraries/krafix/kincfile.js
 	await project.addProject('Libraries/krafix');
 }
 
