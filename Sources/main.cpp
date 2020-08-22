@@ -31,6 +31,12 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 
 #include <libplatform/libplatform.h>
+#ifdef KORE_LINUX // xlib defines conflicting with v8
+#undef True
+#undef False
+#undef None
+#undef Status
+#endif
 #include <v8.h>
 
 #include <map>
@@ -98,15 +104,15 @@ extern void krafix_compile(const char* source, char* output, int* length, const 
 extern "C" {
 #endif
 	extern kinc_g5_command_list_t commandList;
-	kinc_g5_constant_buffer_t constant_buffer;
-	kinc_g4_render_target_t* render_target;
-	kinc_raytrace_pipeline_t pipeline;
-	kinc_raytrace_acceleration_structure_t accel;
-	bool accel_created = false;
-	const int constant_buffer_size = 24;
 #ifdef __cplusplus
 }
 #endif
+static kinc_g5_constant_buffer_t constant_buffer;
+static kinc_g4_render_target_t* render_target;
+static kinc_raytrace_pipeline_t pipeline;
+static kinc_raytrace_acceleration_structure_t accel;
+static bool accel_created = false;
+const int constant_buffer_size = 24;
 #endif
 
 namespace {
