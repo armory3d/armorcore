@@ -3754,6 +3754,7 @@ int kickstart(int argc, char** argv) {
 
 	start_v8();
 	kinc_threads_init();
+	kinc_display_init();
 
 	start_krom(code);
 

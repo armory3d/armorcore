@@ -11,6 +11,7 @@ class Display {
 	}
 
 	static function init(): Void {
+		if (displays.length > 0) return;
 		for (i in 0...Krom.displayCount()) {
 			displays.push(new Display(i, Krom.displayIsPrimary(i)));
 		}
