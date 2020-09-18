@@ -100,7 +100,24 @@ if (with_nfd && (platform === Platform.Windows || platform === Platform.Linux ||
 		project.addFile('Libraries/nfd/nfd_win.cpp');
 	}
 	else if (platform === Platform.Linux) {
-		project.addFile('Libraries/nfd/nfd_zenity.c');
+		let gtk = true;
+		if (gtk) {
+			project.addFile('Libraries/nfd/nfd_gtk.c');
+
+			project.addIncludeDir("/usr/include/gtk-3.0");
+			project.addIncludeDir("/usr/include/glib-2.0");
+			project.addIncludeDir("/usr/lib/x86_64-linux-gnu/glib-2.0/include");
+			project.addIncludeDir("/usr/include/pango-1.0");
+			project.addIncludeDir("/usr/include/cairo");
+			project.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
+			project.addIncludeDir("/usr/include/atk-1.0");
+			project.addLib('gtk-3');
+			project.addLib('gobject-2.0');
+			project.addLib('glib-2.0');
+		}
+		else {
+			project.addFile('Libraries/nfd/nfd_zenity.c');
+		}
 	}
 	else {
 		project.addFile('Libraries/nfd/nfd_cocoa.m');
