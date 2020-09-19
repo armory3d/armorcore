@@ -111,6 +111,8 @@ if (with_nfd && (platform === Platform.Windows || platform === Platform.Linux ||
 			project.addIncludeDir("/usr/include/cairo");
 			project.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
 			project.addIncludeDir("/usr/include/atk-1.0");
+			project.addIncludeDir("/usr/lib/glib-2.0/include");
+			project.addIncludeDir("/usr/include/harfbuzz");
 			project.addLib('gtk-3');
 			project.addLib('gobject-2.0');
 			project.addLib('glib-2.0');
