@@ -5,3 +5,6 @@
 	path = v8
 	url = https://github.com/armory3d/v8_bin
 	shallow = true
+[submodule "Tools/haxe"]
+	path = Tools/haxe
+	url = https://github.com/armory3d/haxe_bin
