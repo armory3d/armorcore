@@ -24,6 +24,11 @@ project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 
+if (platform === Platform.OSX) {
+	// Otherwise V8::Initialize() hangs
+	project.cpp = true;
+}
+
 if (with_audio) {
 	project.addDefine('WITH_AUDIO');
 }
