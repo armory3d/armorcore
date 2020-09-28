@@ -222,12 +222,17 @@ namespace {
 		int height = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int samples_per_pixel = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		bool vertical_sync = args[4]->ToBoolean(isolate)->Value();
-		int frequency = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int window_mode = args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int window_features = args[7]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int api_version = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int x = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int y = args[10]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int window_mode = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int window_features = args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int api_version = args[7]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int x = -1;
+		int y = -1;
+		int frequency = 60;
+		if (args.Length() > 8) {
+			x = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+			y = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+			frequency = args[10]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		}
 
 		if (api_version != KROM_API) {
 			const char* outdated;
