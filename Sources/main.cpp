@@ -90,7 +90,7 @@ extern const char* iphonegetresourcepath();
 
 using namespace v8;
 
-const int KROM_API = 3;
+const int KROM_API = 5;
 
 int save_and_quit = 0; // off, save, nosave
 void armory_save_and_quit(bool save) { save_and_quit = save ? 1 : 2; }
