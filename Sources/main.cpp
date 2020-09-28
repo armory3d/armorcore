@@ -124,6 +124,7 @@ namespace {
 	bool stderr_created = false;
 	bool paused = false;
 	int pausedFrames = 0;
+	bool armorcore = false;
 
 	Global<Context> global_context;
 	Isolate* isolate;
@@ -229,6 +230,7 @@ namespace {
 		int y = -1;
 		int frequency = 60;
 		if (args.Length() > 8) {
+			armorcore = true;
 			x = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 			y = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 			frequency = args[10]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -629,8 +631,12 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)field->Value();
-		int start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
-		int count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
+		int start = 0;
+		int count = kinc_g4_vertex_buffer_count(buffer);
+		if (armorcore) {
+			start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
+			count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
+		}
 		float* vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, (count - start) * kinc_g4_vertex_buffer_stride(buffer));
 		args.GetReturnValue().Set(Float32Array::New(abuffer, 0, (count - start) * kinc_g4_vertex_buffer_stride(buffer) / 4));
@@ -1214,14 +1220,16 @@ namespace {
 			pipeline->color_write_mask_alpha[i] = maskAlphaArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->BooleanValue(isolate);
 		}
 
-		pipeline->color_attachment_count = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachmentCount").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		Local<Object> colorAttachmentArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachments").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		for (int i = 0; i < 8; ++i) {
-			pipeline->color_attachment[i] = (kinc_g4_render_target_format_t)colorAttachmentArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		}
+		if (armorcore) {
+			pipeline->color_attachment_count = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachmentCount").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+			Local<Object> colorAttachmentArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachments").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+			for (int i = 0; i < 8; ++i) {
+				pipeline->color_attachment[i] = (kinc_g4_render_target_format_t)colorAttachmentArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+			}
 
-		pipeline->depth_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		pipeline->stencil_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+			pipeline->depth_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+			pipeline->stencil_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		}
 
 		pipeline->conservative_rasterization = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "conservativeRasterization").ToLocalChecked()).ToLocalChecked()->BooleanValue(isolate);
 
@@ -3121,7 +3129,7 @@ namespace {
 
 	void update() {
 		#if KORE_WINDOWS
-		if (paused && ++pausedFrames > 3) { Sleep(1); return; }
+		if (paused && ++pausedFrames > 3 && armorcore) { Sleep(1); return; }
 		#endif
 
 		#ifdef IDLE_SLEEP
