@@ -646,7 +646,10 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)field->Value();
-		int count = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
+		int count = kinc_g4_vertex_buffer_count(buffer);
+		if (armorcore) {
+			count = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
+		}
 		kinc_g4_vertex_buffer_unlock(buffer, count);
 	}
 
