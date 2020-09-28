@@ -1,5 +1,5 @@
-﻿diff --git a/Backends/Graphics5/Metal/Sources/Kore/PipelineState5Impl.mm b/Backends/Graphics5/Metal/Sources/Kore/PipelineState5Impl.mm
-index b775c873..a36c2a88 100644
+diff --git a/Backends/Graphics5/Metal/Sources/Kore/PipelineState5Impl.mm b/Backends/Graphics5/Metal/Sources/Kore/PipelineState5Impl.mm
+index b775c873..faf29b3d 100644
 --- a/Backends/Graphics5/Metal/Sources/Kore/PipelineState5Impl.mm
 +++ b/Backends/Graphics5/Metal/Sources/Kore/PipelineState5Impl.mm
 @@ -128,8 +128,14 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
@@ -16,45 +16,36 @@ index b775c873..a36c2a88 100644
 +		renderPipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
 +		renderPipelineDesc.stencilAttachmentPixelFormat = MTLPixelFormatInvalid;
 +	}
-
+ 
  	float offset = 0;
  	MTLVertexDescriptor* vertexDescriptor = [[MTLVertexDescriptor alloc] init];
-@@ -145,7 +151,7 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
- 			vertexDescriptor.attributes[index].bufferIndex = 0;
- 			vertexDescriptor.attributes[index].offset = offset;
- 		}
--
-+
- 		switch (pipeline->inputLayout[0]->elements[i].data) {
- 		case KINC_G4_VERTEX_DATA_FLOAT1:
- 			if (index >= 0) {
 @@ -196,41 +202,21 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
  	NSError* errors = nil;
  	MTLRenderPipelineReflection* reflection = nil;
  	id<MTLDevice> device = getMetalDevice();
--
+-	
  	pipeline->impl._pipeline = [device newRenderPipelineStateWithDescriptor:renderPipelineDesc options:MTLPipelineOptionBufferTypeInfo reflection:&reflection error:&errors];
  	if (errors != nil) NSLog(@"%@", [errors localizedDescription]);
  	assert(pipeline->impl._pipeline && !errors);
--
+-	
 -	renderPipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
 -	renderPipelineDesc.stencilAttachmentPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
 -	pipeline->impl._pipelineDepth = [device newRenderPipelineStateWithDescriptor:renderPipelineDesc options:MTLPipelineOptionBufferTypeInfo reflection:&reflection error:&errors];
 -	if (errors != nil) NSLog(@"%@", [errors localizedDescription]);
 -	assert(pipeline->impl._pipelineDepth && !errors);
--
+-	
  	pipeline->impl._reflection = reflection;
-
+ 
  	MTLDepthStencilDescriptor* depthStencilDescriptor = [MTLDepthStencilDescriptor new];
  	depthStencilDescriptor.depthCompareFunction = convert(pipeline->depthMode);
  	depthStencilDescriptor.depthWriteEnabled = pipeline->depthWrite;
  	pipeline->impl._depthStencil = [device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
--
+-	
 -	depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
 -	depthStencilDescriptor.depthWriteEnabled = false;
 -	pipeline->impl._depthStencilNone = [device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
  }
-
+ 
 -extern "C" bool kinc_internal_current_render_target_has_depth();
 -
  void kinc_g5_internal_pipeline_set(kinc_g5_pipeline_t *pipeline) {
