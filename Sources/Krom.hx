@@ -172,6 +172,7 @@ extern class Krom {
 	static function saveDialog(filterList: String, defaultPath: String): String;
 	static function openDialog(filterList: String, defaultPath: String): String;
 	static function readDirectory(path: String, foldersOnly: Bool): String;
+	static function fileExists(path: String): Bool;
 	static function inflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
 	static function deflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
 	static function writePng(path: String, bytes: js.lib.ArrayBuffer): Void;

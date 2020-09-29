@@ -2520,6 +2520,20 @@ namespace {
 	}
 	#endif
 
+	void krom_file_exists(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		bool exists = false;
+		String::Utf8Value utf8_value(isolate, args[0]);
+
+		kinc_file_reader_t reader;
+		if (kinc_file_reader_open(&reader, *utf8_value, KINC_FILE_TYPE_ASSET)) {
+			exists = true;
+			kinc_file_reader_close(&reader);
+		}
+
+		args.GetReturnValue().Set(Boolean::New(isolate, exists));
+	}
+
 	#ifdef WITH_ZLIB
 	void krom_inflate(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
@@ -2999,6 +3013,7 @@ namespace {
 		#ifdef WITH_TINYDIR
 		krom->Set(String::NewFromUtf8(isolate, "readDirectory").ToLocalChecked(), FunctionTemplate::New(isolate, krom_read_directory));
 		#endif
+		krom->Set(String::NewFromUtf8(isolate, "fileExists").ToLocalChecked(), FunctionTemplate::New(isolate, krom_file_exists));
 		#ifdef WITH_ZLIB
 		krom->Set(String::NewFromUtf8(isolate, "inflate").ToLocalChecked(), FunctionTemplate::New(isolate, krom_inflate));
 		krom->Set(String::NewFromUtf8(isolate, "deflate").ToLocalChecked(), FunctionTemplate::New(isolate, krom_deflate));
