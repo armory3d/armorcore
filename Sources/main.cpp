@@ -320,7 +320,19 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		String::Utf8Value value(isolate, arg);
-		kinc_log(KINC_LOG_LEVEL_INFO, *value);
+		int len = strlen(*value);
+		if (len < 2048) {
+			kinc_log(KINC_LOG_LEVEL_INFO, *value);
+		}
+		else {
+			int pos = 0;
+			while (pos < len) {
+				strncpy(temp_string, *value + pos, 2047);
+				temp_string[2047] = 0;
+				kinc_log(KINC_LOG_LEVEL_INFO, temp_string);
+				pos += 2047;
+			}
+		}
 	}
 
 	void krom_clear(const v8::FunctionCallbackInfo<v8::Value>& args) {
