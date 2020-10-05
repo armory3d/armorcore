@@ -320,7 +320,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		String::Utf8Value value(isolate, arg);
-		int len = strlen(*value);
+		size_t len = strlen(*value);
 		if (len < 2048) {
 			kinc_log(KINC_LOG_LEVEL_INFO, *value);
 		}
