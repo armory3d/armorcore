@@ -76,6 +76,9 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 #endif
+#ifdef WITH_TEXSYNTH
+#include <texsynth.h>
+#endif
 #ifdef IDLE_SLEEP
 #include <unistd.h>
 #endif
@@ -2637,6 +2640,22 @@ namespace {
 	}
 	#endif
 
+	#ifdef WITH_TEXSYNTH
+	void krom_texsynth_inpaint(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int32_t w = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int32_t h = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		Local<ArrayBuffer> bufferOut = Local<ArrayBuffer>::Cast(args[2]);
+		ArrayBuffer::Contents contentOut = bufferOut->GetContents();
+		Local<ArrayBuffer> bufferImage = Local<ArrayBuffer>::Cast(args[3]);
+		ArrayBuffer::Contents contentImage = bufferImage->GetContents();
+		Local<ArrayBuffer> bufferTile = Local<ArrayBuffer>::Cast(args[4]);
+		ArrayBuffer::Contents contentTile = bufferTile->GetContents();
+		bool tiling = args[5]->ToBoolean(isolate)->Value();
+		texsynth_inpaint(w, h, contentOut.Data(), contentImage.Data(), contentTile.Data(), tiling);
+	}
+	#endif
+
 	#ifdef KORE_RAYTRACE
 	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
@@ -3033,6 +3052,9 @@ namespace {
 		#ifdef WITH_STB_IMAGE_WRITE
 		krom->Set(String::NewFromUtf8(isolate, "writePng").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_png));
 		krom->Set(String::NewFromUtf8(isolate, "writeJpg").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_jpg));
+		#endif
+		#ifdef WITH_TEXSYNTH
+		krom->Set(String::NewFromUtf8(isolate, "texsynthInpaint").ToLocalChecked(), FunctionTemplate::New(isolate, krom_texsynth_inpaint));
 		#endif
 		#ifdef KORE_RAYTRACE
 		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));

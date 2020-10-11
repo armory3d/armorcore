@@ -177,6 +177,7 @@ extern class Krom {
 	static function deflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
 	static function writePng(path: String, bytes: js.lib.ArrayBuffer): Void;
 	static function writeJpg(path: String, bytes: js.lib.ArrayBuffer): Void;
+	static function texsynthInpaint(w: Int, h: Int, bytesOut: js.lib.ArrayBuffer, bytesImage: js.lib.ArrayBuffer, bytesTile: js.lib.ArrayBuffer, tiling: Bool): Void;
 	static function windowX(id: Int): Int;
 	static function windowY(id: Int): Int;
 	static function language(): String;

@@ -6,7 +6,8 @@ const with_tinydir = true;
 const with_zlib = true;
 const with_stb_image_write = false;
 const with_audio = false;
-let with_krafix = graphics === GraphicsApi.Vulkan; // glsl to spirv for vulkan
+const with_texsynth = false;
+const with_krafix = graphics === GraphicsApi.Vulkan; // glsl to spirv for vulkan
 
 const system = platform === Platform.Windows ? "win32" :
 			   platform === Platform.Linux   ? "linux" :
@@ -149,6 +150,13 @@ if (with_stb_image_write) {
 	project.addDefine('WITH_STB_IMAGE_WRITE');
 	project.addIncludeDir("Libraries/stb");
 	project.addFile("Libraries/stb/stb_image_write.h");
+}
+if (with_texsynth) {
+	project.addDefine('WITH_TEXSYNTH');
+	project.addIncludeDir("Libraries/texsynth");
+	if (platform === Platform.Windows) {
+		project.addLib('Libraries/texsynth/texsynth');
+	}
 }
 if (with_krafix) {
 	// Set library to true in Libraries/krafix/kincfile.js
