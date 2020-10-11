@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-extern "C" void texsynth_inpaint(int w, int h, void *output_ptr, void *image_ptr, void *tile_ptr, bool tiling);
+extern "C" void texsynth_inpaint(int w, int h, void *output_ptr, void *image_ptr, bool tiling);
 
 #ifdef __cplusplus
 }
