@@ -2649,8 +2649,10 @@ namespace {
 		ArrayBuffer::Contents contentOut = bufferOut->GetContents();
 		Local<ArrayBuffer> bufferImage = Local<ArrayBuffer>::Cast(args[3]);
 		ArrayBuffer::Contents contentImage = bufferImage->GetContents();
-		bool tiling = args[4]->ToBoolean(isolate)->Value();
-		texsynth_inpaint(w, h, contentOut.Data(), contentImage.Data(), tiling);
+		Local<ArrayBuffer> bufferMask = Local<ArrayBuffer>::Cast(args[4]);
+		ArrayBuffer::Contents contentMask = bufferMask->GetContents();
+		bool tiling = args[5]->ToBoolean(isolate)->Value();
+		texsynth_inpaint(w, h, contentOut.Data(), contentImage.Data(), contentMask.Data(), tiling);
 	}
 	#endif
 
