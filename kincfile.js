@@ -155,7 +155,13 @@ if (with_texsynth) {
 	project.addDefine('WITH_TEXSYNTH');
 	project.addIncludeDir("Libraries/texsynth");
 	if (platform === Platform.Windows) {
-		project.addLib('Libraries/texsynth/texsynth');
+		project.addLib('Libraries/texsynth/win32/texsynth');
+	}
+	else if (platform === Platform.Linux) {
+		project.addLib('texsynth -L../../Libraries/texsynth/linux');
+	}
+	else if (platform === Platform.OSX) {
+		project.addLib('libtexsynth.a');
 	}
 }
 if (with_krafix) {
