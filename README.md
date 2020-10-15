@@ -25,7 +25,6 @@ strip Krom
 # macOS
 node Kinc/make -g metal
 # Open generated Xcode project
-# Add `path/to/armorcore/v8/libraries/macos/release` into `Project - Krom - Build Settings - Search Paths - Library Search Paths`
 # Build
 ```
 ```bash
@@ -40,7 +39,6 @@ node Kinc/make android -g opengl
 # iOS - wip
 node Kinc/make ios -g metal
 # Open generated Xcode project
-# Add `path/to/armorcore/v8/libraries/ios/release` into `Project - Krom - Build Settings - Search Paths - Library Search Paths`
 # Build for device
 ```
 ```bash

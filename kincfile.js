@@ -91,10 +91,10 @@ else if (platform === Platform.Android) {
 	//   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 }
 else if (platform === Platform.iOS) {
-	project.addLib('libv8_monolith.a');
+	project.addLib('v8/libraries/ios/release/libv8_monolith.a');
 }
 else if (platform === Platform.OSX) {
-	project.addLib('libv8_monolith.a');
+	project.addLib('v8/libraries/macos/release/libv8_monolith.a');
 }
 
 if (with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
@@ -161,7 +161,7 @@ if (with_texsynth) {
 		project.addLib('texsynth -L../../Libraries/texsynth/linux');
 	}
 	else if (platform === Platform.OSX) {
-		project.addLib('libtexsynth.a');
+		project.addLib('Libraries/texsynth/macos/libtexsynth.a');
 	}
 }
 if (with_krafix) {
