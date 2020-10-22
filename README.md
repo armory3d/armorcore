@@ -8,54 +8,62 @@ Based on [Krom](https://github.com/Kode/Krom). Powered by [Kinc](https://github.
 git clone --recursive https://github.com/armory3d/armorcore
 cd armorcore
 ```
+
+**Windows**
 ```bash
-# Windows
 # Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
 node Kinc/make -g direct3d11
 # Open generated Visual Studio project
 # Build for x64 & release
 ```
+
+**Linux**
 ```bash
-# Linux
 node Kinc/make -g opengl --compiler clang --compile
 cd Deployment
 strip Krom
 ```
+
+**macOS**
 ```bash
-# macOS
 node Kinc/make -g metal
 # Open generated Xcode project
 # Build
 ```
+
+**Android** *wip*
 ```bash
-# Android - wip
 node Kinc/make android -g opengl
 # Manual tweaking is required for now:
 # https://github.com/armory3d/armorcore/blob/master/kincfile.js#L68
 # Open generated Android Studio project
 # Build for device
 ```
+
+**iOS** *wip*
 ```bash
-# iOS - wip
 node Kinc/make ios -g metal
 # Open generated Xcode project
 # Build for device
 ```
+
+**Windows DXR** *wip*
 ```bash
-# Windows DXR - wip
 # Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
 node Kinc/make -g direct3d12 --raytrace dxr
 # Open generated Visual Studio project
 # Build for x64 & release
 ```
+
+**Linux VKRT** *wip*
 ```bash
-# Linux VKRT - wip
 node Kinc/make -g vulkan --raytrace vkrt --compiler clang --compile
 cd Deployment
 strip Krom
 ```
+
+**Windows VR** *wip*
 ```bash
-# Windows VR - wip
 # Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
 node Kinc/make -g direct3d11 --vr oculus
 # Open generated Visual Studio project
