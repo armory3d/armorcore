@@ -23,14 +23,18 @@ class Window {
 	}
 
 	public static var all(get, never): Array<Window>;
-	
+
 	static function get_all(): Array<Window> {
 		return windows;
 	}
 
-	public function resize(width: Int, height: Int): Void {}
+	public function resize(width: Int, height: Int): Void {
+		Krom.resizeWindow(num, width, height);
+	}
 
-	public function move(x: Int, y: Int): Void {}
+	public function move(x: Int, y: Int): Void {
+		Krom.moveWindow(num, x, y);
+	}
 
 	public function changeWindowFeatures(features: Int): Void {}
 
@@ -61,7 +65,7 @@ class Window {
 	function get_width(): Int {
 		return Krom.windowWidth(num);
 	}
-	
+
 	function set_width(value: Int): Int {
 		return 800;
 	}
@@ -79,11 +83,12 @@ class Window {
 	public var mode(get, set): WindowMode;
 
 	function get_mode(): WindowMode {
-		return Windowed;
+		return cast Krom.getWindowMode(num);
 	}
 
 	function set_mode(mode: WindowMode): WindowMode {
-		return Windowed;
+		Krom.setWindowMode(num, cast mode);
+		return mode;
 	}
 
 	public var visible(get, set): Bool;

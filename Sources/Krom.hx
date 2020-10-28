@@ -112,6 +112,10 @@ extern class Krom {
 	static function windowWidth(id: Int): Int;
 	static function windowHeight(id: Int): Int;
 	static function setWindowTitle(id: Int, title: String): Void;
+	static function getWindowMode(id: Int): Int;
+	static function setWindowMode(id: Int, mode: Int): Void;
+	static function resizeWindow(id: Int, width: Int, height: Int): Void;
+	static function moveWindow(id: Int, x: Int, y: Int): Void;
 	static function screenDpi(): Int;
 	static function systemId(): String;
 	static function requestShutdown(): Void;

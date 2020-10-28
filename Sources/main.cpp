@@ -1690,6 +1690,35 @@ namespace {
 		kinc_window_set_title(windowId, *title);
 	}
 
+	void krom_get_window_mode(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		args.GetReturnValue().Set(Int32::New(isolate, kinc_window_get_mode(windowId)));
+	}
+
+	void krom_set_window_mode(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_window_mode_t windowMode = (kinc_window_mode_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_window_change_mode(windowId, windowMode);
+	}
+
+	void krom_resize_window(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int width = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int height = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_window_resize(windowId, width, height);
+	}
+
+	void krom_move_window(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int x = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int y = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_window_move(windowId, x, y);
+	}
+
 	void krom_screen_dpi(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		int ppi = kinc_display_current_mode(kinc_primary_display()).pixels_per_inch;
@@ -2974,6 +3003,10 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "windowWidth").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_width));
 		krom->Set(String::NewFromUtf8(isolate, "windowHeight").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_height));
 		krom->Set(String::NewFromUtf8(isolate, "setWindowTitle").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_window_title));
+		krom->Set(String::NewFromUtf8(isolate, "getWindowMode").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_window_mode));
+		krom->Set(String::NewFromUtf8(isolate, "setWindowMode").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_window_mode));
+		krom->Set(String::NewFromUtf8(isolate, "resizeWindow").ToLocalChecked(), FunctionTemplate::New(isolate, krom_resize_window));
+		krom->Set(String::NewFromUtf8(isolate, "moveWindow").ToLocalChecked(), FunctionTemplate::New(isolate, krom_move_window));
 		krom->Set(String::NewFromUtf8(isolate, "screenDpi").ToLocalChecked(), FunctionTemplate::New(isolate, krom_screen_dpi));
 		krom->Set(String::NewFromUtf8(isolate, "systemId").ToLocalChecked(), FunctionTemplate::New(isolate, krom_system_id));
 		krom->Set(String::NewFromUtf8(isolate, "requestShutdown").ToLocalChecked(), FunctionTemplate::New(isolate, krom_request_shutdown));
