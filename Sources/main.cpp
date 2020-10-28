@@ -1326,17 +1326,20 @@ namespace {
 
 		if (armorcore) {
 			kinc_file_reader_t reader;
-			kinc_file_reader_open(&reader, *utf8_value, KINC_FILE_TYPE_ASSET);
-			unsigned char* image_data;
-			int image_width;
-			int image_height;
-			kinc_image_format_t image_format;
-			load_image(reader, *utf8_value, image_data, image_width, image_height, image_format);
-			kinc_image_init(image, image_data, image_width, image_height, image_format);
+			if (kinc_file_reader_open(&reader, *utf8_value, KINC_FILE_TYPE_ASSET)) {
+				unsigned char* image_data;
+				int image_width;
+				int image_height;
+				kinc_image_format_t image_format;
+				load_image(reader, *utf8_value, image_data, image_width, image_height, image_format);
+				kinc_image_init(image, image_data, image_width, image_height, image_format);
+			}
+			else return;
 		}
 		else {
 			// TODO: make kinc_image load faster
 			size_t byte_size = kinc_image_size_from_file(*utf8_value);
+			if (byte_size == 0) return;
 			void* memory = malloc(byte_size);
 			kinc_image_init_from_file(image, memory, *utf8_value);
 		}
