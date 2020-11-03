@@ -69,3 +69,9 @@ node Kinc/make -g direct3d11 --vr oculus
 # Open generated Visual Studio project
 # Build for x64 & release
 ```
+
+**Generating a v8 snapshot file**
+```bash
+./Krom . . --snapshot
+# Generates a `krom.bin` file
+```

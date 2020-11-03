@@ -124,14 +124,16 @@ namespace {
 	bool enable_sound = true;
 	bool enable_window = true;
 	bool profile = false;
+	bool snapshot = false;
 	bool stderr_created = false;
 	bool paused = false;
 	int pausedFrames = 0;
 	bool armorcore = false;
 
-	Global<Context> global_context;
 	Isolate* isolate;
 	std::unique_ptr<Platform> plat;
+	Global<Context> global_context;
+	Global<ObjectTemplate> global_krom;
 	Global<Function> update_func;
 	Global<Function> drop_files_func;
 	Global<Function> cut_func;
@@ -1186,7 +1188,7 @@ namespace {
 		pipeline->vertex_shader = vertexShader;
 		pipeline->fragment_shader = fragmentShader;
 
-		if (!args[8]->IsNull() && !args[8]->IsUndefined()) {
+		if (!args[8]->IsNullOrUndefined()) {
 			Local<External> gsfield = Local<External>::Cast(args[8]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 			kinc_g4_shader_t* geometryShader = (kinc_g4_shader_t*)gsfield->Value();
 			pipeobj->SetInternalField(5, External::New(isolate, geometryShader));
@@ -1194,7 +1196,7 @@ namespace {
 			pipeline->geometry_shader = geometryShader;
 		}
 
-		if (!args[9]->IsNull() && !args[9]->IsUndefined()) {
+		if (!args[9]->IsNullOrUndefined()) {
 			Local<External> tcsfield = Local<External>::Cast(args[9]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 			kinc_g4_shader_t* tessellationControlShader = (kinc_g4_shader_t*)tcsfield->Value();
 			pipeobj->SetInternalField(6, External::New(isolate, tessellationControlShader));
@@ -1202,7 +1204,7 @@ namespace {
 			pipeline->tessellation_control_shader = tessellationControlShader;
 		}
 
-		if (!args[10]->IsNull() && !args[10]->IsUndefined()) {
+		if (!args[10]->IsNullOrUndefined()) {
 			Local<External> tesfield = Local<External>::Cast(args[10]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 			kinc_g4_shader_t* tessellationEvaluationShader = (kinc_g4_shader_t*)tesfield->Value();
 			pipeobj->SetInternalField(7, External::New(isolate, tessellationEvaluationShader));
@@ -1367,7 +1369,7 @@ namespace {
 
 	void krom_unload_image(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
-		if (args[0]->IsNull() || args[0]->IsUndefined()) return;
+		if (args[0]->IsNullOrUndefined()) return;
 		Local<Object> image = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		Local<Value> tex = image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
 		Local<Value> rt = image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
@@ -2091,7 +2093,7 @@ namespace {
 
 	void krom_begin(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
-		if (args[0]->IsNull() || args[0]->IsUndefined()) {
+		if (args[0]->IsNullOrUndefined()) {
 			kinc_g4_restore_render_target();
 		}
 		else {
@@ -2101,7 +2103,7 @@ namespace {
 
 			int32_t length = 1;
 			kinc_g4_render_target_t* render_targets[8] = { render_target, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
-			if (!args[1]->IsNull() && !args[1]->IsUndefined()) {
+			if (!args[1]->IsNullOrUndefined()) {
 				Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 				length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() + 1;
 				if (length > 8) length = 8;
@@ -2897,25 +2899,8 @@ namespace {
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_language()).ToLocalChecked());
 	}
 
-	void start_v8() {
-		plat = platform::NewDefaultPlatform();
-		V8::InitializePlatform(plat.get());
-		V8::Initialize();
-
-		std::string flags = "";
-		#if KORE_IOS
-		flags += "--jitless ";
-		#endif
-		if (profile) flags += "--logfile=krom-v8.log --prof --log-source-code ";
-		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
-
-		Isolate::CreateParams create_params;
-		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-		isolate = Isolate::New(create_params);
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-
+	void bind_krom(Isolate *isolate) {
+		v8::HandleScope handle_scope(isolate);
 		Local<ObjectTemplate> krom = ObjectTemplate::New(isolate);
 		krom->Set(String::NewFromUtf8(isolate, "init").ToLocalChecked(), FunctionTemplate::New(isolate, krom_init));
 		krom->Set(String::NewFromUtf8(isolate, "setApplicationName").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_application_name));
@@ -3109,6 +3094,36 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "windowX").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_x));
 		krom->Set(String::NewFromUtf8(isolate, "windowY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_y));
 		krom->Set(String::NewFromUtf8(isolate, "language").ToLocalChecked(), FunctionTemplate::New(isolate, krom_language));
+		global_krom.Reset(isolate, krom);
+	}
+
+	void start_v8(char *krom_bin, int krom_bin_size) {
+		plat = platform::NewDefaultPlatform();
+		V8::InitializePlatform(plat.get());
+		V8::Initialize();
+
+		std::string flags = "";
+		#if KORE_IOS
+		flags += "--jitless ";
+		#endif
+		if (profile) flags += "--logfile=krom-v8.log --prof --log-source-code ";
+		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
+
+		Isolate::CreateParams create_params;
+		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+		StartupData blob;
+		if (krom_bin_size > 0) {
+			blob.data = krom_bin;
+			blob.raw_size = krom_bin_size;
+			create_params.snapshot_blob = &blob;
+		}
+		isolate = Isolate::New(create_params);
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+
+		bind_krom(isolate);
+		Local<ObjectTemplate> krom = Local<ObjectTemplate>::New(isolate, global_krom);
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
@@ -3117,7 +3132,7 @@ namespace {
 		global_context.Reset(isolate, context);
 	}
 
-	bool start_krom(char* scriptfile) {
+	void start_krom(char* scriptfile) {
 		v8::Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -3125,19 +3140,29 @@ namespace {
 		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
-		Local<String> source = String::NewFromUtf8(isolate, scriptfile, NewStringType::kNormal).ToLocalChecked();
+		if (scriptfile != NULL) {
+			Local<String> source = String::NewFromUtf8(isolate, scriptfile, NewStringType::kNormal).ToLocalChecked();
 
-		TryCatch try_catch(isolate);
-		Local<Script> compiled_script = Script::Compile(isolate->GetCurrentContext(), source).ToLocalChecked();
+			TryCatch try_catch(isolate);
+			Local<Script> compiled_script = Script::Compile(isolate->GetCurrentContext(), source).ToLocalChecked();
 
-		Local<Value> result;
-		if (!compiled_script->Run(context).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
-			return false;
+			Local<Value> result;
+			if (!compiled_script->Run(context).ToLocal(&result)) {
+				v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
+				write_stack_trace(*stack_trace);
+				return;
+			}
 		}
 
-		return true;
+		TryCatch try_catch(isolate);
+		v8::Local<v8::Value> js_kickstart = context->Global()->Get(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "kickstart").ToLocalChecked()).ToLocalChecked();
+		if (!js_kickstart->IsNullOrUndefined()) {
+			Local<Value> result;
+			if (!js_kickstart->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->CallAsFunction(context, context->Global(), 0, nullptr).ToLocal(&result)) {
+				v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
+				write_stack_trace(*stack_trace);
+			}
+		}
 	}
 
 	void run_v8() {
@@ -3823,6 +3848,9 @@ int kickstart(int argc, char** argv) {
 		else if (strcmp(argv[i], "--prof") == 0) {
 			profile = true;
 		}
+		else if (strcmp(argv[i], "--snapshot") == 0) {
+			snapshot = true;
+		}
 		else if (read_console_pid) {
 			#ifdef KORE_WINDOWS
 			AttachConsole(atoi(argv[i]));
@@ -3842,12 +3870,14 @@ int kickstart(int argc, char** argv) {
 	startup_time = kinc_time();
 #endif
 
+	bool snapshot_found = true;
 	kinc_file_reader_t reader;
-	if (!kinc_file_reader_open(&reader, "krom.bin", KINC_FILE_TYPE_ASSET)) {
+	if (snapshot || !kinc_file_reader_open(&reader, "krom.bin", KINC_FILE_TYPE_ASSET)) {
 		if (!kinc_file_reader_open(&reader, "krom.js", KINC_FILE_TYPE_ASSET)) {
 			kinc_log(KINC_LOG_LEVEL_ERROR, "Could not load krom.js, aborting.");
 			exit(1);
 		}
+		snapshot_found = false;
 	}
 
 	int reader_size = (int)kinc_file_reader_size(&reader);
@@ -3856,12 +3886,50 @@ int kickstart(int argc, char** argv) {
 	code[reader_size] = 0;
 	kinc_file_reader_close(&reader);
 
-	start_v8();
+	if (snapshot) {
+		plat = platform::NewDefaultPlatform();
+		V8::InitializePlatform(plat.get());
+		V8::Initialize();
+
+		v8::SnapshotCreator creator;
+		v8::Isolate* isolate = creator.GetIsolate();
+		{
+			v8::HandleScope handle_scope(isolate);
+			{
+				//bind_krom(isolate);
+				//Local<ObjectTemplate> krom = Local<ObjectTemplate>::New(isolate, global_krom);
+				//Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
+				//global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
+				//v8::Local<v8::Context> context = v8::Context::New(isolate, NULL, global);
+
+				v8::Local<v8::Context> context = v8::Context::New(isolate);
+				v8::Context::Scope context_scope(context);
+
+				v8::ScriptOrigin origin(String::NewFromUtf8(isolate, "krom").ToLocalChecked());
+				v8::ScriptCompiler::Source source(String::NewFromUtf8(isolate, code).ToLocalChecked(), origin);
+
+				Local<Script> compiled_script = v8::ScriptCompiler::Compile(context, &source, v8::ScriptCompiler::kEagerCompile).ToLocalChecked();
+				compiled_script->Run(context);
+
+				creator.SetDefaultContext(context);
+			}
+		}
+		StartupData startupData = creator.CreateBlob(v8::SnapshotCreator::FunctionCodeHandling::kKeep);
+
+		std::string krombin = assetsdir + "/krom.bin";
+		FILE* file = fopen(&krombin[0u], "wb");
+		if (file != nullptr) {
+			fwrite(startupData.data, 1, startupData.raw_size, file);
+			fclose(file);
+		}
+		exit(0);
+	}
+
 	kinc_threads_init();
 	kinc_display_init();
 
-	start_krom(code);
-
+	start_v8(snapshot_found ? code : NULL, snapshot_found ? reader_size : 0);
+	start_krom(snapshot_found ? NULL : code);
 	kinc_start();
 
 	// #ifdef WITH_AUDIO
