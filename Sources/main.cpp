@@ -133,7 +133,6 @@ namespace {
 	Isolate* isolate;
 	std::unique_ptr<Platform> plat;
 	Global<Context> global_context;
-	Global<ObjectTemplate> global_krom;
 	Global<Function> update_func;
 	Global<Function> drop_files_func;
 	Global<Function> cut_func;
@@ -206,7 +205,7 @@ namespace {
 	double startup_time = 0.0;
 	#endif
 
-	void write_stack_trace(char* stack_trace) {
+	void write_stack_trace(const char* stack_trace) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", stack_trace);
 
 		#ifdef KORE_WINDOWS
@@ -2899,8 +2898,31 @@ namespace {
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_language()).ToLocalChecked());
 	}
 
-	void bind_krom(Isolate *isolate) {
-		v8::HandleScope handle_scope(isolate);
+	void start_v8(char *krom_bin, int krom_bin_size) {
+		plat = platform::NewDefaultPlatform();
+		V8::InitializePlatform(plat.get());
+		V8::Initialize();
+
+		std::string flags = "";
+		#if KORE_IOS
+		flags += "--jitless ";
+		#endif
+		if (profile) flags += "--logfile=krom-v8.log --prof --log-source-code ";
+		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
+
+		Isolate::CreateParams create_params;
+		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+		StartupData blob;
+		if (krom_bin_size > 0) {
+			blob.data = krom_bin;
+			blob.raw_size = krom_bin_size;
+			create_params.snapshot_blob = &blob;
+		}
+		isolate = Isolate::New(create_params);
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+
 		Local<ObjectTemplate> krom = ObjectTemplate::New(isolate);
 		krom->Set(String::NewFromUtf8(isolate, "init").ToLocalChecked(), FunctionTemplate::New(isolate, krom_init));
 		krom->Set(String::NewFromUtf8(isolate, "setApplicationName").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_application_name));
@@ -3094,36 +3116,6 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "windowX").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_x));
 		krom->Set(String::NewFromUtf8(isolate, "windowY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_window_y));
 		krom->Set(String::NewFromUtf8(isolate, "language").ToLocalChecked(), FunctionTemplate::New(isolate, krom_language));
-		global_krom.Reset(isolate, krom);
-	}
-
-	void start_v8(char *krom_bin, int krom_bin_size) {
-		plat = platform::NewDefaultPlatform();
-		V8::InitializePlatform(plat.get());
-		V8::Initialize();
-
-		std::string flags = "";
-		#if KORE_IOS
-		flags += "--jitless ";
-		#endif
-		if (profile) flags += "--logfile=krom-v8.log --prof --log-source-code ";
-		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
-
-		Isolate::CreateParams create_params;
-		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-		StartupData blob;
-		if (krom_bin_size > 0) {
-			blob.data = krom_bin;
-			blob.raw_size = krom_bin_size;
-			create_params.snapshot_blob = &blob;
-		}
-		isolate = Isolate::New(create_params);
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-
-		bind_krom(isolate);
-		Local<ObjectTemplate> krom = Local<ObjectTemplate>::New(isolate, global_krom);
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
@@ -3896,12 +3888,6 @@ int kickstart(int argc, char** argv) {
 		{
 			v8::HandleScope handle_scope(isolate);
 			{
-				//bind_krom(isolate);
-				//Local<ObjectTemplate> krom = Local<ObjectTemplate>::New(isolate, global_krom);
-				//Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
-				//global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
-				//v8::Local<v8::Context> context = v8::Context::New(isolate, NULL, global);
-
 				v8::Local<v8::Context> context = v8::Context::New(isolate);
 				v8::Context::Scope context_scope(context);
 
@@ -3930,6 +3916,11 @@ int kickstart(int argc, char** argv) {
 
 	start_v8(snapshot_found ? code : NULL, snapshot_found ? reader_size : 0);
 	start_krom(snapshot_found ? NULL : code);
+
+	#ifdef ARM_PROFILE
+	kinc_log(KINC_LOG_LEVEL_INFO, "Parse time: %f", kinc_time() - startup_time);
+	#endif
+
 	kinc_start();
 
 	// #ifdef WITH_AUDIO
