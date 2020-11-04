@@ -1934,14 +1934,63 @@ namespace {
 	}
 
 	void krom_create_texture_from_encoded_bytes(const FunctionCallbackInfo<Value>& args) {
+		// .k images for now
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		if (buffer->IsExternal()) content = buffer->GetContents();
 		else content = buffer->Externalize();
-		// content = buffer->GetContents();
-		String::Utf8Value format(isolate, args[1]);
-		// TODO
+		// String::Utf8Value format(isolate, args[1]);
+		bool readable = args[2]->ToBoolean(isolate)->Value();
+
+		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
+		kinc_image_t* image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
+
+		unsigned char *content_data = (unsigned char *)content.Data();
+		unsigned char *image_data;
+		kinc_image_format_t image_format;
+
+		// load_image(reader, *utf8_value, image_data, image_width, image_height, image_format);
+		int image_width = kinc_read_s32le(content_data);
+		int image_height = kinc_read_s32le(content_data + 4);
+		char fourcc[5];
+		fourcc[0] = content_data[8];
+		fourcc[1] = content_data[9];
+		fourcc[2] = content_data[10];
+		fourcc[3] = content_data[11];
+		fourcc[4] = 0;
+		int compressedSize = content.ByteLength() - 12;
+		if (strcmp(fourcc, "LZ4 ") == 0) {
+			int outputSize = image_width * image_height * 4;
+			image_data = (unsigned char*)malloc(outputSize);
+			LZ4_decompress_safe((char*)content_data + 12, (char *)image_data, compressedSize, outputSize);
+			image_format = KINC_IMAGE_FORMAT_RGBA32;
+		}
+		else if (strcmp(fourcc, "LZ4F") == 0) {
+			int outputSize = image_width * image_height * 16;
+			image_data = (unsigned char*)malloc(outputSize);
+			LZ4_decompress_safe((char*)content_data + 12, (char *)image_data, compressedSize, outputSize);
+			image_format = KINC_IMAGE_FORMAT_RGBA128;
+		}
+
+		kinc_image_init(image, image_data, image_width, image_height, image_format);
+		kinc_g4_texture_init_from_image(texture, image);
+		if (!readable) {
+			delete[] image->data;
+			kinc_image_destroy(image);
+			free(image);
+		}
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(readable ? 2 : 1);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->SetInternalField(0, External::New(isolate, texture));
+		if (readable) obj->SetInternalField(1, External::New(isolate, image));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
+		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
+		args.GetReturnValue().Set(obj);
 	}
 
 	int format_byte_size(kinc_image_format_t format) {
