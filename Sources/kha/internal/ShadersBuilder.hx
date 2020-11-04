@@ -45,18 +45,18 @@ class ShadersBuilder {
 
 	macro static public function build(): Array<Field> {
 		var fields = Context.getBuildFields();
-		
+
 		var content = Json.parse(File.getContent(findResources() + "files.json"));
 		var files: Iterable<Dynamic> = content.files;
-		
+
 		var init = macro { };
-		
+
 		for (file in files) {
 			var name: String = file.name;
 			var fixedName: String = name;
 			var dataName = fixedName + "Data";
 			var filenames: Array<String> = file.files;
-			
+
 			if (file.type == "shader") {
 				var serialized: Array<String> = [];
 				for (filename in filenames) {
@@ -72,7 +72,7 @@ class ShadersBuilder {
 						pos: Context.currentPos()
 					});
 				}
-				
+
 				if (name.endsWith("_comp")) {
 					fields.push({
 						name: fixedName,
@@ -82,7 +82,7 @@ class ShadersBuilder {
 						kind: FVar(macro: kha.compute.Shader, macro null),
 						pos: Context.currentPos()
 					});
-					
+
 					init = macro {
 						$init;
 						{
@@ -105,7 +105,7 @@ class ShadersBuilder {
 						kind: FVar(macro: kha.graphics4.GeometryShader, macro null),
 						pos: Context.currentPos()
 					});
-					
+
 					init = macro {
 						$init;
 						{
@@ -128,7 +128,7 @@ class ShadersBuilder {
 						kind: FVar(macro: kha.graphics4.TessellationControlShader, macro null),
 						pos: Context.currentPos()
 					});
-					
+
 					init = macro {
 						$init;
 						{
@@ -151,7 +151,7 @@ class ShadersBuilder {
 						kind: FVar(macro: kha.graphics4.TessellationEvaluationShader, macro null),
 						pos: Context.currentPos()
 					});
-					
+
 					init = macro {
 						$init;
 						{
@@ -174,7 +174,7 @@ class ShadersBuilder {
 						kind: FVar(macro: kha.graphics4.VertexShader, macro null),
 						pos: Context.currentPos()
 					});
-					
+
 					init = macro {
 						$init;
 						{
@@ -197,7 +197,7 @@ class ShadersBuilder {
 						kind: FVar(macro: kha.graphics4.FragmentShader, macro null),
 						pos: Context.currentPos()
 					});
-					
+
 					init = macro {
 						$init;
 						{
@@ -213,7 +213,7 @@ class ShadersBuilder {
 				}
 			}
 		}
-		
+
 		fields.push({
 			name: "init",
 			doc: null,
@@ -227,7 +227,7 @@ class ShadersBuilder {
 			}),
 			pos: Context.currentPos()
 		});
-		
+
 		return fields;
 	}
 }
