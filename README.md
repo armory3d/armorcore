@@ -73,5 +73,5 @@ node Kinc/make -g direct3d11 --vr oculus
 **Generating a v8 snapshot file**
 ```bash
 ./Krom . --snapshot
-# Generates a `krom.bin` file
+# Generates a `krom.bin` file from `krom.js` file
 ```

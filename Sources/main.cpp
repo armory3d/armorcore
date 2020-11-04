@@ -3142,17 +3142,17 @@ namespace {
 			if (!compiled_script->Run(context).ToLocal(&result)) {
 				v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
 				write_stack_trace(*stack_trace);
-				return;
 			}
 		}
-
-		TryCatch try_catch(isolate);
-		v8::Local<v8::Value> js_kickstart = context->Global()->Get(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "kickstart").ToLocalChecked()).ToLocalChecked();
-		if (!js_kickstart->IsNullOrUndefined()) {
-			Local<Value> result;
-			if (!js_kickstart->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->CallAsFunction(context, context->Global(), 0, nullptr).ToLocal(&result)) {
-				v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-				write_stack_trace(*stack_trace);
+		else {
+			TryCatch try_catch(isolate);
+			v8::Local<v8::Value> js_kickstart = context->Global()->Get(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "kickstart").ToLocalChecked()).ToLocalChecked();
+			if (!js_kickstart->IsNullOrUndefined()) {
+				Local<Value> result;
+				if (!js_kickstart->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->CallAsFunction(context, context->Global(), 0, nullptr).ToLocal(&result)) {
+					v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
+					write_stack_trace(*stack_trace);
+				}
 			}
 		}
 	}
