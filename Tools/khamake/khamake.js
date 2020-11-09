@@ -1220,7 +1220,7 @@ async function exportKhaProject(options) {
 		for (let file of embed_files) {
 			embed_string += file.files[0] + '\n';
 		}
-		fs.outputFileSync(path.join(options.to, exporter.sysdir() + '-resources', 'embed.txt'), embed_string);
+		fs.outputFileSync(path.join(options.to, exporter.sysdir(), 'data', 'embed.txt'), embed_string);
 	}
 
 	return await exportProjectFiles(project.name, path.join(options.to, exporter.sysdir() + '-resources'), options, exporter, kore, korehl, project.libraries, project.defines, project.id);

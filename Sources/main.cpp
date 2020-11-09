@@ -3964,7 +3964,7 @@ int kickstart(int argc, char** argv) {
 				const size_t line_size = 512;
 				char line[line_size];
 				strcpy(line, assetsdir.c_str());
-				strcat(line, "/../krom-resources/embed.txt");
+				strcat(line, "/data/embed.txt");
 				FILE *fp = fopen (line, "r");
 				if (fp != NULL) {
 					while (fgets(line, line_size, fp) != NULL)  {
