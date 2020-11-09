@@ -273,9 +273,7 @@ class AssetConverter {
 							else {
 								images = await self.exporter.copyImage(self.platform, file, exportInfo.destination, options);
 							}
-							if (!options.notinlist) {
-								parsedFiles.push({ name: exportInfo.name, from: file, type: 'image', files: images, original_width: options.original_width, original_height: options.original_height, readable: options.readable });
-							}
+							parsedFiles.push({ name: exportInfo.name, from: file, type: 'image', files: images, original_width: options.original_width, original_height: options.original_height, readable: options.readable, embed: options.embed });
 							break;
 						}
 						case '.ogg':
@@ -293,9 +291,7 @@ class AssetConverter {
 							if (sounds.length === 0) {
 								throw 'Audio file ' + file + ' could not be exported, you have to specify a path to ffmpeg.';
 							}
-							if (!options.notinlist) {
-								parsedFiles.push({ name: exportInfo.name, from: file, type: 'sound', files: sounds, original_width: undefined, original_height: undefined, readable: undefined });
-							}
+							parsedFiles.push({ name: exportInfo.name, from: file, type: 'sound', files: sounds, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
 							break;
 						}
 						case '.ttf':
@@ -309,9 +305,7 @@ class AssetConverter {
 							else {
 								fonts = await self.exporter.copyFont(self.platform, file, exportInfo.destination + fileinfo.ext, options);
 							}
-							if (!options.notinlist) {
-								parsedFiles.push({ name: exportInfo.name, from: file, type: 'font', files: fonts, original_width: undefined, original_height: undefined, readable: undefined });
-							}
+							parsedFiles.push({ name: exportInfo.name, from: file, type: 'font', files: fonts, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
 							break;
 						}
 						case '.mp4':
@@ -330,17 +324,13 @@ class AssetConverter {
 							if (videos.length === 0) {
 								console.error('Video file ' + file + ' could not be exported, you have to specify a path to ffmpeg.');
 							}
-							if (!options.notinlist) {
-								parsedFiles.push({ name: exportInfo.name, from: file, type: 'video', files: videos, original_width: undefined, original_height: undefined, readable: undefined });
-							}
+							parsedFiles.push({ name: exportInfo.name, from: file, type: 'video', files: videos, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
 							break;
 						}
 						default: {
 							let exportInfo = AssetConverter.createExportInfo(fileinfo, true, options, self.exporter.options.from);
 							let blobs = await self.exporter.copyBlob(self.platform, file, exportInfo.destination, options);
-							if (!options.notinlist) {
-								parsedFiles.push({ name: exportInfo.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined });
-							}
+							parsedFiles.push({ name: exportInfo.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
 							break;
 						}
 					}
@@ -1191,6 +1181,7 @@ async function exportKhaProject(options) {
 		return fallback;
 	}
 	let files = [];
+	let embed_files = [];
 	for (let asset of assets) {
 		let file = {
 			name: fixName(asset.name),
@@ -1203,7 +1194,7 @@ async function exportKhaProject(options) {
 			if (asset.readable)
 				file.readable = asset.readable;
 		}
-		files.push(file);
+		if (asset.embed) embed_files.push(file);
 	}
 	for (let shader of exportedShaders) {
 		if (shader.noembed)
@@ -1225,6 +1216,11 @@ async function exportKhaProject(options) {
 	});
 	if (foundProjectFile) {
 		fs.outputFileSync(path.join(options.to, exporter.sysdir() + '-resources', 'files.json'), JSON.stringify({ files: files }, null, '\t'));
+		let embed_string = "";
+		for (let file of embed_files) {
+			embed_string += file.files[0] + '\n';
+		}
+		fs.outputFileSync(path.join(options.to, exporter.sysdir() + '-resources', 'embed.txt'), embed_string);
 	}
 
 	return await exportProjectFiles(project.name, path.join(options.to, exporter.sysdir() + '-resources'), options, exporter, kore, korehl, project.libraries, project.defines, project.id);

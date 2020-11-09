@@ -3932,29 +3932,97 @@ int kickstart(int argc, char** argv) {
 		V8::InitializePlatform(plat.get());
 		V8::Initialize();
 
-		v8::SnapshotCreator creator;
-		v8::Isolate* isolate = creator.GetIsolate();
+		std::string flags = "--nolazy";
+		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
+
+		v8::ScriptCompiler::CachedData* cache;
+		Isolate::CreateParams create_params;
+		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+		v8::Isolate* isolate_cache = Isolate::New(create_params);
 		{
-			v8::HandleScope handle_scope(isolate);
+			v8::HandleScope handle_scope(isolate_cache);
 			{
-				v8::Local<v8::Context> context = v8::Context::New(isolate);
+				v8::Local<v8::Context> context = Context::New(isolate_cache);
 				v8::Context::Scope context_scope(context);
 
-				v8::ScriptOrigin origin(String::NewFromUtf8(isolate, "krom").ToLocalChecked());
-				v8::ScriptCompiler::Source source(String::NewFromUtf8(isolate, code).ToLocalChecked(), origin);
+				v8::ScriptOrigin origin(String::NewFromUtf8(isolate_cache, "krom_cache").ToLocalChecked());
+				v8::ScriptCompiler::Source source(String::NewFromUtf8(isolate_cache, code).ToLocalChecked(), origin);
 
 				Local<Script> compiled_script = v8::ScriptCompiler::Compile(context, &source, v8::ScriptCompiler::kEagerCompile).ToLocalChecked();
-				compiled_script->Run(context);
-
-				creator.SetDefaultContext(context);
+				cache = v8::ScriptCompiler::CreateCodeCache(compiled_script->GetUnboundScript());
 			}
 		}
-		StartupData startupData = creator.CreateBlob(v8::SnapshotCreator::FunctionCodeHandling::kKeep);
+
+		v8::SnapshotCreator creator_cold;
+		v8::Isolate* isolate_cold = creator_cold.GetIsolate();
+		{
+			v8::HandleScope handle_scope(isolate_cold);
+			{
+				v8::Local<v8::Context> context = Context::New(isolate_cold);
+				v8::Context::Scope context_scope(context);
+
+				const size_t line_size = 512;
+				char line[line_size];
+				strcpy(line, assetsdir.c_str());
+				strcat(line, "/../krom-resources/embed.txt");
+				FILE *fp = fopen (line, "r");
+				if (fp != NULL) {
+					while (fgets(line, line_size, fp) != NULL)  {
+						line[strlen(line) - 1] = 0; // Trim \n
+						kinc_file_reader_t reader;
+						if (!kinc_file_reader_open(&reader, line, KINC_FILE_TYPE_ASSET)) continue;
+						int reader_size = (int)kinc_file_reader_size(&reader);
+
+						Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate_cold, reader_size);
+						ArrayBuffer::Contents contents = buffer->GetContents();
+						kinc_file_reader_read(&reader, contents.Data(), reader_size);
+						kinc_file_reader_close(&reader);
+
+						context->Global()->Set(context, String::NewFromUtf8(isolate_cold, line).ToLocalChecked(), buffer);
+					}
+					fclose (fp);
+				}
+
+				v8::ScriptOrigin origin(String::NewFromUtf8(isolate_cold, "krom_cold").ToLocalChecked());
+				v8::ScriptCompiler::Source source(String::NewFromUtf8(isolate_cold, code).ToLocalChecked(), origin, cache);
+
+				Local<Script> compiled_script = v8::ScriptCompiler::Compile(context, &source, v8::ScriptCompiler::kConsumeCodeCache).ToLocalChecked();
+				compiled_script->Run(context);
+
+				creator_cold.SetDefaultContext(context);
+			}
+		}
+		StartupData coldData = creator_cold.CreateBlob(v8::SnapshotCreator::FunctionCodeHandling::kKeep);
+
+		// SnapshotCreator creator_warm(nullptr, &coldData);
+		// Isolate* isolate_warm = creator_warm.GetIsolate();
+		// {
+		// 	HandleScope handle_scope(isolate_warm);
+		// 	{
+		// 		Local<Context> context = Context::New(isolate_warm);
+		// 		v8::Context::Scope context_scope(context);
+
+		// 		// std::string code_warm("Main.main();");
+		// 		v8::ScriptOrigin origin(String::NewFromUtf8(isolate_warm, "krom_warm").ToLocalChecked());
+		// 		v8::ScriptCompiler::Source source(String::NewFromUtf8(isolate_warm, code).ToLocalChecked(), origin);
+
+		// 		Local<Script> compiled_script = v8::ScriptCompiler::Compile(context, &source, v8::ScriptCompiler::kEagerCompile).ToLocalChecked();
+		// 		compiled_script->Run(context);
+		// 	}
+		// }
+		// {
+		//   HandleScope handle_scope(isolate_warm);
+		//   isolate_warm->ContextDisposedNotification(false);
+		//   Local<Context> context = Context::New(isolate_warm);
+		//   creator_warm.SetDefaultContext(context);
+		// }
+		// StartupData warmData = creator_warm.CreateBlob(SnapshotCreator::FunctionCodeHandling::kKeep);
 
 		std::string krombin = assetsdir + "/krom.bin";
 		FILE* file = fopen(&krombin[0u], "wb");
 		if (file != nullptr) {
-			fwrite(startupData.data, 1, startupData.raw_size, file);
+			// fwrite(warmData.data, 1, warmData.raw_size, file);
+			fwrite(coldData.data, 1, coldData.raw_size, file);
 			fclose(file);
 		}
 		exit(0);
