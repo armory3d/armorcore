@@ -6,7 +6,7 @@ const with_tinydir = true;
 const with_zlib = true;
 const with_stb_image_write = false;
 const with_audio = false;
-const with_texsynth = true;
+const with_texsynth = false;
 const with_krafix = graphics === GraphicsApi.Vulkan; // glsl to spirv for vulkan
 
 const system = platform === Platform.Windows ? "win32" :
