@@ -44,23 +44,21 @@ else {
 	project.addFile('Sources/main.cpp');
 }
 
-// Using newer V8 on Android and iOS, other platforms need to be updated
+project.addIncludeDir('v8/include');
+
 if (platform === Platform.Android) {
-	project.addIncludeDir('v8/include_android');
 	project.addDefine('IDLE_SLEEP');
 }
 else if (platform === Platform.iOS) {
 	project.addFile('Sources/IOSFileDialog.mm');
-	project.addIncludeDir('v8/include_ios');
 	project.addDefine('IDLE_SLEEP');
-}
-else {
-	project.addIncludeDir('v8/include');
 }
 
 if (platform === Platform.Windows) {
 	project.addLib('Dbghelp'); // Stack walk
 	project.addLib(libdir + 'v8_monolith');
+	// project.addDefine('V8_COMPRESS_POINTERS');
+	// project.addDefine('V8_31BIT_SMIS_ON_64BIT_ARCH');
 	if (with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
 		project.addDefine('WITH_D3DCOMPILER');
 		project.addLib("d3d11");
