@@ -163,8 +163,7 @@ if (with_texsynth) {
 	}
 }
 if (with_krafix) {
-	// Set library to true in Libraries/krafix/kincfile.js
-	await project.addProject('Libraries/krafix');
+	await project.addProject('Libraries/glsl_to_spirv');
 }
 
 resolve(project);
