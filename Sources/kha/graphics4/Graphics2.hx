@@ -769,8 +769,8 @@ class Graphics2 extends kha.graphics2.Graphics {
 
 		if (videoPipeline == null) {
 			videoPipeline = createImagePipeline(createImageVertexStructure());
-			videoPipeline.fragmentShader = Shaders.painter_video_frag;
-			videoPipeline.vertexShader = Shaders.painter_video_vert;
+			videoPipeline.fragmentShader = Shaders.getFragment("painter-video.frag");
+			videoPipeline.vertexShader = Shaders.getVertex("painter-video.vert");
 			videoPipeline.compile();
 		}
 	}
@@ -1105,8 +1105,8 @@ class Graphics2 extends kha.graphics2.Graphics {
 
 	public static function createImagePipeline(structure: VertexStructure): PipelineState {
 		var shaderPipeline = new PipelineState();
-		shaderPipeline.fragmentShader = Shaders.painter_image_frag;
-		shaderPipeline.vertexShader = Shaders.painter_image_vert;
+		shaderPipeline.fragmentShader = Shaders.getFragment("painter-image.frag");
+		shaderPipeline.vertexShader = Shaders.getVertex("painter-image.vert");
 		shaderPipeline.inputLayout = [structure];
 		shaderPipeline.blendSource = BlendingFactor.BlendOne;
 		shaderPipeline.blendDestination = BlendingFactor.InverseSourceAlpha;
@@ -1124,8 +1124,8 @@ class Graphics2 extends kha.graphics2.Graphics {
 
 	public static function createColoredPipeline(structure: VertexStructure): PipelineState {
 		var shaderPipeline = new PipelineState();
-		shaderPipeline.fragmentShader = Shaders.painter_colored_frag;
-		shaderPipeline.vertexShader = Shaders.painter_colored_vert;
+		shaderPipeline.fragmentShader = Shaders.getFragment("painter-colored.frag");
+		shaderPipeline.vertexShader = Shaders.getVertex("painter-colored.vert");
 		shaderPipeline.inputLayout = [structure];
 		shaderPipeline.blendSource = BlendingFactor.BlendOne;
 		shaderPipeline.blendDestination = BlendingFactor.InverseSourceAlpha;
@@ -1144,8 +1144,8 @@ class Graphics2 extends kha.graphics2.Graphics {
 
 	public static function createTextPipeline(structure: VertexStructure): PipelineState {
 		var shaderPipeline = new PipelineState();
-		shaderPipeline.fragmentShader = Shaders.painter_text_frag;
-		shaderPipeline.vertexShader = Shaders.painter_text_vert;
+		shaderPipeline.fragmentShader = Shaders.getFragment("painter-text.frag");
+		shaderPipeline.vertexShader = Shaders.getVertex("painter-text.vert");
 		shaderPipeline.inputLayout = [structure];
 		shaderPipeline.blendSource = BlendingFactor.SourceAlpha;
 		shaderPipeline.blendDestination = BlendingFactor.InverseSourceAlpha;

@@ -373,7 +373,7 @@ class AssetConverter {
 class CompiledShader {
 	constructor() {
 		this.files = [];
-		this.noembed = false;
+		this.embed = false;
 	}
 }
 
@@ -471,13 +471,13 @@ class ShaderCompiler {
 					}
 					if (compiledShader === null) {
 						compiledShader = new CompiledShader();
-						compiledShader.noembed = options.noembed;
+						compiledShader.embed = options.embed;
 						// mark variables as invalid, so they are loaded from previous compilation
 						compiledShader.files = null;
 					}
 					if (compiledShader.files != null && compiledShader.files.length === 0) {
 						// TODO: Remove when krafix has been recompiled everywhere
-						compiledShader.files.push(parsed.name + '.' + self.type);
+						compiledShader.files.push('data/' + parsed.name + '.' + self.type);
 					}
 					compiledShader.name = AssetConverter.createExportInfo(parsed, false, options, self.exporter.options.from).name;
 					compiledShaders.push(compiledShader);
@@ -543,7 +543,7 @@ class ShaderCompiler {
 							fs.copySync(from, to, { overwrite: true });
 						}
 						let compiledShader = new CompiledShader();
-						compiledShader.noembed = options.noembed;
+						compiledShader.embed = options.embed;
 						resolve(compiledShader);
 						return;
 					}
@@ -575,7 +575,7 @@ class ShaderCompiler {
 							let newErrorLine = true;
 							let errorData = false;
 							let compiledShader = new CompiledShader();
-							compiledShader.noembed = options.noembed;
+							compiledShader.embed = options.embed;
 							child.stderr.on('data', (data) => {
 								let str = data.toString();
 								for (let char of str) {
@@ -970,7 +970,13 @@ let options = [
 		description: 'Experimental - Spawn multiple processes during asset and shader conversion. Possible values:\n  0: disabled (default value)\n -1: choose number of processes automatically\n  N: specify number of processes manually',
 		value: true,
 		default: -1
-	}
+	},
+	{
+		full: 'snapshot',
+		description: 'Generate v8 snapshot file.',
+		value: false,
+		default: null
+	},
 ];
 
 let parsedOptions = {};
@@ -1134,11 +1140,11 @@ async function exportKhaProject(options) {
 	}
 	exporter.parameters = exporter.parameters.concat(project.parameters);
 	project.scriptdir = options.kha;
-	project.addShaders('Sources/Shaders/**', {});
+	project.addShaders('Sources/Shaders/**', { embed: options.snapshot });
 
 	let assetConverter = new AssetConverter(exporter, options, project.assetMatchers);
 	let assets = await assetConverter.run(temp);
-	let shaderDir = path.join(options.to, exporter.sysdir() + '-resources');
+	let shaderDir = path.join(options.to, exporter.sysdir(), 'data');
 
 	fs.ensureDirSync(shaderDir);
 	let oldResources = null;
@@ -1197,14 +1203,14 @@ async function exportKhaProject(options) {
 		if (asset.embed) embed_files.push(file);
 	}
 	for (let shader of exportedShaders) {
-		if (shader.noembed)
-			continue;
 		let oldShader = findShader(shader.name);
-		files.push({
+		let file = {
 			name: fixName(shader.name),
 			files: shader.files === null ? oldShader.files : shader.files,
 			type: 'shader'
-		});
+		};
+		files.push(file);
+		if (shader.embed) embed_files.push(file);
 	}
 	// Sort to prevent files.json from changing between makes when no files have changed.
 	files.sort(function (a, b) {
