@@ -1216,11 +1216,13 @@ async function exportKhaProject(options) {
 	});
 	if (foundProjectFile) {
 		fs.outputFileSync(path.join(options.to, exporter.sysdir() + '-resources', 'files.json'), JSON.stringify({ files: files }, null, '\t'));
-		let embed_string = "";
-		for (let file of embed_files) {
-			embed_string += file.files[0] + '\n';
+		if (embed_files.length > 0) {
+			let embed_string = "";
+			for (let file of embed_files) {
+				embed_string += file.files[0] + '\n';
+			}
+			fs.outputFileSync(path.join(options.to, exporter.sysdir(), 'data', 'embed.txt'), embed_string);
 		}
-		fs.outputFileSync(path.join(options.to, exporter.sysdir(), 'data', 'embed.txt'), embed_string);
 	}
 
 	return await exportProjectFiles(project.name, path.join(options.to, exporter.sysdir() + '-resources'), options, exporter, kore, korehl, project.libraries, project.defines, project.id);
