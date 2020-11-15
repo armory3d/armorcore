@@ -7,8 +7,7 @@ class Blob {
 	static inline var bufferSize: Int = 2000;
 	public var bytes: Bytes;
 
-	@:allow(kha.LoaderImpl)
-	private function new(bytes: Bytes) {
+	public function new(bytes: Bytes) {
 		this.bytes = bytes;
 	}
 
