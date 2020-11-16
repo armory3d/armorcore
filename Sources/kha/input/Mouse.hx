@@ -1,6 +1,6 @@
 package kha.input;
 
-@:allow(kha.SystemImpl)
+@:allow(kha.System)
 @:expose
 class Mouse {
 	/**
@@ -8,7 +8,7 @@ class Mouse {
 	 * @param num (optional) mouse id (0 by default).
 	 */
 	public static function get(num: Int = 0): Mouse {
-		return SystemImpl.getMouse(num);
+		return System.getMouse(num);
 	}
 
 	/**
@@ -174,28 +174,28 @@ class Mouse {
 	 * Locks the cursor position and hides it. For catching movements, use the `moveX`/`moveY` arguments of your `moveListener` handler.
 	 */
 	public function lock(): Void {
-		SystemImpl.lockMouse();
+		System.lockMouse();
 	}
 
 	/**
 	 * Unlock the cursor position and hides it. For catching movements, use the `moveX`/`moveY` arguments of your `moveListener` handler.
 	 */
 	public function unlock(): Void {
-		SystemImpl.unlockMouse();
+		System.unlockMouse();
 	}
 
 	/**
 	 * Unlocks the cursor position and displays it.
 	 */
 	public function canLock(): Bool {
-		return SystemImpl.canLockMouse();
+		return System.canLockMouse();
 	}
 
 	/**
 	 * Returns the status of the cursor lock
 	 */
 	public function isLocked(): Bool {
-		return SystemImpl.isMouseLocked();
+		return System.isMouseLocked();
 	}
 
 	/**
@@ -204,28 +204,28 @@ class Mouse {
 	 * @param error function fired when a toggle error occurs.
 	 */
 	public function notifyOnLockChange(change: Void -> Void, error: Void -> Void): Void {
-		SystemImpl.notifyOfMouseLockChange(change, error);
+		System.notifyOfMouseLockChange(change, error);
 	}
 
 	/**
 	 * Removes event handlers from the passed functions that were passed to `notifyOnLockChange` function.
 	 */
 	public function removeFromLockChange(change: Void -> Void, error: Void -> Void): Void{
-		SystemImpl.removeFromMouseLockChange(change, error);
+		System.removeFromMouseLockChange(change, error);
 	}
 
 	/**
 	 * Hides the system cursor (without locking)
 	 */
 	public function hideSystemCursor(): Void {
-		SystemImpl.hideSystemCursor();
+		System.hideSystemCursor();
 	}
 
 	/**
 	 * Show the system cursor
 	 */
 	public function showSystemCursor(): Void {
-		SystemImpl.showSystemCursor();
+		System.showSystemCursor();
 	}
 
 	private static var instance: Mouse;

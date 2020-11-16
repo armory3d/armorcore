@@ -1,7 +1,7 @@
 package kha;
 
 import kha.Blob;
-import kha.Kravur;
+import kha.Font;
 import kha.Sound;
 import haxe.io.Bytes;
 import haxe.io.BytesData;
@@ -22,7 +22,7 @@ class Assets {
 
 	public static function loadFontFromPath(path: String, done: Font -> Void): Void {
 		loadBlobFromPath(path, function (blob: Blob) {
-			done(new Kravur(blob));
+			done(new Font(blob));
 		});
 	}
 

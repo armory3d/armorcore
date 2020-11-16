@@ -5,8 +5,6 @@ class Window {
 	var num: Int;
 	var windowTitle: String;
 
-	@:noCompletion
-	@:noDoc
 	public function new(num: Int) {
 		this.num = num;
 		windows.push(this);

@@ -212,16 +212,12 @@ class Image implements Canvas {
 	private function get_height(): Int { return texture_ == null ? renderTarget_.height : texture_.height; }
 	public var depth(get, null): Int;
 	private function get_depth(): Int { return texture_ != null ? texture_.depth : 1; }
-	public var realWidth(get, null): Int;
-	private function get_realWidth(): Int { return texture_ == null ? renderTarget_.width : texture_.realWidth; }
-	public var realHeight(get, null): Int;
-	private function get_realHeight(): Int { return texture_ == null ? renderTarget_.height : texture_.realHeight; }
 
 	public var g2(get, null): kha.graphics2.Graphics;
 
 	private function get_g2(): kha.graphics2.Graphics {
 		if (graphics2 == null) {
-			graphics2 = new kha.graphics4.Graphics2(this);
+			graphics2 = new kha.graphics2.Graphics(this);
 		}
 		return graphics2;
 	}

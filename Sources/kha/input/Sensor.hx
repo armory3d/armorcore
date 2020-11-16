@@ -1,15 +1,5 @@
 package kha.input;
 
-#if (cpp || hl)
-
-extern class Sensor {
-	public static function get(type: SensorType): Sensor;
-
-	public function notify(listener: Float -> Float -> Float -> Void): Void;
-}
-
-#else
-
 class Sensor {
 	public static function get(type: SensorType): Sensor {
 		return null;
@@ -19,5 +9,3 @@ class Sensor {
 
 	}
 }
-
-#end

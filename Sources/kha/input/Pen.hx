@@ -1,13 +1,13 @@
 package kha.input;
 
-@:allow(kha.SystemImpl)
+@:allow(kha.System)
 class Pen {
 	/**
 	 * Get current Pen.
 	 * @param num (optional) pen id (0 by default).
 	 */
 	public static function get(num: Int = 0): Pen {
-		return SystemImpl.getPen(num);
+		return System.getPen(num);
 	}
 
 	/**
@@ -93,7 +93,7 @@ class Pen {
 	private function new() {
 		instance = this;
 	}
-	
+
 	private function sendDownEvent(windowId: Int, x: Int, y: Int, pressure: Float): Void {
 		if (windowDownListeners != null) {
 			for (listener in windowDownListeners[windowId]) {

@@ -1,6 +1,6 @@
 package kha.input;
 
-@:allow(kha.SystemImpl)
+@:allow(kha.System)
 @:expose
 class Keyboard {
 	/**
@@ -8,7 +8,7 @@ class Keyboard {
 	 * @param num (optional) keyboard id (0 by default).
 	 */
 	public static function get(num: Int = 0): Keyboard {
-		return SystemImpl.getKeyboard(num);
+		return System.getKeyboard(num);
 	}
 
 	/**
@@ -36,14 +36,14 @@ class Keyboard {
 	 * Show virtual keyboard (if it exists).
 	 */
 	public function show(): Void {
-		SystemImpl.showKeyboard();
+		System.showKeyboard();
 	}
 
 	/**
 	 * Hide virtual keyboard (if it exists).
 	 */
 	public function hide(): Void {
-		SystemImpl.hideKeyboard();
+		System.hideKeyboard();
 	}
 
 	private static var instance: Keyboard;

@@ -1,6 +1,6 @@
 package kha.input;
 
-@:allow(kha.SystemImpl)
+@:allow(kha.System)
 @:expose
 class Gamepad {
 	private var index: Int;
@@ -24,18 +24,18 @@ class Gamepad {
 		if (axisListener != null) axisListeners.push(axisListener);
 		if (buttonListener != null) buttonListeners.push(buttonListener);
 	}
-	
+
 	public function remove(axisListener: Int->Float->Void, buttonListener: Int->Float->Void): Void {
 		if (axisListener != null) axisListeners.remove(axisListener);
 		if (buttonListener != null) buttonListeners.remove(buttonListener);
 	}
-	
+
 	private static var instances: Array<Gamepad> = new Array();
 	private var axisListeners: Array<Int->Float->Void>;
 	private var buttonListeners: Array<Int->Float->Void>;
 	private static var connectListeners:Array<Int->Void> = new Array();
 	private static var disconnectListeners:Array<Int->Void> = new Array();
-	
+
 	private function new(index: Int = 0, id: String = "unknown") {
 		this.index = index;
 		axisListeners = new Array<Int->Float->Void>();
@@ -47,23 +47,23 @@ class Gamepad {
 	public var connected(default, null):Bool;
 
 	private function get_id(): String {
-		return SystemImpl.getGamepadId(index);
+		return System.getGamepadId(index);
 	}
-	
+
 	@input
 	private function sendAxisEvent(axis: Int, value: Float): Void {
 		for (listener in axisListeners) {
 			listener(axis, value);
 		}
 	}
-	
+
 	@input
 	private function sendButtonEvent(button: Int, value: Float): Void {
 		for (listener in buttonListeners) {
 			listener(button, value);
 		}
 	}
-	
+
 	@input
 	private static function sendConnectEvent(index: Int): Void {
 		instances[index].connected = true;
@@ -71,7 +71,7 @@ class Gamepad {
 			listener(index);
 		}
 	}
-	
+
 	@input
 	private static function sendDisconnectEvent(index: Int): Void {
 		instances[index].connected = false;
