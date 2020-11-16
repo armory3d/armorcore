@@ -1177,12 +1177,10 @@ namespace {
 		Local<External> vsfield = Local<External>::Cast(args[6]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_shader_t* vertexShader = (kinc_g4_shader_t*)vsfield->Value();
 		pipeobj->SetInternalField(3, External::New(isolate, vertexShader));
-		pipeobj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "vsname").ToLocalChecked(), args[6]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked()).ToLocalChecked());
 
 		Local<External> fsfield = Local<External>::Cast(args[7]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_shader_t* fragmentShader = (kinc_g4_shader_t*)fsfield->Value();
 		pipeobj->SetInternalField(4, External::New(isolate, fragmentShader));
-		pipeobj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "fsname").ToLocalChecked(), args[7]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked()).ToLocalChecked());
 
 		pipeline->vertex_shader = vertexShader;
 		pipeline->fragment_shader = fragmentShader;
@@ -1191,7 +1189,6 @@ namespace {
 			Local<External> gsfield = Local<External>::Cast(args[8]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 			kinc_g4_shader_t* geometryShader = (kinc_g4_shader_t*)gsfield->Value();
 			pipeobj->SetInternalField(5, External::New(isolate, geometryShader));
-			pipeobj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "gsname").ToLocalChecked(), args[8]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked()).ToLocalChecked());
 			pipeline->geometry_shader = geometryShader;
 		}
 
@@ -1199,7 +1196,6 @@ namespace {
 			Local<External> tcsfield = Local<External>::Cast(args[9]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 			kinc_g4_shader_t* tessellationControlShader = (kinc_g4_shader_t*)tcsfield->Value();
 			pipeobj->SetInternalField(6, External::New(isolate, tessellationControlShader));
-			pipeobj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "tcsname").ToLocalChecked(), args[9]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked()).ToLocalChecked());
 			pipeline->tessellation_control_shader = tessellationControlShader;
 		}
 
@@ -1207,7 +1203,6 @@ namespace {
 			Local<External> tesfield = Local<External>::Cast(args[10]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 			kinc_g4_shader_t* tessellationEvaluationShader = (kinc_g4_shader_t*)tesfield->Value();
 			pipeobj->SetInternalField(7, External::New(isolate, tessellationEvaluationShader));
-			pipeobj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "tesname").ToLocalChecked(), args[10]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked()).ToLocalChecked());
 			pipeline->tessellation_evaluation_shader = tessellationEvaluationShader;
 		}
 
@@ -1360,9 +1355,6 @@ namespace {
 		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "filename").ToLocalChecked(), args[0]);
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -1851,8 +1843,6 @@ namespace {
 		obj->SetInternalField(0, External::New(isolate, texture));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -1869,8 +1859,6 @@ namespace {
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depth").ToLocalChecked(), Int32::New(isolate, texture->tex_depth));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -1899,8 +1887,6 @@ namespace {
 		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -1928,8 +1914,6 @@ namespace {
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depth").ToLocalChecked(), Int32::New(isolate, texture->tex_depth));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -1988,8 +1972,6 @@ namespace {
 		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		args.GetReturnValue().Set(obj);
 	}
 
