@@ -721,7 +721,7 @@ namespace {
 		String::Utf8Value utf8_name(isolate, args[1]);
 		strcpy(temp_string_vs, "// ");
 		strcat(temp_string_vs, *utf8_name);
-		temp_string_vs[strlen(*utf8_name) - 8] = 0;
+		temp_string_vs[strlen(*utf8_name) - 2] = 0; // Strip extension (+ account for "// ")
 		for (int i = 0; i < strlen(temp_string_vs); ++i) {
 			if (temp_string_vs[i] == '-') temp_string_vs[i] = '_';
 		}
@@ -904,7 +904,7 @@ namespace {
 		String::Utf8Value utf8_name(isolate, args[1]);
 		strcpy(temp_string_fs, "// ");
 		strcat(temp_string_fs, *utf8_name);
-		temp_string_fs[strlen(*utf8_name) - 8] = 0;
+		temp_string_fs[strlen(*utf8_name) - 2] = 0;
 		for (int i = 0; i < strlen(temp_string_fs); ++i) {
 			if (temp_string_fs[i] == '-') temp_string_fs[i] = '_';
 		}
