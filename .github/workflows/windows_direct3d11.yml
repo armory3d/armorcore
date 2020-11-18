@@ -1,0 +1,30 @@
+name: Windows (Direct3D11)
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Get Submodules
+      run: git submodule update --init --recursive
+    - name: Get Node.js
+      run: git clone https://github.com/armory3d/nodejs_bin.git --depth 1
+    - name: Get msbuild
+      uses: microsoft/setup-msbuild@v1
+    - name: Unpack v8_monolith
+      uses: DuckSoft/extract-7z-action@v1.0
+      with:
+        pathSource: v8/libraries/win32/release/v8_monolith.7z
+        pathTarget: v8/libraries/win32/release/
+    - name: Compile
+      run: nodejs_bin/node.exe Kinc/make -g direct3d11 --compile
