@@ -26,5 +26,7 @@ jobs:
       with:
         pathSource: v8/libraries/win32/release/v8_monolith.7z
         pathTarget: v8/libraries/win32/release/
+    - name: Apply patch
+      run: git apply patch/d3d12_raytrace.diff --directory=Kinc
     - name: Compile
       run: nodejs_bin/node.exe Kinc/make -g direct3d12 --raytrace dxr --compile
