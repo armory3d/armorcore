@@ -1943,7 +1943,7 @@ namespace {
 		fourcc[2] = content_data[10];
 		fourcc[3] = content_data[11];
 		fourcc[4] = 0;
-		int compressedSize = content.ByteLength() - 12;
+		int compressedSize = (int)content.ByteLength() - 12;
 		if (strcmp(fourcc, "LZ4 ") == 0) {
 			int outputSize = image_width * image_height * 4;
 			image_data = (unsigned char*)malloc(outputSize);
