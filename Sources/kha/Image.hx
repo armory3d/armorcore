@@ -9,7 +9,7 @@ class Image implements Canvas {
 	public var texture_: Dynamic;
 	public var renderTarget_: Dynamic;
 
-	private var format: TextureFormat;
+	public var format: TextureFormat;
 	private var readable: Bool;
 
 	private var graphics2: kha.graphics2.Graphics;
