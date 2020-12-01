@@ -219,6 +219,18 @@ namespace {
 		#endif
 	}
 
+	void handle_exception(TryCatch *try_catch) {
+		MaybeLocal<Value> trace = try_catch->StackTrace(isolate->GetCurrentContext());
+		if (trace.IsEmpty()) {
+			v8::String::Utf8Value stack_trace(isolate, try_catch->Message()->Get());
+			write_stack_trace(*stack_trace);
+		}
+		else {
+			v8::String::Utf8Value stack_trace(isolate, trace.ToLocalChecked());
+			write_stack_trace(*stack_trace);
+		}
+	}
+
 	void krom_init(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
@@ -3171,8 +3183,7 @@ namespace {
 
 			Local<Value> result;
 			if (!compiled_script->Run(context).ToLocal(&result)) {
-				v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-				write_stack_trace(*stack_trace);
+				handle_exception(&try_catch);
 			}
 		}
 		else {
@@ -3181,8 +3192,7 @@ namespace {
 			if (!js_kickstart->IsNullOrUndefined()) {
 				Local<Value> result;
 				if (!js_kickstart->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->CallAsFunction(context, context->Global(), 0, nullptr).ToLocal(&result)) {
-					v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-					write_stack_trace(*stack_trace);
+					handle_exception(&try_catch);
 				}
 			}
 		}
@@ -3202,8 +3212,7 @@ namespace {
 		Local<Value> result;
 
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		if (save_and_quit > 0) {
@@ -3212,8 +3221,7 @@ namespace {
 			const int argc = 1;
 			Local<Value> argv[argc] = {Boolean::New(isolate, save_and_quit == 1)};
 			if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-				v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-				write_stack_trace(*stack_trace);
+				handle_exception(&try_catch);
 			}
 			save_and_quit = 0;
 		}
@@ -3244,8 +3252,7 @@ namespace {
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, samples)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		for (int i = 0; i < samples; ++i) {
@@ -3325,8 +3332,7 @@ namespace {
 			delete str;
 		}
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		paused = false;
@@ -3344,8 +3350,7 @@ namespace {
 		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, copy_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 		String::Utf8Value cutCopyString(isolate, result);
 		strcpy(temp_string, *cutCopyString);
@@ -3364,8 +3369,7 @@ namespace {
 		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, cut_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 		String::Utf8Value cutCopyString(isolate, result);
 		strcpy(temp_string, *cutCopyString);
@@ -3386,8 +3390,7 @@ namespace {
 		const int argc = 1;
 		Local<Value> argv[argc] = {String::NewFromUtf8(isolate, data).ToLocalChecked()};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 	}
 
@@ -3403,8 +3406,7 @@ namespace {
 		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, foreground_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		paused = false;
@@ -3422,8 +3424,7 @@ namespace {
 		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, resume_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 	}
 
@@ -3439,8 +3440,7 @@ namespace {
 		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, pause_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 	}
 
@@ -3456,8 +3456,7 @@ namespace {
 		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, background_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		paused = true;
@@ -3476,8 +3475,7 @@ namespace {
 		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, shutdown_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 	}
 
@@ -3495,8 +3493,7 @@ namespace {
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, code)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3518,8 +3515,7 @@ namespace {
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, code)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3541,8 +3537,7 @@ namespace {
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, character)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3564,8 +3559,7 @@ namespace {
 		const int argc = 4;
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Int32::New(isolate, mx), Int32::New(isolate, my)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3587,8 +3581,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, button), Int32::New(isolate, x), Int32::New(isolate, y)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3610,8 +3603,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, button), Int32::New(isolate, x), Int32::New(isolate, y)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3633,8 +3625,7 @@ namespace {
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, delta)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3656,8 +3647,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, index), Int32::New(isolate, x), Int32::New(isolate, y)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3679,8 +3669,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, index), Int32::New(isolate, x), Int32::New(isolate, y)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3702,8 +3691,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, index), Int32::New(isolate, x), Int32::New(isolate, y)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3725,8 +3713,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Number::New(isolate, pressure)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3748,8 +3735,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Number::New(isolate, pressure)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3771,8 +3757,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Number::New(isolate, pressure)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3794,8 +3779,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, gamepad), Int32::New(isolate, axis), Number::New(isolate, value)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
@@ -3817,8 +3801,7 @@ namespace {
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, gamepad), Int32::New(isolate, button), Number::New(isolate, value)};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch.StackTrace(isolate->GetCurrentContext()).ToLocalChecked());
-			write_stack_trace(*stack_trace);
+			handle_exception(&try_catch);
 		}
 
 		#ifdef IDLE_SLEEP
