@@ -2185,6 +2185,7 @@ namespace {
 
 		bool hasLengthArg = args.Length() > 2 && !args[2]->IsNullOrUndefined();
 		int byteLength = hasLengthArg ? args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() : (int)content.ByteLength();
+		if (byteLength > (int)content.ByteLength()) byteLength = (int)content.ByteLength();
 
 		#ifdef KORE_WINDOWS
 		MultiByteToWideChar(CP_UTF8, 0, *utf8_path, -1, temp_wstring, 1024);
