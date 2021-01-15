@@ -2183,6 +2183,9 @@ namespace {
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
 
+		bool hasLengthArg = args.Length() > 2 && !args[2]->IsNullOrUndefined();
+		int byteLength = hasLengthArg ? args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() : (int)content.ByteLength();
+
 		#ifdef KORE_WINDOWS
 		MultiByteToWideChar(CP_UTF8, 0, *utf8_path, -1, temp_wstring, 1024);
 		FILE* file = _wfopen(temp_wstring, L"wb");
@@ -2190,7 +2193,7 @@ namespace {
 		FILE* file = fopen(*utf8_path, "wb");
 		#endif
 		if (file == nullptr) return;
-		fwrite(content.Data(), 1, (int)content.ByteLength(), file);
+		fwrite(content.Data(), 1, byteLength, file);
 		fclose(file);
 	}
 

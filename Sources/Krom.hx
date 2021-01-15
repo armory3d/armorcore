@@ -129,7 +129,7 @@ extern class Krom {
 	static function writeStorage(name: String, data: js.lib.ArrayBuffer): Void;
 	static function readStorage(name: String): js.lib.ArrayBuffer;
 
-	static function fileSaveBytes(path: String, bytes: js.lib.ArrayBuffer): Void;
+	static function fileSaveBytes(path: String, bytes: js.lib.ArrayBuffer, ?length: Int): Void;
 	static function sysCommand(cmd: String, ?args: Array<String>): Int;
 	static function savePath(): String;
 	static function getArgCount(): Int;
