@@ -15,6 +15,7 @@
 #include <kinc/math/core.h>
 #include <kinc/threads/thread.h>
 #include <kinc/threads/mutex.h>
+#include <kinc/network/http.h>
 #include <kinc/graphics4/shader.h>
 #include <kinc/graphics4/vertexbuffer.h>
 #include <kinc/graphics4/indexbuffer.h>
@@ -159,6 +160,7 @@ namespace {
 	Global<Function> gamepad_axis_func;
 	Global<Function> gamepad_button_func;
 	Global<Function> audio_func;
+	Global<Function> http_func;
 	Global<Function> save_and_quit_func;
 
 	kinc_mutex_t mutex;
@@ -204,6 +206,7 @@ namespace {
 	#ifdef ARM_PROFILE
 	double startup_time = 0.0;
 	#endif
+	int32_t http_result_size = 0;
 
 	void write_stack_trace(const char* stack_trace) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", stack_trace);
@@ -2252,6 +2255,46 @@ namespace {
 		#endif
 	}
 
+	void krom_http_callback(int error, int response, const char *body, void *callbackdata) {
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, http_func);
+		TryCatch try_catch(isolate);
+		Local<Value> result;
+		Local<Value> argv[1] = { ArrayBuffer::New(isolate, (void *)body, http_result_size) };
+		if (!func->Call(context, context->Global(), 1, argv).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
+	void krom_http_request(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value url(isolate, args[0]);
+		// TODO: assuming krom_http_request is synchronous for now
+		http_result_size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		Local<Function> func = Local<Function>::Cast(args[2]);
+		http_func.Reset(isolate, func);
+		char url_base[512];
+		char url_path[512];
+		const char* curl = *url;
+		int i = 0;
+		for (; i < 512; ++i) {
+			if (curl[i + 8] == '/') break;
+			url_base[i] = curl[i + 8]; // Strip https://
+		}
+		url_base[i] = 0;
+		int j = 0;
+		for (; j < 512; ++j) {
+			if (curl[i + 8 + j] == 0) break;
+			url_path[j] = curl[i + 8 + j];
+		}
+		url_path[j] = 0;
+		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL);
+	}
+
 	void krom_set_bool_compute(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -3102,6 +3145,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "getArgCount").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_arg_count));
 		krom->Set(String::NewFromUtf8(isolate, "getArg").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_arg));
 		krom->Set(String::NewFromUtf8(isolate, "getFilesLocation").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_files_location));
+		krom->Set(String::NewFromUtf8(isolate, "httpRequest").ToLocalChecked(), FunctionTemplate::New(isolate, krom_http_request));
 		krom->Set(String::NewFromUtf8(isolate, "setBoolCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_bool_compute));
 		krom->Set(String::NewFromUtf8(isolate, "setIntCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_int_compute));
 		krom->Set(String::NewFromUtf8(isolate, "setFloatCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_float_compute));

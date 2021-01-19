@@ -135,6 +135,7 @@ extern class Krom {
 	static function getArgCount(): Int;
 	static function getArg(index: Int): String;
 	static function getFilesLocation(): String;
+	static function httpRequest(url: String, size: Int, callback: js.lib.ArrayBuffer->Void): Void;
 
 	static function setBoolCompute(location: kha.compute.ConstantLocation, value: Bool): Void;
 	static function setIntCompute(location: kha.compute.ConstantLocation, value: Int): Void;
