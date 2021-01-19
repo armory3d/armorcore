@@ -2264,8 +2264,9 @@ namespace {
 		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, http_func);
 		TryCatch try_catch(isolate);
 		Local<Value> result;
-		Local<Value> argv[1] = { ArrayBuffer::New(isolate, (void *)body, http_result_size) };
-		if (!func->Call(context, context->Global(), 1, argv).ToLocal(&result)) {
+		Local<Value> argv[1];
+		if (body != NULL) argv[0] = ArrayBuffer::New(isolate, (void *)body, http_result_size);
+		if (!func->Call(context, context->Global(), body != NULL ? 1 : 0, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
 	}
