@@ -1933,43 +1933,56 @@ namespace {
 	}
 
 	void krom_create_texture_from_encoded_bytes(const FunctionCallbackInfo<Value>& args) {
-		// .k images for now
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		if (buffer->IsExternal()) content = buffer->GetContents();
 		else content = buffer->Externalize();
-		// String::Utf8Value format(isolate, args[1]);
+		String::Utf8Value format(isolate, args[1]);
 		bool readable = args[2]->ToBoolean(isolate)->Value();
 
 		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t* image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
 
 		unsigned char *content_data = (unsigned char *)content.Data();
+		int content_length = (int)content.ByteLength();
 		unsigned char *image_data;
 		kinc_image_format_t image_format;
+		int image_width;
+		int image_height;
 
-		// load_image(reader, *utf8_value, image_data, image_width, image_height, image_format);
-		int image_width = kinc_read_s32le(content_data);
-		int image_height = kinc_read_s32le(content_data + 4);
-		char fourcc[5];
-		fourcc[0] = content_data[8];
-		fourcc[1] = content_data[9];
-		fourcc[2] = content_data[10];
-		fourcc[3] = content_data[11];
-		fourcc[4] = 0;
-		int compressedSize = (int)content.ByteLength() - 12;
-		if (strcmp(fourcc, "LZ4 ") == 0) {
-			int outputSize = image_width * image_height * 4;
-			image_data = (unsigned char*)malloc(outputSize);
-			LZ4_decompress_safe((char*)content_data + 12, (char *)image_data, compressedSize, outputSize);
-			image_format = KINC_IMAGE_FORMAT_RGBA32;
+		if (ends_with(*format, "k")) {
+			image_width = kinc_read_s32le(content_data);
+			image_height = kinc_read_s32le(content_data + 4);
+			char fourcc[5];
+			fourcc[0] = content_data[8];
+			fourcc[1] = content_data[9];
+			fourcc[2] = content_data[10];
+			fourcc[3] = content_data[11];
+			fourcc[4] = 0;
+			int compressedSize = (int)content.ByteLength() - 12;
+			if (strcmp(fourcc, "LZ4 ") == 0) {
+				int outputSize = image_width * image_height * 4;
+				image_data = (unsigned char*)malloc(outputSize);
+				LZ4_decompress_safe((char*)content_data + 12, (char *)image_data, compressedSize, outputSize);
+				image_format = KINC_IMAGE_FORMAT_RGBA32;
+			}
+			else if (strcmp(fourcc, "LZ4F") == 0) {
+				int outputSize = image_width * image_height * 16;
+				image_data = (unsigned char*)malloc(outputSize);
+				LZ4_decompress_safe((char*)content_data + 12, (char *)image_data, compressedSize, outputSize);
+				image_format = KINC_IMAGE_FORMAT_RGBA128;
+			}
 		}
-		else if (strcmp(fourcc, "LZ4F") == 0) {
-			int outputSize = image_width * image_height * 16;
-			image_data = (unsigned char*)malloc(outputSize);
-			LZ4_decompress_safe((char*)content_data + 12, (char *)image_data, compressedSize, outputSize);
+		else if (ends_with(*format, "hdr")) {
+			int comp;
+			image_data = (unsigned char*)stbi_loadf_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
 			image_format = KINC_IMAGE_FORMAT_RGBA128;
+		}
+		else { // jpg, png, ..
+			int comp;
+			image_data = stbi_load_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
+			image_format = KINC_IMAGE_FORMAT_RGBA32;
 		}
 
 		kinc_image_init(image, image_data, image_width, image_height, image_format);
