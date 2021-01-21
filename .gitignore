@@ -5,5 +5,6 @@ V8/libraries/win32/release/v8_monolith.lib
 Libraries/krafix
 Deployment/*.frag
 Deployment/*.vert
+Deployment/*.comp
 Deployment/*.txt
 Deployment/Krom
