@@ -1,7 +1,6 @@
 #import "IOSFileDialog.h"
 
 #import <UIKit/UIKit.h>
-#include <kinc/system.h>
 
 void IOSFileDialogOpen() {
 	UIViewController<UIDocumentPickerDelegate> *glViewController = [UIApplication sharedApplication].keyWindow.rootViewController;
