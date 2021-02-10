@@ -64,6 +64,8 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 #ifdef WITH_NFD
 #include <nfd.h>
+#elif KORE_ANDROID
+#include "AndroidFileDialog.h"
 #elif KORE_IOS
 #include "IOSFileDialog.h"
 #endif
@@ -1469,7 +1471,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
-		#if KORE_METAL
+		#ifdef KORE_METAL
 		if (unit->impl._unit.impl.index == -1) return;
 		#endif
 		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -1481,7 +1483,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
-		#if KORE_METAL
+		#ifdef KORE_METAL
 		if (unit->impl._unit.impl.index == -1) return;
 		#endif
 		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -1493,7 +1495,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
-		#if KORE_METAL
+		#ifdef KORE_METAL
 		if (unit->impl._unit.impl.index == -1) return;
 		#endif
 		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -2570,19 +2572,35 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Error: %s\n", NFD_GetError());
 		}
 	}
+	#elif KORE_ANDROID
+	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		// String::Utf8Value filterList(isolate, args[0]);
+		// String::Utf8Value defaultPath(isolate, args[1]);
+		// wchar_t* outPath = AndroidFileDialogOpen();
+		// args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)outPath).ToLocalChecked());
+	}
+
+	void krom_save_dialog(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		// String::Utf8Value filterList(isolate, args[0]);
+		// String::Utf8Value defaultPath(isolate, args[1]);
+		// wchar_t* outPath = AndroidFileDialogSave();
+		// args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)outPath).ToLocalChecked());
+	}
 	#elif KORE_IOS
 	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
-		String::Utf8Value filterList(isolate, args[0]);
-		String::Utf8Value defaultPath(isolate, args[1]);
+		// String::Utf8Value filterList(isolate, args[0]);
+		// String::Utf8Value defaultPath(isolate, args[1]);
 		// Once finished drop_files callback is called
 		IOSFileDialogOpen();
 	}
 
 	void krom_save_dialog(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
-		String::Utf8Value filterList(isolate, args[0]);
-		String::Utf8Value defaultPath(isolate, args[1]);
+		// String::Utf8Value filterList(isolate, args[0]);
+		// String::Utf8Value defaultPath(isolate, args[1]);
 		// Path to app document directory
 		wchar_t* outPath = IOSFileDialogSave();
 		size_t len = wcslen(outPath);
@@ -2949,7 +2967,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		// args.GetReturnValue().Set(Int32::New(isolate, kinc_window_x(windowId))); // Returns window creation pos
-		#if KORE_WINDOWS
+		#ifdef KORE_WINDOWS
 		RECT rect;
 		GetWindowRect(kinc_windows_window_handle(windowId), &rect);
 		args.GetReturnValue().Set(Int32::New(isolate, rect.left));
@@ -2960,7 +2978,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		// args.GetReturnValue().Set(Int32::New(isolate, kinc_window_y(windowId)));
-		#if KORE_WINDOWS
+		#ifdef KORE_WINDOWS
 		RECT rect;
 		GetWindowRect(kinc_windows_window_handle(windowId), &rect);
 		args.GetReturnValue().Set(Int32::New(isolate, rect.top));
@@ -2975,14 +2993,15 @@ namespace {
 	void start_v8(char *krom_bin, int krom_bin_size) {
 		plat = platform::NewDefaultPlatform();
 		V8::InitializePlatform(plat.get());
-		V8::Initialize();
 
 		std::string flags = "";
-		#if KORE_IOS
+		#ifdef KORE_IOS
 		flags += "--jitless ";
 		#endif
 		if (profile) flags += "--logfile=krom-v8.log --prof --log-source-code ";
 		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
+
+		V8::Initialize();
 
 		Isolate::CreateParams create_params;
 		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
@@ -3155,7 +3174,7 @@ namespace {
 		//
 		krom->Set(String::NewFromUtf8(isolate, "setSaveAndQuitCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_save_and_quit_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setMouseCursor").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_cursor));
-		#if defined(WITH_NFD) || defined(KORE_IOS)
+		#if defined(WITH_NFD) || defined(KORE_IOS) || defined(KORE_ANDROID)
 		krom->Set(String::NewFromUtf8(isolate, "openDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_open_dialog));
 		krom->Set(String::NewFromUtf8(isolate, "saveDialog").ToLocalChecked(), FunctionTemplate::New(isolate, krom_save_dialog));
 		#endif
@@ -3306,7 +3325,7 @@ namespace {
 	#endif
 
 	void update() {
-		#if KORE_WINDOWS
+		#ifdef KORE_WINDOWS
 		if (paused && ++pausedFrames > 3 && armorcore) { Sleep(1); return; }
 		#endif
 

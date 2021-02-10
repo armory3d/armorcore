@@ -24,6 +24,7 @@ let project = new Project('Krom');
 project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
+project.targetOptions.android.package = 'org.armorpaint';
 
 if (platform === Platform.OSX) {
 	// Otherwise V8::Initialize() hangs
@@ -47,6 +48,7 @@ else {
 project.addIncludeDir('v8/include');
 
 if (platform === Platform.Android) {
+	project.addFile('Sources/AndroidFileDialog.cpp');
 	project.addDefine('IDLE_SLEEP');
 }
 else if (platform === Platform.iOS) {
@@ -77,16 +79,14 @@ else if (platform === Platform.Android) {
 
 	// Some manual tweaking is required for now:
 	// In Kinc/kincfile.js, before node Kinc/make is run:
-	//   project.addDefine('KORE_ANDROID_API=18');
+	//   project.addDefine('KORE_ANDROID_API=19');
 	// In app/CMakeLists.txt:
 	//   add_library(v8_monolith STATIC IMPORTED)
 	//   set_target_properties(v8_monolith PROPERTIES IMPORTED_LOCATION ../../../v8/libraries/android/release/libv8_monolith.a)
 	//   target_link_libraries(v8_monolith)
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
-	// AndroidManifest.xml:
-	//   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-	//   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+	//   android - defaultconfig - cmake - cppFlags "-std=c++14"
 }
 else if (platform === Platform.iOS) {
 	project.addLib('v8/libraries/ios/release/libv8_monolith.a');
