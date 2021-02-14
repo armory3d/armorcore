@@ -327,6 +327,10 @@ namespace {
 		kinc_pen_release_callback = pen_up;
 		kinc_gamepad_axis_callback = gamepad_axis;
 		kinc_gamepad_button_callback = gamepad_button;
+
+		#if KORE_ANDROID
+		android_check_permissions();
+		#endif
 	}
 
 	void krom_set_application_name(const v8::FunctionCallbackInfo<v8::Value>& args) {
@@ -2575,17 +2579,12 @@ namespace {
 	#elif KORE_ANDROID
 	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
-		// String::Utf8Value filterList(isolate, args[0]);
-		// String::Utf8Value defaultPath(isolate, args[1]);
-		// wchar_t* outPath = AndroidFileDialogOpen();
-		// args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)outPath).ToLocalChecked());
+		AndroidFileDialogOpen();
 	}
 
 	void krom_save_dialog(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
-		// String::Utf8Value filterList(isolate, args[0]);
-		// String::Utf8Value defaultPath(isolate, args[1]);
-		// wchar_t* outPath = AndroidFileDialogSave();
+		wchar_t* outPath = AndroidFileDialogSave();
 		// args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)outPath).ToLocalChecked());
 	}
 	#elif KORE_IOS

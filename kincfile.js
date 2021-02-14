@@ -25,6 +25,7 @@ project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 project.targetOptions.android.package = 'org.armorpaint';
+project.targetOptions.android.permissions = ['WRITE_EXTERNAL_STORAGE', 'READ_EXTERNAL_STORAGE'];
 
 if (platform === Platform.OSX) {
 	// Otherwise V8::Initialize() hangs
@@ -87,6 +88,8 @@ else if (platform === Platform.Android) {
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
 	//   android - defaultconfig - cmake - cppFlags "-std=c++14"
+	// In AndroidManifest.xml:
+	//   <application android:requestLegacyExternalStorage="true"
 }
 else if (platform === Platform.iOS) {
 	project.addLib('v8/libraries/ios/release/libv8_monolith.a');

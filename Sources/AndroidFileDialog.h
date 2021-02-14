@@ -1,4 +1,5 @@
 #pragma once
 
-wchar_t* AndroidFileDialogOpen();
+void AndroidFileDialogOpen();
 wchar_t* AndroidFileDialogSave();
+void android_check_permissions();
