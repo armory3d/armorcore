@@ -1,8 +1,8 @@
-﻿diff --git a/Backends/Graphics5/Direct3D12/Sources/Kore/Texture5Impl.cpp b/Backends/Graphics5/Direct3D12/Sources/Kore/Texture5Impl.cpp
-index c5bec33c..b1875ee7 100644
---- a/Backends/Graphics5/Direct3D12/Sources/Kore/Texture5Impl.cpp
-+++ b/Backends/Graphics5/Direct3D12/Sources/Kore/Texture5Impl.cpp
-@@ -142,9 +142,9 @@ static void createSampler(bool bilinear, D3D12_FILTER filter) {
+diff --git a/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/texture.cpp b/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/texture.cpp
+index 14df72d7..c37cabda 100644
+--- a/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/texture.cpp
++++ b/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/texture.cpp
+@@ -144,9 +144,9 @@ static void createSampler(bool bilinear, D3D12_FILTER filter) {
  	D3D12_SAMPLER_DESC samplerDesc;
  	ZeroMemory(&samplerDesc, sizeof(D3D12_SAMPLER_DESC));
  	samplerDesc.Filter = filter;

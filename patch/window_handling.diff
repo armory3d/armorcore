@@ -1,8 +1,8 @@
-﻿diff --git a/Backends/System/Windows/Sources/Kore/System.cpp b/Backends/System/Windows/Sources/Kore/System.cpp
-index 11a4f885..8c585fc4 100644
---- a/Backends/System/Windows/Sources/Kore/System.cpp
-+++ b/Backends/System/Windows/Sources/Kore/System.cpp
-@@ -245,6 +245,8 @@ static bool detectGamepad = true;
+diff --git a/Backends/System/Windows/Sources/kinc/backend/system.cpp b/Backends/System/Windows/Sources/kinc/backend/system.cpp
+index 2089033a..135cd61c 100644
+--- a/Backends/System/Windows/Sources/kinc/backend/system.cpp
++++ b/Backends/System/Windows/Sources/kinc/backend/system.cpp
+@@ -246,6 +246,8 @@ static bool detectGamepad = true;
  static bool gamepadFound = false;
  static unsigned r = 0;
 
@@ -11,7 +11,7 @@ index 11a4f885..8c585fc4 100644
  namespace {
  	wchar_t toUnicode(WPARAM wParam, LPARAM lParam) {
  		wchar_t buffer[11];
-@@ -295,6 +297,17 @@ extern "C" LRESULT WINAPI KoreWindowsMessageProcedure(HWND hWnd, UINT msg, WPARA
+@@ -296,6 +298,17 @@ extern "C" LRESULT WINAPI KoreWindowsMessageProcedure(HWND hWnd, UINT msg, WPARA
  		}
  		break;
  	}
@@ -29,11 +29,11 @@ index 11a4f885..8c585fc4 100644
  	case WM_DESTROY:
  		kinc_stop();
  		return 0;
-diff --git a/Backends/System/Windows/Sources/Kore/Window.c b/Backends/System/Windows/Sources/Kore/Window.c
-index d603129d..2560966d 100644
---- a/Backends/System/Windows/Sources/Kore/Window.c
-+++ b/Backends/System/Windows/Sources/Kore/Window.c
-@@ -196,8 +196,10 @@ static int createWindow(const wchar_t *title, int x, int y, int width, int heigh
+diff --git a/Backends/System/Windows/Sources/kinc/backend/window.c b/Backends/System/Windows/Sources/kinc/backend/window.c
+index a107a3b3..98cc764f 100644
+--- a/Backends/System/Windows/Sources/kinc/backend/window.c
++++ b/Backends/System/Windows/Sources/kinc/backend/window.c
+@@ -205,8 +205,10 @@ static int createWindow(const wchar_t *title, int x, int y, int width, int heigh
 
  	switch (windowMode) {
  	case KINC_WINDOW_MODE_WINDOW:

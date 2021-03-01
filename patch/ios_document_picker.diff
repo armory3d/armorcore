@@ -1,7 +1,7 @@
-﻿diff --git a/Backends/System/iOS/Sources/Kore/GLViewController.h b/Backends/System/iOS/Sources/Kore/GLViewController.h
+diff --git a/Backends/System/iOS/Sources/kinc/backend/GLViewController.h b/Backends/System/iOS/Sources/kinc/backend/GLViewController.h
 index ecfbf793..cb1c3161 100644
---- a/Backends/System/iOS/Sources/Kore/GLViewController.h
-+++ b/Backends/System/iOS/Sources/Kore/GLViewController.h
+--- a/Backends/System/iOS/Sources/kinc/backend/GLViewController.h
++++ b/Backends/System/iOS/Sources/kinc/backend/GLViewController.h
 @@ -6,7 +6,7 @@
  #import <CoreMotion/CMMotionManager.h>
  #endif
@@ -11,10 +11,10 @@ index ecfbf793..cb1c3161 100644
  @private
  }
 
-diff --git a/Backends/System/iOS/Sources/Kore/GLViewController.mm b/Backends/System/iOS/Sources/Kore/GLViewController.mm
-index a6246f94..5e9f09c7 100644
---- a/Backends/System/iOS/Sources/Kore/GLViewController.mm
-+++ b/Backends/System/iOS/Sources/Kore/GLViewController.mm
+diff --git a/Backends/System/iOS/Sources/kinc/backend/GLViewController.mm b/Backends/System/iOS/Sources/kinc/backend/GLViewController.mm
+index a6246f94..6d5617ef 100644
+--- a/Backends/System/iOS/Sources/kinc/backend/GLViewController.mm
++++ b/Backends/System/iOS/Sources/kinc/backend/GLViewController.mm
 @@ -7,6 +7,7 @@
 
  #include <kinc/graphics5/rendertarget.h>
@@ -23,23 +23,23 @@ index a6246f94..5e9f09c7 100644
 
  #include <objc/runtime.h>
 
-@@ -71,4 +72,12 @@ - (void)setVisible:(BOOL)value {
+@@ -71,4 +72,12 @@ id getMetalQueue() {
  	visible = value;
  }
 
 +- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentAtURL:(NSURL *)url {
-+	wchar_t* filePath = (wchar_t*)[url.path cStringUsingEncoding:NSUTF32LittleEndianStringEncoding];
++	wchar_t *filePath = (wchar_t *)[url.path cStringUsingEncoding:NSUTF32LittleEndianStringEncoding];
 +	CFURLRef cfurl = (__bridge CFURLRef)url;
 +	CFURLStartAccessingSecurityScopedResource(cfurl);
-+ 	kinc_internal_drop_files_callback(filePath);
++	kinc_internal_drop_files_callback(filePath);
 +	CFURLStopAccessingSecurityScopedResource(cfurl);
 +}
 +
  @end
-diff --git a/Backends/System/iOS/Sources/Kore/ios.plist b/Backends/System/iOS/Sources/Kore/ios.plist
-index 4cb77811..1f760ac4 100644
---- a/Backends/System/iOS/Sources/Kore/ios.plist
-+++ b/Backends/System/iOS/Sources/Kore/ios.plist
+diff --git a/Backends/System/iOS/Sources/kinc/backend/ios.plist b/Backends/System/iOS/Sources/kinc/backend/ios.plist
+index 4cb77811..0a247070 100644
+--- a/Backends/System/iOS/Sources/kinc/backend/ios.plist
++++ b/Backends/System/iOS/Sources/kinc/backend/ios.plist
 @@ -45,5 +45,9 @@
  		<string>UIInterfaceOrientationLandscapeLeft</string>
  		<string>UIInterfaceOrientationLandscapeRight</string>
