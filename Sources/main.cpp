@@ -46,7 +46,7 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 
 #ifdef KORE_WINDOWS
 #include <Windows.h> // AttachConsole
-#include <Kore/Windows.h> // kinc_windows_window_handle
+extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // Kore/Windows.h
 #endif
 
 #ifdef WITH_D3DCOMPILER
