@@ -186,4 +186,5 @@ extern class Krom {
 	static function windowX(id: Int): Int;
 	static function windowY(id: Int): Int;
 	static function language(): String;
+	static function mlInference(model: js.lib.ArrayBuffer, tensor: js.lib.ArrayBuffer): js.lib.ArrayBuffer;
 }

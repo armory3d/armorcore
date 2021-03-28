@@ -7,6 +7,7 @@ const with_zlib = true;
 const with_stb_image_write = false;
 const with_audio = false;
 const with_texsynth = false;
+const with_onnx = false;
 const with_krafix = graphics === GraphicsApi.Vulkan; // glsl to spirv for vulkan
 
 const system = platform === Platform.Windows ? "win32" :
@@ -161,6 +162,19 @@ if (with_texsynth) {
 	}
 	else if (platform === Platform.OSX) {
 		project.addLib('Libraries/texsynth/macos/libtexsynth.a');
+	}
+}
+if (with_onnx) {
+	project.addDefine('WITH_ONNX');
+	project.addIncludeDir("Libraries/onnx/include");
+	if (platform === Platform.Windows) {
+		project.addLib('Libraries/onnx/win32/onnxruntime');
+	}
+	else if (platform === Platform.Linux) {
+		project.addLib('onnx -L../../Libraries/onnx/linux');
+	}
+	else if (platform === Platform.OSX) {
+		project.addLib('Libraries/onnx/macos/libonnx.dylib');
 	}
 }
 if (with_krafix) {

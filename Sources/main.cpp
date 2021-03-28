@@ -82,6 +82,12 @@ extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // K
 #ifdef WITH_TEXSYNTH
 #include <texsynth.h>
 #endif
+#ifdef WITH_ONNX
+#include <onnxruntime_c_api.h>
+#ifdef KORE_WINDOWS
+#include <dml_provider_factory.h>
+#endif
+#endif
 #ifdef IDLE_SLEEP
 #include <unistd.h>
 #endif
@@ -2780,6 +2786,88 @@ namespace {
 	}
 	#endif
 
+	#ifdef WITH_ONNX
+	void krom_ml_inference(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		const OrtApi *ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
+		OrtEnv *env;
+		ort->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "armorcore", &env);
+
+		OrtSessionOptions *session_options;
+		ort->CreateSessionOptions(&session_options);
+		ort->SetIntraOpNumThreads(session_options, 8);
+		ort->SetInterOpNumThreads(session_options, 8);
+
+		#ifdef KORE_WINDOWS
+		// ort->SetSessionExecutionMode(session_options, ORT_SEQUENTIAL);
+		// ort->DisableMemPattern(session_options);
+		// OrtSessionOptionsAppendExecutionProvider_DML(session_options, 0);
+		#endif
+
+		Local<ArrayBuffer> model_buffer = Local<ArrayBuffer>::Cast(args[0]);
+		ArrayBuffer::Contents model_content;
+		model_content = model_buffer->GetContents();
+
+		Local<ArrayBuffer> tensor_buffer = Local<ArrayBuffer>::Cast(args[1]);
+		ArrayBuffer::Contents tensor_content;
+		tensor_content = tensor_buffer->GetContents();
+
+		OrtSession *session;
+		ort->CreateSessionFromArray(env, model_content.Data(), (int)model_content.ByteLength(), session_options, &session);
+		OrtAllocator *allocator;
+		ort->GetAllocatorWithDefaultOptions(&allocator);
+		char *input_node_name;
+		ort->SessionGetInputName(session, 0, allocator, &input_node_name);
+		char *output_node_name;
+		ort->SessionGetOutputName(session, 0, allocator, &output_node_name);
+
+		OrtTypeInfo *input_type_info;
+		ort->SessionGetInputTypeInfo(session, 0, &input_type_info);
+		const OrtTensorTypeAndShapeInfo *input_tensor_info;
+		ort->CastTypeInfoToTensorInfo(input_type_info, &input_tensor_info);
+		size_t num_input_dims;
+		ort->GetDimensionsCount(input_tensor_info, &num_input_dims);
+		std::vector<int64_t> input_node_dims(num_input_dims);
+		ort->GetDimensions(input_tensor_info, (int64_t *)input_node_dims.data(), num_input_dims);
+		ort->ReleaseTypeInfo(input_type_info);
+
+		OrtTypeInfo *output_type_info;
+		ort->SessionGetOutputTypeInfo(session, 0, &output_type_info);
+		const OrtTensorTypeAndShapeInfo *output_tensor_info;
+		ort->CastTypeInfoToTensorInfo(output_type_info, &output_tensor_info);
+		size_t num_output_dims;
+		ort->GetDimensionsCount(output_tensor_info, &num_output_dims);
+		std::vector<int64_t> output_node_dims(num_output_dims);
+		ort->GetDimensions(output_tensor_info, (int64_t *)output_node_dims.data(), num_output_dims);
+		ort->ReleaseTypeInfo(output_type_info);
+		size_t output_byte_length = 4 * output_node_dims[0];
+		for (int i = 0; i < num_output_dims; ++i) output_byte_length *= output_node_dims[i];
+
+		OrtMemoryInfo *memory_info;
+		ort->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info);
+		OrtValue *input_tensor = NULL;
+		ort->CreateTensorWithDataAsOrtValue(memory_info, tensor_content.Data(), (int)tensor_content.ByteLength(), input_node_dims.data(), 4, ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, &input_tensor);
+		ort->ReleaseMemoryInfo(memory_info);
+
+		OrtValue *output_tensor = NULL;
+		ort->Run(session, NULL, &input_node_name, (const OrtValue* const*)&input_tensor, 1, &output_node_name, 1, &output_tensor);
+
+		float *float_array;
+		ort->GetTensorMutableData(output_tensor, (void**)&float_array);
+
+		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, output_byte_length);
+		ArrayBuffer::Contents output_content = output->GetContents();
+		memcpy(output_content.Data(), float_array, output_byte_length);
+
+		ort->ReleaseValue(output_tensor);
+		ort->ReleaseValue(input_tensor);
+		ort->ReleaseSession(session);
+		ort->ReleaseSessionOptions(session_options);
+		ort->ReleaseEnv(env);
+		args.GetReturnValue().Set(output);
+	}
+	#endif
+
 	#ifdef KORE_RAYTRACE
 	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
@@ -3191,6 +3279,9 @@ namespace {
 		#endif
 		#ifdef WITH_TEXSYNTH
 		krom->Set(String::NewFromUtf8(isolate, "texsynthInpaint").ToLocalChecked(), FunctionTemplate::New(isolate, krom_texsynth_inpaint));
+		#endif
+		#ifdef WITH_ONNX
+		krom->Set(String::NewFromUtf8(isolate, "mlInference").ToLocalChecked(), FunctionTemplate::New(isolate, krom_ml_inference));
 		#endif
 		#ifdef KORE_RAYTRACE
 		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));
