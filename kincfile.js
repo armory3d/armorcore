@@ -45,6 +45,9 @@ if (platform === Platform.HTML5) {
 }
 else {
 	project.addFile('Sources/main.cpp');
+	project.addFile('Sources/worker.h');
+	project.addFile('Sources/worker.cpp');
+	project.addDefine('WITH_WORKER');
 }
 
 project.addIncludeDir('v8/include');

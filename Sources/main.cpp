@@ -91,6 +91,9 @@ extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // K
 #ifdef IDLE_SLEEP
 #include <unistd.h>
 #endif
+#ifdef WITH_WORKER
+#include "worker.h"
+#endif
 
 #ifdef KORE_MACOS
 extern const char* macgetresourcepath();
@@ -3427,6 +3430,10 @@ namespace {
 		if (enable_sound) kinc_a2_update();
 		#endif
 
+		#ifdef WITH_WORKER
+		handle_worker_messages(isolate, global_context);
+		#endif
+
 		kinc_g4_begin(0);
 		run_v8();
 		kinc_g4_end(0);
@@ -4138,6 +4145,9 @@ int kickstart(int argc, char** argv) {
 	kinc_display_init();
 
 	start_v8(snapshot_found ? code : NULL, snapshot_found ? reader_size : 0);
+	#ifdef WITH_WORKER
+	bind_worker_class(isolate, global_context);
+	#endif
 	start_krom(snapshot_found ? NULL : code);
 
 	#ifdef ARM_PROFILE
