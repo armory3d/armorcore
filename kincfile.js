@@ -9,6 +9,7 @@ const with_audio = false;
 const with_texsynth = false;
 const with_onnx = false;
 const with_krafix = graphics === GraphicsApi.Vulkan; // glsl to spirv for vulkan
+const with_worker = false;
 
 const system = platform === Platform.Windows ? "win32" :
 			   platform === Platform.Linux   ? "linux" :
@@ -45,9 +46,11 @@ if (platform === Platform.HTML5) {
 }
 else {
 	project.addFile('Sources/main.cpp');
-	project.addFile('Sources/worker.h');
-	project.addFile('Sources/worker.cpp');
-	project.addDefine('WITH_WORKER');
+	if (with_worker) {
+		project.addDefine('WITH_WORKER');
+		project.addFile('Sources/worker.h');
+		project.addFile('Sources/worker.cpp');
+	}
 }
 
 project.addIncludeDir('v8/include');
