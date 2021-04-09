@@ -30,6 +30,8 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #else
 #include <kinc/io/lz4/lz4.h>
 #endif
+#define STB_IMAGE_IMPLEMENTATION
+#include <kinc/libs/stb_image.h>
 
 #include <libplatform/libplatform.h>
 #ifdef KORE_LINUX // xlib defines conflicting with v8
