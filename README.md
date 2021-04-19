@@ -13,7 +13,7 @@ cd armorcore
 ```bash
 # Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
 node Kinc/make -g direct3d11
-# Open generated Visual Studio project
+# Open generated Visual Studio project at `build\Krom.sln`
 # Build for x64 & release
 ```
 
@@ -27,7 +27,7 @@ strip Krom
 **macOS**
 ```bash
 node Kinc/make -g metal
-# Open generated Xcode project
+# Open generated Xcode project at `build/Krom.xcodeproj`
 # Build
 ```
 
@@ -36,14 +36,14 @@ node Kinc/make -g metal
 node Kinc/make android -g opengl
 # Manual tweaking is required for now:
 # https://github.com/armory3d/armorcore/blob/master/kincfile.js#L68
-# Open generated Android Studio project
+# Open generated Android Studio project at `build/Krom`
 # Build for device
 ```
 
 **iOS** *wip*
 ```bash
 node Kinc/make ios -g metal
-# Open generated Xcode project
+# Open generated Xcode project at `build/Krom.xcodeproj`
 # Build for device
 ```
 
@@ -51,7 +51,7 @@ node Kinc/make ios -g metal
 ```bash
 # Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
 node Kinc/make -g direct3d12 --raytrace dxr
-# Open generated Visual Studio project
+# Open generated Visual Studio project at `build\Krom.sln`
 # Build for x64 & release
 ```
 
@@ -66,7 +66,7 @@ strip Krom
 ```bash
 # Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
 node Kinc/make -g direct3d11 --vr oculus
-# Open generated Visual Studio project
+# Open generated Visual Studio project at `build\Krom.sln`
 # Build for x64 & release
 ```
 
