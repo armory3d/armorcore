@@ -4,8 +4,10 @@
 #include <jni.h>
 #include <string.h>
 #include <cstdlib>
-#include <Kore/Android.h>
 #include <android_native_app_glue.h>
+
+extern "C" ANativeActivity *kinc_android_get_activity(void);
+extern "C" jclass kinc_android_find_class(JNIEnv* env, const char* name);
 
 extern "C" JNIEXPORT void JNICALL Java_tech_kode_kore_KoreActivity_onAndroidFilePicked(JNIEnv* env, jobject jobj, jstring jstr) {
 	if (jstr == NULL) return;
@@ -20,10 +22,10 @@ extern "C" JNIEXPORT void JNICALL Java_tech_kode_kore_KoreActivity_onAndroidFile
 }
 
 void AndroidFileDialogOpen() {
-	ANativeActivity* activity = KoreAndroid::getActivity();
+	ANativeActivity* activity = kinc_android_get_activity();
 	JNIEnv* env;
 	activity->vm->AttachCurrentThread(&env, nullptr);
-	jclass koreActivityClass = KoreAndroid::findClass(env, "tech.kode.kore.KoreActivity");
+	jclass koreActivityClass = kinc_android_find_class(env, "tech.kode.kore.KoreActivity");
 
 	static bool reigstered = false;
 	if (!reigstered) {
@@ -50,7 +52,7 @@ jstring android_permission_name(JNIEnv* env, const char* perm_name) {
 }
 
 bool android_has_permission(struct android_app* app, const char* perm_name) {
-	ANativeActivity* activity = KoreAndroid::getActivity();
+	ANativeActivity* activity = kinc_android_get_activity();
 	JNIEnv* env;
 	activity->vm->AttachCurrentThread(&env, nullptr);
 	bool result = false;
@@ -73,7 +75,7 @@ bool android_has_permission(struct android_app* app, const char* perm_name) {
 }
 
 void android_request_file_permissions(struct android_app* app) {
-	ANativeActivity* activity = KoreAndroid::getActivity();
+	ANativeActivity* activity = kinc_android_get_activity();
 	JNIEnv* env;
 	activity->vm->AttachCurrentThread(&env, nullptr);
 	jobjectArray perm_array = env->NewObjectArray(2, env->FindClass("java/lang/String"), env->NewStringUTF(""));
@@ -87,7 +89,7 @@ void android_request_file_permissions(struct android_app* app) {
 }
 
 void android_check_permissions() {
-	ANativeActivity* activity = KoreAndroid::getActivity();
+	ANativeActivity* activity = kinc_android_get_activity();
 	struct android_app* app = (struct android_app*)activity->instance;
 	bool hasPermissions = android_has_permission(app, "READ_EXTERNAL_STORAGE") && android_has_permission(app, "WRITE_EXTERNAL_STORAGE");
 	if (!hasPermissions) android_request_file_permissions(app);
