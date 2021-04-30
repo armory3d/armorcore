@@ -27,7 +27,7 @@ project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 project.targetOptions.android.package = 'org.armorpaint';
-project.targetOptions.android.permissions = ['WRITE_EXTERNAL_STORAGE', 'READ_EXTERNAL_STORAGE'];
+project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE'];
 
 if (platform === Platform.OSX) {
 	// Otherwise V8::Initialize() hangs

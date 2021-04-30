@@ -25,7 +25,7 @@ void AndroidFileDialogOpen() {
 	ANativeActivity* activity = kinc_android_get_activity();
 	JNIEnv* env;
 	activity->vm->AttachCurrentThread(&env, nullptr);
-	jclass koreActivityClass = kinc_android_find_class(env, "tech.kode.kore.KoreActivity");
+	jclass koreActivityClass = kinc_android_find_class(env, "tech.kinc.KincActivity");
 
 	static bool reigstered = false;
 	if (!reigstered) {
