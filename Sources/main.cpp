@@ -49,6 +49,9 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #ifdef KORE_WINDOWS
 #include <Windows.h> // AttachConsole
 extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // Kore/Windows.h
+
+//Enable visual styles for controls.
+#pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
 #ifdef WITH_D3DCOMPILER
