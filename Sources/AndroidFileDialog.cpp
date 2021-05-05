@@ -7,14 +7,14 @@
 #include <android_native_app_glue.h>
 
 extern "C" ANativeActivity *kinc_android_get_activity(void);
-extern "C" jclass kinc_android_find_class(JNIEnv* env, const char* name);
+extern "C" jclass kinc_android_find_class(JNIEnv *env, const char *name);
 
-extern "C" JNIEXPORT void JNICALL Java_tech_kode_kore_KoreActivity_onAndroidFilePicked(JNIEnv* env, jobject jobj, jstring jstr) {
+extern "C" JNIEXPORT void JNICALL Java_tech_kode_kore_KoreActivity_onAndroidFilePicked(JNIEnv *env, jobject jobj, jstring jstr) {
 	if (jstr == NULL) return;
 	const char *str = env->GetStringUTFChars(jstr, 0);
 	size_t len = strlen(str);
 	wchar_t filePath[len + 1];
-	mbstowcs(filePath, (char*)str, len);
+	mbstowcs(filePath, (char *)str, len);
 	filePath[len] = 0;
 
 	kinc_internal_drop_files_callback(filePath);
@@ -22,8 +22,8 @@ extern "C" JNIEXPORT void JNICALL Java_tech_kode_kore_KoreActivity_onAndroidFile
 }
 
 void AndroidFileDialogOpen() {
-	ANativeActivity* activity = kinc_android_get_activity();
-	JNIEnv* env;
+	ANativeActivity *activity = kinc_android_get_activity();
+	JNIEnv *env;
 	activity->vm->AttachCurrentThread(&env, nullptr);
 	jclass koreActivityClass = kinc_android_find_class(env, "tech.kinc.KincActivity");
 
@@ -40,20 +40,20 @@ void AndroidFileDialogOpen() {
 	activity->vm->DetachCurrentThread();
 }
 
-wchar_t* AndroidFileDialogSave() {
+wchar_t *AndroidFileDialogSave() {
 	return 0;
 }
 
-jstring android_permission_name(JNIEnv* env, const char* perm_name) {
+jstring android_permission_name(JNIEnv *env, const char *perm_name) {
 	jclass ClassManifestpermission = env->FindClass("android/Manifest$permission");
 	jfieldID lid_PERM = env->GetStaticFieldID(ClassManifestpermission, perm_name, "Ljava/lang/String;");
 	jstring ls_PERM = (jstring)(env->GetStaticObjectField(ClassManifestpermission, lid_PERM));
 	return ls_PERM;
 }
 
-bool android_has_permission(struct android_app* app, const char* perm_name) {
-	ANativeActivity* activity = kinc_android_get_activity();
-	JNIEnv* env;
+bool android_has_permission(struct android_app *app, const char *perm_name) {
+	ANativeActivity *activity = kinc_android_get_activity();
+	JNIEnv *env;
 	activity->vm->AttachCurrentThread(&env, nullptr);
 	bool result = false;
 	jstring ls_PERM = android_permission_name(env, perm_name);
@@ -74,9 +74,9 @@ bool android_has_permission(struct android_app* app, const char* perm_name) {
 	return result;
 }
 
-void android_request_file_permissions(struct android_app* app) {
-	ANativeActivity* activity = kinc_android_get_activity();
-	JNIEnv* env;
+void android_request_file_permissions(struct android_app *app) {
+	ANativeActivity *activity = kinc_android_get_activity();
+	JNIEnv *env;
 	activity->vm->AttachCurrentThread(&env, nullptr);
 	jobjectArray perm_array = env->NewObjectArray(2, env->FindClass("java/lang/String"), env->NewStringUTF(""));
 	env->SetObjectArrayElement(perm_array, 0, android_permission_name(env, "READ_EXTERNAL_STORAGE"));
@@ -89,8 +89,8 @@ void android_request_file_permissions(struct android_app* app) {
 }
 
 void android_check_permissions() {
-	ANativeActivity* activity = kinc_android_get_activity();
-	struct android_app* app = (struct android_app*)activity->instance;
+	ANativeActivity *activity = kinc_android_get_activity();
+	struct android_app *app = (struct android_app *)activity->instance;
 	bool hasPermissions = android_has_permission(app, "READ_EXTERNAL_STORAGE") && android_has_permission(app, "WRITE_EXTERNAL_STORAGE");
 	if (!hasPermissions) android_request_file_permissions(app);
 }

@@ -50,7 +50,7 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #include <Windows.h> // AttachConsole
 extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // Kore/Windows.h
 
-//Enable visual styles for controls.
+// Enable visual styles for ui controls
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
@@ -101,11 +101,11 @@ extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // K
 #endif
 
 #ifdef KORE_MACOS
-extern const char* macgetresourcepath();
+extern const char *macgetresourcepath();
 #endif
 
 #ifdef KORE_IOS
-extern const char* iphonegetresourcepath();
+extern const char *iphonegetresourcepath();
 #endif
 
 using namespace v8;
@@ -116,7 +116,7 @@ int save_and_quit = 0; // off, save, nosave
 void armory_save_and_quit(bool save) { save_and_quit = save ? 1 : 2; }
 
 #if defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
-extern void krafix_compile(const char* source, char* output, int* length, const char* targetlang, const char* system, const char* shadertype);
+extern void krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype);
 #endif
 
 #ifdef KORE_RAYTRACE
@@ -128,7 +128,7 @@ extern "C" {
 }
 #endif
 static kinc_g5_constant_buffer_t constant_buffer;
-static kinc_g4_render_target_t* render_target;
+static kinc_g4_render_target_t *render_target;
 static kinc_raytrace_pipeline_t pipeline;
 static kinc_raytrace_acceleration_structure_t accel;
 static bool accel_created = false;
@@ -137,7 +137,7 @@ const int constant_buffer_size = 24;
 
 namespace {
 	int _argc;
-	char** _argv;
+	char **_argv;
 	bool enable_sound = true;
 	bool enable_window = true;
 	bool profile = false;
@@ -147,7 +147,7 @@ namespace {
 	int pausedFrames = 0;
 	bool armorcore = false;
 
-	Isolate* isolate;
+	Isolate *isolate;
 	std::unique_ptr<Platform> plat;
 	Global<Context> global_context;
 	Global<Function> update_func;
@@ -185,10 +185,10 @@ namespace {
 
 	void update();
 	void update_audio(kinc_a2_buffer_t *buffer, int samples);
-	void drop_files(wchar_t* file_path);
-	char* cut();
-	char* copy();
-	void paste(char* data);
+	void drop_files(wchar_t *file_path);
+	char *cut();
+	char *copy();
+	void paste(char *data);
 	void foreground();
 	void resume();
 	void pause();
@@ -224,11 +224,11 @@ namespace {
 	#endif
 	int32_t http_result_size = 0;
 
-	void write_stack_trace(const char* stack_trace) {
+	void write_stack_trace(const char *stack_trace) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", stack_trace);
 
 		#ifdef KORE_WINDOWS
-		FILE* file = fopen("stderr.txt", stderr_created ? "a" : "w");
+		FILE *file = fopen("stderr.txt", stderr_created ? "a" : "w");
 		if (file != nullptr) {
 			stderr_created = true;
 			fwrite(stack_trace, 1, strlen(stack_trace), file);
@@ -241,16 +241,16 @@ namespace {
 	void handle_exception(TryCatch *try_catch) {
 		MaybeLocal<Value> trace = try_catch->StackTrace(isolate->GetCurrentContext());
 		if (trace.IsEmpty()) {
-			v8::String::Utf8Value stack_trace(isolate, try_catch->Message()->Get());
+			String::Utf8Value stack_trace(isolate, try_catch->Message()->Get());
 			write_stack_trace(*stack_trace);
 		}
 		else {
-			v8::String::Utf8Value stack_trace(isolate, trace.ToLocalChecked());
+			String::Utf8Value stack_trace(isolate, trace.ToLocalChecked());
 			write_stack_trace(*stack_trace);
 		}
 	}
 
-	void krom_init(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	void krom_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		String::Utf8Value title(isolate, arg);
@@ -272,7 +272,7 @@ namespace {
 		}
 
 		if (api_version != KROM_API) {
-			const char* outdated;
+			const char *outdated;
 			if (api_version < KROM_API) {
 				outdated = "Kha";
 			}
@@ -347,14 +347,14 @@ namespace {
 		#endif
 	}
 
-	void krom_set_application_name(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	void krom_set_application_name(const FunctionCallbackInfo<Value> &args) {
 		// Name used by kinc_internal_save_path()
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value name(isolate, args[0]);
 		kinc_set_application_name(*name);
 	}
 
-	void krom_log(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	void krom_log(const FunctionCallbackInfo<Value> &args) {
 		if (args.Length() < 1) return;
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
@@ -374,7 +374,7 @@ namespace {
 		}
 	}
 
-	void krom_clear(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	void krom_clear(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int flags = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int color = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -383,21 +383,21 @@ namespace {
 		kinc_g4_clear(flags, color, depth, stencil);
 	}
 
-	void krom_set_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		update_func.Reset(isolate, func);
 	}
 
-	void krom_set_drop_files_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_drop_files_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		drop_files_func.Reset(isolate, func);
 	}
 
-	void krom_set_cut_copy_paste_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_cut_copy_paste_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> cutArg = args[0];
 		Local<Function> cutFunc = Local<Function>::Cast(cutArg);
@@ -410,7 +410,7 @@ namespace {
 		paste_func.Reset(isolate, pasteFunc);
 	}
 
-	void krom_set_application_state_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_application_state_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> foregroundArg = args[0];
 		Local<Function> foregroundFunc = Local<Function>::Cast(foregroundArg);
@@ -429,201 +429,201 @@ namespace {
 		shutdown_func.Reset(isolate, shutdownFunc);
 	}
 
-	void krom_set_keyboard_down_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_keyboard_down_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		keyboard_down_func.Reset(isolate, func);
 	}
 
-	void krom_set_keyboard_up_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_keyboard_up_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		keyboard_up_func.Reset(isolate, func);
 	}
 
-	void krom_set_keyboard_press_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_keyboard_press_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		keyboard_press_func.Reset(isolate, func);
 	}
 
-	void krom_set_mouse_down_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_mouse_down_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		mouse_down_func.Reset(isolate, func);
 	}
 
-	void krom_set_mouse_up_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_mouse_up_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		mouse_up_func.Reset(isolate, func);
 	}
 
-	void krom_set_mouse_move_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_mouse_move_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		mouse_move_func.Reset(isolate, func);
 	}
 
-	void krom_set_touch_down_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_touch_down_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		touch_down_func.Reset(isolate, func);
 	}
 
-	void krom_set_touch_up_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_touch_up_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		touch_up_func.Reset(isolate, func);
 	}
 
-	void krom_set_touch_move_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_touch_move_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		touch_move_func.Reset(isolate, func);
 	}
 
-	void krom_set_mouse_wheel_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_mouse_wheel_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		mouse_wheel_func.Reset(isolate, func);
 	}
 
-	void krom_set_pen_down_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_pen_down_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		pen_down_func.Reset(isolate, func);
 	}
 
-	void krom_set_pen_up_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_pen_up_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		pen_up_func.Reset(isolate, func);
 	}
 
-	void krom_set_pen_move_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_pen_move_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		pen_move_func.Reset(isolate, func);
 	}
 
-	void krom_set_gamepad_axis_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_gamepad_axis_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		gamepad_axis_func.Reset(isolate, func);
 	}
 
-	void krom_set_gamepad_button_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_gamepad_button_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		gamepad_button_func.Reset(isolate, func);
 	}
 
-	void krom_lock_mouse(const FunctionCallbackInfo<Value>& args) {
+	void krom_lock_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		kinc_mouse_lock(0);
 	}
 
-	void krom_unlock_mouse(const FunctionCallbackInfo<Value>& args) {
+	void krom_unlock_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		kinc_mouse_unlock(0);
 	}
 
-	void krom_can_lock_mouse(const FunctionCallbackInfo<Value>& args) {
+	void krom_can_lock_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args.GetReturnValue().Set(Boolean::New(isolate, kinc_mouse_can_lock(0)));
 	}
 
-	void krom_is_mouse_locked(const FunctionCallbackInfo<Value>& args) {
+	void krom_is_mouse_locked(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args.GetReturnValue().Set(Boolean::New(isolate, kinc_mouse_is_locked(0)));
 	}
 
-	void krom_set_mouse_position(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_mouse_position(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_mouse_set_position(0, x, y);
 	}
 
-	void krom_show_mouse(const FunctionCallbackInfo<Value>& args) {
+	void krom_show_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args[0]->ToBoolean(isolate)->Value() ? kinc_mouse_show() : kinc_mouse_hide();
 	}
 
-	void krom_show_keyboard(const FunctionCallbackInfo<Value>& args) {
+	void krom_show_keyboard(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args[0]->ToBoolean(isolate)->Value() ? kinc_keyboard_show() : kinc_keyboard_hide();
 	}
 
-	void krom_set_audio_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_audio_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		audio_func.Reset(isolate, func);
 	}
 
-	void krom_audio_thread(const FunctionCallbackInfo<Value>& args) {
+	void krom_audio_thread(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		bool lock = args[0]->ToBoolean(isolate)->Value();
-		if (lock) kinc_mutex_lock(&mutex);    //v8::Locker::Locker(isolate);
-		else kinc_mutex_unlock(&mutex);       //v8::Unlocker(args.GetIsolate());
+		if (lock) kinc_mutex_lock(&mutex);    //Locker::Locker(isolate);
+		else kinc_mutex_unlock(&mutex);       //Unlocker(args.GetIsolate());
 	}
 
-	void krom_create_indexbuffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_indexbuffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
-		kinc_g4_index_buffer_t* buffer = (kinc_g4_index_buffer_t*)malloc(sizeof(kinc_g4_index_buffer_t));
+		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)malloc(sizeof(kinc_g4_index_buffer_t));
 		kinc_g4_index_buffer_init(buffer, args[0]->Int32Value(isolate->GetCurrentContext()).FromJust(), KINC_G4_INDEX_BUFFER_FORMAT_32BIT);
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 		obj->SetInternalField(0, External::New(isolate, buffer));
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_delete_indexbuffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_delete_indexbuffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_index_buffer_t* buffer = (kinc_g4_index_buffer_t*)field->Value();
+		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)field->Value();
 		kinc_g4_index_buffer_destroy(buffer);
 		free(buffer);
 	}
 
-	void krom_lock_indexbuffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_lock_indexbuffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_index_buffer_t* buffer = (kinc_g4_index_buffer_t*)field->Value();
-		int* vertices = kinc_g4_index_buffer_lock(buffer);
+		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)field->Value();
+		int *vertices = kinc_g4_index_buffer_lock(buffer);
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, kinc_g4_index_buffer_count(buffer) * sizeof(int));
 		args.GetReturnValue().Set(Uint32Array::New(abuffer, 0, kinc_g4_index_buffer_count(buffer)));
 	}
 
-	void krom_unlock_indexbuffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_unlock_indexbuffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_index_buffer_t* buffer = (kinc_g4_index_buffer_t*)field->Value();
+		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)field->Value();
 		kinc_g4_index_buffer_unlock(buffer);
 	}
 
-	void krom_set_indexbuffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_indexbuffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_index_buffer_t* buffer = (kinc_g4_index_buffer_t*)field->Value();
+		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)field->Value();
 		kinc_g4_set_index_buffer(buffer);
 	}
 
@@ -647,7 +647,7 @@ namespace {
 		return KINC_G4_VERTEX_DATA_FLOAT1;
 	}
 
-	void krom_create_vertexbuffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_vertexbuffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -664,39 +664,39 @@ namespace {
 			strcpy(temp_string_vstruct[0][i], *utf8_value);
 			kinc_g4_vertex_structure_add(&structure, temp_string_vstruct[0][i], convert_vertex_data(data));
 		}
-		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)malloc(sizeof(kinc_g4_vertex_buffer_t));
+		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)malloc(sizeof(kinc_g4_vertex_buffer_t));
 		kinc_g4_vertex_buffer_init(buffer, args[0]->Int32Value(isolate->GetCurrentContext()).FromJust(), &structure, (kinc_g4_usage_t)args[2]->Int32Value(isolate->GetCurrentContext()).FromJust(), args[3]->Int32Value(isolate->GetCurrentContext()).FromJust());
 		obj->SetInternalField(0, External::New(isolate, buffer));
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_delete_vertexbuffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_delete_vertexbuffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)field->Value();
+		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)field->Value();
 		kinc_g4_vertex_buffer_destroy(buffer);
 		free(buffer);
 	}
 
-	void krom_lock_vertex_buffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_lock_vertex_buffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)field->Value();
+		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)field->Value();
 		int start = 0;
 		int count = kinc_g4_vertex_buffer_count(buffer);
 		if (armorcore) {
 			start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
 			count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		}
-		float* vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
+		float *vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, (count - start) * kinc_g4_vertex_buffer_stride(buffer));
 		args.GetReturnValue().Set(Float32Array::New(abuffer, 0, (count - start) * kinc_g4_vertex_buffer_stride(buffer) / 4));
 	}
 
-	void krom_unlock_vertex_buffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_unlock_vertex_buffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)field->Value();
+		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)field->Value();
 		int count = kinc_g4_vertex_buffer_count(buffer);
 		if (armorcore) {
 			count = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
@@ -704,28 +704,28 @@ namespace {
 		kinc_g4_vertex_buffer_unlock(buffer, count);
 	}
 
-	void krom_set_vertexbuffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_vertexbuffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)field->Value();
+		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)field->Value();
 		kinc_g4_set_vertex_buffer(buffer);
 	}
 
-	void krom_set_vertexbuffers(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_vertexbuffers(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		kinc_g4_vertex_buffer_t* vertex_buffers[8] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+		kinc_g4_vertex_buffer_t *vertex_buffers[8] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 		Local<Object> jsarray = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		for (int32_t i = 0; i < length; ++i) {
 			Local<Object> bufferobj = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "buffer").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 			Local<External> bufferfield = Local<External>::Cast(bufferobj->GetInternalField(0));
-			kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)bufferfield->Value();
+			kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)bufferfield->Value();
 			vertex_buffers[i] = buffer;
 		}
 		kinc_g4_set_vertex_buffers(vertex_buffers, length);
 	}
 
-	void krom_draw_indexed_vertices(const FunctionCallbackInfo<Value>& args) {
+	void krom_draw_indexed_vertices(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int start = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int count = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -733,7 +733,7 @@ namespace {
 		else kinc_g4_draw_indexed_vertices_from_to(start, count);
 	}
 
-	void krom_draw_indexed_vertices_instanced(const FunctionCallbackInfo<Value>& args) {
+	void krom_draw_indexed_vertices_instanced(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int instance_count = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int start = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -742,14 +742,14 @@ namespace {
 		else kinc_g4_draw_indexed_vertices_instanced_from_to(instance_count, start, count);
 	}
 
-	void krom_create_vertex_shader(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_vertex_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_VERTEX);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -761,7 +761,7 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_vertex_shader_from_source(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_vertex_shader_from_source(const FunctionCallbackInfo<Value> &args) {
 
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
@@ -770,12 +770,12 @@ namespace {
 
 		strcpy(temp_string_vs, *utf8_value);
 
-		ID3DBlob* error_message;
-		ID3DBlob* shader_buffer;
+		ID3DBlob *error_message;
+		ID3DBlob *shader_buffer;
 		UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
 		HRESULT hr = D3DCompile(temp_string_vs, strlen(*utf8_value) + 1, nullptr, nullptr, nullptr, "main", "vs_5_0", flags, 0, &shader_buffer, &error_message);
 		if (hr != S_OK) {
-			kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char*)error_message->GetBufferPointer());
+			kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->GetBufferPointer());
 			return;
 		}
 
@@ -794,7 +794,7 @@ namespace {
 		if (hasTex) attributes["tex"] = index++;
 		if (hasBone) attributes["weight"] = index++;
 
-		char* output = temp_string_vs;
+		char *output = temp_string_vs;
 		std::ostrstream file(output, 1024 * 1024);
 		size_t output_len = 0;
 
@@ -809,8 +809,8 @@ namespace {
 			output_len += 1;
 		}
 
-		ID3D11ShaderReflection* reflector = nullptr;
-		D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflector);
+		ID3D11ShaderReflection *reflector = nullptr;
+		D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
 
 		D3D11_SHADER_DESC desc;
 		reflector->GetDesc(&desc);
@@ -828,14 +828,14 @@ namespace {
 			output_len += 1;
 		}
 
-		ID3D11ShaderReflectionConstantBuffer* constants = reflector->GetConstantBufferByName("$Globals");
+		ID3D11ShaderReflectionConstantBuffer *constants = reflector->GetConstantBufferByName("$Globals");
 		D3D11_SHADER_BUFFER_DESC bufferDesc;
 		hr = constants->GetDesc(&bufferDesc);
 		if (hr == S_OK) {
 			file.put(bufferDesc.Variables);
 			output_len += 1;
 			for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
-				ID3D11ShaderReflectionVariable* variable = constants->GetVariableByIndex(i);
+				ID3D11ShaderReflectionVariable *variable = constants->GetVariableByIndex(i);
 				D3D11_SHADER_VARIABLE_DESC variableDesc;
 				hr = variable->GetDesc(&variableDesc);
 				if (hr == S_OK) {
@@ -843,9 +843,9 @@ namespace {
 					output_len += strlen(variableDesc.Name);
 					file.put(0);
 					output_len += 1;
-					file.write((char*)&variableDesc.StartOffset, 4);
+					file.write((char *)&variableDesc.StartOffset, 4);
 					output_len += 4;
-					file.write((char*)&variableDesc.Size, 4);
+					file.write((char *)&variableDesc.Size, 4);
 					output_len += 4;
 					D3D11_SHADER_TYPE_DESC typeDesc;
 					hr = variable->GetType()->GetDesc(&typeDesc);
@@ -868,34 +868,34 @@ namespace {
 			file.put(0);
 			output_len += 1;
 		}
-		file.write((char*)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
+		file.write((char *)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
 		output_len += shader_buffer->GetBufferSize();
 		shader_buffer->Release();
 		reflector->Release();
 
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
 
 		#elif KORE_METAL
 
 		strcpy(temp_string_vs, "// my_main\n");
 		strcat(temp_string_vs, *utf8_value);
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, temp_string_vs, strlen(temp_string_vs), KINC_G4_SHADER_TYPE_VERTEX);
 
 		#elif defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
 
-		char* output = new char[1024 * 1024];
+		char *output = new char[1024 * 1024];
 		int length;
 		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "vert");
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_VERTEX);
 
 		#else
 
-		char* source = new char[strlen(*utf8_value) + 1];
+		char *source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init_from_source(shader, source, KINC_G4_SHADER_TYPE_VERTEX);
 
 		#endif
@@ -910,14 +910,14 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_fragment_shader(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_fragment_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -929,7 +929,7 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_fragment_shader_from_source(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_fragment_shader_from_source(const FunctionCallbackInfo<Value> &args) {
 
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
@@ -938,26 +938,26 @@ namespace {
 
 		strcpy(temp_string_fs, *utf8_value);
 
-		ID3DBlob* error_message;
-		ID3DBlob* shader_buffer;
+		ID3DBlob *error_message;
+		ID3DBlob *shader_buffer;
 		UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
 		HRESULT hr = D3DCompile(temp_string_fs, strlen(*utf8_value) + 1, nullptr, nullptr, nullptr, "main", "ps_5_0", flags, 0, &shader_buffer, &error_message);
 		if (hr != S_OK) {
-			kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char*)error_message->GetBufferPointer());
+			kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->GetBufferPointer());
 			return;
 		}
 
 		std::map<std::string, int> attributes;
 
-		char* output = temp_string_fs;
+		char *output = temp_string_fs;
 		std::ostrstream file(output, 1024 * 1024);
 		size_t output_len = 0;
 
 		file.put((char)attributes.size());
 		output_len += 1;
 
-		ID3D11ShaderReflection* reflector = nullptr;
-		D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflector);
+		ID3D11ShaderReflection *reflector = nullptr;
+		D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
 
 		D3D11_SHADER_DESC desc;
 		reflector->GetDesc(&desc);
@@ -975,14 +975,14 @@ namespace {
 			output_len += 1;
 		}
 
-		ID3D11ShaderReflectionConstantBuffer* constants = reflector->GetConstantBufferByName("$Globals");
+		ID3D11ShaderReflectionConstantBuffer *constants = reflector->GetConstantBufferByName("$Globals");
 		D3D11_SHADER_BUFFER_DESC bufferDesc;
 		hr = constants->GetDesc(&bufferDesc);
 		if (hr == S_OK) {
 			file.put(bufferDesc.Variables);
 			output_len += 1;
 			for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
-				ID3D11ShaderReflectionVariable* variable = constants->GetVariableByIndex(i);
+				ID3D11ShaderReflectionVariable *variable = constants->GetVariableByIndex(i);
 				D3D11_SHADER_VARIABLE_DESC variableDesc;
 				hr = variable->GetDesc(&variableDesc);
 				if (hr == S_OK) {
@@ -990,9 +990,9 @@ namespace {
 					output_len += strlen(variableDesc.Name);
 					file.put(0);
 					output_len += 1;
-					file.write((char*)&variableDesc.StartOffset, 4);
+					file.write((char *)&variableDesc.StartOffset, 4);
 					output_len += 4;
-					file.write((char*)&variableDesc.Size, 4);
+					file.write((char *)&variableDesc.Size, 4);
 					output_len += 4;
 					D3D11_SHADER_TYPE_DESC typeDesc;
 					hr = variable->GetType()->GetDesc(&typeDesc);
@@ -1015,34 +1015,34 @@ namespace {
 			file.put(0);
 			output_len += 1;
 		}
-		file.write((char*)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
+		file.write((char *)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
 		output_len += shader_buffer->GetBufferSize();
 		shader_buffer->Release();
 		reflector->Release();
 
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		#elif KORE_METAL
 
 		strcpy(temp_string_fs, "// my_main\n");
 		strcat(temp_string_fs, *utf8_value);
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, temp_string_fs, strlen(temp_string_fs), KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		#elif defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
 
-		char* output = new char[1024 * 1024];
+		char *output = new char[1024 * 1024];
 		int length;
 		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "frag");
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		#else
 
-		char* source = new char[strlen(*utf8_value) + 1];
+		char *source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init_from_source(shader, source, KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		#endif
@@ -1057,14 +1057,14 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_geometry_shader(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_geometry_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_GEOMETRY);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -1076,14 +1076,14 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_tessellation_control_shader(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_tessellation_control_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_TESSELLATION_CONTROL);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -1095,14 +1095,14 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_tessellation_evaluation_shader(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_tessellation_evaluation_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_TESSELLATION_EVALUATION);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -1114,17 +1114,17 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_delete_shader(const FunctionCallbackInfo<Value>& args) {
+	void krom_delete_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_shader_t* shader = (kinc_g4_shader_t*)field->Value();
+		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)field->Value();
 		kinc_g4_shader_destroy(shader);
 		free(shader);
 	}
 
-	void krom_create_pipeline(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_pipeline(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		kinc_g4_pipeline_t* pipeline = (kinc_g4_pipeline_t*)malloc(sizeof(kinc_g4_pipeline_t));
+		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)malloc(sizeof(kinc_g4_pipeline_t));
 		kinc_g4_pipeline_init(pipeline);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -1135,29 +1135,29 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_delete_pipeline(const FunctionCallbackInfo<Value>& args) {
+	void krom_delete_pipeline(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> pipeobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		Local<External> pipefield = Local<External>::Cast(pipeobj->GetInternalField(0));
-		kinc_g4_pipeline_t* pipeline = (kinc_g4_pipeline_t*)pipefield->Value();
+		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)pipefield->Value();
 		kinc_g4_pipeline_destroy(pipeline);
 		free(pipeline);
 	}
 
-	void krom_compile_pipeline(const FunctionCallbackInfo<Value>& args) {
+	void krom_compile_pipeline(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
 		Local<Object> pipeobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 
 		Local<External> pipefield = Local<External>::Cast(pipeobj->GetInternalField(0));
-		kinc_g4_pipeline_t* pipeline = (kinc_g4_pipeline_t*)pipefield->Value();
+		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)pipefield->Value();
 
 		kinc_g4_vertex_structure_t s0, s1, s2, s3;
 		kinc_g4_vertex_structure_init(&s0);
 		kinc_g4_vertex_structure_init(&s1);
 		kinc_g4_vertex_structure_init(&s2);
 		kinc_g4_vertex_structure_init(&s3);
-		kinc_g4_vertex_structure_t* structures[4] = { &s0, &s1, &s2, &s3 };
+		kinc_g4_vertex_structure_t *structures[4] = { &s0, &s1, &s2, &s3 };
 
 		int32_t size = args[5]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		for (int32_t i1 = 0; i1 < size; ++i1) {
@@ -1180,11 +1180,11 @@ namespace {
 		pipeobj->SetInternalField(2, External::New(isolate, &size));
 
 		Local<External> vsfield = Local<External>::Cast(args[6]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_shader_t* vertexShader = (kinc_g4_shader_t*)vsfield->Value();
+		kinc_g4_shader_t *vertexShader = (kinc_g4_shader_t *)vsfield->Value();
 		pipeobj->SetInternalField(3, External::New(isolate, vertexShader));
 
 		Local<External> fsfield = Local<External>::Cast(args[7]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_shader_t* fragmentShader = (kinc_g4_shader_t*)fsfield->Value();
+		kinc_g4_shader_t *fragmentShader = (kinc_g4_shader_t *)fsfield->Value();
 		pipeobj->SetInternalField(4, External::New(isolate, fragmentShader));
 
 		pipeline->vertex_shader = vertexShader;
@@ -1192,21 +1192,21 @@ namespace {
 
 		if (!args[8]->IsNullOrUndefined()) {
 			Local<External> gsfield = Local<External>::Cast(args[8]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_shader_t* geometryShader = (kinc_g4_shader_t*)gsfield->Value();
+			kinc_g4_shader_t *geometryShader = (kinc_g4_shader_t *)gsfield->Value();
 			pipeobj->SetInternalField(5, External::New(isolate, geometryShader));
 			pipeline->geometry_shader = geometryShader;
 		}
 
 		if (!args[9]->IsNullOrUndefined()) {
 			Local<External> tcsfield = Local<External>::Cast(args[9]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_shader_t* tessellationControlShader = (kinc_g4_shader_t*)tcsfield->Value();
+			kinc_g4_shader_t *tessellationControlShader = (kinc_g4_shader_t *)tcsfield->Value();
 			pipeobj->SetInternalField(6, External::New(isolate, tessellationControlShader));
 			pipeline->tessellation_control_shader = tessellationControlShader;
 		}
 
 		if (!args[10]->IsNullOrUndefined()) {
 			Local<External> tesfield = Local<External>::Cast(args[10]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_shader_t* tessellationEvaluationShader = (kinc_g4_shader_t*)tesfield->Value();
+			kinc_g4_shader_t *tessellationEvaluationShader = (kinc_g4_shader_t *)tesfield->Value();
 			pipeobj->SetInternalField(7, External::New(isolate, tessellationEvaluationShader));
 			pipeline->tessellation_evaluation_shader = tessellationEvaluationShader;
 		}
@@ -1255,15 +1255,15 @@ namespace {
 		kinc_g4_pipeline_compile(pipeline);
 	}
 
-	void krom_set_pipeline(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_pipeline(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> pipeobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		Local<External> pipefield = Local<External>::Cast(pipeobj->GetInternalField(0));
-		kinc_g4_pipeline_t* pipeline = (kinc_g4_pipeline_t*)pipefield->Value();
+		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)pipefield->Value();
 		kinc_g4_set_pipeline(pipeline);
 	}
 
-	bool ends_with(const char* str, const char* suffix) {
+	bool ends_with(const char *str, const char *suffix) {
 		if (!str || !suffix) return 0;
 		size_t lenstr = strlen(str);
 		size_t lensuffix = strlen(suffix);
@@ -1271,11 +1271,11 @@ namespace {
 		return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 	}
 
-	void load_image(kinc_file_reader_t& reader, const char* filename, unsigned char*& output, int& width, int& height, kinc_image_format_t& format) {
+	void load_image(kinc_file_reader_t &reader, const char *filename, unsigned char *&output, int &width, int &height, kinc_image_format_t &format) {
 		format = KINC_IMAGE_FORMAT_RGBA32;
 		int size = (int)kinc_file_reader_size(&reader);
 		int comp;
-		unsigned char* data = (unsigned char*)malloc(size);
+		unsigned char *data = (unsigned char *)malloc(size);
 		kinc_file_reader_read(&reader, data, size);
 		kinc_file_reader_close(&reader);
 
@@ -1291,18 +1291,18 @@ namespace {
 			int compressedSize = size - 12;
 			if (strcmp(fourcc, "LZ4 ") == 0) {
 				int outputSize = width * height * 4;
-				output = (unsigned char*)malloc(outputSize);
+				output = (unsigned char *)malloc(outputSize);
 				LZ4_decompress_safe((char *)(data + 12), (char *)output, compressedSize, outputSize);
 			}
 			else if (strcmp(fourcc, "LZ4F") == 0) {
 				int outputSize = width * height * 16;
-				output = (unsigned char*)malloc(outputSize);
+				output = (unsigned char *)malloc(outputSize);
 				LZ4_decompress_safe((char *)(data + 12), (char *)output, compressedSize, outputSize);
 				format = KINC_IMAGE_FORMAT_RGBA128;
 			}
 		}
 		else if (ends_with(filename, "hdr")) {
-			output = (unsigned char*)stbi_loadf_from_memory(data, size, &width, &height, &comp, 4);
+			output = (unsigned char *)stbi_loadf_from_memory(data, size, &width, &height, &comp, 4);
 			if (output == nullptr) {
 				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
 			}
@@ -1317,18 +1317,18 @@ namespace {
 		free(data);
 	}
 
-	void krom_load_image(const FunctionCallbackInfo<Value>& args) {
+	void krom_load_image(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		bool readable = args[1]->ToBoolean(isolate)->Value();
 
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
-		kinc_image_t* image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
 		if (armorcore) {
 			kinc_file_reader_t reader;
 			if (kinc_file_reader_open(&reader, *utf8_value, KINC_FILE_TYPE_ASSET)) {
-				unsigned char* image_data;
+				unsigned char *image_data;
 				int image_width;
 				int image_height;
 				kinc_image_format_t image_format;
@@ -1341,7 +1341,7 @@ namespace {
 			// TODO: make kinc_image load faster
 			size_t byte_size = kinc_image_size_from_file(*utf8_value);
 			if (byte_size == 0) return;
-			void* memory = malloc(byte_size);
+			void *memory = malloc(byte_size);
 			kinc_image_init_from_file(image, memory, *utf8_value);
 		}
 
@@ -1363,7 +1363,7 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_unload_image(const FunctionCallbackInfo<Value>& args) {
+	void krom_unload_image(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		if (args[0]->IsNullOrUndefined()) return;
 		Local<Object> image = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
@@ -1372,33 +1372,33 @@ namespace {
 
 		if (tex->IsObject()) {
 			Local<External> texfield = Local<External>::Cast(tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_texture_t* texture = (kinc_g4_texture_t*)texfield->Value();
+			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
 			kinc_g4_texture_destroy(texture);
 			free(texture);
 		}
 		else if (rt->IsObject()) {
 			Local<External> rtfield = Local<External>::Cast(rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)rtfield->Value();
+			kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
 			kinc_g4_render_target_destroy(render_target);
 			free(render_target);
 		}
 	}
 
-	void krom_load_sound(const FunctionCallbackInfo<Value>& args) {
+	void krom_load_sound(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 
-		kinc_a1_sound_t* sound = kinc_a1_sound_create(*utf8_value);
+		kinc_a1_sound_t *sound = kinc_a1_sound_create(*utf8_value);
 		Local<ArrayBuffer> buffer;
 		ArrayBuffer::Contents content;
 		buffer = ArrayBuffer::New(isolate, sound->size * 2 * sizeof(float));
 		content = buffer->GetContents();
-		float* to = (float*)content.Data();
+		float *to = (float *)content.Data();
 
-		int16_t* left = (int16_t*)&sound->left[0];
-		int16_t* right = (int16_t*)&sound->right[0];
+		int16_t *left = (int16_t *)&sound->left[0];
+		int16_t *right = (int16_t *)&sound->right[0];
 		for (int i = 0; i < sound->size; i += 1) {
-			to[i * 2 + 0] = (float)(left [i] / 32767.0);
+			to[i * 2    ] = (float)(left [i] / 32767.0);
 			to[i * 2 + 1] = (float)(right[i] / 32767.0);
 		}
 
@@ -1406,7 +1406,7 @@ namespace {
 		kinc_a1_sound_destroy(sound);
 	}
 
-	void krom_write_audio_buffer(const FunctionCallbackInfo<Value>& args) {
+	void krom_write_audio_buffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
@@ -1416,18 +1416,18 @@ namespace {
 		int samples = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		for (int i = 0; i < samples; ++i) {
-			float* values = (float*)content.Data();
+			float *values = (float *)content.Data();
 			float value = values[audio_read_location / 4];
 			audio_read_location += 4;
 			if (audio_read_location >= content.ByteLength()) audio_read_location = 0;
 
-			*(float*)&audio_buffer.data[audio_buffer.write_location] = value;
+			*(float *)&audio_buffer.data[audio_buffer.write_location] = value;
 			audio_buffer.write_location += 4;
 			if (audio_buffer.write_location >= audio_buffer.data_size) audio_buffer.write_location = 0;
 		}
 	}
 
-	void krom_load_blob(const FunctionCallbackInfo<Value>& args) {
+	void krom_load_blob(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 
@@ -1443,16 +1443,16 @@ namespace {
 		args.GetReturnValue().Set(buffer);
 	}
 
-	void krom_load_url(const FunctionCallbackInfo<Value>& args) {
+	void krom_load_url(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		kinc_load_url(*utf8_value);
 	}
 
-	void krom_get_constant_location(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_constant_location(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> pipefield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_pipeline_t* pipeline = (kinc_g4_pipeline_t*)pipefield->Value();
+		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)pipefield->Value();
 
 		String::Utf8Value utf8_value(isolate, args[1]);
 		kinc_g4_constant_location_t location = kinc_g4_pipeline_get_constant_location(pipeline, *utf8_value);
@@ -1461,16 +1461,16 @@ namespace {
 		templ->SetInternalFieldCount(1);
 
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		kinc_g4_constant_location_t* location_copy = (kinc_g4_constant_location_t*)malloc(sizeof(kinc_g4_constant_location_t));
+		kinc_g4_constant_location_t *location_copy = (kinc_g4_constant_location_t *)malloc(sizeof(kinc_g4_constant_location_t));
 		memcpy(location_copy, &location, sizeof(kinc_g4_constant_location_t)); // TODO
 		obj->SetInternalField(0, External::New(isolate, location_copy));
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_get_texture_unit(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_texture_unit(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> pipefield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_pipeline_t* pipeline = (kinc_g4_pipeline_t*)pipefield->Value();
+		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)pipefield->Value();
 
 		String::Utf8Value utf8_value(isolate, args[1]);
 		kinc_g4_texture_unit_t unit = kinc_g4_pipeline_get_texture_unit(pipeline, *utf8_value);
@@ -1479,61 +1479,61 @@ namespace {
 		templ->SetInternalFieldCount(1);
 
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		kinc_g4_texture_unit_t* unit_copy = (kinc_g4_texture_unit_t*)malloc(sizeof(kinc_g4_texture_unit_t));
+		kinc_g4_texture_unit_t *unit_copy = (kinc_g4_texture_unit_t *)malloc(sizeof(kinc_g4_texture_unit_t));
 		memcpy(unit_copy, &unit, sizeof(kinc_g4_texture_unit_t)); // TODO
 		obj->SetInternalField(0, External::New(isolate, unit_copy));
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_set_texture(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_texture(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
 		#ifdef KORE_METAL
 		if (unit->impl._unit.impl.index == -1) return;
 		#endif
 		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)texfield->Value();
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
 		kinc_g4_set_texture(*unit, texture);
 	}
 
-	void krom_set_render_target(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_render_target(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
 		#ifdef KORE_METAL
 		if (unit->impl._unit.impl.index == -1) return;
 		#endif
 		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)rtfield->Value();
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
 		kinc_g4_render_target_use_color_as_texture(render_target, *unit);
 	}
 
-	void krom_set_texture_depth(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_texture_depth(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
 		#ifdef KORE_METAL
 		if (unit->impl._unit.impl.index == -1) return;
 		#endif
 		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)rtfield->Value();
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
 		kinc_g4_render_target_use_depth_as_texture(render_target, *unit);
 	}
 
-	void krom_set_image_texture(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_image_texture(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
 		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)texfield->Value();
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
 		kinc_g4_set_image_texture(*unit, texture);
 	}
 
-	void krom_set_texture_parameters(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_texture_parameters(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
 		kinc_g4_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_g4_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_g4_set_texture_minification_filter(*unit, (kinc_g4_texture_filter_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
@@ -1541,10 +1541,10 @@ namespace {
 		kinc_g4_set_texture_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 	}
 
-	void krom_set_texture3d_parameters(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_texture3d_parameters(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
 		kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_W, (kinc_g4_texture_addressing_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
@@ -1553,67 +1553,67 @@ namespace {
 		kinc_g4_set_texture3d_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 	}
 
-	void krom_set_texture_compare_mode(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_texture_compare_mode(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
 		kinc_g4_set_texture_compare_mode(*unit, args[1]->ToBoolean(isolate)->Value());
 	}
 
-	void krom_set_cube_map_compare_mode(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_cube_map_compare_mode(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_unit_t* unit = (kinc_g4_texture_unit_t*)unitfield->Value();
+		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
 		kinc_g4_set_cubemap_compare_mode(*unit, args[1]->ToBoolean(isolate)->Value());
 	}
 
-	void krom_set_bool(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_bool(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_constant_location_t* location = (kinc_g4_constant_location_t*)locationfield->Value();
+		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 		int32_t value = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_g4_set_bool(*location, value != 0);
 	}
 
-	void krom_set_int(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_int(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_constant_location_t* location = (kinc_g4_constant_location_t*)locationfield->Value();
+		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 		int32_t value = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_g4_set_int(*location, value);
 	}
 
-	void krom_set_float(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_float(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_constant_location_t* location = (kinc_g4_constant_location_t*)locationfield->Value();
+		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 		float value = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_g4_set_float(*location, value);
 	}
 
-	void krom_set_float2(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_float2(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_constant_location_t* location = (kinc_g4_constant_location_t*)locationfield->Value();
+		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_g4_set_float2(*location, value1, value2);
 	}
 
-	void krom_set_float3(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_float3(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_constant_location_t* location = (kinc_g4_constant_location_t*)locationfield->Value();
+		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value3 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_g4_set_float3(*location, value1, value2, value3);
 	}
 
-	void krom_set_float4(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_float4(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_constant_location_t* location = (kinc_g4_constant_location_t*)locationfield->Value();
+		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value3 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -1621,10 +1621,10 @@ namespace {
 		kinc_g4_set_float4(*location, value1, value2, value3, value4);
 	}
 
-	void krom_set_floats(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_floats(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_constant_location_t* location = (kinc_g4_constant_location_t*)locationfield->Value();
+		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents content;
@@ -1632,76 +1632,76 @@ namespace {
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
 
-		float* from = (float*)content.Data();
+		float *from = (float *)content.Data();
 		kinc_g4_set_floats(*location, from, int(content.ByteLength() / 4));
 	}
 
-	void krom_set_matrix(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_matrix(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_constant_location_t* location = (kinc_g4_constant_location_t*)locationfield->Value();
+		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		float* from = (float*)content.Data();
-		kinc_g4_set_matrix4(*location, (kinc_matrix4x4_t*)from);
+		float *from = (float *)content.Data();
+		kinc_g4_set_matrix4(*location, (kinc_matrix4x4_t *)from);
 	}
 
-	void krom_set_matrix3(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_matrix3(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_constant_location_t* location = (kinc_g4_constant_location_t*)locationfield->Value();
+		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		float* from = (float*)content.Data();
-		kinc_g4_set_matrix3(*location, (kinc_matrix3x3_t*)from);
+		float *from = (float *)content.Data();
+		kinc_g4_set_matrix3(*location, (kinc_matrix3x3_t *)from);
 	}
 
-	void krom_get_time(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_time(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args.GetReturnValue().Set(Number::New(isolate, kinc_time()));
 	}
 
-	void krom_window_width(const FunctionCallbackInfo<Value>& args) {
+	void krom_window_width(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_window_width(windowId)));
 	}
 
-	void krom_window_height(const FunctionCallbackInfo<Value>& args) {
+	void krom_window_height(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_window_height(windowId)));
 	}
 
-	void krom_set_window_title(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_window_title(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		String::Utf8Value title(isolate, args[1]);
 		kinc_window_set_title(windowId, *title);
 	}
 
-	void krom_get_window_mode(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_window_mode(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_window_get_mode(windowId)));
 	}
 
-	void krom_set_window_mode(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_window_mode(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_window_mode_t windowMode = (kinc_window_mode_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_window_change_mode(windowId, windowMode);
 	}
 
-	void krom_resize_window(const FunctionCallbackInfo<Value>& args) {
+	void krom_resize_window(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int width = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -1709,7 +1709,7 @@ namespace {
 		kinc_window_resize(windowId, width, height);
 	}
 
-	void krom_move_window(const FunctionCallbackInfo<Value>& args) {
+	void krom_move_window(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int x = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -1717,64 +1717,64 @@ namespace {
 		kinc_window_move(windowId, x, y);
 	}
 
-	void krom_screen_dpi(const FunctionCallbackInfo<Value>& args) {
+	void krom_screen_dpi(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int ppi = kinc_display_current_mode(kinc_primary_display()).pixels_per_inch;
 		args.GetReturnValue().Set(Int32::New(isolate, ppi));
 	}
 
-	void krom_system_id(const FunctionCallbackInfo<Value>& args) {
+	void krom_system_id(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_system_id()).ToLocalChecked());
 	}
 
-	void krom_request_shutdown(const FunctionCallbackInfo<Value>& args) {
+	void krom_request_shutdown(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		kinc_stop();
 	}
 
-	void krom_display_count(const FunctionCallbackInfo<Value>& args) {
+	void krom_display_count(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_count_displays()));
 	}
 
-	void krom_display_width(const FunctionCallbackInfo<Value>& args) {
+	void krom_display_width(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_display_current_mode(index).width));
 	}
 
-	void krom_display_height(const FunctionCallbackInfo<Value>& args) {
+	void krom_display_height(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_display_current_mode(index).height));
 	}
 
-	void krom_display_x(const FunctionCallbackInfo<Value>& args) {
+	void krom_display_x(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_display_current_mode(index).x));
 	}
 
-	void krom_display_y(const FunctionCallbackInfo<Value>& args) {
+	void krom_display_y(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_display_current_mode(index).y));
 	}
 
-	void krom_display_frequency(const FunctionCallbackInfo<Value>& args) {
+	void krom_display_frequency(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(Int32::New(isolate, kinc_display_current_mode(index).frequency));
 	}
 
-	void krom_display_is_primary(const FunctionCallbackInfo<Value>& args) {
+	void krom_display_is_primary(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(Boolean::New(isolate, index == kinc_primary_display()));
 	}
 
-	void krom_write_storage(const FunctionCallbackInfo<Value>& args) {
+	void krom_write_storage(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_name(isolate, args[0]);
 
@@ -1790,7 +1790,7 @@ namespace {
 		kinc_file_writer_close(&writer);
 	}
 
-	void krom_read_storage(const FunctionCallbackInfo<Value>& args) {
+	void krom_read_storage(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_name(isolate, args[0]);
 
@@ -1806,9 +1806,9 @@ namespace {
 		args.GetReturnValue().Set(buffer);
 	}
 
-	void krom_create_render_target(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_render_target(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)malloc(sizeof(kinc_g4_render_target_t));
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
 		kinc_g4_render_target_init(render_target, args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), false, (kinc_g4_render_target_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), 0);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -1821,9 +1821,9 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_render_target_cube_map(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_render_target_cube_map(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)malloc(sizeof(kinc_g4_render_target_t));
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
 		kinc_g4_render_target_init_cube(render_target, args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), false, (kinc_g4_render_target_format_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), 0);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -1836,9 +1836,9 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_texture(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_texture(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_g4_texture_init(texture, args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -1851,9 +1851,9 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_texture3d(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_texture3d(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_g4_texture_init3d(texture, args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -1867,15 +1867,15 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_texture_from_bytes(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_texture_from_bytes(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		if (buffer->IsExternal()) content = buffer->GetContents();
 		else content = buffer->Externalize();
 		// content = buffer->GetContents();
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
-		kinc_image_t* image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 		kinc_image_init(image, content.Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		kinc_g4_texture_init_from_image(texture, image);
 		bool readable = args[4]->ToBoolean(isolate)->Value();
@@ -1895,14 +1895,14 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_texture_from_bytes3d(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_texture_from_bytes3d(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		if (buffer->IsExternal()) content = buffer->GetContents();
 		else content = buffer->Externalize();
 		// content = buffer->GetContents();
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t image;
 		kinc_image_init3d(&image, content.Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		kinc_g4_texture_init_from_image3d(texture, &image);
@@ -1922,7 +1922,7 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_texture_from_encoded_bytes(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_texture_from_encoded_bytes(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
@@ -1931,8 +1931,8 @@ namespace {
 		String::Utf8Value format(isolate, args[1]);
 		bool readable = args[2]->ToBoolean(isolate)->Value();
 
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
-		kinc_image_t* image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
 		unsigned char *content_data = (unsigned char *)content.Data();
 		int content_length = (int)content.ByteLength();
@@ -1953,20 +1953,20 @@ namespace {
 			int compressedSize = (int)content.ByteLength() - 12;
 			if (strcmp(fourcc, "LZ4 ") == 0) {
 				int outputSize = image_width * image_height * 4;
-				image_data = (unsigned char*)malloc(outputSize);
-				LZ4_decompress_safe((char*)content_data + 12, (char *)image_data, compressedSize, outputSize);
+				image_data = (unsigned char *)malloc(outputSize);
+				LZ4_decompress_safe((char *)content_data + 12, (char *)image_data, compressedSize, outputSize);
 				image_format = KINC_IMAGE_FORMAT_RGBA32;
 			}
 			else if (strcmp(fourcc, "LZ4F") == 0) {
 				int outputSize = image_width * image_height * 16;
-				image_data = (unsigned char*)malloc(outputSize);
-				LZ4_decompress_safe((char*)content_data + 12, (char *)image_data, compressedSize, outputSize);
+				image_data = (unsigned char *)malloc(outputSize);
+				LZ4_decompress_safe((char *)content_data + 12, (char *)image_data, compressedSize, outputSize);
 				image_format = KINC_IMAGE_FORMAT_RGBA128;
 			}
 		}
 		else if (ends_with(*format, "hdr")) {
 			int comp;
-			image_data = (unsigned char*)stbi_loadf_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
+			image_data = (unsigned char *)stbi_loadf_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
 			image_format = KINC_IMAGE_FORMAT_RGBA128;
 		}
 		else { // jpg, png, ..
@@ -2014,23 +2014,23 @@ namespace {
 		}
 	}
 
-	void krom_get_texture_pixels(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_texture_pixels(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(1));
-		kinc_image_t* image = (kinc_image_t*)field->Value();
+		kinc_image_t *image = (kinc_image_t *)field->Value();
 
-		uint8_t* data = kinc_image_get_pixels(image);
+		uint8_t *data = kinc_image_get_pixels(image);
 		int byteLength = format_byte_size(image->format) * image->width * image->height * image->depth;
 		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, data, byteLength);
 		args.GetReturnValue().Set(buffer);
 	}
 
-	void krom_get_render_target_pixels(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_render_target_pixels(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* rt = (kinc_g4_render_target_t*)field->Value();
+		kinc_g4_render_target_t *rt = (kinc_g4_render_target_t *)field->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents content;
@@ -2038,32 +2038,32 @@ namespace {
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
 
-		uint8_t* b = (uint8_t*)content.Data();
+		uint8_t *b = (uint8_t *)content.Data();
 		kinc_g4_render_target_get_pixels(rt, b);
 	}
 
-	void krom_lock_texture(const FunctionCallbackInfo<Value>& args) {
+	void krom_lock_texture(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)field->Value();
-		uint8_t* tex = kinc_g4_texture_lock(texture);
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)field->Value();
+		uint8_t *tex = kinc_g4_texture_lock(texture);
 
 		int byteLength = kinc_g4_texture_stride(texture) * texture->tex_height * texture->tex_depth;
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, tex, byteLength);
 		args.GetReturnValue().Set(abuffer);
 	}
 
-	void krom_unlock_texture(const FunctionCallbackInfo<Value>& args) {
+	void krom_unlock_texture(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)field->Value();
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)field->Value();
 		kinc_g4_texture_unlock(texture);
 	}
 
-	void krom_clear_texture(const FunctionCallbackInfo<Value>& args) {
+	void krom_clear_texture(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)field->Value();
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)field->Value();
 		int x = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int y = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int z = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -2074,45 +2074,45 @@ namespace {
 		kinc_g4_texture_clear(texture, x, y, z, width, height, depth, color);
 	}
 
-	void krom_generate_texture_mipmaps(const FunctionCallbackInfo<Value>& args) {
+	void krom_generate_texture_mipmaps(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)field->Value();
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)field->Value();
 		kinc_g4_texture_generate_mipmaps(texture, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 	}
 
-	void krom_generate_render_target_mipmaps(const FunctionCallbackInfo<Value>& args) {
+	void krom_generate_render_target_mipmaps(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* rt = (kinc_g4_render_target_t*)field->Value();
+		kinc_g4_render_target_t *rt = (kinc_g4_render_target_t *)field->Value();
 		kinc_g4_render_target_generate_mipmaps(rt, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 	}
 
-	void krom_set_mipmaps(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_mipmaps(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)field->Value();
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)field->Value();
 
 		Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		for (int32_t i = 0; i < length; ++i) {
 			Local<Object> mipmapobj = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 			Local<External> mipmapfield = Local<External>::Cast(mipmapobj->GetInternalField(1));
-			kinc_image_t* mipmap = (kinc_image_t*)mipmapfield->Value();
+			kinc_image_t *mipmap = (kinc_image_t *)mipmapfield->Value();
 			kinc_g4_texture_set_mipmap(texture, mipmap, i + 1);
 		}
 	}
 
-	void krom_set_depth_stencil_from(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_depth_stencil_from(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> targetfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)targetfield->Value();
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)targetfield->Value();
 		Local<External> sourcefield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* source_target = (kinc_g4_render_target_t*)sourcefield->Value();
+		kinc_g4_render_target_t *source_target = (kinc_g4_render_target_t *)sourcefield->Value();
 		kinc_g4_render_target_set_depth_stencil_from(render_target, source_target);
 	}
 
-	void krom_viewport(const FunctionCallbackInfo<Value>& args) {
+	void krom_viewport(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
@@ -2121,7 +2121,7 @@ namespace {
 		kinc_g4_viewport(x, y, w, h);
 	}
 
-	void krom_scissor(const FunctionCallbackInfo<Value>& args) {
+	void krom_scissor(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
@@ -2130,16 +2130,16 @@ namespace {
 		kinc_g4_scissor(x, y, w, h);
 	}
 
-	void krom_disable_scissor(const FunctionCallbackInfo<Value>& args) {
+	void krom_disable_scissor(const FunctionCallbackInfo<Value> &args) {
 		kinc_g4_disable_scissor();
 	}
 
-	void krom_render_targets_inverted_y(const FunctionCallbackInfo<Value>& args) {
+	void krom_render_targets_inverted_y(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args.GetReturnValue().Set(Boolean::New(isolate, kinc_g4_render_targets_inverted_y()));
 	}
 
-	void krom_begin(const FunctionCallbackInfo<Value>& args) {
+	void krom_begin(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		if (args[0]->IsNullOrUndefined()) {
 			kinc_g4_restore_render_target();
@@ -2147,10 +2147,10 @@ namespace {
 		else {
 			Local<Object> obj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 			Local<External> rtfield = Local<External>::Cast(obj->GetInternalField(0));
-			kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)rtfield->Value();
+			kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
 
 			int32_t length = 1;
-			kinc_g4_render_target_t* render_targets[8] = { render_target, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
+			kinc_g4_render_target_t *render_targets[8] = { render_target, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 			if (!args[1]->IsNullOrUndefined()) {
 				Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 				length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() + 1;
@@ -2158,7 +2158,7 @@ namespace {
 				for (int32_t i = 1; i < length; ++i) {
 					Local<Object> artobj = jsarray->Get(isolate->GetCurrentContext(), i - 1).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 					Local<External> artfield = Local<External>::Cast(artobj->GetInternalField(0));
-					kinc_g4_render_target_t* art = (kinc_g4_render_target_t*)artfield->Value();
+					kinc_g4_render_target_t *art = (kinc_g4_render_target_t *)artfield->Value();
 					render_targets[i] = art;
 				}
 			}
@@ -2166,20 +2166,20 @@ namespace {
 		}
 	}
 
-	void krom_begin_face(const FunctionCallbackInfo<Value>& args) {
+	void krom_begin_face(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> obj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		Local<External> rtfield = Local<External>::Cast(obj->GetInternalField(0));
-		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)rtfield->Value();
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
 		int face = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		kinc_g4_set_render_target_face(render_target, face);
 	}
 
-	void krom_end(const FunctionCallbackInfo<Value>& args) {
+	void krom_end(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 	}
 
-	void krom_file_save_bytes(const FunctionCallbackInfo<Value>& args) {
+	void krom_file_save_bytes(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_path(isolate, args[0]);
 
@@ -2195,21 +2195,21 @@ namespace {
 
 		#ifdef KORE_WINDOWS
 		MultiByteToWideChar(CP_UTF8, 0, *utf8_path, -1, temp_wstring, 1024);
-		FILE* file = _wfopen(temp_wstring, L"wb");
+		FILE *file = _wfopen(temp_wstring, L"wb");
 		#else
-		FILE* file = fopen(*utf8_path, "wb");
+		FILE *file = fopen(*utf8_path, "wb");
 		#endif
 		if (file == nullptr) return;
 		fwrite(content.Data(), 1, byteLength, file);
 		fclose(file);
 	}
 
-	void krom_sys_command(const FunctionCallbackInfo<Value>& args) {
+	void krom_sys_command(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_cmd(isolate, args[0]);
 		#ifdef KORE_WINDOWS
 		int wlen = MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, NULL, 0);
-		wchar_t* wstr = new wchar_t[wlen];
+		wchar_t *wstr = new wchar_t[wlen];
 		MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, wstr, wlen);
 		int result = _wsystem(wstr);
 		delete[] wstr;
@@ -2221,23 +2221,23 @@ namespace {
 		args.GetReturnValue().Set(Int32::New(isolate, result));
 	}
 
-	void krom_save_path(const FunctionCallbackInfo<Value>& args) {
+	void krom_save_path(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_internal_save_path()).ToLocalChecked());
 	}
 
-	void krom_get_arg_count(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_arg_count(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args.GetReturnValue().Set(Int32::New(isolate, _argc));
 	}
 
-	void krom_get_arg(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_arg(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, _argv[index]).ToLocalChecked());
 	}
 
-	void krom_get_files_location(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_files_location(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		#ifdef KORE_MACOS
 		char path[1024];
@@ -2261,10 +2261,10 @@ namespace {
 	void krom_http_callback(int error, int response, const char *body, void *callbackdata) {
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, http_func);
+		Local<Function> func = Local<Function>::New(isolate, http_func);
 		TryCatch try_catch(isolate);
 		Local<Value> result;
 		Local<Value> argv[1];
@@ -2274,7 +2274,7 @@ namespace {
 		}
 	}
 
-	void krom_http_request(const FunctionCallbackInfo<Value>& args) {
+	void krom_http_request(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value url(isolate, args[0]);
 		// TODO: assuming krom_http_request is synchronous for now
@@ -2283,7 +2283,7 @@ namespace {
 		http_func.Reset(isolate, func);
 		char url_base[512];
 		char url_path[512];
-		const char* curl = *url;
+		const char *curl = *url;
 		int i = 0;
 		for (; i < 512; ++i) {
 			if (curl[i + 8] == '/') break;
@@ -2299,53 +2299,53 @@ namespace {
 		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL);
 	}
 
-	void krom_set_bool_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_bool_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_constant_location_t* location = (kinc_compute_constant_location_t*)locationfield->Value();
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		int32_t value = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_compute_set_bool(*location, value != 0);
 	}
 
-	void krom_set_int_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_int_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_constant_location_t* location = (kinc_compute_constant_location_t*)locationfield->Value();
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		int32_t value = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_compute_set_int(*location, value);
 	}
 
-	void krom_set_float_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_float_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_constant_location_t* location = (kinc_compute_constant_location_t*)locationfield->Value();
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		float value = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_compute_set_float(*location, value);
 	}
 
-	void krom_set_float2_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_float2_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_constant_location_t* location = (kinc_compute_constant_location_t*)locationfield->Value();
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_compute_set_float2(*location, value1, value2);
 	}
 
-	void krom_set_float3_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_float3_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_constant_location_t* location = (kinc_compute_constant_location_t*)locationfield->Value();
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value3 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_compute_set_float3(*location, value1, value2, value3);
 	}
 
-	void krom_set_float4_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_float4_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_constant_location_t* location = (kinc_compute_constant_location_t*)locationfield->Value();
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float value3 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -2353,97 +2353,97 @@ namespace {
 		kinc_compute_set_float4(*location, value1, value2, value3, value4);
 	}
 
-	void krom_set_floats_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_floats_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_constant_location_t* location = (kinc_compute_constant_location_t*)locationfield->Value();
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		float* from = (float*)content.Data();
+		float *from = (float *)content.Data();
 		kinc_compute_set_floats(*location, from, int(content.ByteLength() / 4));
 	}
 
-	void krom_set_matrix_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_matrix_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_constant_location_t* location = (kinc_compute_constant_location_t*)locationfield->Value();
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		float* from = (float*)content.Data();
-		kinc_compute_set_matrix4(*location, (kinc_matrix4x4_t*)from);
+		float *from = (float *)content.Data();
+		kinc_compute_set_matrix4(*location, (kinc_matrix4x4_t *)from);
 	}
 
-	void krom_set_matrix3_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_matrix3_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_constant_location_t* location = (kinc_compute_constant_location_t*)locationfield->Value();
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		float* from = (float*)content.Data();
-		kinc_compute_set_matrix3(*location, (kinc_matrix3x3_t*)from);
+		float *from = (float *)content.Data();
+		kinc_compute_set_matrix3(*location, (kinc_matrix3x3_t *)from);
 	}
 
-	void krom_set_texture_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_texture_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_texture_unit_t* unit = (kinc_compute_texture_unit_t*)unitfield->Value();
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
 		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)texfield->Value();
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
 		int access = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		kinc_compute_set_texture(*unit, texture, (kinc_compute_access_t)access);
 	}
 
-	void krom_set_render_target_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_render_target_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_texture_unit_t* unit = (kinc_compute_texture_unit_t*)unitfield->Value();
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
 		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)rtfield->Value();
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
 		int access = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		kinc_compute_set_render_target(*unit, render_target, (kinc_compute_access_t)access);
 	}
 
-	void krom_set_sampled_texture_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_sampled_texture_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_texture_unit_t* unit = (kinc_compute_texture_unit_t*)unitfield->Value();
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
 		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)texfield->Value();
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
 		kinc_compute_set_sampled_texture(*unit, texture);
 	}
 
-	void krom_set_sampled_render_target_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_sampled_render_target_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_texture_unit_t* unit = (kinc_compute_texture_unit_t*)unitfield->Value();
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
 		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)rtfield->Value();
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
 		kinc_compute_set_sampled_render_target(*unit, render_target);
 	}
 
-	void krom_set_sampled_depth_texture_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_sampled_depth_texture_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_texture_unit_t* unit = (kinc_compute_texture_unit_t*)unitfield->Value();
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
 		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* render_target = (kinc_g4_render_target_t*)rtfield->Value();
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
 		kinc_compute_set_sampled_depth_from_render_target(*unit, render_target);
 	}
 
-	void krom_set_texture_parameters_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_texture_parameters_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_texture_unit_t* unit = (kinc_compute_texture_unit_t*)unitfield->Value();
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
 		kinc_compute_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_compute_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_compute_set_texture_minification_filter(*unit, (kinc_g4_texture_filter_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
@@ -2451,10 +2451,10 @@ namespace {
 		kinc_compute_set_texture_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 	}
 
-	void krom_set_texture3d_parameters_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_texture3d_parameters_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_texture_unit_t* unit = (kinc_compute_texture_unit_t*)unitfield->Value();
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
 		kinc_compute_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_compute_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 		kinc_compute_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_W, (kinc_g4_texture_addressing_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
@@ -2463,21 +2463,21 @@ namespace {
 		kinc_compute_set_texture3d_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
 	}
 
-	void krom_set_shader_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_shader_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> shaderfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_shader* shader = (kinc_compute_shader*)shaderfield->Value();
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
 		kinc_compute_set_shader(shader);
 	}
 
-	void krom_create_shader_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_create_shader_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents content;
 		// if (buffer->IsExternal()) content = buffer->GetContents();
 		// else content = buffer->Externalize();
 		content = buffer->GetContents();
-		kinc_compute_shader* shader = (kinc_compute_shader*)malloc(sizeof(kinc_compute_shader));
+		kinc_compute_shader *shader = (kinc_compute_shader *)malloc(sizeof(kinc_compute_shader));
 		kinc_compute_shader_init(shader, content.Data(), (int)content.ByteLength());
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -2488,19 +2488,19 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_delete_shader_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_delete_shader_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> shaderobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		Local<External> shaderfield = Local<External>::Cast(shaderobj->GetInternalField(0));
-		kinc_compute_shader* shader = (kinc_compute_shader*)shaderfield->Value();
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
 		kinc_compute_shader_destroy(shader);
 		free(shader);
 	}
 
-	void krom_get_constant_location_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_constant_location_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> shaderfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_shader* shader = (kinc_compute_shader*)shaderfield->Value();
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
 
 		String::Utf8Value utf8_value(isolate, args[1]);
 		kinc_compute_constant_location_t location = kinc_compute_shader_get_constant_location(shader, *utf8_value);
@@ -2509,16 +2509,16 @@ namespace {
 		templ->SetInternalFieldCount(1);
 
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		kinc_compute_constant_location_t* location_copy = (kinc_compute_constant_location_t*)malloc(sizeof(kinc_compute_constant_location_t)); // TODO
+		kinc_compute_constant_location_t *location_copy = (kinc_compute_constant_location_t *)malloc(sizeof(kinc_compute_constant_location_t)); // TODO
 		memcpy(location_copy, &location, sizeof(kinc_compute_constant_location_t));
 		obj->SetInternalField(0, External::New(isolate, location_copy));
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_get_texture_unit_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_get_texture_unit_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> shaderfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_compute_shader* shader = (kinc_compute_shader*)shaderfield->Value();
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
 
 		String::Utf8Value utf8_value(isolate, args[1]);
 		kinc_compute_texture_unit_t unit = kinc_compute_shader_get_texture_unit(shader, *utf8_value);
@@ -2527,13 +2527,13 @@ namespace {
 		templ->SetInternalFieldCount(1);
 
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		kinc_compute_texture_unit_t* unit_copy = (kinc_compute_texture_unit_t*)malloc(sizeof(kinc_compute_texture_unit_t)); // TODO
+		kinc_compute_texture_unit_t *unit_copy = (kinc_compute_texture_unit_t *)malloc(sizeof(kinc_compute_texture_unit_t)); // TODO
 		memcpy(unit_copy, &unit, sizeof(kinc_compute_texture_unit_t));
 		obj->SetInternalField(0, External::New(isolate, unit_copy));
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_compute(const FunctionCallbackInfo<Value>& args) {
+	void krom_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -2541,14 +2541,14 @@ namespace {
 		kinc_compute(x, y, z);
 	}
 
-	void krom_set_save_and_quit_callback(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_save_and_quit_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		save_and_quit_func.Reset(isolate, func);
 	}
 
-	void krom_set_mouse_cursor(const FunctionCallbackInfo<Value>& args) {
+	void krom_set_mouse_cursor(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int id = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_mouse_set_cursor(id);
@@ -2559,7 +2559,7 @@ namespace {
 	}
 
 	#ifdef WITH_NFD
-	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
+	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value filterList(isolate, args[0]);
 		String::Utf8Value defaultPath(isolate, args[1]);
@@ -2575,7 +2575,7 @@ namespace {
 		}
 	}
 
-	void krom_save_dialog(const FunctionCallbackInfo<Value>& args) {
+	void krom_save_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value filterList(isolate, args[0]);
 		String::Utf8Value defaultPath(isolate, args[1]);
@@ -2591,18 +2591,18 @@ namespace {
 		}
 	}
 	#elif KORE_ANDROID
-	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
+	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		AndroidFileDialogOpen();
 	}
 
-	void krom_save_dialog(const FunctionCallbackInfo<Value>& args) {
+	void krom_save_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		wchar_t* outPath = AndroidFileDialogSave();
-		// args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)outPath).ToLocalChecked());
+		wchar_t *outPath = AndroidFileDialogSave();
+		// args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)outPath).ToLocalChecked());
 	}
 	#elif KORE_IOS
-	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
+	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		// String::Utf8Value filterList(isolate, args[0]);
 		// String::Utf8Value defaultPath(isolate, args[1]);
@@ -2610,23 +2610,23 @@ namespace {
 		IOSFileDialogOpen();
 	}
 
-	void krom_save_dialog(const FunctionCallbackInfo<Value>& args) {
+	void krom_save_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		// String::Utf8Value filterList(isolate, args[0]);
 		// String::Utf8Value defaultPath(isolate, args[1]);
 		// Path to app document directory
-		wchar_t* outPath = IOSFileDialogSave();
+		wchar_t *outPath = IOSFileDialogSave();
 		size_t len = wcslen(outPath);
-		uint16_t* str = new uint16_t[len + 1];
+		uint16_t *str = new uint16_t[len + 1];
 		for (int i = 0; i < len; i++) str[i] = outPath[i];
 		str[len] = 0;
-		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)str).ToLocalChecked());
+		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)str).ToLocalChecked());
 		delete str;
 	}
 	#endif
 
 	#ifdef WITH_TINYDIR
-	void krom_read_directory(const FunctionCallbackInfo<Value>& args) {
+	void krom_read_directory(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value path(isolate, args[0]);
 		bool foldersOnly = args[1]->ToBoolean(isolate)->Value();
@@ -2666,14 +2666,14 @@ namespace {
 
 		tinydir_close(&dir);
 		#ifdef KORE_WINDOWS
-		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t*)temp_wstring).ToLocalChecked());
+		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)temp_wstring).ToLocalChecked());
 		#else
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, temp_string).ToLocalChecked());
 		#endif
 	}
 	#endif
 
-	void krom_file_exists(const FunctionCallbackInfo<Value>& args) {
+	void krom_file_exists(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		bool exists = false;
 		String::Utf8Value utf8_value(isolate, args[0]);
@@ -2688,7 +2688,7 @@ namespace {
 	}
 
 	#ifdef WITH_ZLIB
-	void krom_inflate(const FunctionCallbackInfo<Value>& args) {
+	void krom_inflate(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
@@ -2698,7 +2698,7 @@ namespace {
 		content = buffer->GetContents();
 		bool raw = args[1]->ToBoolean(isolate)->Value();
 
-		unsigned char* inflated = (unsigned char*)malloc(content.ByteLength());
+		unsigned char *inflated = (unsigned char *)malloc(content.ByteLength());
 
 		z_stream infstream;
 		infstream.zalloc = Z_NULL;
@@ -2716,7 +2716,7 @@ namespace {
 			int res = inflate(&infstream, Z_NO_FLUSH);
 			if (res == Z_STREAM_END) break;
 			if (infstream.avail_out == 0) {
-				inflated = (unsigned char*)realloc(inflated, content.ByteLength() * i);
+				inflated = (unsigned char *)realloc(inflated, content.ByteLength() * i);
 				infstream.avail_out = (uInt)content.ByteLength();
 				infstream.next_out = (Bytef *)(inflated + content.ByteLength() * (i - 1));
 				i++;
@@ -2733,7 +2733,7 @@ namespace {
 		args.GetReturnValue().Set(output);
 	}
 
-	void krom_deflate(const FunctionCallbackInfo<Value>& args) {
+	void krom_deflate(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
@@ -2744,7 +2744,7 @@ namespace {
 		bool raw = args[1]->ToBoolean(isolate)->Value();
 
 		int deflatedSize = compressBound((uInt)content.ByteLength());
-		void* deflated = malloc(deflatedSize);
+		void *deflated = malloc(deflatedSize);
 
 		z_stream defstream;
 		defstream.zalloc = Z_NULL;
@@ -2769,17 +2769,17 @@ namespace {
 	#endif
 
 	#ifdef WITH_STB_IMAGE_WRITE
-	void krom_write_png(const FunctionCallbackInfo<Value>& args) {
+	void krom_write_png(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 	}
 
-	void krom_write_jpg(const FunctionCallbackInfo<Value>& args) {
+	void krom_write_jpg(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 	}
 	#endif
 
 	#ifdef WITH_TEXSYNTH
-	void krom_texsynth_inpaint(const FunctionCallbackInfo<Value>& args) {
+	void krom_texsynth_inpaint(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int32_t w = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int32_t h = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -2795,7 +2795,7 @@ namespace {
 	#endif
 
 	#ifdef WITH_ONNX
-	void krom_ml_inference(const FunctionCallbackInfo<Value>& args) {
+	void krom_ml_inference(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		const OrtApi *ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
 		OrtEnv *env;
@@ -2861,7 +2861,7 @@ namespace {
 		ort->Run(session, NULL, &input_node_name, (const OrtValue* const*)&input_tensor, 1, &output_node_name, 1, &output_tensor);
 
 		float *float_array;
-		ort->GetTensorMutableData(output_tensor, (void**)&float_array);
+		ort->GetTensorMutableData(output_tensor, (void **)&float_array);
 
 		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, output_byte_length);
 		ArrayBuffer::Contents output_content = output->GetContents();
@@ -2877,7 +2877,7 @@ namespace {
 	#endif
 
 	#ifdef KORE_RAYTRACE
-	void krom_raytrace_init(const FunctionCallbackInfo<Value>& args) {
+	void krom_raytrace_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
 		if (accel_created) {
@@ -2891,12 +2891,12 @@ namespace {
 		shader_content = shader_buffer->GetContents();
 
 		Local<External> vb_field = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_vertex_buffer_t* vertex_buffer4 = (kinc_g4_vertex_buffer_t*)vb_field->Value();
-		kinc_g5_vertex_buffer_t* vertex_buffer = &vertex_buffer4->impl._buffer;
+		kinc_g4_vertex_buffer_t *vertex_buffer4 = (kinc_g4_vertex_buffer_t *)vb_field->Value();
+		kinc_g5_vertex_buffer_t *vertex_buffer = &vertex_buffer4->impl._buffer;
 
 		Local<External> ib_field = Local<External>::Cast(args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_index_buffer_t* index_buffer4 = (kinc_g4_index_buffer_t*)ib_field->Value();
-		kinc_g5_index_buffer_t* index_buffer = &index_buffer4->impl._buffer;
+		kinc_g4_index_buffer_t *index_buffer4 = (kinc_g4_index_buffer_t *)ib_field->Value();
+		kinc_g5_index_buffer_t *index_buffer = &index_buffer4->impl._buffer;
 
 		float scale = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
@@ -2908,29 +2908,29 @@ namespace {
 		accel_created = true;
 	}
 
-	void krom_raytrace_set_textures(const FunctionCallbackInfo<Value>& args) {
+	void krom_raytrace_set_textures(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
 		Local<External> rtfield0 = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* texpaint0 = (kinc_g4_render_target_t*)rtfield0->Value();
+		kinc_g4_render_target_t *texpaint0 = (kinc_g4_render_target_t *)rtfield0->Value();
 
 		Local<External> rtfield1 = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* texpaint1 = (kinc_g4_render_target_t*)rtfield1->Value();
+		kinc_g4_render_target_t *texpaint1 = (kinc_g4_render_target_t *)rtfield1->Value();
 
 		Local<External> rtfield2 = Local<External>::Cast(args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t* texpaint2 = (kinc_g4_render_target_t*)rtfield2->Value();
+		kinc_g4_render_target_t *texpaint2 = (kinc_g4_render_target_t *)rtfield2->Value();
 
 		Local<External> envfield = Local<External>::Cast(args[3]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texenv = (kinc_g4_texture_t*)envfield->Value();
+		kinc_g4_texture_t *texenv = (kinc_g4_texture_t *)envfield->Value();
 
 		Local<External> sobolfield = Local<External>::Cast(args[4]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texsobol = (kinc_g4_texture_t*)sobolfield->Value();
+		kinc_g4_texture_t *texsobol = (kinc_g4_texture_t *)sobolfield->Value();
 
 		Local<External> scramblefield = Local<External>::Cast(args[5]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texscramble = (kinc_g4_texture_t*)scramblefield->Value();
+		kinc_g4_texture_t *texscramble = (kinc_g4_texture_t *)scramblefield->Value();
 
 		Local<External> rankfield = Local<External>::Cast(args[6]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t* texrank = (kinc_g4_texture_t*)rankfield->Value();
+		kinc_g4_texture_t *texrank = (kinc_g4_texture_t *)rankfield->Value();
 
 		if (!texenv->impl._uploaded) {
 			kinc_g5_command_list_upload_texture(&commandList, &texenv->impl._texture);
@@ -2952,16 +2952,16 @@ namespace {
 		kinc_raytrace_set_textures(&texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture, &texsobol->impl._texture, &texscramble->impl._texture, &texrank->impl._texture);
 	}
 
-	void krom_raytrace_dispatch_rays(const FunctionCallbackInfo<Value>& args) {
+	void krom_raytrace_dispatch_rays(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
 		Local<External> rtfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		render_target = (kinc_g4_render_target_t*)rtfield->Value();
+		render_target = (kinc_g4_render_target_t *)rtfield->Value();
 
 		Local<ArrayBuffer> cb_buffer = Local<ArrayBuffer>::Cast(args[1]);
 		ArrayBuffer::Contents cb_content;
 		cb_content = cb_buffer->GetContents();
-		float* cb = (float*)cb_content.Data();
+		float *cb = (float *)cb_content.Data();
 
 		kinc_g5_constant_buffer_lock_all(&constant_buffer);
 		for (int i = 0; i < constant_buffer_size; ++i) {
@@ -2977,29 +2977,29 @@ namespace {
 	#endif
 
 	#ifdef KORE_VR
-	void krom_vr_begin(const FunctionCallbackInfo<Value>& args) {
+	void krom_vr_begin(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		kinc_vr_interface_begin();
 	}
 
-	void krom_vr_begin_render(const FunctionCallbackInfo<Value>& args) {
+	void krom_vr_begin_render(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_vr_interface_begin_render(eye);
 	}
 
-	void krom_vr_end_render(const FunctionCallbackInfo<Value>& args) {
+	void krom_vr_end_render(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_vr_interface_end_render(eye);
 	}
 
-	void krom_vr_warp_swap(const FunctionCallbackInfo<Value>& args) {
+	void krom_vr_warp_swap(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		kinc_vr_interface_warp_swap();
 	}
 
-	void krom_vr_get_sensor_state_view(const FunctionCallbackInfo<Value>& args) {
+	void krom_vr_get_sensor_state_view(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(eye);
@@ -3025,7 +3025,7 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_vr_get_sensor_state_projection(const FunctionCallbackInfo<Value>& args) {
+	void krom_vr_get_sensor_state_projection(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(eye);
@@ -3051,14 +3051,14 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_vr_get_sensor_state_hmd_mounted(const FunctionCallbackInfo<Value>& args) {
+	void krom_vr_get_sensor_state_hmd_mounted(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(0);
 		args.GetReturnValue().Set(Boolean::New(isolate, state.pose.hmdMounted));
 	}
 	#endif
 
-	void krom_window_x(const FunctionCallbackInfo<Value>& args) {
+	void krom_window_x(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		// args.GetReturnValue().Set(Int32::New(isolate, kinc_window_x(windowId))); // Returns window creation pos
@@ -3069,7 +3069,7 @@ namespace {
 		#endif
 	}
 
-	void krom_window_y(const FunctionCallbackInfo<Value>& args) {
+	void krom_window_y(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		// args.GetReturnValue().Set(Int32::New(isolate, kinc_window_y(windowId)));
@@ -3080,7 +3080,7 @@ namespace {
 		#endif
 	}
 
-	void krom_language(const FunctionCallbackInfo<Value>& args) {
+	void krom_language(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_language()).ToLocalChecked());
 	}
@@ -3099,7 +3099,7 @@ namespace {
 		V8::Initialize();
 
 		Isolate::CreateParams create_params;
-		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
+		create_params.array_buffer_allocator = ArrayBuffer::Allocator::NewDefaultAllocator();
 		StartupData blob;
 		if (krom_bin_size > 0) {
 			blob.data = krom_bin;
@@ -3316,8 +3316,8 @@ namespace {
 		global_context.Reset(isolate, context);
 	}
 
-	void start_krom(char* scriptfile) {
-		v8::Locker locker{isolate};
+	void start_krom(char *scriptfile) {
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
@@ -3337,7 +3337,7 @@ namespace {
 		}
 		else {
 			TryCatch try_catch(isolate);
-			v8::Local<v8::Value> js_kickstart = context->Global()->Get(isolate->GetCurrentContext(), v8::String::NewFromUtf8(isolate, "kickstart").ToLocalChecked()).ToLocalChecked();
+			Local<Value> js_kickstart = context->Global()->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "kickstart").ToLocalChecked()).ToLocalChecked();
 			if (!js_kickstart->IsNullOrUndefined()) {
 				Local<Value> result;
 				if (!js_kickstart->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->CallAsFunction(context, context->Global(), 0, nullptr).ToLocal(&result)) {
@@ -3348,16 +3348,16 @@ namespace {
 	}
 
 	void run_v8() {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
-		v8::MicrotasksScope microtasks_scope(isolate, v8::MicrotasksScope::kRunMicrotasks);
+		MicrotasksScope microtasks_scope(isolate, MicrotasksScope::kRunMicrotasks);
 		HandleScope handle_scope(isolate);
 		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		Local<v8::Function> func = Local<v8::Function>::New(isolate, update_func);
+		Local<Function> func = Local<Function>::New(isolate, update_func);
 		Local<Value> result;
 
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
@@ -3365,7 +3365,7 @@ namespace {
 		}
 
 		if (save_and_quit > 0) {
-			v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, save_and_quit_func);
+			Local<Function> func = Local<Function>::New(isolate, save_and_quit_func);
 			Local<Value> result;
 			const int argc = 1;
 			Local<Value> argv[argc] = {Boolean::New(isolate, save_and_quit == 1)};
@@ -3387,16 +3387,16 @@ namespace {
 	#ifdef WITH_AUDIO
 	void update_audio(kinc_a2_buffer_t *buffer, int samples) {
 		// kinc_mutex_lock(&mutex);
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
-		v8::MicrotasksScope microtasks_scope(isolate, v8::MicrotasksScope::kRunMicrotasks);
+		MicrotasksScope microtasks_scope(isolate, MicrotasksScope::kRunMicrotasks);
 		HandleScope handle_scope(isolate);
 		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		Local<v8::Function> func = Local<v8::Function>::New(isolate, audio_func);
+		Local<Function> func = Local<Function>::New(isolate, audio_func);
 		Local<Value> result;
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, samples)};
@@ -3405,13 +3405,13 @@ namespace {
 		}
 
 		for (int i = 0; i < samples; ++i) {
-			float sample = *(float*)&audio_buffer.data[audio_buffer.read_location];
+			float sample = *(float *)&audio_buffer.data[audio_buffer.read_location];
 			audio_buffer.read_location += 4;
 			if (audio_buffer.read_location >= audio_buffer.data_size) {
 				audio_buffer.read_location = 0;
 			}
 
-			*(float*)&buffer->data[buffer->write_location] = sample;
+			*(float *)&buffer->data[buffer->write_location] = sample;
 			buffer->write_location += 4;
 			if (buffer->write_location >= buffer->data_size) {
 				buffer->write_location = 0;
@@ -3452,7 +3452,7 @@ namespace {
 		#endif
 	}
 
-	void drop_files(wchar_t* file_path) {
+	void drop_files(wchar_t *file_path) {
 		// Update mouse position
 		#ifdef KORE_WINDOWS
 		POINT p;
@@ -3461,24 +3461,24 @@ namespace {
 		mouse_move(0, p.x, p.y, 0, 0);
 		#endif
 
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, drop_files_func);
+		Local<Function> func = Local<Function>::New(isolate, drop_files_func);
 		Local<Value> result;
 		const int argc = 1;
 		Local<Value> argv[argc];
 		if (sizeof(wchar_t) == 2) {
-			argv[0] = {String::NewFromTwoByte(isolate, (const uint16_t*)file_path).ToLocalChecked()};
+			argv[0] = {String::NewFromTwoByte(isolate, (const uint16_t *)file_path).ToLocalChecked()};
 		}
 		else {
 			size_t len = wcslen(file_path);
-			uint16_t* str = new uint16_t[len + 1];
+			uint16_t *str = new uint16_t[len + 1];
 			for (int i = 0; i < len; i++) str[i] = file_path[i];
 			str[len] = 0;
 			argv[0] = {String::NewFromTwoByte(isolate, str).ToLocalChecked()};
@@ -3491,16 +3491,16 @@ namespace {
 		paused = false;
 	}
 
-	char* copy() {
-		v8::Locker locker{isolate};
+	char *copy() {
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, copy_func);
+		Local<Function> func = Local<Function>::New(isolate, copy_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			handle_exception(&try_catch);
@@ -3510,16 +3510,16 @@ namespace {
 		return temp_string;
 	}
 
-	char* cut() {
-		v8::Locker locker{isolate};
+	char *cut() {
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, cut_func);
+		Local<Function> func = Local<Function>::New(isolate, cut_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			handle_exception(&try_catch);
@@ -3529,16 +3529,16 @@ namespace {
 		return temp_string;
 	}
 
-	void paste(char* data) {
-		v8::Locker locker{isolate};
+	void paste(char *data) {
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, paste_func);
+		Local<Function> func = Local<Function>::New(isolate, paste_func);
 		Local<Value> result;
 		const int argc = 1;
 		Local<Value> argv[argc] = {String::NewFromUtf8(isolate, data).ToLocalChecked()};
@@ -3548,15 +3548,15 @@ namespace {
 	}
 
 	void foreground() {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, foreground_func);
+		Local<Function> func = Local<Function>::New(isolate, foreground_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			handle_exception(&try_catch);
@@ -3566,15 +3566,15 @@ namespace {
 	}
 
 	void resume() {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, resume_func);
+		Local<Function> func = Local<Function>::New(isolate, resume_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			handle_exception(&try_catch);
@@ -3582,15 +3582,15 @@ namespace {
 	}
 
 	void pause() {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, pause_func);
+		Local<Function> func = Local<Function>::New(isolate, pause_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			handle_exception(&try_catch);
@@ -3598,15 +3598,15 @@ namespace {
 	}
 
 	void background() {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, background_func);
+		Local<Function> func = Local<Function>::New(isolate, background_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			handle_exception(&try_catch);
@@ -3617,15 +3617,15 @@ namespace {
 	}
 
 	void shutdown() {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, shutdown_func);
+		Local<Function> func = Local<Function>::New(isolate, shutdown_func);
 		Local<Value> result;
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			handle_exception(&try_catch);
@@ -3633,15 +3633,15 @@ namespace {
 	}
 
 	void key_down(int code) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, keyboard_down_func);
+		Local<Function> func = Local<Function>::New(isolate, keyboard_down_func);
 		Local<Value> result;
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, code)};
@@ -3655,15 +3655,15 @@ namespace {
 	}
 
 	void key_up(int code) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, keyboard_up_func);
+		Local<Function> func = Local<Function>::New(isolate, keyboard_up_func);
 		Local<Value> result;
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, code)};
@@ -3677,15 +3677,15 @@ namespace {
 	}
 
 	void key_press(unsigned int character) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, keyboard_press_func);
+		Local<Function> func = Local<Function>::New(isolate, keyboard_press_func);
 		Local<Value> result;
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, character)};
@@ -3699,15 +3699,15 @@ namespace {
 	}
 
 	void mouse_move(int window, int x, int y, int mx, int my) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, mouse_move_func);
+		Local<Function> func = Local<Function>::New(isolate, mouse_move_func);
 		Local<Value> result;
 		const int argc = 4;
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Int32::New(isolate, mx), Int32::New(isolate, my)};
@@ -3721,15 +3721,15 @@ namespace {
 	}
 
 	void mouse_down(int window, int button, int x, int y) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, mouse_down_func);
+		Local<Function> func = Local<Function>::New(isolate, mouse_down_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, button), Int32::New(isolate, x), Int32::New(isolate, y)};
@@ -3743,15 +3743,15 @@ namespace {
 	}
 
 	void mouse_up(int window, int button, int x, int y) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, mouse_up_func);
+		Local<Function> func = Local<Function>::New(isolate, mouse_up_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, button), Int32::New(isolate, x), Int32::New(isolate, y)};
@@ -3765,15 +3765,15 @@ namespace {
 	}
 
 	void mouse_wheel(int window, int delta) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, mouse_wheel_func);
+		Local<Function> func = Local<Function>::New(isolate, mouse_wheel_func);
 		Local<Value> result;
 		const int argc = 1;
 		Local<Value> argv[argc] = {Int32::New(isolate, delta)};
@@ -3787,15 +3787,15 @@ namespace {
 	}
 
 	void touch_move(int index, int x, int y) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, touch_move_func);
+		Local<Function> func = Local<Function>::New(isolate, touch_move_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, index), Int32::New(isolate, x), Int32::New(isolate, y)};
@@ -3809,15 +3809,15 @@ namespace {
 	}
 
 	void touch_down(int index, int x, int y) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, touch_down_func);
+		Local<Function> func = Local<Function>::New(isolate, touch_down_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, index), Int32::New(isolate, x), Int32::New(isolate, y)};
@@ -3831,15 +3831,15 @@ namespace {
 	}
 
 	void touch_up(int index, int x, int y) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, touch_up_func);
+		Local<Function> func = Local<Function>::New(isolate, touch_up_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, index), Int32::New(isolate, x), Int32::New(isolate, y)};
@@ -3853,15 +3853,15 @@ namespace {
 	}
 
 	void pen_down(int window, int x, int y, float pressure) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, pen_down_func);
+		Local<Function> func = Local<Function>::New(isolate, pen_down_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Number::New(isolate, pressure)};
@@ -3875,15 +3875,15 @@ namespace {
 	}
 
 	void pen_up(int window, int x, int y, float pressure) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, pen_up_func);
+		Local<Function> func = Local<Function>::New(isolate, pen_up_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Number::New(isolate, pressure)};
@@ -3897,15 +3897,15 @@ namespace {
 	}
 
 	void pen_move(int window, int x, int y, float pressure) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, pen_move_func);
+		Local<Function> func = Local<Function>::New(isolate, pen_move_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, x), Int32::New(isolate, y), Number::New(isolate, pressure)};
@@ -3919,15 +3919,15 @@ namespace {
 	}
 
 	void gamepad_axis(int gamepad, int axis, float value) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, gamepad_axis_func);
+		Local<Function> func = Local<Function>::New(isolate, gamepad_axis_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, gamepad), Int32::New(isolate, axis), Number::New(isolate, value)};
@@ -3941,15 +3941,15 @@ namespace {
 	}
 
 	void gamepad_button(int gamepad, int button, float value) {
-		v8::Locker locker{isolate};
+		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
-		v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
 		TryCatch try_catch(isolate);
-		v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, gamepad_button_func);
+		Local<Function> func = Local<Function>::New(isolate, gamepad_button_func);
 		Local<Value> result;
 		const int argc = 3;
 		Local<Value> argv[argc] = {Int32::New(isolate, gamepad), Int32::New(isolate, button), Number::New(isolate, value)};
@@ -3963,7 +3963,7 @@ namespace {
 	}
 }
 
-int kickstart(int argc, char** argv) {
+int kickstart(int argc, char **argv) {
 	_argc = argc;
 	_argv = argv;
 #ifdef KORE_ANDROID
@@ -4040,7 +4040,7 @@ int kickstart(int argc, char** argv) {
 	}
 
 	int reader_size = (int)kinc_file_reader_size(&reader);
-	char* code = (char*)malloc(reader_size + 1);
+	char *code = (char *)malloc(reader_size + 1);
 	kinc_file_reader_read(&reader, code, reader_size);
 	code[reader_size] = 0;
 	kinc_file_reader_close(&reader);
@@ -4053,31 +4053,31 @@ int kickstart(int argc, char** argv) {
 		std::string flags = "--nolazy";
 		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
 
-		v8::ScriptCompiler::CachedData* cache;
+		ScriptCompiler::CachedData *cache;
 		Isolate::CreateParams create_params;
-		create_params.array_buffer_allocator = v8::ArrayBuffer::Allocator::NewDefaultAllocator();
-		v8::Isolate* isolate_cache = Isolate::New(create_params);
+		create_params.array_buffer_allocator = ArrayBuffer::Allocator::NewDefaultAllocator();
+		Isolate *isolate_cache = Isolate::New(create_params);
 		{
-			v8::HandleScope handle_scope(isolate_cache);
+			HandleScope handle_scope(isolate_cache);
 			{
-				v8::Local<v8::Context> context = Context::New(isolate_cache);
-				v8::Context::Scope context_scope(context);
+				Local<Context> context = Context::New(isolate_cache);
+				Context::Scope context_scope(context);
 
-				v8::ScriptOrigin origin(String::NewFromUtf8(isolate_cache, "krom_cache").ToLocalChecked());
-				v8::ScriptCompiler::Source source(String::NewFromUtf8(isolate_cache, code).ToLocalChecked(), origin);
+				ScriptOrigin origin(String::NewFromUtf8(isolate_cache, "krom_cache").ToLocalChecked());
+				ScriptCompiler::Source source(String::NewFromUtf8(isolate_cache, code).ToLocalChecked(), origin);
 
-				Local<Script> compiled_script = v8::ScriptCompiler::Compile(context, &source, v8::ScriptCompiler::kEagerCompile).ToLocalChecked();
-				cache = v8::ScriptCompiler::CreateCodeCache(compiled_script->GetUnboundScript());
+				Local<Script> compiled_script = ScriptCompiler::Compile(context, &source, ScriptCompiler::kEagerCompile).ToLocalChecked();
+				cache = ScriptCompiler::CreateCodeCache(compiled_script->GetUnboundScript());
 			}
 		}
 
-		v8::SnapshotCreator creator_cold;
-		v8::Isolate* isolate_cold = creator_cold.GetIsolate();
+		SnapshotCreator creator_cold;
+		Isolate *isolate_cold = creator_cold.GetIsolate();
 		{
-			v8::HandleScope handle_scope(isolate_cold);
+			HandleScope handle_scope(isolate_cold);
 			{
-				v8::Local<v8::Context> context = Context::New(isolate_cold);
-				v8::Context::Scope context_scope(context);
+				Local<Context> context = Context::New(isolate_cold);
+				Context::Scope context_scope(context);
 
 				const size_t line_size = 512;
 				char line[line_size];
@@ -4101,30 +4101,30 @@ int kickstart(int argc, char** argv) {
 					fclose (fp);
 				}
 
-				v8::ScriptOrigin origin(String::NewFromUtf8(isolate_cold, "krom_cold").ToLocalChecked());
-				v8::ScriptCompiler::Source source(String::NewFromUtf8(isolate_cold, code).ToLocalChecked(), origin, cache);
+				ScriptOrigin origin(String::NewFromUtf8(isolate_cold, "krom_cold").ToLocalChecked());
+				ScriptCompiler::Source source(String::NewFromUtf8(isolate_cold, code).ToLocalChecked(), origin, cache);
 
-				Local<Script> compiled_script = v8::ScriptCompiler::Compile(context, &source, v8::ScriptCompiler::kConsumeCodeCache).ToLocalChecked();
+				Local<Script> compiled_script = ScriptCompiler::Compile(context, &source, ScriptCompiler::kConsumeCodeCache).ToLocalChecked();
 				compiled_script->Run(context);
 
 				creator_cold.SetDefaultContext(context);
 			}
 		}
-		StartupData coldData = creator_cold.CreateBlob(v8::SnapshotCreator::FunctionCodeHandling::kKeep);
+		StartupData coldData = creator_cold.CreateBlob(SnapshotCreator::FunctionCodeHandling::kKeep);
 
 		// SnapshotCreator creator_warm(nullptr, &coldData);
-		// Isolate* isolate_warm = creator_warm.GetIsolate();
+		// Isolate *isolate_warm = creator_warm.GetIsolate();
 		// {
 		// 	HandleScope handle_scope(isolate_warm);
 		// 	{
 		// 		Local<Context> context = Context::New(isolate_warm);
-		// 		v8::Context::Scope context_scope(context);
+		// 		Context::Scope context_scope(context);
 
 		// 		// std::string code_warm("Main.main();");
-		// 		v8::ScriptOrigin origin(String::NewFromUtf8(isolate_warm, "krom_warm").ToLocalChecked());
-		// 		v8::ScriptCompiler::Source source(String::NewFromUtf8(isolate_warm, code).ToLocalChecked(), origin);
+		// 		ScriptOrigin origin(String::NewFromUtf8(isolate_warm, "krom_warm").ToLocalChecked());
+		// 		ScriptCompiler::Source source(String::NewFromUtf8(isolate_warm, code).ToLocalChecked(), origin);
 
-		// 		Local<Script> compiled_script = v8::ScriptCompiler::Compile(context, &source, v8::ScriptCompiler::kEagerCompile).ToLocalChecked();
+		// 		Local<Script> compiled_script = ScriptCompiler::Compile(context, &source, ScriptCompiler::kEagerCompile).ToLocalChecked();
 		// 		compiled_script->Run(context);
 		// 	}
 		// }
@@ -4137,7 +4137,7 @@ int kickstart(int argc, char** argv) {
 		// StartupData warmData = creator_warm.CreateBlob(SnapshotCreator::FunctionCodeHandling::kKeep);
 
 		std::string krombin = assetsdir + "/krom.bin";
-		FILE* file = fopen(&krombin[0u], "wb");
+		FILE *file = fopen(&krombin[0u], "wb");
 		if (file != nullptr) {
 			// fwrite(warmData.data, 1, warmData.raw_size, file);
 			fwrite(coldData.data, 1, coldData.raw_size, file);
