@@ -131,6 +131,11 @@ extern class Krom {
 
 	static function fileSaveBytes(path: String, bytes: js.lib.ArrayBuffer, ?length: Int): Void;
 	static function sysCommand(cmd: String, ?args: Array<String>): Int;
+	static function deleteFile(file: String): Int;
+	static function copyFile(srcPath : String, dstPath : String) : Int;
+	static function createDirectory(file: String): Int;
+	static function openInStdApp(url: String) : Int;
+	static function workingDir() : String;
 	static function savePath(): String;
 	static function getArgCount(): Int;
 	static function getArg(index: Int): String;

@@ -2207,12 +2207,49 @@ namespace {
 	void krom_sys_command(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_cmd(isolate, args[0]);
+		
 		#ifdef KORE_WINDOWS
 		int wlen = MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, NULL, 0);
-		wchar_t* wstr = new wchar_t[wlen];
-		MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, wstr, wlen);
-		int result = _wsystem(wstr);
-		delete[] wstr;
+		wchar_t* wcmd = new wchar_t[wlen];
+		MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, wcmd, wlen);
+		
+		wchar_t* cmdCommand = new wchar_t[wlen + 11];
+		wsprintf(cmdCommand,L"cmd.exe /C %s", wcmd);
+		delete[] wcmd;
+
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+
+		ZeroMemory(&si, sizeof(si));
+		si.cb = sizeof(si);
+		si.dwFlags = STARTF_USESHOWWINDOW;
+		ZeroMemory(&pi, sizeof(pi));
+		int result = 1;
+		// Start the child process.
+		if (CreateProcess(NULL,   // No module name (use command line)
+			cmdCommand,        // Command line
+			NULL,           // Process handle not inheritable
+			NULL,           // Thread handle not inheritable
+			FALSE,          // Set handle inheritance to FALSE
+			0,              // No creation flags
+			NULL,           // Use parent's environment block
+			NULL,           // Use parent's starting directory
+			&si,            // Pointer to STARTUPINFO structure
+			&pi)           // Pointer to PROCESS_INFORMATION structure
+			)
+		{
+			DWORD dwResult;
+
+			// Wait until child process exits.
+			WaitForSingleObject(pi.hProcess, INFINITE);
+			GetExitCodeProcess(pi.hProcess, &dwResult); //grab the exit code
+			// Close process and thread handles.
+			CloseHandle(pi.hProcess);
+			CloseHandle(pi.hThread);
+			result = dwResult;
+		}
+
+		delete[] cmdCommand;
 		#elif KORE_IOS
 		int result = 0;
 		#else
@@ -2220,6 +2257,115 @@ namespace {
 		#endif
 		args.GetReturnValue().Set(Int32::New(isolate, result));
 	}
+
+	void krom_delete_file(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_file(isolate, args[0]);
+		#ifdef KORE_WINDOWS
+		int wlen = MultiByteToWideChar(CP_UTF8, 0, *utf8_file, -1, NULL, 0);
+		wchar_t* wstr = new wchar_t[wlen];
+		MultiByteToWideChar(CP_UTF8, 0, *utf8_file, -1, wstr, wlen);
+		int result = ~DeleteFileW(wstr);
+		delete[] wstr;
+		#else
+		int result = remove(*utf8_file);
+		#endif
+		args.GetReturnValue().Set(Int32::New(isolate, result));
+	}
+
+	void krom_copy_file(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_srcPath(isolate, args[0]);
+		String::Utf8Value utf8_dstPath(isolate, args[1]);
+		#ifdef KORE_WINDOWS
+		int wlen = MultiByteToWideChar(CP_UTF8, 0, *utf8_srcPath, -1, NULL, 0);
+		wchar_t* wsrcPath = new wchar_t[wlen];
+		MultiByteToWideChar(CP_UTF8, 0, *utf8_srcPath, -1, wsrcPath, wlen);
+		wlen = MultiByteToWideChar(CP_UTF8, 0, *utf8_dstPath, -1, NULL, 0);
+		wchar_t* wdstPath = new wchar_t[wlen];
+		MultiByteToWideChar(CP_UTF8, 0, *utf8_dstPath, -1, wdstPath, wlen);
+
+		int result = ~CopyFileW(wsrcPath, wdstPath, FALSE);
+		delete[] wsrcPath;
+		delete[] wdstPath;
+		#else
+		char* cmd = new char[utf8_srcPath.length() + utf8_dstPath.length() + 8]; //cp 'PATH' 'PATH'
+		sprintf(cmd, "cp '%s' '%s'", *utf8_srcPath, *utf8_dstPath);
+		int result = system(cmd);
+		delete[] cmd;
+		#endif
+		args.GetReturnValue().Set(Int32::New(isolate, result));
+	}
+
+	void krom_open_in_std_app(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_path(isolate, args[0]);
+		#if defined(KORE_WINDOWS)
+		int wlen = MultiByteToWideChar(CP_UTF8, 0, *utf8_path, -1, NULL, 0);
+		wchar_t* wstr = new wchar_t[wlen];
+		MultiByteToWideChar(CP_UTF8, 0, *utf8_path, -1, wstr, wlen);
+		SHELLEXECUTEINFOW info{ sizeof(info) };
+		info.fMask = SEE_MASK_NOASYNC; 
+		info.lpVerb = L"open";
+		info.lpFile = wstr;
+		info.nShow = SW_SHOWDEFAULT;
+		int result = 0;
+
+		result = ~ShellExecuteExW(&info);
+		delete[] wstr;
+		
+		#elif defined(KORE_LINUX)
+		char* cmd = new char[utf8_path.length()+11]; //xdg-open 'PATH'
+		sprintf(cmd, "xdg-open '%s'", *utf8_path);
+		int result = system(cmd);
+		delete[] cmd;
+		#elif defined(KORE_ANDROID) || defined(KORE_IOS)
+		kinc_load_url(*utf8_path);
+		int result = 0;
+		#else
+		char* cmd = new char[utf8_path.length() + 7]; //open 'PATH'
+		sprintf(cmd, "open '%s'", *utf8_path);
+		int result = system(cmd);
+		delete[] cmd;
+		#endif
+		args.GetReturnValue().Set(Int32::New(isolate, result));
+	}
+
+	void krom_create_directory(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_dir(isolate, args[0]);
+		#ifdef KORE_WINDOWS
+		int wlen = MultiByteToWideChar(CP_UTF8, 0, *utf8_dir, -1, NULL, 0);
+		wchar_t* wstr = new wchar_t[wlen];
+		MultiByteToWideChar(CP_UTF8, 0, *utf8_dir, -1, wstr, wlen);
+		int result = ~CreateDirectoryW(wstr,NULL);
+		delete[] wstr;
+		#else
+		int result = mkdir(*utf8_dir);
+		#endif
+		args.GetReturnValue().Set(Int32::New(isolate, result));
+	}
+
+	void krom_working_dir(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+
+		#ifdef KORE_WINDOWS
+		DWORD dwBufferLength = GetCurrentDirectoryW(0, NULL);
+		wchar_t* wcwd = new wchar_t[dwBufferLength];
+		GetCurrentDirectoryW(dwBufferLength, wcwd);
+		int utf8len = WideCharToMultiByte(CP_UTF8, 0, wcwd, -1, NULL, 0, NULL, NULL);
+		char* cwd = new char[utf8len];
+		WideCharToMultiByte(CP_UTF8, 0, wcwd, -1, cwd, utf8len, NULL, NULL);
+		delete[] wcwd;
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, cwd).ToLocalChecked());
+		delete[] cwd;
+		#else
+		char cwd[PATH_MAX];
+		getcwd(cwd, PATH_MAX);
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, cwd).ToLocalChecked());
+		#endif
+	}
+
 
 	void krom_save_path(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
@@ -3239,6 +3385,11 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "end").ToLocalChecked(), FunctionTemplate::New(isolate, krom_end));
 		krom->Set(String::NewFromUtf8(isolate, "fileSaveBytes").ToLocalChecked(), FunctionTemplate::New(isolate, krom_file_save_bytes));
 		krom->Set(String::NewFromUtf8(isolate, "sysCommand").ToLocalChecked(), FunctionTemplate::New(isolate, krom_sys_command));
+		krom->Set(String::NewFromUtf8(isolate, "deleteFile").ToLocalChecked(), FunctionTemplate::New(isolate, krom_delete_file));
+		krom->Set(String::NewFromUtf8(isolate, "copyFile").ToLocalChecked(), FunctionTemplate::New(isolate, krom_copy_file));
+		krom->Set(String::NewFromUtf8(isolate, "createDirectory").ToLocalChecked(), FunctionTemplate::New(isolate, krom_create_directory));
+		krom->Set(String::NewFromUtf8(isolate, "openInStdApp").ToLocalChecked(), FunctionTemplate::New(isolate, krom_open_in_std_app));
+		krom->Set(String::NewFromUtf8(isolate, "workingDir").ToLocalChecked(), FunctionTemplate::New(isolate, krom_working_dir));
 		krom->Set(String::NewFromUtf8(isolate, "savePath").ToLocalChecked(), FunctionTemplate::New(isolate, krom_save_path));
 		krom->Set(String::NewFromUtf8(isolate, "getArgCount").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_arg_count));
 		krom->Set(String::NewFromUtf8(isolate, "getArg").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_arg));
