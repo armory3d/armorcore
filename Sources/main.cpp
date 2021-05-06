@@ -561,9 +561,10 @@ namespace {
 
 	void krom_set_mouse_position(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		kinc_mouse_set_position(0, x, y);
+		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int x = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int y = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_mouse_set_position(windowId, x, y);
 	}
 
 	void krom_show_mouse(const FunctionCallbackInfo<Value> &args) {
