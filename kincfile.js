@@ -26,8 +26,12 @@ let project = new Project('Krom');
 project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
+
 project.targetOptions.android.package = 'org.armorpaint';
 project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE'];
+project.targetOptions.android.screenOrientation = ['sensorLandscape'];
+project.targetOptions.android.minSdkVersion = 29;
+project.targetOptions.android.targetSdkVersion = 29;
 
 if (platform === Platform.OSX) {
 	// Otherwise V8::Initialize() hangs
