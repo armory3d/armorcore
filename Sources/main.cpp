@@ -229,6 +229,11 @@ namespace {
 
 		#ifdef KORE_WINDOWS
 		FILE *file = fopen("stderr.txt", stderr_created ? "a" : "w");
+		if (file == nullptr) { // Running from protected path
+			strcpy(temp_string, kinc_internal_save_path());
+			strcat(temp_string, "\\stderr.txt");
+			file = fopen(temp_string, stderr_created ? "a" : "w");
+		}
 		if (file != nullptr) {
 			stderr_created = true;
 			fwrite(stack_trace, 1, strlen(stack_trace), file);
