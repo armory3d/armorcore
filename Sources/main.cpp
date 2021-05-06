@@ -2657,7 +2657,7 @@ namespace {
 				if (i < dir.n_files - 1) wcscat(temp_wstring, L"\n"); // Separator
 				#else
 				if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0) continue;
-				if(strlen(temp_string) + strlen(file.name) + 1 > 1023) break;
+				if (strlen(temp_string) + strlen(file.name) + 1 > 1023) break;
 				strcat(temp_string, file.name);
 				if (i < dir.n_files - 1) strcat(temp_string, "\n"); // Separator
 				#endif
@@ -3424,11 +3424,17 @@ namespace {
 
 	void update() {
 		#ifdef KORE_WINDOWS
-		if (paused && ++pausedFrames > 3 && armorcore) { Sleep(1); return; }
+		if (paused && ++pausedFrames > 3 && armorcore) {
+			Sleep(1);
+			return;
+		}
 		#endif
 
 		#ifdef IDLE_SLEEP
-		if (++pausedFrames > 120) { usleep(1000); return; }
+		if (++pausedFrames > 120) {
+			usleep(1000);
+			return;
+		}
 		#endif
 
 		#ifdef WITH_AUDIO
