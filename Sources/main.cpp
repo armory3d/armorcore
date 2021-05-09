@@ -24,7 +24,6 @@
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
 #include <kinc/compute/compute.h>
-#include <kinc/libs/stb_image.h>
 #ifdef KORE_LZ4X
 extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int maxOutputSize);
 #else
@@ -77,12 +76,17 @@ extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // K
 #ifdef WITH_TINYDIR
 #include <tinydir.h>
 #endif
-#ifdef WITH_ZLIB
-#include <zlib.h>
-#endif
 #ifdef WITH_STB_IMAGE_WRITE
+#ifdef WITH_ZLIB
+extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
+#define STBIW_ZLIB_COMPRESS stbiw_zlib_compress
+#endif
+#define STBI_WINDOWS_UTF8
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
+#endif
+#ifdef WITH_ZLIB
+#include <zlib.h>
 #endif
 #ifdef WITH_TEXSYNTH
 #include <texsynth.h>
@@ -2775,13 +2779,127 @@ namespace {
 	#endif
 
 	#ifdef WITH_STB_IMAGE_WRITE
-	void krom_write_png(const FunctionCallbackInfo<Value> &args) {
+	void write_image(const FunctionCallbackInfo<Value> &args, int imageFormat, int quality) {
 		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_path(isolate, args[0]);
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
+		ArrayBuffer::Contents content;
+		content = buffer->GetContents();
+		int w = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int h = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int format = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
+		int comp = 0;
+		unsigned char *pixels = NULL;
+		unsigned char *rgba = (unsigned char *)content.Data();
+		if (format == 0) { // RGBA
+			comp = 4;
+			pixels = rgba;
+		}
+		else if (format == 1) { // R
+			comp = 1;
+			pixels = rgba;
+		}
+		else if (format == 2) { // RGB1
+			comp = 3;
+			pixels = (unsigned char *)malloc(w * h * comp);
+			for (int i = 0; i < w * h; ++i) {
+				#if defined(KORE_METAL) || defined(KORE_VULKAN)
+				pixels[i * 3    ] = rgba[i * 4 + 2];
+				pixels[i * 3 + 1] = rgba[i * 4 + 1];
+				pixels[i * 3 + 2] = rgba[i * 4    ];
+				#else
+				pixels[i * 3    ] = rgba[i * 4    ];
+				pixels[i * 3 + 1] = rgba[i * 4 + 1];
+				pixels[i * 3 + 2] = rgba[i * 4 + 2];
+				#endif
+			}
+		}
+		else if (format > 2) { // RRR1, GGG1, BBB1, AAA1
+			comp = 1;
+			pixels = (unsigned char *)malloc(w * h * comp);
+			int off = format - 3;
+			#if defined(KORE_METAL) || defined(KORE_VULKAN)
+			off = 2 - off;
+			#endif
+			for (int i = 0; i < w * h; ++i) pixels[i] = rgba[i * 4 + off];
+		}
+
+		imageFormat == 0 ?
+			stbi_write_jpg(*utf8_path, w, h, comp, pixels, quality) :
+			stbi_write_png(*utf8_path, w, h, comp, pixels, w * comp);
+
+		if (pixels != rgba) free(pixels);
 	}
 
 	void krom_write_jpg(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
+		int quality = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		write_image(args, 0, quality);
 	}
+
+	void krom_write_png(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		write_image(args, 1, 100);
+	}
+
+	unsigned char *encode_data;
+	int encode_size;
+	void encode_image_func(void *context, void *data, int size) {
+		memcpy(encode_data + encode_size, data, size);
+		encode_size += size;
+	}
+
+	void encode_image(const FunctionCallbackInfo<Value> &args, int imageFormat, int quality) {
+		HandleScope scope(args.GetIsolate());
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		ArrayBuffer::Contents content;
+		content = buffer->GetContents();
+		int w = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int h = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int format = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
+		encode_data = (unsigned char *)malloc(w * h * 4);
+		encode_size = 0;
+
+		imageFormat == 0 ?
+			stbi_write_jpg_to_func(&encode_image_func, NULL, w, h, 4, content.Data(), quality) :
+			stbi_write_png_to_func(&encode_image_func, NULL, w, h, 4, content.Data(), w * 4);
+
+		Local<ArrayBuffer> out = ArrayBuffer::New(isolate, encode_data, encode_size);
+		args.GetReturnValue().Set(out);
+	}
+
+	void krom_encode_jpg(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		int quality = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		encode_image(args, 0, quality);
+	}
+
+	void krom_encode_png(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		encode_image(args, 1, 100);
+	}
+
+	#ifdef WITH_ZLIB
+	extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality) {
+		int deflatedSize = compressBound((uInt)data_len);
+		void *deflated = malloc(deflatedSize);
+		z_stream defstream;
+		defstream.zalloc = Z_NULL;
+		defstream.zfree = Z_NULL;
+		defstream.opaque = Z_NULL;
+		defstream.avail_in = (uInt)data_len;
+		defstream.next_in = (Bytef *)data;
+		defstream.avail_out = deflatedSize;
+		defstream.next_out = (Bytef *)deflated;
+		deflateInit2(&defstream, Z_BEST_SPEED, Z_DEFLATED, -15, 5, Z_DEFAULT_STRATEGY);
+		deflate(&defstream, Z_FINISH);
+		deflateEnd(&defstream);
+		*out_len = defstream.total_out;
+		return (unsigned char *)deflated;
+	}
+	#endif
 	#endif
 
 	#ifdef WITH_TEXSYNTH
@@ -3288,8 +3406,10 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "deflate").ToLocalChecked(), FunctionTemplate::New(isolate, krom_deflate));
 		#endif
 		#ifdef WITH_STB_IMAGE_WRITE
-		krom->Set(String::NewFromUtf8(isolate, "writePng").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_png));
 		krom->Set(String::NewFromUtf8(isolate, "writeJpg").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_jpg));
+		krom->Set(String::NewFromUtf8(isolate, "writePng").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_png));
+		krom->Set(String::NewFromUtf8(isolate, "encodeJpg").ToLocalChecked(), FunctionTemplate::New(isolate, krom_encode_jpg));
+		krom->Set(String::NewFromUtf8(isolate, "encodePng").ToLocalChecked(), FunctionTemplate::New(isolate, krom_encode_png));
 		#endif
 		#ifdef WITH_TEXSYNTH
 		krom->Set(String::NewFromUtf8(isolate, "texsynthInpaint").ToLocalChecked(), FunctionTemplate::New(isolate, krom_texsynth_inpaint));

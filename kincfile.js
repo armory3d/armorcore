@@ -4,7 +4,7 @@ const with_d3dcompiler = true;
 const with_nfd = true;
 const with_tinydir = true;
 const with_zlib = true;
-const with_stb_image_write = false;
+const with_stb_image_write = true;
 const with_audio = false;
 const with_texsynth = false;
 const with_onnx = false;
@@ -159,7 +159,6 @@ if (with_zlib) {
 if (with_stb_image_write) {
 	project.addDefine('WITH_STB_IMAGE_WRITE');
 	project.addIncludeDir("Libraries/stb");
-	project.addFile("Libraries/stb/stb_image_write.h");
 }
 if (with_texsynth) {
 	project.addDefine('WITH_TEXSYNTH');

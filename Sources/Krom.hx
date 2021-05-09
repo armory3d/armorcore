@@ -180,11 +180,14 @@ extern class Krom {
 	static function fileExists(path: String): Bool;
 	static function inflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
 	static function deflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
-	static function writePng(path: String, bytes: js.lib.ArrayBuffer): Void;
-	static function writeJpg(path: String, bytes: js.lib.ArrayBuffer): Void;
-	static function texsynthInpaint(w: Int, h: Int, bytesOut: js.lib.ArrayBuffer, bytesImage: js.lib.ArrayBuffer, bytesMask: js.lib.ArrayBuffer, tiling: Bool): Void;
+	static function writeJpg(path: String, bytes: js.lib.ArrayBuffer, w: Int, h: Int, format: Int, quality: Int): Void; // RGBA, R, RGB1, RRR1, GGG1, BBB1, AAA1
+	static function writePng(path: String, bytes: js.lib.ArrayBuffer, w: Int, h: Int, format: Int): Void;
+	static function encodeJpg(bytes: js.lib.ArrayBuffer, w: Int, h: Int, format: Int, quality: Int): js.lib.ArrayBuffer;
+	static function encodePng(bytes: js.lib.ArrayBuffer, w: Int, h: Int, format: Int): js.lib.ArrayBuffer;
 	static function windowX(id: Int): Int;
 	static function windowY(id: Int): Int;
 	static function language(): String;
+
+	static function texsynthInpaint(w: Int, h: Int, bytesOut: js.lib.ArrayBuffer, bytesImage: js.lib.ArrayBuffer, bytesMask: js.lib.ArrayBuffer, tiling: Bool): Void;
 	static function mlInference(model: js.lib.ArrayBuffer, tensor: js.lib.ArrayBuffer): js.lib.ArrayBuffer;
 }
