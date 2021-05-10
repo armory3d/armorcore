@@ -2893,7 +2893,7 @@ namespace {
 		defstream.next_in = (Bytef *)data;
 		defstream.avail_out = deflatedSize;
 		defstream.next_out = (Bytef *)deflated;
-		deflateInit2(&defstream, Z_BEST_SPEED, Z_DEFLATED, -15, 5, Z_DEFAULT_STRATEGY);
+		deflateInit2(&defstream, Z_BEST_SPEED, Z_DEFLATED, 15, 5, Z_DEFAULT_STRATEGY);
 		deflate(&defstream, Z_FINISH);
 		deflateEnd(&defstream);
 		*out_len = defstream.total_out;
