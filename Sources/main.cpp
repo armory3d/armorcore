@@ -550,17 +550,17 @@ namespace {
 
 	void krom_unlock_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		kinc_mouse_unlock(0);
+		kinc_mouse_unlock();
 	}
 
 	void krom_can_lock_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(Boolean::New(isolate, kinc_mouse_can_lock(0)));
+		args.GetReturnValue().Set(Boolean::New(isolate, kinc_mouse_can_lock()));
 	}
 
 	void krom_is_mouse_locked(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(Boolean::New(isolate, kinc_mouse_is_locked(0)));
+		args.GetReturnValue().Set(Boolean::New(isolate, kinc_mouse_is_locked()));
 	}
 
 	void krom_set_mouse_position(const FunctionCallbackInfo<Value> &args) {
