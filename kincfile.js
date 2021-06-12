@@ -69,6 +69,7 @@ else if (platform === Platform.iOS) {
 }
 
 if (platform === Platform.Windows) {
+	project.cmdArgs = ['..\\..\\build\\krom'];
 	project.addLib('Dbghelp'); // Stack walk
 	project.addLib(libdir + 'v8_monolith');
 	// project.addDefine('V8_COMPRESS_POINTERS');
