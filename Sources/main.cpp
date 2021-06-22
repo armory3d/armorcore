@@ -70,6 +70,7 @@ extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // K
 #include <nfd.h>
 #elif KORE_ANDROID
 #include "AndroidFileDialog.h"
+#include "AndroidHttpRequest.h"
 #elif KORE_IOS
 #include "IOSFileDialog.h"
 #endif
@@ -2306,7 +2307,11 @@ namespace {
 			url_path[j] = curl[i + 8 + j];
 		}
 		url_path[j] = 0;
+		#if KORE_ANDROID // TODO: move to Kinc
+		android_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL);
+		#else
 		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL);
+		#endif
 	}
 
 	void krom_set_bool_compute(const FunctionCallbackInfo<Value> &args) {
