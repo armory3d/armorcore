@@ -2308,7 +2308,7 @@ namespace {
 		}
 		url_path[j] = 0;
 		#if KORE_ANDROID // TODO: move to Kinc
-		android_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL);
+		android_http_request(*url, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL, &http_result_size);
 		#else
 		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL);
 		#endif
