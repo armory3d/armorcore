@@ -2574,15 +2574,33 @@ namespace {
 	}
 
 	#ifdef WITH_NFD
-	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
+	void krom_open_dialog(const FunctionCallbackInfo<Value>& args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value filterList(isolate, args[0]);
 		String::Utf8Value defaultPath(isolate, args[1]);
-		nfdchar_t *outPath = NULL;
-		nfdresult_t result = NFD_OpenDialog(*filterList, *defaultPath, &outPath);
+		bool openMultiple = args[2]->ToBoolean(isolate)->Value();
+
+		nfdpathset_t outPaths;
+		nfdchar_t* outPath;
+		nfdresult_t result = openMultiple ? NFD_OpenDialogMultiple(*filterList, *defaultPath, &outPaths) : NFD_OpenDialog(*filterList, *defaultPath, &outPath);
+		
 		if (result == NFD_OKAY) {
-			args.GetReturnValue().Set(String::NewFromUtf8(isolate, outPath).ToLocalChecked());
-			free(outPath);
+			int pathCount = openMultiple ? NFD_PathSet_GetCount(&outPaths) : 1;
+			Local<Array> result = Array::New(isolate, pathCount);
+
+			if (openMultiple) {
+				for (int n = 0; n < pathCount; ++n) {
+					nfdchar_t* outPath = NFD_PathSet_GetPath(&outPaths, n);
+					result->Set(isolate->GetCurrentContext(), n, String::NewFromUtf8(isolate, outPath).ToLocalChecked());
+				}
+			}
+			else {
+				result->Set(isolate->GetCurrentContext(), 0, String::NewFromUtf8(isolate, outPath).ToLocalChecked());
+			}
+			
+			args.GetReturnValue().Set(result);
+			
+			openMultiple ? NFD_PathSet_Free(&outPaths) : free(outPath);
 		}
 		else if (result == NFD_CANCEL) {}
 		else {
