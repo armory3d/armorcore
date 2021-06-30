@@ -2296,19 +2296,19 @@ namespace {
 		char url_path[512];
 		const char *curl = *url;
 		int i = 0;
-		for (; i < 512; ++i) {
+		for (; i < strlen(curl) - 8; ++i) {
 			if (curl[i + 8] == '/') break;
 			url_base[i] = curl[i + 8]; // Strip https://
 		}
 		url_base[i] = 0;
 		int j = 0;
-		for (; j < 512; ++j) {
+		for (; j < strlen(curl) - 8 - i; ++j) {
 			if (curl[i + 8 + j] == 0) break;
 			url_path[j] = curl[i + 8 + j];
 		}
 		url_path[j] = 0;
 		#if KORE_ANDROID // TODO: move to Kinc
-		android_http_request(*url, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL, &http_result_size);
+		android_http_request(curl, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL, &http_result_size);
 		#else
 		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL);
 		#endif
