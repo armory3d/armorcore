@@ -175,7 +175,7 @@ extern class Krom {
 	static function vrGetSensorStateProjection(eye: Int): Dynamic;
 	static function vrGetSensorStateHmdMounted(): Bool;
 	static function saveDialog(filterList: String, defaultPath: String): String;
-	static function openDialog(filterList: String, defaultPath: String, openMultiple : Bool): Array<String>;
+	static function openDialog(filterList: String, defaultPath: String, openMultiple: Bool): Array<String>;
 	static function readDirectory(path: String, foldersOnly: Bool): String;
 	static function fileExists(path: String): Bool;
 	static function inflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
