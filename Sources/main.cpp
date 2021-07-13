@@ -227,7 +227,6 @@ namespace {
 	#ifdef ARM_PROFILE
 	double startup_time = 0.0;
 	#endif
-	int32_t http_result_size = 0;
 
 	void write_stack_trace(const char *stack_trace) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", stack_trace);
@@ -2270,6 +2269,10 @@ namespace {
 	}
 
 	void krom_http_callback(int error, int response, const char *body, void *callbackdata) {
+		#if defined(KORE_MACOS) || defined(KORE_IOS)
+		Locker locker{isolate};
+		#endif
+
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
 		Local<Context> context = Local<Context>::New(isolate, global_context);
@@ -2279,7 +2282,8 @@ namespace {
 		TryCatch try_catch(isolate);
 		Local<Value> result;
 		Local<Value> argv[1];
-		if (body != NULL) argv[0] = ArrayBuffer::New(isolate, (void *)body, http_result_size);
+		int32_t http_result_size = *(int *)callbackdata;
+		if (body != NULL) argv[0] = ArrayBuffer::New(isolate, (void *)body, http_result_size > 0 ? http_result_size : strlen(body));
 		if (!func->Call(context, context->Global(), body != NULL ? 1 : 0, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
@@ -2288,8 +2292,7 @@ namespace {
 	void krom_http_request(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value url(isolate, args[0]);
-		// TODO: assuming krom_http_request is synchronous for now
-		http_result_size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int32_t http_result_size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		Local<Function> func = Local<Function>::Cast(args[2]);
 		http_func.Reset(isolate, func);
 		char url_base[512];
@@ -2308,9 +2311,9 @@ namespace {
 		}
 		url_path[j] = 0;
 		#if KORE_ANDROID // TODO: move to Kinc
-		android_http_request(curl, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL, &http_result_size);
+		android_http_request(curl, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, &http_result_size);
 		#else
-		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, NULL);
+		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, &http_result_size);
 		#endif
 	}
 
