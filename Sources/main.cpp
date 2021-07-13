@@ -181,7 +181,6 @@ namespace {
 	Global<Function> gamepad_axis_func;
 	Global<Function> gamepad_button_func;
 	Global<Function> audio_func;
-	Global<Function> http_func;
 	Global<Function> save_and_quit_func;
 
 	kinc_mutex_t mutex;
@@ -227,6 +226,12 @@ namespace {
 	#ifdef ARM_PROFILE
 	double startup_time = 0.0;
 	#endif
+
+	class KromCallbackdata {
+	public:
+		int32_t size;
+		Global<Function> func;
+	};
 
 	void write_stack_trace(const char *stack_trace) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", stack_trace);
@@ -2278,23 +2283,27 @@ namespace {
 		Local<Context> context = Local<Context>::New(isolate, global_context);
 		Context::Scope context_scope(context);
 
-		Local<Function> func = Local<Function>::New(isolate, http_func);
 		TryCatch try_catch(isolate);
 		Local<Value> result;
 		Local<Value> argv[1];
-		int32_t http_result_size = *(int *)callbackdata;
-		if (body != NULL) argv[0] = ArrayBuffer::New(isolate, (void *)body, http_result_size > 0 ? http_result_size : strlen(body));
+		KromCallbackdata *cbd = (KromCallbackdata *)callbackdata;
+		if (body != NULL) argv[0] = ArrayBuffer::New(isolate, (void *)body, cbd->size > 0 ? cbd->size : strlen(body));
+		Local<Function> func = Local<Function>::New(isolate, cbd->func);
 		if (!func->Call(context, context->Global(), body != NULL ? 1 : 0, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
+		delete cbd;
 	}
 
 	void krom_http_request(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value url(isolate, args[0]);
-		int32_t http_result_size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
+		KromCallbackdata *cbd = new KromCallbackdata();
+		cbd->size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		Local<Function> func = Local<Function>::Cast(args[2]);
-		http_func.Reset(isolate, func);
+		cbd->func.Reset(isolate, func);
+
 		char url_base[512];
 		char url_path[512];
 		const char *curl = *url;
@@ -2305,15 +2314,16 @@ namespace {
 		}
 		url_base[i] = 0;
 		int j = 0;
+		++i; // Skip /
 		for (; j < strlen(curl) - 8 - i; ++j) {
 			if (curl[i + 8 + j] == 0) break;
 			url_path[j] = curl[i + 8 + j];
 		}
 		url_path[j] = 0;
 		#if KORE_ANDROID // TODO: move to Kinc
-		android_http_request(curl, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, &http_result_size);
+		android_http_request(curl, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, cbd);
 		#else
-		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, &http_result_size);
+		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, cbd);
 		#endif
 	}
 
