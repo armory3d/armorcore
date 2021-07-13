@@ -2314,7 +2314,7 @@ namespace {
 		}
 		url_base[i] = 0;
 		int j = 0;
-		++i; // Skip /
+		if (strlen(url_base) < strlen(curl) - 8) ++i; // Skip /
 		for (; j < strlen(curl) - 8 - i; ++j) {
 			if (curl[i + 8 + j] == 0) break;
 			url_path[j] = curl[i + 8 + j];
