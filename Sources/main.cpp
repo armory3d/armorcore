@@ -1286,10 +1286,11 @@ namespace {
 		return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
 	}
 
-	void load_image(kinc_file_reader_t &reader, const char *filename, unsigned char *&output, int &width, int &height, kinc_image_format_t &format) {
+	bool load_image(kinc_file_reader_t &reader, const char *filename, unsigned char *&output, int &width, int &height, kinc_image_format_t &format) {
 		format = KINC_IMAGE_FORMAT_RGBA32;
 		int size = (int)kinc_file_reader_size(&reader);
 		int comp;
+		bool readSuccessfully = true;
 		unsigned char *data = (unsigned char *)malloc(size);
 		kinc_file_reader_read(&reader, data, size);
 		kinc_file_reader_close(&reader);
@@ -1315,11 +1316,15 @@ namespace {
 				LZ4_decompress_safe((char *)(data + 12), (char *)output, compressedSize, outputSize);
 				format = KINC_IMAGE_FORMAT_RGBA128;
 			}
+			else {
+				readSuccessfully = false;
+			}
 		}
 		else if (ends_with(filename, "hdr")) {
 			output = (unsigned char *)stbi_loadf_from_memory(data, size, &width, &height, &comp, 4);
 			if (output == nullptr) {
 				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+				readSuccessfully = false;
 			}
 			format = KINC_IMAGE_FORMAT_RGBA128;
 		}
@@ -1327,17 +1332,19 @@ namespace {
 			output = stbi_load_from_memory(data, size, &width, &height, &comp, 4);
 			if (output == nullptr) {
 				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+				readSuccessfully = false;
 			}
 		}
 		free(data);
+		return readSuccessfully;
 	}
 
 	void krom_load_image(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		bool readable = args[1]->ToBoolean(isolate)->Value();
+		bool readSuccessfully = true;
 
-		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
 		if (armorcore) {
@@ -1347,19 +1354,33 @@ namespace {
 				int image_width;
 				int image_height;
 				kinc_image_format_t image_format;
-				load_image(reader, *utf8_value, image_data, image_width, image_height, image_format);
-				kinc_image_init(image, image_data, image_width, image_height, image_format);
+				readSuccessfully = load_image(reader, *utf8_value, image_data, image_width, image_height, image_format);
+				if (readSuccessfully) {
+					kinc_image_init(image, image_data, image_width, image_height, image_format);
+				}
 			}
-			else return;
+			else {
+				readSuccessfully = false;
+			}
 		}
 		else {
 			// TODO: make kinc_image load faster
 			size_t byte_size = kinc_image_size_from_file(*utf8_value);
-			if (byte_size == 0) return;
-			void *memory = malloc(byte_size);
-			kinc_image_init_from_file(image, memory, *utf8_value);
+			if (byte_size == 0) {
+				readSuccessfully = false;
+			}
+			else {
+				void* memory = malloc(byte_size);
+				kinc_image_init_from_file(image, memory, *utf8_value);
+			}
 		}
 
+		if (!readSuccessfully) {
+			free(image);
+			return;
+		}
+
+		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
 		kinc_g4_texture_init_from_image(texture, image);
 		if (!readable) {
 			delete[] image->data;
