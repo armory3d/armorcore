@@ -36,6 +36,7 @@ project.targetOptions.android.targetSdkVersion = 29;
 if (platform === Platform.OSX) {
 	// Otherwise V8::Initialize() hangs
 	project.cpp = true;
+	project.icon = 'icon_macos.png';
 }
 
 if (with_audio) {
