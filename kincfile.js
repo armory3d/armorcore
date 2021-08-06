@@ -1,15 +1,23 @@
+let flags = {
+	release: process.argv.indexOf("--debug") == -1,
+	with_d3dcompiler: true,
+	with_nfd: true,
+	with_tinydir: true,
+	with_zlib: true,
+	with_stb_image_write: true,
+	with_audio: false,
+	with_texsynth: false,
+	with_onnx: false,
+	with_krafix: graphics === GraphicsApi.Vulkan, // glsl to spirv for vulkan
+	with_worker: false,
+};
 
-const release = process.argv.indexOf("--debug") == -1;
-const with_d3dcompiler = true;
-const with_nfd = true;
-const with_tinydir = true;
-const with_zlib = true;
-const with_stb_image_write = true;
-const with_audio = false;
-const with_texsynth = false;
-const with_onnx = false;
-const with_krafix = graphics === GraphicsApi.Vulkan; // glsl to spirv for vulkan
-const with_worker = false;
+try {
+	// Parent folder
+	require('../../../../../kincflags.js').set_flags(flags);
+}
+catch (e) {
+}
 
 const system = platform === Platform.Windows ? "win32" :
 			   platform === Platform.Linux   ? "linux" :
@@ -19,7 +27,7 @@ const system = platform === Platform.Windows ? "win32" :
 			   platform === Platform.iOS     ? "ios" :
 			   								   "unknown";
 
-const build = release ? 'release' : 'debug';
+const build = flags.release ? 'release' : 'debug';
 const libdir = 'v8/libraries/' + system + '/' + build + '/';
 
 let project = new Project('Krom');
@@ -34,12 +42,11 @@ project.targetOptions.android.minSdkVersion = 29;
 project.targetOptions.android.targetSdkVersion = 29;
 
 if (platform === Platform.OSX) {
-	// Otherwise V8::Initialize() hangs
-	project.cpp = true;
+	project.cpp = true; // Otherwise V8::Initialize() hangs
 	project.icon = 'icon_macos.png';
 }
 
-if (with_audio) {
+if (flags.with_audio) {
 	project.addDefine('WITH_AUDIO');
 }
 
@@ -51,7 +58,7 @@ if (platform === Platform.HTML5) {
 }
 else {
 	project.addFile('Sources/main.cpp');
-	if (with_worker) {
+	if (flags.with_worker) {
 		project.addDefine('WITH_WORKER');
 		project.addFile('Sources/worker.h');
 		project.addFile('Sources/worker.cpp');
@@ -77,12 +84,12 @@ if (platform === Platform.Windows) {
 	project.addLib(libdir + 'v8_monolith');
 	// project.addDefine('V8_COMPRESS_POINTERS');
 	// project.addDefine('V8_31BIT_SMIS_ON_64BIT_ARCH');
-	if (with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
+	if (flags.with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
 		project.addDefine('WITH_D3DCOMPILER');
 		project.addLib("d3d11");
 		project.addLib("d3dcompiler");
 	}
-	if (!release) {
+	if (!flags.release) {
 		project.addDefine('_HAS_ITERATOR_DEBUGGING=0');
 		project.addDefine('_ITERATOR_DEBUG_LEVEL=0');
 	}
@@ -111,7 +118,7 @@ else if (platform === Platform.OSX) {
 	project.addLib('v8/libraries/macos/release/libv8_monolith.a');
 }
 
-if (with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
+if (flags.with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
 	project.addDefine('WITH_NFD');
 	project.addIncludeDir("Libraries/nfd/include");
 	project.addFile('Libraries/nfd/nfd_common.c');
@@ -146,11 +153,11 @@ if (with_nfd && (platform === Platform.Windows || platform === Platform.Linux ||
 		project.addFile('Libraries/nfd/nfd_cocoa.m');
 	}
 }
-if (with_tinydir) {
+if (flags.with_tinydir) {
 	project.addDefine('WITH_TINYDIR');
 	project.addIncludeDir("Libraries/tinydir/include");
 }
-if (with_zlib) {
+if (flags.with_zlib) {
 	project.addDefine('WITH_ZLIB');
 	project.addIncludeDir("Libraries/zlib");
 	project.addFile("Libraries/zlib/*.h");
@@ -160,11 +167,11 @@ if (with_zlib) {
 	project.addExclude("Libraries/zlib/gzwrite.c");
 	project.addExclude("Libraries/zlib/gzread.c");
 }
-if (with_stb_image_write) {
+if (flags.with_stb_image_write) {
 	project.addDefine('WITH_STB_IMAGE_WRITE');
 	project.addIncludeDir("Libraries/stb");
 }
-if (with_texsynth) {
+if (flags.with_texsynth) {
 	project.addDefine('WITH_TEXSYNTH');
 	project.addIncludeDir("Libraries/texsynth");
 	if (platform === Platform.Windows) {
@@ -177,7 +184,7 @@ if (with_texsynth) {
 		project.addLib('Libraries/texsynth/macos/libtexsynth.a');
 	}
 }
-if (with_onnx) {
+if (flags.with_onnx) {
 	project.addDefine('WITH_ONNX');
 	project.addIncludeDir("Libraries/onnx/include");
 	if (platform === Platform.Windows) {
@@ -190,7 +197,7 @@ if (with_onnx) {
 		project.addLib('Libraries/onnx/macos/libonnx.dylib');
 	}
 }
-if (with_krafix) {
+if (flags.with_krafix) {
 	await project.addProject('Libraries/glsl_to_spirv');
 }
 
