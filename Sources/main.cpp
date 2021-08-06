@@ -605,7 +605,7 @@ namespace {
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
 		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)malloc(sizeof(kinc_g4_index_buffer_t));
-		kinc_g4_index_buffer_init(buffer, args[0]->Int32Value(isolate->GetCurrentContext()).FromJust(), KINC_G4_INDEX_BUFFER_FORMAT_32BIT);
+		kinc_g4_index_buffer_init(buffer, args[0]->Int32Value(isolate->GetCurrentContext()).FromJust(), KINC_G4_INDEX_BUFFER_FORMAT_32BIT, KINC_G4_USAGE_STATIC);
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 		obj->SetInternalField(0, External::New(isolate, buffer));
 		args.GetReturnValue().Set(obj);
