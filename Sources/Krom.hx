@@ -1,5 +1,5 @@
 extern class Krom {
-	static inline var KROM_API: Int = 5;
+	static inline var KROM_API: Int = 6;
 
 	static function clear(flags: Int, color: Int, depth: Float, stencil: Int): Void;
 	static function createVertexShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
