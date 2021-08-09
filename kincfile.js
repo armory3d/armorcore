@@ -1,10 +1,12 @@
 let flags = {
+	name: 'Krom',
+	package: 'org.armory3d',
 	release: process.argv.indexOf("--debug") == -1,
-	with_d3dcompiler: true,
-	with_nfd: true,
-	with_tinydir: true,
-	with_zlib: true,
-	with_stb_image_write: true,
+	with_d3dcompiler: false,
+	with_nfd: false,
+	with_tinydir: false,
+	with_zlib: false,
+	with_stb_image_write: false,
 	with_audio: false,
 	with_texsynth: false,
 	with_onnx: false,
@@ -30,12 +32,12 @@ const system = platform === Platform.Windows ? "win32" :
 const build = flags.release ? 'release' : 'debug';
 const libdir = 'v8/libraries/' + system + '/' + build + '/';
 
-let project = new Project('Krom');
+let project = new Project(flags.name);
 project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 
-project.targetOptions.android.package = 'org.armorpaint';
+project.targetOptions.android.package = flags.package;
 project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
 project.targetOptions.android.screenOrientation = ['sensorLandscape'];
 project.targetOptions.android.minSdkVersion = 29;
