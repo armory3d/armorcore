@@ -697,12 +697,8 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)field->Value();
-		int start = 0;
-		int count = kinc_g4_vertex_buffer_count(buffer);
-		if (armorcore) {
-			start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
-			count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
-		}
+		int start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
+		int count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		float *vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, (count - start) * kinc_g4_vertex_buffer_stride(buffer));
 		args.GetReturnValue().Set(Float32Array::New(abuffer, 0, (count - start) * kinc_g4_vertex_buffer_stride(buffer) / 4));
@@ -712,10 +708,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)field->Value();
-		int count = kinc_g4_vertex_buffer_count(buffer);
-		if (armorcore) {
-			count = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
-		}
+		int count = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		kinc_g4_vertex_buffer_unlock(buffer, count);
 	}
 
@@ -1375,6 +1368,10 @@ namespace {
 		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
+		if (!armorcore) {
+			obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
+			obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
+		}
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -1863,6 +1860,10 @@ namespace {
 		obj->SetInternalField(0, External::New(isolate, texture));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
+		if (!armorcore) {
+			obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
+			obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
+		}
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -1907,6 +1908,10 @@ namespace {
 		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
+		if (!armorcore) {
+			obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
+			obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
+		}
 		args.GetReturnValue().Set(obj);
 	}
 
