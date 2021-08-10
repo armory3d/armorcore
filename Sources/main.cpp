@@ -2702,6 +2702,7 @@ namespace {
 
 			if (!file.is_dir || !foldersOnly) {
 				#ifdef KORE_WINDOWS
+				if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesW(file.path)) continue; //skip hidden files
 				if (wcscmp(file.name, L".") == 0 || wcscmp(file.name, L"..") == 0) continue;
 				if (wcslen(temp_wstring) + wcslen(file.name) + 1 > 1023) break;
 				wcscat(temp_wstring, file.name);
