@@ -1268,7 +1268,7 @@ namespace {
 		format = KINC_IMAGE_FORMAT_RGBA32;
 		int size = (int)kinc_file_reader_size(&reader);
 		int comp;
-		bool readSuccessfully = true;
+		bool success = true;
 		unsigned char *data = (unsigned char *)malloc(size);
 		kinc_file_reader_read(&reader, data, size);
 		kinc_file_reader_close(&reader);
@@ -1295,14 +1295,14 @@ namespace {
 				format = KINC_IMAGE_FORMAT_RGBA128;
 			}
 			else {
-				readSuccessfully = false;
+				success = false;
 			}
 		}
 		else if (ends_with(filename, "hdr")) {
 			output = (unsigned char *)stbi_loadf_from_memory(data, size, &width, &height, &comp, 4);
 			if (output == nullptr) {
 				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
-				readSuccessfully = false;
+				success = false;
 			}
 			format = KINC_IMAGE_FORMAT_RGBA128;
 		}
@@ -1310,18 +1310,18 @@ namespace {
 			output = stbi_load_from_memory(data, size, &width, &height, &comp, 4);
 			if (output == nullptr) {
 				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
-				readSuccessfully = false;
+				success = false;
 			}
 		}
 		free(data);
-		return readSuccessfully;
+		return success;
 	}
 
 	void krom_load_image(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		bool readable = args[1]->ToBoolean(isolate)->Value();
-		bool readSuccessfully = true;
+		bool success = true;
 
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
@@ -1332,33 +1332,33 @@ namespace {
 				int image_width;
 				int image_height;
 				kinc_image_format_t image_format;
-				readSuccessfully = load_image(reader, *utf8_value, image_data, image_width, image_height, image_format);
-				if (readSuccessfully) {
+				success = load_image(reader, *utf8_value, image_data, image_width, image_height, image_format);
+				if (success) {
 					kinc_image_init(image, image_data, image_width, image_height, image_format);
 				}
 			}
 			else {
-				readSuccessfully = false;
+				success = false;
 			}
 		}
 		else {
 			// TODO: make kinc_image load faster
 			size_t byte_size = kinc_image_size_from_file(*utf8_value);
 			if (byte_size == 0) {
-				readSuccessfully = false;
+				success = false;
 			}
 			else {
-				void* memory = malloc(byte_size);
+				void *memory = malloc(byte_size);
 				kinc_image_init_from_file(image, memory, *utf8_value);
 			}
 		}
 
-		if (!readSuccessfully) {
+		if (!success) {
 			free(image);
 			return;
 		}
 
-		kinc_g4_texture_t* texture = (kinc_g4_texture_t*)malloc(sizeof(kinc_g4_texture_t));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_g4_texture_init_from_image(texture, image);
 		if (!readable) {
 			delete[] image->data;
