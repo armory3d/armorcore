@@ -9,7 +9,8 @@ import haxe.io.BytesData;
 class Assets {
 
 	public static function loadImageFromPath(path: String, readable: Bool, done: Image -> Void): Void {
-		done(Image._fromTexture(Krom.loadImage(path, readable)));
+		var image = Krom.loadImage(path, readable);
+		if (image != null) done(Image._fromTexture(image));
 	}
 
 	public static function loadBlobFromPath(path: String, done: Blob -> Void): Void {
