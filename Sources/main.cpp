@@ -2204,20 +2204,25 @@ namespace {
 		fclose(file);
 	}
 
-	void krom_sys_command(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value utf8_cmd(isolate, args[0]);
+	int sys_command(const char *cmd) {
 		#ifdef KORE_WINDOWS
-		int wlen = MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, NULL, 0);
+		int wlen = MultiByteToWideChar(CP_UTF8, 0, cmd, -1, NULL, 0);
 		wchar_t *wstr = new wchar_t[wlen];
-		MultiByteToWideChar(CP_UTF8, 0, *utf8_cmd, -1, wstr, wlen);
+		MultiByteToWideChar(CP_UTF8, 0, cmd, -1, wstr, wlen);
 		int result = _wsystem(wstr);
 		delete[] wstr;
 		#elif KORE_IOS
 		int result = 0;
 		#else
-		int result = system(*utf8_cmd);
+		int result = system(cmd);
 		#endif
+		return result;
+	}
+
+	void krom_sys_command(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_cmd(isolate, args[0]);
+		int result = sys_command(*utf8_cmd);
 		args.GetReturnValue().Set(Int32::New(isolate, result));
 	}
 
@@ -2705,6 +2710,26 @@ namespace {
 		}
 
 		args.GetReturnValue().Set(Boolean::New(isolate, exists));
+	}
+
+	void krom_delete_file(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value utf8_value(isolate, args[0]);
+		#if KORE_IOS
+		IOSDeleteFile(*utf8_value);
+		#elif KORE_WINDOWS
+		char path[1024];
+		strcpy(path, "del /f \"");
+		strcat(path, *utf8_value);
+		strcat(path, "\"");
+		sys_command(path);
+		#else
+		char path[1024];
+		strcpy(path, "rm \"");
+		strcat(path, *utf8_value);
+		strcat(path, "\"");
+		sys_command(path);
+		#endif
 	}
 
 	#ifdef WITH_ZLIB
@@ -3399,6 +3424,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "readDirectory").ToLocalChecked(), FunctionTemplate::New(isolate, krom_read_directory));
 		#endif
 		krom->Set(String::NewFromUtf8(isolate, "fileExists").ToLocalChecked(), FunctionTemplate::New(isolate, krom_file_exists));
+		krom->Set(String::NewFromUtf8(isolate, "deleteFile").ToLocalChecked(), FunctionTemplate::New(isolate, krom_delete_file));
 		#ifdef WITH_ZLIB
 		krom->Set(String::NewFromUtf8(isolate, "inflate").ToLocalChecked(), FunctionTemplate::New(isolate, krom_inflate));
 		krom->Set(String::NewFromUtf8(isolate, "deflate").ToLocalChecked(), FunctionTemplate::New(isolate, krom_deflate));

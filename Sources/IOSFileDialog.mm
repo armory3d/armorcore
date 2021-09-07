@@ -17,3 +17,9 @@ wchar_t* IOSFileDialogSave() {
 	NSString *filePath = [documentsDirectory stringByAppendingString:fileName];
 	return (wchar_t*)[filePath cStringUsingEncoding:NSUTF32LittleEndianStringEncoding];
 }
+
+void IOSDeleteFile(const char *path) {
+	NSError *error = nil;
+	NSString *nspath = [NSString stringWithUTF8String:path];
+	[[NSFileManager defaultManager] removeItemAtPath:nspath error:&error];
+}

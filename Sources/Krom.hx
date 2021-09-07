@@ -178,6 +178,7 @@ extern class Krom {
 	static function openDialog(filterList: String, defaultPath: String, openMultiple: Bool): Array<String>;
 	static function readDirectory(path: String, foldersOnly: Bool): String;
 	static function fileExists(path: String): Bool;
+	static function deleteFile(path: String): Void;
 	static function inflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
 	static function deflate(bytes: js.lib.ArrayBuffer, raw: Bool): js.lib.ArrayBuffer;
 	static function writeJpg(path: String, bytes: js.lib.ArrayBuffer, w: Int, h: Int, format: Int, quality: Int): Void; // RGBA, R, RGB1, RRR1, GGG1, BBB1, AAA1
