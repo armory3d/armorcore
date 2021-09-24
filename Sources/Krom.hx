@@ -77,6 +77,7 @@ extern class Krom {
 	static function writeAudioBuffer(buffer: js.lib.ArrayBuffer, samples: Int): Void;
 	static function loadBlob(file: String): js.lib.ArrayBuffer;
 	static function loadUrl(url: String): Void;
+	static function copyToClipboard(text: String): Void;
 
 	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, frequency: Int, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int): Void;
 	static function setApplicationName(name: String): Void;
