@@ -105,6 +105,10 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #include "worker.h"
 #endif
 
+#if (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) && defined(KORE_WINDOWS)
+#include <filesystem>
+#endif
+
 #ifdef KORE_MACOS
 extern const char *macgetresourcepath();
 #endif
@@ -2655,7 +2659,44 @@ namespace {
 	}
 	#endif
 
-	#ifdef WITH_TINYDIR
+	#if (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) && defined(KORE_WINDOWS)
+	bool is_hidden(const std::filesystem::path& p) {
+		auto name = p.filename().u8string();
+		if (name != ".." && name != "." && name[0] == '.')
+			return true;
+
+		#ifdef KORE_WINDOWS
+		if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesW(p.wstring().c_str()))
+			return true;
+		#endif
+		return false;
+	}
+
+	void krom_read_directory(const FunctionCallbackInfo<Value>& args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value path(isolate, args[0]);
+		bool foldersOnly = args[1]->ToBoolean(isolate)->Value();
+
+		std::string result;
+		try {
+			for (auto const& dir_entry : std::filesystem::directory_iterator{ std::filesystem::u8path(*path),std::filesystem::directory_options::skip_permission_denied }) {
+				if (foldersOnly && dir_entry.is_directory())
+					continue;
+
+				if ((dir_entry.is_regular_file() || dir_entry.is_directory()) && !is_hidden(dir_entry))
+					result += dir_entry.path().filename().u8string() + "\n";
+			}
+		}
+		catch (std::filesystem::filesystem_error& ex) { // path is no directory or other problem
+		}
+
+		if (!result.empty())
+			result.pop_back(); //remove last '\n'
+
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, result.c_str()).ToLocalChecked());
+	}
+
+	#elif defined(WITH_TINYDIR)
 	void krom_read_directory(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value path(isolate, args[0]);
