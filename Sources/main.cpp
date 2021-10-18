@@ -120,6 +120,10 @@ const int KROM_API = 6;
 int save_and_quit = 0; // off, save, nosave
 void armory_save_and_quit(bool save) { save_and_quit = save ? 1 : 2; }
 
+#if defined(KORE_IOS) || defined(KORE_ANDROID)
+char mobile_title[1024];
+#endif
+
 #if defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
 extern void krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype);
 #endif
@@ -1699,6 +1703,9 @@ namespace {
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		String::Utf8Value title(isolate, args[1]);
 		kinc_window_set_title(windowId, *title);
+		#if defined(KORE_IOS) || defined(KORE_ANDROID)
+		strcpy(mobile_title, *title);
+		#endif
 	}
 
 	void krom_get_window_mode(const FunctionCallbackInfo<Value> &args) {
@@ -2580,7 +2587,7 @@ namespace {
 		nfdpathset_t outPaths;
 		nfdchar_t* outPath;
 		nfdresult_t result = openMultiple ? NFD_OpenDialogMultiple(*filterList, *defaultPath, &outPaths) : NFD_OpenDialog(*filterList, *defaultPath, &outPath);
-		
+
 		if (result == NFD_OKAY) {
 			int pathCount = openMultiple ? (int)NFD_PathSet_GetCount(&outPaths) : 1;
 			Local<Array> result = Array::New(isolate, pathCount);
@@ -3588,7 +3595,12 @@ namespace {
 		#endif
 
 		#ifdef IDLE_SLEEP
-		if (++pausedFrames > 120) {
+		#if defined(KORE_IOS) || defined(KORE_ANDROID)
+		int sleepLimit = 1200;
+		#else
+		int sleepLimit = 120;
+		#endif
+		if (++pausedFrames > sleepLimit) {
 			usleep(1000);
 			return;
 		}
