@@ -90,4 +90,5 @@ void android_check_permissions() {
 	JNINativeMethod methodTable[] = {{"onAndroidFilePicked", "(Ljava/lang/String;)V", (void*)Java_tech_kode_kore_KoreActivity_onAndroidFilePicked}};
 	int methodTableSize = sizeof(methodTable) / sizeof(methodTable[0]);
 	env->RegisterNatives(koreActivityClass, methodTable, methodTableSize);
+	activity->vm->DetachCurrentThread();
 }
