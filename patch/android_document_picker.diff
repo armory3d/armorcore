@@ -1,8 +1,49 @@
-diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
-index 730eb40d..902e77d7 100644
+﻿diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
+index 3e3a4b46..90fbff08 100644
 --- a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
 +++ b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
-@@ -142,4 +142,26 @@ public class KincActivity extends NativeActivity {
+@@ -13,10 +13,15 @@ import android.os.Message;
+ import android.os.Vibrator;
+ import android.os.VibrationEffect;
+ import android.os.Build;
++import android.view.DragAndDropPermissions;
++import android.view.DragEvent;
+ import android.view.View;
+ import android.view.WindowManager;
+ import android.view.inputmethod.InputMethodManager;
+ 
++import static android.view.DragEvent.ACTION_DRAG_STARTED;
++import static android.view.DragEvent.ACTION_DROP;
++
+ public class KincActivity extends NativeActivity {
+ 	private static KincActivity instance;
+ 	private InputMethodManager inputManager;
+@@ -45,6 +50,24 @@ public class KincActivity extends NativeActivity {
+         } catch (PackageManager.NameNotFoundException|NullPointerException e) {
+             isDisabledStickyImmersiveMode = false;
+         }
++
++       getWindow().getDecorView().setOnDragListener(
++           new View.OnDragListener() {
++               @Override
++               public boolean onDrag(View view, DragEvent dragEvent) {
++                   switch(dragEvent.getAction()) {
++						case ACTION_DRAG_STARTED:
++							return true;
++						case ACTION_DROP:
++							DragAndDropPermissions dropPermissions = requestDragAndDropPermissions(dragEvent);
++							importFile(dragEvent.getClipData().getItemAt(0).getUri());
++							dropPermissions.release();
++							return true;
++					}
++					return false;
++				}
++			}
++		);
+ 	}
+ 
+     private void hideSystemUI() {
+@@ -148,4 +171,29 @@ public class KincActivity extends NativeActivity {
  			}
  		});
  	}
@@ -13,13 +54,7 @@ index 730eb40d..902e77d7 100644
 +	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 +		super.onActivityResult(requestCode, resultCode, data);
 +		if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
-+			Uri pickedFile = data.getData();
-+			String[] filePath = {android.provider.MediaStore.Images.Media.DATA };
-+			android.database.Cursor cursor = getContentResolver().query(pickedFile, filePath, null, null, null);
-+			cursor.moveToFirst();
-+			String pickedPath = cursor.getString(cursor.getColumnIndex(filePath[0]));
-+			cursor.close();
-+			onAndroidFilePicked(pickedPath);
++			importFile(data.getData());
 +		}
 +	}
 +
@@ -27,5 +62,14 @@ index 730eb40d..902e77d7 100644
 +		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 +		intent.setType("*/*");
 +		getInstance().startActivityForResult(Intent.createChooser(intent, "Select File"), 1);
++	}
++
++	private void importFile(Uri pickedFile) {
++		String[] filePath = { android.provider.MediaStore.Images.Media.DATA };
++		android.database.Cursor cursor = getContentResolver().query(pickedFile, filePath, null, null, null);
++		cursor.moveToFirst();
++		String pickedPath = cursor.getString(cursor.getColumnIndex(filePath[0]));
++		cursor.close();
++		onAndroidFilePicked(pickedPath);
 +	}
  }

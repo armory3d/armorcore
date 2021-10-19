@@ -26,17 +26,7 @@ void AndroidFileDialogOpen() {
 	JNIEnv *env;
 	activity->vm->AttachCurrentThread(&env, nullptr);
 	jclass koreActivityClass = kinc_android_find_class(env, "tech.kinc.KincActivity");
-
-	static bool reigstered = false;
-	if (!reigstered) {
-		JNINativeMethod methodTable[] = {{"onAndroidFilePicked", "(Ljava/lang/String;)V", (void*)Java_tech_kode_kore_KoreActivity_onAndroidFilePicked}};
-		int methodTableSize = sizeof(methodTable) / sizeof(methodTable[0]);
-		env->RegisterNatives(koreActivityClass, methodTable, methodTableSize);
-		reigstered = true;
-	}
-
 	env->CallStaticVoidMethod(koreActivityClass, env->GetStaticMethodID(koreActivityClass, "pickFile", "()V"));
-
 	activity->vm->DetachCurrentThread();
 }
 
@@ -93,4 +83,11 @@ void android_check_permissions() {
 	struct android_app *app = (struct android_app *)activity->instance;
 	bool hasPermissions = android_has_permission(app, "READ_EXTERNAL_STORAGE") && android_has_permission(app, "WRITE_EXTERNAL_STORAGE");
 	if (!hasPermissions) android_request_file_permissions(app);
+
+	JNIEnv *env;
+	activity->vm->AttachCurrentThread(&env, nullptr);
+	jclass koreActivityClass = kinc_android_find_class(env, "tech.kinc.KincActivity");
+	JNINativeMethod methodTable[] = {{"onAndroidFilePicked", "(Ljava/lang/String;)V", (void*)Java_tech_kode_kore_KoreActivity_onAndroidFilePicked}};
+	int methodTableSize = sizeof(methodTable) / sizeof(methodTable[0]);
+	env->RegisterNatives(koreActivityClass, methodTable, methodTableSize);
 }
