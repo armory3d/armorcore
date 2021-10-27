@@ -41,7 +41,7 @@ project.targetOptions.android.package = flags.package;
 project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
 project.targetOptions.android.screenOrientation = ['sensorLandscape'];
 project.targetOptions.android.minSdkVersion = 29;
-project.targetOptions.android.targetSdkVersion = 29;
+project.targetOptions.android.targetSdkVersion = 30;
 
 if (platform === Platform.OSX) {
 	project.cpp = true; // Otherwise V8::Initialize() hangs
