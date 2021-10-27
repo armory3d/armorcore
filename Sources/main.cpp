@@ -230,6 +230,11 @@ namespace {
 	#ifdef ARM_PROFILE
 	double startup_time = 0.0;
 	#endif
+	#ifdef WITH_ONNX
+	const OrtApi *ort = NULL;
+	OrtEnv *ort_env;
+	OrtSessionOptions *ort_session_options;
+	#endif
 
 	class KromCallbackdata {
 	public:
@@ -2960,21 +2965,27 @@ namespace {
 
 	#ifdef WITH_ONNX
 	void krom_ml_inference(const FunctionCallbackInfo<Value> &args) {
+		// double inference_time = kinc_time();
 		HandleScope scope(args.GetIsolate());
-		const OrtApi *ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
-		OrtEnv *env;
-		ort->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "armorcore", &env);
+		if (ort == NULL) {
+			ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
+			ort->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "armorcore", &ort_env);
 
-		OrtSessionOptions *session_options;
-		ort->CreateSessionOptions(&session_options);
-		ort->SetIntraOpNumThreads(session_options, 8);
-		ort->SetInterOpNumThreads(session_options, 8);
+			ort->CreateSessionOptions(&ort_session_options);
+			ort->SetIntraOpNumThreads(ort_session_options, 8);
+			ort->SetInterOpNumThreads(ort_session_options, 8);
 
-		#ifdef KORE_WINDOWS
-		// ort->SetSessionExecutionMode(session_options, ORT_SEQUENTIAL);
-		// ort->DisableMemPattern(session_options);
-		// OrtSessionOptionsAppendExecutionProvider_DML(session_options, 0);
-		#endif
+			#ifdef KORE_WINDOWS
+			ort->SetSessionExecutionMode(ort_session_options, ORT_SEQUENTIAL);
+			ort->DisableMemPattern(ort_session_options);
+			OrtStatus *onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
+			if (onnx_status != NULL) {
+				const char *msg = ort->GetErrorMessage(onnx_status);
+				kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
+				ort->ReleaseStatus(onnx_status);
+			}
+			#endif
+		}
 
 		Local<ArrayBuffer> model_buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents model_content = model_buffer->GetContents();
@@ -2983,7 +2994,7 @@ namespace {
 		ArrayBuffer::Contents tensor_content = tensor_buffer->GetContents();
 
 		OrtSession *session;
-		ort->CreateSessionFromArray(env, model_content.Data(), (int)model_content.ByteLength(), session_options, &session);
+		ort->CreateSessionFromArray(ort_env, model_content.Data(), (int)model_content.ByteLength(), ort_session_options, &session);
 		OrtAllocator *allocator;
 		ort->GetAllocatorWithDefaultOptions(&allocator);
 		char *input_node_name;
@@ -3032,9 +3043,8 @@ namespace {
 		ort->ReleaseValue(output_tensor);
 		ort->ReleaseValue(input_tensor);
 		ort->ReleaseSession(session);
-		ort->ReleaseSessionOptions(session_options);
-		ort->ReleaseEnv(env);
 		args.GetReturnValue().Set(output);
+		// kinc_log(KINC_LOG_LEVEL_INFO, "Inference completed in %f", kinc_time() - inference_time);
 	}
 	#endif
 
@@ -4347,5 +4357,12 @@ int kickstart(int argc, char **argv) {
 
 	free(code);
 	end_v8();
+	#ifdef WITH_ONNX
+	if (ort != NULL) {
+		ort->ReleaseEnv(ort_env);
+		ort->ReleaseSessionOptions(ort_session_options);
+	}
+	#endif
+
 	return 0;
 }
