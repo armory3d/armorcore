@@ -1,10 +1,10 @@
-diff --git a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.mm b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.mm
-index b775c873..4397394a 100644
---- a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.mm
-+++ b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.mm
-@@ -128,8 +128,14 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
- 			| (pipeline->colorWriteMaskBlue[i] ? MTLColorWriteMaskBlue : 0)
- 			| (pipeline->colorWriteMaskAlpha[i] ? MTLColorWriteMaskAlpha : 0);
+﻿diff --git a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.m.h b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.m.h
+index 5a86f0f9..b7501353 100644
+--- a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.m.h
++++ b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.m.h
+@@ -141,8 +141,14 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
+ 		    (pipeline->colorWriteMaskRed[i] ? MTLColorWriteMaskRed : 0) | (pipeline->colorWriteMaskGreen[i] ? MTLColorWriteMaskGreen : 0) |
+ 		    (pipeline->colorWriteMaskBlue[i] ? MTLColorWriteMaskBlue : 0) | (pipeline->colorWriteMaskAlpha[i] ? MTLColorWriteMaskAlpha : 0);
  	}
 -	renderPipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
 -	renderPipelineDesc.stencilAttachmentPixelFormat = MTLPixelFormatInvalid;
@@ -16,61 +16,52 @@ index b775c873..4397394a 100644
 +		renderPipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatInvalid;
 +		renderPipelineDesc.stencilAttachmentPixelFormat = MTLPixelFormatInvalid;
 +	}
-
+ 
  	float offset = 0;
- 	MTLVertexDescriptor* vertexDescriptor = [[MTLVertexDescriptor alloc] init];
-@@ -145,7 +151,7 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
- 			vertexDescriptor.attributes[index].bufferIndex = 0;
- 			vertexDescriptor.attributes[index].offset = offset;
- 		}
--		
-+
- 		switch (pipeline->inputLayout[0]->elements[i].data) {
- 		case KINC_G4_VERTEX_DATA_FLOAT1:
- 			if (index >= 0) {
-@@ -196,41 +202,23 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
- 	NSError* errors = nil;
- 	MTLRenderPipelineReflection* reflection = nil;
- 	id<MTLDevice> device = getMetalDevice();
--	
-+
- 	pipeline->impl._pipeline = [device newRenderPipelineStateWithDescriptor:renderPipelineDesc options:MTLPipelineOptionBufferTypeInfo reflection:&reflection error:&errors];
+ 	MTLVertexDescriptor *vertexDescriptor = [[MTLVertexDescriptor alloc] init];
+@@ -217,43 +223,20 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
  	if (errors != nil) NSLog(@"%@", [errors localizedDescription]);
  	assert(pipeline->impl._pipeline && !errors);
--	
+ 
 -	renderPipelineDesc.depthAttachmentPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
 -	renderPipelineDesc.stencilAttachmentPixelFormat = MTLPixelFormatDepth32Float_Stencil8;
--	pipeline->impl._pipelineDepth = [device newRenderPipelineStateWithDescriptor:renderPipelineDesc options:MTLPipelineOptionBufferTypeInfo reflection:&reflection error:&errors];
+-	pipeline->impl._pipelineDepth = (__bridge_retained void *)[device newRenderPipelineStateWithDescriptor:renderPipelineDesc
+-	                                                                                               options:MTLPipelineOptionBufferTypeInfo
+-	                                                                                            reflection:&reflection
+-	                                                                                                 error:&errors];
 -	if (errors != nil) NSLog(@"%@", [errors localizedDescription]);
 -	assert(pipeline->impl._pipelineDepth && !errors);
--	
-+
- 	pipeline->impl._reflection = reflection;
-
- 	MTLDepthStencilDescriptor* depthStencilDescriptor = [MTLDepthStencilDescriptor new];
- 	depthStencilDescriptor.depthCompareFunction = convert(pipeline->depthMode);
+-
+ 	pipeline->impl._reflection = (__bridge_retained void *)reflection;
+ 
+ 	MTLDepthStencilDescriptor *depthStencilDescriptor = [MTLDepthStencilDescriptor new];
+ 	depthStencilDescriptor.depthCompareFunction = convert_compare_mode(pipeline->depthMode);
  	depthStencilDescriptor.depthWriteEnabled = pipeline->depthWrite;
- 	pipeline->impl._depthStencil = [device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
--	
+ 	pipeline->impl._depthStencil = (__bridge_retained void *)[device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+-
 -	depthStencilDescriptor.depthCompareFunction = MTLCompareFunctionAlways;
 -	depthStencilDescriptor.depthWriteEnabled = false;
--	pipeline->impl._depthStencilNone = [device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
+-	pipeline->impl._depthStencilNone = (__bridge_retained void *)[device newDepthStencilStateWithDescriptor:depthStencilDescriptor];
  }
-
--extern "C" bool kinc_internal_current_render_target_has_depth();
--
+ 
+ bool kinc_internal_current_render_target_has_depth(void);
+ 
  void kinc_g5_internal_pipeline_set(kinc_g5_pipeline_t *pipeline) {
  	id<MTLRenderCommandEncoder> encoder = getMetalEncoder();
 -	if (kinc_internal_current_render_target_has_depth()) {
--		[encoder setRenderPipelineState:pipeline->impl._pipelineDepth];
--		[encoder setDepthStencilState:pipeline->impl._depthStencil];
+-		id<MTLRenderPipelineState> pipe = (__bridge id<MTLRenderPipelineState>)pipeline->impl._pipelineDepth;
+-		[encoder setRenderPipelineState:pipe];
+-		id<MTLDepthStencilState> depthStencil = (__bridge id<MTLDepthStencilState>)pipeline->impl._depthStencil;
+-		[encoder setDepthStencilState:depthStencil];
 -	}
 -	else {
--		[encoder setRenderPipelineState:pipeline->impl._pipeline];
--		[encoder setDepthStencilState:pipeline->impl._depthStencilNone];
+-		id<MTLRenderPipelineState> pipe = (__bridge id<MTLRenderPipelineState>)pipeline->impl._pipeline;
+-		[encoder setRenderPipelineState:pipe];
+-		id<MTLDepthStencilState> depthStencil = (__bridge id<MTLDepthStencilState>)pipeline->impl._depthStencilNone;
+-		[encoder setDepthStencilState:depthStencil];
 -	}
 +	[encoder setRenderPipelineState:pipeline->impl._pipeline];
 +	[encoder setDepthStencilState:pipeline->impl._depthStencil];
  	[encoder setFrontFacingWinding:MTLWindingClockwise];
- 	[encoder setCullMode:convert(pipeline->cullMode)];
+ 	[encoder setCullMode:convert_cull_mode(pipeline->cullMode)];
  }

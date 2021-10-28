@@ -11,10 +11,10 @@ index ecfbf793..70841c72 100644
  @private
  }
  
-diff --git a/Backends/System/iOS/Sources/kinc/backend/GLViewController.mm b/Backends/System/iOS/Sources/kinc/backend/GLViewController.mm
+diff --git a/Backends/System/iOS/Sources/kinc/backend/GLViewController.m.h b/Backends/System/iOS/Sources/kinc/backend/GLViewController.m.h
 index 7ea7d6d0..a785f6fe 100644
---- a/Backends/System/iOS/Sources/kinc/backend/GLViewController.mm
-+++ b/Backends/System/iOS/Sources/kinc/backend/GLViewController.mm
+--- a/Backends/System/iOS/Sources/kinc/backend/GLViewController.m.h
++++ b/Backends/System/iOS/Sources/kinc/backend/GLViewController.m.h
 @@ -63,10 +63,62 @@ id getMetalQueue() {
  - (void)loadView {
  	visible = true;

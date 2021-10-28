@@ -1,3 +1,4 @@
+#include <kinc/memory.h>
 #include <kinc/log.h>
 #include <kinc/io/filereader.h>
 #include <kinc/io/filewriter.h>
@@ -118,7 +119,7 @@ using namespace v8;
 const int KROM_API = 6;
 
 int save_and_quit = 0; // off, save, nosave
-void armory_save_and_quit(bool save) { save_and_quit = save ? 1 : 2; }
+extern "C" void armory_save_and_quit(bool save) { save_and_quit = save ? 1 : 2; }
 
 #if defined(KORE_IOS) || defined(KORE_ANDROID)
 char mobile_title[1024];
