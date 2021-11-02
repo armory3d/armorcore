@@ -488,7 +488,7 @@ class Graphics {
 	public static function createImageVertexStructure(): VertexStructure {
 		var structure = new VertexStructure();
 		structure.add("vertexPosition", VertexData.Float3);
-		structure.add("texPosition", VertexData.Float2);
+		structure.add("vertexUV", VertexData.Float2);
 		structure.add("vertexColor", VertexData.Float4);
 		return structure;
 	}
@@ -527,7 +527,7 @@ class Graphics {
 	public static function createTextVertexStructure(): VertexStructure {
 		var structure = new VertexStructure();
 		structure.add("vertexPosition", VertexData.Float3);
-		structure.add("texPosition", VertexData.Float2);
+		structure.add("vertexUV", VertexData.Float2);
 		structure.add("vertexColor", VertexData.Float4);
 		return structure;
 	}

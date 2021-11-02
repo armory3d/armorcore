@@ -32,6 +32,14 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
+#ifdef KORE_RAYTRACE
+#include <kinc/graphics5/constantbuffer.h>
+#include <kinc/graphics5/commandlist.h>
+#include <kinc/graphics5/raytrace.h>
+#endif
+#ifdef KORE_VR
+#include <kinc/vr/vrinterface.h>
+#endif
 
 #include <libplatform/libplatform.h>
 #ifdef KORE_LINUX // xlib defines conflicting with v8
@@ -58,14 +66,6 @@ extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // K
 #include <d3d11.h>
 #include <D3Dcompiler.h>
 #include <strstream>
-#endif
-#ifdef KORE_RAYTRACE
-#include <kinc/graphics5/constantbuffer.h>
-#include <kinc/graphics5/commandlist.h>
-#include <kinc/graphics5/raytrace.h>
-#endif
-#ifdef KORE_VR
-#include <kinc/vr/vrinterface.h>
 #endif
 #ifdef WITH_NFD
 #include <nfd.h>
