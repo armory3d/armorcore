@@ -12,6 +12,7 @@ let flags = {
 	with_onnx: false,
 	with_krafix: graphics === GraphicsApi.Vulkan, // glsl to spirv for vulkan
 	with_worker: false,
+	with_plugin_embed: platform === Platform.iOS,
 };
 
 try {
@@ -201,6 +202,9 @@ if (flags.with_onnx) {
 }
 if (flags.with_krafix) {
 	await project.addProject('Libraries/glsl_to_spirv');
+}
+if (flags.with_plugin_embed) {
+	await project.addProject('Libraries/plugins');
 }
 
 resolve(project);

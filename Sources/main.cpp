@@ -105,6 +105,9 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #ifdef WITH_WORKER
 #include "worker.h"
 #endif
+#ifdef WITH_PLUGIN_EMBED
+void plugin_embed(v8::Isolate *isolate, v8::Local<v8::ObjectTemplate> global);
+#endif
 
 #ifdef KORE_MACOS
 extern const char *macgetresourcepath();
@@ -3486,6 +3489,10 @@ namespace {
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
+
+		#ifdef WITH_PLUGIN_EMBED
+		plugin_embed(isolate, global);
+		#endif
 
 		Local<Context> context = Context::New(isolate, NULL, global);
 		global_context.Reset(isolate, context);
