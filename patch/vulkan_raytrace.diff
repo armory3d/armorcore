@@ -11,23 +11,15 @@ index d7864bab..a1b5e205 100644
  	buf_info.flags = 0;
  
 diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h
-index db9d4ede..b18e8720 100644
+index ccbed33b..95793cf6 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h
 +++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h
-@@ -9,6 +9,7 @@
- #include <kinc/graphics5/indexbuffer.h>
- #include <kinc/graphics5/raytrace.h>
- #include <kinc/graphics5/vertexbuffer.h>
-+#include <kinc/graphics5/pipeline.h>
- #include <string.h>
- #include <vulkan/vulkan.h>
- 
-@@ -31,10 +32,20 @@ const char *miss_shader_name = "miss";
- VkDescriptorPool descriptor_pool;
+@@ -31,7 +31,16 @@ const char *miss_shader_name = "miss";
+ VkDescriptorPool raytrace_descriptor_pool;
  kinc_raytrace_acceleration_structure_t *accel;
  kinc_raytrace_pipeline_t *pipeline;
--kinc_g5_texture_t *output = nullptr;
-+kinc_g5_render_target_t *output = nullptr;
+-kinc_g5_texture_t *output = NULL;
++kinc_g5_render_target_t *output = NULL;
 +kinc_g5_render_target_t *texpaint0;
 +kinc_g5_render_target_t *texpaint1;
 +kinc_g5_render_target_t *texpaint2;
@@ -38,20 +30,24 @@ index db9d4ede..b18e8720 100644
 +kinc_g5_vertex_buffer_t *vb;
 +kinc_g5_index_buffer_t *ib;
  
- void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list *command_list, void *ray_shader, int ray_shader_size,
+ PFN_vkCreateRayTracingPipelinesKHR _vkCreateRayTracingPipelinesKHR = NULL;
+ PFN_vkGetRayTracingShaderGroupHandlesKHR _vkGetRayTracingShaderGroupHandlesKHR = NULL;
+@@ -45,6 +54,7 @@ PFN_vkCmdTraceRaysKHR _vkCmdTraceRaysKHR = NULL;
+ 
+ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list_t *command_list, void *ray_shader, int ray_shader_size,
                                   kinc_g5_constant_buffer_t *constant_buffer) {
-+	output = nullptr;
++	output = NULL;
  	pipeline->_constant_buffer = constant_buffer;
  
  	{
-@@ -42,26 +53,93 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
+@@ -52,26 +62,93 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
  		acceleration_structure_layout_binding.binding = 0;
  		acceleration_structure_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
  		acceleration_structure_layout_binding.descriptorCount = 1;
 -		acceleration_structure_layout_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 +		acceleration_structure_layout_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
  
- 		VkDescriptorSetLayoutBinding result_image_layout_binding{};
+ 		VkDescriptorSetLayoutBinding result_image_layout_binding = {0};
 -		result_image_layout_binding.binding = 1;
 +		result_image_layout_binding.binding = 10;
  		result_image_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
@@ -59,7 +55,7 @@ index db9d4ede..b18e8720 100644
 -		result_image_layout_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 +		result_image_layout_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
  
- 		VkDescriptorSetLayoutBinding uniform_buffer_binding{};
+ 		VkDescriptorSetLayoutBinding uniform_buffer_binding = {0};
 -		uniform_buffer_binding.binding = 2;
 +		uniform_buffer_binding.binding = 11;
  		uniform_buffer_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -69,55 +65,55 @@ index db9d4ede..b18e8720 100644
 -		VkDescriptorSetLayoutBinding bindings[3] = {acceleration_structure_layout_binding, result_image_layout_binding, uniform_buffer_binding};
 +		uniform_buffer_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 +
-+		VkDescriptorSetLayoutBinding ib_binding{};
++		VkDescriptorSetLayoutBinding ib_binding = {0};
 +		ib_binding.binding = 1;
 +		ib_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 +		ib_binding.descriptorCount = 1;
 +		ib_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 +
-+		VkDescriptorSetLayoutBinding vb_binding{};
++		VkDescriptorSetLayoutBinding vb_binding = {0};
 +		vb_binding.binding = 2;
 +		vb_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 +		vb_binding.descriptorCount = 1;
 +		vb_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 +
-+		VkDescriptorSetLayoutBinding tex0_binding{};
++		VkDescriptorSetLayoutBinding tex0_binding = {0};
 +		tex0_binding.binding = 3;
 +		tex0_binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +		tex0_binding.descriptorCount = 1;
 +		tex0_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 +
-+		VkDescriptorSetLayoutBinding tex1_binding{};
++		VkDescriptorSetLayoutBinding tex1_binding = {0};
 +		tex1_binding.binding = 4;
 +		tex1_binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +		tex1_binding.descriptorCount = 1;
 +		tex1_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 +
-+		VkDescriptorSetLayoutBinding tex2_binding{};
++		VkDescriptorSetLayoutBinding tex2_binding = {0};
 +		tex2_binding.binding = 5;
 +		tex2_binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +		tex2_binding.descriptorCount = 1;
 +		tex2_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 +
-+		VkDescriptorSetLayoutBinding texenv_binding{};
++		VkDescriptorSetLayoutBinding texenv_binding = {0};
 +		texenv_binding.binding = 6;
 +		texenv_binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +		texenv_binding.descriptorCount = 1;
 +		texenv_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 +
-+		VkDescriptorSetLayoutBinding texsobol_binding{};
++		VkDescriptorSetLayoutBinding texsobol_binding = {0};
 +		texsobol_binding.binding = 7;
 +		texsobol_binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +		texsobol_binding.descriptorCount = 1;
 +		texsobol_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 +
-+		VkDescriptorSetLayoutBinding texscramble_binding{};
++		VkDescriptorSetLayoutBinding texscramble_binding = {0};
 +		texscramble_binding.binding = 8;
 +		texscramble_binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +		texscramble_binding.descriptorCount = 1;
 +		texscramble_binding.stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR;
 +
-+		VkDescriptorSetLayoutBinding texrank_binding{};
++		VkDescriptorSetLayoutBinding texrank_binding = {0};
 +		texrank_binding.binding = 9;
 +		texrank_binding.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +		texrank_binding.descriptorCount = 1;
@@ -138,15 +134,15 @@ index db9d4ede..b18e8720 100644
 +			texrank_binding
 +		};
  
- 		VkDescriptorSetLayoutCreateInfo layout_info{};
+ 		VkDescriptorSetLayoutCreateInfo layout_info = {0};
  		layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
  		layout_info.pNext = NULL;
 -		layout_info.bindingCount = 3;
 +		layout_info.bindingCount = 12;
  		layout_info.pBindings = &bindings[0];
- 		vkCreateDescriptorSetLayout(device, &layout_info, nullptr, &pipeline->impl.descriptor_set_layout);
+ 		vkCreateDescriptorSetLayout(device, &layout_info, NULL, &pipeline->impl.descriptor_set_layout);
  
-@@ -224,23 +302,50 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
+@@ -233,23 +310,50 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
  	}
  
  	{
@@ -192,7 +188,7 @@ index db9d4ede..b18e8720 100644
 +		type_counts[11].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 +		type_counts[11].descriptorCount = 1;
 +
- 		VkDescriptorPoolCreateInfo descriptor_pool_create_info = {};
+ 		VkDescriptorPoolCreateInfo descriptor_pool_create_info = {0};
  		descriptor_pool_create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
  		descriptor_pool_create_info.pNext = NULL;
  		descriptor_pool_create_info.maxSets = 1024;
@@ -200,20 +196,21 @@ index db9d4ede..b18e8720 100644
 +		descriptor_pool_create_info.poolSizeCount = 12;
  		descriptor_pool_create_info.pPoolSizes = type_counts;
  
- 		vkCreateDescriptorPool(device, &descriptor_pool_create_info, nullptr, &descriptor_pool);
-@@ -270,8 +375,9 @@ uint64_t get_buffer_device_address(VkBuffer buffer) {
+ 		vkCreateDescriptorPool(device, &descriptor_pool_create_info, NULL, &raytrace_descriptor_pool);
+@@ -278,8 +382,10 @@ uint64_t get_buffer_device_address(VkBuffer buffer) {
+ 	return _vkGetBufferDeviceAddressKHR(device, &buffer_device_address_info);
  }
  
- void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *vb,
+-void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *vb,
 -                                               kinc_g5_index_buffer_t *ib) {
--
-+                                               kinc_g5_index_buffer_t *ib, float scale) {
++void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *_vb,
++                                               kinc_g5_index_buffer_t *_ib, float scale) {
 +	vb = _vb;
 +	ib = _ib;
- 	auto vkGetBufferDeviceAddressKHR = PFN_vkGetBufferDeviceAddressKHR(vkGetDeviceProcAddr(device, "vkGetBufferDeviceAddressKHR"));
- 	auto vkCreateAccelerationStructureKHR = PFN_vkCreateAccelerationStructureKHR(vkGetDeviceProcAddr(device, "vkCreateAccelerationStructureKHR"));
- 	auto vkGetAccelerationStructureDeviceAddressKHR =
-@@ -291,7 +397,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+ 	_vkGetBufferDeviceAddressKHR = (void *)vkGetDeviceProcAddr(device, "vkGetBufferDeviceAddressKHR");
+ 	_vkCreateAccelerationStructureKHR = (void *)vkGetDeviceProcAddr(device, "vkCreateAccelerationStructureKHR");
+ 	_vkGetAccelerationStructureDeviceAddressKHR = (void *)vkGetDeviceProcAddr(device, "vkGetAccelerationStructureDeviceAddressKHR");
+@@ -297,7 +403,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  		acceleration_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
  		acceleration_geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
  		acceleration_geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
@@ -222,53 +219,53 @@ index db9d4ede..b18e8720 100644
  		acceleration_geometry.geometry.triangles.vertexData.deviceAddress = vertex_data_device_address.deviceAddress;
  		acceleration_geometry.geometry.triangles.vertexStride = vb->impl.myStride;
  		acceleration_geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
-@@ -306,7 +412,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -312,7 +418,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  
- 		VkAccelerationStructureBuildSizesInfoKHR acceleration_build_sizes_info{};
+ 		VkAccelerationStructureBuildSizesInfoKHR acceleration_build_sizes_info = {0};
  		acceleration_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 -		const uint32_t primitive_count = 1;
 +		const uint32_t primitive_count = ib->impl.myCount / 3;
- 		vkGetAccelerationStructureBuildSizesKHR(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &acceleration_structure_build_geometry_info,
- 		                                        &primitive_count, &acceleration_build_sizes_info);
+ 		_vkGetAccelerationStructureBuildSizesKHR(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &acceleration_structure_build_geometry_info,
+ 		                                         &primitive_count, &acceleration_build_sizes_info);
  
-@@ -380,7 +486,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -386,7 +492,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  		acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer_device_address;
  
- 		VkAccelerationStructureBuildRangeInfoKHR acceleration_build_range_info{};
+ 		VkAccelerationStructureBuildRangeInfoKHR acceleration_build_range_info = {0};
 -		acceleration_build_range_info.primitiveCount = 1;
 +		acceleration_build_range_info.primitiveCount = ib->impl.myCount / 3;
  		acceleration_build_range_info.primitiveOffset = 0x0;
  		acceleration_build_range_info.firstVertex = 0;
  		acceleration_build_range_info.transformOffset = 0x0;
-@@ -436,7 +542,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -441,7 +547,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  	}
  
  	{
 -		VkTransformMatrixKHR transform_matrix = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f};
 +		VkTransformMatrixKHR transform_matrix = {scale, 0.0f, 0.0f, 0.0f, 0.0f, scale, 0.0f, 0.0f, 0.0f, 0.0f, scale, 0.0f};
  
- 		VkAccelerationStructureInstanceKHR instance{};
+ 		VkAccelerationStructureInstanceKHR instance = {0};
  		instance.transform = transform_matrix;
-@@ -503,7 +609,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -508,7 +614,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  
- 		VkAccelerationStructureBuildSizesInfoKHR acceleration_build_sizes_info{};
+ 		VkAccelerationStructureBuildSizesInfoKHR acceleration_build_sizes_info = {0};
  		acceleration_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 -		const uint32_t primitive_count = 1;
 +		const uint32_t primitive_count = ib->impl.myCount / 3;
- 		vkGetAccelerationStructureBuildSizesKHR(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &acceleration_structure_build_geometry_info,
- 		                                        &primitive_count, &acceleration_build_sizes_info);
+ 		_vkGetAccelerationStructureBuildSizesKHR(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &acceleration_structure_build_geometry_info,
+ 		                                         &primitive_count, &acceleration_build_sizes_info);
  
-@@ -575,7 +681,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -580,7 +686,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  		acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer_device_address;
  
- 		VkAccelerationStructureBuildRangeInfoKHR acceleration_build_range_info{};
+ 		VkAccelerationStructureBuildRangeInfoKHR acceleration_build_range_info = {0};
 -		acceleration_build_range_info.primitiveCount = 1;
 +		acceleration_build_range_info.primitiveCount = ib->impl.myCount / 3;
  		acceleration_build_range_info.primitiveOffset = 0x0;
  		acceleration_build_range_info.firstVertex = 0;
  		acceleration_build_range_info.transformOffset = 0x0;
-@@ -638,6 +744,16 @@ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_str
- 	vkDestroyAccelerationStructureKHR(device, accel->impl.top_level_acceleration_structure, nullptr);
+@@ -642,6 +748,16 @@ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_str
+ 	_vkDestroyAccelerationStructureKHR(device, accel->impl.top_level_acceleration_structure, NULL);
  }
  
 +void kinc_raytrace_set_textures(kinc_g5_render_target_t *_texpaint0, kinc_g5_render_target_t *_texpaint1, kinc_g5_render_target_t *_texpaint2, kinc_g5_texture_t *_texenv, kinc_g5_texture_t *_texsobol, kinc_g5_texture_t *_texscramble, kinc_g5_texture_t *_texrank) {
@@ -284,18 +281,18 @@ index db9d4ede..b18e8720 100644
  void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *_accel) {
  	accel = _accel;
  }
-@@ -646,7 +762,58 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
+@@ -650,7 +766,57 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
  	pipeline = _pipeline;
  }
  
 -void kinc_raytrace_set_target(kinc_g5_texture_t *_output) {
 +void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 +	if (_output != output) {
-+		vkDestroyImage(device, _output->impl.sourceImage, nullptr);
++		vkDestroyImage(device, _output->impl.sourceImage, NULL);
 +
-+		VkImageCreateInfo image = {};
++		VkImageCreateInfo image = {0};
 +		image.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-+		image.pNext = nullptr;
++		image.pNext = NULL;
 +		image.imageType = VK_IMAGE_TYPE_2D;
 +		image.format = _output->impl.format;
 +		image.extent.width = _output->width;
@@ -308,63 +305,62 @@ index db9d4ede..b18e8720 100644
 +		image.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
 +		image.flags = 0;
 +
-+		vkCreateImage(device, &image, nullptr, &_output->impl.sourceImage);
++		vkCreateImage(device, &image, NULL, &_output->impl.sourceImage);
 +
 +		vkBindImageMemory(device, _output->impl.sourceImage, _output->impl.sourceMemory, 0);
 +
-+		VkImageViewCreateInfo colorImageView = {};
++		VkImageViewCreateInfo colorImageView = {0};
 +		colorImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-+		colorImageView.pNext = nullptr;
++		colorImageView.pNext = NULL;
 +		colorImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
 +		colorImageView.format = _output->impl.format;
 +		colorImageView.flags = 0;
-+		colorImageView.subresourceRange = {};
 +		colorImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 +		colorImageView.subresourceRange.baseMipLevel = 0;
 +		colorImageView.subresourceRange.levelCount = 1;
 +		colorImageView.subresourceRange.baseArrayLayer = 0;
 +		colorImageView.subresourceRange.layerCount = 1;
 +		colorImageView.image = _output->impl.sourceImage;
-+		vkCreateImageView(device, &colorImageView, nullptr, &_output->impl.sourceView);
++		vkCreateImageView(device, &colorImageView, NULL, &_output->impl.sourceView);
 +
 +		VkImageView attachments[1];
 +		attachments[0] = _output->impl.sourceView;
 +
-+		VkFramebufferCreateInfo fbufCreateInfo = {};
++		VkFramebufferCreateInfo fbufCreateInfo = {0};
 +		fbufCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-+		fbufCreateInfo.pNext = nullptr;
++		fbufCreateInfo.pNext = NULL;
 +		fbufCreateInfo.renderPass = _output->impl.renderPass;
 +		fbufCreateInfo.attachmentCount = 1;
 +		fbufCreateInfo.pAttachments = attachments;
 +		fbufCreateInfo.width = _output->width;
 +		fbufCreateInfo.height = _output->height;
 +		fbufCreateInfo.layers = 1;
-+		vkCreateFramebuffer(device, &fbufCreateInfo, nullptr, &_output->impl.framebuffer);
++		vkCreateFramebuffer(device, &fbufCreateInfo, NULL, &_output->impl.framebuffer);
 +	}
  	output = _output;
  }
  
-@@ -665,7 +832,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+@@ -669,7 +835,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
  	acceleration_structure_write.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
  
- 	VkDescriptorImageInfo image_descriptor{};
+ 	VkDescriptorImageInfo image_descriptor = {0};
 -	image_descriptor.imageView = output->impl.texture.view;
 +	image_descriptor.imageView = output->impl.sourceView;
  	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
  
- 	VkDescriptorBufferInfo buffer_descriptor{};
-@@ -677,7 +844,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+ 	VkDescriptorBufferInfo buffer_descriptor = {0};
+@@ -681,7 +847,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
  	result_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
- 	result_image_write.pNext = nullptr;
+ 	result_image_write.pNext = NULL;
  	result_image_write.dstSet = pipeline->impl.descriptor_set;
 -	result_image_write.dstBinding = 1;
 +	result_image_write.dstBinding = 10;
  	result_image_write.descriptorCount = 1;
  	result_image_write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
  	result_image_write.pImageInfo = &image_descriptor;
-@@ -686,13 +853,145 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+@@ -690,13 +856,145 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
  	uniform_buffer_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
- 	uniform_buffer_write.pNext = nullptr;
+ 	uniform_buffer_write.pNext = NULL;
  	uniform_buffer_write.dstSet = pipeline->impl.descriptor_set;
 -	uniform_buffer_write.dstBinding = 2;
 +	uniform_buffer_write.dstBinding = 11;
@@ -374,119 +370,119 @@ index db9d4ede..b18e8720 100644
  
 -	VkWriteDescriptorSet write_descriptor_sets[3] = {acceleration_structure_write, result_image_write, uniform_buffer_write};
 -	vkUpdateDescriptorSets(device, 3, write_descriptor_sets, 0, VK_NULL_HANDLE);
-+	VkDescriptorBufferInfo ib_descriptor{};
++	VkDescriptorBufferInfo ib_descriptor = {0};
 +	ib_descriptor.buffer = ib->impl.buf;
 +	ib_descriptor.range = VK_WHOLE_SIZE;
 +	ib_descriptor.offset = 0;
 +
-+	VkWriteDescriptorSet ib_write{};
++	VkWriteDescriptorSet ib_write = {0};
 +	ib_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-+	ib_write.pNext = nullptr;
++	ib_write.pNext = NULL;
 +	ib_write.dstSet = pipeline->impl.descriptor_set;
 +	ib_write.dstBinding = 1;
 +	ib_write.descriptorCount = 1;
 +	ib_write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 +	ib_write.pBufferInfo = &ib_descriptor;
 +
-+	VkDescriptorBufferInfo vb_descriptor{};
++	VkDescriptorBufferInfo vb_descriptor = {0};
 +	vb_descriptor.buffer = vb->impl.vertices.buf;
 +	vb_descriptor.range = VK_WHOLE_SIZE;
 +	vb_descriptor.offset = 0;
 +
-+	VkWriteDescriptorSet vb_write{};
++	VkWriteDescriptorSet vb_write = {0};
 +	vb_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-+	vb_write.pNext = nullptr;
++	vb_write.pNext = NULL;
 +	vb_write.dstSet = pipeline->impl.descriptor_set;
 +	vb_write.dstBinding = 2;
 +	vb_write.descriptorCount = 1;
 +	vb_write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 +	vb_write.pBufferInfo = &vb_descriptor;
 +
-+	VkDescriptorImageInfo tex0image_descriptor{};
++	VkDescriptorImageInfo tex0image_descriptor = {0};
 +	tex0image_descriptor.imageView = texpaint0->impl.sourceView;
 +	tex0image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 +
-+	VkWriteDescriptorSet tex0_image_write{};
++	VkWriteDescriptorSet tex0_image_write = {0};
 +	tex0_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-+	tex0_image_write.pNext = nullptr;
++	tex0_image_write.pNext = NULL;
 +	tex0_image_write.dstSet = pipeline->impl.descriptor_set;
 +	tex0_image_write.dstBinding = 3;
 +	tex0_image_write.descriptorCount = 1;
 +	tex0_image_write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +	tex0_image_write.pImageInfo = &tex0image_descriptor;
 +
-+	VkDescriptorImageInfo tex1image_descriptor{};
++	VkDescriptorImageInfo tex1image_descriptor = {0};
 +	tex1image_descriptor.imageView = texpaint1->impl.sourceView;
 +	tex1image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 +
-+	VkWriteDescriptorSet tex1_image_write{};
++	VkWriteDescriptorSet tex1_image_write = {0};
 +	tex1_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-+	tex1_image_write.pNext = nullptr;
++	tex1_image_write.pNext = NULL;
 +	tex1_image_write.dstSet = pipeline->impl.descriptor_set;
 +	tex1_image_write.dstBinding = 4;
 +	tex1_image_write.descriptorCount = 1;
 +	tex1_image_write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +	tex1_image_write.pImageInfo = &tex1image_descriptor;
 +
-+	VkDescriptorImageInfo tex2image_descriptor{};
++	VkDescriptorImageInfo tex2image_descriptor = {0};
 +	tex2image_descriptor.imageView = texpaint2->impl.sourceView;
 +	tex2image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 +
-+	VkWriteDescriptorSet tex2_image_write{};
++	VkWriteDescriptorSet tex2_image_write = {0};
 +	tex2_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-+	tex2_image_write.pNext = nullptr;
++	tex2_image_write.pNext = NULL;
 +	tex2_image_write.dstSet = pipeline->impl.descriptor_set;
 +	tex2_image_write.dstBinding = 5;
 +	tex2_image_write.descriptorCount = 1;
 +	tex2_image_write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +	tex2_image_write.pImageInfo = &tex2image_descriptor;
 +
-+	VkDescriptorImageInfo texenvimage_descriptor{};
++	VkDescriptorImageInfo texenvimage_descriptor = {0};
 +	texenvimage_descriptor.imageView = texenv->impl.texture.view;
 +	texenvimage_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 +
-+	VkWriteDescriptorSet texenv_image_write{};
++	VkWriteDescriptorSet texenv_image_write = {0};
 +	texenv_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-+	texenv_image_write.pNext = nullptr;
++	texenv_image_write.pNext = NULL;
 +	texenv_image_write.dstSet = pipeline->impl.descriptor_set;
 +	texenv_image_write.dstBinding = 6;
 +	texenv_image_write.descriptorCount = 1;
 +	texenv_image_write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +	texenv_image_write.pImageInfo = &texenvimage_descriptor;
 +
-+	VkDescriptorImageInfo texsobolimage_descriptor{};
++	VkDescriptorImageInfo texsobolimage_descriptor = {0};
 +	texsobolimage_descriptor.imageView = texsobol->impl.texture.view;
 +	texsobolimage_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 +
-+	VkWriteDescriptorSet texsobol_image_write{};
++	VkWriteDescriptorSet texsobol_image_write = {0};
 +	texsobol_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-+	texsobol_image_write.pNext = nullptr;
++	texsobol_image_write.pNext = NULL;
 +	texsobol_image_write.dstSet = pipeline->impl.descriptor_set;
 +	texsobol_image_write.dstBinding = 7;
 +	texsobol_image_write.descriptorCount = 1;
 +	texsobol_image_write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +	texsobol_image_write.pImageInfo = &texsobolimage_descriptor;
 +
-+	VkDescriptorImageInfo texscrambleimage_descriptor{};
++	VkDescriptorImageInfo texscrambleimage_descriptor = {0};
 +	texscrambleimage_descriptor.imageView = texscramble->impl.texture.view;
 +	texscrambleimage_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 +
-+	VkWriteDescriptorSet texscramble_image_write{};
++	VkWriteDescriptorSet texscramble_image_write = {0};
 +	texscramble_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-+	texscramble_image_write.pNext = nullptr;
++	texscramble_image_write.pNext = NULL;
 +	texscramble_image_write.dstSet = pipeline->impl.descriptor_set;
 +	texscramble_image_write.dstBinding = 8;
 +	texscramble_image_write.descriptorCount = 1;
 +	texscramble_image_write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 +	texscramble_image_write.pImageInfo = &texscrambleimage_descriptor;
 +
-+	VkDescriptorImageInfo texrankimage_descriptor{};
++	VkDescriptorImageInfo texrankimage_descriptor = {0};
 +	texrankimage_descriptor.imageView = texrank->impl.texture.view;
 +	texrankimage_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 +
-+	VkWriteDescriptorSet texrank_image_write{};
++	VkWriteDescriptorSet texrank_image_write = {0};
 +	texrank_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-+	texrank_image_write.pNext = nullptr;
++	texrank_image_write.pNext = NULL;
 +	texrank_image_write.dstSet = pipeline->impl.descriptor_set;
 +	texrank_image_write.dstBinding = 9;
 +	texrank_image_write.descriptorCount = 1;
@@ -511,6 +507,24 @@ index db9d4ede..b18e8720 100644
  
  	VkPhysicalDeviceRayTracingPipelinePropertiesKHR ray_tracing_pipeline_properties;
  	ray_tracing_pipeline_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+@@ -744,7 +1042,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+ 
+ void kinc_raytrace_copy(kinc_g5_command_list_t *command_list, kinc_g5_render_target_t *target, kinc_g5_texture_t *source) {
+ 
+-	vkCmdEndRenderPass(command_list->impl._buffer);
++	/*vkCmdEndRenderPass(command_list->impl._buffer);
+ 
+ 	VkImageCopy copy_region = {0};
+ 	copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+@@ -764,7 +1062,7 @@ void kinc_raytrace_copy(kinc_g5_command_list_t *command_list, kinc_g5_render_tar
+ 		               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+ 	}
+ 
+-	vkCmdBeginRenderPass(command_list->impl._buffer, &currentRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
++	vkCmdBeginRenderPass(command_list->impl._buffer, &currentRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);*/
+ }
+ 
+ #endif // KORE_VKRT
 diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h
 index 0897756e..519a1bce 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h
