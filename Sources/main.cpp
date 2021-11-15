@@ -1,3 +1,6 @@
+#include <map>
+#include <string>
+#include <vector>
 #include <kinc/memory.h>
 #include <kinc/log.h>
 #include <kinc/io/filereader.h>
@@ -49,10 +52,6 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #undef Status
 #endif
 #include <v8.h>
-
-#include <map>
-#include <string>
-#include <vector>
 
 #ifdef KORE_WINDOWS
 #include <Windows.h> // AttachConsole
