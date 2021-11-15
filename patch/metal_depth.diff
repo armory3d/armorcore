@@ -1,5 +1,5 @@
 ﻿diff --git a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.m.h b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.m.h
-index 5a86f0f9..b7501353 100644
+index 5a86f0f9..97b062eb 100644
 --- a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.m.h
 +++ b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/pipeline.m.h
 @@ -141,8 +141,14 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
@@ -19,7 +19,7 @@ index 5a86f0f9..b7501353 100644
  
  	float offset = 0;
  	MTLVertexDescriptor *vertexDescriptor = [[MTLVertexDescriptor alloc] init];
-@@ -217,43 +223,20 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
+@@ -217,43 +223,22 @@ void kinc_g5_pipeline_compile(kinc_g5_pipeline_t *pipeline) {
  	if (errors != nil) NSLog(@"%@", [errors localizedDescription]);
  	assert(pipeline->impl._pipeline && !errors);
  
@@ -60,8 +60,10 @@ index 5a86f0f9..b7501353 100644
 -		id<MTLDepthStencilState> depthStencil = (__bridge id<MTLDepthStencilState>)pipeline->impl._depthStencilNone;
 -		[encoder setDepthStencilState:depthStencil];
 -	}
-+	[encoder setRenderPipelineState:pipeline->impl._pipeline];
-+	[encoder setDepthStencilState:pipeline->impl._depthStencil];
++	id<MTLRenderPipelineState> pipe = (__bridge id<MTLRenderPipelineState>)pipeline->impl._pipeline;
++	[encoder setRenderPipelineState:pipe];
++	id<MTLDepthStencilState> depthStencil = (__bridge id<MTLDepthStencilState>)pipeline->impl._depthStencil;
++	[encoder setDepthStencilState:depthStencil];
  	[encoder setFrontFacingWinding:MTLWindingClockwise];
  	[encoder setCullMode:convert_cull_mode(pipeline->cullMode)];
  }
