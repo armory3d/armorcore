@@ -109,11 +109,11 @@ void plugin_embed(v8::Isolate *isolate, v8::Local<v8::ObjectTemplate> global);
 #endif
 
 #ifdef KORE_MACOS
-extern const char *macgetresourcepath();
+extern "C" const char *macgetresourcepath();
 #endif
 
 #ifdef KORE_IOS
-extern const char *iphonegetresourcepath();
+extern "C" const char *iphonegetresourcepath();
 #endif
 
 using namespace v8;
