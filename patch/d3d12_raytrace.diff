@@ -1,5 +1,5 @@
 ﻿diff --git a/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/raytrace.c.h b/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/raytrace.c.h
-index 4c1c611f..79420af2 100644
+index 19515c8c..636737be 100644
 --- a/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/raytrace.c.h
 +++ b/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/raytrace.c.h
 @@ -26,21 +26,37 @@ ID3D12RootSignature *dxrRootSignature;
@@ -158,14 +158,14 @@ index 4c1c611f..79420af2 100644
  	hitGroup.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
  
  	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {0};
--	shaderConfig.MaxPayloadSizeInBytes = 4 * sizeof(float); // float4 color
+-	shaderConfig.MaxPayloadSizeInBytes = 4 * sizeof(float);   // float4 color
 -	shaderConfig.MaxAttributeSizeInBytes = 2 * sizeof(float); // float2 barycentrics
 +	shaderConfig.MaxPayloadSizeInBytes = 10 * sizeof(float); // float4 color
 +	shaderConfig.MaxAttributeSizeInBytes = 8 * sizeof(float); // float2 barycentrics
  
  	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {0};
- 	pipelineConfig.MaxTraceRecursionDepth = 1;  // ~ primary rays only
-@@ -233,6 +338,12 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
+ 	pipelineConfig.MaxTraceRecursionDepth = 1; // ~ primary rays only
+@@ -232,6 +337,12 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
  		memcpy(byteDest, hitGroupShaderId, size);
  		pipeline->impl.hitgroup_shader_table->lpVtbl->Unmap(pipeline->impl.hitgroup_shader_table, 0, NULL);
  	}
@@ -178,7 +178,7 @@ index 4c1c611f..79420af2 100644
  }
  
  void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline) {
-@@ -242,8 +353,63 @@ void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline) {
+@@ -241,8 +352,63 @@ void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline) {
  	pipeline->impl.hitgroup_shader_table->lpVtbl->Release(pipeline->impl.hitgroup_shader_table);
  }
  
@@ -243,7 +243,7 @@ index 4c1c611f..79420af2 100644
  	// Reset the command list for the acceleration structure construction
  	command_list->impl._commandList->lpVtbl->Reset(command_list->impl._commandList, command_list->impl._commandAllocator, NULL);
  
-@@ -253,7 +419,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -252,7 +418,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  	geometryDesc.Triangles.IndexCount = ib->impl.myCount;
  	geometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
  	geometryDesc.Triangles.Transform3x4 = 0;
@@ -252,7 +252,7 @@ index 4c1c611f..79420af2 100644
  	geometryDesc.Triangles.VertexCount = vb->impl.myCount;
  	geometryDesc.Triangles.VertexBuffer.StartAddress = vb->impl.uploadBuffer->lpVtbl->GetGPUVirtualAddress(vb->impl.uploadBuffer);
  	geometryDesc.Triangles.VertexBuffer.StrideInBytes = D3D12ResourceGetDesc(vb->impl.uploadBuffer).Width / vb->impl.myCount;
-@@ -347,7 +513,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -348,7 +514,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  	// Create an instance desc for the bottom-level acceleration structure
  	ID3D12Resource *instanceDescs;
  	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc = {0};
@@ -261,7 +261,7 @@ index 4c1c611f..79420af2 100644
  	instanceDesc.InstanceMask = 1;
  	instanceDesc.AccelerationStructure = accel->impl.bottom_level_accel->lpVtbl->GetGPUVirtualAddress(accel->impl.bottom_level_accel);
  
-@@ -402,6 +568,44 @@ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_str
+@@ -403,6 +569,44 @@ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_str
  	accel->impl.top_level_accel->lpVtbl->Release(accel->impl.top_level_accel);
  }
  
@@ -306,7 +306,7 @@ index 4c1c611f..79420af2 100644
  void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *_accel) {
  	accel = _accel;
  }
-@@ -410,14 +614,72 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
+@@ -411,14 +615,72 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
  	pipeline = _pipeline;
  }
  
@@ -385,13 +385,14 @@ index 4c1c611f..79420af2 100644
  }
  
  void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
-@@ -425,10 +687,19 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+@@ -426,11 +688,20 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
  
  	// Bind the heaps, acceleration structure and dispatch rays
  	command_list->impl._commandList->lpVtbl->SetDescriptorHeaps(command_list->impl._commandList, 1, &descriptorHeap);
 -	command_list->impl._commandList->lpVtbl->SetComputeRootDescriptorTable(command_list->impl._commandList, 0, GetGPUDescriptorHandle(descriptorHeap));
 +	command_list->impl._commandList->lpVtbl->SetComputeRootDescriptorTable(command_list->impl._commandList, 0, outputDescriptorHandle);
- 	command_list->impl._commandList->lpVtbl->SetComputeRootShaderResourceView(command_list->impl._commandList, 1, accel->impl.top_level_accel->lpVtbl->GetGPUVirtualAddress(accel->impl.top_level_accel));
+ 	command_list->impl._commandList->lpVtbl->SetComputeRootShaderResourceView(
+ 	    command_list->impl._commandList, 1, accel->impl.top_level_accel->lpVtbl->GetGPUVirtualAddress(accel->impl.top_level_accel));
 -	auto cbGpuAddress = pipeline->_constant_buffer->impl.constant_buffer->lpVtbl->GetGPUVirtualAddress(pipeline->_constant_buffer->impl.constant_buffer);
 -	command_list->impl._commandList->lpVtbl->SetComputeRootConstantBufferView(command_list->impl._commandList, 2, cbGpuAddress);
 +	command_list->impl._commandList->lpVtbl->SetComputeRootDescriptorTable(command_list->impl._commandList, 2, ibgpuDescriptorHandle);
