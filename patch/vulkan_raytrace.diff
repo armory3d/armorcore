@@ -1,5 +1,59 @@
-﻿diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h
-index d7864bab..a1b5e205 100644
+﻿diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/Vulkan.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/Vulkan.c.h
+index 4cd387c9..66706ac1 100644
+--- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/Vulkan.c.h
++++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/Vulkan.c.h
+@@ -53,6 +53,7 @@ int newRenderTargetHeight;
+ VkDevice device;
+ VkFormat format;
+ VkRenderPass render_pass;
++VkDescriptorSet desc_set;
+ VkPhysicalDevice gpu;
+ VkCommandPool cmd_pool;
+ VkQueue queue;
+diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/commandlist.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/commandlist.c.h
+index d804dacc..6f3dfbd8 100644
+--- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/commandlist.c.h
++++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/commandlist.c.h
+@@ -11,13 +11,15 @@ extern PFN_vkQueuePresentKHR fpQueuePresentKHR;
+ extern VkSwapchainKHR swapchain;
+ extern VkQueue queue;
+ extern VkFramebuffer *framebuffers;
++extern VkDescriptorSet desc_set;
+ extern VkRenderPass render_pass;
+ extern uint32_t current_buffer;
++extern VkDescriptorPool desc_pools[3];
+ extern int depthBits;
+ extern VkSemaphore presentCompleteSemaphore;
+ extern kinc_g5_texture_t *vulkanTextures[16];
+ extern kinc_g5_render_target_t *vulkanRenderTargets[16];
+-VkDescriptorSet getDescriptorSet(void);
++void createDescriptorSet(VkDescriptorSet *desc_set);
+ bool memory_type_from_properties(uint32_t typeBits, VkFlags requirements_mask, uint32_t *typeIndex);
+ void setImageLayout(VkCommandBuffer _buffer, VkImage image, VkImageAspectFlags aspectMask, VkImageLayout oldImageLayout, VkImageLayout newImageLayout);
+ VkCommandBuffer setup_cmd;
+@@ -332,6 +334,8 @@ void kinc_g5_command_list_begin(kinc_g5_command_list_t *list) {
+ 
+ 	set_viewport_and_scissor(list);
+ 
++	vkResetDescriptorPool(device, desc_pools[current_buffer], 0);
++
+ 	onBackBuffer = true;
+ 
+ 	for (int i = 0; i < mrtIndex; ++i) {
+@@ -859,9 +863,9 @@ void kinc_g5_command_list_set_vertex_constant_buffer(kinc_g5_command_list_t *lis
+ void kinc_g5_command_list_set_fragment_constant_buffer(kinc_g5_command_list_t *list, struct kinc_g5_constant_buffer *buffer, int offset, size_t size) {
+ 	lastFragmentConstantBufferOffset = offset;
+ 
+-	VkDescriptorSet descriptor_set = getDescriptorSet();
++	createDescriptorSet(&desc_set);
+ 	uint32_t offsets[2] = {lastVertexConstantBufferOffset, lastFragmentConstantBufferOffset};
+-	vkCmdBindDescriptorSets(list->impl._buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->impl.pipeline_layout, 0, 1, &descriptor_set, 2, offsets);
++	vkCmdBindDescriptorSets(list->impl._buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, currentPipeline->impl.pipeline_layout, 0, 1, &desc_set, 2, offsets);
+ }
+ 
+ void kinc_g5_command_list_set_pipeline_layout(kinc_g5_command_list_t *list) {}
+diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h
+index ba7c1593..0bbc778a 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h
 +++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h
 @@ -21,6 +21,7 @@ void kinc_g5_index_buffer_init(kinc_g5_index_buffer_t *buffer, int indexCount, b
@@ -10,8 +64,119 @@ index d7864bab..a1b5e205 100644
  #endif
  	buf_info.flags = 0;
  
+diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/pipeline.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/pipeline.c.h
+index 3a3fab2e..6494ae24 100644
+--- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/pipeline.c.h
++++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/pipeline.c.h
+@@ -2,6 +2,7 @@
+ #include <kinc/graphics5/shader.h>
+ 
+ extern VkDevice device;
++extern VkDescriptorSet desc_set;
+ VkDescriptorSetLayout desc_layout;
+ extern kinc_g5_texture_t *vulkanTextures[16];
+ extern kinc_g5_render_target_t *vulkanRenderTargets[16];
+@@ -9,7 +10,7 @@ extern uint32_t swapchainImageCount;
+ extern uint32_t current_buffer;
+ bool memory_type_from_properties(uint32_t typeBits, VkFlags requirements_mask, uint32_t *typeIndex);
+ 
+-static VkDescriptorPool descriptor_pool;
++VkDescriptorPool desc_pools[3];
+ 
+ static bool has_number(kinc_internal_named_number *named_numbers, const char *name) {
+ 	for (int i = 0; i < KINC_INTERNAL_NAMED_NUMBER_COUNT; ++i) {
+@@ -689,15 +690,17 @@ void createDescriptorLayout() {
+ 		typeCounts[i].descriptorCount = 1;
+ 	}
+ 
+-	VkDescriptorPoolCreateInfo pool_info = {0};
+-	pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+-	pool_info.pNext = NULL;
+-	pool_info.maxSets = 1024;
+-	pool_info.poolSizeCount = 18;
+-	pool_info.pPoolSizes = typeCounts;
++	VkDescriptorPoolCreateInfo descriptor_pool = {0};
++	descriptor_pool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
++	descriptor_pool.pNext = NULL;
++	descriptor_pool.maxSets = 1024;
++	descriptor_pool.poolSizeCount = 18;
++	descriptor_pool.pPoolSizes = typeCounts;
+ 
+-	err = vkCreateDescriptorPool(device, &pool_info, NULL, &descriptor_pool);
+-	assert(!err);
++	for (int i = 0; i < 3; ++i) {
++		err = vkCreateDescriptorPool(device, &descriptor_pool, NULL, &desc_pools[i]);
++		assert(!err);
++	}
+ }
+ 
+ int calc_descriptor_id(void) {
+@@ -726,22 +729,15 @@ struct destriptor_set {
+ static struct destriptor_set descriptor_sets[MAX_DESCRIPTOR_SETS] = {0};
+ static int descriptor_sets_count = 0;
+ 
+-VkDescriptorSet getDescriptorSet() {
+-	int id = calc_descriptor_id();
+-	for (int i = 0; i < descriptor_sets_count; ++i) {
+-		if (descriptor_sets[i].id == id) {
+-			return descriptor_sets[i].set;
+-		}
+-	}
++void createDescriptorSet(VkDescriptorSet *desc_set) {
+ 
+ 	VkDescriptorSetAllocateInfo alloc_info = {0};
+ 	alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+ 	alloc_info.pNext = NULL;
+-	alloc_info.descriptorPool = descriptor_pool;
++	alloc_info.descriptorPool = desc_pools[current_buffer];
+ 	alloc_info.descriptorSetCount = 1;
+ 	alloc_info.pSetLayouts = &desc_layout;
+-	VkDescriptorSet descriptor_set;
+-	VkResult err = vkAllocateDescriptorSets(device, &alloc_info, &descriptor_set);
++	VkResult err = vkAllocateDescriptorSets(device, &alloc_info, desc_set);
+ 	assert(!err);
+ 
+ 	VkDescriptorBufferInfo buffer_descs[2];
+@@ -788,14 +784,14 @@ VkDescriptorSet getDescriptorSet() {
+ 	memset(&writes, 0, sizeof(writes));
+ 
+ 	writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+-	writes[0].dstSet = descriptor_set;
++	writes[0].dstSet = *desc_set;
+ 	writes[0].dstBinding = 0;
+ 	writes[0].descriptorCount = 1;
+ 	writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+ 	writes[0].pBufferInfo = &buffer_descs[0];
+ 
+ 	writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+-	writes[1].dstSet = descriptor_set;
++	writes[1].dstSet = *desc_set;
+ 	writes[1].dstBinding = 1;
+ 	writes[1].descriptorCount = 1;
+ 	writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+@@ -803,7 +799,7 @@ VkDescriptorSet getDescriptorSet() {
+ 
+ 	for (int i = 2; i < 18; ++i) {
+ 		writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+-		writes[i].dstSet = descriptor_set;
++		writes[i].dstSet = *desc_set;
+ 		writes[i].dstBinding = i;
+ 		writes[i].descriptorCount = 1;
+ 		writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+@@ -823,11 +819,4 @@ VkDescriptorSet getDescriptorSet() {
+ 			vkUpdateDescriptorSets(device, 2, writes, 0, NULL);
+ 		}
+ 	}
+-
+-	assert(descriptor_sets_count + 1 < MAX_DESCRIPTOR_SETS);
+-	descriptor_sets[descriptor_sets_count].id = id;
+-	descriptor_sets[descriptor_sets_count].set = descriptor_set;
+-	descriptor_sets_count += 1;
+-
+-	return descriptor_set;
+ }
 diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h
-index ccbed33b..95793cf6 100644
+index d36d44c8..421e2969 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h
 +++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h
 @@ -31,7 +31,16 @@ const char *miss_shader_name = "miss";
@@ -526,7 +691,7 @@ index ccbed33b..95793cf6 100644
  
  #endif // KORE_VKRT
 diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h
-index 0897756e..519a1bce 100644
+index 4ce652a5..425a8752 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h
 +++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h
 @@ -54,6 +54,7 @@ void kinc_g5_vertex_buffer_init(kinc_g5_vertex_buffer_t *buffer, int vertexCount
