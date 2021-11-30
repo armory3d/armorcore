@@ -352,21 +352,21 @@ namespace {
 		kinc_set_background_callback(background);
 		kinc_set_shutdown_callback(shutdown);
 
-		kinc_keyboard_key_down_callback = key_down;
-		kinc_keyboard_key_up_callback = key_up;
-		kinc_keyboard_key_press_callback = key_press;
-		kinc_mouse_move_callback = mouse_move;
-		kinc_mouse_press_callback = mouse_down;
-		kinc_mouse_release_callback = mouse_up;
-		kinc_mouse_scroll_callback = mouse_wheel;
-		kinc_surface_move_callback = touch_move;
-		kinc_surface_touch_start_callback = touch_down;
-		kinc_surface_touch_end_callback = touch_up;
-		kinc_pen_press_callback = pen_down;
-		kinc_pen_move_callback = pen_move;
-		kinc_pen_release_callback = pen_up;
-		kinc_gamepad_axis_callback = gamepad_axis;
-		kinc_gamepad_button_callback = gamepad_button;
+		kinc_keyboard_set_key_down_callback(key_down);
+		kinc_keyboard_set_key_up_callback(key_up);
+		kinc_keyboard_set_key_press_callback(key_press);
+		kinc_mouse_set_move_callback(mouse_move);
+		kinc_mouse_set_press_callback(mouse_down);
+		kinc_mouse_set_release_callback(mouse_up);
+		kinc_mouse_set_scroll_callback(mouse_wheel);
+		kinc_surface_set_move_callback(touch_move);
+		kinc_surface_set_touch_start_callback(touch_down);
+		kinc_surface_set_touch_end_callback(touch_up);
+		kinc_pen_set_press_callback(pen_down);
+		kinc_pen_set_move_callback(pen_move);
+		kinc_pen_set_release_callback(pen_up);
+		kinc_gamepad_set_axis_callback(gamepad_axis);
+		kinc_gamepad_set_button_callback(gamepad_button);
 
 		#if KORE_ANDROID
 		android_check_permissions();
