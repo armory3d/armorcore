@@ -1,0 +1,37 @@
+﻿diff --git a/Kinc b/Kinc
+--- a/Kinc
++++ b/Kinc
+@@ -1 +1 @@
+-Subproject commit 47ed02ff500d84ddc0d0ee70f01befff630b992e
++Subproject commit 47ed02ff500d84ddc0d0ee70f01befff630b992e-dirty
+diff --git a/Libraries/nfd/nfd_win.cpp b/Libraries/nfd/nfd_win.cpp
+index 949da2b..8ec18d7 100644
+--- a/Libraries/nfd/nfd_win.cpp
++++ b/Libraries/nfd/nfd_win.cpp
+@@ -27,6 +27,8 @@
+ #include <shobjidl.h>
+ #include "nfd_common.h"
+ 
++extern "C" { struct HWND__* kinc_windows_window_handle(int window_index); } // Kore/Windows.h
++
+ 
+ #define COM_INITFLAGS ::COINIT_APARTMENTTHREADED | ::COINIT_DISABLE_OLE1DDE
+ 
+@@ -423,7 +425,7 @@ nfdresult_t NFD_OpenDialog( const nfdchar_t *filterList,
+     }    
+ 
+     // Show the dialog.
+-    result = fileOpenDialog->Show(NULL);
++    result = fileOpenDialog->Show(kinc_windows_window_handle(0));
+     if ( SUCCEEDED(result) )
+     {
+         // Get the file name
+@@ -529,7 +531,7 @@ nfdresult_t NFD_OpenDialogMultiple( const nfdchar_t *filterList,
+     }
+  
+     // Show the dialog.
+-    result = fileOpenDialog->Show(NULL);
++    result = fileOpenDialog->Show(kinc_windows_window_handle(0));
+     if ( SUCCEEDED(result) )
+     {
+         IShellItemArray *shellItems;
