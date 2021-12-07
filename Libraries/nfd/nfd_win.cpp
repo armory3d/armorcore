@@ -27,6 +27,8 @@
 #include <shobjidl.h>
 #include "nfd_common.h"
 
+extern "C" { struct HWND__* kinc_windows_window_handle(int window_index); } // Kore/Windows.h
+
 
 #define COM_INITFLAGS ::COINIT_APARTMENTTHREADED | ::COINIT_DISABLE_OLE1DDE
 
@@ -423,7 +425,7 @@ nfdresult_t NFD_OpenDialog( const nfdchar_t *filterList,
     }    
 
     // Show the dialog.
-    result = fileOpenDialog->Show(NULL);
+    result = fileOpenDialog->Show(kinc_windows_window_handle(0));
     if ( SUCCEEDED(result) )
     {
         // Get the file name
@@ -529,7 +531,7 @@ nfdresult_t NFD_OpenDialogMultiple( const nfdchar_t *filterList,
     }
  
     // Show the dialog.
-    result = fileOpenDialog->Show(NULL);
+    result = fileOpenDialog->Show(kinc_windows_window_handle(0));
     if ( SUCCEEDED(result) )
     {
         IShellItemArray *shellItems;
