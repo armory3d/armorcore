@@ -1,11 +1,5 @@
-﻿diff --git a/Kinc b/Kinc
---- a/Kinc
-+++ b/Kinc
-@@ -1 +1 @@
--Subproject commit 47ed02ff500d84ddc0d0ee70f01befff630b992e
-+Subproject commit 47ed02ff500d84ddc0d0ee70f01befff630b992e-dirty
-diff --git a/Libraries/nfd/nfd_win.cpp b/Libraries/nfd/nfd_win.cpp
-index 949da2b..8ec18d7 100644
+﻿diff --git a/Libraries/nfd/nfd_win.cpp b/Libraries/nfd/nfd_win.cpp
+index 949da2b..1f57734 100644
 --- a/Libraries/nfd/nfd_win.cpp
 +++ b/Libraries/nfd/nfd_win.cpp
 @@ -27,6 +27,8 @@
@@ -35,3 +29,21 @@ index 949da2b..8ec18d7 100644
      if ( SUCCEEDED(result) )
      {
          IShellItemArray *shellItems;
+@@ -607,7 +609,7 @@ nfdresult_t NFD_SaveDialog( const nfdchar_t *filterList,
+     }
+ 
+     // Show the dialog.
+-    result = fileSaveDialog->Show(NULL);
++    result = fileSaveDialog->Show(kinc_windows_window_handle(0));
+     if ( SUCCEEDED(result) )
+     {
+         // Get the file name
+@@ -707,7 +709,7 @@ nfdresult_t NFD_PickFolder(const nfdchar_t *defaultPath,
+     }
+ 
+     // Show the dialog to the user
+-    result = fileDialog->Show(NULL);
++    result = fileDialog->Show(kinc_windows_window_handle(0));
+     if ( SUCCEEDED(result) )
+     {
+         // Get the folder name

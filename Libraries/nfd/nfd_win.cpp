@@ -609,7 +609,7 @@ nfdresult_t NFD_SaveDialog( const nfdchar_t *filterList,
     }
 
     // Show the dialog.
-    result = fileSaveDialog->Show(NULL);
+    result = fileSaveDialog->Show(kinc_windows_window_handle(0));
     if ( SUCCEEDED(result) )
     {
         // Get the file name
@@ -709,7 +709,7 @@ nfdresult_t NFD_PickFolder(const nfdchar_t *defaultPath,
     }
 
     // Show the dialog to the user
-    result = fileDialog->Show(NULL);
+    result = fileDialog->Show(kinc_windows_window_handle(0));
     if ( SUCCEEDED(result) )
     {
         // Get the folder name
