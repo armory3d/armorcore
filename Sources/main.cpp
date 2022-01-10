@@ -3734,7 +3734,7 @@ namespace {
 			for (int i = 0; i < len; i++) str[i] = file_path[i];
 			str[len] = 0;
 			argv[0] = {String::NewFromTwoByte(isolate, str).ToLocalChecked()};
-			delete str;
+			delete[] str;
 		}
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
