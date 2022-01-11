@@ -1,14 +1,13 @@
 package kha.graphics4;
 
-import kha.arrays.Float32Array;
-import kha.arrays.Int16Array;
+import kha.arrays.ByteArray;
 import kha.graphics4.Usage;
 import kha.graphics4.VertexStructure;
 import kha.graphics4.VertexData;
 
 class VertexBuffer {
 	public var buffer: Dynamic;
-	public var _data: Float32Array;
+	public var _data: ByteArray;
 	private var vertexCount: Int;
 	private var structure: VertexStructure;
 
@@ -25,16 +24,12 @@ class VertexBuffer {
 
 	var lastLockCount: Int = 0;
 
-	public function lock(?start: Int, ?count: Int): Float32Array {
+	public function lock(?start: Int, ?count: Int): ByteArray {
 		if (start == null) start = 0;
 		if (count == null) count = this.count();
 		lastLockCount = count;
-		_data = Krom.lockVertexBuffer(buffer, start, count);
+		_data = new ByteArray(Krom.lockVertexBuffer(buffer, start, count));
 		return _data;
-	}
-
-	public function lockInt16(?start: Int, ?count: Int): Int16Array {
-		return new Int16Array(untyped lock(start, count).buffer);
 	}
 
 	public function unlock(?count: Int): Void {
