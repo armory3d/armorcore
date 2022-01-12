@@ -11,7 +11,7 @@ index 4cd387c9..66706ac1 100644
  VkCommandPool cmd_pool;
  VkQueue queue;
 diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/commandlist.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/commandlist.c.h
-index d804dacc..6f3dfbd8 100644
+index 12bc4130..a59fc7ad 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/commandlist.c.h
 +++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/commandlist.c.h
 @@ -11,13 +11,15 @@ extern PFN_vkQueuePresentKHR fpQueuePresentKHR;
@@ -40,7 +40,7 @@ index d804dacc..6f3dfbd8 100644
  	onBackBuffer = true;
  
  	for (int i = 0; i < mrtIndex; ++i) {
-@@ -859,9 +863,9 @@ void kinc_g5_command_list_set_vertex_constant_buffer(kinc_g5_command_list_t *lis
+@@ -860,9 +864,9 @@ void kinc_g5_command_list_set_vertex_constant_buffer(kinc_g5_command_list_t *lis
  void kinc_g5_command_list_set_fragment_constant_buffer(kinc_g5_command_list_t *list, struct kinc_g5_constant_buffer *buffer, int offset, size_t size) {
  	lastFragmentConstantBufferOffset = offset;
  
@@ -53,19 +53,22 @@ index d804dacc..6f3dfbd8 100644
  
  void kinc_g5_command_list_set_pipeline_layout(kinc_g5_command_list_t *list) {}
 diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h
-index ba7c1593..0bbc778a 100644
+index 710c03f7..265dc4ac 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h
 +++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/indexbuffer.c.h
-@@ -21,6 +21,7 @@ void kinc_g5_index_buffer_init(kinc_g5_index_buffer_t *buffer, int indexCount, b
+@@ -21,9 +21,8 @@ void kinc_g5_index_buffer_init(kinc_g5_index_buffer_t *buffer, int indexCount, k
+ 	buf_info.pNext = NULL;
+ 	buf_info.size = format == KINC_G5_INDEX_BUFFER_FORMAT_16BIT ? indexCount * sizeof(uint16_t) : indexCount * sizeof(uint32_t);
  	buf_info.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
- #ifdef KORE_VKRT
+-#ifdef KORE_VKRT
  	buf_info.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+-#endif
 +	buf_info.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
- #endif
  	buf_info.flags = 0;
  
+ 	memset(&buffer->impl.mem_alloc, 0, sizeof(VkMemoryAllocateInfo));
 diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/pipeline.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/pipeline.c.h
-index 3a3fab2e..6494ae24 100644
+index d1601138..b3f0cd27 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/pipeline.c.h
 +++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/pipeline.c.h
 @@ -2,6 +2,7 @@
@@ -85,7 +88,7 @@ index 3a3fab2e..6494ae24 100644
  
  static bool has_number(kinc_internal_named_number *named_numbers, const char *name) {
  	for (int i = 0; i < KINC_INTERNAL_NAMED_NUMBER_COUNT; ++i) {
-@@ -689,15 +690,17 @@ void createDescriptorLayout() {
+@@ -742,15 +743,17 @@ void createDescriptorLayout() {
  		typeCounts[i].descriptorCount = 1;
  	}
  
@@ -111,7 +114,7 @@ index 3a3fab2e..6494ae24 100644
  }
  
  int calc_descriptor_id(void) {
-@@ -726,22 +729,15 @@ struct destriptor_set {
+@@ -779,22 +782,15 @@ struct destriptor_set {
  static struct destriptor_set descriptor_sets[MAX_DESCRIPTOR_SETS] = {0};
  static int descriptor_sets_count = 0;
  
@@ -137,7 +140,7 @@ index 3a3fab2e..6494ae24 100644
  	assert(!err);
  
  	VkDescriptorBufferInfo buffer_descs[2];
-@@ -788,14 +784,14 @@ VkDescriptorSet getDescriptorSet() {
+@@ -841,14 +837,14 @@ VkDescriptorSet getDescriptorSet() {
  	memset(&writes, 0, sizeof(writes));
  
  	writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -154,7 +157,7 @@ index 3a3fab2e..6494ae24 100644
  	writes[1].dstBinding = 1;
  	writes[1].descriptorCount = 1;
  	writes[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-@@ -803,7 +799,7 @@ VkDescriptorSet getDescriptorSet() {
+@@ -856,7 +852,7 @@ VkDescriptorSet getDescriptorSet() {
  
  	for (int i = 2; i < 18; ++i) {
  		writes[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -163,7 +166,7 @@ index 3a3fab2e..6494ae24 100644
  		writes[i].dstBinding = i;
  		writes[i].descriptorCount = 1;
  		writes[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-@@ -823,11 +819,4 @@ VkDescriptorSet getDescriptorSet() {
+@@ -876,11 +872,4 @@ VkDescriptorSet getDescriptorSet() {
  			vkUpdateDescriptorSets(device, 2, writes, 0, NULL);
  		}
  	}
@@ -176,28 +179,28 @@ index 3a3fab2e..6494ae24 100644
 -	return descriptor_set;
  }
 diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h
-index d36d44c8..421e2969 100644
+index 28537808..bcb601fd 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h
 +++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/raytrace.c.h
-@@ -31,7 +31,16 @@ const char *miss_shader_name = "miss";
- VkDescriptorPool raytrace_descriptor_pool;
- kinc_raytrace_acceleration_structure_t *accel;
- kinc_raytrace_pipeline_t *pipeline;
--kinc_g5_texture_t *output = NULL;
-+kinc_g5_render_target_t *output = NULL;
-+kinc_g5_render_target_t *texpaint0;
-+kinc_g5_render_target_t *texpaint1;
-+kinc_g5_render_target_t *texpaint2;
-+kinc_g5_texture_t *texenv;
-+kinc_g5_texture_t *texsobol;
-+kinc_g5_texture_t *texscramble;
-+kinc_g5_texture_t *texrank;
-+kinc_g5_vertex_buffer_t *vb;
-+kinc_g5_index_buffer_t *ib;
+@@ -27,7 +27,16 @@ static const char *miss_shader_name = "miss";
+ static VkDescriptorPool raytrace_descriptor_pool;
+ static kinc_raytrace_acceleration_structure_t *accel;
+ static kinc_raytrace_pipeline_t *pipeline;
+-static kinc_g5_texture_t *output = NULL;
++static kinc_g5_render_target_t *output = NULL;
++static kinc_g5_render_target_t *texpaint0;
++static kinc_g5_render_target_t *texpaint1;
++static kinc_g5_render_target_t *texpaint2;
++static kinc_g5_texture_t *texenv;
++static kinc_g5_texture_t *texsobol;
++static kinc_g5_texture_t *texscramble;
++static kinc_g5_texture_t *texrank;
++static kinc_g5_vertex_buffer_t *vb;
++static kinc_g5_index_buffer_t *ib;
  
- PFN_vkCreateRayTracingPipelinesKHR _vkCreateRayTracingPipelinesKHR = NULL;
- PFN_vkGetRayTracingShaderGroupHandlesKHR _vkGetRayTracingShaderGroupHandlesKHR = NULL;
-@@ -45,6 +54,7 @@ PFN_vkCmdTraceRaysKHR _vkCmdTraceRaysKHR = NULL;
+ static PFN_vkCreateRayTracingPipelinesKHR _vkCreateRayTracingPipelinesKHR = NULL;
+ static PFN_vkGetRayTracingShaderGroupHandlesKHR _vkGetRayTracingShaderGroupHandlesKHR = NULL;
+@@ -41,6 +50,7 @@ static PFN_vkCmdTraceRaysKHR _vkCmdTraceRaysKHR = NULL;
  
  void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list_t *command_list, void *ray_shader, int ray_shader_size,
                                   kinc_g5_constant_buffer_t *constant_buffer) {
@@ -205,7 +208,7 @@ index d36d44c8..421e2969 100644
  	pipeline->_constant_buffer = constant_buffer;
  
  	{
-@@ -52,26 +62,93 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
+@@ -48,26 +58,93 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
  		acceleration_structure_layout_binding.binding = 0;
  		acceleration_structure_layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
  		acceleration_structure_layout_binding.descriptorCount = 1;
@@ -307,7 +310,7 @@ index d36d44c8..421e2969 100644
  		layout_info.pBindings = &bindings[0];
  		vkCreateDescriptorSetLayout(device, &layout_info, NULL, &pipeline->impl.descriptor_set_layout);
  
-@@ -233,23 +310,50 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
+@@ -229,23 +306,50 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
  	}
  
  	{
@@ -362,7 +365,7 @@ index d36d44c8..421e2969 100644
  		descriptor_pool_create_info.pPoolSizes = type_counts;
  
  		vkCreateDescriptorPool(device, &descriptor_pool_create_info, NULL, &raytrace_descriptor_pool);
-@@ -278,8 +382,10 @@ uint64_t get_buffer_device_address(VkBuffer buffer) {
+@@ -274,8 +378,10 @@ uint64_t get_buffer_device_address(VkBuffer buffer) {
  	return _vkGetBufferDeviceAddressKHR(device, &buffer_device_address_info);
  }
  
@@ -375,7 +378,7 @@ index d36d44c8..421e2969 100644
  	_vkGetBufferDeviceAddressKHR = (void *)vkGetDeviceProcAddr(device, "vkGetBufferDeviceAddressKHR");
  	_vkCreateAccelerationStructureKHR = (void *)vkGetDeviceProcAddr(device, "vkCreateAccelerationStructureKHR");
  	_vkGetAccelerationStructureDeviceAddressKHR = (void *)vkGetDeviceProcAddr(device, "vkGetAccelerationStructureDeviceAddressKHR");
-@@ -297,7 +403,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -293,7 +399,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  		acceleration_geometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
  		acceleration_geometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
  		acceleration_geometry.geometry.triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
@@ -384,7 +387,7 @@ index d36d44c8..421e2969 100644
  		acceleration_geometry.geometry.triangles.vertexData.deviceAddress = vertex_data_device_address.deviceAddress;
  		acceleration_geometry.geometry.triangles.vertexStride = vb->impl.myStride;
  		acceleration_geometry.geometry.triangles.indexType = VK_INDEX_TYPE_UINT32;
-@@ -312,7 +418,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -308,7 +414,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  
  		VkAccelerationStructureBuildSizesInfoKHR acceleration_build_sizes_info = {0};
  		acceleration_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
@@ -393,7 +396,7 @@ index d36d44c8..421e2969 100644
  		_vkGetAccelerationStructureBuildSizesKHR(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &acceleration_structure_build_geometry_info,
  		                                         &primitive_count, &acceleration_build_sizes_info);
  
-@@ -386,7 +492,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -382,7 +488,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  		acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer_device_address;
  
  		VkAccelerationStructureBuildRangeInfoKHR acceleration_build_range_info = {0};
@@ -402,7 +405,7 @@ index d36d44c8..421e2969 100644
  		acceleration_build_range_info.primitiveOffset = 0x0;
  		acceleration_build_range_info.firstVertex = 0;
  		acceleration_build_range_info.transformOffset = 0x0;
-@@ -441,7 +547,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -437,7 +543,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  	}
  
  	{
@@ -411,7 +414,7 @@ index d36d44c8..421e2969 100644
  
  		VkAccelerationStructureInstanceKHR instance = {0};
  		instance.transform = transform_matrix;
-@@ -508,7 +614,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -504,7 +610,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  
  		VkAccelerationStructureBuildSizesInfoKHR acceleration_build_sizes_info = {0};
  		acceleration_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
@@ -420,7 +423,7 @@ index d36d44c8..421e2969 100644
  		_vkGetAccelerationStructureBuildSizesKHR(device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR, &acceleration_structure_build_geometry_info,
  		                                         &primitive_count, &acceleration_build_sizes_info);
  
-@@ -580,7 +686,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -576,7 +682,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  		acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer_device_address;
  
  		VkAccelerationStructureBuildRangeInfoKHR acceleration_build_range_info = {0};
@@ -429,7 +432,7 @@ index d36d44c8..421e2969 100644
  		acceleration_build_range_info.primitiveOffset = 0x0;
  		acceleration_build_range_info.firstVertex = 0;
  		acceleration_build_range_info.transformOffset = 0x0;
-@@ -642,6 +748,16 @@ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_str
+@@ -638,6 +744,16 @@ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_str
  	_vkDestroyAccelerationStructureKHR(device, accel->impl.top_level_acceleration_structure, NULL);
  }
  
@@ -446,7 +449,7 @@ index d36d44c8..421e2969 100644
  void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *_accel) {
  	accel = _accel;
  }
-@@ -650,7 +766,57 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
+@@ -646,7 +762,57 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
  	pipeline = _pipeline;
  }
  
@@ -505,7 +508,7 @@ index d36d44c8..421e2969 100644
  	output = _output;
  }
  
-@@ -669,7 +835,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+@@ -665,7 +831,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
  	acceleration_structure_write.descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
  
  	VkDescriptorImageInfo image_descriptor = {0};
@@ -514,7 +517,7 @@ index d36d44c8..421e2969 100644
  	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
  
  	VkDescriptorBufferInfo buffer_descriptor = {0};
-@@ -681,7 +847,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+@@ -677,7 +843,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
  	result_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
  	result_image_write.pNext = NULL;
  	result_image_write.dstSet = pipeline->impl.descriptor_set;
@@ -523,7 +526,7 @@ index d36d44c8..421e2969 100644
  	result_image_write.descriptorCount = 1;
  	result_image_write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
  	result_image_write.pImageInfo = &image_descriptor;
-@@ -690,13 +856,145 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+@@ -686,13 +852,145 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
  	uniform_buffer_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
  	uniform_buffer_write.pNext = NULL;
  	uniform_buffer_write.dstSet = pipeline->impl.descriptor_set;
@@ -672,41 +675,44 @@ index d36d44c8..421e2969 100644
  
  	VkPhysicalDeviceRayTracingPipelinePropertiesKHR ray_tracing_pipeline_properties;
  	ray_tracing_pipeline_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
-@@ -744,7 +1042,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+@@ -724,7 +1022,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
  
- void kinc_raytrace_copy(kinc_g5_command_list_t *command_list, kinc_g5_render_target_t *target, kinc_g5_texture_t *source) {
+ 	VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry = {0};
  
 -	vkCmdEndRenderPass(command_list->impl._buffer);
 +	/*vkCmdEndRenderPass(command_list->impl._buffer);
  
- 	VkImageCopy copy_region = {0};
- 	copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-@@ -764,7 +1062,7 @@ void kinc_raytrace_copy(kinc_g5_command_list_t *command_list, kinc_g5_render_tar
- 		               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
- 	}
+ 	// Dispatch the ray tracing commands
+ 	vkCmdBindPipeline(command_list->impl._buffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline->impl.pipeline);
+@@ -735,7 +1033,7 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+ 	_vkCmdTraceRaysKHR(command_list->impl._buffer, &raygen_shader_sbt_entry, &miss_shader_sbt_entry, &hit_shader_sbt_entry, &callable_shader_sbt_entry,
+ 	                   output->texWidth, output->texHeight, 1);
  
 -	vkCmdBeginRenderPass(command_list->impl._buffer, &currentRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 +	vkCmdBeginRenderPass(command_list->impl._buffer, &currentRenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);*/
  }
  
- #endif // KORE_VKRT
+ void kinc_raytrace_copy(kinc_g5_command_list_t *command_list, kinc_g5_render_target_t *target, kinc_g5_texture_t *source) {
 diff --git a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h
-index 4ce652a5..425a8752 100644
+index 1aaced5a..61ff8449 100644
 --- a/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h
 +++ b/Backends/Graphics5/Vulkan/Sources/kinc/backend/graphics5/vertexbuffer.c.h
-@@ -54,6 +54,7 @@ void kinc_g5_vertex_buffer_init(kinc_g5_vertex_buffer_t *buffer, int vertexCount
+@@ -27,9 +27,8 @@ void kinc_g5_vertex_buffer_init(kinc_g5_vertex_buffer_t *buffer, int vertexCount
+ 	buf_info.pNext = NULL;
+ 	buf_info.size = vertexCount * buffer->impl.myStride;
  	buf_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
- #ifdef KORE_VKRT
+-#ifdef KORE_VKRT
  	buf_info.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+-#endif
 +	buf_info.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
- #endif
  	buf_info.flags = 0;
  
+ 	memset(&buffer->impl.mem_alloc, 0, sizeof(VkMemoryAllocateInfo));
 diff --git a/Sources/kinc/graphics5/raytrace.h b/Sources/kinc/graphics5/raytrace.h
-index febbd4c2..27b74e04 100644
+index 330f7d61..07abc2e1 100644
 --- a/Sources/kinc/graphics5/raytrace.h
 +++ b/Sources/kinc/graphics5/raytrace.h
-@@ -35,12 +35,13 @@ typedef struct kinc_raytrace_acceleration_structure {
+@@ -33,12 +33,13 @@ typedef struct kinc_raytrace_acceleration_structure {
  } kinc_raytrace_acceleration_structure_t;
  
  KINC_FUNC void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, struct kinc_g5_command_list *command_list,

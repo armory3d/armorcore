@@ -1,26 +1,26 @@
 ﻿diff --git a/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/raytrace.c.h b/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/raytrace.c.h
-index 19515c8c..636737be 100644
+index a36e4636..570c02bb 100644
 --- a/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/raytrace.c.h
 +++ b/Backends/Graphics5/Direct3D12/Sources/kinc/backend/graphics5/raytrace.c.h
-@@ -26,21 +26,37 @@ ID3D12RootSignature *dxrRootSignature;
- ID3D12DescriptorHeap *descriptorHeap;
- kinc_raytrace_acceleration_structure_t *accel;
- kinc_raytrace_pipeline_t *pipeline;
--kinc_g5_texture_t *output = NULL;
-+kinc_g5_render_target_t *output = NULL;
-+D3D12_CPU_DESCRIPTOR_HANDLE outputCpuDescriptor;
-+D3D12_GPU_DESCRIPTOR_HANDLE outputDescriptorHandle;
-+D3D12_GPU_DESCRIPTOR_HANDLE vbgpuDescriptorHandle;
-+D3D12_GPU_DESCRIPTOR_HANDLE ibgpuDescriptorHandle;
-+D3D12_GPU_DESCRIPTOR_HANDLE tex0gpuDescriptorHandle;
-+D3D12_GPU_DESCRIPTOR_HANDLE tex1gpuDescriptorHandle;
-+D3D12_GPU_DESCRIPTOR_HANDLE tex2gpuDescriptorHandle;
-+D3D12_GPU_DESCRIPTOR_HANDLE texenvgpuDescriptorHandle;
-+D3D12_GPU_DESCRIPTOR_HANDLE texsobolgpuDescriptorHandle;
-+D3D12_GPU_DESCRIPTOR_HANDLE texscramblegpuDescriptorHandle;
-+D3D12_GPU_DESCRIPTOR_HANDLE texrankgpuDescriptorHandle;
-+int descriptorsAllocated = 0;
-+UINT descriptorSize;
+@@ -18,21 +18,37 @@ static ID3D12RootSignature *dxrRootSignature;
+ static ID3D12DescriptorHeap *descriptorHeap;
+ static kinc_raytrace_acceleration_structure_t *accel;
+ static kinc_raytrace_pipeline_t *pipeline;
+-static kinc_g5_texture_t *output = NULL;
++static kinc_g5_render_target_t *output = NULL;
++static D3D12_CPU_DESCRIPTOR_HANDLE outputCpuDescriptor;
++static D3D12_GPU_DESCRIPTOR_HANDLE outputDescriptorHandle;
++static D3D12_GPU_DESCRIPTOR_HANDLE vbgpuDescriptorHandle;
++static D3D12_GPU_DESCRIPTOR_HANDLE ibgpuDescriptorHandle;
++static D3D12_GPU_DESCRIPTOR_HANDLE tex0gpuDescriptorHandle;
++static D3D12_GPU_DESCRIPTOR_HANDLE tex1gpuDescriptorHandle;
++static D3D12_GPU_DESCRIPTOR_HANDLE tex2gpuDescriptorHandle;
++static D3D12_GPU_DESCRIPTOR_HANDLE texenvgpuDescriptorHandle;
++static D3D12_GPU_DESCRIPTOR_HANDLE texsobolgpuDescriptorHandle;
++static D3D12_GPU_DESCRIPTOR_HANDLE texscramblegpuDescriptorHandle;
++static D3D12_GPU_DESCRIPTOR_HANDLE texrankgpuDescriptorHandle;
++static int descriptorsAllocated = 0;
++static UINT descriptorSize;
  
  void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list_t *command_list, void *ray_shader, int ray_shader_size,
                                   kinc_g5_constant_buffer_t *constant_buffer) {
@@ -42,7 +42,7 @@ index 19515c8c..636737be 100644
  
  	// Device
  	device->lpVtbl->QueryInterface(device, &IID_ID3D12Device5, &dxrDevice);
-@@ -54,8 +70,61 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
+@@ -46,8 +62,61 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
  	UAVDescriptor.BaseShaderRegister = 0;
  	UAVDescriptor.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
  
@@ -106,7 +106,7 @@ index 19515c8c..636737be 100644
  	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
  	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
  	rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
-@@ -65,9 +134,45 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
+@@ -57,9 +126,45 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
  	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
  	rootParameters[1].Descriptor.ShaderRegister = 0;
  	// Constant buffer
@@ -154,7 +154,7 @@ index 19515c8c..636737be 100644
  
  	D3D12_ROOT_SIGNATURE_DESC dxrRootSignatureDesc = {0};
  	dxrRootSignatureDesc.NumParameters = ARRAYSIZE(rootParameters);
-@@ -101,8 +206,8 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
+@@ -93,8 +198,8 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
  	hitGroup.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
  
  	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {0};
@@ -165,7 +165,7 @@ index 19515c8c..636737be 100644
  
  	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {0};
  	pipelineConfig.MaxTraceRecursionDepth = 1; // ~ primary rays only
-@@ -232,6 +337,12 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
+@@ -224,6 +329,12 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
  		memcpy(byteDest, hitGroupShaderId, size);
  		pipeline->impl.hitgroup_shader_table->lpVtbl->Unmap(pipeline->impl.hitgroup_shader_table, 0, NULL);
  	}
@@ -178,7 +178,7 @@ index 19515c8c..636737be 100644
  }
  
  void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline) {
-@@ -241,8 +352,63 @@ void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline) {
+@@ -233,8 +344,63 @@ void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline) {
  	pipeline->impl.hitgroup_shader_table->lpVtbl->Release(pipeline->impl.hitgroup_shader_table);
  }
  
@@ -228,7 +228,7 @@ index 19515c8c..636737be 100644
 +	cpuDescriptor.ptr = GetCPUDescriptorHandle(descriptorHeap).ptr + (INT64)(descriptorsAllocated) * (UINT64)(descriptorSize);
 +	UINT descriptorIndex = descriptorsAllocated++;
 +
-+	device->lpVtbl->CreateShaderResourceView(device, ib->impl.uploadBuffer, &srvDesc, cpuDescriptor);
++	device->lpVtbl->CreateShaderResourceView(device, ib->impl.upload_buffer, &srvDesc, cpuDescriptor);
 +	ibgpuDescriptorHandle.ptr = GetGPUDescriptorHandle(descriptorHeap).ptr + (INT64)(descriptorIndex) * (UINT64)(descriptorSize);
 +
 +	return descriptorIndex;
@@ -237,22 +237,22 @@ index 19515c8c..636737be 100644
  void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *vb,
 -                                               kinc_g5_index_buffer_t *ib) {
 +                                               kinc_g5_index_buffer_t *ib, float scale) {
-+	create_srv_ib(ib, ib->impl.myCount, 0);
++	create_srv_ib(ib, ib->impl.count, 0);
 +	create_srv_vb(vb, vb->impl.myCount, 8 * 2);
 +
  	// Reset the command list for the acceleration structure construction
  	command_list->impl._commandList->lpVtbl->Reset(command_list->impl._commandList, command_list->impl._commandAllocator, NULL);
  
-@@ -252,7 +418,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
- 	geometryDesc.Triangles.IndexCount = ib->impl.myCount;
- 	geometryDesc.Triangles.IndexFormat = DXGI_FORMAT_R32_UINT;
+@@ -244,7 +410,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+ 	geometryDesc.Triangles.IndexCount = ib->impl.count;
+ 	geometryDesc.Triangles.IndexFormat = ib->impl.format == KINC_G5_INDEX_BUFFER_FORMAT_16BIT ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
  	geometryDesc.Triangles.Transform3x4 = 0;
 -	geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R32G32B32_FLOAT;
 +	geometryDesc.Triangles.VertexFormat = DXGI_FORMAT_R16G16B16A16_SNORM;
  	geometryDesc.Triangles.VertexCount = vb->impl.myCount;
  	geometryDesc.Triangles.VertexBuffer.StartAddress = vb->impl.uploadBuffer->lpVtbl->GetGPUVirtualAddress(vb->impl.uploadBuffer);
  	geometryDesc.Triangles.VertexBuffer.StrideInBytes = D3D12ResourceGetDesc(vb->impl.uploadBuffer).Width / vb->impl.myCount;
-@@ -348,7 +514,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+@@ -340,7 +506,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  	// Create an instance desc for the bottom-level acceleration structure
  	ID3D12Resource *instanceDescs;
  	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc = {0};
@@ -261,7 +261,7 @@ index 19515c8c..636737be 100644
  	instanceDesc.InstanceMask = 1;
  	instanceDesc.AccelerationStructure = accel->impl.bottom_level_accel->lpVtbl->GetGPUVirtualAddress(accel->impl.bottom_level_accel);
  
-@@ -403,6 +569,44 @@ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_str
+@@ -395,6 +561,44 @@ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_str
  	accel->impl.top_level_accel->lpVtbl->Release(accel->impl.top_level_accel);
  }
  
@@ -306,7 +306,7 @@ index 19515c8c..636737be 100644
  void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *_accel) {
  	accel = _accel;
  }
-@@ -411,14 +615,72 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
+@@ -403,14 +607,72 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
  	pipeline = _pipeline;
  }
  
@@ -385,7 +385,7 @@ index 19515c8c..636737be 100644
  }
  
  void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
-@@ -426,11 +688,20 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+@@ -418,12 +680,20 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
  
  	// Bind the heaps, acceleration structure and dispatch rays
  	command_list->impl._commandList->lpVtbl->SetDescriptorHeaps(command_list->impl._commandList, 1, &descriptorHeap);
@@ -393,7 +393,8 @@ index 19515c8c..636737be 100644
 +	command_list->impl._commandList->lpVtbl->SetComputeRootDescriptorTable(command_list->impl._commandList, 0, outputDescriptorHandle);
  	command_list->impl._commandList->lpVtbl->SetComputeRootShaderResourceView(
  	    command_list->impl._commandList, 1, accel->impl.top_level_accel->lpVtbl->GetGPUVirtualAddress(accel->impl.top_level_accel));
--	auto cbGpuAddress = pipeline->_constant_buffer->impl.constant_buffer->lpVtbl->GetGPUVirtualAddress(pipeline->_constant_buffer->impl.constant_buffer);
+-	D3D12_GPU_VIRTUAL_ADDRESS cbGpuAddress =
+-	    pipeline->_constant_buffer->impl.constant_buffer->lpVtbl->GetGPUVirtualAddress(pipeline->_constant_buffer->impl.constant_buffer);
 -	command_list->impl._commandList->lpVtbl->SetComputeRootConstantBufferView(command_list->impl._commandList, 2, cbGpuAddress);
 +	command_list->impl._commandList->lpVtbl->SetComputeRootDescriptorTable(command_list->impl._commandList, 2, ibgpuDescriptorHandle);
 +	command_list->impl._commandList->lpVtbl->SetComputeRootDescriptorTable(command_list->impl._commandList, 3, vbgpuDescriptorHandle);
@@ -410,10 +411,10 @@ index 19515c8c..636737be 100644
  	// Since each shader table has only one shader record, the stride is same as the size.
  	D3D12_DISPATCH_RAYS_DESC dispatchDesc = {0};
 diff --git a/Sources/kinc/graphics5/raytrace.h b/Sources/kinc/graphics5/raytrace.h
-index febbd4c2..27b74e04 100644
+index 330f7d61..07abc2e1 100644
 --- a/Sources/kinc/graphics5/raytrace.h
 +++ b/Sources/kinc/graphics5/raytrace.h
-@@ -35,12 +35,13 @@ typedef struct kinc_raytrace_acceleration_structure {
+@@ -33,12 +33,13 @@ typedef struct kinc_raytrace_acceleration_structure {
  } kinc_raytrace_acceleration_structure_t;
  
  KINC_FUNC void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, struct kinc_g5_command_list *command_list,
