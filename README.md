@@ -50,14 +50,14 @@ node Kinc/make ios -g metal
 **Windows DXR** *wip*
 ```bash
 # Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
-node Kinc/make -g direct3d12 --raytrace dxr
+node Kinc/make -g direct3d12
 # Open generated Visual Studio project at `build\Krom.sln`
 # Build for x64 & release
 ```
 
 **Linux VKRT** *wip*
 ```bash
-node Kinc/make -g vulkan --raytrace vkrt --compiler clang --compile
+node Kinc/make -g vulkan --compiler clang --compile
 cd Deployment
 strip Krom
 ```
