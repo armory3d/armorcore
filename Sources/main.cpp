@@ -35,7 +35,7 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
-#ifdef KORE_RAYTRACE
+#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
 #include <kinc/graphics5/constantbuffer.h>
 #include <kinc/graphics5/commandlist.h>
 #include <kinc/graphics5/raytrace.h>
@@ -131,7 +131,7 @@ char mobile_title[1024];
 extern void krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype);
 #endif
 
-#ifdef KORE_RAYTRACE
+#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -3111,7 +3111,7 @@ namespace {
 	}
 	#endif
 
-	#ifdef KORE_RAYTRACE
+	#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
 	void krom_raytrace_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
@@ -3528,7 +3528,7 @@ namespace {
 		#ifdef WITH_ONNX
 		krom->Set(String::NewFromUtf8(isolate, "mlInference").ToLocalChecked(), FunctionTemplate::New(isolate, krom_ml_inference));
 		#endif
-		#ifdef KORE_RAYTRACE
+		#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
 		krom->Set(String::NewFromUtf8(isolate, "raytraceInit").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_init));
 		krom->Set(String::NewFromUtf8(isolate, "raytraceSetTextures").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_set_textures));
 		krom->Set(String::NewFromUtf8(isolate, "raytraceDispatchRays").ToLocalChecked(), FunctionTemplate::New(isolate, krom_raytrace_dispatch_rays));
