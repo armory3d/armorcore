@@ -2,23 +2,25 @@ name: Windows (Direct3D12)
 
 on:
   push:
-    branches:
-    - master
+    paths-ignore:
+      - "README.md"
+      - .github/**
+      - '!.github/workflows/windows_direct3d12.yml'
   pull_request:
     branches:
-    - master
+      - master
+    paths-ignore:
+      - "README.md"
+      - .github/**
+      - '!.github/workflows/windows_direct3d12.yml'
 
 jobs:
   build:
-
     runs-on: windows-latest
-
     steps:
-    - uses: actions/checkout@v1
-    - name: Get Submodules
-      run: git submodule update --init --recursive
-    - name: Get Node.js
-      run: git clone https://github.com/armory3d/nodejs_bin.git --depth 1
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Get msbuild
       uses: microsoft/setup-msbuild@v1
     - name: Unpack v8_monolith
@@ -29,4 +31,4 @@ jobs:
     - name: Apply patch
       run: git apply patch/d3d12_raytrace.diff --directory=Kinc
     - name: Compile
-      run: nodejs_bin/node.exe Kinc/make -v vs2019 -g direct3d12 --compile
+      run: node Kinc/make -v vs2019 -g direct3d12 --compile

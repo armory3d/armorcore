@@ -2,26 +2,30 @@ name: Linux (OpenGL)
 
 on:
   push:
-    branches:
-    - master
+    paths-ignore:
+      - "README.md"
+      - .github/**
+      - '!.github/workflows/linux_opengl.yml'
   pull_request:
     branches:
-    - master
+      - master
+    paths-ignore:
+      - "README.md"
+      - .github/**
+      - '!.github/workflows/linux_opengl.yml'
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v1
-    - name: Apt Update
-      run: sudo apt-get update
-    - name: Apt Install
-      run: sudo apt-get install libasound2-dev libxrandr-dev libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libudev-dev libgtk-3-dev --yes --quiet
-    - name: Get Submodules
-      run: git submodule update --init --recursive
-    - name: Get Node.js
-      run: git clone https://github.com/armory3d/nodejs_bin.git --depth 1
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Setup
+      run: |
+        sudo apt update
+        sudo apt install libasound2-dev libxrandr-dev libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libudev-dev libgtk-3-dev --yes --quiet
     - name: Compile
-      run: nodejs_bin/node-linux64 Kinc/make --compiler clang --compile
+      run: |
+        node Kinc/make -g opengl --compiler clang --compile
+        test -e Deployment/Krom

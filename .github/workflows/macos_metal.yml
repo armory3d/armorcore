@@ -1,23 +1,26 @@
-name: macOS (Metal)
+name: MacOS (Metal)
 
 on:
   push:
-    branches:
-    - master
+    paths-ignore:
+      - "README.md"
+      - .github/**
+      - '!.github/workflows/macos_metal.yml'
   pull_request:
     branches:
-    - master
+      - master
+    paths-ignore:
+      - "README.md"
+      - .github/**
+      - '!.github/workflows/macos_metal.yml'
 
 jobs:
   build:
-
-    runs-on: macOS-latest
-
+    runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Get Submodules
-      run: git submodule update --init --recursive
-    - name: Get Node.js
-      run: git clone https://github.com/armory3d/nodejs_bin.git --depth 1
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Compile
-      run: nodejs_bin/node-osx Kinc/make -g metal --compile
+      run: |
+        node Kinc/make -g metal --compile
