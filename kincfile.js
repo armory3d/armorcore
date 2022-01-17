@@ -10,14 +10,14 @@ let flags = {
 	with_audio: false,
 	with_texsynth: false,
 	with_onnx: false,
-	with_krafix: graphics === GraphicsApi.Vulkan, // glsl to spirv for vulkan
+	with_krafix: false,
 	with_worker: false,
-	with_plugin_embed: platform === Platform.iOS,
+	with_plugin_embed: false,
 };
 
 try {
 	// Parent folder
-	require('../../../../../kincflags.js').set_flags(flags);
+	require('../../../../../kincflags.js').set_flags(flags, platform, graphics);
 }
 catch (e) {
 }
