@@ -368,7 +368,7 @@ namespace {
 		kinc_gamepad_set_axis_callback(gamepad_axis);
 		kinc_gamepad_set_button_callback(gamepad_button);
 
-		#if KORE_ANDROID
+		#ifdef KORE_ANDROID
 		android_check_permissions();
 		#endif
 	}
@@ -1365,6 +1365,19 @@ namespace {
 				output = (unsigned char *)malloc(outputSize);
 				LZ4_decompress_safe((char *)(data + 12), (char *)output, compressedSize, outputSize);
 				format = KINC_IMAGE_FORMAT_RGBA128;
+
+				#ifdef KORE_IOS // No RGBA128 filtering, convert to RGBA64
+				uint32_t *_output32 = (uint32_t *)output;
+				unsigned char *_output = (unsigned char *)malloc(outputSize / 2);
+				uint16_t *_output16 = (uint16_t *)_output;
+				for (int i = 0; i < outputSize / 4; ++i) {
+					uint32_t x = *((uint32_t *)&_output32[i]);
+					_output16[i] = ((x >> 16) & 0x8000) | ((((x & 0x7f800000) - 0x38000000) >> 13) & 0x7c00) | ((x >> 13) & 0x03ff);
+				}
+				format = KINC_IMAGE_FORMAT_RGBA64;
+				free(output);
+				output = _output;
+				#endif
 			}
 			else {
 				success = false;
@@ -2391,7 +2404,7 @@ namespace {
 			url_path[j] = curl[i + 8 + j];
 		}
 		url_path[j] = 0;
-		#if KORE_ANDROID // TODO: move to Kinc
+		#ifdef KORE_ANDROID // TODO: move to Kinc
 		android_http_request(curl, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, cbd);
 		#else
 		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, cbd);
@@ -2796,7 +2809,7 @@ namespace {
 	void krom_delete_file(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
-		#if KORE_IOS
+		#ifdef KORE_IOS
 		IOSDeleteFile(*utf8_value);
 		#elif KORE_WINDOWS
 		char path[1024];
