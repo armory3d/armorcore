@@ -1,13 +1,14 @@
 ﻿diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
-index 3e3a4b46..90fbff08 100644
+index 6678b2e7..819c6455 100644
 --- a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
 +++ b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
-@@ -13,10 +13,15 @@ import android.os.Message;
+@@ -13,11 +13,16 @@ import android.os.Message;
  import android.os.Vibrator;
  import android.os.VibrationEffect;
  import android.os.Build;
 +import android.view.DragAndDropPermissions;
 +import android.view.DragEvent;
+ import android.view.KeyEvent;
  import android.view.View;
  import android.view.WindowManager;
  import android.view.inputmethod.InputMethodManager;
@@ -15,19 +16,19 @@ index 3e3a4b46..90fbff08 100644
 +import static android.view.DragEvent.ACTION_DRAG_STARTED;
 +import static android.view.DragEvent.ACTION_DROP;
 +
- public class KincActivity extends NativeActivity {
+ public class KincActivity extends NativeActivity implements KeyEvent.Callback {
  	private static KincActivity instance;
  	private InputMethodManager inputManager;
-@@ -45,6 +50,24 @@ public class KincActivity extends NativeActivity {
+@@ -46,6 +51,24 @@ public class KincActivity extends NativeActivity implements KeyEvent.Callback {
          } catch (PackageManager.NameNotFoundException|NullPointerException e) {
              isDisabledStickyImmersiveMode = false;
          }
 +
-+       getWindow().getDecorView().setOnDragListener(
-+           new View.OnDragListener() {
-+               @Override
-+               public boolean onDrag(View view, DragEvent dragEvent) {
-+                   switch(dragEvent.getAction()) {
++		getWindow().getDecorView().setOnDragListener(
++			new View.OnDragListener() {
++				@Override
++				public boolean onDrag(View view, DragEvent dragEvent) {
++					switch(dragEvent.getAction()) {
 +						case ACTION_DRAG_STARTED:
 +							return true;
 +						case ACTION_DROP:
@@ -43,10 +44,10 @@ index 3e3a4b46..90fbff08 100644
  	}
  
      private void hideSystemUI() {
-@@ -148,4 +171,29 @@ public class KincActivity extends NativeActivity {
- 			}
- 		});
+@@ -157,4 +180,29 @@ public class KincActivity extends NativeActivity implements KeyEvent.Callback {
  	}
+ 
+ 	private native void nativeKincKeyPress(String chars);
 +
 +	private native void onAndroidFilePicked(String pickedPath);
 +
