@@ -29,4 +29,4 @@ jobs:
     - name: Apply patch
       run: git apply patch/d3d12_raytrace.diff --directory=Kinc
     - name: Compile
-      run: nodejs_bin/node.exe Kinc/make -v vs2019 -g direct3d12 --compile
+      run: nodejs_bin/node.exe Kinc/make -v vs2022 -g direct3d12 --compile
