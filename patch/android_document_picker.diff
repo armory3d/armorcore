@@ -1,8 +1,16 @@
 ﻿diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
-index 6678b2e7..819c6455 100644
+index 6678b2e7..30742be8 100644
 --- a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
 +++ b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
-@@ -13,11 +13,16 @@ import android.os.Message;
+@@ -1,6 +1,7 @@
+ package tech.kinc;
+ 
+ import android.app.NativeActivity;
++import android.content.ContentResolver;
+ import android.content.Context;
+ import android.content.Intent;
+ import android.content.pm.ApplicationInfo;
+@@ -13,11 +14,23 @@ import android.os.Message;
  import android.os.Vibrator;
  import android.os.VibrationEffect;
  import android.os.Build;
@@ -16,10 +24,17 @@ index 6678b2e7..819c6455 100644
 +import static android.view.DragEvent.ACTION_DRAG_STARTED;
 +import static android.view.DragEvent.ACTION_DROP;
 +
++import java.io.File;
++import java.io.FileNotFoundException;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.io.InputStream;
++import java.io.OutputStream;
++
  public class KincActivity extends NativeActivity implements KeyEvent.Callback {
  	private static KincActivity instance;
  	private InputMethodManager inputManager;
-@@ -46,6 +51,24 @@ public class KincActivity extends NativeActivity implements KeyEvent.Callback {
+@@ -46,6 +59,24 @@ public class KincActivity extends NativeActivity implements KeyEvent.Callback {
          } catch (PackageManager.NameNotFoundException|NullPointerException e) {
              isDisabledStickyImmersiveMode = false;
          }
@@ -44,12 +59,13 @@ index 6678b2e7..819c6455 100644
  	}
  
      private void hideSystemUI() {
-@@ -157,4 +180,29 @@ public class KincActivity extends NativeActivity implements KeyEvent.Callback {
+@@ -157,4 +188,53 @@ public class KincActivity extends NativeActivity implements KeyEvent.Callback {
  	}
  
  	private native void nativeKincKeyPress(String chars);
 +
 +	private native void onAndroidFilePicked(String pickedPath);
++	private native String getMobileTitle();
 +
 +	@Override
 +	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -66,11 +82,34 @@ index 6678b2e7..819c6455 100644
 +	}
 +
 +	private void importFile(Uri pickedFile) {
-+		String[] filePath = { android.provider.MediaStore.Images.Media.DATA };
-+		android.database.Cursor cursor = getContentResolver().query(pickedFile, filePath, null, null, null);
-+		cursor.moveToFirst();
-+		String pickedPath = cursor.getString(cursor.getColumnIndex(filePath[0]));
-+		cursor.close();
-+		onAndroidFilePicked(pickedPath);
++		ContentResolver resolver = getApplicationContext().getContentResolver();
++		try (InputStream is = resolver.openInputStream(pickedFile)) {
++			File dir = new File(getFilesDir() + "/" + getMobileTitle());
++			dir.mkdirs();
++			String[] path = pickedFile.getPath().split("/");
++
++			// Samsung files app removes extension from fileName
++			String[] filePath = { android.provider.MediaStore.Images.Media.DATA };
++			android.database.Cursor cursor = getContentResolver().query(pickedFile, filePath, null, null, null);
++			cursor.moveToFirst();
++			String pickedPath = cursor.getString(cursor.getColumnIndex(filePath[0]));
++			if (pickedPath != null) {
++				path = pickedPath.split("/");
++			}
++			cursor.close();
++
++			String fileName = path[path.length - 1];
++			String dst = getFilesDir() + "/" + getMobileTitle() + "/" + fileName;
++			try (OutputStream os = new FileOutputStream(dst)) {
++				byte[] buf = new byte[1024];
++				int len;
++				while ((len = is.read(buf)) > 0) {
++					os.write(buf, 0, len);
++				}
++				onAndroidFilePicked(dst);
++			}
++		}
++		catch (java.io.FileNotFoundException e) {}
++		catch (IOException e) {}
 +	}
  }

@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <android_native_app_glue.h>
 
+extern char mobile_title[1024];
+
 extern "C" ANativeActivity *kinc_android_get_activity(void);
 extern "C" jclass kinc_android_find_class(JNIEnv *env, const char *name);
 
@@ -19,6 +21,11 @@ extern "C" JNIEXPORT void JNICALL Java_tech_kode_kore_KoreActivity_onAndroidFile
 
 	kinc_internal_drop_files_callback(filePath);
 	env->ReleaseStringUTFChars(jstr, str);
+}
+
+extern "C" JNIEXPORT jstring JNICALL Java_tech_kode_kore_KoreActivity_getMobileTitle(JNIEnv *env, jobject jobj) {
+	jstring result = env->NewStringUTF(mobile_title);
+	return result;
 }
 
 void AndroidFileDialogOpen() {
@@ -87,7 +94,10 @@ void android_check_permissions() {
 	JNIEnv *env;
 	activity->vm->AttachCurrentThread(&env, nullptr);
 	jclass koreActivityClass = kinc_android_find_class(env, "tech.kinc.KincActivity");
-	JNINativeMethod methodTable[] = {{"onAndroidFilePicked", "(Ljava/lang/String;)V", (void*)Java_tech_kode_kore_KoreActivity_onAndroidFilePicked}};
+	JNINativeMethod methodTable[] = {
+		{"onAndroidFilePicked", "(Ljava/lang/String;)V", (void *)Java_tech_kode_kore_KoreActivity_onAndroidFilePicked},
+		{"getMobileTitle", "()Ljava/lang/String;", (void *)Java_tech_kode_kore_KoreActivity_getMobileTitle}
+	};
 	int methodTableSize = sizeof(methodTable) / sizeof(methodTable[0]);
 	env->RegisterNatives(koreActivityClass, methodTable, methodTableSize);
 	activity->vm->DetachCurrentThread();
