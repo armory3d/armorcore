@@ -99,6 +99,7 @@ if (platform === Platform.Windows) {
 }
 else if (platform === Platform.Linux) {
 	project.addLib('v8_monolith -L../../' + libdir);
+	project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
 }
 else if (platform === Platform.Android) {
 	// project.addLib(libdir + 'libv8_monolith.a');
