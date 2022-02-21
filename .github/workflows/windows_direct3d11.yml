@@ -27,4 +27,4 @@ jobs:
         pathSource: v8/libraries/win32/release/v8_monolith.7z
         pathTarget: v8/libraries/win32/release/
     - name: Compile
-      run: nodejs_bin/node.exe Kinc/make -v vs2022 -g direct3d11 --compile
+      run: nodejs_bin/node.exe Kinc/make.js -v vs2022 -g direct3d11 --compile

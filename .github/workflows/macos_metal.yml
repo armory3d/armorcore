@@ -20,4 +20,4 @@ jobs:
     - name: Get Node.js
       run: git clone https://github.com/armory3d/nodejs_bin.git --depth 1
     - name: Compile
-      run: nodejs_bin/node-osx Kinc/make -g metal --compile
+      run: nodejs_bin/node-osx Kinc/make.js -g metal --compile
