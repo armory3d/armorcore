@@ -38,12 +38,6 @@ project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 
-project.targetOptions.android.package = flags.package;
-project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
-project.targetOptions.android.screenOrientation = ['sensorLandscape'];
-project.targetOptions.android.minSdkVersion = 29;
-project.targetOptions.android.targetSdkVersion = 30;
-
 if (platform === Platform.OSX) {
 	project.cpp = true; // Otherwise V8::Initialize() hangs
 	project.icon = 'icon_macos.png';
@@ -75,6 +69,12 @@ if (platform === Platform.Android) {
 	project.addFile('Sources/AndroidHttpRequest.cpp');
 	project.addDefine('IDLE_SLEEP');
 	project.addJavaDir('Sources/android');
+
+	project.targetOptions.android.package = flags.package;
+	project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
+	project.targetOptions.android.screenOrientation = ['sensorLandscape'];
+	project.targetOptions.android.minSdkVersion = 29;
+	project.targetOptions.android.targetSdkVersion = 30;
 }
 else if (platform === Platform.iOS) {
 	project.addFile('Sources/IOSFileDialog.mm');
