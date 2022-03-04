@@ -1872,7 +1872,11 @@ namespace {
 	void krom_display_is_primary(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		#ifdef KORE_LINUX // TODO: Primary display detection broken in Kinc
+		args.GetReturnValue().Set(Boolean::New(isolate, true));
+		#else
 		args.GetReturnValue().Set(Boolean::New(isolate, index == kinc_primary_display()));
+		#endif
 	}
 
 	void krom_write_storage(const FunctionCallbackInfo<Value> &args) {
