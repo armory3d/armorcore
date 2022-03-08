@@ -713,6 +713,7 @@ class KromExporter {
 	}
 
 	haxeOptions(name, defines) {
+		defines.push('armorcore');
 		defines.push('sys_' + this.options.target);
 		defines.push('sys_g1');
 		defines.push('sys_g2');
