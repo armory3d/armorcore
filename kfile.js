@@ -16,8 +16,8 @@ let flags = {
 };
 
 try {
-	// Parent folder
-	require('../../../../../kincflags.js').set_flags(flags, platform, graphics);
+	const fs = require('fs');
+	eval(fs.readFileSync("../kincflags.js") + "");
 }
 catch (e) {
 }
@@ -34,6 +34,7 @@ const build = flags.release ? 'release' : 'debug';
 const libdir = 'v8/libraries/' + system + '/' + build + '/';
 
 let project = new Project(flags.name);
+await project.addProject('Kinc');
 project.cpp11 = true;
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
@@ -208,4 +209,5 @@ if (flags.with_plugin_embed) {
 	await project.addProject('Libraries/plugins');
 }
 
+project.flatten();
 resolve(project);
