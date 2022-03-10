@@ -17,8 +17,6 @@ jobs:
     - uses: actions/checkout@v1
     - name: Get Submodules
       run: git submodule update --init --recursive
-    - name: Get Node.js
-      run: git clone https://github.com/armory3d/nodejs_bin.git --depth 1
     - name: Get msbuild
       uses: microsoft/setup-msbuild@v1
     - name: Unpack v8_monolith
@@ -27,4 +25,4 @@ jobs:
         pathSource: v8/libraries/win32/release/v8_monolith.7z
         pathTarget: v8/libraries/win32/release/
     - name: Compile
-      run: nodejs_bin/node.exe Kinc/make.js -v vs2022 -g direct3d11 --compile
+      run: Kinc/make -g direct3d11 --compile
