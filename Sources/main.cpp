@@ -120,9 +120,6 @@ using namespace v8;
 
 const int KROM_API = 6;
 
-int save_and_quit = 0; // off, save, nosave
-extern "C" void armory_save_and_quit(bool save) { save_and_quit = save ? 1 : 2; }
-
 #if defined(KORE_IOS) || defined(KORE_ANDROID)
 char mobile_title[1024];
 #endif
@@ -2645,11 +2642,47 @@ namespace {
 		kinc_compute(x, y, z);
 	}
 
+	bool window_close_callback(void *data) {
+		#if KORE_WINDOWS
+		wchar_t title[1024];
+		GetWindowTextW(kinc_windows_window_handle(0), title, sizeof(title));
+		bool dirty = wcsstr(title, L"* - ArmorPaint") != NULL;
+		if (dirty) {
+			int res = MessageBox(kinc_windows_window_handle(0), L"Project has been modified, save changes?", L"Save Changes?", MB_YESNOCANCEL | MB_ICONEXCLAMATION);
+			if (res == IDYES) {
+				Locker locker{isolate};
+				Isolate::Scope isolate_scope(isolate);
+				HandleScope handle_scope(isolate);
+				Local<Context> context = Local<Context>::New(isolate, global_context);
+				Context::Scope context_scope(context);
+
+				TryCatch try_catch(isolate);
+				Local<Function> func = Local<Function>::New(isolate, save_and_quit_func);
+				Local<Value> result;
+				const int argc = 1;
+				Local<Value> argv[argc] = { Boolean::New(isolate, true) };
+				if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+					handle_exception(&try_catch);
+				}
+				return false;
+			}
+			else if (res == IDNO)
+				return true;
+			else
+				return false;
+		}
+		return true;
+		#else
+		return true;
+		#endif
+	}
+
 	void krom_set_save_and_quit_callback(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		save_and_quit_func.Reset(isolate, func);
+		kinc_window_set_close_callback(0, window_close_callback, NULL);
 	}
 
 	void krom_set_mouse_cursor(const FunctionCallbackInfo<Value> &args) {
@@ -3620,17 +3653,6 @@ namespace {
 
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			handle_exception(&try_catch);
-		}
-
-		if (save_and_quit > 0) {
-			Local<Function> func = Local<Function>::New(isolate, save_and_quit_func);
-			Local<Value> result;
-			const int argc = 1;
-			Local<Value> argv[argc] = {Boolean::New(isolate, save_and_quit == 1)};
-			if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-				handle_exception(&try_catch);
-			}
-			save_and_quit = 0;
 		}
 	}
 
