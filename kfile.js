@@ -1,3 +1,19 @@
+const fs = require('fs');
+
+try {
+	eval(fs.readFileSync("armorcore/make.js") + "");
+	await runKhamake();
+
+	let haxeonly = false;
+	if (haxeonly) {
+		process.exit(1);
+	}
+}
+catch (e) {
+	console.log(e);
+	process.exit(1);
+}
+
 let flags = {
 	name: 'Krom',
 	package: 'org.armory3d',
@@ -16,8 +32,7 @@ let flags = {
 };
 
 try {
-	const fs = require('fs');
-	eval(fs.readFileSync("../kincflags.js") + "");
+	eval(fs.readFileSync("kincflags.js") + "");
 }
 catch (e) {
 }
