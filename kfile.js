@@ -1,6 +1,10 @@
 const fs = require('fs');
 
 try {
+	if (process.env.ARM_SNAPSHOT) {
+		process.argv.push("--snapshot");
+	}
+
 	eval(fs.readFileSync("armorcore/make.js") + "");
 	await runKhamake();
 
