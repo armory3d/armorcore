@@ -32,14 +32,6 @@ function matches(text, pattern) {
 	return regex.test(text);
 }
 
-function matchesAllSubdirs(dir, pattern) {
-	if (pattern.endsWith('/**')) {
-		return matches(stringify(dir), pattern.substr(0, pattern.length - 3));
-	}
-	else
-		return false;
-}
-
 function stringify(path) {
 	return path.replace(/\\/g, '/');
 }
@@ -56,14 +48,16 @@ function searchFiles(currentDir, pattern) {
 			result.push(path.join(currentDir, stringify(file)));
 		}
 	}
-	let dirs = fs.readdirSync(currentDir);
-	for (let d of dirs) {
-		let dir = path.join(currentDir, d);
-		if (d.startsWith('.'))
-			continue;
-		if (!fs.statSync(dir).isDirectory())
-			continue;
-		return result.concat(searchFiles(dir, pattern));
+	if (pattern.endsWith("/**")) {
+		let dirs = fs.readdirSync(currentDir);
+		for (let d of dirs) {
+			let dir = path.join(currentDir, d);
+			if (d.startsWith('.'))
+				continue;
+			if (!fs.statSync(dir).isDirectory())
+				continue;
+			return result.concat(searchFiles(dir, pattern));
+		}
 	}
 	return result;
 }
