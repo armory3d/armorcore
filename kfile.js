@@ -1,4 +1,5 @@
 const fs = require('fs');
+let armorcore = false;
 
 try {
 	if (process.env.ARM_SNAPSHOT) {
@@ -7,6 +8,7 @@ try {
 
 	eval(fs.readFileSync("armorcore/make.js") + "");
 	await runKhamake();
+	armorcore = true;
 
 	let haxeonly = false;
 	if (haxeonly) {
@@ -116,7 +118,12 @@ if (platform === Platform.Windows) {
 	}
 }
 else if (platform === Platform.Linux) {
-	project.addLib('v8_monolith -L../../' + libdir);
+	if (armorcore) {
+		project.addLib('v8_monolith -L../../armorcore/' + libdir);
+	}
+	else {
+		project.addLib('v8_monolith -L../../' + libdir);
+	}
 	project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
 }
 else if (platform === Platform.Android) {
