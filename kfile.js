@@ -6,6 +6,11 @@ try {
 		process.argv.push("--snapshot");
 	}
 
+	if (platform === Platform.Android) {
+		process.argv.push("--shaderversion");
+		process.argv.push("300");
+	}
+
 	eval(fs.readFileSync("armorcore/make.js") + "");
 	await runKhamake();
 	armorcore = true;
