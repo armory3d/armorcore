@@ -186,6 +186,7 @@ namespace {
 	Global<Function> gamepad_button_func;
 	Global<Function> audio_func;
 	Global<Function> save_and_quit_func;
+	bool save_and_quit_func_set = false;
 
 	kinc_mutex_t mutex;
 	kinc_a2_buffer_t audio_buffer;
@@ -2643,38 +2644,43 @@ namespace {
 	}
 
 	bool window_close_callback(void *data) {
+
 		#if KORE_WINDOWS
+		bool save = false;
+		Locker locker{isolate};
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, save_and_quit_func);
+		Local<Value> result;
+		const int argc = 1;
+
 		wchar_t title[1024];
 		GetWindowTextW(kinc_windows_window_handle(0), title, sizeof(title));
 		bool dirty = wcsstr(title, L"* - ArmorPaint") != NULL;
 		if (dirty) {
 			int res = MessageBox(kinc_windows_window_handle(0), L"Project has been modified, save changes?", L"Save Changes?", MB_YESNOCANCEL | MB_ICONEXCLAMATION);
-			if (res == IDYES) {
-				Locker locker{isolate};
-				Isolate::Scope isolate_scope(isolate);
-				HandleScope handle_scope(isolate);
-				Local<Context> context = Local<Context>::New(isolate, global_context);
-				Context::Scope context_scope(context);
-
-				TryCatch try_catch(isolate);
-				Local<Function> func = Local<Function>::New(isolate, save_and_quit_func);
-				Local<Value> result;
-				const int argc = 1;
-				Local<Value> argv[argc] = { Boolean::New(isolate, true) };
-				if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-					handle_exception(&try_catch);
-				}
-				return false;
-			}
+			if (res == IDYES)
+				save = true;
 			else if (res == IDNO)
-				return true;
-			else
+				save = false;
+			else // Cancel
 				return false;
 		}
-		return true;
-		#else
-		return true;
+
+		if (save_and_quit_func_set) {
+			Local<Value> argv[argc] = { Boolean::New(isolate, save) };
+			if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+				handle_exception(&try_catch);
+			}
+			return false;
+		}
 		#endif
+
+		return true;
 	}
 
 	void krom_set_save_and_quit_callback(const FunctionCallbackInfo<Value> &args) {
@@ -2682,6 +2688,7 @@ namespace {
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		save_and_quit_func.Reset(isolate, func);
+		save_and_quit_func_set = true;
 		kinc_window_set_close_callback(0, window_close_callback, NULL);
 	}
 
