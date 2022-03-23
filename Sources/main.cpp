@@ -3351,23 +3351,13 @@ namespace {
 	void krom_window_x(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		// args.GetReturnValue().Set(Int32::New(isolate, kinc_window_x(windowId))); // Returns window creation pos
-		#ifdef KORE_WINDOWS
-		RECT rect;
-		GetWindowRect(kinc_windows_window_handle(windowId), &rect);
-		args.GetReturnValue().Set(Int32::New(isolate, rect.left));
-		#endif
+		args.GetReturnValue().Set(Int32::New(isolate, kinc_window_x(windowId)));
 	}
 
 	void krom_window_y(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		// args.GetReturnValue().Set(Int32::New(isolate, kinc_window_y(windowId)));
-		#ifdef KORE_WINDOWS
-		RECT rect;
-		GetWindowRect(kinc_windows_window_handle(windowId), &rect);
-		args.GetReturnValue().Set(Int32::New(isolate, rect.top));
-		#endif
+		args.GetReturnValue().Set(Int32::New(isolate, kinc_window_y(windowId)));
 	}
 
 	void krom_language(const FunctionCallbackInfo<Value> &args) {
