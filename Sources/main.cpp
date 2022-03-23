@@ -328,6 +328,13 @@ namespace {
 		kinc_mutex_init(&mutex);
 		kinc_random_init((int)(kinc_time() * 1000));
 
+		// Maximized window has negative xy, prevent window centering done by kinc
+		#if KORE_WINDOWS
+		if (x < 0 && y < 0) {
+			kinc_window_move(0, x, y);
+		}
+		#endif
+
 		#ifdef WITH_AUDIO
 		if (enable_sound) {
 			kinc_a2_init();
