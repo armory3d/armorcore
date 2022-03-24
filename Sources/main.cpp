@@ -328,9 +328,9 @@ namespace {
 		kinc_mutex_init(&mutex);
 		kinc_random_init((int)(kinc_time() * 1000));
 
-		// Maximized window has negative xy, prevent window centering done by kinc
+		// Maximized window has x < -1, prevent window centering done by kinc
 		#if KORE_WINDOWS
-		if (x < 0 && y < 0) {
+		if (x < -1 && y < -1) {
 			kinc_window_move(0, x, y);
 		}
 		#endif
