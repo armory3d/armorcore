@@ -2809,9 +2809,9 @@ namespace {
 		#endif
 
 		#ifdef KORE_WINDOWS
-		temp_wstring[0] = 0;
+		std::wstring files;
 		#else
-		temp_string[0] = 0;
+		std::string files;
 		#endif
 
 		for (int i = 0; i < dir.n_files; i++) {
@@ -2822,23 +2822,22 @@ namespace {
 				#ifdef KORE_WINDOWS
 				if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesW(file.path)) continue; // Skip hidden files
 				if (wcscmp(file.name, L".") == 0 || wcscmp(file.name, L"..") == 0) continue;
-				if (wcslen(temp_wstring) + wcslen(file.name) + 1 > 1023) break;
-				wcscat(temp_wstring, file.name);
-				if (i < dir.n_files - 1) wcscat(temp_wstring, L"\n"); // Separator
+				files += file.name;
+				
+				if (i < dir.n_files - 1) files += L"\n"; // Separator
 				#else
 				if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0) continue;
-				if (strlen(temp_string) + strlen(file.name) + 1 > 1023) break;
-				strcat(temp_string, file.name);
-				if (i < dir.n_files - 1) strcat(temp_string, "\n"); // Separator
+				files += file.name;
+				if (i < dir.n_files - 1) files += "\n";
 				#endif
 			}
 		}
 
 		tinydir_close(&dir);
 		#ifdef KORE_WINDOWS
-		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)temp_wstring).ToLocalChecked());
+		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)files.c_str()).ToLocalChecked());
 		#else
-		args.GetReturnValue().Set(String::NewFromUtf8(isolate, temp_string).ToLocalChecked());
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, files.c_str()).ToLocalChecked());
 		#endif
 	}
 	#endif
