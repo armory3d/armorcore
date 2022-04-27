@@ -1,6 +1,5 @@
 #include <emscripten.h>
 #include <string.h>
-#include <kinc/pch.h>
 #include <kinc/log.h>
 #include <kinc/io/filereader.h>
 #include <kinc/io/filewriter.h>
@@ -24,7 +23,6 @@
 #include <kinc/graphics4/pipeline.h>
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
-// #include <kinc/compute/compute.h>
 #include <kinc/libs/stb_image.h>
 #ifdef KORE_LZ4X
 int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int maxOutputSize);
@@ -32,7 +30,7 @@ int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int 
 #include <kinc/io/lz4/lz4.h>
 #endif
 
-const int KROM_API = 3;
+const int KROM_API = 6;
 
 static void (*update_func)() = NULL;
 
@@ -44,20 +42,16 @@ void update() {
 
 	kinc_g4_begin(0);
 
-	// kinc_mutex_lock(&mutex);
-	
 	update_func();
-
-	// kinc_mutex_unlock(&mutex);
 
 	kinc_g4_end(0);
 	kinc_g4_swap_buffers();
 }
 
-EMSCRIPTEN_KEEPALIVE void init(char* title, int width, int height, int samples_per_pixel, bool vertical_sync, int window_mode, int window_features, int api_version, int x, int y) {
+EMSCRIPTEN_KEEPALIVE void init(char *title, int width, int height, int samples_per_pixel, bool vertical_sync, int window_mode, int window_features, int api_version, int x, int y) {
 
 	if (api_version != KROM_API) {
-		const char* outdated;
+		const char *outdated;
 		if (api_version < KROM_API) {
 			outdated = "Kha";
 		}
@@ -86,7 +80,6 @@ EMSCRIPTEN_KEEPALIVE void init(char* title, int width, int height, int samples_p
 	frame.stencil_bits = 8;
 	frame.samples_per_pixel = samples_per_pixel;
 	kinc_init(title, width, height, &win, &frame);
-	// kinc_mutex_init(&mutex);
 	kinc_random_init((int)(kinc_time() * 1000));
 
 	// #ifdef WITH_AUDIO
@@ -129,7 +122,7 @@ EMSCRIPTEN_KEEPALIVE void setApplicationName() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE void krom_log(char* message) {
+EMSCRIPTEN_KEEPALIVE void krom_log(char *message) {
 	kinc_log(KINC_LOG_LEVEL_INFO, "%s", message);
 }
 
@@ -229,9 +222,9 @@ EMSCRIPTEN_KEEPALIVE void showKeyboard() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE kinc_g4_index_buffer_t* createIndexBuffer(int count) {
-	kinc_g4_index_buffer_t* buffer = (kinc_g4_index_buffer_t*)malloc(sizeof(kinc_g4_index_buffer_t));
-	kinc_g4_index_buffer_init(buffer, count);
+EMSCRIPTEN_KEEPALIVE kinc_g4_index_buffer_t *createIndexBuffer(int count) {
+	kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)malloc(sizeof(kinc_g4_index_buffer_t));
+	kinc_g4_index_buffer_init(buffer, count, KINC_G4_INDEX_BUFFER_FORMAT_32BIT, KINC_G4_USAGE_STATIC);
 	return buffer;
 }
 
@@ -239,26 +232,26 @@ EMSCRIPTEN_KEEPALIVE void deleteIndexBuffer() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE int index_buffer_size(kinc_g4_index_buffer_t* buffer) {
+EMSCRIPTEN_KEEPALIVE int index_buffer_size(kinc_g4_index_buffer_t *buffer) {
 	return kinc_g4_index_buffer_count(buffer);
 }
 
-EMSCRIPTEN_KEEPALIVE int* lockIndexBuffer(kinc_g4_index_buffer_t* buffer) {
-	int* vertices = kinc_g4_index_buffer_lock(buffer);
+EMSCRIPTEN_KEEPALIVE int *lockIndexBuffer(kinc_g4_index_buffer_t *buffer) {
+	int *vertices = kinc_g4_index_buffer_lock(buffer);
 	return vertices;
 }
 
-EMSCRIPTEN_KEEPALIVE void unlockIndexBuffer(kinc_g4_index_buffer_t* buffer) {
+EMSCRIPTEN_KEEPALIVE void unlockIndexBuffer(kinc_g4_index_buffer_t *buffer) {
 	kinc_g4_index_buffer_unlock(buffer);
 }
 
-EMSCRIPTEN_KEEPALIVE void setIndexBuffer(kinc_g4_index_buffer_t* buffer) {
+EMSCRIPTEN_KEEPALIVE void setIndexBuffer(kinc_g4_index_buffer_t *buffer) {
 	kinc_g4_set_index_buffer(buffer);
 }
 
-EMSCRIPTEN_KEEPALIVE kinc_g4_vertex_buffer_t* createVertexBuffer(int count/*, structure: Array<kha.graphics4.VertexElement>, int usage, int instanceDataStepRate*/) {
-	kinc_g4_vertex_buffer_t* buffer = (kinc_g4_vertex_buffer_t*)malloc(sizeof(kinc_g4_vertex_buffer_t));
-	
+EMSCRIPTEN_KEEPALIVE kinc_g4_vertex_buffer_t *createVertexBuffer(int count/*, structure: Array<kha.graphics4.VertexElement>, int usage, int instanceDataStepRate*/) {
+	kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)malloc(sizeof(kinc_g4_vertex_buffer_t));
+
 	kinc_g4_vertex_structure_t structure;
 	kinc_g4_vertex_structure_init(&structure);
 	kinc_g4_vertex_structure_add(&structure, "pos", KINC_G4_VERTEX_DATA_FLOAT3);
@@ -271,20 +264,20 @@ EMSCRIPTEN_KEEPALIVE void deleteVertexBuffer() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE int vertex_buffer_size(kinc_g4_vertex_buffer_t* buffer) {
+EMSCRIPTEN_KEEPALIVE int vertex_buffer_size(kinc_g4_vertex_buffer_t *buffer) {
 	return (kinc_g4_vertex_buffer_count(buffer) * kinc_g4_vertex_buffer_stride(buffer)) / 4;
 }
 
-EMSCRIPTEN_KEEPALIVE float* lockVertexBuffer(kinc_g4_vertex_buffer_t* buffer) {
-	float* vertices = kinc_g4_vertex_buffer_lock_all(buffer);
+EMSCRIPTEN_KEEPALIVE float *lockVertexBuffer(kinc_g4_vertex_buffer_t *buffer) {
+	float *vertices = kinc_g4_vertex_buffer_lock_all(buffer);
 	return vertices;
 }
 
-EMSCRIPTEN_KEEPALIVE void unlockVertexBuffer(kinc_g4_vertex_buffer_t* buffer) {
+EMSCRIPTEN_KEEPALIVE void unlockVertexBuffer(kinc_g4_vertex_buffer_t *buffer) {
 	kinc_g4_vertex_buffer_unlock_all(buffer);
 }
 
-EMSCRIPTEN_KEEPALIVE void setVertexBuffer(kinc_g4_vertex_buffer_t* buffer) {
+EMSCRIPTEN_KEEPALIVE void setVertexBuffer(kinc_g4_vertex_buffer_t *buffer) {
 	kinc_g4_set_vertex_buffer(buffer);
 }
 
@@ -305,10 +298,8 @@ EMSCRIPTEN_KEEPALIVE void createVertexShader() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE kinc_g4_shader_t* createVertexShaderFromSource(char* source) {
-	// char* source = new char[strlen(*utf8_value) + 1];
-	// strcpy(source, *utf8_value);
-	kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+EMSCRIPTEN_KEEPALIVE kinc_g4_shader_t *createVertexShaderFromSource(char *source) {
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 	kinc_g4_shader_init_from_source(shader, source, KINC_G4_SHADER_TYPE_VERTEX);
 	return shader;
 }
@@ -317,10 +308,8 @@ EMSCRIPTEN_KEEPALIVE void createFragmentShader() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE kinc_g4_shader_t* createFragmentShaderFromSource(char* source) {
-	// char* source = new char[strlen(*utf8_value) + 1];
-	// strcpy(source, *utf8_value);
-	kinc_g4_shader_t* shader = (kinc_g4_shader_t*)malloc(sizeof(kinc_g4_shader_t));
+EMSCRIPTEN_KEEPALIVE kinc_g4_shader_t *createFragmentShaderFromSource(char *source) {
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 	kinc_g4_shader_init_from_source(shader, source, KINC_G4_SHADER_TYPE_FRAGMENT);
 	return shader;
 }
@@ -341,8 +330,8 @@ EMSCRIPTEN_KEEPALIVE void deleteShader() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE kinc_g4_pipeline_t* createPipeline() {
-	kinc_g4_pipeline_t* pipeline = (kinc_g4_pipeline_t*)malloc(sizeof(kinc_g4_pipeline_t));
+EMSCRIPTEN_KEEPALIVE kinc_g4_pipeline_t *createPipeline() {
+	kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)malloc(sizeof(kinc_g4_pipeline_t));
 	kinc_g4_pipeline_init(pipeline);
 	return pipeline;
 }
@@ -351,7 +340,7 @@ EMSCRIPTEN_KEEPALIVE void deletePipeline() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE void compilePipeline(kinc_g4_pipeline_t* pipeline, kinc_g4_shader_t* vertex_shader, kinc_g4_shader_t* fragment_shader) {
+EMSCRIPTEN_KEEPALIVE void compilePipeline(kinc_g4_pipeline_t *pipeline, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader) {
 	kinc_g4_vertex_structure_t structure;
 	kinc_g4_vertex_structure_init(&structure);
 	kinc_g4_vertex_structure_add(&structure, "pos", KINC_G4_VERTEX_DATA_FLOAT3);
@@ -362,7 +351,7 @@ EMSCRIPTEN_KEEPALIVE void compilePipeline(kinc_g4_pipeline_t* pipeline, kinc_g4_
 	kinc_g4_pipeline_compile(pipeline);
 }
 
-EMSCRIPTEN_KEEPALIVE void setPipeline(kinc_g4_pipeline_t* pipeline) {
+EMSCRIPTEN_KEEPALIVE void setPipeline(kinc_g4_pipeline_t *pipeline) {
 	kinc_g4_set_pipeline(pipeline);
 }
 
@@ -751,36 +740,6 @@ EMSCRIPTEN_KEEPALIVE void setMouseCursor() {
 
 }
 
-// #ifdef WITH_NFD
-// EMSCRIPTEN_KEEPALIVE void openDialog() {
-
-// }
-
-// EMSCRIPTEN_KEEPALIVE void saveDialog() {
-
-// }
-// #endif
-
-// #ifdef WITH_TINYDIR
-// EMSCRIPTEN_KEEPALIVE void readDirectory() {
-
-// }
-// #endif
-
-// #ifdef KORE_DIRECT3D12
-// EMSCRIPTEN_KEEPALIVE void raytraceInit() {
-
-// }
-
-// EMSCRIPTEN_KEEPALIVE void raytraceSetTextures() {
-
-// }
-
-// EMSCRIPTEN_KEEPALIVE void raytraceDispatchRays() {
-
-// }
-// #endif
-
 EMSCRIPTEN_KEEPALIVE void windowX() {
 
 }
@@ -789,8 +748,8 @@ EMSCRIPTEN_KEEPALIVE void windowY() {
 
 }
 
-int kickstart(int argc, char** argv) {
-	
+int kickstart(int argc, char **argv) {
+
 	kinc_file_reader_t reader;
 	if (!kinc_file_reader_open(&reader, "krom.js", KINC_FILE_TYPE_ASSET)) {
 		kinc_log(KINC_LOG_LEVEL_ERROR, "Could not load krom.js, aborting.");
@@ -798,17 +757,17 @@ int kickstart(int argc, char** argv) {
 	}
 
 	int reader_size = (int)kinc_file_reader_size(&reader);
-	char* code_krom = (char*)malloc(reader_size + 1);
+	char *code_krom = (char *)malloc(reader_size + 1);
 	kinc_file_reader_read(&reader, code_krom, reader_size);
 	code_krom[reader_size] = 0;
 	kinc_file_reader_close(&reader);
 
-	char* code_header = "Krom = {};\
+	char *code_header = "Krom = {};\
 	Krom.init = Module.cwrap('init', null, ['string', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);\
 	Krom.setApplicationName = _setApplicationName;\
-	Krom.log = _krom_log;\
+	Krom.log = Module.cwrap('krom_log', null, ['string']);\
 	Krom.clear = _clear;\
-	Krom.setCallback = function(f) { _setCallback(addFunctionWasm(f, 'v')) };\
+	Krom.setCallback = function(f) { _setCallback(Module.addFunction(f, 'v')); };\
 	Krom.setDropFilesCallback = _setDropFilesCallback;\
 	Krom.setCutCopyPasteCallback = _setCutCopyPasteCallback;\
 	Krom.setApplicationStateCallback = _setApplicationStateCallback;\
@@ -953,20 +912,8 @@ int kickstart(int argc, char** argv) {
 	Krom.setMouseCursor = _setMouseCursor;\
 	Krom.windowX = _windowX;\
 	Krom.windowY = _windowY;";
-	// #ifdef WITH_NFD
-	// Krom.openDialog = _openDialog;
-	// Krom.saveDialog = _saveDialog;
-	// #endif
-	// #ifdef WITH_TINYDIR
-	// Krom.readDirectory = _readDirectory;
-	// #endif
-	// #ifdef KORE_DIRECT3D12
-	// Krom.raytraceInit = _raytraceInit;
-	// Krom.raytraceSetTextures = _raytraceSetTextures;
-	// Krom.raytraceDispatchRays = _raytraceDispatchRays;
-	// #endif
 
-	char* code = (char*)malloc(strlen(code_header) + strlen(code_krom) + 1);
+	char *code = (char *)malloc(strlen(code_header) + strlen(code_krom) + 1);
 	strcpy(code, code_header);
 	strcat(code, code_krom);
 	free(code_krom);
