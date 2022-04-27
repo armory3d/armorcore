@@ -74,9 +74,8 @@ if (flags.with_audio) {
 
 if (platform === Platform.HTML5) {
 	project.addFile('Sources/main_html5.c');
-	// EmscriptenExporter.js:
-	// -s EXTRA_EXPORTED_RUNTIME_METHODS=["cwrap"] -s ALLOW_TABLE_GROWTH
-	// -s USE_WEBGL2=1 or -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2
+	// kmake/lib/kmake/Exporters/EmscriptenExporter.js:
+	// linkerFlags += '-s EXPORTED_RUNTIME_METHODS=cwrap,addFunction -s ALLOW_TABLE_GROWTH -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 ';
 }
 else {
 	project.addFile('Sources/main.cpp');
