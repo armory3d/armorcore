@@ -11,12 +11,12 @@ try {
 		process.argv.push("300");
 	}
 
-	eval(fs.readFileSync("armorcore/make.js") + "");
+	let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/" : "";
+	eval(fs.readFileSync(root + "armorcore/make.js") + "");
 	await runKhamake();
 	armorcore = true;
 
-	let haxeonly = false;
-	if (haxeonly) {
+	if (process.env.ARM_HAXEONLY) {
 		process.exit(1);
 	}
 }
@@ -24,7 +24,7 @@ catch (e) {
 }
 
 let flags = {
-	name: 'Krom',
+	name: 'Armory',
 	package: 'org.armory3d',
 	release: process.argv.indexOf("--debug") == -1,
 	with_d3dcompiler: false,
@@ -55,7 +55,8 @@ const system = platform === Platform.Windows ? "win32" :
 			   								   "unknown";
 
 const build = flags.release ? 'release' : 'debug';
-const libdir = 'v8/libraries/' + system + '/' + build + '/';
+let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/armorcore/" : "";
+const libdir = root + 'v8/libraries/' + system + '/' + build + '/';
 
 let project = new Project(flags.name);
 await project.addProject('Kinc');
