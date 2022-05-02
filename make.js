@@ -38,6 +38,9 @@ function stringify(path) {
 
 function searchFiles(currentDir, pattern) {
 	let result = [];
+	if (!fs.existsSync(currentDir)) {
+		return result;
+	}
 	let files = fs.readdirSync(currentDir);
 	for (let f in files) {
 		let file = path.join(currentDir, files[f]);
