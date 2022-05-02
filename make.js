@@ -51,7 +51,7 @@ function searchFiles(currentDir, pattern) {
 			result.push(path.join(currentDir, stringify(file)));
 		}
 	}
-	if (pattern.endsWith("/**")) {
+	if (pattern.endsWith("**")) {
 		let dirs = fs.readdirSync(currentDir);
 		for (let d of dirs) {
 			let dir = path.join(currentDir, d);
@@ -59,7 +59,7 @@ function searchFiles(currentDir, pattern) {
 				continue;
 			if (!fs.statSync(dir).isDirectory())
 				continue;
-			return result.concat(searchFiles(dir, pattern));
+			result = result.concat(searchFiles(dir, pattern));
 		}
 	}
 	return result;
