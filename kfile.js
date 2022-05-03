@@ -6,7 +6,7 @@ try {
 		process.argv.push("--snapshot");
 	}
 
-	if (platform === Platform.Android) {
+	if (platform === Platform.Android || platform === Platform.HTML5) {
 		process.argv.push("--shaderversion");
 		process.argv.push("300");
 	}
