@@ -694,6 +694,7 @@ class KromExporter {
 		defines.push('kha_g4');
 		defines.push('kha_a1');
 		defines.push('kha_a2');
+		defines.push('krom_' + platform);
 		return {
 			from: this.options.from.toString(),
 			to: path.join(this.sysdir(), 'krom.js.temp'),
