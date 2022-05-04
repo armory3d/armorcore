@@ -9,7 +9,7 @@ class Shaders {
 	static var vertexShaders: Map<String, VertexShader> = [];
 	static var fragmentShaders: Map<String, FragmentShader> = [];
 	static var geometryShaders: Map<String, GeometryShader> = [];
-	static var ext = #if kha_vulkan ".spirv" #elseif krom_android ".essl" #elseif kha_opengl ".glsl" #elseif kha_metal ".metal" #else ".d3d11" #end ;
+	static var ext = #if kha_vulkan ".spirv" #elseif (krom_android || krom_html5) ".essl" #elseif kha_opengl ".glsl" #elseif kha_metal ".metal" #else ".d3d11" #end ;
 
 	public static function init() {
 		// When running a game, precompile shaders here
