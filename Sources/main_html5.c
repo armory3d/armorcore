@@ -1,5 +1,6 @@
 #include <emscripten.h>
 #include <string.h>
+#include <kinc/memory.h>
 #include <kinc/log.h>
 #include <kinc/io/filereader.h>
 #include <kinc/io/filewriter.h>
@@ -23,6 +24,7 @@
 #include <kinc/graphics4/pipeline.h>
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
+#define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
 #ifdef KORE_LZ4X
 int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int maxOutputSize);
@@ -35,6 +37,13 @@ const int KROM_API = 6;
 static char temp_buffer[4096];
 
 static void (*update_func)() = NULL;
+static void (*keyboard_down_func)(int) = NULL;
+static void (*keyboard_up_func)(int) = NULL;
+static void (*keyboard_press_func)(int) = NULL;
+static void (*mouse_move_func)(int, int, int, int) = NULL;
+static void (*mouse_down_func)(int, int, int) = NULL;
+static void (*mouse_up_func)(int, int, int) = NULL;
+static void (*mouse_wheel_func)(int) = NULL;
 
 void update() {
 
@@ -48,6 +57,62 @@ void update() {
 
 	kinc_g4_end(0);
 	kinc_g4_swap_buffers();
+}
+
+void key_down(int code) {
+	keyboard_down_func(code);
+
+	#ifdef IDLE_SLEEP
+	pausedFrames = 0;
+	#endif
+}
+
+void key_up(int code) {
+	keyboard_up_func(code);
+
+	#ifdef IDLE_SLEEP
+	pausedFrames = 0;
+	#endif
+}
+
+void key_press(unsigned int code) {
+	keyboard_press_func(code);
+
+	#ifdef IDLE_SLEEP
+	pausedFrames = 0;
+	#endif
+}
+
+void mouse_move(int window, int x, int y, int mx, int my) {
+	mouse_move_func(x, y, mx, my);
+
+	#ifdef IDLE_SLEEP
+	pausedFrames = 0;
+	#endif
+}
+
+void mouse_down(int window, int button, int x, int y) {
+	mouse_down_func(button, x, y);
+
+	#ifdef IDLE_SLEEP
+	pausedFrames = 0;
+	#endif
+}
+
+void mouse_up(int window, int button, int x, int y) {
+	mouse_up_func(button, x, y);
+
+	#ifdef IDLE_SLEEP
+	pausedFrames = 0;
+	#endif
+}
+
+void mouse_wheel(int window, int delta) {
+	mouse_wheel_func(delta);
+
+	#ifdef IDLE_SLEEP
+	pausedFrames = 0;
+	#endif
 }
 
 kinc_g4_vertex_data_t convert_vertex_data(int num) {
@@ -190,13 +255,13 @@ EMSCRIPTEN_KEEPALIVE void init(char *title, int width, int height, int samples_p
 	// kinc_set_background_callback(background);
 	// kinc_set_shutdown_callback(shutdown);
 
-	// kinc_keyboard_key_down_callback = key_down;
-	// kinc_keyboard_key_up_callback = key_up;
-	// kinc_keyboard_key_press_callback = key_press;
-	// kinc_mouse_move_callback = mouse_move;
-	// kinc_mouse_press_callback = mouse_down;
-	// kinc_mouse_release_callback = mouse_up;
-	// kinc_mouse_scroll_callback = mouse_wheel;
+	kinc_keyboard_set_key_down_callback(key_down);
+	kinc_keyboard_set_key_up_callback(key_up);
+	kinc_keyboard_set_key_press_callback(key_press);
+	kinc_mouse_set_move_callback(mouse_move);
+	kinc_mouse_set_press_callback(mouse_down);
+	kinc_mouse_set_release_callback(mouse_up);
+	kinc_mouse_set_scroll_callback(mouse_wheel);
 	// kinc_surface_set_move_callback(touch_move);
 	// kinc_surface_set_touch_start_callback(touch_down);
 	// kinc_surface_set_touch_end_callback(touch_up);
@@ -235,32 +300,32 @@ EMSCRIPTEN_KEEPALIVE void setApplicationStateCallback() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE void setKeyboardDownCallback() {
-
+EMSCRIPTEN_KEEPALIVE void setKeyboardDownCallback(void (*f)(int)) {
+	keyboard_down_func = f;
 }
 
-EMSCRIPTEN_KEEPALIVE void setKeyboardUpCallback() {
-
+EMSCRIPTEN_KEEPALIVE void setKeyboardUpCallback(void (*f)(int)) {
+	keyboard_up_func = f;
 }
 
-EMSCRIPTEN_KEEPALIVE void setKeyboardPressCallback() {
-
+EMSCRIPTEN_KEEPALIVE void setKeyboardPressCallback(void (*f)(int)) {
+	keyboard_press_func = f;
 }
 
-EMSCRIPTEN_KEEPALIVE void setMouseDownCallback() {
-
+EMSCRIPTEN_KEEPALIVE void setMouseMoveCallback(void (*f)(int, int, int, int)) {
+	mouse_move_func = f;
 }
 
-EMSCRIPTEN_KEEPALIVE void setMouseUpCallback() {
-
+EMSCRIPTEN_KEEPALIVE void setMouseDownCallback(void (*f)(int, int, int)) {
+	mouse_down_func = f;
 }
 
-EMSCRIPTEN_KEEPALIVE void setMouseMoveCallback() {
-
+EMSCRIPTEN_KEEPALIVE void setMouseUpCallback(void (*f)(int, int, int)) {
+	mouse_up_func = f;
 }
 
-EMSCRIPTEN_KEEPALIVE void setMouseWheelCallback() {
-
+EMSCRIPTEN_KEEPALIVE void setMouseWheelCallback(void (*f)(int)) {
+	mouse_wheel_func = f;
 }
 
 EMSCRIPTEN_KEEPALIVE void setTouchDownCallback() {
@@ -457,7 +522,7 @@ EMSCRIPTEN_KEEPALIVE void deletePipeline(kinc_g4_pipeline_t *pipeline) {
 	free(pipeline);
 }
 
-EMSCRIPTEN_KEEPALIVE void compilePipeline(kinc_g4_pipeline_t *pipeline, char *name0, int data0, char *name1, int data1, char *name2, int data2, char *name3, int data3, char *name4, int data4, char *name5, int data5, char *name6, int data6, char *name7, int data7, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader) {
+EMSCRIPTEN_KEEPALIVE void compilePipeline(kinc_g4_pipeline_t *pipeline, char *name0, int data0, char *name1, int data1, char *name2, int data2, char *name3, int data3, char *name4, int data4, char *name5, int data5, char *name6, int data6, char *name7, int data7, kinc_g4_cull_mode_t cull_mode, bool depth_write, kinc_g4_compare_mode_t depth_mode, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader) {
 	kinc_g4_vertex_structure_t structure;
 	kinc_g4_vertex_structure_init(&structure);
 	if (name0 != NULL) kinc_g4_vertex_structure_add(&structure, name0, convert_vertex_data(data0));
@@ -473,6 +538,9 @@ EMSCRIPTEN_KEEPALIVE void compilePipeline(kinc_g4_pipeline_t *pipeline, char *na
 	pipeline->fragment_shader = fragment_shader;
 	pipeline->input_layout[0] = &structure;
 	pipeline->input_layout[1] = NULL;
+	pipeline->cull_mode = cull_mode;
+	pipeline->depth_write = depth_write;
+	pipeline->depth_mode = depth_mode;
 	kinc_g4_pipeline_compile(pipeline);
 }
 
@@ -480,8 +548,95 @@ EMSCRIPTEN_KEEPALIVE void setPipeline(kinc_g4_pipeline_t *pipeline) {
 	kinc_g4_set_pipeline(pipeline);
 }
 
-EMSCRIPTEN_KEEPALIVE void loadImage() {
+bool ends_with(const char *str, const char *suffix) {
+	if (!str || !suffix) return 0;
+	size_t lenstr = strlen(str);
+	size_t lensuffix = strlen(suffix);
+	if (lensuffix > lenstr) return 0;
+	return strncmp(str + lenstr - lensuffix, suffix, lensuffix) == 0;
+}
 
+EMSCRIPTEN_KEEPALIVE kinc_g4_texture_t *loadImage(char *file, bool readable) {
+	bool success = true;
+	kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
+
+	kinc_file_reader_t reader;
+	if (kinc_file_reader_open(&reader, file, KINC_FILE_TYPE_ASSET)) {
+		unsigned char *image_data;
+		int image_width;
+		int image_height;
+		kinc_image_format_t image_format = KINC_IMAGE_FORMAT_RGBA32;
+		int size = (int)kinc_file_reader_size(&reader);
+		int comp;
+		unsigned char *data = (unsigned char *)malloc(size);
+		kinc_file_reader_read(&reader, data, size);
+		kinc_file_reader_close(&reader);
+
+		if (ends_with(file, "k")) {
+			image_width = kinc_read_s32le(data);
+			image_height = kinc_read_s32le(data + 4);
+			char fourcc[5];
+			fourcc[0] = data[8];
+			fourcc[1] = data[9];
+			fourcc[2] = data[10];
+			fourcc[3] = data[11];
+			fourcc[4] = 0;
+			int compressedSize = size - 12;
+			if (strcmp(fourcc, "LZ4 ") == 0) {
+				int outputSize = image_width * image_height * 4;
+				image_data = (unsigned char *)malloc(outputSize);
+				LZ4_decompress_safe((char *)(data + 12), (char *)image_data, compressedSize, outputSize);
+			}
+			else if (strcmp(fourcc, "LZ4F") == 0) {
+				int outputSize = image_width * image_height * 16;
+				image_data = (unsigned char *)malloc(outputSize);
+				LZ4_decompress_safe((char *)(data + 12), (char *)image_data, compressedSize, outputSize);
+				image_format = KINC_IMAGE_FORMAT_RGBA128;
+			}
+			else {
+				success = false;
+			}
+		}
+		else if (ends_with(file, "hdr")) {
+			image_data = (unsigned char *)stbi_loadf_from_memory(data, size, &image_width, &image_height, &comp, 4);
+			if (image_data == NULL) {
+				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+				success = false;
+			}
+			image_format = KINC_IMAGE_FORMAT_RGBA128;
+		}
+		else { // jpg, png, ..
+			image_data = stbi_load_from_memory(data, size, &image_width, &image_height, &comp, 4);
+			if (image_data == NULL) {
+				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+				success = false;
+			}
+		}
+		free(data);
+
+		if (success) {
+			kinc_image_init(image, image_data, image_width, image_height, image_format);
+		}
+	}
+	else {
+		success = false;
+	}
+
+	if (!success) {
+		free(image);
+		return NULL;
+	}
+
+	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+	kinc_g4_texture_init_from_image(texture, image);
+	if (!readable) {
+		free(image->data);
+		kinc_image_destroy(image);
+		free(image);
+		// free(memory);
+	}
+
+	return texture;
 }
 
 EMSCRIPTEN_KEEPALIVE void unloadImage() {
@@ -573,43 +728,43 @@ EMSCRIPTEN_KEEPALIVE void setCubeMapCompareMode() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE void setBool() {
-
+EMSCRIPTEN_KEEPALIVE void setBool(kinc_g4_constant_location_t *location, bool value) {
+	kinc_g4_set_bool(*location, value);
 }
 
-EMSCRIPTEN_KEEPALIVE void setInt() {
-
+EMSCRIPTEN_KEEPALIVE void setInt(kinc_g4_constant_location_t *location, int value) {
+	kinc_g4_set_int(*location, value);
 }
 
-EMSCRIPTEN_KEEPALIVE void setFloat() {
-
+EMSCRIPTEN_KEEPALIVE void setFloat(kinc_g4_constant_location_t *location, float value) {
+	kinc_g4_set_float(*location, value);
 }
 
-EMSCRIPTEN_KEEPALIVE void setFloat2() {
-
+EMSCRIPTEN_KEEPALIVE void setFloat2(kinc_g4_constant_location_t *location, float value1, float value2) {
+	kinc_g4_set_float2(*location, value1, value2);
 }
 
-EMSCRIPTEN_KEEPALIVE void setFloat3() {
-
+EMSCRIPTEN_KEEPALIVE void setFloat3(kinc_g4_constant_location_t *location, float value1, float value2, float value3) {
+	kinc_g4_set_float3(*location, value1, value2, value3);
 }
 
-EMSCRIPTEN_KEEPALIVE void setFloat4() {
-
+EMSCRIPTEN_KEEPALIVE void setFloat4(kinc_g4_constant_location_t *location, float value1, float value2, float value3, float value4) {
+	kinc_g4_set_float4(*location, value1, value2, value3, value4);
 }
 
-EMSCRIPTEN_KEEPALIVE void setFloats() {
-
+EMSCRIPTEN_KEEPALIVE void setFloats(kinc_g4_constant_location_t *location, float *from, int count) {
+	kinc_g4_set_floats(*location, from, count);
 }
 
 EMSCRIPTEN_KEEPALIVE void setMatrix(kinc_g4_constant_location_t *location, float *from) {
 	kinc_g4_set_matrix4(*location, (kinc_matrix4x4_t *)from);
 }
 
-EMSCRIPTEN_KEEPALIVE void setMatrix3() {
-
+EMSCRIPTEN_KEEPALIVE void setMatrix3(kinc_g4_constant_location_t *location, float *from) {
+	kinc_g4_set_matrix3(*location, (kinc_matrix3x3_t *)from);
 }
 
-EMSCRIPTEN_KEEPALIVE int getTime() {
+EMSCRIPTEN_KEEPALIVE double getTime() {
 	return kinc_time();
 }
 
@@ -925,13 +1080,13 @@ int kickstart(int argc, char **argv) {
 	Krom.setDropFilesCallback = _setDropFilesCallback;\
 	Krom.setCutCopyPasteCallback = _setCutCopyPasteCallback;\
 	Krom.setApplicationStateCallback = _setApplicationStateCallback;\
-	Krom.setKeyboardDownCallback = _setKeyboardDownCallback;\
-	Krom.setKeyboardUpCallback = _setKeyboardUpCallback;\
-	Krom.setKeyboardPressCallback = _setKeyboardPressCallback;\
-	Krom.setMouseDownCallback = _setMouseDownCallback;\
-	Krom.setMouseUpCallback = _setMouseUpCallback;\
-	Krom.setMouseMoveCallback = _setMouseMoveCallback;\
-	Krom.setMouseWheelCallback = _setMouseWheelCallback;\
+	Krom.setKeyboardDownCallback = function(f) { _setKeyboardDownCallback(Module.addFunction(f, 'vi')); };\
+	Krom.setKeyboardUpCallback = function(f) { _setKeyboardUpCallback(Module.addFunction(f, 'vi')); };\
+	Krom.setKeyboardPressCallback = function(f) { _setKeyboardPressCallback(Module.addFunction(f, 'vi')); };\
+	Krom.setMouseMoveCallback = function(f) { _setMouseMoveCallback(Module.addFunction(f, 'viiii')); };\
+	Krom.setMouseDownCallback = function(f) { _setMouseDownCallback(Module.addFunction(f, 'viii')); };\
+	Krom.setMouseUpCallback = function(f) { _setMouseUpCallback(Module.addFunction(f, 'viii')); };\
+	Krom.setMouseWheelCallback = function(f) { _setMouseWheelCallback(Module.addFunction(f, 'vi')); };\
 	Krom.setPenDownCallback = _setPenDownCallback;\
 	Krom.setPenUpCallback = _setPenUpCallback;\
 	Krom.setPenMoveCallback = _setPenMoveCallback;\
@@ -1024,10 +1179,10 @@ int kickstart(int argc, char **argv) {
 		let data6 = structure0.elements.length > 6 ? structure0.elements[6].data : null;\
 		let name7 = structure0.elements.length > 7 ? structure0.elements[7].name : null;\
 		let data7 = structure0.elements.length > 7 ? structure0.elements[7].data : null;\
-		Module.cwrap('compilePipeline', null, ['number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'number', 'number'])(pipeline, name0, data0, name1, data1, name2, data2, name3, data3, name4, data4, name5, data5, name6, data6, name7, data7, vertexShader, fragmentShader);\
+		Module.cwrap('compilePipeline', null, ['number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'number', 'number', 'number', 'number', 'number'])(pipeline, name0, data0, name1, data1, name2, data2, name3, data3, name4, data4, name5, data5, name6, data6, name7, data7, state.cullMode, state.depthWrite, state.depthMode, vertexShader, fragmentShader);\
 	};\
 	Krom.setPipeline = _setPipeline;\
-	Krom.loadImage = _loadImage;\
+	Krom.loadImage = Module.cwrap('loadImage', 'number', ['string', 'number']);\
 	Krom.unloadImage = _unloadImage;\
 	Krom.loadSound = _loadSound;\
 	Krom.setAudioCallback = _setAudioCallback;\
@@ -1056,14 +1211,24 @@ int kickstart(int argc, char **argv) {
 	Krom.setFloat2 = _setFloat2;\
 	Krom.setFloat3 = _setFloat3;\
 	Krom.setFloat4 = _setFloat4;\
-	Krom.setFloats = _setFloats;\
+	Krom.setFloats = function(location, floats) {\
+		let to = new Uint8Array(Module['HEAPU8'].buffer, _getTempBuffer(), 4096);\
+		let from = new Uint8Array(floats);\
+		for (let i = 0; i < floats.byteLength; ++i) to[i] = from[i];\
+		Module.cwrap('setFloats', null, ['number', 'number', 'number'])(location, _getTempBuffer(), floats.byteLength / 4);\
+	};\
 	Krom.setMatrix = function(location, matrix) {\
 		let to = new Uint8Array(Module['HEAPU8'].buffer, _getTempBuffer(), 4096);\
 		let from = new Uint8Array(matrix);\
 		for (let i = 0; i < matrix.byteLength; ++i) to[i] = from[i];\
 		Module.cwrap('setMatrix', null, ['number', 'number'])(location, _getTempBuffer());\
 	};\
-	Krom.setMatrix3 = _setMatrix3;\
+	Krom.setMatrix3 = function(location, matrix) {\
+		let to = new Uint8Array(Module['HEAPU8'].buffer, _getTempBuffer(), 4096);\
+		let from = new Uint8Array(matrix);\
+		for (let i = 0; i < matrix.byteLength; ++i) to[i] = from[i];\
+		Module.cwrap('setMatrix3', null, ['number', 'number'])(location, _getTempBuffer());\
+	};\
 	Krom.getTime = _getTime;\
 	Krom.windowWidth = _windowWidth;\
 	Krom.windowHeight = _windowHeight;\
