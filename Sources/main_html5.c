@@ -199,6 +199,31 @@ EMSCRIPTEN_KEEPALIVE char *getTempBuffer() {
 	return temp_buffer;
 }
 
+EMSCRIPTEN_KEEPALIVE char *c_alloc(int size) {
+	return malloc(size);
+}
+
+kinc_image_t *last_image = NULL;
+int last_width = 0;
+int last_height = 0;
+int last_depth = 0;
+
+EMSCRIPTEN_KEEPALIVE kinc_image_t *getLastImage() {
+	return last_image;
+}
+
+EMSCRIPTEN_KEEPALIVE int getLastWidth() {
+	return last_width;
+}
+
+EMSCRIPTEN_KEEPALIVE int getLastHeight() {
+	return last_height;
+}
+
+EMSCRIPTEN_KEEPALIVE int getLastDepth() {
+	return last_depth;
+}
+
 EMSCRIPTEN_KEEPALIVE void init(char *title, int width, int height, int samples_per_pixel, bool vertical_sync, int window_mode, int window_features, int api_version, int x, int y) {
 
 	if (api_version != KROM_API) {
@@ -361,31 +386,31 @@ EMSCRIPTEN_KEEPALIVE void setGamepadButtonCallback() {
 }
 
 EMSCRIPTEN_KEEPALIVE void lockMouse() {
-
+	kinc_mouse_lock(0);
 }
 
 EMSCRIPTEN_KEEPALIVE void unlockMouse() {
-
+	kinc_mouse_unlock();
 }
 
-EMSCRIPTEN_KEEPALIVE void canLockMouse() {
-
+EMSCRIPTEN_KEEPALIVE bool canLockMouse() {
+	return kinc_mouse_can_lock();
 }
 
-EMSCRIPTEN_KEEPALIVE void isMouseLocked() {
-
+EMSCRIPTEN_KEEPALIVE bool isMouseLocked() {
+	return kinc_mouse_is_locked();
 }
 
-EMSCRIPTEN_KEEPALIVE void setMousePosition() {
-
+EMSCRIPTEN_KEEPALIVE void setMousePosition(int windowId, int x, int y) {
+	kinc_mouse_set_position(windowId, x, y);
 }
 
-EMSCRIPTEN_KEEPALIVE void showMouse() {
-
+EMSCRIPTEN_KEEPALIVE void showMouse(bool show) {
+	show ? kinc_mouse_show() : kinc_mouse_hide();
 }
 
-EMSCRIPTEN_KEEPALIVE void showKeyboard() {
-
+EMSCRIPTEN_KEEPALIVE void showKeyboard(bool show) {
+	// show ? kinc_keyboard_show() : kinc_keyboard_hide();
 }
 
 EMSCRIPTEN_KEEPALIVE kinc_g4_index_buffer_t *createIndexBuffer(int count) {
@@ -636,11 +661,20 @@ EMSCRIPTEN_KEEPALIVE kinc_g4_texture_t *loadImage(char *file, bool readable) {
 		// free(memory);
 	}
 
+	last_image = readable ? image : NULL;
+	last_width = texture->tex_width;
+	last_height = texture->tex_height;
 	return texture;
 }
 
-EMSCRIPTEN_KEEPALIVE void unloadImage() {
+EMSCRIPTEN_KEEPALIVE void unloadTexture(kinc_g4_texture_t *texture) {
+	kinc_g4_texture_destroy(texture);
+	free(texture);
+}
 
+EMSCRIPTEN_KEEPALIVE void unloadRenderTarget(kinc_g4_render_target_t *render_target) {
+	kinc_g4_render_target_destroy(render_target);
+	free(render_target);
 }
 
 EMSCRIPTEN_KEEPALIVE void loadSound() {
@@ -684,6 +718,10 @@ EMSCRIPTEN_KEEPALIVE void loadUrl(char *url) {
 	// kinc_load_url(url);
 }
 
+EMSCRIPTEN_KEEPALIVE void copyToClipboard(char *str) {
+	kinc_copy_to_clipboard(str);
+}
+
 EMSCRIPTEN_KEEPALIVE kinc_g4_constant_location_t *getConstantLocation(kinc_g4_pipeline_t *pipeline, char *name) {
 	kinc_g4_constant_location_t location = kinc_g4_pipeline_get_constant_location(pipeline, name);
 
@@ -692,40 +730,53 @@ EMSCRIPTEN_KEEPALIVE kinc_g4_constant_location_t *getConstantLocation(kinc_g4_pi
 	return location_copy;
 }
 
-EMSCRIPTEN_KEEPALIVE void getTextureUnit(kinc_g4_pipeline_t *pipeline, char *name) {
+EMSCRIPTEN_KEEPALIVE kinc_g4_texture_unit_t *getTextureUnit(kinc_g4_pipeline_t *pipeline, char *name) {
+	kinc_g4_texture_unit_t unit = kinc_g4_pipeline_get_texture_unit(pipeline, name);
 
+	kinc_g4_texture_unit_t *unit_copy = (kinc_g4_texture_unit_t *)malloc(sizeof(kinc_g4_texture_unit_t));
+	memcpy(unit_copy, &unit, sizeof(kinc_g4_texture_unit_t)); // TODO
+	return unit_copy;
 }
 
-EMSCRIPTEN_KEEPALIVE void setTexture() {
-
+EMSCRIPTEN_KEEPALIVE void setTexture(kinc_g4_texture_unit_t *unit, kinc_g4_texture_t *texture) {
+	kinc_g4_set_texture(*unit, texture);
 }
 
-EMSCRIPTEN_KEEPALIVE void setRenderTarget() {
-
+EMSCRIPTEN_KEEPALIVE void setRenderTarget(kinc_g4_texture_unit_t *unit, kinc_g4_render_target_t *render_target) {
+	kinc_g4_render_target_use_color_as_texture(render_target, *unit);
 }
 
-EMSCRIPTEN_KEEPALIVE void setTextureDepth() {
-
+EMSCRIPTEN_KEEPALIVE void setTextureDepth(kinc_g4_texture_unit_t *unit, kinc_g4_render_target_t *render_target) {
+	kinc_g4_render_target_use_depth_as_texture(render_target, *unit);
 }
 
-EMSCRIPTEN_KEEPALIVE void setImageTexture() {
-
+EMSCRIPTEN_KEEPALIVE void setImageTexture(kinc_g4_texture_unit_t *unit, kinc_g4_texture_t *texture) {
+	kinc_g4_set_image_texture(*unit, texture);
 }
 
-EMSCRIPTEN_KEEPALIVE void setTextureParameters() {
-
+EMSCRIPTEN_KEEPALIVE void setTextureParameters(kinc_g4_texture_unit_t *unit, int uAddressing, int vAddressing, int minificationFilter, int magnificationFilter, int mipmapFilter) {
+	kinc_g4_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)uAddressing);
+	kinc_g4_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)vAddressing);
+	kinc_g4_set_texture_minification_filter(*unit, (kinc_g4_texture_filter_t)minificationFilter);
+	kinc_g4_set_texture_magnification_filter(*unit, (kinc_g4_texture_filter_t)magnificationFilter);
+	kinc_g4_set_texture_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)mipmapFilter);
 }
 
-EMSCRIPTEN_KEEPALIVE void setTexture3DParameters() {
-
+EMSCRIPTEN_KEEPALIVE void setTexture3DParameters(kinc_g4_texture_unit_t *unit, int uAddressing, int vAddressing, int wAddressing, int minificationFilter, int magnificationFilter, int mipmapFilter) {
+	kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)uAddressing);
+	kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)vAddressing);
+	kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_W, (kinc_g4_texture_addressing_t)wAddressing);
+	kinc_g4_set_texture3d_minification_filter(*unit, (kinc_g4_texture_filter_t)minificationFilter);
+	kinc_g4_set_texture3d_magnification_filter(*unit, (kinc_g4_texture_filter_t)magnificationFilter);
+	kinc_g4_set_texture3d_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)mipmapFilter);
 }
 
-EMSCRIPTEN_KEEPALIVE void setTextureCompareMode() {
-
+EMSCRIPTEN_KEEPALIVE void setTextureCompareMode(kinc_g4_texture_unit_t *unit, bool enabled) {
+	kinc_g4_set_texture_compare_mode(*unit, enabled);
 }
 
-EMSCRIPTEN_KEEPALIVE void setCubeMapCompareMode() {
-
+EMSCRIPTEN_KEEPALIVE void setCubeMapCompareMode(kinc_g4_texture_unit_t *unit, bool enabled) {
+	kinc_g4_set_cubemap_compare_mode(*unit, enabled);
 }
 
 EMSCRIPTEN_KEEPALIVE void setBool(kinc_g4_constant_location_t *location, bool value) {
@@ -829,68 +880,184 @@ EMSCRIPTEN_KEEPALIVE void readStorage() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE void createRenderTarget() {
-
+EMSCRIPTEN_KEEPALIVE kinc_g4_render_target_t *createRenderTarget(int width, int height, int depthBufferBits, int format, int stencilBufferBits, int contextId) {
+	kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
+	kinc_g4_render_target_init(render_target, width, height, depthBufferBits, false, (kinc_g4_render_target_format_t)format, stencilBufferBits, 0);
+	last_width = render_target->width;
+	last_height = render_target->height;
+	return render_target;
 }
 
-EMSCRIPTEN_KEEPALIVE void createRenderTargetCubeMap() {
-
+EMSCRIPTEN_KEEPALIVE kinc_g4_render_target_t *createRenderTargetCubeMap(int size, int depthBufferBits, int format, int stencilBufferBits, int contextId) {
+	kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
+	kinc_g4_render_target_init_cube(render_target, size, depthBufferBits, false, (kinc_g4_render_target_format_t)format, stencilBufferBits, 0);
+	last_width = render_target->width;
+	last_height = render_target->height;
+	return render_target;
 }
 
-EMSCRIPTEN_KEEPALIVE void createTexture() {
-
+EMSCRIPTEN_KEEPALIVE kinc_g4_texture_t *createTexture(int width, int height, int format) {
+	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+	kinc_g4_texture_init(texture, width, height, (kinc_image_format_t)format);
+	last_width = texture->tex_width;
+	last_height = texture->tex_height;
+	return texture;
 }
 
-EMSCRIPTEN_KEEPALIVE void createTexture3D() {
-
+EMSCRIPTEN_KEEPALIVE kinc_g4_texture_t *createTexture3D(int width, int height, int depth, int format) {
+	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+	kinc_g4_texture_init3d(texture, width, height, depth, (kinc_image_format_t)format);
+	last_width = texture->tex_width;
+	last_height = texture->tex_height;
+	last_depth = texture->tex_depth;
+	return texture;
 }
 
-EMSCRIPTEN_KEEPALIVE void createTextureFromBytes() {
-
+EMSCRIPTEN_KEEPALIVE kinc_g4_texture_t *createTextureFromBytes(char *data, int width, int height, int format, bool readable) {
+	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+	kinc_image_t image;
+	kinc_image_init(&image, data, width, height, (kinc_image_format_t)format);
+	kinc_g4_texture_init_from_image(texture, &image);
+	kinc_image_destroy(&image);
+	if (!readable) {
+		free(data);
+	}
+	last_width = texture->tex_width;
+	last_height = texture->tex_height;
+	return texture;
 }
 
-EMSCRIPTEN_KEEPALIVE void createTextureFromBytes3D() {
-
+EMSCRIPTEN_KEEPALIVE kinc_g4_texture_t *createTextureFromBytes3D(char *data, int width, int height, int depth, int format, bool readable) {
+	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+	kinc_image_t image;
+	kinc_image_init3d(&image, data, width, height, depth, (kinc_image_format_t)format);
+	kinc_g4_texture_init_from_image3d(texture, &image);
+	kinc_image_destroy(&image);
+	if (!readable) {
+		free(data);
+	}
+	last_width = texture->tex_width;
+	last_height = texture->tex_height;
+	last_depth = texture->tex_depth;
+	return texture;
 }
 
-EMSCRIPTEN_KEEPALIVE void createTextureFromEncodedBytes() {
+EMSCRIPTEN_KEEPALIVE kinc_g4_texture_t *createTextureFromEncodedBytes(unsigned char *content_data, int content_length, char *format, bool readable) {
+	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+	kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
+	unsigned char *image_data;
+	kinc_image_format_t image_format;
+	int image_width;
+	int image_height;
+
+	if (ends_with(format, "k")) {
+		image_width = kinc_read_s32le(content_data);
+		image_height = kinc_read_s32le(content_data + 4);
+		char fourcc[5];
+		fourcc[0] = content_data[8];
+		fourcc[1] = content_data[9];
+		fourcc[2] = content_data[10];
+		fourcc[3] = content_data[11];
+		fourcc[4] = 0;
+		int compressedSize = content_length - 12;
+		if (strcmp(fourcc, "LZ4 ") == 0) {
+			int outputSize = image_width * image_height * 4;
+			image_data = (unsigned char *)malloc(outputSize);
+			LZ4_decompress_safe((char *)content_data + 12, (char *)image_data, compressedSize, outputSize);
+			image_format = KINC_IMAGE_FORMAT_RGBA32;
+		}
+		else if (strcmp(fourcc, "LZ4F") == 0) {
+			int outputSize = image_width * image_height * 16;
+			image_data = (unsigned char *)malloc(outputSize);
+			LZ4_decompress_safe((char *)content_data + 12, (char *)image_data, compressedSize, outputSize);
+			image_format = KINC_IMAGE_FORMAT_RGBA128;
+		}
+	}
+	else if (ends_with(format, "hdr")) {
+		int comp;
+		image_data = (unsigned char *)stbi_loadf_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
+		image_format = KINC_IMAGE_FORMAT_RGBA128;
+	}
+	else { // jpg, png, ..
+		int comp;
+		image_data = stbi_load_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
+		image_format = KINC_IMAGE_FORMAT_RGBA32;
+	}
+
+	kinc_image_init(image, image_data, image_width, image_height, image_format);
+	kinc_g4_texture_init_from_image(texture, image);
+	if (!readable) {
+		free(image->data);
+		kinc_image_destroy(image);
+		free(image);
+	}
+
+	last_image = readable ? image : NULL;
+	last_width = texture->tex_width;
+	last_height = texture->tex_height;
+	return texture;
 }
 
-EMSCRIPTEN_KEEPALIVE void getTexturePixels() {
-
+EMSCRIPTEN_KEEPALIVE int format_byte_size(kinc_image_format_t format) {
+	switch (format) {
+	case KINC_IMAGE_FORMAT_RGBA128:
+		return 16;
+	case KINC_IMAGE_FORMAT_RGBA64:
+		return 8;
+	case KINC_IMAGE_FORMAT_RGB24:
+		return 4;
+	case KINC_IMAGE_FORMAT_A32:
+		return 4;
+	case KINC_IMAGE_FORMAT_A16:
+		return 2;
+	case KINC_IMAGE_FORMAT_GREY8:
+		return 1;
+	case KINC_IMAGE_FORMAT_BGRA32:
+	case KINC_IMAGE_FORMAT_RGBA32:
+	default:
+		return 4;
+	}
 }
 
-EMSCRIPTEN_KEEPALIVE void getRenderTargetPixels() {
-
+EMSCRIPTEN_KEEPALIVE uint8_t *getTexturePixels(kinc_image_t *image) {
+	uint8_t *data = kinc_image_get_pixels(image);
+	int byteLength = format_byte_size(image->format) * image->width * image->height * image->depth;
+	return data;
 }
 
-EMSCRIPTEN_KEEPALIVE void lockTexture() {
-
+EMSCRIPTEN_KEEPALIVE void getRenderTargetPixels(kinc_g4_render_target_t *render_target, uint8_t *out) {
+	kinc_g4_render_target_get_pixels(render_target, out);
 }
 
-EMSCRIPTEN_KEEPALIVE void unlockTexture() {
-
+EMSCRIPTEN_KEEPALIVE uint8_t *lockTexture(kinc_g4_texture_t *texture, int level) {
+	uint8_t *tex = kinc_g4_texture_lock(texture);
+	// int byteLength = kinc_g4_texture_stride(texture) * texture->tex_height * texture->tex_depth;
+	return tex;
 }
 
-EMSCRIPTEN_KEEPALIVE void clearTexture() {
-
+EMSCRIPTEN_KEEPALIVE void unlockTexture(kinc_g4_texture_t *texture) {
+	kinc_g4_texture_unlock(texture);
 }
 
-EMSCRIPTEN_KEEPALIVE void generateTextureMipmaps() {
-
+EMSCRIPTEN_KEEPALIVE void clearTexture(kinc_g4_texture_t *texture, int x, int y, int z, int width, int height, int depth, int color) {
+	// kinc_g4_texture_clear(texture, x, y, z, width, height, depth, color);
 }
 
-EMSCRIPTEN_KEEPALIVE void generateRenderTargetMipmaps() {
-
+EMSCRIPTEN_KEEPALIVE void generateTextureMipmaps(kinc_g4_texture_t *texture, int levels) {
+	kinc_g4_texture_generate_mipmaps(texture, levels);
 }
 
-EMSCRIPTEN_KEEPALIVE void setMipmaps() {
-
+EMSCRIPTEN_KEEPALIVE void generateRenderTargetMipmaps(kinc_g4_render_target_t *render_target, int levels) {
+	kinc_g4_render_target_generate_mipmaps(render_target, levels);
 }
 
-EMSCRIPTEN_KEEPALIVE void setDepthStencilFrom() {
+EMSCRIPTEN_KEEPALIVE void setMipmap(kinc_g4_texture_t *texture, kinc_image_t *mipmap, int level) {
+	kinc_g4_texture_set_mipmap(texture, mipmap, level);
+}
 
+EMSCRIPTEN_KEEPALIVE void setDepthStencilFrom(kinc_g4_render_target_t *render_target, kinc_g4_render_target_t *source_target) {
+	kinc_g4_render_target_set_depth_stencil_from(render_target, source_target);
 }
 
 EMSCRIPTEN_KEEPALIVE void viewport(int x, int y, int w, int h) {
@@ -909,12 +1076,20 @@ EMSCRIPTEN_KEEPALIVE bool renderTargetsInvertedY() {
 	return kinc_g4_render_targets_inverted_y();
 }
 
-EMSCRIPTEN_KEEPALIVE void begin(kinc_g4_render_target_t *renderTarget, kinc_g4_render_target_t **additionalRenderTargets) {
+EMSCRIPTEN_KEEPALIVE void begin(kinc_g4_render_target_t *renderTarget, kinc_g4_render_target_t *renderTarget1, kinc_g4_render_target_t *renderTarget2, kinc_g4_render_target_t *renderTarget3, kinc_g4_render_target_t *renderTarget4, kinc_g4_render_target_t *renderTarget5, kinc_g4_render_target_t *renderTarget6, kinc_g4_render_target_t *renderTarget7) {
 	if (renderTarget == NULL) {
 		kinc_g4_restore_render_target();
 	}
 	else {
-		// kinc_g4_set_render_targets();
+		int32_t length = renderTarget7 != NULL ? 8 :
+						 renderTarget6 != NULL ? 7 :
+						 renderTarget5 != NULL ? 6 :
+						 renderTarget4 != NULL ? 5 :
+						 renderTarget3 != NULL ? 4 :
+						 renderTarget2 != NULL ? 3 :
+						 renderTarget1 != NULL ? 2 : 1;
+		kinc_g4_render_target_t *render_targets[8] = { renderTarget, renderTarget1, renderTarget2, renderTarget3, renderTarget4, renderTarget5, renderTarget6, renderTarget7 };
+		kinc_g4_set_render_targets(render_targets, length);
 	}
 }
 
@@ -1070,7 +1245,7 @@ int kickstart(int argc, char **argv) {
 	kinc_file_reader_close(&reader);
 
 	char *code_header = "\
-	let KromBuffers = {};\
+	let KromBuffers = new Map();\
 	let Krom = {};\
 	Krom.init = Module.cwrap('init', null, ['string', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);\
 	Krom.setApplicationName = _setApplicationName;\
@@ -1133,13 +1308,13 @@ int kickstart(int argc, char **argv) {
 		let start = _lockVertexBuffer(vbuffer, vstart, vcount);\
 		let byteLength = _vertex_buffer_size(vbuffer);\
 		let b = Module['HEAPU8'].buffer.slice(start, start + byteLength);\
-		KromBuffers[vbuffer] = { buffer: b, start: start, byteLength: byteLength };\
+		KromBuffers.set(vbuffer, { buffer: b, start: start, byteLength: byteLength });\
 		return b;\
 	};\
 	Krom.unlockVertexBuffer = function(vbuffer, count) {\
-		let b = new Uint8Array(KromBuffers[vbuffer].buffer);\
-		let start = KromBuffers[vbuffer].start;\
-		let byteLength = KromBuffers[vbuffer].byteLength;\
+		let b = new Uint8Array(KromBuffers.get(vbuffer).buffer);\
+		let start = KromBuffers.get(vbuffer).start;\
+		let byteLength = KromBuffers.get(vbuffer).byteLength;\
 		let heap = new Uint8Array(Module['HEAPU8'].buffer, start, byteLength);\
 		for (let i = 0; i < byteLength; ++i) heap[i] = b[i];\
 		_unlockVertexBuffer(vbuffer, count);\
@@ -1149,11 +1324,11 @@ int kickstart(int argc, char **argv) {
 	Krom.drawIndexedVertices = _drawIndexedVertices;\
 	Krom.drawIndexedVerticesInstanced = _drawIndexedVerticesInstanced;\
 	Krom.createVertexShader = function(buffer, name) {\
-		return Module.cwrap('createVertexShader', 'number', ['number', 'number', 'string'])(KromBuffers[buffer].start, KromBuffers[buffer].byteLength, name);\
+		return Module.cwrap('createVertexShader', 'number', ['number', 'number', 'string'])(KromBuffers.get(buffer).start, KromBuffers.get(buffer).byteLength, name);\
 	};\
 	Krom.createVertexShaderFromSource = Module.cwrap('createVertexShaderFromSource', 'number', ['string']);\
 	Krom.createFragmentShader = function(buffer, name) {\
-		return Module.cwrap('createFragmentShader', 'number', ['number', 'number', 'string'])(KromBuffers[buffer].start, KromBuffers[buffer].byteLength, name);\
+		return Module.cwrap('createFragmentShader', 'number', ['number', 'number', 'string'])(KromBuffers.get(buffer).start, KromBuffers.get(buffer).byteLength, name);\
 	};\
 	Krom.createFragmentShaderFromSource = Module.cwrap('createFragmentShaderFromSource', 'number', ['string']);\
 	Krom.createGeometryShader = _createGeometryShader;\
@@ -1182,8 +1357,14 @@ int kickstart(int argc, char **argv) {
 		Module.cwrap('compilePipeline', null, ['number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'number', 'number', 'number', 'number', 'number'])(pipeline, name0, data0, name1, data1, name2, data2, name3, data3, name4, data4, name5, data5, name6, data6, name7, data7, state.cullMode, state.depthWrite, state.depthMode, vertexShader, fragmentShader);\
 	};\
 	Krom.setPipeline = _setPipeline;\
-	Krom.loadImage = Module.cwrap('loadImage', 'number', ['string', 'number']);\
-	Krom.unloadImage = _unloadImage;\
+	Krom.loadImage = function (file, readable) {\
+		return { self: Module.cwrap('loadImage', 'number', ['string', 'number'])(file, readable),\
+				 image: _getLastImage(),\
+				 width: _getLastWidth(),\
+				 height: _getLastHeight()\
+		};\
+	};\
+	Krom.unloadImage = function(image) { image.texture_ != null ? _unloadTexture(image.texture_.self) : _unloadRenderTarget(image.renderTarget_.self); };\
 	Krom.loadSound = _loadSound;\
 	Krom.setAudioCallback = _setAudioCallback;\
 	Krom.audioThread = _audioThread;\
@@ -1191,16 +1372,17 @@ int kickstart(int argc, char **argv) {
 	Krom.loadBlob = function(path) {\
 		let start = Module.cwrap('loadBlob', 'number', ['string'])(path);\
 		let b = Module['HEAPU8'].buffer.slice(start, start + _readerSize());\
-		KromBuffers[b] = { start: start, byteLength: _readerSize() };\
+		KromBuffers.set(b, { start: start, byteLength: _readerSize() });\
 		return b;\
 	};\
-	Krom.loadUrl = _loadUrl;\
+	Krom.loadUrl = Module.cwrap('loadUrl', null, ['string']);\
+	Krom.copyToClipboard = Module.cwrap('copyToClipboard', null, ['string']);\
 	Krom.getConstantLocation = Module.cwrap('getConstantLocation', 'number', ['number', 'string']);\
-	Krom.getTextureUnit = _getTextureUnit;\
-	Krom.setTexture = _setTexture;\
-	Krom.setRenderTarget = _setRenderTarget;\
-	Krom.setTextureDepth = _setTextureDepth;\
-	Krom.setImageTexture = _setImageTexture;\
+	Krom.getTextureUnit = Module.cwrap('getTextureUnit', 'number', ['number', 'string']);\
+	Krom.setTexture = function(unit, texture) { _setTexture(unit, texture.self); };\
+	Krom.setRenderTarget = function(unit, renderTarget) { _setRenderTarget(unit, renderTarget.self); };\
+	Krom.setTextureDepth = function(unit, renderTarget) { _setTextureDepth(unit, renderTarget.self); };\
+	Krom.setImageTexture = function(unit, texture) { _setImageTexture(unit, texture.self); };\
 	Krom.setTextureParameters = _setTextureParameters;\
 	Krom.setTexture3DParameters = _setTexture3DParameters;\
 	Krom.setTextureCompareMode = _setTextureCompareMode;\
@@ -1245,28 +1427,88 @@ int kickstart(int argc, char **argv) {
 	Krom.displayIsPrimary = _displayIsPrimary;\
 	Krom.writeStorage = _writeStorage;\
 	Krom.readStorage = _readStorage;\
-	Krom.createRenderTarget = _createRenderTarget;\
-	Krom.createRenderTargetCubeMap = _createRenderTargetCubeMap;\
-	Krom.createTexture = _createTexture;\
-	Krom.createTexture3D = _createTexture3D;\
-	Krom.createTextureFromBytes = _createTextureFromBytes;\
-	Krom.createTextureFromBytes3D = _createTextureFromBytes3D;\
-	Krom.createTextureFromEncodedBytes = _createTextureFromEncodedBytes;\
-	Krom.getTexturePixels = _getTexturePixels;\
-	Krom.getRenderTargetPixels = _getRenderTargetPixels;\
-	Krom.lockTexture = _lockTexture;\
-	Krom.unlockTexture = _unlockTexture;\
-	Krom.clearTexture = _clearTexture;\
-	Krom.generateTextureMipmaps = _generateTextureMipmaps;\
-	Krom.generateRenderTargetMipmaps = _generateRenderTargetMipmaps;\
-	Krom.setMipmaps = _setMipmaps;\
-	Krom.setDepthStencilFrom = _setDepthStencilFrom;\
+	Krom.createRenderTarget = function(width, height, depthBufferBits, format, stencilBufferBits, contextId) {\
+		return { self: _createRenderTarget(width, height, depthBufferBits, format, stencilBufferBits, contextId),\
+				 width: _getLastWidth(),\
+				 height: _getLastHeight()\
+		};\
+	};\
+	Krom.createRenderTargetCubeMap = function(size, depthBufferBits, format, stencilBufferBits, contextId) {\
+		return { self: _createRenderTargetCubeMap(size, depthBufferBits, format, stencilBufferBits, contextId),\
+				 width: _getLastWidth(),\
+				 height: _getLastHeight()\
+		};\
+	};\
+	Krom.createTexture = function(width, height, format) {\
+		return { self: _createTexture(width, height, format),\
+				 width: _getLastWidth(),\
+				 height: _getLastHeight()\
+		};\
+	};\
+	Krom.createTexture3D = function(width, height, depth, format) {\
+		return { self: _createTexture3D(width, height, depth, format),\
+				 width: _getLastWidth(),\
+				 height: _getLastHeight(),\
+				 depth: _getLastDepth()\
+		};\
+	};\
+	Krom.createTextureFromBytes = function(data, width, height, format, readable) {\
+		let from = new Uint8Array(data);\
+		let start = _c_alloc(data.byteLength);\
+		let to = new Uint8Array(Module['HEAPU8'].buffer, start, data.byteLength);\
+		for (let i = 0; i < data.byteLength; ++i) to[i] = from[i];\
+		return { self: _createTextureFromBytes(start, width, height, format, readable),\
+				 width: _getLastWidth(),\
+				 height: _getLastHeight()\
+		};\
+	};\
+	Krom.createTextureFromBytes3D = function(data, width, height, depth, format, readable) {\
+		let from = new Uint8Array(data);\
+		let start = _c_alloc(data.byteLength);\
+		let to = new Uint8Array(Module['HEAPU8'].buffer, start, data.byteLength);\
+		for (let i = 0; i < data.byteLength; ++i) to[i] = from[i];\
+		return { self: _createTextureFromBytes3D(start, width, height, depth, format, readable),\
+				 width: _getLastWidth(),\
+				 height: _getLastHeight(),\
+				 depth: _getLastDepth()\
+		};\
+	};\
+	Krom.createTextureFromEncodedBytes = function(data, format, readable) {\
+		let from = new Uint8Array(data);\
+		let start = _c_alloc(data.byteLength);\
+		let to = new Uint8Array(Module['HEAPU8'].buffer, start, data.byteLength);\
+		for (let i = 0; i < data.byteLength; ++i) to[i] = from[i];\
+		return { self: Module.cwrap('createTextureFromEncodedBytes', 'number', ['number', 'number', 'string', 'number'])(start, data.byteLength, format, readable),\
+				 image: _getLastImage(),\
+				 width: _getLastWidth(),\
+				 height: _getLastHeight()\
+		};\
+	};\
+	Krom.getTexturePixels = function(texture) { return _getTexturePixels(texture.self); };\
+	Krom.getRenderTargetPixels = function(renderTarget, out) { return _getRenderTargetPixels(renderTarget.self, out); };\
+	Krom.lockTexture = function(texture, level) { return _lockTexture(texture.self, level); };\
+	Krom.unlockTexture = function(texture) { _unlockTexture(texture.self); };\
+	Krom.clearTexture = function(texture) { _clearTexture(texture.self); };\
+	Krom.generateTextureMipmaps = function(texture) { _generateTextureMipmaps(texture.self); };\
+	Krom.generateRenderTargetMipmaps = function(renderTarget) { _generateRenderTargetMipmaps(renderTarget.self); };\
+	Krom.setMipmaps = function(texture, mipmaps) { for (let i = 0; i < mipmaps.length; ++i) _setMipmap(texture.self, mipmaps[i].texture_.image, i + 1); };\
+	Krom.setDepthStencilFrom = function(renderTarget, sourceTarget) { _setDepthStencilFrom(renderTarget.self, sourceTarget.self); };\
 	Krom.viewport = _viewport;\
 	Krom.scissor = _scissor;\
 	Krom.disableScissor = _disableScissor;\
 	Krom.renderTargetsInvertedY = _renderTargetsInvertedY;\
-	Krom.begin = _begin;\
-	Krom.beginFace = _beginFace;\
+	Krom.begin = function(renderTarget, art) {\
+		_begin(renderTarget != null ? renderTarget.renderTarget_.self : null,\
+			   (art != null && art.length > 0) ? art[0].renderTarget_.self : null,\
+			   (art != null && art.length > 1) ? art[1].renderTarget_.self : null,\
+			   (art != null && art.length > 2) ? art[2].renderTarget_.self : null,\
+			   (art != null && art.length > 3) ? art[3].renderTarget_.self : null,\
+			   (art != null && art.length > 4) ? art[4].renderTarget_.self : null,\
+			   (art != null && art.length > 5) ? art[5].renderTarget_.self : null,\
+			   (art != null && art.length > 6) ? art[6].renderTarget_.self : null\
+		);\
+	};\
+	Krom.beginFace = function(renderTarget, face) { _beginFace(renderTarget.renderTarget_.self, face); };\
 	Krom.end = _end;\
 	Krom.fileSaveBytes = _fileSaveBytes;\
 	Krom.sysCommand = _sysCommand;\
