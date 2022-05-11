@@ -547,7 +547,7 @@ EMSCRIPTEN_KEEPALIVE void deletePipeline(kinc_g4_pipeline_t *pipeline) {
 	free(pipeline);
 }
 
-EMSCRIPTEN_KEEPALIVE void compilePipeline(kinc_g4_pipeline_t *pipeline, char *name0, int data0, char *name1, int data1, char *name2, int data2, char *name3, int data3, char *name4, int data4, char *name5, int data5, char *name6, int data6, char *name7, int data7, kinc_g4_cull_mode_t cull_mode, bool depth_write, kinc_g4_compare_mode_t depth_mode, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader) {
+EMSCRIPTEN_KEEPALIVE void compilePipeline(kinc_g4_pipeline_t *pipeline, char *name0, int data0, char *name1, int data1, char *name2, int data2, char *name3, int data3, char *name4, int data4, char *name5, int data5, char *name6, int data6, char *name7, int data7, kinc_g4_cull_mode_t cull_mode, bool depth_write, kinc_g4_compare_mode_t depth_mode, int blend_source, int blend_destination, int alpha_blend_source, int alpha_blend_destination, bool color_write_mask_red, bool color_write_mask_green, bool color_write_mask_blue, bool color_write_mask_alpha, int color_attachment_count, int depth_attachment_bits, int stencil_attachment_bits, bool conservative_rasterization, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader) {
 	kinc_g4_vertex_structure_t structure;
 	kinc_g4_vertex_structure_init(&structure);
 	if (name0 != NULL) kinc_g4_vertex_structure_add(&structure, name0, convert_vertex_data(data0));
@@ -566,6 +566,21 @@ EMSCRIPTEN_KEEPALIVE void compilePipeline(kinc_g4_pipeline_t *pipeline, char *na
 	pipeline->cull_mode = cull_mode;
 	pipeline->depth_write = depth_write;
 	pipeline->depth_mode = depth_mode;
+	pipeline->blend_source = blend_source;
+	pipeline->blend_destination = blend_destination;
+	pipeline->alpha_blend_source = alpha_blend_source;
+	pipeline->alpha_blend_destination = alpha_blend_destination;
+	for (int i = 0; i < 8; ++i) {
+		pipeline->color_write_mask_red[i] = color_write_mask_red;
+		pipeline->color_write_mask_green[i] = color_write_mask_green;
+		pipeline->color_write_mask_blue[i] = color_write_mask_blue;
+		pipeline->color_write_mask_alpha[i] = color_write_mask_alpha;
+	}
+	pipeline->color_attachment_count = color_attachment_count;
+	pipeline->depth_attachment_bits = depth_attachment_bits;
+	pipeline->stencil_attachment_bits = stencil_attachment_bits;
+	pipeline->conservative_rasterization = conservative_rasterization;
+
 	kinc_g4_pipeline_compile(pipeline);
 }
 
@@ -1354,7 +1369,7 @@ int kickstart(int argc, char **argv) {
 		let data6 = structure0.elements.length > 6 ? structure0.elements[6].data : null;\
 		let name7 = structure0.elements.length > 7 ? structure0.elements[7].name : null;\
 		let data7 = structure0.elements.length > 7 ? structure0.elements[7].data : null;\
-		Module.cwrap('compilePipeline', null, ['number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'number', 'number', 'number', 'number', 'number'])(pipeline, name0, data0, name1, data1, name2, data2, name3, data3, name4, data4, name5, data5, name6, data6, name7, data7, state.cullMode, state.depthWrite, state.depthMode, vertexShader, fragmentShader);\
+		Module.cwrap('compilePipeline', null, ['number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'string', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number'])(pipeline, name0, data0, name1, data1, name2, data2, name3, data3, name4, data4, name5, data5, name6, data6, name7, data7, state.cullMode, state.depthWrite, state.depthMode, state.blendSource, state.blendDestination, state.alphaBlendSource, state.alphaBlendDestination, state.colorWriteMaskRed[0], state.colorWriteMaskGreen[0], state.colorWriteMaskBlue[0], state.colorWriteMaskAlpha[0], state.colorAttachmentCount, state.depthAttachmentBits, state.stencilAttachmentBits, state.conservativeRasterization, vertexShader, fragmentShader);\
 	};\
 	Krom.setPipeline = _setPipeline;\
 	Krom.loadImage = function (file, readable) {\
