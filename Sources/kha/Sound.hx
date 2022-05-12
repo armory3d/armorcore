@@ -12,6 +12,7 @@ class Sound {
 	public var uncompressedData: kha.arrays.Float32Array;
 	public var length: Float = 0; // in seconds
 	public var channels: Int = 0;
+	public var sampleRate: Int = 0;
 
 	public function new(bytes: Bytes) {
 		var count = Std.int(bytes.length / 4);
