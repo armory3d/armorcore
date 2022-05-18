@@ -26,7 +26,7 @@ class VertexBuffer {
 
 	public function lock(?start: Int, ?count: Int): ByteArray {
 		if (start == null) start = 0;
-		if (count == null) count = this.count();
+		if (count == null) count = this.count() - start;
 		lastLockCount = count;
 		_data = new ByteArray(Krom.lockVertexBuffer(buffer, start, count));
 		return _data;

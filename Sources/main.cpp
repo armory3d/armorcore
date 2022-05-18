@@ -777,7 +777,7 @@ namespace {
 		int start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		float *vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
-		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, (count - start) * kinc_g4_vertex_buffer_stride(buffer));
+		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, count * kinc_g4_vertex_buffer_stride(buffer));
 		args.GetReturnValue().Set(abuffer);
 	}
 
