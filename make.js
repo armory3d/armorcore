@@ -26,6 +26,33 @@ function exec_sys() {
 	}
 }
 
+function sys() {
+	if (os.platform() === 'win32') {
+		return '.exe';
+	}
+	else {
+		return '';
+	}
+}
+
+function sysdir() {
+	if (os.platform() === 'linux') {
+		if (os.arch() === 'arm') return 'linux_arm';
+		if (os.arch() === 'arm64') return 'linux_arm64';
+		else if (os.arch() === 'x64') return 'linux_x64';
+		else throw 'Unsupported CPU';
+	}
+	else if (os.platform() === 'win32') {
+		return 'windows_x64';
+	}
+	else if (os.platform() === 'freebsd') {
+		return 'freebsd_x64';
+	}
+	else {
+		return 'macos';
+	}
+}
+
 function matches(text, pattern) {
 	const regexstring = pattern.replace(/\./g, '\\.').replace(/\*\*/g, '.?').replace(/\*/g, '[^/]*').replace(/\?/g, '*');
 	const regex = new RegExp('^' + regexstring + '$', 'g');
@@ -580,7 +607,7 @@ class ShaderCompiler {
 
 function convertImage(from, temp, to, kha, exe, params) {
 	return new Promise((resolve, reject) => {
-		let process = child_process.spawn(path.join(kha, 'Kinc', 'Tools', 'kraffiti', exe), params);
+		let process = child_process.spawn(path.join(kha, 'Kinc', 'Tools', sysdir(), exe), params);
 		process.stdout.on('data', (data) => {});
 		process.stderr.on('data', (data) => {});
 		process.on('close', (code) => {
@@ -603,7 +630,7 @@ async function exportImage(kha, from, to) {
 		return outputformat;
 	}
 	fs.ensureDirSync(path.dirname(to));
-	const exe = 'kraffiti' + exec_sys();
+	const exe = 'kraffiti' + sys();
 	let params = ['from=' + from, 'to=' + temp, 'format=lz4'];
 	params.push('filter=nearest');
 	await convertImage(from, temp, to, kha, exe, params);
@@ -1208,7 +1235,7 @@ async function main_run(options) {
 	let haxepath = path.join(options.kha, 'Tools', 'haxe');
 	if (fs.existsSync(haxepath) && fs.statSync(haxepath).isDirectory())
 		options.haxe = haxepath;
-	let krafixpath = path.join(options.kha, 'Kinc', 'Tools', 'krafix', 'krafix' + exec_sys());
+	let krafixpath = path.join(options.kha, 'Kinc', 'Tools', sysdir(), 'krafix' + sys());
 	if (fs.existsSync(krafixpath))
 		options.krafix = krafixpath;
 
@@ -1222,12 +1249,12 @@ async function main_run(options) {
 		options.theora = options.ffmpeg + ' -nostdin -i {in} {out}';
 	}
 	if (!options.ogg) {
-		let oggpath = path.join(options.kha, 'Tools', 'oggenc', 'oggenc' + exec_sys());
+		let oggpath = path.join(options.kha, 'Tools', sysdir(), 'oggenc' + sys());
 		if (fs.existsSync(oggpath))
 			options.ogg = oggpath + ' {in} -o {out} --quiet';
 	}
 	if (!options.mp3) {
-		let lamepath = path.join(options.kha, 'Tools', 'lame', 'lame' + exec_sys());
+		let lamepath = path.join(options.kha, 'Tools', sysdir(), 'lame' + sys());
 		if (fs.existsSync(lamepath))
 			options.mp3 = lamepath + ' {in} {out}';
 	}
