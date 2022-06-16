@@ -115,6 +115,7 @@ else if (platform === Platform.iOS) {
 if (platform === Platform.Windows) {
 	project.cmdArgs = ['..\\..\\build\\krom'];
 	project.addLib('Dbghelp'); // Stack walk
+	project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
 	project.addLib(libdir + 'v8_monolith');
 	// project.addDefine('V8_COMPRESS_POINTERS');
 	// project.addDefine('V8_31BIT_SMIS_ON_64BIT_ARCH');

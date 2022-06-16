@@ -55,6 +55,10 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 
 #ifdef KORE_WINDOWS
 #include <Windows.h> // AttachConsole
+#include <dwmapi.h>
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
 extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // Kore/Windows.h
 
 // Enable visual styles for ui controls
@@ -328,11 +332,17 @@ namespace {
 		kinc_mutex_init(&mutex);
 		kinc_random_init((int)(kinc_time() * 1000));
 
-		// Maximized window has x < -1, prevent window centering done by kinc
 		#if KORE_WINDOWS
+		// Maximized window has x < -1, prevent window centering done by kinc
 		if (x < -1 && y < -1) {
 			kinc_window_move(0, x, y);
 		}
+
+		char vdata[4];
+		DWORD cbdata = 4 * sizeof(char);
+		RegGetValueW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, vdata, &cbdata);
+		BOOL use_dark_mode = int(vdata[3] << 24 | vdata[2] << 16 | vdata[1] << 8 | vdata[0]) != 1;
+		DwmSetWindowAttribute(kinc_windows_window_handle(0), DWMWA_USE_IMMERSIVE_DARK_MODE, &use_dark_mode, sizeof(use_dark_mode));
 		#endif
 
 		#ifdef WITH_AUDIO
