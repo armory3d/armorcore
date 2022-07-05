@@ -332,7 +332,7 @@ namespace {
 		kinc_mutex_init(&mutex);
 		kinc_random_init((int)(kinc_time() * 1000));
 
-		#if KORE_WINDOWS
+		#ifdef KORE_WINDOWS
 		// Maximized window has x < -1, prevent window centering done by kinc
 		if (x < -1 && y < -1) {
 			kinc_window_move(0, x, y);
@@ -2662,7 +2662,7 @@ namespace {
 
 	bool window_close_callback(void *data) {
 
-		#if KORE_WINDOWS
+		#ifdef KORE_WINDOWS
 		bool save = false;
 		Locker locker{isolate};
 		Isolate::Scope isolate_scope(isolate);
@@ -2833,7 +2833,7 @@ namespace {
 				if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesW(file.path)) continue; // Skip hidden files
 				if (wcscmp(file.name, L".") == 0 || wcscmp(file.name, L"..") == 0) continue;
 				files += file.name;
-				
+
 				if (i < dir.n_files - 1) files += L"\n"; // Separator
 				#else
 				if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0) continue;
@@ -2871,7 +2871,7 @@ namespace {
 		String::Utf8Value utf8_value(isolate, args[0]);
 		#ifdef KORE_IOS
 		IOSDeleteFile(*utf8_value);
-		#elif KORE_WINDOWS
+		#elif defined(KORE_WINDOWS)
 		char path[1024];
 		strcpy(path, "del /f \"");
 		strcat(path, *utf8_value);
