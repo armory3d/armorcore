@@ -4329,6 +4329,14 @@ int kickstart(int argc, char **argv) {
 	kinc_internal_set_files_location(&assetsdir[0u]);
 #endif
 
+#ifdef KORE_MACOS
+	// Handle loading assets located outside of '.app/Contents/Resources/Deployment' folder
+	// when assets and shaders dir is passed as an argument
+	if (argc > 2) {
+		kinc_internal_set_files_location(&assetsdir[0u]);
+	}
+#endif
+
 #ifdef ARM_PROFILE
 	startup_time = kinc_time();
 #endif
