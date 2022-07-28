@@ -3112,13 +3112,16 @@ namespace {
 			ort->SetInterOpNumThreads(ort_session_options, 8);
 
 			#ifdef KORE_WINDOWS
-			ort->SetSessionExecutionMode(ort_session_options, ORT_SEQUENTIAL);
-			ort->DisableMemPattern(ort_session_options);
-			OrtStatus *onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
-			if (onnx_status != NULL) {
-				const char *msg = ort->GetErrorMessage(onnx_status);
-				kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
-				ort->ReleaseStatus(onnx_status);
+			bool use_gpu = args[2]->ToBoolean(isolate)->Value();
+			if (use_gpu) {
+				ort->SetSessionExecutionMode(ort_session_options, ORT_SEQUENTIAL);
+				ort->DisableMemPattern(ort_session_options);
+				OrtStatus *onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
+				if (onnx_status != NULL) {
+					const char *msg = ort->GetErrorMessage(onnx_status);
+					kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
+					ort->ReleaseStatus(onnx_status);
+				}
 			}
 			#endif
 		}
