@@ -3128,28 +3128,48 @@ namespace {
 
 		Local<ArrayBuffer> model_buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents model_content = model_buffer->GetContents();
-
-		Local<ArrayBuffer> tensor_buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents tensor_content = tensor_buffer->GetContents();
-
 		OrtSession *session;
-		ort->CreateSessionFromArray(ort_env, model_content.Data(), (int)model_content.ByteLength(), ort_session_options, &session);
+		OrtStatus* onnx_status = ort->CreateSessionFromArray(ort_env, model_content.Data(), (int)model_content.ByteLength(), ort_session_options, &session);
+		if (onnx_status != NULL) {
+			const char* msg = ort->GetErrorMessage(onnx_status);
+			kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
+			ort->ReleaseStatus(onnx_status);
+		}
 		OrtAllocator *allocator;
 		ort->GetAllocatorWithDefaultOptions(&allocator);
-		char *input_node_name;
-		ort->SessionGetInputName(session, 0, allocator, &input_node_name);
+		OrtMemoryInfo *memory_info;
+		ort->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info);
+
+		Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		if (length > 4) length = 4;
+		char *input_node_names[4];
+		OrtValue *input_tensors[4];
+		for (int32_t i = 0; i < length; ++i) {
+			Local<Object> tensorobj = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+			Local<ArrayBuffer> tensor_buffer = Local<ArrayBuffer>::Cast(tensorobj);
+			ArrayBuffer::Contents tensor_content = tensor_buffer->GetContents();
+
+			ort->SessionGetInputName(session, i, allocator, &input_node_names[i]);
+
+			OrtTypeInfo *input_type_info;
+			ort->SessionGetInputTypeInfo(session, i, &input_type_info);
+			const OrtTensorTypeAndShapeInfo *input_tensor_info;
+			ort->CastTypeInfoToTensorInfo(input_type_info, &input_tensor_info);
+			size_t num_input_dims;
+			ort->GetDimensionsCount(input_tensor_info, &num_input_dims);
+			std::vector<int64_t> input_node_dims(num_input_dims);
+			ort->GetDimensions(input_tensor_info, (int64_t *)input_node_dims.data(), num_input_dims);
+			ort->ReleaseTypeInfo(input_type_info);
+			ort->CreateTensorWithDataAsOrtValue(memory_info, tensor_content.Data(), (int)tensor_content.ByteLength(), input_node_dims.data(), num_input_dims, ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, &input_tensors[i]);
+		}
+
 		char *output_node_name;
 		ort->SessionGetOutputName(session, 0, allocator, &output_node_name);
-
-		OrtTypeInfo *input_type_info;
-		ort->SessionGetInputTypeInfo(session, 0, &input_type_info);
-		const OrtTensorTypeAndShapeInfo *input_tensor_info;
-		ort->CastTypeInfoToTensorInfo(input_type_info, &input_tensor_info);
-		size_t num_input_dims;
-		ort->GetDimensionsCount(input_tensor_info, &num_input_dims);
-		std::vector<int64_t> input_node_dims(num_input_dims);
-		ort->GetDimensions(input_tensor_info, (int64_t *)input_node_dims.data(), num_input_dims);
-		ort->ReleaseTypeInfo(input_type_info);
+		OrtValue *output_tensor = NULL;
+		ort->Run(session, NULL, input_node_names, input_tensors, length, &output_node_name, 1, &output_tensor);
+		float *float_array;
+		ort->GetTensorMutableData(output_tensor, (void **)&float_array);
 
 		OrtTypeInfo *output_type_info;
 		ort->SessionGetOutputTypeInfo(session, 0, &output_type_info);
@@ -3163,24 +3183,13 @@ namespace {
 		size_t output_byte_length = 4 * output_node_dims[0];
 		for (int i = 0; i < num_output_dims; ++i) output_byte_length *= output_node_dims[i];
 
-		OrtMemoryInfo *memory_info;
-		ort->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info);
-		OrtValue *input_tensor = NULL;
-		ort->CreateTensorWithDataAsOrtValue(memory_info, tensor_content.Data(), (int)tensor_content.ByteLength(), input_node_dims.data(), 4, ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, &input_tensor);
-		ort->ReleaseMemoryInfo(memory_info);
-
-		OrtValue *output_tensor = NULL;
-		ort->Run(session, NULL, &input_node_name, (const OrtValue* const*)&input_tensor, 1, &output_node_name, 1, &output_tensor);
-
-		float *float_array;
-		ort->GetTensorMutableData(output_tensor, (void **)&float_array);
-
 		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, output_byte_length);
 		ArrayBuffer::Contents output_content = output->GetContents();
 		memcpy(output_content.Data(), float_array, output_byte_length);
 
+		ort->ReleaseMemoryInfo(memory_info);
 		ort->ReleaseValue(output_tensor);
-		ort->ReleaseValue(input_tensor);
+		for (int i = 0; i < length; ++i) ort->ReleaseValue(input_tensors[i]);
 		ort->ReleaseSession(session);
 		args.GetReturnValue().Set(output);
 		// kinc_log(KINC_LOG_LEVEL_INFO, "Inference completed in %f", kinc_time() - inference_time);
