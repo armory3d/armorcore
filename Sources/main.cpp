@@ -93,9 +93,6 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #ifdef WITH_ZLIB
 #include <zlib.h>
 #endif
-#ifdef WITH_TEXSYNTH
-#include <texsynth.h>
-#endif
 #ifdef WITH_ONNX
 #include <onnxruntime_c_api.h>
 #ifdef KORE_WINDOWS
@@ -3083,22 +3080,6 @@ namespace {
 	#endif
 	#endif
 
-	#ifdef WITH_TEXSYNTH
-	void krom_texsynth_inpaint(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int32_t w = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int32_t h = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		Local<ArrayBuffer> bufferOut = Local<ArrayBuffer>::Cast(args[2]);
-		ArrayBuffer::Contents contentOut = bufferOut->GetContents();
-		Local<ArrayBuffer> bufferImage = Local<ArrayBuffer>::Cast(args[3]);
-		ArrayBuffer::Contents contentImage = bufferImage->GetContents();
-		Local<ArrayBuffer> bufferMask = Local<ArrayBuffer>::Cast(args[4]);
-		ArrayBuffer::Contents contentMask = bufferMask->GetContents();
-		bool tiling = args[5]->ToBoolean(isolate)->Value();
-		texsynth_inpaint(w, h, contentOut.Data(), contentImage.Data(), contentMask.Data(), tiling);
-	}
-	#endif
-
 	#ifdef WITH_ONNX
 	void krom_ml_inference(const FunctionCallbackInfo<Value> &args) {
 		// double inference_time = kinc_time();
@@ -3596,9 +3577,6 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "writePng").ToLocalChecked(), FunctionTemplate::New(isolate, krom_write_png));
 		krom->Set(String::NewFromUtf8(isolate, "encodeJpg").ToLocalChecked(), FunctionTemplate::New(isolate, krom_encode_jpg));
 		krom->Set(String::NewFromUtf8(isolate, "encodePng").ToLocalChecked(), FunctionTemplate::New(isolate, krom_encode_png));
-		#endif
-		#ifdef WITH_TEXSYNTH
-		krom->Set(String::NewFromUtf8(isolate, "texsynthInpaint").ToLocalChecked(), FunctionTemplate::New(isolate, krom_texsynth_inpaint));
 		#endif
 		#ifdef WITH_ONNX
 		krom->Set(String::NewFromUtf8(isolate, "mlInference").ToLocalChecked(), FunctionTemplate::New(isolate, krom_ml_inference));

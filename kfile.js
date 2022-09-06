@@ -33,7 +33,6 @@ let flags = {
 	with_zlib: false,
 	with_stb_image_write: false,
 	with_audio: false,
-	with_texsynth: false,
 	with_onnx: false,
 	with_krafix: false,
 	with_worker: false,
@@ -211,19 +210,6 @@ if (flags.with_zlib) {
 if (flags.with_stb_image_write) {
 	project.addDefine('WITH_STB_IMAGE_WRITE');
 	project.addIncludeDir("Libraries/stb");
-}
-if (flags.with_texsynth) {
-	project.addDefine('WITH_TEXSYNTH');
-	project.addIncludeDir("Libraries/texsynth");
-	if (platform === Platform.Windows) {
-		project.addLib('Libraries/texsynth/win32/texsynth');
-	}
-	else if (platform === Platform.Linux) {
-		project.addLib('texsynth -L../../Libraries/texsynth/linux');
-	}
-	else if (platform === Platform.OSX) {
-		project.addLib('Libraries/texsynth/macos/libtexsynth.a');
-	}
 }
 if (flags.with_onnx) {
 	project.addDefine('WITH_ONNX');

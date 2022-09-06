@@ -189,7 +189,5 @@ extern class Krom {
 	static function windowX(id: Int): Int;
 	static function windowY(id: Int): Int;
 	static function language(): String;
-
-	static function texsynthInpaint(w: Int, h: Int, bytesOut: js.lib.ArrayBuffer, bytesImage: js.lib.ArrayBuffer, bytesMask: js.lib.ArrayBuffer, tiling: Bool): Void;
 	static function mlInference(model: js.lib.ArrayBuffer, tensors: Array<js.lib.ArrayBuffer>, useGpu: Bool): js.lib.ArrayBuffer;
 }
