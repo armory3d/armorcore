@@ -1,3 +1,9 @@
+enum abstract LogLevel(Int) to Int {
+    var info;
+    var warning;
+    var error;
+}
+
 extern class Krom {
 	static inline var KROM_API: Int = 6;
 
@@ -81,7 +87,7 @@ extern class Krom {
 
 	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, frequency: Int, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int): Void;
 	static function setApplicationName(name: String): Void;
-	static function log(v: Dynamic): Void;
+	static function log(v: Dynamic, ?level: LogLevel): Void;
 	static function setCallback(callback: Void->Void): Void;
 	static function setDropFilesCallback(callback: String->Void): Void;
 	static function setCutCopyPasteCallback(cutCallback: Void->String, copyCallback: Void->String, pasteCallback: String->Void): Void;
