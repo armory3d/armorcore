@@ -399,14 +399,16 @@ namespace {
 		String::Utf8Value value(isolate, arg);
 		size_t len = strlen(*value);
         kinc_log_level_t level;
-        if(args.Length() > 1) {
-            level = (kinc_log_level_t) args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-        } else {
+        if (args.Length() > 1) {
+            level = (kinc_log_level_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+        }
+        else {
             level = KINC_LOG_LEVEL_INFO;
         }
 		if (len < 2048) {
 			kinc_log(level, *value);
-		} else {
+		}
+		else {
 			int pos = 0;
 			while (pos < len) {
 				strncpy(temp_string, *value + pos, 2047);

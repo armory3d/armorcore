@@ -1,9 +1,3 @@
-enum abstract LogLevel(Int) to Int {
-    var info;
-    var warning;
-    var error;
-}
-
 extern class Krom {
 	static inline var KROM_API: Int = 6;
 
@@ -196,4 +190,10 @@ extern class Krom {
 	static function windowY(id: Int): Int;
 	static function language(): String;
 	static function mlInference(model: js.lib.ArrayBuffer, tensors: Array<js.lib.ArrayBuffer>, useGpu: Bool): js.lib.ArrayBuffer;
+}
+
+enum abstract LogLevel(Int) to Int {
+    var Info;
+    var Warning;
+    var Error;
 }
