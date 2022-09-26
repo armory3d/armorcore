@@ -3100,7 +3100,7 @@ namespace {
 			ort->SetInterOpNumThreads(ort_session_options, 8);
 
 			#ifdef KORE_WINDOWS
-			bool use_gpu = args[2]->ToBoolean(isolate)->Value();
+			bool use_gpu = !(args.Length() > 4 && !args[4]->ToBoolean(isolate)->Value());
 			if (use_gpu) {
 				ort->SetSessionExecutionMode(ort_session_options, ORT_SEQUENTIAL);
 				ort->DisableMemPattern(ort_session_options);
@@ -3147,29 +3147,58 @@ namespace {
 			size_t num_input_dims;
 			ort->GetDimensionsCount(input_tensor_info, &num_input_dims);
 			std::vector<int64_t> input_node_dims(num_input_dims);
-			ort->GetDimensions(input_tensor_info, (int64_t *)input_node_dims.data(), num_input_dims);
+
+			if (args.Length() > 2 && !args[2]->IsNullOrUndefined()) {
+				Local<Object> jsarray = args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+				Local<Object> jsarray2 = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+				for (int32_t i = 0; i < num_input_dims; ++i) {
+					int32_t j = jsarray2->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+					input_node_dims[i] = j;
+				}
+			}
+			else {
+				ort->GetDimensions(input_tensor_info, (int64_t *)input_node_dims.data(), num_input_dims);
+			}
+			ONNXTensorElementDataType tensor_element_type;
+			ort->GetTensorElementType(input_tensor_info, &tensor_element_type);
+
+			ort->CreateTensorWithDataAsOrtValue(memory_info, tensor_content.Data(), (int)tensor_content.ByteLength(), input_node_dims.data(), num_input_dims,  tensor_element_type, &input_tensors[i]);
 			ort->ReleaseTypeInfo(input_type_info);
-			ort->CreateTensorWithDataAsOrtValue(memory_info, tensor_content.Data(), (int)tensor_content.ByteLength(), input_node_dims.data(), num_input_dims, ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, &input_tensors[i]);
 		}
 
 		char *output_node_name;
 		ort->SessionGetOutputName(session, 0, allocator, &output_node_name);
 		OrtValue *output_tensor = NULL;
-		ort->Run(session, NULL, input_node_names, input_tensors, length, &output_node_name, 1, &output_tensor);
+		onnx_status = ort->Run(session, NULL, input_node_names, input_tensors, length, &output_node_name, 1, &output_tensor);
+		if (onnx_status != NULL) {
+			const char* msg = ort->GetErrorMessage(onnx_status);
+			kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
+			ort->ReleaseStatus(onnx_status);
+		}
 		float *float_array;
 		ort->GetTensorMutableData(output_tensor, (void **)&float_array);
 
-		OrtTypeInfo *output_type_info;
-		ort->SessionGetOutputTypeInfo(session, 0, &output_type_info);
-		const OrtTensorTypeAndShapeInfo *output_tensor_info;
-		ort->CastTypeInfoToTensorInfo(output_type_info, &output_tensor_info);
-		size_t num_output_dims;
-		ort->GetDimensionsCount(output_tensor_info, &num_output_dims);
-		std::vector<int64_t> output_node_dims(num_output_dims);
-		ort->GetDimensions(output_tensor_info, (int64_t *)output_node_dims.data(), num_output_dims);
-		ort->ReleaseTypeInfo(output_type_info);
-		size_t output_byte_length = 4 * output_node_dims[0];
-		for (int i = 0; i < num_output_dims; ++i) output_byte_length *= output_node_dims[i];
+		size_t output_byte_length = 4;
+		if (args.Length() > 3 && !args[3]->IsNullOrUndefined()) {
+			Local<Object> jsarray = args[3]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+			int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+			for (int i = 0; i < length; ++i) {
+				int32_t j = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+				output_byte_length *= j;
+			}
+		}
+		else {
+			OrtTypeInfo *output_type_info;
+			ort->SessionGetOutputTypeInfo(session, 0, &output_type_info);
+			const OrtTensorTypeAndShapeInfo *output_tensor_info;
+			ort->CastTypeInfoToTensorInfo(output_type_info, &output_tensor_info);
+			size_t num_output_dims;
+			ort->GetDimensionsCount(output_tensor_info, &num_output_dims);
+			std::vector<int64_t> output_node_dims(num_output_dims);
+			ort->GetDimensions(output_tensor_info, (int64_t *)output_node_dims.data(), num_output_dims);
+			ort->ReleaseTypeInfo(output_type_info);
+			for (int i = 0; i < num_output_dims; ++i) if (output_node_dims[i] > 1) output_byte_length *= output_node_dims[i];
+		}
 
 		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, output_byte_length);
 		ArrayBuffer::Contents output_content = output->GetContents();
