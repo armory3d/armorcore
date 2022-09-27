@@ -236,6 +236,7 @@ namespace {
 	const OrtApi *ort = NULL;
 	OrtEnv *ort_env;
 	OrtSessionOptions *ort_session_options;
+	OrtSession *session = NULL;
 	#endif
 
 	class KromCallbackdata {
@@ -3089,9 +3090,18 @@ namespace {
 
 	#ifdef WITH_ONNX
 	void krom_ml_inference(const FunctionCallbackInfo<Value> &args) {
-		// double inference_time = kinc_time();
 		HandleScope scope(args.GetIsolate());
-		if (ort == NULL) {
+
+		#ifdef ARM_PROFILE
+		double inference_time = kinc_time();
+		#endif
+
+		OrtStatus* onnx_status;
+
+		static bool use_gpu_last = false;
+		bool use_gpu = !(args.Length() > 4 && !args[4]->ToBoolean(isolate)->Value());
+		if (ort == NULL || use_gpu_last != use_gpu) {
+			use_gpu_last = use_gpu;
 			ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
 			ort->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "armorcore", &ort_env);
 
@@ -3100,11 +3110,10 @@ namespace {
 			ort->SetInterOpNumThreads(ort_session_options, 8);
 
 			#ifdef KORE_WINDOWS
-			bool use_gpu = !(args.Length() > 4 && !args[4]->ToBoolean(isolate)->Value());
 			if (use_gpu) {
 				ort->SetSessionExecutionMode(ort_session_options, ORT_SEQUENTIAL);
 				ort->DisableMemPattern(ort_session_options);
-				OrtStatus *onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
+				onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
 				if (onnx_status != NULL) {
 					const char *msg = ort->GetErrorMessage(onnx_status);
 					kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
@@ -3114,15 +3123,25 @@ namespace {
 			#endif
 		}
 
+		bool cache = args.Length() > 5 && args[5]->ToBoolean(isolate)->Value();
 		Local<ArrayBuffer> model_buffer = Local<ArrayBuffer>::Cast(args[0]);
 		ArrayBuffer::Contents model_content = model_buffer->GetContents();
-		OrtSession *session;
-		OrtStatus* onnx_status = ort->CreateSessionFromArray(ort_env, model_content.Data(), (int)model_content.ByteLength(), ort_session_options, &session);
-		if (onnx_status != NULL) {
-			const char* msg = ort->GetErrorMessage(onnx_status);
-			kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
-			ort->ReleaseStatus(onnx_status);
+
+		static void *model_content_last = 0;
+		if (!cache || model_content_last != model_content.Data()) {
+			if (session != NULL) {
+				ort->ReleaseSession(session);
+				session = NULL;
+			}
+			onnx_status = ort->CreateSessionFromArray(ort_env, model_content.Data(), (int)model_content.ByteLength(), ort_session_options, &session);
+			if (onnx_status != NULL) {
+				const char* msg = ort->GetErrorMessage(onnx_status);
+				kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
+				ort->ReleaseStatus(onnx_status);
+			}
 		}
+		model_content_last = model_content.Data();
+
 		OrtAllocator *allocator;
 		ort->GetAllocatorWithDefaultOptions(&allocator);
 		OrtMemoryInfo *memory_info;
@@ -3207,9 +3226,15 @@ namespace {
 		ort->ReleaseMemoryInfo(memory_info);
 		ort->ReleaseValue(output_tensor);
 		for (int i = 0; i < length; ++i) ort->ReleaseValue(input_tensors[i]);
-		ort->ReleaseSession(session);
+		if (session != NULL && !cache) {
+			ort->ReleaseSession(session);
+			session = NULL;
+		}
 		args.GetReturnValue().Set(output);
-		// kinc_log(KINC_LOG_LEVEL_INFO, "Inference completed in %f", kinc_time() - inference_time);
+
+		#ifdef ARM_PROFILE
+		kinc_log(KINC_LOG_LEVEL_INFO, "Inference completed in %f", kinc_time() - inference_time);
+		#endif
 	}
 	#endif
 
