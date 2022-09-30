@@ -97,6 +97,8 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #include <onnxruntime_c_api.h>
 #ifdef KORE_WINDOWS
 #include <dml_provider_factory.h>
+#elif defined(KORE_MACOS)
+#include <coreml_provider_factory.h>
 #endif
 #endif
 #ifdef IDLE_SLEEP
@@ -3096,7 +3098,7 @@ namespace {
 		double inference_time = kinc_time();
 		#endif
 
-		OrtStatus* onnx_status;
+		OrtStatus *onnx_status = NULL;
 
 		static bool use_gpu_last = false;
 		bool use_gpu = !(args.Length() > 4 && !args[4]->ToBoolean(isolate)->Value());
@@ -3115,7 +3117,9 @@ namespace {
 				ort->DisableMemPattern(ort_session_options);
 				onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
 				#elif defined(KORE_LINUX)
-				//onnx_status = OrtSessionOptionsAppendExecutionProvider_CUDA(ort_session_options, 0);
+				// onnx_status = OrtSessionOptionsAppendExecutionProvider_CUDA(ort_session_options, 0);
+				#elif defined(KORE_MACOS)
+				onnx_status = OrtSessionOptionsAppendExecutionProvider_CoreML(ort_session_options, 0);
 				#endif
 				if (onnx_status != NULL) {
 					const char *msg = ort->GetErrorMessage(onnx_status);
