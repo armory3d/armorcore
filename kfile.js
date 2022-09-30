@@ -218,7 +218,10 @@ if (flags.with_onnx) {
 		project.addLib('Libraries/onnx/win32/onnxruntime');
 	}
 	else if (platform === Platform.Linux) {
-		project.addLib('onnx -L../../Libraries/onnx/linux');
+		// patchelf --set-rpath . Armory
+		project.addLib('onnxruntime -L../../Libraries/onnx/linux');
+		//project.addLib('onnxruntime_providers_cuda -L../../Libraries/onnx/linux');
+		//project.addLib('onnxruntime_providers_shared -L../../Libraries/onnx/linux');
 	}
 	else if (platform === Platform.OSX) {
 		project.addLib('Libraries/onnx/macos/libonnx.dylib');

@@ -3109,18 +3109,20 @@ namespace {
 			ort->SetIntraOpNumThreads(ort_session_options, 8);
 			ort->SetInterOpNumThreads(ort_session_options, 8);
 
-			#ifdef KORE_WINDOWS
 			if (use_gpu) {
+				#ifdef KORE_WINDOWS
 				ort->SetSessionExecutionMode(ort_session_options, ORT_SEQUENTIAL);
 				ort->DisableMemPattern(ort_session_options);
 				onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
+				#elif defined(KORE_LINUX)
+				//onnx_status = OrtSessionOptionsAppendExecutionProvider_CUDA(ort_session_options, 0);
+				#endif
 				if (onnx_status != NULL) {
 					const char *msg = ort->GetErrorMessage(onnx_status);
 					kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
 					ort->ReleaseStatus(onnx_status);
 				}
 			}
-			#endif
 		}
 
 		bool cache = args.Length() > 5 && args[5]->ToBoolean(isolate)->Value();
