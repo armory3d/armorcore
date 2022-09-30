@@ -229,7 +229,7 @@ if (flags.with_onnx) {
 		}
 	}
 	else if (platform === Platform.OSX) {
-		project.addLib('Libraries/onnx/macos/libonnxruntime.dylib');
+		project.addLib('Libraries/onnx/macos/libonnxruntime.1.12.1.dylib');
 	}
 }
 if (flags.with_krafix) {
