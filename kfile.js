@@ -236,7 +236,7 @@ if (flags.with_krafix) {
 	await project.addProject('Libraries/glsl_to_spirv');
 }
 if (flags.with_plugin_embed) {
-	await project.addProject('Libraries/plugins');
+	await project.addProject('../Libraries/plugins');
 }
 
 project.flatten();
