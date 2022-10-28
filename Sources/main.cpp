@@ -994,7 +994,7 @@ namespace {
 		char *source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, source, kinc_string_length(source), KINC_G4_SHADER_TYPE_VERTEX);
+		kinc_g4_shader_init(shader, source, strlen(source), KINC_G4_SHADER_TYPE_VERTEX);
 
 		#endif
 
@@ -1138,7 +1138,7 @@ namespace {
 		char *source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, source, kinc_string_length(source), KINC_G4_SHADER_TYPE_FRAGMENT);
+		kinc_g4_shader_init(shader, source, strlen(source), KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		#endif
 
