@@ -895,17 +895,17 @@ EMSCRIPTEN_KEEPALIVE void readStorage() {
 
 }
 
-EMSCRIPTEN_KEEPALIVE kinc_g4_render_target_t *createRenderTarget(int width, int height, int depthBufferBits, int format, int stencilBufferBits, int contextId) {
+EMSCRIPTEN_KEEPALIVE kinc_g4_render_target_t *createRenderTarget(int width, int height, int format, int depthBufferBits, int stencilBufferBits) {
 	kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
-	kinc_g4_render_target_init(render_target, width, height, depthBufferBits, false, (kinc_g4_render_target_format_t)format, stencilBufferBits, 0);
+	kinc_g4_render_target_init(render_target, width, height, (kinc_g4_render_target_format_t)format, depthBufferBits, stencilBufferBits);
 	last_width = render_target->width;
 	last_height = render_target->height;
 	return render_target;
 }
 
-EMSCRIPTEN_KEEPALIVE kinc_g4_render_target_t *createRenderTargetCubeMap(int size, int depthBufferBits, int format, int stencilBufferBits, int contextId) {
+EMSCRIPTEN_KEEPALIVE kinc_g4_render_target_t *createRenderTargetCubeMap(int size, int format, int depthBufferBits, int stencilBufferBits) {
 	kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
-	kinc_g4_render_target_init_cube(render_target, size, depthBufferBits, false, (kinc_g4_render_target_format_t)format, stencilBufferBits, 0);
+	kinc_g4_render_target_init_cube(render_target, size, (kinc_g4_render_target_format_t)format, depthBufferBits, stencilBufferBits);
 	last_width = render_target->width;
 	last_height = render_target->height;
 	return render_target;
@@ -1442,14 +1442,14 @@ int kickstart(int argc, char **argv) {
 	Krom.displayIsPrimary = _displayIsPrimary;\
 	Krom.writeStorage = _writeStorage;\
 	Krom.readStorage = _readStorage;\
-	Krom.createRenderTarget = function(width, height, depthBufferBits, format, stencilBufferBits, contextId) {\
-		return { self: _createRenderTarget(width, height, depthBufferBits, format, stencilBufferBits, contextId),\
+	Krom.createRenderTarget = function(width, height, format, depthBufferBits, stencilBufferBits) {\
+		return { self: _createRenderTarget(width, height, format, depthBufferBits, stencilBufferBits),\
 				 width: _getLastWidth(),\
 				 height: _getLastHeight()\
 		};\
 	};\
-	Krom.createRenderTargetCubeMap = function(size, depthBufferBits, format, stencilBufferBits, contextId) {\
-		return { self: _createRenderTargetCubeMap(size, depthBufferBits, format, stencilBufferBits, contextId),\
+	Krom.createRenderTargetCubeMap = function(size, format, depthBufferBits, stencilBufferBits) {\
+		return { self: _createRenderTargetCubeMap(size, format, depthBufferBits, stencilBufferBits),\
 				 width: _getLastWidth(),\
 				 height: _getLastHeight()\
 		};\
