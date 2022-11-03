@@ -4418,10 +4418,10 @@ int kickstart(int argc, char **argv) {
 	if (snapshot) {
 		plat = platform::NewDefaultPlatform();
 		V8::InitializePlatform(plat.get());
-		V8::Initialize();
 
 		std::string flags = "--nolazy";
 		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
+		V8::Initialize();
 
 		ScriptCompiler::CachedData *cache;
 		Isolate::CreateParams create_params;
