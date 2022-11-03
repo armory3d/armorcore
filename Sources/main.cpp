@@ -657,7 +657,8 @@ namespace {
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)field->Value();
 		int *vertices = kinc_g4_index_buffer_lock(buffer);
-		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, kinc_g4_index_buffer_count(buffer) * sizeof(int));
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)vertices, kinc_g4_index_buffer_count(buffer) * sizeof(int), [](void*, size_t, void*) {}, nullptr);
+		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(Uint32Array::New(abuffer, 0, kinc_g4_index_buffer_count(buffer)));
 	}
 
@@ -793,7 +794,8 @@ namespace {
 		int start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		float *vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
-		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, vertices, count * kinc_g4_vertex_buffer_stride(buffer));
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)vertices, count * kinc_g4_vertex_buffer_stride(buffer), [](void*, size_t, void*) {}, nullptr);
+		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(abuffer);
 	}
 
@@ -846,9 +848,9 @@ namespace {
 	void krom_create_vertex_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_VERTEX);
+		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_VERTEX);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -1011,9 +1013,9 @@ namespace {
 	void krom_create_fragment_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_FRAGMENT);
+		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -1155,9 +1157,9 @@ namespace {
 	void krom_create_geometry_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_GEOMETRY);
+		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_GEOMETRY);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -1171,9 +1173,9 @@ namespace {
 	void krom_create_tessellation_control_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_TESSELLATION_CONTROL);
+		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_TESSELLATION_CONTROL);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -1187,9 +1189,9 @@ namespace {
 	void krom_create_tessellation_evaluation_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content.Data(), (int)content.ByteLength(), KINC_G4_SHADER_TYPE_TESSELLATION_EVALUATION);
+		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_TESSELLATION_EVALUATION);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -1514,8 +1516,8 @@ namespace {
 
 		kinc_a1_sound_t *sound = kinc_a1_sound_create(*utf8_value);
 		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, sound->size * 2 * sizeof(float));
-		ArrayBuffer::Contents content = buffer->GetContents();
-		float *to = (float *)content.Data();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *to = (float *)content->Data();
 
 		int16_t *left = (int16_t *)&sound->left[0];
 		int16_t *right = (int16_t *)&sound->right[0];
@@ -1531,14 +1533,14 @@ namespace {
 	void krom_write_audio_buffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		int samples = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		for (int i = 0; i < samples; ++i) {
-			float *values = (float *)content.Data();
+			float *values = (float *)content->Data();
 			float value = values[audio_read_location / 4];
 			audio_read_location += 4;
-			if (audio_read_location >= content.ByteLength()) audio_read_location = 0;
+			if (audio_read_location >= content->ByteLength()) audio_read_location = 0;
 
 			*(float *)&audio_buffer.data[audio_buffer.write_location] = value;
 			audio_buffer.write_location += 4;
@@ -1555,8 +1557,8 @@ namespace {
 		int reader_size = (int)kinc_file_reader_size(&reader);
 
 		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, reader_size);
-		ArrayBuffer::Contents contents = buffer->GetContents();
-		kinc_file_reader_read(&reader, contents.Data(), reader_size);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		kinc_file_reader_read(&reader, content->Data(), reader_size);
 		kinc_file_reader_close(&reader);
 
 		args.GetReturnValue().Set(buffer);
@@ -1752,10 +1754,10 @@ namespace {
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 
-		float *from = (float *)content.Data();
-		kinc_g4_set_floats(*location, from, int(content.ByteLength() / 4));
+		float *from = (float *)content->Data();
+		kinc_g4_set_floats(*location, from, int(content->ByteLength() / 4));
 	}
 
 	void krom_set_matrix(const FunctionCallbackInfo<Value> &args) {
@@ -1764,11 +1766,8 @@ namespace {
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content;
-		// if (buffer->IsExternal()) content = buffer->GetContents();
-		// else content = buffer->Externalize();
-		content = buffer->GetContents();
-		float *from = (float *)content.Data();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
 		kinc_g4_set_matrix4(*location, (kinc_matrix4x4_t *)from);
 	}
 
@@ -1778,8 +1777,8 @@ namespace {
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)locationfield->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content = buffer->GetContents();
-		float *from = (float *)content.Data();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
 		kinc_g4_set_matrix3(*location, (kinc_matrix3x3_t *)from);
 	}
 
@@ -1905,11 +1904,11 @@ namespace {
 		String::Utf8Value utf8_name(isolate, args[0]);
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 
 		kinc_file_writer_t writer;
 		kinc_file_writer_open(&writer, *utf8_name);
-		kinc_file_writer_write(&writer, content.Data(), (int)content.ByteLength());
+		kinc_file_writer_write(&writer, content->Data(), (int)content->ByteLength());
 		kinc_file_writer_close(&writer);
 	}
 
@@ -1922,8 +1921,8 @@ namespace {
 		int reader_size = (int)kinc_file_reader_size(&reader);
 
 		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, reader_size);
-		ArrayBuffer::Contents contents = buffer->GetContents();
-		kinc_file_reader_read(&reader, contents.Data(), reader_size);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		kinc_file_reader_read(&reader, content->Data(), reader_size);
 		kinc_file_reader_close(&reader);
 
 		args.GetReturnValue().Set(buffer);
@@ -1997,14 +1996,14 @@ namespace {
 	void krom_create_texture_from_bytes(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
-		kinc_image_init(image, content.Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
+		kinc_image_init(image, content->Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		kinc_g4_texture_init_from_image(texture, image);
 		bool readable = args[4]->ToBoolean(isolate)->Value();
 		if (!readable) {
-			delete[] content.Data();
+			delete[] content->Data();
 			kinc_image_destroy(image);
 			free(image);
 		}
@@ -2026,15 +2025,15 @@ namespace {
 	void krom_create_texture_from_bytes3d(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t image;
-		kinc_image_init3d(&image, content.Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
+		kinc_image_init3d(&image, content->Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		kinc_g4_texture_init_from_image3d(texture, &image);
 		kinc_image_destroy(&image);
 		bool readable = args[5]->ToBoolean(isolate)->Value();
 		if (!readable) {
-			delete[] content.Data();
+			delete[] content->Data();
 		}
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
@@ -2050,17 +2049,15 @@ namespace {
 	void krom_create_texture_from_encoded_bytes(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content;
-		if (buffer->IsExternal()) content = buffer->GetContents();
-		else content = buffer->Externalize();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		String::Utf8Value format(isolate, args[1]);
 		bool readable = args[2]->ToBoolean(isolate)->Value();
 
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
-		unsigned char *content_data = (unsigned char *)content.Data();
-		int content_length = (int)content.ByteLength();
+		unsigned char *content_data = (unsigned char *)content->Data();
+		int content_length = (int)content->ByteLength();
 		unsigned char *image_data;
 		kinc_image_format_t image_format;
 		int image_width;
@@ -2075,7 +2072,7 @@ namespace {
 			fourcc[2] = content_data[10];
 			fourcc[3] = content_data[11];
 			fourcc[4] = 0;
-			int compressedSize = (int)content.ByteLength() - 12;
+			int compressedSize = (int)content->ByteLength() - 12;
 			if (strcmp(fourcc, "LZ4 ") == 0) {
 				int outputSize = image_width * image_height * 4;
 				image_data = (unsigned char *)malloc(outputSize);
@@ -2147,7 +2144,8 @@ namespace {
 
 		uint8_t *data = kinc_image_get_pixels(image);
 		int byteLength = format_byte_size(image->format) * image->width * image->height * image->depth;
-		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, data, byteLength);
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)data, byteLength, [](void*, size_t, void*) {}, nullptr);
+		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(buffer);
 	}
 
@@ -2158,9 +2156,9 @@ namespace {
 		kinc_g4_render_target_t *rt = (kinc_g4_render_target_t *)field->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 
-		uint8_t *b = (uint8_t *)content.Data();
+		uint8_t *b = (uint8_t *)content->Data();
 		kinc_g4_render_target_get_pixels(rt, b);
 	}
 
@@ -2171,7 +2169,8 @@ namespace {
 		uint8_t *tex = kinc_g4_texture_lock(texture);
 
 		int byteLength = kinc_g4_texture_stride(texture) * texture->tex_height * texture->tex_depth;
-		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, tex, byteLength);
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)tex, byteLength, [](void*, size_t, void*) {}, nullptr);
+		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(abuffer);
 	}
 
@@ -2306,11 +2305,11 @@ namespace {
 		String::Utf8Value utf8_path(isolate, args[0]);
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 
 		bool hasLengthArg = args.Length() > 2 && !args[2]->IsNullOrUndefined();
-		int byteLength = hasLengthArg ? args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() : (int)content.ByteLength();
-		if (byteLength > (int)content.ByteLength()) byteLength = (int)content.ByteLength();
+		int byteLength = hasLengthArg ? args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() : (int)content->ByteLength();
+		if (byteLength > (int)content->ByteLength()) byteLength = (int)content->ByteLength();
 
 		#ifdef KORE_WINDOWS
 		MultiByteToWideChar(CP_UTF8, 0, *utf8_path, -1, temp_wstring, 1024);
@@ -2319,7 +2318,7 @@ namespace {
 		FILE *file = fopen(*utf8_path, "wb");
 		#endif
 		if (file == nullptr) return;
-		fwrite(content.Data(), 1, byteLength, file);
+		fwrite(content->Data(), 1, byteLength, file);
 		fclose(file);
 	}
 
@@ -2396,7 +2395,10 @@ namespace {
 		Local<Value> result;
 		Local<Value> argv[1];
 		KromCallbackdata *cbd = (KromCallbackdata *)callbackdata;
-		if (body != NULL) argv[0] = ArrayBuffer::New(isolate, (void *)body, cbd->size > 0 ? cbd->size : strlen(body));
+		if (body != NULL) {
+			std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)body, cbd->size > 0 ? cbd->size : strlen(body), [](void*, size_t, void*) {}, nullptr);
+			argv[0] = ArrayBuffer::New(isolate, std::move(backing));
+		}
 		Local<Function> func = Local<Function>::New(isolate, cbd->func);
 		if (!func->Call(context, context->Global(), body != NULL ? 1 : 0, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
@@ -2496,9 +2498,9 @@ namespace {
 		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content = buffer->GetContents();
-		float *from = (float *)content.Data();
-		kinc_compute_set_floats(*location, from, int(content.ByteLength() / 4));
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
+		kinc_compute_set_floats(*location, from, int(content->ByteLength() / 4));
 	}
 
 	void krom_set_matrix_compute(const FunctionCallbackInfo<Value> &args) {
@@ -2506,8 +2508,8 @@ namespace {
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content = buffer->GetContents();
-		float *from = (float *)content.Data();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
 		kinc_compute_set_matrix4(*location, (kinc_matrix4x4_t *)from);
 	}
 
@@ -2516,8 +2518,8 @@ namespace {
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content = buffer->GetContents();
-		float *from = (float *)content.Data();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
 		kinc_compute_set_matrix3(*location, (kinc_matrix3x3_t *)from);
 	}
 
@@ -2601,9 +2603,9 @@ namespace {
 	void krom_create_shader_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_compute_shader *shader = (kinc_compute_shader *)malloc(sizeof(kinc_compute_shader));
-		kinc_compute_shader_init(shader, content.Data(), (int)content.ByteLength());
+		kinc_compute_shader_init(shader, content->Data(), (int)content->ByteLength());
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -2897,18 +2899,18 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		bool raw = args[1]->ToBoolean(isolate)->Value();
 
-		unsigned char *inflated = (unsigned char *)malloc(content.ByteLength());
+		unsigned char *inflated = (unsigned char *)malloc(content->ByteLength());
 
 		z_stream infstream;
 		infstream.zalloc = Z_NULL;
 		infstream.zfree = Z_NULL;
 		infstream.opaque = Z_NULL;
-		infstream.avail_in = (uInt)content.ByteLength();
-		infstream.next_in = (Bytef *)content.Data();
-		infstream.avail_out = (uInt)content.ByteLength();
+		infstream.avail_in = (uInt)content->ByteLength();
+		infstream.next_in = (Bytef *)content->Data();
+		infstream.avail_out = (uInt)content->ByteLength();
 		infstream.next_out = (Bytef *)inflated;
 
 		inflateInit2(&infstream, raw ? -15 : 15 + 32);
@@ -2918,9 +2920,9 @@ namespace {
 			int res = inflate(&infstream, Z_NO_FLUSH);
 			if (res == Z_STREAM_END) break;
 			if (infstream.avail_out == 0) {
-				inflated = (unsigned char *)realloc(inflated, content.ByteLength() * i);
-				infstream.avail_out = (uInt)content.ByteLength();
-				infstream.next_out = (Bytef *)(inflated + content.ByteLength() * (i - 1));
+				inflated = (unsigned char *)realloc(inflated, content->ByteLength() * i);
+				infstream.avail_out = (uInt)content->ByteLength();
+				infstream.next_out = (Bytef *)(inflated + content->ByteLength() * (i - 1));
 				i++;
 			}
 		}
@@ -2928,8 +2930,8 @@ namespace {
 		inflateEnd(&infstream);
 
 		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, infstream.total_out);
-		ArrayBuffer::Contents outputContent = output->GetContents();
-		memcpy(outputContent.Data(), inflated, infstream.total_out);
+		std::shared_ptr<BackingStore> output_content = output->GetBackingStore();
+		memcpy(output_content->Data(), inflated, infstream.total_out);
 		free(inflated);
 
 		args.GetReturnValue().Set(output);
@@ -2939,18 +2941,18 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		bool raw = args[1]->ToBoolean(isolate)->Value();
 
-		int deflatedSize = compressBound((uInt)content.ByteLength());
+		int deflatedSize = compressBound((uInt)content->ByteLength());
 		void *deflated = malloc(deflatedSize);
 
 		z_stream defstream;
 		defstream.zalloc = Z_NULL;
 		defstream.zfree = Z_NULL;
 		defstream.opaque = Z_NULL;
-		defstream.avail_in = (uInt)content.ByteLength();
-		defstream.next_in = (Bytef *)content.Data();
+		defstream.avail_in = (uInt)content->ByteLength();
+		defstream.next_in = (Bytef *)content->Data();
 		defstream.avail_out = deflatedSize;
 		defstream.next_out = (Bytef *)deflated;
 
@@ -2959,8 +2961,8 @@ namespace {
 		deflateEnd(&defstream);
 
 		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, defstream.total_out);
-		ArrayBuffer::Contents outputContent = output->GetContents();
-		memcpy(outputContent.Data(), deflated, defstream.total_out);
+		std::shared_ptr<BackingStore> output_content = output->GetBackingStore();
+		memcpy(output_content->Data(), deflated, defstream.total_out);
 		free(deflated);
 
 		args.GetReturnValue().Set(output);
@@ -2972,14 +2974,14 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_path(isolate, args[0]);
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		int w = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int h = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int format = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		int comp = 0;
 		unsigned char *pixels = NULL;
-		unsigned char *rgba = (unsigned char *)content.Data();
+		unsigned char *rgba = (unsigned char *)content->Data();
 		if (format == 0) { // RGBA
 			comp = 4;
 			pixels = rgba;
@@ -3041,7 +3043,7 @@ namespace {
 	void encode_image(const FunctionCallbackInfo<Value> &args, int imageFormat, int quality) {
 		HandleScope scope(args.GetIsolate());
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents content = buffer->GetContents();
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		int w = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int h = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int format = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -3050,10 +3052,11 @@ namespace {
 		encode_size = 0;
 
 		imageFormat == 0 ?
-			stbi_write_jpg_to_func(&encode_image_func, NULL, w, h, 4, content.Data(), quality) :
-			stbi_write_png_to_func(&encode_image_func, NULL, w, h, 4, content.Data(), w * 4);
+			stbi_write_jpg_to_func(&encode_image_func, NULL, w, h, 4, content->Data(), quality) :
+			stbi_write_png_to_func(&encode_image_func, NULL, w, h, 4, content->Data(), w * 4);
 
-		Local<ArrayBuffer> out = ArrayBuffer::New(isolate, encode_data, encode_size);
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)encode_data, encode_size, [](void*, size_t, void*) {}, nullptr);
+		Local<ArrayBuffer> out = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(out);
 	}
 
@@ -3130,22 +3133,22 @@ namespace {
 
 		bool cache = args.Length() > 5 && args[5]->ToBoolean(isolate)->Value();
 		Local<ArrayBuffer> model_buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents model_content = model_buffer->GetContents();
+		std::shared_ptr<BackingStore> model_content = model_buffer->GetBackingStore();
 
 		static void *model_content_last = 0;
-		if (!cache || model_content_last != model_content.Data()) {
+		if (!cache || model_content_last != model_content->Data()) {
 			if (session != NULL) {
 				ort->ReleaseSession(session);
 				session = NULL;
 			}
-			onnx_status = ort->CreateSessionFromArray(ort_env, model_content.Data(), (int)model_content.ByteLength(), ort_session_options, &session);
+			onnx_status = ort->CreateSessionFromArray(ort_env, model_content->Data(), (int)model_content->ByteLength(), ort_session_options, &session);
 			if (onnx_status != NULL) {
 				const char* msg = ort->GetErrorMessage(onnx_status);
 				kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
 				ort->ReleaseStatus(onnx_status);
 			}
 		}
-		model_content_last = model_content.Data();
+		model_content_last = model_content->Data();
 
 		OrtAllocator *allocator;
 		ort->GetAllocatorWithDefaultOptions(&allocator);
@@ -3160,7 +3163,7 @@ namespace {
 		for (int32_t i = 0; i < length; ++i) {
 			Local<Object> tensorobj = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 			Local<ArrayBuffer> tensor_buffer = Local<ArrayBuffer>::Cast(tensorobj);
-			ArrayBuffer::Contents tensor_content = tensor_buffer->GetContents();
+			std::shared_ptr<BackingStore> tensor_content = tensor_buffer->GetBackingStore();
 
 			ort->SessionGetInputName(session, i, allocator, &input_node_names[i]);
 
@@ -3186,7 +3189,7 @@ namespace {
 			ONNXTensorElementDataType tensor_element_type;
 			ort->GetTensorElementType(input_tensor_info, &tensor_element_type);
 
-			ort->CreateTensorWithDataAsOrtValue(memory_info, tensor_content.Data(), (int)tensor_content.ByteLength(), input_node_dims.data(), num_input_dims,  tensor_element_type, &input_tensors[i]);
+			ort->CreateTensorWithDataAsOrtValue(memory_info, tensor_content->Data(), (int)tensor_content->ByteLength(), input_node_dims.data(), num_input_dims,  tensor_element_type, &input_tensors[i]);
 			ort->ReleaseTypeInfo(input_type_info);
 		}
 
@@ -3225,8 +3228,8 @@ namespace {
 		}
 
 		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, output_byte_length);
-		ArrayBuffer::Contents output_content = output->GetContents();
-		memcpy(output_content.Data(), float_array, output_byte_length);
+		std::shared_ptr<BackingStore> output_content = output->GetBackingStore();
+		memcpy(output_content->Data(), float_array, output_byte_length);
 
 		ort->ReleaseMemoryInfo(memory_info);
 		ort->ReleaseValue(output_tensor);
@@ -3254,7 +3257,7 @@ namespace {
 		}
 
 		Local<ArrayBuffer> shader_buffer = Local<ArrayBuffer>::Cast(args[0]);
-		ArrayBuffer::Contents shader_content = shader_buffer->GetContents();
+		std::shared_ptr<BackingStore> shader_content = shader_buffer->GetBackingStore();
 
 		Local<External> vb_field = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_vertex_buffer_t *vertex_buffer4 = (kinc_g4_vertex_buffer_t *)vb_field->Value();
@@ -3268,7 +3271,7 @@ namespace {
 
 		kinc_g5_constant_buffer_init(&constant_buffer, constant_buffer_size * 4);
 
-		kinc_raytrace_pipeline_init(&pipeline, &commandList, shader_content.Data(), (int)shader_content.ByteLength(), &constant_buffer);
+		kinc_raytrace_pipeline_init(&pipeline, &commandList, shader_content->Data(), (int)shader_content->ByteLength(), &constant_buffer);
 
 		kinc_raytrace_acceleration_structure_init(&accel, &commandList, vertex_buffer, index_buffer, scale);
 		accel_created = true;
@@ -3325,8 +3328,8 @@ namespace {
 		render_target = (kinc_g4_render_target_t *)rtfield->Value();
 
 		Local<ArrayBuffer> cb_buffer = Local<ArrayBuffer>::Cast(args[1]);
-		ArrayBuffer::Contents cb_content = cb_buffer->GetContents();
-		float *cb = (float *)cb_content.Data();
+		std::shared_ptr<BackingStore> cb_content = cb_buffer->GetBackingStore();
+		float *cb = (float *)cb_content->Data();
 
 		kinc_g5_constant_buffer_lock_all(&constant_buffer);
 		for (int i = 0; i < constant_buffer_size; ++i) {
@@ -3730,7 +3733,6 @@ namespace {
 		global_context.Reset();
 		isolate->Dispose();
 		V8::Dispose();
-		V8::ShutdownPlatform();
 	}
 
 	#ifdef WITH_AUDIO
@@ -4431,7 +4433,7 @@ int kickstart(int argc, char **argv) {
 				Local<Context> context = Context::New(isolate_cache);
 				Context::Scope context_scope(context);
 
-				ScriptOrigin origin(String::NewFromUtf8(isolate_cache, "krom_cache").ToLocalChecked());
+				ScriptOrigin origin(isolate_cache, String::NewFromUtf8(isolate_cache, "krom_cache").ToLocalChecked());
 				ScriptCompiler::Source source(String::NewFromUtf8(isolate_cache, code).ToLocalChecked(), origin);
 
 				Local<Script> compiled_script = ScriptCompiler::Compile(context, &source, ScriptCompiler::kEagerCompile).ToLocalChecked();
@@ -4460,8 +4462,8 @@ int kickstart(int argc, char **argv) {
 						int reader_size = (int)kinc_file_reader_size(&reader);
 
 						Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate_cold, reader_size);
-						ArrayBuffer::Contents contents = buffer->GetContents();
-						kinc_file_reader_read(&reader, contents.Data(), reader_size);
+						std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+						kinc_file_reader_read(&reader, content->Data(), reader_size);
 						kinc_file_reader_close(&reader);
 
 						(void) context->Global()->Set(context, String::NewFromUtf8(isolate_cold, line).ToLocalChecked(), buffer);
@@ -4469,7 +4471,7 @@ int kickstart(int argc, char **argv) {
 					fclose (fp);
 				}
 
-				ScriptOrigin origin(String::NewFromUtf8(isolate_cold, "krom_cold").ToLocalChecked());
+				ScriptOrigin origin(isolate_cache, String::NewFromUtf8(isolate_cold, "krom_cold").ToLocalChecked());
 				ScriptCompiler::Source source(String::NewFromUtf8(isolate_cold, code).ToLocalChecked(), origin, cache);
 
 				Local<Script> compiled_script = ScriptCompiler::Compile(context, &source, ScriptCompiler::kConsumeCodeCache).ToLocalChecked();
