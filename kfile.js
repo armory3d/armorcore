@@ -59,7 +59,7 @@ const libdir = root + 'v8/libraries/' + system + '/' + build + '/';
 
 let project = new Project(flags.name);
 await project.addProject('Kinc');
-project.cpp11 = true;
+project.cppStd = "c++17";
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 
