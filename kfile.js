@@ -63,10 +63,6 @@ project.cppStd = "c++17";
 project.setDebugDir('Deployment');
 project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 
-if (platform === Platform.OSX) {
-	project.cpp = true; // Otherwise V8::Initialize() hangs
-}
-
 if (fs.existsSync("icon.png")) {
 	project.icon = '../icon.png';
 	if (platform === Platform.OSX && fs.existsSync("icon_macos.png")) {
