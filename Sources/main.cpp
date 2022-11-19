@@ -146,6 +146,16 @@ static bool accel_created = false;
 const int constant_buffer_size = 24;
 #endif
 
+#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern bool waitAfterNextDraw;
+#ifdef __cplusplus
+}
+#endif
+#endif
+
 namespace {
 	int _argc;
 	char **_argv;
@@ -829,6 +839,9 @@ namespace {
 	}
 
 	void krom_draw_indexed_vertices(const FunctionCallbackInfo<Value> &args) {
+		#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
+		waitAfterNextDraw = true; // TODO: prevents glitches in G4onG5 when binding >16 textures
+		#endif
 		HandleScope scope(args.GetIsolate());
 		int start = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int count = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
