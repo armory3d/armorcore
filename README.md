@@ -35,7 +35,7 @@ Kinc/make -g metal
 ```bash
 Kinc/make android -g opengl
 # Manual tweaking is required for now:
-# https://github.com/armory3d/armorcore/blob/master/kincfile.js#L68
+# https://github.com/armory3d/armorcore/blob/master/kfile.js#L136
 # Open generated Android Studio project at `build/Krom`
 # Build for device
 ```
