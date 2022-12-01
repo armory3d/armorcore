@@ -143,9 +143,6 @@ else if (platform === Platform.Android) {
 	//   target_link_libraries(v8_monolith)
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
-	//   android - defaultconfig - cmake - cppFlags "-std=c++14"
-	// In AndroidManifest.xml:
-	//   <application android:requestLegacyExternalStorage="true"
 }
 else if (platform === Platform.iOS) {
 	project.addLib('v8/libraries/ios/release/libv8_monolith.a');
