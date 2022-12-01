@@ -33,7 +33,7 @@ Kinc/make -g metal
 
 **Android** *wip*
 ```bash
-Kinc/make android -g opengl
+Kinc/make -g opengl android
 # Manual tweaking is required for now:
 # https://github.com/armory3d/armorcore/blob/master/kfile.js#L136
 # Open generated Android Studio project at `build/Krom`
@@ -42,7 +42,7 @@ Kinc/make android -g opengl
 
 **iOS** *wip*
 ```bash
-Kinc/make ios -g metal
+Kinc/make -g metal ios
 # Open generated Xcode project at `build/Krom.xcodeproj`
 # Build for device
 ```
