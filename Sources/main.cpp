@@ -71,10 +71,10 @@ extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // K
 #endif
 #ifdef WITH_NFD
 #include <nfd.h>
-#elif KORE_ANDROID
+#elif defined(KORE_ANDROID)
 #include "AndroidFileDialog.h"
 #include "AndroidHttpRequest.h"
-#elif KORE_IOS
+#elif defined(KORE_IOS)
 #include "IOSFileDialog.h"
 #endif
 #ifdef WITH_TINYDIR
@@ -989,7 +989,7 @@ namespace {
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
 
-		#elif KORE_METAL
+		#elif defined(KORE_METAL)
 
 		strcpy(temp_string_vs, "// my_main\n");
 		strcat(temp_string_vs, *utf8_value);
@@ -1133,7 +1133,7 @@ namespace {
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
 
-		#elif KORE_METAL
+		#elif defined(KORE_METAL)
 
 		strcpy(temp_string_fs, "// my_main\n");
 		strcat(temp_string_fs, *utf8_value);
@@ -2333,7 +2333,7 @@ namespace {
 		MultiByteToWideChar(CP_UTF8, 0, cmd, -1, wstr, wlen);
 		int result = _wsystem(wstr);
 		delete[] wstr;
-		#elif KORE_IOS
+		#elif defined(KORE_IOS)
 		int result = 0;
 		#else
 		int result = system(cmd);
@@ -2373,7 +2373,7 @@ namespace {
 		strcat(path, KORE_DEBUGDIR);
 		strcat(path, "/");
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, path).ToLocalChecked());
-		#elif KORE_IOS
+		#elif defined(KORE_IOS)
 		char path[1024];
 		strcpy(path, iphonegetresourcepath());
 		strcat(path, "/");
@@ -2781,7 +2781,7 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Error: %s\n", NFD_GetError());
 		}
 	}
-	#elif KORE_ANDROID
+	#elif defined(KORE_ANDROID)
 	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		AndroidFileDialogOpen();
@@ -2792,7 +2792,7 @@ namespace {
 		wchar_t *outPath = AndroidFileDialogSave();
 		// args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)outPath).ToLocalChecked());
 	}
-	#elif KORE_IOS
+	#elif defined(KORE_IOS)
 	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		// String::Utf8Value filterList(isolate, args[0]);
@@ -4334,7 +4334,7 @@ int kickstart(int argc, char **argv) {
 	_argv = argv;
 #ifdef KORE_ANDROID
 	std::string bindir("/");
-#elif KORE_IOS
+#elif defined(KORE_IOS)
 	std::string bindir("");
 #else
 	std::string bindir(argv[0]);
