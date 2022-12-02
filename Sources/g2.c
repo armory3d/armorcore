@@ -292,7 +292,7 @@ void g2_init(void) {
 		kinc_g4_vertex_structure_t structure;
 		kinc_g4_vertex_structure_init(&structure);
 		kinc_g4_vertex_structure_add(&structure, "vertexPosition", KINC_G4_VERTEX_DATA_FLOAT3);
-		kinc_g4_vertex_structure_add(&structure, "texPosition", KINC_G4_VERTEX_DATA_FLOAT2);
+		kinc_g4_vertex_structure_add(&structure, "vertexUV", KINC_G4_VERTEX_DATA_FLOAT2);
 		kinc_g4_vertex_structure_add(&structure, "vertexColor", KINC_G4_VERTEX_DATA_U8_4X_NORMALIZED);
 
 		kinc_g4_pipeline_init(&text_pipeline);
