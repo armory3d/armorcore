@@ -139,7 +139,7 @@ else if (platform === Platform.Android) {
 	// Some manual tweaking is required for now:
 	// In app/CMakeLists.txt:
 	//   add_library(v8_monolith STATIC IMPORTED)
-	//   set_target_properties(v8_monolith PROPERTIES IMPORTED_LOCATION ../../../v8/libraries/android/release/libv8_monolith.a)
+	//   set_target_properties(v8_monolith PROPERTIES IMPORTED_LOCATION ../../../../../../../armorcore/v8/libraries/android/release/libv8_monolith.a)
 	//   target_link_libraries(v8_monolith)
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
