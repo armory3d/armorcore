@@ -294,7 +294,7 @@ namespace {
 		int width = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int height = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int samples_per_pixel = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool vertical_sync = args[4]->ToBoolean(isolate)->Value();
+		bool vertical_sync = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int window_mode = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int window_features = args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int api_version = args[7]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -603,12 +603,12 @@ namespace {
 
 	void krom_can_lock_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(Boolean::New(isolate, kinc_mouse_can_lock()));
+		args.GetReturnValue().Set(Int32::New(isolate, kinc_mouse_can_lock()));
 	}
 
 	void krom_is_mouse_locked(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(Boolean::New(isolate, kinc_mouse_is_locked()));
+		args.GetReturnValue().Set(Int32::New(isolate, kinc_mouse_is_locked()));
 	}
 
 	void krom_set_mouse_position(const FunctionCallbackInfo<Value> &args) {
@@ -621,12 +621,12 @@ namespace {
 
 	void krom_show_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args[0]->ToBoolean(isolate)->Value() ? kinc_mouse_show() : kinc_mouse_hide();
+		args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() ? kinc_mouse_show() : kinc_mouse_hide();
 	}
 
 	void krom_show_keyboard(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args[0]->ToBoolean(isolate)->Value() ? kinc_keyboard_show() : kinc_keyboard_hide();
+		args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() ? kinc_keyboard_show() : kinc_keyboard_hide();
 	}
 
 	void krom_set_audio_callback(const FunctionCallbackInfo<Value> &args) {
@@ -638,7 +638,7 @@ namespace {
 
 	void krom_audio_thread(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		bool lock = args[0]->ToBoolean(isolate)->Value();
+		bool lock = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		if (lock) kinc_mutex_lock(&mutex);    //Locker::Locker(isolate);
 		else kinc_mutex_unlock(&mutex);       //Unlocker(args.GetIsolate());
 	}
@@ -1263,7 +1263,7 @@ namespace {
 		int32_t size = args[5]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		for (int32_t i1 = 0; i1 < size; ++i1) {
 			Local<Object> jsstructure = args[i1 + 1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-			structures[i1]->instanced = jsstructure->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "instanced").ToLocalChecked()).ToLocalChecked()->ToBoolean(isolate)->Value();
+			structures[i1]->instanced = jsstructure->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "instanced").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 			Local<Object> elements = jsstructure->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "elements").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 			int32_t length = elements->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 			for (int32_t i2 = 0; i2 < length; ++i2) {
@@ -1441,7 +1441,7 @@ namespace {
 	void krom_load_image(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
-		bool readable = args[1]->ToBoolean(isolate)->Value();
+		bool readable = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		bool success = true;
 
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
@@ -1688,14 +1688,14 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
-		kinc_g4_set_texture_compare_mode(*unit, args[1]->ToBoolean(isolate)->Value());
+		kinc_g4_set_texture_compare_mode(*unit, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 	}
 
 	void krom_set_cube_map_compare_mode(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)unitfield->Value();
-		kinc_g4_set_cubemap_compare_mode(*unit, args[1]->ToBoolean(isolate)->Value());
+		kinc_g4_set_cubemap_compare_mode(*unit, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 	}
 
 	void krom_set_bool(const FunctionCallbackInfo<Value> &args) {
@@ -1897,9 +1897,9 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		int index = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		#ifdef KORE_LINUX // TODO: Primary display detection broken in Kinc
-		args.GetReturnValue().Set(Boolean::New(isolate, true));
+		args.GetReturnValue().Set(Int32::New(isolate, true));
 		#else
-		args.GetReturnValue().Set(Boolean::New(isolate, index == kinc_primary_display()));
+		args.GetReturnValue().Set(Int32::New(isolate, index == kinc_primary_display()));
 		#endif
 	}
 
@@ -2005,7 +2005,7 @@ namespace {
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 		kinc_image_init(image, content->Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		kinc_g4_texture_init_from_image(texture, image);
-		bool readable = args[4]->ToBoolean(isolate)->Value();
+		bool readable = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		if (!readable) {
 			delete[] content->Data();
 			kinc_image_destroy(image);
@@ -2035,7 +2035,7 @@ namespace {
 		kinc_image_init3d(&image, content->Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		kinc_g4_texture_init_from_image3d(texture, &image);
 		kinc_image_destroy(&image);
-		bool readable = args[5]->ToBoolean(isolate)->Value();
+		bool readable = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		if (!readable) {
 			delete[] content->Data();
 		}
@@ -2055,7 +2055,7 @@ namespace {
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		String::Utf8Value format(isolate, args[1]);
-		bool readable = args[2]->ToBoolean(isolate)->Value();
+		bool readable = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
@@ -2261,7 +2261,7 @@ namespace {
 
 	void krom_render_targets_inverted_y(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(Boolean::New(isolate, kinc_g4_render_targets_inverted_y()));
+		args.GetReturnValue().Set(Int32::New(isolate, kinc_g4_render_targets_inverted_y()));
 	}
 
 	void krom_begin(const FunctionCallbackInfo<Value> &args) {
@@ -2701,7 +2701,7 @@ namespace {
 		}
 
 		if (save_and_quit_func_set) {
-			Local<Value> argv[argc] = { Boolean::New(isolate, save) };
+			Local<Value> argv[argc] = { Int32::New(isolate, save) };
 			if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 				handle_exception(&try_catch);
 			}
@@ -2736,7 +2736,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value filterList(isolate, args[0]);
 		String::Utf8Value defaultPath(isolate, args[1]);
-		bool openMultiple = args[2]->ToBoolean(isolate)->Value();
+		bool openMultiple = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		nfdpathset_t outPaths;
 		nfdchar_t* outPath;
@@ -2820,7 +2820,7 @@ namespace {
 	void krom_read_directory(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value path(isolate, args[0]);
-		bool foldersOnly = args[1]->ToBoolean(isolate)->Value();
+		bool foldersOnly = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		tinydir_dir dir;
 		#ifdef KORE_WINDOWS
@@ -2875,7 +2875,7 @@ namespace {
 			kinc_file_reader_close(&reader);
 		}
 
-		args.GetReturnValue().Set(Boolean::New(isolate, exists));
+		args.GetReturnValue().Set(Int32::New(isolate, exists));
 	}
 
 	void krom_delete_file(const FunctionCallbackInfo<Value> &args) {
@@ -2904,7 +2904,7 @@ namespace {
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		bool raw = args[1]->ToBoolean(isolate)->Value();
+		bool raw = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		unsigned char *inflated = (unsigned char *)malloc(content->ByteLength());
 
@@ -2946,7 +2946,7 @@ namespace {
 
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		bool raw = args[1]->ToBoolean(isolate)->Value();
+		bool raw = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		int deflatedSize = compressBound((uInt)content->ByteLength());
 		void *deflated = malloc(deflatedSize);
@@ -3107,7 +3107,7 @@ namespace {
 		OrtStatus *onnx_status = NULL;
 
 		static bool use_gpu_last = false;
-		bool use_gpu = !(args.Length() > 4 && !args[4]->ToBoolean(isolate)->Value());
+		bool use_gpu = !(args.Length() > 4 && !args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		if (ort == NULL || use_gpu_last != use_gpu) {
 			use_gpu_last = use_gpu;
 			ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
@@ -3135,7 +3135,7 @@ namespace {
 			}
 		}
 
-		bool cache = args.Length() > 5 && args[5]->ToBoolean(isolate)->Value();
+		bool cache = args.Length() > 5 && args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		Local<ArrayBuffer> model_buffer = Local<ArrayBuffer>::Cast(args[0]);
 		std::shared_ptr<BackingStore> model_content = model_buffer->GetBackingStore();
 
@@ -3426,7 +3426,7 @@ namespace {
 	void krom_vr_get_sensor_state_hmd_mounted(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(0);
-		args.GetReturnValue().Set(Boolean::New(isolate, state.pose.hmdMounted));
+		args.GetReturnValue().Set(Int32::New(isolate, state.pose.hmdMounted));
 	}
 	#endif
 
