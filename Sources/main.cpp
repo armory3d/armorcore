@@ -67,7 +67,7 @@ extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // K
 #ifdef WITH_D3DCOMPILER
 #include <d3d11.h>
 #include <D3Dcompiler.h>
-#include <strstream>
+#include <sstream>
 #endif
 #ifdef WITH_NFD
 #include <nfd.h>
@@ -907,8 +907,7 @@ namespace {
 		if (hasTex) attributes["tex"] = index++;
 		if (hasBone) attributes["weight"] = index++;
 
-		char *output = temp_string_vs;
-		std::ostrstream file(output, 1024 * 1024);
+		std::ostringstream file;
 		size_t output_len = 0;
 
 		file.put((char)attributes.size());
@@ -987,7 +986,7 @@ namespace {
 		reflector->Release();
 
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, output, (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
+		kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
 
 		#elif defined(KORE_METAL)
 
@@ -1059,8 +1058,7 @@ namespace {
 
 		std::map<std::string, int> attributes;
 
-		char *output = temp_string_fs;
-		std::ostrstream file(output, 1024 * 1024);
+		std::ostringstream file;
 		size_t output_len = 0;
 
 		file.put((char)attributes.size());
@@ -1131,7 +1129,7 @@ namespace {
 		reflector->Release();
 
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, output, (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
+		kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
 
 		#elif defined(KORE_METAL)
 
