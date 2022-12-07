@@ -61,7 +61,6 @@ let project = new Project(flags.name);
 await project.addProject('Kinc');
 project.cppStd = "c++17";
 project.setDebugDir('Deployment');
-project.addDefine('KINC_IMAGE_STANDARD_MALLOC');
 
 if (fs.existsSync("icon.png")) {
 	project.icon = '../icon.png';
