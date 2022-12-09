@@ -2788,7 +2788,12 @@ namespace {
 	void krom_save_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		wchar_t *outPath = AndroidFileDialogSave();
-		// args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)outPath).ToLocalChecked());
+		size_t len = wcslen(outPath);
+		uint16_t *str = new uint16_t[len + 1];
+		for (int i = 0; i < len; i++) str[i] = outPath[i];
+		str[len] = 0;
+		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)str).ToLocalChecked());
+		delete str;
 	}
 	#elif defined(KORE_IOS)
 	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
