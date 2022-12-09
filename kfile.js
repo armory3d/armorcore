@@ -90,8 +90,8 @@ else {
 project.addIncludeDir('v8/include');
 
 if (platform === Platform.Android) {
-	project.addFile('Sources/AndroidFileDialog.cpp');
-	project.addFile('Sources/AndroidHttpRequest.cpp');
+	project.addFile('Sources/AndroidFileDialog.c');
+	project.addFile('Sources/AndroidHttpRequest.c');
 	project.addDefine('IDLE_SLEEP');
 	project.addJavaDir('Sources/android');
 
