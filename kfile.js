@@ -99,7 +99,7 @@ if (platform === Platform.Android) {
 	project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
 	project.targetOptions.android.screenOrientation = ['sensorLandscape'];
 	project.targetOptions.android.minSdkVersion = 29;
-	project.targetOptions.android.targetSdkVersion = 30;
+	project.targetOptions.android.targetSdkVersion = 31;
 }
 else if (platform === Platform.iOS) {
 	project.addFile('Sources/IOSFileDialog.mm');
