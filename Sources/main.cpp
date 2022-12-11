@@ -1526,6 +1526,10 @@ namespace {
 		String::Utf8Value utf8_value(isolate, args[0]);
 
 		kinc_a1_sound_t *sound = kinc_a1_sound_create(*utf8_value);
+		if (sound == nullptr) {
+			return;
+		}
+
 		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, sound->size * 2 * sizeof(float));
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		float *to = (float *)content->Data();
