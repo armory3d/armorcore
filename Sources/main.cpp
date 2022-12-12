@@ -2797,7 +2797,7 @@ namespace {
 		for (int i = 0; i < len; i++) str[i] = outPath[i];
 		str[len] = 0;
 		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)str).ToLocalChecked());
-		delete str;
+		delete[] str;
 	}
 	#elif defined(KORE_IOS)
 	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
@@ -2819,7 +2819,7 @@ namespace {
 		for (int i = 0; i < len; i++) str[i] = outPath[i];
 		str[len] = 0;
 		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)str).ToLocalChecked());
-		delete str;
+		delete[] str;
 	}
 	#endif
 
