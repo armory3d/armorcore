@@ -111,8 +111,6 @@ if (platform === Platform.Windows) {
 	project.addLib('Dbghelp'); // Stack walk
 	project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
 	project.addLib(libdir + 'v8_monolith');
-	// project.addDefine('V8_COMPRESS_POINTERS');
-	// project.addDefine('V8_31BIT_SMIS_ON_64BIT_ARCH');
 	if (flags.with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
 		project.addDefine('WITH_D3DCOMPILER');
 		project.addLib("d3d11");
