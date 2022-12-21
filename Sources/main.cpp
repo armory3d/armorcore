@@ -3849,6 +3849,10 @@ namespace {
 		}
 
 		paused = false;
+
+		#ifdef IDLE_SLEEP
+		pausedFrames = 0;
+		#endif
 	}
 
 	char *copy() {
