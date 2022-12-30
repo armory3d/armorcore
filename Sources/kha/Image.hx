@@ -168,7 +168,10 @@ class Image implements Canvas {
 
 	public function getPixels(): Bytes {
 		if (renderTarget_ != null) {
-			if (pixels == null) pixels = Bytes.alloc(formatByteSize(format) * width * height);
+			// Minimum size of 32x32 required after https://github.com/Kode/Kinc/commit/3797ebce5f6d7d360db3331eba28a17d1be87833
+			var pixelsWidth = width < 32 ? 32 : width;
+			var pixelsHeight = height < 32 ? 32 : height;
+			if (pixels == null) pixels = Bytes.alloc(formatByteSize(format) * pixelsWidth * pixelsHeight);
 			Krom.getRenderTargetPixels(renderTarget_, pixels.getData());
 			return pixels;
 		}
