@@ -90,6 +90,7 @@ namespace {
 			return;
 		}
 
+		HandleScope scope(isolate);
 		Local<Context> current_context = Local<Context>::New(isolate, context);
 		Context::Scope context_scope(current_context);
 
