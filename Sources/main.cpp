@@ -194,24 +194,24 @@ namespace {
 	kinc_a2_buffer_t audio_buffer;
 	int audio_read_location = 0;
 
-	void update();
+	void update(void *data);
 	void update_audio(kinc_a2_buffer_t *buffer, int samples);
-	void drop_files(wchar_t *file_path);
-	char *cut();
-	char *copy();
-	void paste(char *data);
-	void foreground();
-	void resume();
-	void pause();
-	void background();
-	void shutdown();
+	void drop_files(wchar_t *file_path, void *data);
+	char *cut(void *data);
+	char *copy(void *data);
+	void paste(char *text, void *data);
+	void foreground(void *data);
+	void resume(void *data);
+	void pause(void *data);
+	void background(void *data);
+	void shutdown(void *data);
 	void key_down(int code);
 	void key_up(int code);
 	void key_press(unsigned int character);
-	void mouse_move(int window, int x, int y, int mx, int my);
-	void mouse_down(int window, int button, int x, int y);
-	void mouse_up(int window, int button, int x, int y);
-	void mouse_wheel(int window, int delta);
+	void mouse_move(int window, int x, int y, int mx, int my, void *data);
+	void mouse_down(int window, int button, int x, int y, void *data);
+	void mouse_up(int window, int button, int x, int y, void *data);
+	void mouse_wheel(int window, int delta, void *data);
 	void touch_move(int index, int x, int y);
 	void touch_down(int index, int x, int y);
 	void touch_up(int index, int x, int y);
@@ -355,24 +355,24 @@ namespace {
 		}
 		#endif
 
-		kinc_set_update_callback(update);
-		kinc_set_drop_files_callback(drop_files);
-		kinc_set_copy_callback(copy);
-		kinc_set_cut_callback(cut);
-		kinc_set_paste_callback(paste);
-		kinc_set_foreground_callback(foreground);
-		kinc_set_resume_callback(resume);
-		kinc_set_pause_callback(pause);
-		kinc_set_background_callback(background);
-		kinc_set_shutdown_callback(shutdown);
+		kinc_set_update_callback(update, NULL);
+		kinc_set_drop_files_callback(drop_files, NULL);
+		kinc_set_copy_callback(copy, NULL);
+		kinc_set_cut_callback(cut, NULL);
+		kinc_set_paste_callback(paste, NULL);
+		kinc_set_foreground_callback(foreground, NULL);
+		kinc_set_resume_callback(resume, NULL);
+		kinc_set_pause_callback(pause, NULL);
+		kinc_set_background_callback(background, NULL);
+		kinc_set_shutdown_callback(shutdown, NULL);
 
 		kinc_keyboard_set_key_down_callback(key_down);
 		kinc_keyboard_set_key_up_callback(key_up);
 		kinc_keyboard_set_key_press_callback(key_press);
-		kinc_mouse_set_move_callback(mouse_move);
-		kinc_mouse_set_press_callback(mouse_down);
-		kinc_mouse_set_release_callback(mouse_up);
-		kinc_mouse_set_scroll_callback(mouse_wheel);
+		kinc_mouse_set_move_callback(mouse_move, NULL);
+		kinc_mouse_set_press_callback(mouse_down, NULL);
+		kinc_mouse_set_release_callback(mouse_up, NULL);
+		kinc_mouse_set_scroll_callback(mouse_wheel, NULL);
 		kinc_surface_set_move_callback(touch_move);
 		kinc_surface_set_touch_start_callback(touch_down);
 		kinc_surface_set_touch_end_callback(touch_up);
@@ -3771,7 +3771,7 @@ namespace {
 	}
 	#endif
 
-	void update() {
+	void update(void *data) {
 		#ifdef KORE_WINDOWS
 		if (paused && ++pausedFrames > 3 && armorcore) {
 			Sleep(1);
@@ -3812,13 +3812,13 @@ namespace {
 		#endif
 	}
 
-	void drop_files(wchar_t *file_path) {
+	void drop_files(wchar_t *file_path, void *data) {
 		// Update mouse position
 		#ifdef KORE_WINDOWS
 		POINT p;
 		GetCursorPos(&p);
 		ScreenToClient(kinc_windows_window_handle(0), &p);
-		mouse_move(0, p.x, p.y, 0, 0);
+		mouse_move(0, p.x, p.y, 0, 0, NULL);
 		#endif
 
 		Locker locker{isolate};
@@ -3855,7 +3855,7 @@ namespace {
 		#endif
 	}
 
-	char *copy() {
+	char *copy(void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -3874,7 +3874,7 @@ namespace {
 		return temp_string;
 	}
 
-	char *cut() {
+	char *cut(void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -3893,7 +3893,7 @@ namespace {
 		return temp_string;
 	}
 
-	void paste(char *data) {
+	void paste(char *text, void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -3905,13 +3905,13 @@ namespace {
 		Local<Function> func = Local<Function>::New(isolate, paste_func);
 		Local<Value> result;
 		const int argc = 1;
-		Local<Value> argv[argc] = {String::NewFromUtf8(isolate, data).ToLocalChecked()};
+		Local<Value> argv[argc] = {String::NewFromUtf8(isolate, text).ToLocalChecked()};
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
 	}
 
-	void foreground() {
+	void foreground(void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -3929,7 +3929,7 @@ namespace {
 		paused = false;
 	}
 
-	void resume() {
+	void resume(void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -3945,7 +3945,7 @@ namespace {
 		}
 	}
 
-	void pause() {
+	void pause(void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -3961,7 +3961,7 @@ namespace {
 		}
 	}
 
-	void background() {
+	void background(void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -3980,7 +3980,7 @@ namespace {
 		pausedFrames = 0;
 	}
 
-	void shutdown() {
+	void shutdown(void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -4062,7 +4062,7 @@ namespace {
 		#endif
 	}
 
-	void mouse_move(int window, int x, int y, int mx, int my) {
+	void mouse_move(int window, int x, int y, int mx, int my, void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -4084,7 +4084,7 @@ namespace {
 		#endif
 	}
 
-	void mouse_down(int window, int button, int x, int y) {
+	void mouse_down(int window, int button, int x, int y, void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -4106,7 +4106,7 @@ namespace {
 		#endif
 	}
 
-	void mouse_up(int window, int button, int x, int y) {
+	void mouse_up(int window, int button, int x, int y, void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -4128,7 +4128,7 @@ namespace {
 		#endif
 	}
 
-	void mouse_wheel(int window, int delta) {
+	void mouse_wheel(int window, int delta, void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
