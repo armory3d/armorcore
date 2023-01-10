@@ -72,10 +72,10 @@ extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // K
 #ifdef WITH_NFD
 #include <nfd.h>
 #elif defined(KORE_ANDROID)
-#include "AndroidFileDialog.h"
-#include "AndroidHttpRequest.h"
+#include "android/android_file_dialog.h"
+#include "android/android_http_request.h"
 #elif defined(KORE_IOS)
-#include "IOSFileDialog.h"
+#include "ios/ios_file_dialog.h"
 #endif
 #ifdef WITH_TINYDIR
 #include <tinydir.h>

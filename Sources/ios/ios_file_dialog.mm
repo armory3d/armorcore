@@ -1,4 +1,4 @@
-#import "IOSFileDialog.h"
+#import "ios_file_dialog.h"
 
 #import <UIKit/UIKit.h>
 

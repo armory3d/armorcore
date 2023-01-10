@@ -1,4 +1,4 @@
-#include "AndroidHttpRequest.h"
+#include "android_http_request.h"
 #include <kinc/system.h>
 #include <jni.h>
 #include <string.h>

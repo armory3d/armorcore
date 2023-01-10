@@ -90,10 +90,10 @@ else {
 project.addIncludeDir('v8/include');
 
 if (platform === Platform.Android) {
-	project.addFile('Sources/AndroidFileDialog.c');
-	project.addFile('Sources/AndroidHttpRequest.c');
+	project.addFile('Sources/android/android_file_dialog.c');
+	project.addFile('Sources/android/android_http_request.c');
 	project.addDefine('IDLE_SLEEP');
-	project.addJavaDir('Sources/android');
+	project.addJavaDir('Sources/android/java');
 
 	project.targetOptions.android.package = flags.package;
 	project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
@@ -102,7 +102,7 @@ if (platform === Platform.Android) {
 	project.targetOptions.android.targetSdkVersion = 31;
 }
 else if (platform === Platform.iOS) {
-	project.addFile('Sources/IOSFileDialog.mm');
+	project.addFile('Sources/ios/ios_file_dialog.mm');
 	project.addDefine('IDLE_SLEEP');
 }
 
