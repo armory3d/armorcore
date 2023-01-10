@@ -2,7 +2,7 @@
 
 3D engine core for C with embedded V8. ArmorCore is designed for the [Graphics5](https://github.com/Kode/Kinc/tree/master/Backends/Graphics5) api and targets Direct3D12, Vulkan, Metal and WebGPU. *(wip!)*
 
-Based on [Krom](https://github.com/Kode/Krom). Powered by [Kinc](https://github.com/Kode/Kinc). Powering [ArmorPaint](https://github.com/armory3d/armorpaint).
+Based on [Krom](https://github.com/Kode/Krom). Powered by [Kinc](https://github.com/Kode/Kinc).
 
 ```bash
 git clone --recursive https://github.com/armory3d/armorcore
