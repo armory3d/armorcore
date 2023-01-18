@@ -79,7 +79,7 @@ extern class Krom {
 	static function loadUrl(url: String): Void;
 	static function copyToClipboard(text: String): Void;
 
-	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, frequency: Int, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int): Void;
+	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int, frequency: Int): Void;
 	static function setApplicationName(name: String): Void;
 	static function log(v: Dynamic, ?level: LogLevel): Void;
 	static function setCallback(callback: Void->Void): Void;
