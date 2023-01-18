@@ -6,7 +6,7 @@ try {
 		process.argv.push("--snapshot");
 	}
 
-	if (platform === Platform.Android || platform === Platform.HTML5) {
+	if (platform === Platform.Android || platform === Platform.Wasm) {
 		process.argv.push("--shaderversion");
 		process.argv.push("300");
 	}
@@ -48,7 +48,7 @@ catch (e) {
 const system = platform === Platform.Windows ? "win32" :
 			   platform === Platform.Linux   ? "linux" :
 			   platform === Platform.OSX     ? "macos" :
-			   platform === Platform.HTML5   ? "html5" :
+			   platform === Platform.Wasm    ? "wasm" :
 			   platform === Platform.Android ? "android" :
 			   platform === Platform.iOS     ? "ios" :
 			   								   "unknown";
@@ -73,10 +73,8 @@ if (flags.with_audio) {
 	project.addDefine('WITH_AUDIO');
 }
 
-if (platform === Platform.HTML5) {
-	project.addFile('Sources/main_html5.c');
-	// kmake/lib/kmake/Exporters/EmscriptenExporter.js:
-	// linkerFlags += '-s EXPORTED_RUNTIME_METHODS=cwrap,addFunction -s ALLOW_TABLE_GROWTH -s MIN_WEBGL_VERSION=2 -s MAX_WEBGL_VERSION=2 ';
+if (platform === Platform.Wasm) {
+	project.addFile('Sources/main_wasm.c');
 }
 else {
 	project.addFile('Sources/main.cpp');
