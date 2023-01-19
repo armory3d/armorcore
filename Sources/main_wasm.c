@@ -23,6 +23,8 @@
 #include <kinc/system.h>
 #include <kinc/window.h>
 #include <kinc/display.h>
+#define STB_SPRINTF_IMPLEMENTATION
+#include <kinc/libs/stb_sprintf.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
 #ifdef KORE_LZ4X
@@ -41,6 +43,7 @@ static int last_depth = 0;
 static int reader_size = 0;
 
 __attribute__((import_module("imports"), import_name("js_eval"))) void js_eval(const char *str);
+__attribute__((import_module("imports"), import_name("js_fprintf"))) void js_fprintf(const char *str);
 
 static void (*update_func)() = NULL;
 static void (*keyboard_down_func)(int) = NULL;
@@ -66,7 +69,9 @@ void update(void *data) {
 }
 
 void key_down(int code) {
-	keyboard_down_func(code);
+	// keyboard_down_func(code);
+	stbsp_sprintf(temp_buffer, "js_keyboard_down_func(%d);", code);
+	js_eval(temp_buffer);
 
 	#ifdef IDLE_SLEEP
 	pausedFrames = 0;
@@ -74,7 +79,9 @@ void key_down(int code) {
 }
 
 void key_up(int code) {
-	keyboard_up_func(code);
+	// keyboard_up_func(code);
+	stbsp_sprintf(temp_buffer, "js_keyboard_up_func(%d);", code);
+	js_eval(temp_buffer);
 
 	#ifdef IDLE_SLEEP
 	pausedFrames = 0;
@@ -82,7 +89,9 @@ void key_up(int code) {
 }
 
 void key_press(unsigned int code) {
-	keyboard_press_func(code);
+	// keyboard_press_func(code);
+	stbsp_sprintf(temp_buffer, "js_keyboard_press_func(%d);", code);
+	js_eval(temp_buffer);
 
 	#ifdef IDLE_SLEEP
 	pausedFrames = 0;
@@ -90,7 +99,9 @@ void key_press(unsigned int code) {
 }
 
 void mouse_move(int window, int x, int y, int mx, int my, void *data) {
-	mouse_move_func(x, y, mx, my);
+	// mouse_move_func(x, y, mx, my);
+	stbsp_sprintf(temp_buffer, "js_mouse_move_func(%d, %d, %d, %d);", x, y, mx, my);
+	js_eval(temp_buffer);
 
 	#ifdef IDLE_SLEEP
 	pausedFrames = 0;
@@ -98,7 +109,9 @@ void mouse_move(int window, int x, int y, int mx, int my, void *data) {
 }
 
 void mouse_down(int window, int button, int x, int y, void *data) {
-	mouse_down_func(button, x, y);
+	// mouse_down_func(button, x, y);
+	stbsp_sprintf(temp_buffer, "js_mouse_down_func(%d, %d, %d);", button, x, y);
+	js_eval(temp_buffer);
 
 	#ifdef IDLE_SLEEP
 	pausedFrames = 0;
@@ -106,7 +119,9 @@ void mouse_down(int window, int button, int x, int y, void *data) {
 }
 
 void mouse_up(int window, int button, int x, int y, void *data) {
-	mouse_up_func(button, x, y);
+	// mouse_up_func(button, x, y);
+	stbsp_sprintf(temp_buffer, "js_mouse_up_func(%d, %d, %d);", button, x, y);
+	js_eval(temp_buffer);
 
 	#ifdef IDLE_SLEEP
 	pausedFrames = 0;
@@ -114,7 +129,9 @@ void mouse_up(int window, int button, int x, int y, void *data) {
 }
 
 void mouse_wheel(int window, int delta, void *data) {
-	mouse_wheel_func(delta);
+	// mouse_wheel_func(delta);
+	stbsp_sprintf(temp_buffer, "js_mouse_wheel_func(%d);", delta);
+	js_eval(temp_buffer);
 
 	#ifdef IDLE_SLEEP
 	pausedFrames = 0;
@@ -331,7 +348,8 @@ __attribute__((export_name("_setApplicationName"))) void _setApplicationName(cha
 }
 
 __attribute__((export_name("_log"))) void _log(char *message) {
-	kinc_log(KINC_LOG_LEVEL_INFO, "%s", message);
+	// kinc_log(KINC_LOG_LEVEL_INFO, "%s", message);
+	js_fprintf(message);
 }
 
 __attribute__((export_name("_clear"))) void _clear(int flags, int color, float depth, int stencil) {
@@ -498,8 +516,7 @@ __attribute__((export_name("_vertex_buffer_size"))) int _vertex_buffer_size(kinc
 }
 
 __attribute__((export_name("_lockVertexBuffer"))) float *_lockVertexBuffer(kinc_g4_vertex_buffer_t *buffer, int start, int count) {
-	float *vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
-	return vertices;
+	return kinc_g4_vertex_buffer_lock(buffer, start, count);
 }
 
 __attribute__((export_name("_unlockVertexBuffer"))) void _unlockVertexBuffer(kinc_g4_vertex_buffer_t *buffer, int count) {
@@ -532,7 +549,6 @@ __attribute__((export_name("_createVertexShader"))) kinc_g4_shader_t *_createVer
 
 __attribute__((export_name("_createVertexShaderFromSource"))) kinc_g4_shader_t *_createVertexShaderFromSource(char *source) {
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-	// kinc_g4_shader_init_from_source(shader, source, KINC_G4_SHADER_TYPE_VERTEX);
 	kinc_g4_shader_init(shader, source, strlen(source), KINC_G4_SHADER_TYPE_VERTEX);
 	return shader;
 }
@@ -545,7 +561,6 @@ __attribute__((export_name("_createFragmentShader"))) kinc_g4_shader_t *_createF
 
 __attribute__((export_name("_createFragmentShaderFromSource"))) kinc_g4_shader_t *_createFragmentShaderFromSource(char *source) {
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-	// kinc_g4_shader_init_from_source(shader, source, KINC_G4_SHADER_TYPE_FRAGMENT);
 	kinc_g4_shader_init(shader, source, strlen(source), KINC_G4_SHADER_TYPE_FRAGMENT);
 	return shader;
 }
@@ -1258,10 +1273,24 @@ int kickstart(int argc, char **argv) {
 
 	char *code_header = "\
 	let _exports = instance.exports;\
+	let _buffers = {};\
 	let string = function(str, off = 0) { if (str == null) return null; let ptr = _exports._get_temp_buffer() + off; write_string(ptr, str); return ptr; };\
 	let update_func = null;\
+	let keyboard_down_func = null;\
+	let keyboard_up_func = null;\
+	let keyboard_press_func = null;\
+	let mouse_move_func = null;\
+	let mouse_down_func = null;\
+	let mouse_up_func = null;\
+	let mouse_wheel_func = null;\
 	function js_update_func() { update_func(); }\
-	let KromBuffers = new Map();\
+	function js_keyboard_down_func(code) { keyboard_down_func(code); }\
+	function js_keyboard_up_func(code) { keyboard_up_func(code); }\
+	function js_keyboard_press_func(code) { keyboard_press_func(code); }\
+	function js_mouse_move_func(x, y, mx, my) { mouse_move_func(x, y, mx, my); }\
+	function js_mouse_down_func(x, y) { mouse_down_func(x, y); }\
+	function js_mouse_up_func(x, y) { mouse_up_func(x, y); }\
+	function js_mouse_wheel_func(delta) { mouse_wheel_func(delta); }\
 	let Krom = {};\
 	Krom.init = function(title, width, height, samplesPerPixel, vSync, frequency, windowMode, windowFeatures, kromApi, x, y) { _exports._init(string(title), width, height, samplesPerPixel, vSync, frequency, windowMode, windowFeatures, kromApi, x, y); };\
 	Krom.setApplicationName = function(str) { _exports._setApplicationName(string(str)); };\
@@ -1271,13 +1300,13 @@ int kickstart(int argc, char **argv) {
 	Krom.setDropFilesCallback = function(f) { /*_exports._setDropFilesCallback(f);*/ };\
 	Krom.setCutCopyPasteCallback = function(f) { /*_exports._setCutCopyPasteCallback(f);*/ };\
 	Krom.setApplicationStateCallback = function(f) { /*_exports._setApplicationStateCallback(f);*/ };\
-	Krom.setKeyboardDownCallback = function(f) { /*_exports._setKeyboardDownCallback(f);*/ };\
-	Krom.setKeyboardUpCallback = function(f) { /*_exports._setKeyboardUpCallback(f);*/ };\
-	Krom.setKeyboardPressCallback = function(f) { /*_exports._setKeyboardPressCallback(f);*/ };\
-	Krom.setMouseMoveCallback = function(f) { /*_exports._setMouseMoveCallback(f);*/ };\
-	Krom.setMouseDownCallback = function(f) { /*_exports._setMouseDownCallback(f);*/ };\
-	Krom.setMouseUpCallback = function(f) { /*_exports._setMouseUpCallback(f);*/ };\
-	Krom.setMouseWheelCallback = function(f) { /*_exports._setMouseWheelCallback(f);*/ };\
+	Krom.setKeyboardDownCallback = function(f) { keyboard_down_func = f; /*_exports._setKeyboardDownCallback(f);*/ };\
+	Krom.setKeyboardUpCallback = function(f) { keyboard_up_func = f; /*_exports._setKeyboardUpCallback(f);*/ };\
+	Krom.setKeyboardPressCallback = function(f) { keyboard_press_func = f; /*_exports._setKeyboardPressCallback(f);*/ };\
+	Krom.setMouseMoveCallback = function(f) { mouse_move_func = f; /*_exports._setMouseMoveCallback(f);*/ };\
+	Krom.setMouseDownCallback = function(f) { mouse_down_func = f; /*_exports._setMouseDownCallback(f);*/ };\
+	Krom.setMouseUpCallback = function(f) { mouse_up_func = f; /*_exports._setMouseUpCallback(f);*/ };\
+	Krom.setMouseWheelCallback = function(f) { mouse_wheel_func = f; /*_exports._setMouseWheelCallback(f);*/ };\
 	Krom.setPenDownCallback = function(f) { /*_exports._setPenDownCallback(f);*/ };\
 	Krom.setPenUpCallback = function(f) { /*_exports._setPenUpCallback(f);*/ };\
 	Krom.setPenMoveCallback = function(f) { /*_exports._setPenMoveCallback(f);*/ };\
@@ -1324,13 +1353,13 @@ int kickstart(int argc, char **argv) {
 		let start = _exports._lockVertexBuffer(vbuffer, vstart, vcount);\
 		let byteLength = _exports._vertex_buffer_size(vbuffer);\
 		let b = heapu8.buffer.slice(start, start + byteLength);\
-		KromBuffers.set(vbuffer, { buffer: b, start: start, byteLength: byteLength });\
+		_buffers[vbuffer] = { buffer: b, start: start, byteLength: byteLength };\
 		return b;\
 	};\
 	Krom.unlockVertexBuffer = function(vbuffer, count) {\
-		let b = new Uint8Array(KromBuffers.get(vbuffer).buffer);\
-		let start = KromBuffers.get(vbuffer).start;\
-		let byteLength = KromBuffers.get(vbuffer).byteLength;\
+		let b = new Uint8Array(_buffers[vbuffer].buffer);\
+		let start = _buffers[vbuffer].start;\
+		let byteLength = _buffers[vbuffer].byteLength;\
 		let u8 = new Uint8Array(heapu8.buffer, start, byteLength);\
 		for (let i = 0; i < byteLength; ++i) u8[i] = b[i];\
 		_exports._unlockVertexBuffer(vbuffer, count);\
@@ -1340,11 +1369,21 @@ int kickstart(int argc, char **argv) {
 	Krom.drawIndexedVertices = _exports._drawIndexedVertices;\
 	Krom.drawIndexedVerticesInstanced = _exports._drawIndexedVerticesInstanced;\
 	Krom.createVertexShader = function(buffer, name) {\
-		return _exports._createVertexShader(KromBuffers.get(buffer).start, KromBuffers.get(buffer).byteLength, string(name));\
+		let b = new Uint8Array(buffer);\
+		let start = _buffers[buffer].start;\
+		let byteLength = _buffers[buffer].byteLength;\
+		let u8 = new Uint8Array(heapu8.buffer, start, byteLength);\
+		for (let i = 0; i < byteLength; ++i) u8[i] = b[i];\
+		return _exports._createVertexShader(_buffers[buffer].start, byteLength, string(name));\
 	};\
 	Krom.createVertexShaderFromSource = function(str) { return _exports._createVertexShaderFromSource(string(str)); };\
 	Krom.createFragmentShader = function(buffer, name) {\
-		return _exports._createFragmentShader(KromBuffers.get(buffer).start, KromBuffers.get(buffer).byteLength, string(name));\
+		let b = new Uint8Array(buffer);\
+		let start = _buffers[buffer].start;\
+		let byteLength = _buffers[buffer].byteLength;\
+		let u8 = new Uint8Array(heapu8.buffer, start, byteLength);\
+		for (let i = 0; i < byteLength; ++i) u8[i] = b[i];\
+		return _exports._createFragmentShader(_buffers[buffer].start, byteLength, string(name));\
 	};\
 	Krom.createFragmentShaderFromSource = function(str) { return _exports._createFragmentShaderFromSource(string(str)); };\
 	Krom.createGeometryShader = _exports._createGeometryShader;\
@@ -1388,13 +1427,13 @@ int kickstart(int argc, char **argv) {
 	Krom.loadBlob = function(path) {\
 		let start = _exports._loadBlob(string(path));\
 		let b = heapu8.buffer.slice(start, start + _exports._readerSize());\
-		KromBuffers.set(b, { start: start, byteLength: _exports._readerSize() });\
+		_buffers[b] = { start: start, byteLength: _exports._readerSize() };\
 		return b;\
 	};\
-	Krom.loadUrl = _exports._loadUrl;\
-	Krom.copyToClipboard = _exports._copyToClipboard;\
-	Krom.getConstantLocation = _exports._getConstantLocation;\
-	Krom.getTextureUnit = _exports._getTextureUnit;\
+	Krom.loadUrl = function(url) { _exports._loadUrl(string(url)); };\
+	Krom.copyToClipboard = function(text) { _exports._copyToClipboard(string(text)); };\
+	Krom.getConstantLocation = function(pipeline, name) { return _exports._getConstantLocation(pipeline, string(name)); };\
+	Krom.getTextureUnit = function(pipeline, name) { return _exports._getTextureUnit(pipeline, string(name)); };\
 	Krom.setTexture = function(unit, texture) { _exports._setTexture(unit, texture.self); };\
 	Krom.setRenderTarget = function(unit, renderTarget) { _exports._setRenderTarget(unit, renderTarget.self); };\
 	Krom.setTextureDepth = function(unit, renderTarget) { _exports._setTextureDepth(unit, renderTarget.self); };\
@@ -1430,7 +1469,7 @@ int kickstart(int argc, char **argv) {
 	Krom.getTime = _exports._getTime;\
 	Krom.windowWidth = _exports._windowWidth;\
 	Krom.windowHeight = _exports._windowHeight;\
-	Krom.setWindowTitle = _exports._setWindowTitle;\
+	Krom.setWindowTitle = function(id, title) { _exports._setWindowTitle(id, string(title)); };\
 	Krom.screenDpi = _exports._screenDpi;\
 	Krom.systemId = _exports._systemId;\
 	Krom.requestShutdown = _exports._requestShutdown;\
@@ -1441,8 +1480,8 @@ int kickstart(int argc, char **argv) {
 	Krom.displayY = _exports._displayY;\
 	Krom.displayFrequency = _exports._displayFrequency;\
 	Krom.displayIsPrimary = _exports._displayIsPrimary;\
-	Krom.writeStorage = _exports._writeStorage;\
-	Krom.readStorage = _exports._readStorage;\
+	Krom.writeStorage = function(name, data) { _exports._writeStorage(string(name), data); };\
+	Krom.readStorage = function(name) { return _exports._readStorage(string(name)); };\
 	Krom.createRenderTarget = function(width, height, format, depthBufferBits, stencilBufferBits) {\
 		return { self: _exports._createRenderTarget(width, height, format, depthBufferBits, stencilBufferBits),\
 				 width: _exports._get_last_width(),\
@@ -1526,12 +1565,12 @@ int kickstart(int argc, char **argv) {
 	};\
 	Krom.beginFace = function(renderTarget, face) { _exports._beginFace(renderTarget.renderTarget_.self, face); };\
 	Krom.end = _exports._end;\
-	Krom.fileSaveBytes = _exports._fileSaveBytes;\
-	Krom.sysCommand = _exports._sysCommand;\
-	Krom.savePath = _exports._savePath;\
+	Krom.fileSaveBytes = function(path, bytes, length) { _exports._fileSaveBytes(string(path), bytes, length); };\
+	Krom.sysCommand = function(cmd, args) { return _exports._sysCommand(string(cmd), args); };\
+	Krom.savePath = function() { return _exports._savePath() };\
 	Krom.getArgCount = _exports._getArgCount;\
-	Krom.getArg = _exports._getArg;\
-	Krom.getFilesLocation = _exports._getFilesLocation;\
+	Krom.getArg = function(index) { return _exports._getArg(index); };\
+	Krom.getFilesLocation = function() { return _exports._getFilesLocation(); };\
 	Krom.setBoolCompute = _exports._setBoolCompute;\
 	Krom.setIntCompute = _exports._setIntCompute;\
 	Krom.setFloatCompute = _exports._setFloatCompute;\
