@@ -1257,49 +1257,49 @@ int kickstart(int argc, char **argv) {
 	kinc_file_reader_close(&reader);
 
 	char *code_header = "\
-	let string = function(str, off = 0) { if (str == null) return null; let ptr = exports._get_temp_buffer() + off; write_string(ptr, str); return ptr; };\
+	let _exports = instance.exports;\
+	let string = function(str, off = 0) { if (str == null) return null; let ptr = _exports._get_temp_buffer() + off; write_string(ptr, str); return ptr; };\
 	let update_func = null;\
 	function js_update_func() { update_func(); }\
 	let KromBuffers = new Map();\
 	let Krom = {};\
-	let exports = instance.exports;\
-	Krom.init = function(title, width, height, samplesPerPixel, vSync, frequency, windowMode, windowFeatures, kromApi, x, y) { exports._init(string(title), width, height, samplesPerPixel, vSync, frequency, windowMode, windowFeatures, kromApi, x, y); };\
-	Krom.setApplicationName = function(str) { exports._setApplicationName(string(str)); };\
-	Krom.log = function(str) { exports._log(string(str)); };\
-	Krom.clear = exports._clear;\
-	Krom.setCallback = function(f) { update_func = f; /*exports._setCallback(f);*/ };\
-	Krom.setDropFilesCallback = function(f) { /*exports._setDropFilesCallback(f);*/ };\
-	Krom.setCutCopyPasteCallback = function(f) { /*exports._setCutCopyPasteCallback(f);*/ };\
-	Krom.setApplicationStateCallback = function(f) { /*exports._setApplicationStateCallback(f);*/ };\
-	Krom.setKeyboardDownCallback = function(f) { /*exports._setKeyboardDownCallback(f);*/ };\
-	Krom.setKeyboardUpCallback = function(f) { /*exports._setKeyboardUpCallback(f);*/ };\
-	Krom.setKeyboardPressCallback = function(f) { /*exports._setKeyboardPressCallback(f);*/ };\
-	Krom.setMouseMoveCallback = function(f) { /*exports._setMouseMoveCallback(f);*/ };\
-	Krom.setMouseDownCallback = function(f) { /*exports._setMouseDownCallback(f);*/ };\
-	Krom.setMouseUpCallback = function(f) { /*exports._setMouseUpCallback(f);*/ };\
-	Krom.setMouseWheelCallback = function(f) { /*exports._setMouseWheelCallback(f);*/ };\
-	Krom.setPenDownCallback = function(f) { /*exports._setPenDownCallback(f);*/ };\
-	Krom.setPenUpCallback = function(f) { /*exports._setPenUpCallback(f);*/ };\
-	Krom.setPenMoveCallback = function(f) { /*exports._setPenMoveCallback(f);*/ };\
-	Krom.setGamepadAxisCallback = function(f) { /*exports._setGamepadAxisCallback(f);*/ };\
-	Krom.setGamepadButtonCallback = function(f) { /*exports._setGamepadButtonCallback(f);*/ };\
-	Krom.setTouchDownCallback = function(f) { /*exports._setTouchDownCallback(f);*/ };\
-	Krom.setTouchUpCallback = function(f) { /*exports._setTouchUpCallback(f);*/ };\
-	Krom.setTouchMoveCallback = function(f) { /*exports._setTouchMoveCallback(f);*/ };\
-	Krom.lockMouse = exports._lockMouse;\
-	Krom.unlockMouse = exports._unlockMouse;\
-	Krom.canLockMouse = exports._canLockMouse;\
-	Krom.isMouseLocked = exports._isMouseLocked;\
-	Krom.setMousePosition = exports._setMousePosition;\
-	Krom.showMouse = exports._showMouse;\
-	Krom.showKeyboard = exports._showKeyboard;\
-	Krom.createIndexBuffer = exports._createIndexBuffer;\
-	Krom.deleteIndexBuffer = exports._deleteIndexBuffer;\
+	Krom.init = function(title, width, height, samplesPerPixel, vSync, frequency, windowMode, windowFeatures, kromApi, x, y) { _exports._init(string(title), width, height, samplesPerPixel, vSync, frequency, windowMode, windowFeatures, kromApi, x, y); };\
+	Krom.setApplicationName = function(str) { _exports._setApplicationName(string(str)); };\
+	Krom.log = function(str) { _exports._log(string(str)); };\
+	Krom.clear = _exports._clear;\
+	Krom.setCallback = function(f) { update_func = f; /*_exports._setCallback(f);*/ };\
+	Krom.setDropFilesCallback = function(f) { /*_exports._setDropFilesCallback(f);*/ };\
+	Krom.setCutCopyPasteCallback = function(f) { /*_exports._setCutCopyPasteCallback(f);*/ };\
+	Krom.setApplicationStateCallback = function(f) { /*_exports._setApplicationStateCallback(f);*/ };\
+	Krom.setKeyboardDownCallback = function(f) { /*_exports._setKeyboardDownCallback(f);*/ };\
+	Krom.setKeyboardUpCallback = function(f) { /*_exports._setKeyboardUpCallback(f);*/ };\
+	Krom.setKeyboardPressCallback = function(f) { /*_exports._setKeyboardPressCallback(f);*/ };\
+	Krom.setMouseMoveCallback = function(f) { /*_exports._setMouseMoveCallback(f);*/ };\
+	Krom.setMouseDownCallback = function(f) { /*_exports._setMouseDownCallback(f);*/ };\
+	Krom.setMouseUpCallback = function(f) { /*_exports._setMouseUpCallback(f);*/ };\
+	Krom.setMouseWheelCallback = function(f) { /*_exports._setMouseWheelCallback(f);*/ };\
+	Krom.setPenDownCallback = function(f) { /*_exports._setPenDownCallback(f);*/ };\
+	Krom.setPenUpCallback = function(f) { /*_exports._setPenUpCallback(f);*/ };\
+	Krom.setPenMoveCallback = function(f) { /*_exports._setPenMoveCallback(f);*/ };\
+	Krom.setGamepadAxisCallback = function(f) { /*_exports._setGamepadAxisCallback(f);*/ };\
+	Krom.setGamepadButtonCallback = function(f) { /*_exports._setGamepadButtonCallback(f);*/ };\
+	Krom.setTouchDownCallback = function(f) { /*_exports._setTouchDownCallback(f);*/ };\
+	Krom.setTouchUpCallback = function(f) { /*_exports._setTouchUpCallback(f);*/ };\
+	Krom.setTouchMoveCallback = function(f) { /*_exports._setTouchMoveCallback(f);*/ };\
+	Krom.lockMouse = _exports._lockMouse;\
+	Krom.unlockMouse = _exports._unlockMouse;\
+	Krom.canLockMouse = _exports._canLockMouse;\
+	Krom.isMouseLocked = _exports._isMouseLocked;\
+	Krom.setMousePosition = _exports._setMousePosition;\
+	Krom.showMouse = _exports._showMouse;\
+	Krom.showKeyboard = _exports._showKeyboard;\
+	Krom.createIndexBuffer = _exports._createIndexBuffer;\
+	Krom.deleteIndexBuffer = _exports._deleteIndexBuffer;\
 	Krom.lockIndexBuffer = function(buffer) {\
-		return new Uint32Array(heapu8.buffer, exports._lockIndexBuffer(buffer), exports._index_buffer_size(buffer));\
+		return new Uint32Array(heapu8.buffer, _exports._lockIndexBuffer(buffer), _exports._index_buffer_size(buffer));\
 	};\
-	Krom.unlockIndexBuffer = exports._unlockIndexBuffer;\
-	Krom.setIndexBuffer = exports._setIndexBuffer;\
+	Krom.unlockIndexBuffer = _exports._unlockIndexBuffer;\
+	Krom.setIndexBuffer = _exports._setIndexBuffer;\
 	Krom.createVertexBuffer = function(count, structure, usage, instanceDataStepRate) {\
 		let name0 = structure.length > 0 ? structure[0].name : null;\
 		let data0 = structure.length > 0 ? structure[0].data : null;\
@@ -1317,12 +1317,12 @@ int kickstart(int argc, char **argv) {
 		let data6 = structure.length > 6 ? structure[6].data : null;\
 		let name7 = structure.length > 7 ? structure[7].name : null;\
 		let data7 = structure.length > 7 ? structure[7].data : null;\
-		return exports._createVertexBuffer(count, string(name0), data0, string(name1, 64 * 1), data1, string(name2, 64 * 2), data2, string(name3, 64 * 3), data3, string(name4, 64 * 4), data4, string(name5, 64 * 5), data5, string(name6, 64 * 6), data6, string(name7, 64 * 7), data7, usage, instanceDataStepRate);\
+		return _exports._createVertexBuffer(count, string(name0), data0, string(name1, 64 * 1), data1, string(name2, 64 * 2), data2, string(name3, 64 * 3), data3, string(name4, 64 * 4), data4, string(name5, 64 * 5), data5, string(name6, 64 * 6), data6, string(name7, 64 * 7), data7, usage, instanceDataStepRate);\
 	};\
-	Krom.deleteVertexBuffer = exports._deleteVertexBuffer;\
+	Krom.deleteVertexBuffer = _exports._deleteVertexBuffer;\
 	Krom.lockVertexBuffer = function(vbuffer, vstart, vcount) {\
-		let start = exports._lockVertexBuffer(vbuffer, vstart, vcount);\
-		let byteLength = exports._vertex_buffer_size(vbuffer);\
+		let start = _exports._lockVertexBuffer(vbuffer, vstart, vcount);\
+		let byteLength = _exports._vertex_buffer_size(vbuffer);\
 		let b = heapu8.buffer.slice(start, start + byteLength);\
 		KromBuffers.set(vbuffer, { buffer: b, start: start, byteLength: byteLength });\
 		return b;\
@@ -1333,26 +1333,26 @@ int kickstart(int argc, char **argv) {
 		let byteLength = KromBuffers.get(vbuffer).byteLength;\
 		let u8 = new Uint8Array(heapu8.buffer, start, byteLength);\
 		for (let i = 0; i < byteLength; ++i) u8[i] = b[i];\
-		exports._unlockVertexBuffer(vbuffer, count);\
+		_exports._unlockVertexBuffer(vbuffer, count);\
 	};\
-	Krom.setVertexBuffer = exports._setVertexBuffer;\
-	Krom.setVertexBuffers = exports._setVertexBuffers;\
-	Krom.drawIndexedVertices = exports._drawIndexedVertices;\
-	Krom.drawIndexedVerticesInstanced = exports._drawIndexedVerticesInstanced;\
+	Krom.setVertexBuffer = _exports._setVertexBuffer;\
+	Krom.setVertexBuffers = _exports._setVertexBuffers;\
+	Krom.drawIndexedVertices = _exports._drawIndexedVertices;\
+	Krom.drawIndexedVerticesInstanced = _exports._drawIndexedVerticesInstanced;\
 	Krom.createVertexShader = function(buffer, name) {\
-		return exports._createVertexShader(KromBuffers.get(buffer).start, KromBuffers.get(buffer).byteLength, string(name));\
+		return _exports._createVertexShader(KromBuffers.get(buffer).start, KromBuffers.get(buffer).byteLength, string(name));\
 	};\
-	Krom.createVertexShaderFromSource = function(str) { return exports._createVertexShaderFromSource(string(str)); };\
+	Krom.createVertexShaderFromSource = function(str) { return _exports._createVertexShaderFromSource(string(str)); };\
 	Krom.createFragmentShader = function(buffer, name) {\
-		return exports._createFragmentShader(KromBuffers.get(buffer).start, KromBuffers.get(buffer).byteLength, string(name));\
+		return _exports._createFragmentShader(KromBuffers.get(buffer).start, KromBuffers.get(buffer).byteLength, string(name));\
 	};\
-	Krom.createFragmentShaderFromSource = function(str) { return exports._createFragmentShaderFromSource(string(str)); };\
-	Krom.createGeometryShader = exports._createGeometryShader;\
-	Krom.createTessellationControlShader = exports._createTessellationControlShader;\
-	Krom.createTessellationEvaluationShader = exports._createTessellationEvaluationShader;\
-	Krom.deleteShader = exports._deleteShader;\
-	Krom.createPipeline = exports._createPipeline;\
-	Krom.deletePipeline = exports._deletePipeline;\
+	Krom.createFragmentShaderFromSource = function(str) { return _exports._createFragmentShaderFromSource(string(str)); };\
+	Krom.createGeometryShader = _exports._createGeometryShader;\
+	Krom.createTessellationControlShader = _exports._createTessellationControlShader;\
+	Krom.createTessellationEvaluationShader = _exports._createTessellationEvaluationShader;\
+	Krom.deleteShader = _exports._deleteShader;\
+	Krom.createPipeline = _exports._createPipeline;\
+	Krom.deletePipeline = _exports._deletePipeline;\
 	Krom.compilePipeline = function(pipeline, structure0, structure1, structure2, structure3, length, vertexShader, fragmentShader, geometryShader, tessellationControlShader, tessellationEvaluationShader, state) {\
 		let name0 = structure0.elements.length > 0 ? structure0.elements[0].name : null;\
 		let data0 = structure0.elements.length > 0 ? structure0.elements[0].data : null;\
@@ -1370,151 +1370,151 @@ int kickstart(int argc, char **argv) {
 		let data6 = structure0.elements.length > 6 ? structure0.elements[6].data : null;\
 		let name7 = structure0.elements.length > 7 ? structure0.elements[7].name : null;\
 		let data7 = structure0.elements.length > 7 ? structure0.elements[7].data : null;\
-		exports._compilePipeline(pipeline, string(name0, 0), data0, string(name1, 64 * 1), data1, string(name2, 64 * 2), data2, string(name3, 64 * 3), data3, string(name4, 64 * 4), data4, string(name5, 64 * 5), data5, string(name6, 64 * 6), data6, string(name7, 64 * 7), data7, state.cullMode, state.depthWrite, state.depthMode, state.blendSource, state.blendDestination, state.alphaBlendSource, state.alphaBlendDestination, state.colorWriteMaskRed[0], state.colorWriteMaskGreen[0], state.colorWriteMaskBlue[0], state.colorWriteMaskAlpha[0], state.colorAttachmentCount, state.depthAttachmentBits, state.stencilAttachmentBits, state.conservativeRasterization, vertexShader, fragmentShader);\
+		_exports._compilePipeline(pipeline, string(name0, 0), data0, string(name1, 64 * 1), data1, string(name2, 64 * 2), data2, string(name3, 64 * 3), data3, string(name4, 64 * 4), data4, string(name5, 64 * 5), data5, string(name6, 64 * 6), data6, string(name7, 64 * 7), data7, state.cullMode, state.depthWrite, state.depthMode, state.blendSource, state.blendDestination, state.alphaBlendSource, state.alphaBlendDestination, state.colorWriteMaskRed[0], state.colorWriteMaskGreen[0], state.colorWriteMaskBlue[0], state.colorWriteMaskAlpha[0], state.colorAttachmentCount, state.depthAttachmentBits, state.stencilAttachmentBits, state.conservativeRasterization, vertexShader, fragmentShader);\
 	};\
-	Krom.setPipeline = exports._setPipeline;\
+	Krom.setPipeline = _exports._setPipeline;\
 	Krom.loadImage = function (file, readable) {\
-		return { self: exports._loadImage(string(file), readable),\
-				 image: exports._get_last_image(),\
-				 width: exports._get_last_width(),\
-				 height: exports._get_last_height()\
+		return { self: _exports._loadImage(string(file), readable),\
+				 image: _exports._get_last_image(),\
+				 width: _exports._get_last_width(),\
+				 height: _exports._get_last_height()\
 		};\
 	};\
-	Krom.unloadImage = function(image) { image.texture_ != null ? exports._unloadTexture(image.texture_.self) : exports._unloadRenderTarget(image.renderTarget_.self); };\
-	Krom.loadSound = exports._loadSound;\
-	Krom.setAudioCallback = exports._setAudioCallback;\
-	Krom.audioThread = exports._audioThread;\
-	Krom.writeAudioBuffer = exports._writeAudioBuffer;\
+	Krom.unloadImage = function(image) { image.texture_ != null ? _exports._unloadTexture(image.texture_.self) : _exports._unloadRenderTarget(image.renderTarget_.self); };\
+	Krom.loadSound = _exports._loadSound;\
+	Krom.setAudioCallback = _exports._setAudioCallback;\
+	Krom.audioThread = _exports._audioThread;\
+	Krom.writeAudioBuffer = _exports._writeAudioBuffer;\
 	Krom.loadBlob = function(path) {\
-		let start = exports._loadBlob(string(path));\
-		let b = heapu8.buffer.slice(start, start + exports._readerSize());\
-		KromBuffers.set(b, { start: start, byteLength: exports._readerSize() });\
+		let start = _exports._loadBlob(string(path));\
+		let b = heapu8.buffer.slice(start, start + _exports._readerSize());\
+		KromBuffers.set(b, { start: start, byteLength: _exports._readerSize() });\
 		return b;\
 	};\
-	Krom.loadUrl = exports._loadUrl;\
-	Krom.copyToClipboard = exports._copyToClipboard;\
-	Krom.getConstantLocation = exports._getConstantLocation;\
-	Krom.getTextureUnit = exports._getTextureUnit;\
-	Krom.setTexture = function(unit, texture) { exports._setTexture(unit, texture.self); };\
-	Krom.setRenderTarget = function(unit, renderTarget) { exports._setRenderTarget(unit, renderTarget.self); };\
-	Krom.setTextureDepth = function(unit, renderTarget) { exports._setTextureDepth(unit, renderTarget.self); };\
-	Krom.setImageTexture = function(unit, texture) { exports._setImageTexture(unit, texture.self); };\
-	Krom.setTextureParameters = exports._setTextureParameters;\
-	Krom.setTexture3DParameters = exports._setTexture3DParameters;\
-	Krom.setTextureCompareMode = exports._setTextureCompareMode;\
-	Krom.setCubeMapCompareMode = exports._setCubeMapCompareMode;\
-	Krom.setBool = exports._setBool;\
-	Krom.setInt = exports._setInt;\
-	Krom.setFloat = exports._setFloat;\
-	Krom.setFloat2 = exports._setFloat2;\
-	Krom.setFloat3 = exports._setFloat3;\
-	Krom.setFloat4 = exports._setFloat4;\
+	Krom.loadUrl = _exports._loadUrl;\
+	Krom.copyToClipboard = _exports._copyToClipboard;\
+	Krom.getConstantLocation = _exports._getConstantLocation;\
+	Krom.getTextureUnit = _exports._getTextureUnit;\
+	Krom.setTexture = function(unit, texture) { _exports._setTexture(unit, texture.self); };\
+	Krom.setRenderTarget = function(unit, renderTarget) { _exports._setRenderTarget(unit, renderTarget.self); };\
+	Krom.setTextureDepth = function(unit, renderTarget) { _exports._setTextureDepth(unit, renderTarget.self); };\
+	Krom.setImageTexture = function(unit, texture) { _exports._setImageTexture(unit, texture.self); };\
+	Krom.setTextureParameters = _exports._setTextureParameters;\
+	Krom.setTexture3DParameters = _exports._setTexture3DParameters;\
+	Krom.setTextureCompareMode = _exports._setTextureCompareMode;\
+	Krom.setCubeMapCompareMode = _exports._setCubeMapCompareMode;\
+	Krom.setBool = _exports._setBool;\
+	Krom.setInt = _exports._setInt;\
+	Krom.setFloat = _exports._setFloat;\
+	Krom.setFloat2 = _exports._setFloat2;\
+	Krom.setFloat3 = _exports._setFloat3;\
+	Krom.setFloat4 = _exports._setFloat4;\
 	Krom.setFloats = function(location, floats) {\
-		let to = new Uint8Array(heapu8.buffer, exports._get_temp_buffer(), 4096);\
+		let to = new Uint8Array(heapu8.buffer, _exports._get_temp_buffer(), 4096);\
 		let from = new Uint8Array(floats);\
 		for (let i = 0; i < floats.byteLength; ++i) to[i] = from[i];\
-		exports._setFloats(location, exports._get_temp_buffer(), floats.byteLength / 4);\
+		_exports._setFloats(location, _exports._get_temp_buffer(), floats.byteLength / 4);\
 	};\
 	Krom.setMatrix = function(location, matrix) {\
-		let to = new Uint8Array(heapu8.buffer, exports._get_temp_buffer(), 4096);\
+		let to = new Uint8Array(heapu8.buffer, _exports._get_temp_buffer(), 4096);\
 		let from = new Uint8Array(matrix);\
 		for (let i = 0; i < matrix.byteLength; ++i) to[i] = from[i];\
-		exports._setMatrix(location, exports._get_temp_buffer());\
+		_exports._setMatrix(location, _exports._get_temp_buffer());\
 	};\
 	Krom.setMatrix3 = function(location, matrix) {\
-		let to = new Uint8Array(heapu8.buffer, exports._get_temp_buffer(), 4096);\
+		let to = new Uint8Array(heapu8.buffer, _exports._get_temp_buffer(), 4096);\
 		let from = new Uint8Array(matrix);\
 		for (let i = 0; i < matrix.byteLength; ++i) to[i] = from[i];\
-		exports._setMatrix3(location, exports._get_temp_buffer());\
+		_exports._setMatrix3(location, _exports._get_temp_buffer());\
 	};\
-	Krom.getTime = exports._getTime;\
-	Krom.windowWidth = exports._windowWidth;\
-	Krom.windowHeight = exports._windowHeight;\
-	Krom.setWindowTitle = exports._setWindowTitle;\
-	Krom.screenDpi = exports._screenDpi;\
-	Krom.systemId = exports._systemId;\
-	Krom.requestShutdown = exports._requestShutdown;\
-	Krom.displayCount = exports._displayCount;\
-	Krom.displayWidth = exports._displayWidth;\
-	Krom.displayHeight = exports._displayHeight;\
-	Krom.displayX = exports._displayX;\
-	Krom.displayY = exports._displayY;\
-	Krom.displayFrequency = exports._displayFrequency;\
-	Krom.displayIsPrimary = exports._displayIsPrimary;\
-	Krom.writeStorage = exports._writeStorage;\
-	Krom.readStorage = exports._readStorage;\
+	Krom.getTime = _exports._getTime;\
+	Krom.windowWidth = _exports._windowWidth;\
+	Krom.windowHeight = _exports._windowHeight;\
+	Krom.setWindowTitle = _exports._setWindowTitle;\
+	Krom.screenDpi = _exports._screenDpi;\
+	Krom.systemId = _exports._systemId;\
+	Krom.requestShutdown = _exports._requestShutdown;\
+	Krom.displayCount = _exports._displayCount;\
+	Krom.displayWidth = _exports._displayWidth;\
+	Krom.displayHeight = _exports._displayHeight;\
+	Krom.displayX = _exports._displayX;\
+	Krom.displayY = _exports._displayY;\
+	Krom.displayFrequency = _exports._displayFrequency;\
+	Krom.displayIsPrimary = _exports._displayIsPrimary;\
+	Krom.writeStorage = _exports._writeStorage;\
+	Krom.readStorage = _exports._readStorage;\
 	Krom.createRenderTarget = function(width, height, format, depthBufferBits, stencilBufferBits) {\
-		return { self: exports._createRenderTarget(width, height, format, depthBufferBits, stencilBufferBits),\
-				 width: exports._get_last_width(),\
-				 height: exports._get_last_height()\
+		return { self: _exports._createRenderTarget(width, height, format, depthBufferBits, stencilBufferBits),\
+				 width: _exports._get_last_width(),\
+				 height: _exports._get_last_height()\
 		};\
 	};\
 	Krom.createRenderTargetCubeMap = function(size, format, depthBufferBits, stencilBufferBits) {\
-		return { self: exports._createRenderTargetCubeMap(size, format, depthBufferBits, stencilBufferBits),\
-				 width: exports._get_last_width(),\
-				 height: exports._get_last_height()\
+		return { self: _exports._createRenderTargetCubeMap(size, format, depthBufferBits, stencilBufferBits),\
+				 width: _exports._get_last_width(),\
+				 height: _exports._get_last_height()\
 		};\
 	};\
 	Krom.createTexture = function(width, height, format) {\
-		return { self: exports._createTexture(width, height, format),\
-				 width: exports._get_last_width(),\
-				 height: exports._get_last_height()\
+		return { self: _exports._createTexture(width, height, format),\
+				 width: _exports._get_last_width(),\
+				 height: _exports._get_last_height()\
 		};\
 	};\
 	Krom.createTexture3D = function(width, height, depth, format) {\
-		return { self: exports._createTexture3D(width, height, depth, format),\
-				 width: exports._get_last_width(),\
-				 height: exports._get_last_height(),\
-				 depth: exports._get_last_depth()\
+		return { self: _exports._createTexture3D(width, height, depth, format),\
+				 width: _exports._get_last_width(),\
+				 height: _exports._get_last_height(),\
+				 depth: _exports._get_last_depth()\
 		};\
 	};\
 	Krom.createTextureFromBytes = function(data, width, height, format, readable) {\
 		let from = new Uint8Array(data);\
-		let start = exports._malloc(data.byteLength);\
+		let start = _exports._malloc(data.byteLength);\
 		let to = new Uint8Array(heapu8.buffer, start, data.byteLength);\
 		for (let i = 0; i < data.byteLength; ++i) to[i] = from[i];\
-		return { self: exports._createTextureFromBytes(start, width, height, format, readable),\
-				 width: exports._get_last_width(),\
-				 height: exports._get_last_height()\
+		return { self: _exports._createTextureFromBytes(start, width, height, format, readable),\
+				 width: _exports._get_last_width(),\
+				 height: _exports._get_last_height()\
 		};\
 	};\
 	Krom.createTextureFromBytes3D = function(data, width, height, depth, format, readable) {\
 		let from = new Uint8Array(data);\
-		let start = exports._malloc(data.byteLength);\
+		let start = _exports._malloc(data.byteLength);\
 		let to = new Uint8Array(heapu8.buffer, start, data.byteLength);\
 		for (let i = 0; i < data.byteLength; ++i) to[i] = from[i];\
-		return { self: exports._createTextureFromBytes3D(start, width, height, depth, format, readable),\
-				 width: exports._get_last_width(),\
-				 height: exports._get_last_height(),\
-				 depth: exports._get_last_depth()\
+		return { self: _exports._createTextureFromBytes3D(start, width, height, depth, format, readable),\
+				 width: _exports._get_last_width(),\
+				 height: _exports._get_last_height(),\
+				 depth: _exports._get_last_depth()\
 		};\
 	};\
 	Krom.createTextureFromEncodedBytes = function(data, format, readable) {\
 		let from = new Uint8Array(data);\
-		let start = exports._malloc(data.byteLength);\
+		let start = _exports._malloc(data.byteLength);\
 		let to = new Uint8Array(heapu8.buffer, start, data.byteLength);\
 		for (let i = 0; i < data.byteLength; ++i) to[i] = from[i];\
-		return { self: exports._createTextureFromEncodedBytes(start, data.byteLength, format, readable),\
-				 image: exports._get_last_image(),\
-				 width: exports._get_last_width(),\
-				 height: exports._get_last_height()\
+		return { self: _exports._createTextureFromEncodedBytes(start, data.byteLength, format, readable),\
+				 image: _exports._get_last_image(),\
+				 width: _exports._get_last_width(),\
+				 height: _exports._get_last_height()\
 		};\
 	};\
-	Krom.getTexturePixels = function(texture) { return exports._getTexturePixels(texture.self); };\
-	Krom.getRenderTargetPixels = function(renderTarget, out) { return exports._getRenderTargetPixels(renderTarget.self, out); };\
-	Krom.lockTexture = function(texture, level) { return exports._lockTexture(texture.self, level); };\
-	Krom.unlockTexture = function(texture) { exports._unlockTexture(texture.self); };\
-	Krom.clearTexture = function(texture) { exports._clearTexture(texture.self); };\
-	Krom.generateTextureMipmaps = function(texture) { exports._generateTextureMipmaps(texture.self); };\
-	Krom.generateRenderTargetMipmaps = function(renderTarget) { exports._generateRenderTargetMipmaps(renderTarget.self); };\
-	Krom.setMipmaps = function(texture, mipmaps) { for (let i = 0; i < mipmaps.length; ++i) exports._setMipmap(texture.self, mipmaps[i].texture_.image, i + 1); };\
-	Krom.setDepthStencilFrom = function(renderTarget, sourceTarget) { exports._setDepthStencilFrom(renderTarget.self, sourceTarget.self); };\
-	Krom.viewport = exports._viewport;\
-	Krom.scissor = exports._scissor;\
-	Krom.disableScissor = exports._disableScissor;\
-	Krom.renderTargetsInvertedY = exports._renderTargetsInvertedY;\
+	Krom.getTexturePixels = function(texture) { return _exports._getTexturePixels(texture.self); };\
+	Krom.getRenderTargetPixels = function(renderTarget, out) { return _exports._getRenderTargetPixels(renderTarget.self, out); };\
+	Krom.lockTexture = function(texture, level) { return _exports._lockTexture(texture.self, level); };\
+	Krom.unlockTexture = function(texture) { _exports._unlockTexture(texture.self); };\
+	Krom.clearTexture = function(texture) { _exports._clearTexture(texture.self); };\
+	Krom.generateTextureMipmaps = function(texture) { _exports._generateTextureMipmaps(texture.self); };\
+	Krom.generateRenderTargetMipmaps = function(renderTarget) { _exports._generateRenderTargetMipmaps(renderTarget.self); };\
+	Krom.setMipmaps = function(texture, mipmaps) { for (let i = 0; i < mipmaps.length; ++i) _exports._setMipmap(texture.self, mipmaps[i].texture_.image, i + 1); };\
+	Krom.setDepthStencilFrom = function(renderTarget, sourceTarget) { _exports._setDepthStencilFrom(renderTarget.self, sourceTarget.self); };\
+	Krom.viewport = _exports._viewport;\
+	Krom.scissor = _exports._scissor;\
+	Krom.disableScissor = _exports._disableScissor;\
+	Krom.renderTargetsInvertedY = _exports._renderTargetsInvertedY;\
 	Krom.begin = function(renderTarget, art) {\
-		exports._begin(renderTarget != null ? renderTarget.renderTarget_.self : null,\
+		_exports._begin(renderTarget != null ? renderTarget.renderTarget_.self : null,\
 			   (art != null && art.length > 0) ? art[0].renderTarget_.self : null,\
 			   (art != null && art.length > 1) ? art[1].renderTarget_.self : null,\
 			   (art != null && art.length > 2) ? art[2].renderTarget_.self : null,\
@@ -1524,40 +1524,40 @@ int kickstart(int argc, char **argv) {
 			   (art != null && art.length > 6) ? art[6].renderTarget_.self : null\
 		);\
 	};\
-	Krom.beginFace = function(renderTarget, face) { exports._beginFace(renderTarget.renderTarget_.self, face); };\
-	Krom.end = exports._end;\
-	Krom.fileSaveBytes = exports._fileSaveBytes;\
-	Krom.sysCommand = exports._sysCommand;\
-	Krom.savePath = exports._savePath;\
-	Krom.getArgCount = exports._getArgCount;\
-	Krom.getArg = exports._getArg;\
-	Krom.getFilesLocation = exports._getFilesLocation;\
-	Krom.setBoolCompute = exports._setBoolCompute;\
-	Krom.setIntCompute = exports._setIntCompute;\
-	Krom.setFloatCompute = exports._setFloatCompute;\
-	Krom.setFloat2Compute = exports._setFloat2Compute;\
-	Krom.setFloat3Compute = exports._setFloat3Compute;\
-	Krom.setFloat4Compute = exports._setFloat4Compute;\
-	Krom.setFloatsCompute = exports._setFloatsCompute;\
-	Krom.setMatrixCompute = exports._setMatrixCompute;\
-	Krom.setMatrix3Compute = exports._setMatrix3Compute;\
-	Krom.setTextureCompute = exports._setTextureCompute;\
-	Krom.setRenderTargetCompute = exports._setRenderTargetCompute;\
-	Krom.setSampledTextureCompute = exports._setSampledTextureCompute;\
-	Krom.setSampledRenderTargetCompute = exports._setSampledRenderTargetCompute;\
-	Krom.setSampledDepthTextureCompute = exports._setSampledDepthTextureCompute;\
-	Krom.setTextureParametersCompute = exports._setTextureParametersCompute;\
-	Krom.setTexture3DParametersCompute = exports._setTexture3DParametersCompute;\
-	Krom.setShaderCompute = exports._setShaderCompute;\
-	Krom.deleteShaderCompute = exports._deleteShaderCompute;\
-	Krom.createShaderCompute = exports._createShaderCompute;\
-	Krom.getConstantLocationCompute = exports._getConstantLocationCompute;\
-	Krom.getTextureUnitCompute = exports._getTextureUnitCompute;\
-	Krom.compute = exports._compute;\
-	Krom.setSaveAndQuitCallback = exports._setSaveAndQuitCallback;\
-	Krom.setMouseCursor = exports._setMouseCursor;\
-	Krom.windowX = exports._windowX;\
-	Krom.windowY = exports._windowY;";
+	Krom.beginFace = function(renderTarget, face) { _exports._beginFace(renderTarget.renderTarget_.self, face); };\
+	Krom.end = _exports._end;\
+	Krom.fileSaveBytes = _exports._fileSaveBytes;\
+	Krom.sysCommand = _exports._sysCommand;\
+	Krom.savePath = _exports._savePath;\
+	Krom.getArgCount = _exports._getArgCount;\
+	Krom.getArg = _exports._getArg;\
+	Krom.getFilesLocation = _exports._getFilesLocation;\
+	Krom.setBoolCompute = _exports._setBoolCompute;\
+	Krom.setIntCompute = _exports._setIntCompute;\
+	Krom.setFloatCompute = _exports._setFloatCompute;\
+	Krom.setFloat2Compute = _exports._setFloat2Compute;\
+	Krom.setFloat3Compute = _exports._setFloat3Compute;\
+	Krom.setFloat4Compute = _exports._setFloat4Compute;\
+	Krom.setFloatsCompute = _exports._setFloatsCompute;\
+	Krom.setMatrixCompute = _exports._setMatrixCompute;\
+	Krom.setMatrix3Compute = _exports._setMatrix3Compute;\
+	Krom.setTextureCompute = _exports._setTextureCompute;\
+	Krom.setRenderTargetCompute = _exports._setRenderTargetCompute;\
+	Krom.setSampledTextureCompute = _exports._setSampledTextureCompute;\
+	Krom.setSampledRenderTargetCompute = _exports._setSampledRenderTargetCompute;\
+	Krom.setSampledDepthTextureCompute = _exports._setSampledDepthTextureCompute;\
+	Krom.setTextureParametersCompute = _exports._setTextureParametersCompute;\
+	Krom.setTexture3DParametersCompute = _exports._setTexture3DParametersCompute;\
+	Krom.setShaderCompute = _exports._setShaderCompute;\
+	Krom.deleteShaderCompute = _exports._deleteShaderCompute;\
+	Krom.createShaderCompute = _exports._createShaderCompute;\
+	Krom.getConstantLocationCompute = _exports._getConstantLocationCompute;\
+	Krom.getTextureUnitCompute = _exports._getTextureUnitCompute;\
+	Krom.compute = _exports._compute;\
+	Krom.setSaveAndQuitCallback = _exports._setSaveAndQuitCallback;\
+	Krom.setMouseCursor = _exports._setMouseCursor;\
+	Krom.windowX = _exports._windowX;\
+	Krom.windowY = _exports._windowY;";
 
 	char *code = (char *)malloc(strlen(code_header) + strlen(code_krom) + 1);
 	strcpy(code, code_header);
