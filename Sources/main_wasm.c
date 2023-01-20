@@ -1426,8 +1426,9 @@ int kickstart(int argc, char **argv) {
 	Krom.writeAudioBuffer = _exports._writeAudioBuffer;\
 	Krom.loadBlob = function(path) {\
 		let start = _exports._loadBlob(string(path));\
-		let b = heapu8.buffer.slice(start, start + _exports._readerSize());\
-		_buffers[b] = { start: start, byteLength: _exports._readerSize() };\
+		let byteLength = _exports._readerSize();\
+		let b = heapu8.buffer.slice(start, start + byteLength);\
+		_buffers[b] = { start: start, byteLength: byteLength };\
 		return b;\
 	};\
 	Krom.loadUrl = function(url) { _exports._loadUrl(string(url)); };\
