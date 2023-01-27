@@ -16,6 +16,10 @@ try {
 	await runKhamake();
 	armorcore = true;
 
+	if (process.argv.indexOf("--run") >= 0) {
+		fs.cp(process.cwd() + "/build/krom", __dirname + "/Deployment", {recursive: true}, function (err){});
+	}
+
 	if (process.env.ARM_HAXEONLY) {
 		process.exit(1);
 	}
@@ -105,7 +109,7 @@ else if (platform === Platform.iOS) {
 }
 
 if (platform === Platform.Windows) {
-	project.cmdArgs = ['..\\..\\build\\krom'];
+	project.cmdArgs = [process.cwd() + '\\build\\krom'];
 	project.addLib('Dbghelp'); // Stack walk
 	project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
 	project.addLib(libdir + 'v8_monolith');
