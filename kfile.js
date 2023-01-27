@@ -11,8 +11,8 @@ try {
 		process.argv.push("300");
 	}
 
-	let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/" : "";
-	eval(fs.readFileSync(root + "armorcore/make.js") + "");
+	let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/armorcore" : __dirname;
+	eval(fs.readFileSync(root + "/make.js") + "");
 	await runKhamake();
 	armorcore = true;
 
@@ -54,8 +54,8 @@ const system = platform === Platform.Windows ? "win32" :
 			   								   "unknown";
 
 const build = flags.release ? 'release' : 'debug';
-let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/armorcore/" : "";
-const libdir = root + 'v8/libraries/' + system + '/' + build + '/';
+let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/armorcore" : __dirname;
+const libdir = root + '/v8/libraries/' + system + '/' + build + '/';
 
 let project = new Project(flags.name);
 await project.addProject('Kinc');
