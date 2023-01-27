@@ -124,12 +124,7 @@ if (platform === Platform.Windows) {
 	}
 }
 else if (platform === Platform.Linux) {
-	if (armorcore) {
-		project.addLib('v8_monolith -L../../armorcore/' + libdir);
-	}
-	else {
-		project.addLib('v8_monolith -L../../' + libdir);
-	}
+	project.addLib('v8_monolith -L' + libdir);
 	project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
 }
 else if (platform === Platform.Android) {
