@@ -41,6 +41,7 @@ let flags = {
 	with_krafix: false,
 	with_worker: false,
 	with_plugin_embed: false,
+	on_project_created: null,
 };
 
 try {
@@ -224,6 +225,10 @@ if (flags.with_krafix) {
 }
 if (flags.with_plugin_embed) {
 	await project.addProject('../Libraries/plugins');
+}
+
+if (flags.on_project_created) {
+	flags.on_project_created(project);
 }
 
 project.flatten();
