@@ -100,7 +100,7 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #include <coreml_provider_factory.h>
 #endif
 #endif
-#ifdef IDLE_SLEEP
+#if defined(IDLE_SLEEP) && !defined(KORE_WINDOWS)
 #include <unistd.h>
 #endif
 #ifdef WITH_WORKER
@@ -3781,12 +3781,16 @@ namespace {
 
 		#ifdef IDLE_SLEEP
 		#if defined(KORE_IOS) || defined(KORE_ANDROID)
-		int sleepLimit = 1200;
+		int startSleep = 1200;
 		#else
-		int sleepLimit = 120;
+		int startSleep = 120;
 		#endif
-		if (++pausedFrames > sleepLimit) {
+		if (++pausedFrames > startSleep) {
+			#ifdef KORE_WINDOWS
+			Sleep(1);
+			#else
 			usleep(1000);
+			#endif
 			return;
 		}
 		#endif
