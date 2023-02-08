@@ -38,9 +38,7 @@ let flags = {
 	with_stb_image_write: false,
 	with_audio: false,
 	with_onnx: false,
-	with_krafix: false,
 	with_worker: false,
-	with_plugin_embed: false,
 	on_project_created: null,
 };
 
@@ -219,12 +217,6 @@ if (flags.with_onnx) {
 	else if (platform === Platform.OSX) {
 		project.addLib('Libraries/onnx/macos/libonnxruntime.1.13.1.dylib');
 	}
-}
-if (flags.with_krafix) {
-	await project.addProject('Libraries/glsl_to_spirv');
-}
-if (flags.with_plugin_embed) {
-	await project.addProject('../Libraries/plugins');
 }
 
 if (flags.on_project_created) {
