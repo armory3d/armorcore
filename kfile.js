@@ -220,7 +220,7 @@ if (flags.with_onnx) {
 }
 
 if (flags.on_project_created) {
-	flags.on_project_created(project);
+	await flags.on_project_created(project);
 }
 
 project.flatten();
