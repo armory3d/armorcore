@@ -157,6 +157,9 @@ namespace {
 	bool paused = false;
 	int pausedFrames = 0;
 	bool armorcore = false;
+	#ifdef IDLE_SLEEP
+	bool input_down = false;
+	#endif
 
 	Isolate *isolate;
 	std::unique_ptr<Platform> plat;
@@ -3785,7 +3788,7 @@ namespace {
 		#else
 		int startSleep = 120;
 		#endif
-		if (++pausedFrames > startSleep) {
+		if (++pausedFrames > startSleep && !input_down) {
 			#ifdef KORE_WINDOWS
 			Sleep(1);
 			#else
@@ -4018,6 +4021,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
+		input_down = true;
 		pausedFrames = 0;
 		#endif
 	}
@@ -4040,6 +4044,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
+		input_down = false;
 		pausedFrames = 0;
 		#endif
 	}
@@ -4106,6 +4111,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
+		input_down = true;
 		pausedFrames = 0;
 		#endif
 	}
@@ -4128,6 +4134,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
+		input_down = false;
 		pausedFrames = 0;
 		#endif
 	}
@@ -4194,6 +4201,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
+		input_down = true;
 		pausedFrames = 0;
 		#endif
 	}
@@ -4216,6 +4224,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
+		input_down = false;
 		pausedFrames = 0;
 		#endif
 	}
@@ -4238,6 +4247,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
+		input_down = true;
 		pausedFrames = 0;
 		#endif
 	}
@@ -4260,6 +4270,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
+		input_down = false;
 		pausedFrames = 0;
 		#endif
 	}
