@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 let armorcore = false;
 
 try {
@@ -65,10 +66,10 @@ await project.addProject('Kinc');
 project.cppStd = "c++17";
 project.setDebugDir('Deployment');
 
-if (fs.existsSync("icon.png")) {
-	project.icon = '../icon.png';
-	if (platform === Platform.OSX && fs.existsSync("icon_macos.png")) {
-		project.icon = '../icon_macos.png';
+if (fs.existsSync(process.cwd() + '/icon.png')) {
+	project.icon = path.relative(__dirname, process.cwd()) + '/icon.png';
+	if (platform === Platform.OSX && fs.existsSync(process.cwd() + '/icon_macos.png')) {
+		project.icon = path.relative(__dirname, process.cwd()) + '/icon_macos.png';
 	}
 }
 
