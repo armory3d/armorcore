@@ -208,9 +208,9 @@ namespace {
 	void pause(void *data);
 	void background(void *data);
 	void shutdown(void *data);
-	void key_down(int code);
-	void key_up(int code);
-	void key_press(unsigned int character);
+	void key_down(int code, void *data);
+	void key_up(int code, void *data);
+	void key_press(unsigned int character, void *data);
 	void mouse_move(int window, int x, int y, int mx, int my, void *data);
 	void mouse_down(int window, int button, int x, int y, void *data);
 	void mouse_up(int window, int button, int x, int y, void *data);
@@ -369,9 +369,9 @@ namespace {
 		kinc_set_background_callback(background, NULL);
 		kinc_set_shutdown_callback(shutdown, NULL);
 
-		kinc_keyboard_set_key_down_callback(key_down);
-		kinc_keyboard_set_key_up_callback(key_up);
-		kinc_keyboard_set_key_press_callback(key_press);
+		kinc_keyboard_set_key_down_callback(key_down, NULL);
+		kinc_keyboard_set_key_up_callback(key_up, NULL);
+		kinc_keyboard_set_key_press_callback(key_press, NULL);
 		kinc_mouse_set_move_callback(mouse_move, NULL);
 		kinc_mouse_set_press_callback(mouse_down, NULL);
 		kinc_mouse_set_release_callback(mouse_up, NULL);
@@ -660,7 +660,7 @@ namespace {
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)field->Value();
 		int *vertices = kinc_g4_index_buffer_lock(buffer);
-		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)vertices, kinc_g4_index_buffer_count(buffer) * sizeof(int), [](void*, size_t, void*) {}, nullptr);
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)vertices, kinc_g4_index_buffer_count(buffer) * sizeof(int), [](void *, size_t, void *) {}, nullptr);
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(Uint32Array::New(abuffer, 0, kinc_g4_index_buffer_count(buffer)));
 	}
@@ -797,7 +797,7 @@ namespace {
 		int start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		float *vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
-		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)vertices, count * kinc_g4_vertex_buffer_stride(buffer), [](void*, size_t, void*) {}, nullptr);
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)vertices, count * kinc_g4_vertex_buffer_stride(buffer), [](void *, size_t, void *) {}, nullptr);
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(abuffer);
 	}
@@ -2140,7 +2140,7 @@ namespace {
 
 		uint8_t *data = kinc_image_get_pixels(image);
 		int byteLength = format_byte_size(image->format) * image->width * image->height * image->depth;
-		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)data, byteLength, [](void*, size_t, void*) {}, nullptr);
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)data, byteLength, [](void *, size_t, void *) {}, nullptr);
 		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(buffer);
 	}
@@ -2165,7 +2165,7 @@ namespace {
 		uint8_t *tex = kinc_g4_texture_lock(texture);
 
 		int byteLength = kinc_g4_texture_stride(texture) * texture->tex_height * texture->tex_depth;
-		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)tex, byteLength, [](void*, size_t, void*) {}, nullptr);
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)tex, byteLength, [](void *, size_t, void *) {}, nullptr);
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(abuffer);
 	}
@@ -2392,7 +2392,7 @@ namespace {
 		Local<Value> argv[1];
 		KromCallbackdata *cbd = (KromCallbackdata *)callbackdata;
 		if (body != NULL) {
-			std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)body, cbd->size > 0 ? cbd->size : strlen(body), [](void*, size_t, void*) {}, nullptr);
+			std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)body, cbd->size > 0 ? cbd->size : strlen(body), [](void *, size_t, void *) {}, nullptr);
 			argv[0] = ArrayBuffer::New(isolate, std::move(backing));
 		}
 		Local<Function> func = Local<Function>::New(isolate, cbd->func);
@@ -3056,7 +3056,7 @@ namespace {
 			stbi_write_jpg_to_func(&encode_image_func, NULL, w, h, 4, content->Data(), quality) :
 			stbi_write_png_to_func(&encode_image_func, NULL, w, h, 4, content->Data(), w * 4);
 
-		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void*)encode_data, encode_size, [](void*, size_t, void*) {}, nullptr);
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)encode_data, encode_size, [](void *, size_t, void *) {}, nullptr);
 		Local<ArrayBuffer> out = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(out);
 	}
@@ -4003,7 +4003,7 @@ namespace {
 		}
 	}
 
-	void key_down(int code) {
+	void key_down(int code, void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -4026,7 +4026,7 @@ namespace {
 		#endif
 	}
 
-	void key_up(int code) {
+	void key_up(int code, void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
@@ -4049,7 +4049,7 @@ namespace {
 		#endif
 	}
 
-	void key_press(unsigned int character) {
+	void key_press(unsigned int character, void *data) {
 		Locker locker{isolate};
 
 		Isolate::Scope isolate_scope(isolate);
