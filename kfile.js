@@ -112,6 +112,7 @@ if (platform === Platform.Windows) {
 	project.cmdArgs = [process.cwd() + '\\build\\krom'];
 	project.addLib('Dbghelp'); // Stack walk
 	project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
+	project.addLib('winmm'); // timeGetTime for V8
 	project.addLib(libdir + 'v8_monolith');
 	if (flags.with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
 		project.addDefine('WITH_D3DCOMPILER');
