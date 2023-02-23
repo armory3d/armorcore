@@ -721,7 +721,26 @@ class KromExporter {
 		defines.push('kha_g4');
 		defines.push('kha_a1');
 		defines.push('kha_a2');
-		defines.push('krom_' + platform);
+		if (process.argv.indexOf('android') >= 0) {
+			defines.push('krom_android');
+			defines.push('kha_android');
+		}
+		else if (process.argv.indexOf('ios') >= 0) {
+			defines.push('krom_ios');
+			defines.push('kha_ios');
+		}
+		else if (process.platform === 'win32') {
+			defines.push('krom_windows');
+			defines.push('kha_windows');
+		}
+		else if (process.platform === 'linux') {
+			defines.push('krom_linux');
+			defines.push('kha_linux');
+		}
+		else if (process.platform === 'darwin') {
+			defines.push('krom_darwin');
+			defines.push('kha_darwin');
+		}
 		return {
 			from: this.options.from.toString(),
 			to: path.join(this.sysdir(), 'krom.js.temp'),
