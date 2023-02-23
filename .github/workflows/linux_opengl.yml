@@ -22,4 +22,4 @@ jobs:
     - name: Get Submodules
       run: git submodule update --init --recursive
     - name: Compile
-      run: Kinc/make --compiler clang --compile
+      run: Kinc/make -g opengl --compiler clang --compile
