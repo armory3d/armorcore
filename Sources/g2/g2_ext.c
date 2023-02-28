@@ -1,17 +1,18 @@
 #include "g2_ext.h"
 
+#include <math.h>
 #include "g2.h"
 
 #define MATH_PI 3.14159265358979323846
 
 void g2_fill_circle(float cx, float cy, float radius, int segments/* = 0*/) {
 	if (segments <= 0) {
-		segments = floor(10 * sqrt(radius));
+		segments = (int)floor(10 * sqrt(radius));
 	}
 
-	float theta = 2 * MATH_PI / segments;
-	float c = cos(theta);
-	float s = sin(theta);
+	float theta = 2 * (float)MATH_PI / segments;
+	float c = (float)cos(theta);
+	float s = (float)sin(theta);
 
 	float x = radius;
 	float y = 0.0;
@@ -65,7 +66,7 @@ void g2_draw_cubic_bezier(float *x, float *y, int segments/* = 20*/, float stren
 	g2_calculate_cubic_bezier_point(0, x, y, q0);
 
 	for (int i = 0; i < (segments + 1); ++i) {
-		float t = i / segments;
+		float t = (float)(i / segments);
 		g2_calculate_cubic_bezier_point(t, x, y, q1);
 		g2_draw_line(q0[0], q0[1], q1[0], q1[1], strength);
 		q0[0] = q1[0];

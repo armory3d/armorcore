@@ -10,10 +10,11 @@
 #include <kinc/graphics4/vertexbuffer.h>
 #include <kinc/graphics4/vertexstructure.h>
 #include <kinc/io/filereader.h>
-#include <kinc/color.h>
 #include <kinc/math/matrix.h>
 #include <kinc/math/vector.h>
 #include <kinc/simd/float32x4.h>
+#include <kinc/color.h>
+#include <kinc/window.h>
 
 #define G2_BUFFER_SIZE 1000
 
@@ -120,12 +121,7 @@ kinc_vector2_t g2_matrix3x3_multvec(kinc_matrix3x3_t *m, kinc_vector2_t v) {
 }
 
 void g2_internal_set_projection_matrix(void) {
-	if (!kinc_g4_render_targets_inverted_y()) {
-		g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, kinc_window_width(0), kinc_window_height(0), 0.0f, 0.1f, 1000.0f);
-	}
-	else {
-		g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, kinc_window_width(0), kinc_window_height(0), 0.0f, 0.1f, 1000.0f);
-	}
+	g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, (float)kinc_window_width(0), (float)kinc_window_height(0), 0.0f, 0.1f, 1000.0f);
 }
 
 void g2_init(void) {
@@ -433,7 +429,7 @@ void g2_draw_scaled_sub_image(kinc_g4_texture_t *tex, float sx, float sy, float 
 }
 
 void g2_draw_scaled_image(kinc_g4_texture_t *tex, float dx, float dy, float dw, float dh) {
-	g2_draw_scaled_sub_image(tex, 0, 0, tex->tex_width, tex->tex_height, dx, dy, dw, dh);
+	g2_draw_scaled_sub_image(tex, 0, 0, (float)tex->tex_width, (float)tex->tex_height, dx, dy, dw, dh);
 }
 
 void g2_draw_sub_image(kinc_g4_texture_t *tex, float sx, float sy, float sw, float sh, float x, float y) {
@@ -441,7 +437,7 @@ void g2_draw_sub_image(kinc_g4_texture_t *tex, float sx, float sy, float sw, flo
 }
 
 void g2_draw_image(kinc_g4_texture_t *tex, float x, float y) {
-	g2_draw_scaled_sub_image(tex, 0, 0, tex->tex_width, tex->tex_height, x, y, tex->tex_width, tex->tex_height);
+	g2_draw_scaled_sub_image(tex, 0, 0, (float)tex->tex_width, (float)tex->tex_height, x, y, (float)tex->tex_width, (float)tex->tex_height);
 }
 
 void g2_draw_scaled_sub_render_target(kinc_g4_render_target_t *rt, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh) {
@@ -462,7 +458,7 @@ void g2_draw_scaled_sub_render_target(kinc_g4_render_target_t *rt, float sx, flo
 }
 
 void g2_draw_scaled_render_target(kinc_g4_render_target_t *rt, float dx, float dy, float dw, float dh) {
-	g2_draw_scaled_sub_render_target(rt, 0, 0, rt->width, rt->height, dx, dy, dw, dh);
+	g2_draw_scaled_sub_render_target(rt, 0, 0, (float)rt->width, (float)rt->height, dx, dy, dw, dh);
 }
 
 void g2_draw_sub_render_target(kinc_g4_render_target_t *rt, float sx, float sy, float sw, float sh, float x, float y) {
@@ -470,7 +466,7 @@ void g2_draw_sub_render_target(kinc_g4_render_target_t *rt, float sx, float sy, 
 }
 
 void g2_draw_render_target(kinc_g4_render_target_t *rt, float x, float y) {
-	g2_draw_scaled_sub_render_target(rt, 0, 0, rt->width, rt->height, x, y, rt->width, rt->height);
+	g2_draw_scaled_sub_render_target(rt, 0, 0, (float)rt->width, (float)rt->height, x, y, (float)rt->width, (float)rt->height);
 }
 
 void g2_colored_rect_set_verts(float btlx, float btly, float tplx, float tply, float tprx, float tpry, float btrx, float btry) {
@@ -617,19 +613,19 @@ void g2_fill_rect(float x, float y, float width, float height) {
 
 void g2_draw_rect(float x, float y, float width, float height, float strength) {
 	float hs = strength / 2.0f;
-	g2_fill_rect(x - hs, y - hs, width + strength, strength, g2_color); // Top
-	g2_fill_rect(x - hs, y + hs, strength, height - strength, g2_color); // Left
-	g2_fill_rect(x - hs, y + height - hs, width + strength, strength, g2_color); // Bottom
-	g2_fill_rect(x + width - hs, y + hs, strength, height - strength, g2_color); // Right
+	g2_fill_rect(x - hs, y - hs, width + strength, strength); // Top
+	g2_fill_rect(x - hs, y + hs, strength, height - strength); // Left
+	g2_fill_rect(x - hs, y + height - hs, width + strength, strength); // Bottom
+	g2_fill_rect(x + width - hs, y + hs, strength, height - strength); // Right
 }
 
-void g2_draw_line(float x1, float y1, float x2, float y2, float strength) {
+void g2_draw_line(float x0, float y0, float x1, float y1, float strength) {
 	kinc_vector2_t vec;
-	if (y2 == y1) {
+	if (y1 == y0) {
 		vec = (kinc_vector2_t){0.0f, -1.0f};
 	}
 	else {
-		vec = (kinc_vector2_t){1.0f, -(x2 - x1) / (y2 - y1)};
+		vec = (kinc_vector2_t){1.0f, -(x1 - x0) / (y1 - y0)};
 	}
 
 	float current_length = sqrtf(vec.x * vec.x + vec.y * vec.y);
@@ -639,12 +635,12 @@ void g2_draw_line(float x1, float y1, float x2, float y2, float strength) {
 		vec.y *= mul;
 	}
 
+	kinc_vector2_t p0 = (kinc_vector2_t){x0 + 0.5f * vec.x, y0 + 0.5f * vec.y};
 	kinc_vector2_t p1 = (kinc_vector2_t){x1 + 0.5f * vec.x, y1 + 0.5f * vec.y};
-	kinc_vector2_t p2 = (kinc_vector2_t){x2 + 0.5f * vec.x, y2 + 0.5f * vec.y};
+	kinc_vector2_t p2 = (kinc_vector2_t){p0.x - vec.x, p0.y - vec.y};
 	kinc_vector2_t p3 = (kinc_vector2_t){p1.x - vec.x, p1.y - vec.y};
-	kinc_vector2_t p4 = (kinc_vector2_t){p2.x - vec.x, p2.y - vec.y};
-	g2_fill_triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, g2_color);
-	g2_fill_triangle(p3.x, p3.y, p2.x, p2.y, p4.x, p4.y, g2_color);
+	g2_fill_triangle(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y);
+	g2_fill_triangle(p2.x, p2.y, p1.x, p1.y, p3.x, p3.y);
 }
 
 void g2_text_set_rect_verts(float btlx, float btly, float tplx, float tply, float tprx, float tpry, float btrx, float btry) {
@@ -839,8 +835,8 @@ void g2_font_load(g2_font_t *font, int size) {
 	img->baseline = (float)((int)((float)ascent * scale + 0.5f));
 	img->descent = (float)((int)((float)descent * scale + 0.5f));
 	img->line_gap = (float)((int)((float)line_gap * scale + 0.5f));
-	img->width = (float)width;
-	img->height = (float)height;
+	img->width = width;
+	img->height = height;
 	img->chars = baked;
 	img->owns_tex = true;
 	img->first_unused_y = status;
@@ -884,10 +880,10 @@ bool g2_font_get_baked_quad(g2_font_t *font, int size, g2_font_aligned_quad_t *q
 	int round_x = (int)(xpos + b.xoff + 0.5);
 	int round_y = (int)(ypos + b.yoff + 0.5);
 
-	q->x0 = round_x;
-	q->y0 = round_y;
-	q->x1 = round_x + b.x1 - b.x0;
-	q->y1 = round_y + b.y1 - b.y0;
+	q->x0 = (float)round_x;
+	q->y0 = (float)round_y;
+	q->x1 = (float)round_x + b.x1 - b.x0;
+	q->y1 = (float)round_y + b.y1 - b.y0;
 
 	q->s0 = b.x0 * ipw;
 	q->t0 = b.y0 * iph;
@@ -999,7 +995,7 @@ float g2_sub_string_width(g2_font_t *font, int font_size, const char *text, int 
 }
 
 float g2_string_width(g2_font_t *font, int font_size, const char *text) {
-	return g2_sub_string_width(font, font_size, text, 0, strlen(text));
+	return g2_sub_string_width(font, font_size, text, 0, (int)strlen(text));
 }
 
 void g2_image_end(void) {
@@ -1056,6 +1052,13 @@ void g2_set_render_target(kinc_g4_render_target_t *target) {
 	g2_is_render_target = true;
 	g2_end();
 	g2_begin();
-	kinc_g4_set_render_targets(&target, 1);
-	g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, target->width, target->height, 0.0f, 0.1f, 1000.0f);
+	kinc_g4_render_target_t *render_targets[1] = { target };
+	kinc_g4_set_render_targets(render_targets, 1);
+
+	if (kinc_g4_render_targets_inverted_y()) {
+		g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, (float)target->width, 0.0f, (float)target->height, 0.1f, 1000.0f);
+	}
+	else {
+		g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, (float)target->width, (float)target->height, 0.0f, 0.1f, 1000.0f);
+	}
 }

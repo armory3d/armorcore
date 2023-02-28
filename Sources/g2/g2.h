@@ -31,10 +31,10 @@ void g2_draw_scaled_sub_render_target(kinc_g4_render_target_t *rt, float sx, flo
 void g2_draw_scaled_render_target(kinc_g4_render_target_t *rt, float dx, float dy, float dw, float dh);
 void g2_draw_sub_render_target(kinc_g4_render_target_t *rt, float sx, float sy, float sw, float sh, float x, float y);
 void g2_draw_render_target(kinc_g4_render_target_t *rt, float x, float y);
-void g2_fill_triangle(float x1, float y1, float x2, float y2, float x3, float y3);
+void g2_fill_triangle(float x0, float y0, float x1, float y1, float x2, float y2);
 void g2_fill_rect(float x, float y, float width, float height);
 void g2_draw_rect(float x, float y, float width, float height, float strength);
-void g2_draw_line(float x1, float y1, float x2, float y2, float strength);
+void g2_draw_line(float x0, float y0, float x1, float y1, float strength);
 void g2_draw_string(const char *text, float x, float y);
 void g2_end(void);
 void g2_set_color(uint32_t color);
