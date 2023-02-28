@@ -1,1 +1,0 @@
-node .\bin\tick-processor.js --preprocess .\isolate-krom-v8.log > krom.json

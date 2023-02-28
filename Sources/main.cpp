@@ -151,7 +151,6 @@ namespace {
 	char **_argv;
 	bool enable_sound = true;
 	bool enable_window = true;
-	bool profile = false;
 	bool snapshot = false;
 	bool stderr_created = false;
 	bool paused = false;
@@ -3452,7 +3451,6 @@ namespace {
 		#ifdef KORE_IOS
 		flags += "--jitless ";
 		#endif
-		if (profile) flags += "--logfile=krom-v8.log --prof --log-source-code ";
 		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
 
 		V8::Initialize();
@@ -4382,9 +4380,6 @@ int kickstart(int argc, char **argv) {
 		}
 		else if (strcmp(argv[i], "--nowindow") == 0) {
 			enable_window = false;
-		}
-		else if (strcmp(argv[i], "--prof") == 0) {
-			profile = true;
 		}
 		else if (strcmp(argv[i], "--snapshot") == 0) {
 			snapshot = true;
