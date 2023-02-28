@@ -1,22 +1,7 @@
 package kha.graphics2;
 
 import kha.arrays.ByteArray;
-import kha.graphics4.PipelineState;
-import kha.graphics4.DepthStencilFormat;
-import kha.graphics4.BlendingOperation;
-import kha.graphics4.BlendingFactor;
-import kha.graphics4.ConstantLocation;
-import kha.graphics4.CullMode;
-import kha.graphics4.IndexBuffer;
-import kha.graphics4.MipMapFilter;
-import kha.graphics4.TextureAddressing;
-import kha.graphics4.TextureFilter;
-import kha.graphics4.TextureFormat;
-import kha.graphics4.TextureUnit;
-import kha.graphics4.Usage;
-import kha.graphics4.VertexBuffer;
-import kha.graphics4.VertexData;
-import kha.graphics4.VertexStructure;
+import kha.graphics4.*;
 import kha.math.FastMatrix3;
 import kha.math.FastMatrix4;
 import kha.math.FastVector2;
@@ -598,7 +583,7 @@ class TextShaderPainter {
 	static var rectVertices: ByteArray;
 	static var indexBuffer: IndexBuffer;
 
-	var font: Font;
+	public var font: Font;
 
 	static var lastTexture: Image;
 
@@ -747,10 +732,6 @@ class TextShaderPainter {
 		this.bilinear = bilinear;
 	}
 
-	public function setFont(font: Font): Void {
-		this.font = font;
-	}
-
 	static function findIndex(charCode: Int): Int {
 		// var glyphs = kha.graphics2.Graphics.fontGlyphs;
 		var blocks = Font.KravurImage.charBlocks;
@@ -795,34 +776,6 @@ class TextShaderPainter {
 		}
 	}
 
-	public function drawCharacters(text: Array<Int>, start: Int, length: Int, opacity: FastFloat, color: Color, x: Float, y: Float,
-			transformation: FastMatrix3): Void {
-		var font = this.font._get(fontSize);
-		var tex = font.getTexture();
-		if (lastTexture != null && tex != lastTexture)
-			drawBuffer();
-		lastTexture = tex;
-
-		var xpos = x;
-		var ypos = y;
-		for (i in start...start + length) {
-			var q = font.getBakedQuad(bakedQuadCache, findIndex(text[i]), xpos, ypos);
-			if (q != null) {
-				if (bufferIndex + 1 >= bufferSize)
-					drawBuffer();
-				setRectColors(opacity, color);
-				setRectTexCoords(q.s0, q.t0, q.s1, q.t1);
-				var p0 = transformation.multvec(new FastVector2(q.x0, q.y1)); // bottom-left
-				var p1 = transformation.multvec(new FastVector2(q.x0, q.y0)); // top-left
-				var p2 = transformation.multvec(new FastVector2(q.x1, q.y0)); // top-right
-				var p3 = transformation.multvec(new FastVector2(q.x1, q.y1)); // bottom-right
-				setRectVertices(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-				xpos += q.xadvance;
-				++bufferIndex;
-			}
-		}
-	}
-
 	public function end(): Void {
 		if (bufferIndex > 0)
 			drawBuffer();
@@ -831,166 +784,83 @@ class TextShaderPainter {
 }
 
 class Graphics {
-	var myColor: Color;
-	var myFont: Font;
-	var projectionMatrix: FastMatrix4;
+	public static var fontGlyphs: Array<Int> = [for (i in 32...256) i];
+	static var current: Graphics = null;
+	static var thrown = false;
 
 	public var imageScaleQuality(get, set): ImageScaleQuality;
-	public var mipmapScaleQuality(get, set): ImageScaleQuality;
-	public var color(get, set): Color;
+	public var color: Color;
 	public var font(get, set): Font;
 	public var fontSize(get, set): Int;
-
-	public static var fontGlyphs: Array<Int> = [for (i in 32...256) i];
-
-	// works on the top of the transformation stack
-	public var transformation(get, set): FastMatrix3;
-
-	inline function get_transformation(): FastMatrix3 {
-		return transformations[transformationIndex];
-	}
-
-	inline function set_transformation(transformation: FastMatrix3): FastMatrix3 {
-		setTransformation(transformation);
-		transformations[transformationIndex].setFrom(transformation);
-		return transformation;
-	}
-
-	public inline function pushTransformation(trans: FastMatrix3): Void {
-		transformationIndex++;
-		if (transformationIndex == transformations.length) {
-			transformations.push(FastMatrix3.identity());
-		}
-		transformations[transformationIndex].setFrom(trans);
-		setTransformation(get_transformation());
-	}
-
-	public function popTransformation(): FastMatrix3 {
-		transformationIndex--;
-		setTransformation(get_transformation());
-		return transformations[transformationIndex + 1];
-	}
-
-	function setTransformation(transformation: FastMatrix3): Void {}
-
-	function setOpacity(opacity: Float): Void {}
-
-	public function scale(x: FastFloat, y: FastFloat): Void {
-		transformation.setFrom(kha.math.FastMatrix3.scale(x, y).multmat(transformation));
-	}
-
-	inline function translation(tx: FastFloat, ty: FastFloat): FastMatrix3 {
-		return FastMatrix3.translation(tx, ty).multmat(transformation);
-	}
-
-	public function translate(tx: FastFloat, ty: FastFloat): Void {
-		transformation.setFrom(translation(tx, ty));
-	}
-
-	public function pushTranslation(tx: FastFloat, ty: FastFloat): Void {
-		pushTransformation(translation(tx, ty));
-	}
-
-	inline function rotation(angle: FastFloat, centerx: FastFloat, centery: FastFloat): FastMatrix3 {
-		return FastMatrix3.translation(centerx, centery)
-			.multmat(FastMatrix3.rotation(angle))
-			.multmat(FastMatrix3.translation(-centerx, -centery))
-			.multmat(transformation);
-	}
-
-	public function rotate(angle: FastFloat, centerx: FastFloat, centery: FastFloat): Void {
-		transformation.setFrom(rotation(angle, centerx, centery));
-	}
-
-	public function pushRotation(angle: FastFloat, centerx: FastFloat, centery: FastFloat): Void {
-		pushTransformation(rotation(angle, centerx, centery));
-	}
-
-	public var opacity(get, set): Float; // works on the top of the opacity stack
-
-	public function pushOpacity(opacity: Float): Void {
-		setOpacity(opacity);
-		opacities.push(opacity);
-	}
-
-	public function popOpacity(): Float {
-		var ret = opacities.pop();
-		setOpacity(get_opacity());
-		return ret;
-	}
-
-	function get_opacity(): Float {
-		return opacities[opacities.length - 1];
-	}
-
-	function set_opacity(opacity: Float): Float {
-		setOpacity(opacity);
-		return opacities[opacities.length - 1] = opacity;
-	}
-
-	private var pipe: PipelineState;
-
 	public var pipeline(get, set): PipelineState;
+	var projectionMatrix: FastMatrix4;
+	var transformation = FastMatrix3.identity();
+	var imagePainter: ImageShaderPainter;
+	var coloredPainter: ColoredShaderPainter;
+	var textPainter: TextShaderPainter;
+	var canvas: Canvas;
+	var g: kha.graphics4.Graphics;
+	var pipe: PipelineState;
+	var myImageScaleQuality = ImageScaleQuality.Low;
+	var pipelineCache = new Map<PipelineState, PipelineCache>();
+	var lastPipeline: PipelineState = null;
 
-	private function get_pipeline(): PipelineState {
+	public function setTransformation(trans: FastMatrix3): Void {
+		transformation.setFrom(trans);
+	}
+
+	public function clearTransformation(): Void {
+		transformation = FastMatrix3.identity();
+	}
+
+	function get_pipeline(): PipelineState {
 		return pipe;
 	}
 
-	private function set_pipeline(pipeline: PipelineState): PipelineState {
+	function set_pipeline(pipeline: PipelineState): PipelineState {
 		setPipeline(pipeline);
 		return pipe = pipeline;
 	}
 
-	var transformations: Array<FastMatrix3>;
-	var transformationIndex: Int;
-	var opacities: Array<Float>;
-	var myFontSize: Int;
+	function get_font(): Font {
+		return textPainter.font;
+	}
 
-	var imagePainter: ImageShaderPainter;
-	var coloredPainter: ColoredShaderPainter;
-	var textPainter: TextShaderPainter;
+	function set_font(font: Font): Font {
+		return textPainter.font = font;
+	}
 
-	public static var videoPipeline: PipelineState;
+	function get_fontSize(): Int {
+		return textPainter.fontSize;
+	}
 
-	var canvas: Canvas;
-	var g: kha.graphics4.Graphics;
+	function set_fontSize(value: Int): Int {
+		return textPainter.fontSize = value;
+	}
 
-	static var current: Graphics = null;
+	function get_imageScaleQuality(): ImageScaleQuality {
+		return myImageScaleQuality;
+	}
+
+	function set_imageScaleQuality(value: ImageScaleQuality): ImageScaleQuality {
+		if (value == myImageScaleQuality) {
+			return value;
+		}
+		imagePainter.setBilinearFilter(value == ImageScaleQuality.High);
+		textPainter.setBilinearFilter(value == ImageScaleQuality.High);
+		return myImageScaleQuality = value;
+	}
 
 	public function new(canvas: Canvas) {
-		transformations = [FastMatrix3.identity()];
-		transformationIndex = 0;
-		opacities = [1];
-		myFontSize = 12;
 		pipe = null;
-
 		color = Color.White;
 		this.canvas = canvas;
 		g = canvas.g4;
 		imagePainter = new ImageShaderPainter(g);
 		coloredPainter = new ColoredShaderPainter(g);
 		textPainter = new TextShaderPainter(g);
-		textPainter.fontSize = fontSize;
 		projectionMatrix = FastMatrix4.identity();
 		setProjection();
-
-		if (videoPipeline == null) {
-			videoPipeline = createImagePipeline(createImageVertexStructure());
-			videoPipeline.fragmentShader = Shaders.getFragment("painter-video.frag");
-			videoPipeline.vertexShader = Shaders.getVertex("painter-video.vert");
-			videoPipeline.compile();
-		}
-	}
-
-	static function upperPowerOfTwo(v: Int): Int {
-		v--;
-		v |= v >>> 1;
-		v |= v >>> 2;
-		v |= v >>> 4;
-		v |= v >>> 8;
-		v |= v >>> 16;
-		v++;
-		return v;
 	}
 
 	function setProjection(): Void {
@@ -1000,10 +870,6 @@ class Graphics {
 			projectionMatrix.setFrom(FastMatrix4.orthogonalProjection(0, width, height, 0, 0.1, 1000));
 		}
 		else {
-			if (!Image.nonPow2Supported) {
-				width = upperPowerOfTwo(width);
-				height = upperPowerOfTwo(height);
-			}
 			if (Image.renderTargetsInvertedY()) {
 				projectionMatrix.setFrom(FastMatrix4.orthogonalProjection(0, width, 0, height, 0.1, 1000));
 			}
@@ -1025,7 +891,7 @@ class Graphics {
 		var p2 = transformation.multvec(new FastVector2(x, y));
 		var p3 = transformation.multvec(new FastVector2(xw, y));
 		var p4 = transformation.multvec(new FastVector2(xw, yh));
-		imagePainter.drawImage(img, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, opacity, this.color);
+		imagePainter.drawImage(img, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, 1.0, this.color);
 	}
 
 	public function drawScaledSubImage(img: kha.Image, sx: FastFloat, sy: FastFloat, sw: FastFloat, sh: FastFloat, dx: FastFloat, dy: FastFloat,
@@ -1036,15 +902,7 @@ class Graphics {
 		var p2 = transformation.multvec(new FastVector2(dx, dy));
 		var p3 = transformation.multvec(new FastVector2(dx + dw, dy));
 		var p4 = transformation.multvec(new FastVector2(dx + dw, dy + dh));
-		imagePainter.drawImage2(img, sx, sy, sw, sh, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, opacity, this.color);
-	}
-
-	function get_color(): Color {
-		return myColor;
-	}
-
-	function set_color(color: Color): Color {
-		return myColor = color;
+		imagePainter.drawImage2(img, sx, sy, sw, sh, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, 1.0, this.color);
 	}
 
 	public function drawRect(x: Float, y: Float, width: Float, height: Float, strength: Float = 1.0): Void {
@@ -1055,25 +913,25 @@ class Graphics {
 		var p2 = transformation.multvec(new FastVector2(x - strength / 2, y - strength / 2)); // top-left
 		var p3 = transformation.multvec(new FastVector2(x + width + strength / 2, y - strength / 2)); // top-right
 		var p4 = transformation.multvec(new FastVector2(x + width + strength / 2, y + strength / 2)); // bottom-right
-		coloredPainter.fillRect(opacity, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y); // top
+		coloredPainter.fillRect(1.0, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y); // top
 
 		p1.setFrom(transformation.multvec(new FastVector2(x - strength / 2, y + height - strength / 2)));
 		p2.setFrom(transformation.multvec(new FastVector2(x - strength / 2, y + strength / 2)));
 		p3.setFrom(transformation.multvec(new FastVector2(x + strength / 2, y + strength / 2)));
 		p4.setFrom(transformation.multvec(new FastVector2(x + strength / 2, y + height - strength / 2)));
-		coloredPainter.fillRect(opacity, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y); // left
+		coloredPainter.fillRect(1.0, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y); // left
 
 		p1.setFrom(transformation.multvec(new FastVector2(x - strength / 2, y + height + strength / 2)));
 		p2.setFrom(transformation.multvec(new FastVector2(x - strength / 2, y + height - strength / 2)));
 		p3.setFrom(transformation.multvec(new FastVector2(x + width + strength / 2, y + height - strength / 2)));
 		p4.setFrom(transformation.multvec(new FastVector2(x + width + strength / 2, y + height + strength / 2)));
-		coloredPainter.fillRect(opacity, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y); // bottom
+		coloredPainter.fillRect(1.0, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y); // bottom
 
 		p1.setFrom(transformation.multvec(new FastVector2(x + width - strength / 2, y + height - strength / 2)));
 		p2.setFrom(transformation.multvec(new FastVector2(x + width - strength / 2, y + strength / 2)));
 		p3.setFrom(transformation.multvec(new FastVector2(x + width + strength / 2, y + strength / 2)));
 		p4.setFrom(transformation.multvec(new FastVector2(x + width + strength / 2, y + height - strength / 2)));
-		coloredPainter.fillRect(opacity, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y); // right
+		coloredPainter.fillRect(1.0, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y); // right
 	}
 
 	public function fillRect(x: Float, y: Float, width: Float, height: Float): Void {
@@ -1084,38 +942,14 @@ class Graphics {
 		var p2 = transformation.multvec(new FastVector2(x, y));
 		var p3 = transformation.multvec(new FastVector2(x + width, y));
 		var p4 = transformation.multvec(new FastVector2(x + width, y + height));
-		coloredPainter.fillRect(opacity, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y);
+		coloredPainter.fillRect(1.0, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y);
 	}
 
 	public function drawString(text: String, x: Float, y: Float): Void {
 		imagePainter.end();
 		coloredPainter.end();
 
-		textPainter.drawString(text, opacity, color, x, y, transformation);
-	}
-
-	public function drawCharacters(text: Array<Int>, start: Int, length: Int, x: Float, y: Float): Void {
-		imagePainter.end();
-		coloredPainter.end();
-
-		textPainter.drawCharacters(text, start, length, opacity, color, x, y, transformation);
-	}
-
-	function get_font(): Font {
-		return myFont;
-	}
-
-	function set_font(font: Font): Font {
-		textPainter.setFont(font);
-		return myFont = font;
-	}
-
-	function get_fontSize(): Int {
-		return myFontSize;
-	}
-
-	function set_fontSize(value: Int): Int {
-		return myFontSize = textPainter.fontSize = value;
+		textPainter.drawString(text, 1.0, color, x, y, transformation);
 	}
 
 	public function drawLine(x1: Float, y1: Float, x2: Float, y2: Float, strength: Float = 1.0): Void {
@@ -1138,8 +972,8 @@ class Graphics {
 		p3.setFrom(transformation.multvec(p3));
 		p4.setFrom(transformation.multvec(p4));
 
-		coloredPainter.fillTriangle(opacity, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-		coloredPainter.fillTriangle(opacity, color, p3.x, p3.y, p2.x, p2.y, p4.x, p4.y);
+		coloredPainter.fillTriangle(1.0, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+		coloredPainter.fillTriangle(1.0, color, p3.x, p3.y, p2.x, p2.y, p4.x, p4.y);
 	}
 
 	public function fillTriangle(x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float) {
@@ -1149,38 +983,8 @@ class Graphics {
 		var p1 = transformation.multvec(new FastVector2(x1, y1));
 		var p2 = transformation.multvec(new FastVector2(x2, y2));
 		var p3 = transformation.multvec(new FastVector2(x3, y3));
-		coloredPainter.fillTriangle(opacity, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+		coloredPainter.fillTriangle(1.0, color, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
 	}
-
-	var myImageScaleQuality: ImageScaleQuality = ImageScaleQuality.Low;
-
-	function get_imageScaleQuality(): ImageScaleQuality {
-		return myImageScaleQuality;
-	}
-
-	function set_imageScaleQuality(value: ImageScaleQuality): ImageScaleQuality {
-		if (value == myImageScaleQuality) {
-			return value;
-		}
-		imagePainter.setBilinearFilter(value == ImageScaleQuality.High);
-		textPainter.setBilinearFilter(value == ImageScaleQuality.High);
-		return myImageScaleQuality = value;
-	}
-
-	var myMipmapScaleQuality: ImageScaleQuality = ImageScaleQuality.Low;
-
-	function get_mipmapScaleQuality(): ImageScaleQuality {
-		return myMipmapScaleQuality;
-	}
-
-	function set_mipmapScaleQuality(value: ImageScaleQuality): ImageScaleQuality {
-		imagePainter.setBilinearMipmapFilter(value == ImageScaleQuality.High);
-		// textPainter.setBilinearMipmapFilter(value == ImageScaleQuality.High); // TODO (DK) implement for fonts as well?
-		return myMipmapScaleQuality = value;
-	}
-
-	var pipelineCache = new Map<PipelineState, PipelineCache>();
-	var lastPipeline: PipelineState = null;
 
 	function setPipeline(pipeline: PipelineState): Void {
 		if (pipeline == lastPipeline) {
@@ -1205,35 +1009,17 @@ class Graphics {
 		}
 	}
 
-	var scissorEnabled = false;
-	var scissorX: Int = -1;
-	var scissorY: Int = -1;
-	var scissorW: Int = -1;
-	var scissorH: Int = -1;
-
 	public function scissor(x: Int, y: Int, width: Int, height: Int): Void {
-		// if (!scissorEnabled || x != scissorX || y != scissorY || width != scissorW || height != scissorH) {
-		scissorEnabled = true;
-		scissorX = x;
-		scissorY = y;
-		scissorW = width;
-		scissorH = height;
 		flush();
 		g.scissor(x, y, width, height);
-		// }
 	}
 
 	public function disableScissor(): Void {
-		// if (scissorEnabled) {
-		scissorEnabled = false;
 		flush();
 		g.disableScissor();
-		// }
 	}
 
-	static var thrown = false;
-
-	public function begin(clear: Bool = true, clearColor: Color = null): Void {
+	public function begin(clear = true, clearColor: Color = null): Void {
 		if (current == null) {
 			current = this;
 		}
@@ -1242,8 +1028,7 @@ class Graphics {
 		}
 
 		g.begin();
-		if (clear)
-			this.clear(clearColor);
+		if (clear) this.clear(clearColor);
 		setProjection();
 	}
 
@@ -1268,14 +1053,6 @@ class Graphics {
 		else {
 			if (!thrown) { thrown = true; throw "Begin before you end"; }
 		}
-	}
-
-	function drawVideoInternal(video: kha.Video, x: Float, y: Float, width: Float, height: Float): Void {}
-
-	public function drawVideo(video: kha.Video, x: Float, y: Float, width: Float, height: Float): Void {
-		setPipeline(videoPipeline);
-		drawVideoInternal(video, x, y, width, height);
-		setPipeline(null);
 	}
 
 	public static function createImageVertexStructure(): VertexStructure {
@@ -1343,11 +1120,5 @@ class Graphics {
 
 	public function drawScaledImage(img: Image, dx: FastFloat, dy: FastFloat, dw: FastFloat, dh: FastFloat): Void {
 		drawScaledSubImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
-	}
-
-	public function drawArc(cx: Float, cy: Float, radius: Float, sAngle: Float, eAngle: Float, strength: Float = 1, ccw: Bool = false, segments: Int = 0): Void {
-	}
-
-	public function drawCircle(cx: Float, cy: Float, radius: Float, strength: Float = 1, segments: Int = 0): Void {
 	}
 }
