@@ -21,7 +21,7 @@ typedef struct g2_font {
 	int offset;
 } g2_font_t;
 
-void g2_init(void);
+void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_frag_size, void *colored_vert, int colored_vert_size, void *colored_frag, int colored_frag_size, void *text_vert, int text_vert_size, void *text_frag, int text_frag_size);
 void g2_begin(void);
 void g2_draw_scaled_sub_image(kinc_g4_texture_t *tex, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh);
 void g2_draw_scaled_image(kinc_g4_texture_t *tex, float dx, float dy, float dw, float dh);
@@ -40,7 +40,7 @@ void g2_end(void);
 void g2_set_color(uint32_t color);
 uint32_t g2_get_color();
 void g2_set_font(g2_font_t *font, int size);
-void g2_font_init(g2_font_t *font, const char *font_path);
+void g2_font_init(g2_font_t *font, void *blob);
 bool g2_font_has_glyph(int glyph);
 void g2_font_add_glyphs(int *glyphs, int count);
 float g2_font_height(g2_font_t *font, int font_size);

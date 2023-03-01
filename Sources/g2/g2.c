@@ -19,7 +19,7 @@
 #define G2_BUFFER_SIZE 1000
 
 static kinc_matrix4x4_t g2_projection_matrix;
-static bool g2_bilinear_filter = false;
+static bool g2_bilinear_filter = true;
 static uint32_t g2_color = 0;
 static g2_font_t *g2_font = NULL;
 static int g2_font_size;
@@ -120,37 +120,26 @@ kinc_vector2_t g2_matrix3x3_multvec(kinc_matrix3x3_t *m, kinc_vector2_t v) {
 	return (kinc_vector2_t){x, y};
 }
 
-void g2_internal_set_projection_matrix(void) {
-	g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, (float)kinc_window_width(0), (float)kinc_window_height(0), 0.0f, 0.1f, 1000.0f);
+void g2_internal_set_projection_matrix(kinc_g4_render_target_t *target) {
+	if (target != NULL) {
+		if (kinc_g4_render_targets_inverted_y()) {
+			g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, (float)target->width, 0.0f, (float)target->height, 0.1f, 1000.0f);
+		}
+		else {
+			g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, (float)target->width, (float)target->height, 0.0f, 0.1f, 1000.0f);
+		}
+	}
+	else {
+		g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, (float)kinc_window_width(0), (float)kinc_window_height(0), 0.0f, 0.1f, 1000.0f);
+	}
 }
 
-void g2_init(void) {
-	g2_internal_set_projection_matrix();
+void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_frag_size, void *colored_vert, int colored_vert_size, void *colored_frag, int colored_frag_size, void *text_vert, int text_vert_size, void *text_frag, int text_frag_size) {
+	g2_internal_set_projection_matrix(NULL);
 
 	// Image painter
-	{
-		kinc_file_reader_t reader;
-		kinc_file_reader_open(&reader, "painter-image.vert", KINC_FILE_TYPE_ASSET);
-		size_t size = kinc_file_reader_size(&reader);
-		uint8_t *data = malloc(size);
-		kinc_file_reader_read(&reader, data, size);
-		kinc_file_reader_close(&reader);
-
-		kinc_g4_shader_init(&image_vert_shader, data, size, KINC_G4_SHADER_TYPE_VERTEX);
-		free(data);
-	}
-
-	{
-		kinc_file_reader_t reader;
-		kinc_file_reader_open(&reader, "painter-image.frag", KINC_FILE_TYPE_ASSET);
-		size_t size = kinc_file_reader_size(&reader);
-		uint8_t *data = malloc(size);
-		kinc_file_reader_read(&reader, data, size);
-		kinc_file_reader_close(&reader);
-
-		kinc_g4_shader_init(&image_frag_shader, data, size, KINC_G4_SHADER_TYPE_FRAGMENT);
-		free(data);
-	}
+	kinc_g4_shader_init(&image_vert_shader, image_vert, image_vert_size, KINC_G4_SHADER_TYPE_VERTEX);
+	kinc_g4_shader_init(&image_frag_shader, image_frag, image_frag_size, KINC_G4_SHADER_TYPE_FRAGMENT);
 
 	{
 		kinc_g4_vertex_structure_t structure;
@@ -163,9 +152,9 @@ void g2_init(void) {
 		image_pipeline.input_layout[1] = NULL;
 		image_pipeline.vertex_shader = &image_vert_shader;
 		image_pipeline.fragment_shader = &image_frag_shader;
-		image_pipeline.blend_source = KINC_G4_BLEND_SOURCE_ALPHA;
+		image_pipeline.blend_source = KINC_G4_BLEND_ONE;
 		image_pipeline.blend_destination = KINC_G4_BLEND_INV_SOURCE_ALPHA;
-		image_pipeline.alpha_blend_source = KINC_G4_BLEND_SOURCE_ALPHA;
+		image_pipeline.alpha_blend_source = KINC_G4_BLEND_ONE;
 		image_pipeline.alpha_blend_destination = KINC_G4_BLEND_INV_SOURCE_ALPHA;
 		kinc_g4_pipeline_compile(&image_pipeline);
 
@@ -189,29 +178,8 @@ void g2_init(void) {
 	}
 
 	// Colored painter
-	{
-		kinc_file_reader_t reader;
-		kinc_file_reader_open(&reader, "painter-colored.vert", KINC_FILE_TYPE_ASSET);
-		size_t size = kinc_file_reader_size(&reader);
-		uint8_t *data = malloc(size);
-		kinc_file_reader_read(&reader, data, size);
-		kinc_file_reader_close(&reader);
-
-		kinc_g4_shader_init(&colored_vert_shader, data, size, KINC_G4_SHADER_TYPE_VERTEX);
-		free(data);
-	}
-
-	{
-		kinc_file_reader_t reader;
-		kinc_file_reader_open(&reader, "painter-colored.frag", KINC_FILE_TYPE_ASSET);
-		size_t size = kinc_file_reader_size(&reader);
-		uint8_t *data = malloc(size);
-		kinc_file_reader_read(&reader, data, size);
-		kinc_file_reader_close(&reader);
-
-		kinc_g4_shader_init(&colored_frag_shader, data, size, KINC_G4_SHADER_TYPE_FRAGMENT);
-		free(data);
-	}
+	kinc_g4_shader_init(&colored_vert_shader, colored_vert, colored_vert_size, KINC_G4_SHADER_TYPE_VERTEX);
+	kinc_g4_shader_init(&colored_frag_shader, colored_frag, colored_frag_size, KINC_G4_SHADER_TYPE_FRAGMENT);
 
 	{
 		kinc_g4_vertex_structure_t structure;
@@ -223,9 +191,9 @@ void g2_init(void) {
 		colored_pipeline.input_layout[1] = NULL;
 		colored_pipeline.vertex_shader = &colored_vert_shader;
 		colored_pipeline.fragment_shader = &colored_frag_shader;
-		colored_pipeline.blend_source = KINC_G4_BLEND_SOURCE_ALPHA;
+		colored_pipeline.blend_source = KINC_G4_BLEND_ONE;
 		colored_pipeline.blend_destination = KINC_G4_BLEND_INV_SOURCE_ALPHA;
-		colored_pipeline.alpha_blend_source = KINC_G4_BLEND_SOURCE_ALPHA;
+		colored_pipeline.alpha_blend_source = KINC_G4_BLEND_ONE;
 		colored_pipeline.alpha_blend_destination = KINC_G4_BLEND_INV_SOURCE_ALPHA;
 		kinc_g4_pipeline_compile(&colored_pipeline);
 
@@ -260,29 +228,8 @@ void g2_init(void) {
 	}
 
 	// Text painter
-	{
-		kinc_file_reader_t reader;
-		kinc_file_reader_open(&reader, "painter-text.vert", KINC_FILE_TYPE_ASSET);
-		size_t size = kinc_file_reader_size(&reader);
-		uint8_t *data = malloc(size);
-		kinc_file_reader_read(&reader, data, size);
-		kinc_file_reader_close(&reader);
-
-		kinc_g4_shader_init(&text_vert_shader, data, size, KINC_G4_SHADER_TYPE_VERTEX);
-		free(data);
-	}
-
-	{
-		kinc_file_reader_t reader;
-		kinc_file_reader_open(&reader, "painter-text.frag", KINC_FILE_TYPE_ASSET);
-		size_t size = kinc_file_reader_size(&reader);
-		uint8_t *data = malloc(size);
-		kinc_file_reader_read(&reader, data, size);
-		kinc_file_reader_close(&reader);
-
-		kinc_g4_shader_init(&text_frag_shader, data, size, KINC_G4_SHADER_TYPE_FRAGMENT);
-		free(data);
-	}
+	kinc_g4_shader_init(&text_vert_shader, text_vert, text_vert_size, KINC_G4_SHADER_TYPE_VERTEX);
+	kinc_g4_shader_init(&text_frag_shader, text_frag, text_frag_size, KINC_G4_SHADER_TYPE_FRAGMENT);
 
 	{
 		kinc_g4_vertex_structure_t structure;
@@ -395,7 +342,8 @@ void g2_draw_image_buffer(bool end) {
 		kinc_g4_render_target_use_color_as_texture(image_last_render_target, image_tex_unit);
 	}
 	kinc_g4_set_texture_addressing(image_tex_unit, KINC_G4_TEXTURE_ADDRESSING_CLAMP, KINC_G4_TEXTURE_ADDRESSING_CLAMP);
-	kinc_g4_set_texture_mipmap_filter(image_tex_unit, g2_bilinear_filter ? KINC_G4_MIPMAP_FILTER_LINEAR : KINC_G4_MIPMAP_FILTER_NONE);
+	// kinc_g4_set_texture_mipmap_filter(image_tex_unit, g2_bilinear_filter ? KINC_G4_MIPMAP_FILTER_LINEAR : KINC_G4_MIPMAP_FILTER_NONE);
+	kinc_g4_set_texture_mipmap_filter(image_tex_unit, KINC_G4_MIPMAP_FILTER_NONE);
 	kinc_g4_set_texture_minification_filter(image_tex_unit, g2_bilinear_filter ? KINC_G4_TEXTURE_FILTER_LINEAR : KINC_G4_TEXTURE_FILTER_POINT);
 	kinc_g4_set_texture_magnification_filter(image_tex_unit, g2_bilinear_filter ? KINC_G4_TEXTURE_FILTER_LINEAR : KINC_G4_TEXTURE_FILTER_POINT);
 	kinc_g4_draw_indexed_vertices_from_to(image_buffer_start * 2 * 3, (image_buffer_index - image_buffer_start) * 2 * 3);
@@ -899,13 +847,14 @@ void g2_draw_string(const char *text, float x, float y) {
 	g2_image_end();
 	g2_colored_end();
 
-	kinc_g4_texture_t *tex = g2_font_get_texture(g2_font, g2_font_size);
+	g2_font_image_t *img = g2_font_get_image_internal(g2_font, g2_font_size);
+	kinc_g4_texture_t *tex = img->tex;
 
 	if (text_last_texture != NULL && tex != text_last_texture) g2_text_draw_buffer(false);
 	text_last_texture = tex;
 
 	float xpos = x;
-	float ypos = y;
+	float ypos = y + img->baseline;
 	g2_font_aligned_quad_t q;
 	for (int i = 0; text[i] != 0; ++i) {
 		if (g2_font_get_baked_quad(g2_font, g2_font_size, &q, text[i], xpos, ypos)) {
@@ -924,18 +873,7 @@ void g2_draw_string(const char *text, float x, float y) {
 	}
 }
 
-void g2_font_load_blob_internal(g2_font_t *font, const char *font_path) {
-	kinc_file_reader_t fh;
-	bool res = kinc_file_reader_open(&fh, font_path, KINC_FILE_TYPE_ASSET);
-	size_t sz = kinc_file_reader_size(&fh);
-	font->blob = malloc(sz);
-	assert(font->blob != NULL);
-	int read_sz = kinc_file_reader_read(&fh, font->blob, sz);
-	assert(read_sz == sz);
-	kinc_file_reader_close(&fh);
-}
-
-void g2_font_init(g2_font_t *font, const char *font_path) {
+void g2_font_init(g2_font_t *font, void *blob) {
 	if (g2_font_glyphs == NULL) {
 		g2_font_glyphs = (int *)malloc(224 * sizeof(int));
 		for (int i = 32; i < 256; ++i) g2_font_glyphs[i - 32] = i;
@@ -946,11 +884,10 @@ void g2_font_init(g2_font_t *font, const char *font_path) {
 		g2_font_glyph_blocks[1] = 255;
 	}
 
-	font->blob = NULL;
+	font->blob = blob;
 	font->images = NULL;
 	font->m_images_len = 0;
 	font->m_capacity = 0;
-	g2_font_load_blob_internal(font, font_path);
 	font->offset = stbtt_GetFontOffsetForIndex(font->blob, 0);
 	if (font->offset == -1) {
 		font->offset = stbtt_GetFontOffsetForIndex(font->blob, 0);
@@ -1045,7 +982,7 @@ void g2_restore_render_target(void) {
 	g2_end();
 	g2_begin();
 	kinc_g4_restore_render_target();
-	g2_internal_set_projection_matrix();
+	g2_internal_set_projection_matrix(NULL);
 }
 
 void g2_set_render_target(kinc_g4_render_target_t *target) {
@@ -1054,11 +991,5 @@ void g2_set_render_target(kinc_g4_render_target_t *target) {
 	g2_begin();
 	kinc_g4_render_target_t *render_targets[1] = { target };
 	kinc_g4_set_render_targets(render_targets, 1);
-
-	if (kinc_g4_render_targets_inverted_y()) {
-		g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, (float)target->width, 0.0f, (float)target->height, 0.1f, 1000.0f);
-	}
-	else {
-		g2_projection_matrix = g2_matrix4x4_orthogonal_projection(0.0f, (float)target->width, (float)target->height, 0.0f, 0.1f, 1000.0f);
-	}
+	g2_internal_set_projection_matrix(target);
 }
