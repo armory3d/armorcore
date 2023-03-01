@@ -24,6 +24,8 @@ static uint32_t g2_color = 0;
 static g2_font_t *g2_font = NULL;
 static int g2_font_size;
 static g2_is_render_target = false;
+static kinc_g4_pipeline_t *last_pipeline = NULL;
+static kinc_g4_pipeline_t *custom_pipeline = NULL;
 
 static kinc_g4_vertex_buffer_t image_vertex_buffer;
 static kinc_g4_index_buffer_t image_index_buffer;
@@ -331,7 +333,7 @@ void g2_set_image_rect_colors(uint32_t color) {
 void g2_draw_image_buffer(bool end) {
 	if (image_buffer_index - image_buffer_start == 0) return;
 	kinc_g4_vertex_buffer_unlock(&image_vertex_buffer, (image_buffer_index - image_buffer_start) * 4);
-	kinc_g4_set_pipeline(&image_pipeline);
+	kinc_g4_set_pipeline(custom_pipeline != NULL ? custom_pipeline : &image_pipeline);
 	kinc_g4_set_matrix4(image_proj_loc, &g2_projection_matrix);
 	kinc_g4_set_vertex_buffer(&image_vertex_buffer);
 	kinc_g4_set_index_buffer(&image_index_buffer);
@@ -453,7 +455,7 @@ void g2_colored_rect_draw_buffer(bool tris_done) {
 	if (!tris_done) g2_colored_tris_end(true);
 
 	kinc_g4_vertex_buffer_unlock(&colored_rect_vertex_buffer, (colored_rect_buffer_index - colored_rect_buffer_start) * 4);
-	kinc_g4_set_pipeline(&colored_pipeline);
+	kinc_g4_set_pipeline(custom_pipeline != NULL ? custom_pipeline : &colored_pipeline);
 	kinc_g4_set_matrix4(colored_proj_loc, &g2_projection_matrix);
 	kinc_g4_set_vertex_buffer(&colored_rect_vertex_buffer);
 	kinc_g4_set_index_buffer(&colored_rect_index_buffer);
@@ -501,7 +503,7 @@ void g2_colored_tris_draw_buffer(bool rect_done) {
 	if (!rect_done) g2_colored_rect_end(true);
 
 	kinc_g4_vertex_buffer_unlock(&colored_tris_vertex_buffer, (colored_tris_buffer_index - colored_tris_buffer_start) * 3);
-	kinc_g4_set_pipeline(&colored_pipeline);
+	kinc_g4_set_pipeline(custom_pipeline != NULL ? custom_pipeline : &colored_pipeline);
 	kinc_g4_set_matrix4(colored_proj_loc, &g2_projection_matrix);
 	kinc_g4_set_vertex_buffer(&colored_tris_vertex_buffer);
 	kinc_g4_set_index_buffer(&colored_tris_index_buffer);
@@ -637,7 +639,7 @@ void g2_text_set_rect_colors(uint32_t color) {
 void g2_text_draw_buffer(bool end) {
 	if (text_buffer_index - text_buffer_start == 0) return;
 	kinc_g4_vertex_buffer_unlock(&text_vertex_buffer, text_buffer_index * 4);
-	kinc_g4_set_pipeline(g2_is_render_target ? &text_pipeline_rt : &text_pipeline);
+	kinc_g4_set_pipeline(custom_pipeline != NULL ? custom_pipeline : g2_is_render_target ? &text_pipeline_rt : &text_pipeline);
 	kinc_g4_set_matrix4(text_proj_loc, &g2_projection_matrix);
 	kinc_g4_set_vertex_buffer(&text_vertex_buffer);
 	kinc_g4_set_index_buffer(&text_index_buffer);
@@ -963,6 +965,13 @@ void g2_set_color(uint32_t color) {
 
 uint32_t g2_get_color() {
 	return g2_color;
+}
+
+void g2_set_pipeline(kinc_g4_pipeline_t *pipeline) {
+	if (pipeline == last_pipeline) return;
+	last_pipeline = pipeline;
+	g2_end(); // flush
+	custom_pipeline = pipeline;
 }
 
 void g2_set_font(g2_font_t *font, int size) {

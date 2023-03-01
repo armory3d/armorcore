@@ -8,6 +8,7 @@
 #include <kinc/math/matrix.h>
 #include <kinc/graphics4/texture.h>
 #include <kinc/graphics4/rendertarget.h>
+#include <kinc/graphics4/pipeline.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -39,6 +40,7 @@ void g2_draw_string(const char *text, float x, float y);
 void g2_end(void);
 void g2_set_color(uint32_t color);
 uint32_t g2_get_color();
+void g2_set_pipeline(kinc_g4_pipeline_t *pipeline);
 void g2_set_font(g2_font_t *font, int size);
 void g2_font_init(g2_font_t *font, void *blob);
 bool g2_font_has_glyph(int glyph);
