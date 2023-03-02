@@ -15,13 +15,17 @@ class Shaders {
 		// When running a game, precompile shaders here
 	}
 
-	static function getBlob(name: String): kha.Blob {
+	public static function getBuffer(name: String): js.lib.ArrayBuffer {
 		#if arm_shader_embed
 		var global = js.Syntax.code("globalThis");
-		return untyped kha.Blob.fromBytes(haxe.io.Bytes.ofData(global["data/" + name + ext]));
+		return untyped global["data/" + name + Shaders.ext];
 		#else
-		return kha.Blob.fromBytes(haxe.io.Bytes.ofData(Krom.loadBlob("data/" + name + ext)));
+		return Krom.loadBlob("data/" + name + Shaders.ext);
 		#end
+	}
+
+	static function getBlob(name: String): kha.Blob {
+		return kha.Blob.fromBytes(haxe.io.Bytes.ofData(getBuffer(name)));
 	}
 
 	public static function getVertex(name: String): VertexShader {

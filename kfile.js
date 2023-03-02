@@ -89,6 +89,12 @@ else {
 	}
 }
 
+let with_g2 = true;
+if (with_g2) {
+	project.addDefine('WITH_G2');
+	project.addFile('Sources/g2/*');
+}
+
 project.addIncludeDir('v8/include');
 
 if (platform === Platform.Android) {

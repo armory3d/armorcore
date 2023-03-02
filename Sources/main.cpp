@@ -106,14 +106,18 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #ifdef WITH_WORKER
 #include "worker.h"
 #endif
+#ifdef WITH_G2
+extern "C" {
+	#include "g2/g2.h"
+}
+#endif
+
 #ifdef WITH_PLUGIN_EMBED
 void plugin_embed(v8::Isolate *isolate, v8::Local<v8::ObjectTemplate> global);
 #endif
-
 #ifdef KORE_MACOS
 extern "C" const char *macgetresourcepath();
 #endif
-
 #ifdef KORE_IOS
 extern "C" const char *iphonegetresourcepath();
 #endif
@@ -131,13 +135,9 @@ extern void krafix_compile(const char *source, char *output, int *length, const 
 #endif
 
 #if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
-#ifdef __cplusplus
 extern "C" {
-#endif
 	extern kinc_g5_command_list_t commandList;
-#ifdef __cplusplus
 }
-#endif
 static kinc_g5_constant_buffer_t constant_buffer;
 static kinc_g4_render_target_t *render_target;
 static kinc_raytrace_pipeline_t pipeline;
@@ -153,11 +153,13 @@ namespace {
 	bool enable_window = true;
 	bool snapshot = false;
 	bool stderr_created = false;
-	bool paused = false;
-	int pausedFrames = 0;
+	bool in_background = false;
+	int paused_frames = 0;
 	bool armorcore = false;
 	#ifdef IDLE_SLEEP
 	bool input_down = false;
+	int last_window_width = 0;
+	int last_window_height = 0;
 	#endif
 
 	Isolate *isolate;
@@ -2663,6 +2665,236 @@ namespace {
 		kinc_compute(x, y, z);
 	}
 
+	#ifdef WITH_G2
+	void krom_g2_init(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<ArrayBuffer> buffer_image_vert = Local<ArrayBuffer>::Cast(args[0]);
+		std::shared_ptr<BackingStore> content_image_vert = buffer_image_vert->GetBackingStore();
+		Local<ArrayBuffer> buffer_image_frag = Local<ArrayBuffer>::Cast(args[1]);
+		std::shared_ptr<BackingStore> content_image_frag = buffer_image_frag->GetBackingStore();
+		Local<ArrayBuffer> buffer_colored_vert = Local<ArrayBuffer>::Cast(args[2]);
+		std::shared_ptr<BackingStore> content_colored_vert = buffer_colored_vert->GetBackingStore();
+		Local<ArrayBuffer> buffer_colored_frag = Local<ArrayBuffer>::Cast(args[3]);
+		std::shared_ptr<BackingStore> content_colored_frag = buffer_colored_frag->GetBackingStore();
+		Local<ArrayBuffer> buffer_text_vert = Local<ArrayBuffer>::Cast(args[4]);
+		std::shared_ptr<BackingStore> content_text_vert = buffer_text_vert->GetBackingStore();
+		Local<ArrayBuffer> buffer_text_frag = Local<ArrayBuffer>::Cast(args[5]);
+		std::shared_ptr<BackingStore> content_text_frag = buffer_text_frag->GetBackingStore();
+
+		g2_init(content_image_vert->Data(), (int)content_image_vert->ByteLength(), content_image_frag->Data(), (int)content_image_frag->ByteLength(), content_colored_vert->Data(), (int)content_colored_vert->ByteLength(), content_colored_frag->Data(), (int)content_colored_frag->ByteLength(), content_text_vert->Data(), (int)content_text_vert->ByteLength(), content_text_frag->Data(), (int)content_text_frag->ByteLength());
+	}
+
+	void krom_g2_begin(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		g2_begin();
+	}
+
+	void krom_g2_end(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		g2_end();
+	}
+
+	void krom_g2_draw_scaled_sub_image(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Object> image = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		float sx = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float sy = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float sw = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float sh = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float dx = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float dy = (float)args[6]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float dw = (float)args[7]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float dh = (float)args[8]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		Local<Value> tex = image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
+		if (tex->IsObject()) {
+			Local<External> texfield = Local<External>::Cast(tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+			g2_draw_scaled_sub_image(texture, sx, sy, sw, sh, dx, dy, dw, dh);
+		}
+		else {
+			Local<Value> rt = image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
+			Local<External> rtfield = Local<External>::Cast(rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
+			g2_draw_scaled_sub_render_target(render_target, sx, sy, sw, sh, dx, dy, dw, dh);
+		}
+	}
+
+	void krom_g2_fill_triangle(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float x0 = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y0 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float x1 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y1 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float x2 = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y2 = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		g2_fill_triangle(x0, y0, x1, y1, x2, y2);
+	}
+
+	void krom_g2_fill_rect(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float width = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float height = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		g2_fill_rect(x, y, width, height);
+	}
+
+	void krom_g2_draw_rect(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float width = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float height = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float strength = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		g2_draw_rect(x, y, width, height, strength);
+	}
+
+	void krom_g2_draw_line(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float x0 = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y0 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float x1 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y1 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float strength = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		g2_draw_line(x0, y0, x1, y1, strength);
+	}
+
+	void krom_g2_draw_string(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value text(isolate, args[0]);
+		float x = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		g2_draw_string(*text, x, y);
+	}
+
+	void krom_g2_set_font(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		g2_font_t *font = (g2_font_t *)field->Value();
+		int size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		g2_set_font(font, size);
+	}
+
+	void krom_g2_font_init(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<ArrayBuffer> blob_buffer = Local<ArrayBuffer>::Cast(args[0]);
+		std::shared_ptr<BackingStore> blob_content = blob_buffer->GetBackingStore();
+
+		g2_font_t *font = (g2_font_t *)malloc(sizeof(g2_font_t));
+		g2_font_init(font, blob_content->Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->SetInternalField(0, External::New(isolate, font));
+		args.GetReturnValue().Set(obj);
+	}
+
+	void krom_g2_font_13(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<ArrayBuffer> blob_buffer = Local<ArrayBuffer>::Cast(args[0]);
+		std::shared_ptr<BackingStore> blob_content = blob_buffer->GetBackingStore();
+
+		g2_font_t *font = (g2_font_t *)malloc(sizeof(g2_font_t));
+		g2_font_13(font, blob_content->Data());
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->SetInternalField(0, External::New(isolate, font));
+		args.GetReturnValue().Set(obj);
+	}
+
+	void krom_g2_font_set_glyphs(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Object> jsarray = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int *ar = (int *)malloc(sizeof(int) * length);
+		for (int i = 0; i < length; ++i) {
+			int32_t j = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+			ar[i] = j;
+		}
+		g2_font_set_glyphs(ar, length);
+		free(ar);
+	}
+
+	void krom_g2_font_count(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		g2_font_t *font = (g2_font_t *)field->Value();
+		int i = g2_font_count(font);
+		args.GetReturnValue().Set(Int32::New(isolate, i));
+	}
+
+	void krom_g2_font_height(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		g2_font_t *font = (g2_font_t *)field->Value();
+		int size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int i = (int)g2_font_height(font, size);
+		args.GetReturnValue().Set(Int32::New(isolate, i));
+	}
+
+	void krom_g2_string_width(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		g2_font_t *font = (g2_font_t *)field->Value();
+		int size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		String::Utf8Value text(isolate, args[2]);
+		int i = (int)g2_string_width(font, size, *text);
+		args.GetReturnValue().Set(Int32::New(isolate, i));
+	}
+
+	void krom_g2_set_bilinear_filter(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		g2_set_bilinear_filter(args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
+	}
+
+	void krom_g2_restore_render_target(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		g2_restore_render_target();
+	}
+
+	void krom_g2_set_render_target(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t *rt = (kinc_g4_render_target_t *)field->Value();
+		g2_set_render_target(rt);
+	}
+
+	void krom_g2_set_color(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		int color = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		g2_set_color(color);
+	}
+
+	void krom_g2_set_pipeline(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		if (args[0]->IsNullOrUndefined()) {
+			g2_set_pipeline(NULL);
+		}
+		else {
+			Local<Object> pipeobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+			Local<External> pipefield = Local<External>::Cast(pipeobj->GetInternalField(0));
+			kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)pipefield->Value();
+			g2_set_pipeline(pipeline);
+		}
+	}
+
+	void krom_g2_set_transform(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		if (args[0]->IsNullOrUndefined()) {
+			g2_set_transform(NULL);
+		}
+		else {
+			Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+			std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+			float *from = (float *)content->Data();
+			g2_set_transform((kinc_matrix3x3_t *)from);
+		}
+	}
+	#endif
+
 	bool window_close_callback(void *data) {
 
 		#ifdef KORE_WINDOWS
@@ -3624,7 +3856,31 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "getConstantLocationCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_constant_location_compute));
 		krom->Set(String::NewFromUtf8(isolate, "getTextureUnitCompute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_get_texture_unit_compute));
 		krom->Set(String::NewFromUtf8(isolate, "compute").ToLocalChecked(), FunctionTemplate::New(isolate, krom_compute));
-		//
+		// Extended
+		#ifdef WITH_G2
+		krom->Set(String::NewFromUtf8(isolate, "g2_init").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_init));
+		krom->Set(String::NewFromUtf8(isolate, "g2_begin").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_begin));
+		krom->Set(String::NewFromUtf8(isolate, "g2_end").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_end));
+		krom->Set(String::NewFromUtf8(isolate, "g2_draw_scaled_sub_image").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_draw_scaled_sub_image));
+		krom->Set(String::NewFromUtf8(isolate, "g2_fill_triangle").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_fill_triangle));
+		krom->Set(String::NewFromUtf8(isolate, "g2_fill_rect").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_fill_rect));
+		krom->Set(String::NewFromUtf8(isolate, "g2_draw_rect").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_draw_rect));
+		krom->Set(String::NewFromUtf8(isolate, "g2_draw_line").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_draw_line));
+		krom->Set(String::NewFromUtf8(isolate, "g2_draw_string").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_draw_string));
+		krom->Set(String::NewFromUtf8(isolate, "g2_set_font").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_set_font));
+		krom->Set(String::NewFromUtf8(isolate, "g2_font_init").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_font_init));
+		krom->Set(String::NewFromUtf8(isolate, "g2_font_13").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_font_13));
+		krom->Set(String::NewFromUtf8(isolate, "g2_font_set_glyphs").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_font_set_glyphs));
+		krom->Set(String::NewFromUtf8(isolate, "g2_font_count").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_font_count));
+		krom->Set(String::NewFromUtf8(isolate, "g2_font_height").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_font_height));
+		krom->Set(String::NewFromUtf8(isolate, "g2_string_width").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_string_width));
+		krom->Set(String::NewFromUtf8(isolate, "g2_set_bilinear_filter").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_set_bilinear_filter));
+		krom->Set(String::NewFromUtf8(isolate, "g2_restore_render_target").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_restore_render_target));
+		krom->Set(String::NewFromUtf8(isolate, "g2_set_render_target").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_set_render_target));
+		krom->Set(String::NewFromUtf8(isolate, "g2_set_color").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_set_color));
+		krom->Set(String::NewFromUtf8(isolate, "g2_set_pipeline").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_set_pipeline));
+		krom->Set(String::NewFromUtf8(isolate, "g2_set_transform").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_set_transform));
+		#endif
 		krom->Set(String::NewFromUtf8(isolate, "setSaveAndQuitCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_save_and_quit_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setMouseCursor").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_cursor));
 		#if defined(WITH_NFD) || defined(KORE_IOS) || defined(KORE_ANDROID)
@@ -3774,19 +4030,24 @@ namespace {
 
 	void update(void *data) {
 		#ifdef KORE_WINDOWS
-		if (paused && ++pausedFrames > 3 && armorcore) {
+		if (in_background && ++paused_frames > 3 && armorcore) {
 			Sleep(1);
 			return;
 		}
 		#endif
 
 		#ifdef IDLE_SLEEP
+		if (last_window_width != kinc_window_width(0) || last_window_height != kinc_window_height(0)) {
+			last_window_width = kinc_window_width(0);
+			last_window_height = kinc_window_height(0);
+			paused_frames = 0;
+		}
 		#if defined(KORE_IOS) || defined(KORE_ANDROID)
-		int startSleep = 1200;
+		int start_sleep = 1200;
 		#else
-		int startSleep = 120;
+		int start_sleep = 120;
 		#endif
-		if (++pausedFrames > startSleep && !input_down) {
+		if (++paused_frames > start_sleep && !input_down) {
 			#ifdef KORE_WINDOWS
 			Sleep(1);
 			#else
@@ -3853,10 +4114,10 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
-		paused = false;
+		in_background = false;
 
 		#ifdef IDLE_SLEEP
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -3931,7 +4192,7 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
-		paused = false;
+		in_background = false;
 	}
 
 	void resume(void *data) {
@@ -3981,8 +4242,8 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
-		paused = true;
-		pausedFrames = 0;
+		in_background = true;
+		paused_frames = 0;
 	}
 
 	void shutdown(void *data) {
@@ -4020,7 +4281,7 @@ namespace {
 
 		#ifdef IDLE_SLEEP
 		input_down = true;
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4043,7 +4304,7 @@ namespace {
 
 		#ifdef IDLE_SLEEP
 		input_down = false;
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4065,7 +4326,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4087,7 +4348,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4110,7 +4371,7 @@ namespace {
 
 		#ifdef IDLE_SLEEP
 		input_down = true;
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4133,7 +4394,7 @@ namespace {
 
 		#ifdef IDLE_SLEEP
 		input_down = false;
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4155,7 +4416,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4177,7 +4438,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4200,7 +4461,7 @@ namespace {
 
 		#ifdef IDLE_SLEEP
 		input_down = true;
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4223,7 +4484,7 @@ namespace {
 
 		#ifdef IDLE_SLEEP
 		input_down = false;
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4246,7 +4507,7 @@ namespace {
 
 		#ifdef IDLE_SLEEP
 		input_down = true;
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4269,7 +4530,7 @@ namespace {
 
 		#ifdef IDLE_SLEEP
 		input_down = false;
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4291,7 +4552,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4313,7 +4574,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 
@@ -4335,7 +4596,7 @@ namespace {
 		}
 
 		#ifdef IDLE_SLEEP
-		pausedFrames = 0;
+		paused_frames = 0;
 		#endif
 	}
 }

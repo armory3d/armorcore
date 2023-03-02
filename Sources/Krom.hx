@@ -160,8 +160,29 @@ extern class Krom {
 	static function getConstantLocationCompute(shader: Dynamic, name: String): Dynamic;
 	static function getTextureUnitCompute(shader: Dynamic, name: String): Dynamic;
 	static function compute(x: Int, y: Int, z: Int): Void;
-
-	//
+	// Extended
+	static function g2_init(image_vert: js.lib.ArrayBuffer, image_frag: js.lib.ArrayBuffer, colored_vert: js.lib.ArrayBuffer, colored_frag: js.lib.ArrayBuffer, text_vert: js.lib.ArrayBuffer, text_frag: js.lib.ArrayBuffer): Void;
+	static function g2_begin(): Void;
+	static function g2_end(): Void;
+	static function g2_draw_scaled_sub_image(image: kha.Image, sx: Float, sy: Float, sw: Float, sh: Float, dx: Float, dy: Float, dw: Float, dh: Float): Void;
+	static function g2_fill_triangle(x0: Float, y0: Float, x1: Float, y1: Float, x2: Float, y2: Float): Void;
+	static function g2_fill_rect(x: Float, y: Float, width: Float, height: Float): Void;
+	static function g2_draw_rect(x: Float, y: Float, width: Float, height: Float, strength: Float): Void;
+	static function g2_draw_line(x0: Float, y0: Float, x1: Float, y1: Float, strength: Float): Void;
+	static function g2_draw_string(text: String, x: Float, y: Float): Void;
+	static function g2_set_font(font: Dynamic, size: Int): Void;
+	static function g2_font_init(blob: js.lib.ArrayBuffer, font_index: Int): Dynamic;
+	static function g2_font_13(blob: js.lib.ArrayBuffer): Dynamic;
+	static function g2_font_set_glyphs(glyphs: Array<Int>): Void;
+	static function g2_font_count(font: Dynamic): Int;
+	static function g2_font_height(font: Dynamic, size: Int): Int;
+	static function g2_string_width(font: Dynamic, size: Int, text: String): Int;
+	static function g2_set_bilinear_filter(bilinear: Bool): Void;
+	static function g2_restore_render_target(): Void;
+	static function g2_set_render_target(renderTarget: Dynamic): Void;
+	static function g2_set_color(color: Int): Void;
+	static function g2_set_pipeline(pipeline: Dynamic): Void;
+	static function g2_set_transform(matrix: js.lib.ArrayBuffer): Void;
 
 	static function setSaveAndQuitCallback(callback: Bool->Void): Void;
 	static function setMouseCursor(id: Int): Void;

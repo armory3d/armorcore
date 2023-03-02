@@ -1,5 +1,7 @@
 #include "g2.h"
+#include "g2_font.h"
 
+#include <math.h>
 #include <kinc/graphics4/graphics.h>
 #include <kinc/graphics4/indexbuffer.h>
 #include <kinc/graphics4/pipeline.h>
@@ -24,8 +26,9 @@ static uint32_t g2_color = 0;
 static g2_font_t *g2_font = NULL;
 static int g2_font_size;
 static g2_is_render_target = false;
-static kinc_g4_pipeline_t *last_pipeline = NULL;
-static kinc_g4_pipeline_t *custom_pipeline = NULL;
+static kinc_g4_pipeline_t *g2_last_pipeline = NULL;
+static kinc_g4_pipeline_t *g2_custom_pipeline = NULL;
+static kinc_matrix3x3_t g2_transform;
 
 static kinc_g4_vertex_buffer_t image_vertex_buffer;
 static kinc_g4_index_buffer_t image_index_buffer;
@@ -138,6 +141,7 @@ void g2_internal_set_projection_matrix(kinc_g4_render_target_t *target) {
 
 void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_frag_size, void *colored_vert, int colored_vert_size, void *colored_frag, int colored_frag_size, void *text_vert, int text_vert_size, void *text_frag, int text_frag_size) {
 	g2_internal_set_projection_matrix(NULL);
+	g2_transform = kinc_matrix3x3_identity();
 
 	// Image painter
 	kinc_g4_shader_init(&image_vert_shader, image_vert, image_vert_size, KINC_G4_SHADER_TYPE_VERTEX);
@@ -193,7 +197,8 @@ void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_
 		colored_pipeline.input_layout[1] = NULL;
 		colored_pipeline.vertex_shader = &colored_vert_shader;
 		colored_pipeline.fragment_shader = &colored_frag_shader;
-		colored_pipeline.blend_source = KINC_G4_BLEND_ONE;
+		// colored_pipeline.blend_source = KINC_G4_BLEND_ONE;
+		colored_pipeline.blend_source = KINC_G4_BLEND_SOURCE_ALPHA;
 		colored_pipeline.blend_destination = KINC_G4_BLEND_INV_SOURCE_ALPHA;
 		colored_pipeline.alpha_blend_source = KINC_G4_BLEND_ONE;
 		colored_pipeline.alpha_blend_destination = KINC_G4_BLEND_INV_SOURCE_ALPHA;
@@ -333,7 +338,7 @@ void g2_set_image_rect_colors(uint32_t color) {
 void g2_draw_image_buffer(bool end) {
 	if (image_buffer_index - image_buffer_start == 0) return;
 	kinc_g4_vertex_buffer_unlock(&image_vertex_buffer, (image_buffer_index - image_buffer_start) * 4);
-	kinc_g4_set_pipeline(custom_pipeline != NULL ? custom_pipeline : &image_pipeline);
+	kinc_g4_set_pipeline(g2_custom_pipeline != NULL ? g2_custom_pipeline : &image_pipeline);
 	kinc_g4_set_matrix4(image_proj_loc, &g2_projection_matrix);
 	kinc_g4_set_vertex_buffer(&image_vertex_buffer);
 	kinc_g4_set_index_buffer(&image_index_buffer);
@@ -369,8 +374,7 @@ void g2_draw_scaled_sub_image(kinc_g4_texture_t *tex, float sx, float sy, float 
 	g2_set_image_rect_tex_coords(sx / tex->tex_width, sy / tex->tex_height, (sx + sw) / tex->tex_width, (sy + sh) / tex->tex_height);
 	g2_set_image_rect_colors(g2_color);
 	kinc_vector2_t p[4];
-	kinc_matrix3x3_t transformation = kinc_matrix3x3_identity();
-	g2_matrix3x3_multquad(&transformation, dx, dy, dw, dh, p);
+	g2_matrix3x3_multquad(&g2_transform, dx, dy, dw, dh, p);
 	g2_set_image_rect_verts(p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, p[3].x, p[3].y);
 
 	++image_buffer_index;
@@ -398,8 +402,7 @@ void g2_draw_scaled_sub_render_target(kinc_g4_render_target_t *rt, float sx, flo
 	g2_set_image_rect_tex_coords(sx / rt->width, sy / rt->height, (sx + sw) / rt->width, (sy + sh) / rt->height);
 	g2_set_image_rect_colors(g2_color);
 	kinc_vector2_t p[4];
-	kinc_matrix3x3_t transformation = kinc_matrix3x3_identity();
-	g2_matrix3x3_multquad(&transformation, dx, dy, dw, dh, p);
+	g2_matrix3x3_multquad(&g2_transform, dx, dy, dw, dh, p);
 	g2_set_image_rect_verts(p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, p[3].x, p[3].y);
 
 	++image_buffer_index;
@@ -455,7 +458,7 @@ void g2_colored_rect_draw_buffer(bool tris_done) {
 	if (!tris_done) g2_colored_tris_end(true);
 
 	kinc_g4_vertex_buffer_unlock(&colored_rect_vertex_buffer, (colored_rect_buffer_index - colored_rect_buffer_start) * 4);
-	kinc_g4_set_pipeline(custom_pipeline != NULL ? custom_pipeline : &colored_pipeline);
+	kinc_g4_set_pipeline(g2_custom_pipeline != NULL ? g2_custom_pipeline : &colored_pipeline);
 	kinc_g4_set_matrix4(colored_proj_loc, &g2_projection_matrix);
 	kinc_g4_set_vertex_buffer(&colored_rect_vertex_buffer);
 	kinc_g4_set_index_buffer(&colored_rect_index_buffer);
@@ -503,7 +506,7 @@ void g2_colored_tris_draw_buffer(bool rect_done) {
 	if (!rect_done) g2_colored_rect_end(true);
 
 	kinc_g4_vertex_buffer_unlock(&colored_tris_vertex_buffer, (colored_tris_buffer_index - colored_tris_buffer_start) * 3);
-	kinc_g4_set_pipeline(custom_pipeline != NULL ? custom_pipeline : &colored_pipeline);
+	kinc_g4_set_pipeline(g2_custom_pipeline != NULL ? g2_custom_pipeline : &colored_pipeline);
 	kinc_g4_set_matrix4(colored_proj_loc, &g2_projection_matrix);
 	kinc_g4_set_vertex_buffer(&colored_tris_vertex_buffer);
 	kinc_g4_set_index_buffer(&colored_tris_index_buffer);
@@ -536,10 +539,9 @@ void g2_fill_triangle(float x0, float y0, float x1, float y1, float x2, float y2
 
 	g2_colored_tris_set_colors(g2_color);
 
-	kinc_matrix3x3_t transformation = kinc_matrix3x3_identity();
-	kinc_vector2_t p0 = g2_matrix3x3_multvec(&transformation, (kinc_vector2_t){x0, y0}); // Bottom-left
-	kinc_vector2_t p1 = g2_matrix3x3_multvec(&transformation, (kinc_vector2_t){x1, y1}); // Top-left
-	kinc_vector2_t p2 = g2_matrix3x3_multvec(&transformation, (kinc_vector2_t){x2, y2}); // Top-right
+	kinc_vector2_t p0 = g2_matrix3x3_multvec(&g2_transform, (kinc_vector2_t){x0, y0}); // Bottom-left
+	kinc_vector2_t p1 = g2_matrix3x3_multvec(&g2_transform, (kinc_vector2_t){x1, y1}); // Top-left
+	kinc_vector2_t p2 = g2_matrix3x3_multvec(&g2_transform, (kinc_vector2_t){x2, y2}); // Top-right
 	g2_colored_tris_set_verts(p0.x, p0.y, p1.x, p1.y, p2.x, p2.y);
 
 	++colored_tris_buffer_index;
@@ -554,8 +556,7 @@ void g2_fill_rect(float x, float y, float width, float height) {
 	g2_colored_rect_set_colors(g2_color);
 
 	kinc_vector2_t p[4];
-	kinc_matrix3x3_t transformation = kinc_matrix3x3_identity();
-	g2_matrix3x3_multquad(&transformation, x, y, width, height, p);
+	g2_matrix3x3_multquad(&g2_transform, x, y, width, height, p);
 	g2_colored_rect_set_verts(p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, p[3].x, p[3].y);
 
 	++colored_rect_buffer_index;
@@ -639,7 +640,7 @@ void g2_text_set_rect_colors(uint32_t color) {
 void g2_text_draw_buffer(bool end) {
 	if (text_buffer_index - text_buffer_start == 0) return;
 	kinc_g4_vertex_buffer_unlock(&text_vertex_buffer, text_buffer_index * 4);
-	kinc_g4_set_pipeline(custom_pipeline != NULL ? custom_pipeline : g2_is_render_target ? &text_pipeline_rt : &text_pipeline);
+	kinc_g4_set_pipeline(g2_custom_pipeline != NULL ? g2_custom_pipeline : g2_is_render_target ? &text_pipeline_rt : &text_pipeline);
 	kinc_g4_set_matrix4(text_proj_loc, &g2_projection_matrix);
 	kinc_g4_set_vertex_buffer(&text_vertex_buffer);
 	kinc_g4_set_index_buffer(&text_index_buffer);
@@ -676,7 +677,6 @@ typedef struct g2_font_image {
 	kinc_g4_texture_t *tex;
 	int width, height, first_unused_y;
 	float baseline, descent, line_gap;
-	bool owns_tex;
 } g2_font_image_t;
 
 g2_font_image_t *g2_font_get_image_internal(g2_font_t *font, int size) {
@@ -693,15 +693,13 @@ static inline bool g2_prepare_font_load_internal(g2_font_t *font, int size) {
 
 	// Resize images array if necessary
 	if (font->m_capacity <= font->m_images_len) {
-		size_t new_capacity = 2;
-		if (font->m_capacity == 0) {
-			font->images = (g2_font_image_t *)malloc(new_capacity * sizeof(g2_font_image_t));
+		font->m_capacity = font->m_images_len + 1;
+		if (font->images == NULL) {
+			font->images = (g2_font_image_t *)malloc(font->m_capacity * sizeof(g2_font_image_t));
 		}
 		else {
-			while (font->m_capacity > new_capacity) new_capacity *= 2;
-			font->images = (g2_font_image_t *)realloc(font->images, new_capacity * sizeof(g2_font_image_t));
+			font->images = (g2_font_image_t *)realloc(font->images, font->m_capacity * sizeof(g2_font_image_t));
 		}
-		font->m_capacity = new_capacity;
 	}
 
 	return true;
@@ -788,7 +786,6 @@ void g2_font_load(g2_font_t *font, int size) {
 	img->width = width;
 	img->height = height;
 	img->chars = baked;
-	img->owns_tex = true;
 	img->first_unused_y = status;
 	kinc_image_t fontimg;
 	kinc_image_init_from_bytes(&fontimg, pixels, width, height, KINC_IMAGE_FORMAT_GREY8);
@@ -845,6 +842,25 @@ bool g2_font_get_baked_quad(g2_font_t *font, int size, g2_font_aligned_quad_t *q
 	return true;
 }
 
+// Per Lowgren, CC BY-SA 3.0
+// https://stackoverflow.com/a/35332046
+#define is_unicode(c) (((c) & 0xc0) == 0xc0)
+int utf8_decode(const char *str, int *i) {
+	const unsigned char *s = (const unsigned char *)str;
+	int u = *s, l = 1;
+	if (is_unicode(u)) {
+		int a = (u & 0x20) ? ((u & 0x10) ? ((u & 0x08) ? ((u & 0x04) ? 6 : 5) : 4) : 3) : 2;
+		if (a < 6 || !(u & 0x02)) {
+			int b, p = 0;
+			u = ((u << (a + 1)) & 0xff) >> (a + 1);
+			for (b = 1; b < a; ++b)
+				u = (u << 6) | (s[l++] & 0x3f);
+		}
+	}
+	if (i) *i += l;
+	return u;
+}
+
 void g2_draw_string(const char *text, float x, float y) {
 	g2_image_end();
 	g2_colored_end();
@@ -858,15 +874,18 @@ void g2_draw_string(const char *text, float x, float y) {
 	float xpos = x;
 	float ypos = y + img->baseline;
 	g2_font_aligned_quad_t q;
-	for (int i = 0; text[i] != 0; ++i) {
-		if (g2_font_get_baked_quad(g2_font, g2_font_size, &q, text[i], xpos, ypos)) {
+	for (int i = 0; text[i] != 0; ) {
+		int l = 0;
+		int codepoint = utf8_decode(&text[i], &l);
+		i += l;
+
+		if (g2_font_get_baked_quad(g2_font, g2_font_size, &q, codepoint, xpos, ypos)) {
 			if (text_buffer_index + 1 >= G2_BUFFER_SIZE) g2_text_draw_buffer(false);
 			g2_text_set_rect_colors(g2_color);
 			g2_text_set_rect_tex_coords(q.s0, q.t0, q.s1, q.t1);
 
 			kinc_vector2_t p[4];
-			kinc_matrix3x3_t transformation = kinc_matrix3x3_identity();
-			g2_matrix3x3_multquad(&transformation, q.x0, q.y0, q.x1 - q.x0, q.y1 - q.y0, p);
+			g2_matrix3x3_multquad(&g2_transform, q.x0, q.y0, q.x1 - q.x0, q.y1 - q.y0, p);
 			g2_text_set_rect_verts(p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, p[3].x, p[3].y);
 
 			xpos += q.xadvance;
@@ -875,25 +894,70 @@ void g2_draw_string(const char *text, float x, float y) {
 	}
 }
 
-void g2_font_init(g2_font_t *font, void *blob) {
+void g2_font_default_glyphs() {
+	g2_font_num_glyphs = 127 - 32;
+	g2_font_glyphs = (int *)malloc(g2_font_num_glyphs * sizeof(int));
+	for (int i = 32; i < 127; ++i) g2_font_glyphs[i - 32] = i;
+	g2_font_num_glyph_blocks = 2;
+	g2_font_glyph_blocks = (int *)malloc(g2_font_num_glyph_blocks * sizeof(int));
+	g2_font_glyph_blocks[0] = 32;
+	g2_font_glyph_blocks[1] = 126;
+}
+
+void g2_font_init(g2_font_t *font, void *blob, int font_index) {
 	if (g2_font_glyphs == NULL) {
-		g2_font_glyphs = (int *)malloc(224 * sizeof(int));
-		for (int i = 32; i < 256; ++i) g2_font_glyphs[i - 32] = i;
-		g2_font_num_glyph_blocks = 2;
-		g2_font_num_glyphs = 224;
-		g2_font_glyph_blocks = (int *)malloc(2 * sizeof(int));
-		g2_font_glyph_blocks[0] = 32;
-		g2_font_glyph_blocks[1] = 255;
+		g2_font_default_glyphs();
 	}
 
 	font->blob = blob;
 	font->images = NULL;
 	font->m_images_len = 0;
 	font->m_capacity = 0;
-	font->offset = stbtt_GetFontOffsetForIndex(font->blob, 0);
+	font->offset = stbtt_GetFontOffsetForIndex(font->blob, font_index);
 	if (font->offset == -1) {
 		font->offset = stbtt_GetFontOffsetForIndex(font->blob, 0);
 	}
+}
+
+void g2_font_13(g2_font_t *font, void *blob) {
+	if (g2_font_glyphs == NULL) {
+		g2_font_default_glyphs();
+	}
+
+	font->blob = blob;
+	font->images = NULL;
+	font->m_images_len = 0;
+	font->m_capacity = 0;
+	font->offset = 0;
+	g2_prepare_font_load_internal(font, 13);
+
+	g2_font_image_t *img = &(font->images[font->m_images_len]);
+	font->m_images_len += 1;
+	img->m_size = 13;
+	img->baseline = 0; // 10
+	img->descent = 0;
+	img->line_gap = 0;
+	img->width = 128;
+	img->height = 128;
+	img->first_unused_y = 0;
+	kinc_image_t font_img;
+	kinc_image_init_from_bytes(&font_img, (void *)g2_font_13_pixels, 128, 128, KINC_IMAGE_FORMAT_GREY8);
+	img->tex = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
+	kinc_g4_texture_init_from_image(img->tex, &font_img);
+	kinc_image_destroy(&font_img);
+
+	stbtt_bakedchar *baked = (stbtt_bakedchar *)malloc(95 * sizeof(stbtt_bakedchar));
+	for (int i = 0; i < 95; ++i) {
+		baked[i].x0 = g2_font_13_x0[i];
+		baked[i].x1 = g2_font_13_x1[i];
+		baked[i].y0 = g2_font_13_y0[i];
+		baked[i].y1 = g2_font_13_y1[i];
+		baked[i].xoff = g2_font_13_xoff[i];
+		baked[i].yoff = g2_font_13_yoff[i];
+		baked[i].xadvance = g2_font_13_xadvance[i];
+	}
+	img->chars = baked;
+
 }
 
 bool g2_font_has_glyph(int glyph) {
@@ -905,13 +969,48 @@ bool g2_font_has_glyph(int glyph) {
 	return false;
 }
 
-void g2_font_add_glyphs(int *glyphs, int count) {
-	g2_font_num_glyphs += count;
-	g2_font_glyphs = (int *)realloc(g2_font_glyphs, g2_font_num_glyphs * sizeof(int));
-	for (int i = 0; i < count; ++i) g2_font_glyphs[count - i - 1] = glyphs[i];
+void g2_font_set_glyphs(int *glyphs, int count) {
+	free(g2_font_glyphs);
+	g2_font_num_glyphs = count;
+	g2_font_glyphs = (int *)malloc(g2_font_num_glyphs * sizeof(int));
 
-	// TODO
-	assert(false);
+	int blocks = 1;
+	g2_font_glyphs[0] = glyphs[0];
+	int next_char = glyphs[0] + 1;
+	int pos = 1;
+	while (pos < count) {
+		g2_font_glyphs[pos] = glyphs[pos];
+		if (glyphs[pos] != next_char) {
+			++blocks;
+			next_char = glyphs[pos] + 1;
+		}
+		else {
+			++next_char;
+		}
+		++pos;
+	}
+
+	g2_font_num_glyph_blocks = 2 * blocks;
+	g2_font_glyph_blocks = (int *)malloc(g2_font_num_glyph_blocks * sizeof(int));
+	g2_font_glyph_blocks[0] = glyphs[0];
+	next_char = glyphs[0] + 1;
+	pos = 1;
+	for (int i = 1; i < count; ++i) {
+		if (glyphs[i] != next_char) {
+			g2_font_glyph_blocks[pos * 2 - 1] = glyphs[i - 1];
+			g2_font_glyph_blocks[pos * 2] = glyphs[i];
+			++pos;
+			next_char = glyphs[i] + 1;
+		}
+		else {
+			++next_char;
+		}
+	}
+	g2_font_glyph_blocks[blocks * 2 - 1] = glyphs[count - 1];
+}
+
+int g2_font_count(g2_font_t *font) {
+	return stbtt_GetNumberOfFonts(font->blob);
 }
 
 float g2_font_height(g2_font_t *font, int font_size) {
@@ -968,10 +1067,19 @@ uint32_t g2_get_color() {
 }
 
 void g2_set_pipeline(kinc_g4_pipeline_t *pipeline) {
-	if (pipeline == last_pipeline) return;
-	last_pipeline = pipeline;
+	if (pipeline == g2_last_pipeline) return;
+	g2_last_pipeline = pipeline;
 	g2_end(); // flush
-	custom_pipeline = pipeline;
+	g2_custom_pipeline = pipeline;
+}
+
+void g2_set_transform(kinc_matrix3x3_t *m) {
+	if (m == NULL) {
+		g2_transform = kinc_matrix3x3_identity();
+	}
+	else {
+		for (int i = 0; i < 3 * 3; ++i) g2_transform.m[i] = m->m[i];
+	}
 }
 
 void g2_set_font(g2_font_t *font, int size) {
@@ -982,7 +1090,7 @@ void g2_set_font(g2_font_t *font, int size) {
 
 void g2_set_bilinear_filter(bool bilinear) {
 	if (g2_bilinear_filter == bilinear) return;
-	g2_end();
+	g2_end(); // flush
 	g2_bilinear_filter = bilinear;
 }
 

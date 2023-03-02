@@ -1,7 +1,7 @@
 package kha.graphics4;
 
 class PipelineState {
-	private var pipeline: Dynamic;
+	public var pipeline: Dynamic;
 
 	public var inputLayout: Array<VertexStructure>;
 	public var vertexShader: VertexShader;
