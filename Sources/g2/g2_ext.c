@@ -5,7 +5,7 @@
 
 #define MATH_PI 3.14159265358979323846
 
-void g2_fill_circle(float cx, float cy, float radius, int segments/* = 0*/) {
+void g2_fill_circle(float cx, float cy, float radius, int segments) {
 	if (segments <= 0) {
 		segments = (int)floor(10 * sqrt(radius));
 	}
@@ -54,19 +54,19 @@ void g2_calculate_cubic_bezier_point(float t, float *x, float *y, float *out) {
 }
 
 /**
- * Draws a cubic bezier using 4 pairs of points. If the x and y arrays have a length bigger then 4, the additional
+ * Draws a cubic bezier using 4 pairs of points. If the x and y arrays have a length bigger than 4, the additional
  * points will be ignored. With a length smaller of 4 a error will occur, there is no check for this.
  * You can construct the curves visually in Inkscape with a path using default nodes.
  * Provide x and y in the following order: startPoint, controlPoint1, controlPoint2, endPoint
  * Reference: http://devmag.org.za/2011/04/05/bzier-curves-a-tutorial/
  */
-void g2_draw_cubic_bezier(float *x, float *y, int segments/* = 20*/, float strength/* = 1.0*/) {
+void g2_draw_cubic_bezier(float *x, float *y, int segments, float strength) {
 	float q0[2];
 	float q1[2];
 	g2_calculate_cubic_bezier_point(0, x, y, q0);
 
-	for (int i = 0; i < (segments + 1); ++i) {
-		float t = (float)(i / segments);
+	for (int i = 1; i < (segments + 1); ++i) {
+		float t = (float)i / segments;
 		g2_calculate_cubic_bezier_point(t, x, y, q1);
 		g2_draw_line(q0[0], q0[1], q1[0], q1[1], strength);
 		q0[0] = q1[0];

@@ -109,6 +109,7 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #ifdef WITH_G2
 extern "C" {
 	#include "g2/g2.h"
+	#include "g2/g2_ext.h"
 }
 #endif
 
@@ -2893,6 +2894,42 @@ namespace {
 			g2_set_transform((kinc_matrix3x3_t *)from);
 		}
 	}
+
+	void krom_g2_fill_circle(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float cx = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float cy = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float radius = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int segments = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		g2_fill_circle(cx, cy, radius, segments);
+	}
+
+	void krom_g2_draw_cubic_bezier(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+
+		Local<Object> jsarray_x = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		int32_t length = jsarray_x->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float *x = (float *)malloc(sizeof(float) * length);
+		for (int i = 0; i < length; ++i) {
+			float j = (float)jsarray_x->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+			x[i] = j;
+		}
+
+		Local<Object> jsarray_y = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		length = jsarray_y->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float *y = (float *)malloc(sizeof(float) * length);
+		for (int i = 0; i < length; ++i) {
+			float j = (float)jsarray_y->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+			y[i] = j;
+		}
+
+		int segments = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float strength = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
+		g2_draw_cubic_bezier(x, y, segments, strength);
+		free(x);
+		free(y);
+	}
 	#endif
 
 	bool window_close_callback(void *data) {
@@ -3880,6 +3917,8 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "g2_set_color").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_set_color));
 		krom->Set(String::NewFromUtf8(isolate, "g2_set_pipeline").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_set_pipeline));
 		krom->Set(String::NewFromUtf8(isolate, "g2_set_transform").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_set_transform));
+		krom->Set(String::NewFromUtf8(isolate, "g2_fill_circle").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_fill_circle));
+		krom->Set(String::NewFromUtf8(isolate, "g2_draw_cubic_bezier").ToLocalChecked(), FunctionTemplate::New(isolate, krom_g2_draw_cubic_bezier));
 		#endif
 		krom->Set(String::NewFromUtf8(isolate, "setSaveAndQuitCallback").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_save_and_quit_callback));
 		krom->Set(String::NewFromUtf8(isolate, "setMouseCursor").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mouse_cursor));
