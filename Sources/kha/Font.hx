@@ -4,14 +4,12 @@ class Font {
 
 	public var font_: Dynamic = null;
 	public var blob: Blob;
-	public var fontGlyphs: Array<Int>;
+	public var fontGlyphs: Array<Int> = null;
 	public var fontIndex = 0;
 
 	public function new(blob: Blob, fontIndex = 0) {
 		this.blob = blob;
-		this.fontGlyphs = kha.graphics2.Graphics.fontGlyphs;
 		this.fontIndex = fontIndex;
-		font_ = Krom.g2_font_init(blob.bytes.getData(), fontIndex);
 	}
 
 	public function height(fontSize: Int): Float {
