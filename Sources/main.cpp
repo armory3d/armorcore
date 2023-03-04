@@ -51,6 +51,7 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #undef Status
 #endif
 #include <v8.h>
+#include <v8-fast-api-calls.h>
 
 #ifdef KORE_WINDOWS
 #include <Windows.h> // AttachConsole
@@ -2231,13 +2232,17 @@ namespace {
 		kinc_g4_render_target_set_depth_stencil_from(render_target, source_target);
 	}
 
+	void krom_viewport_fast(v8::Local<v8::Object> receiver, int x, int y, int w, int h) {
+		kinc_g4_viewport(x, y, w, h);
+	}
+
 	void krom_viewport(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int w = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int h = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		kinc_g4_viewport(x, y, w, h);
+		krom_viewport_fast(args.This(), x, y, w, h);
 	}
 
 	void krom_scissor(const FunctionCallbackInfo<Value> &args) {
@@ -3857,7 +3862,7 @@ namespace {
 		krom->Set(String::NewFromUtf8(isolate, "generateRenderTargetMipmaps").ToLocalChecked(), FunctionTemplate::New(isolate, krom_generate_render_target_mipmaps));
 		krom->Set(String::NewFromUtf8(isolate, "setMipmaps").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_mipmaps));
 		krom->Set(String::NewFromUtf8(isolate, "setDepthStencilFrom").ToLocalChecked(), FunctionTemplate::New(isolate, krom_set_depth_stencil_from));
-		krom->Set(String::NewFromUtf8(isolate, "viewport").ToLocalChecked(), FunctionTemplate::New(isolate, krom_viewport));
+		krom->Set(String::NewFromUtf8(isolate, "viewport").ToLocalChecked(), FunctionTemplate::New(isolate, krom_viewport, v8::Local<v8::Value>(), v8::Local<v8::Signature>(), 0, v8::ConstructorBehavior::kThrow, v8::SideEffectType::kHasNoSideEffect, &CFunction::Make(krom_viewport_fast)));
 		krom->Set(String::NewFromUtf8(isolate, "scissor").ToLocalChecked(), FunctionTemplate::New(isolate, krom_scissor));
 		krom->Set(String::NewFromUtf8(isolate, "disableScissor").ToLocalChecked(), FunctionTemplate::New(isolate, krom_disable_scissor));
 		krom->Set(String::NewFromUtf8(isolate, "renderTargetsInvertedY").ToLocalChecked(), FunctionTemplate::New(isolate, krom_render_targets_inverted_y));
