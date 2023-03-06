@@ -115,7 +115,7 @@ extern "C" {
 #endif
 
 #ifdef WITH_PLUGIN_EMBED
-void plugin_embed(v8::Isolate *isolate, v8::Local<v8::ObjectTemplate> global);
+void plugin_embed(v8::Isolate *isolate, Local<ObjectTemplate> global);
 #endif
 #ifdef KORE_MACOS
 extern "C" const char *macgetresourcepath();
@@ -427,13 +427,17 @@ namespace {
 		}
 	}
 
+	void krom_clear_fast(Local<Object> receiver, int flags, int color, float depth, int stencil) {
+		kinc_g4_clear(flags, color, depth, stencil);
+	}
+
 	void krom_clear(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int flags = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int color = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float depth = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int stencil = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		kinc_g4_clear(flags, color, depth, stencil);
+		krom_clear_fast(args.This(), flags, color, depth, stencil);
 	}
 
 	void krom_set_callback(const FunctionCallbackInfo<Value> &args) {
@@ -587,24 +591,44 @@ namespace {
 		gamepad_button_func.Reset(isolate, func);
 	}
 
+	void krom_lock_mouse_fast(Local<Object> receiver) {
+		kinc_mouse_lock(0);
+	}
+
 	void krom_lock_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		kinc_mouse_lock(0);
+		krom_lock_mouse_fast(args.This());
+	}
+
+	void krom_unlock_mouse_fast(Local<Object> receiver) {
+		kinc_mouse_unlock();
 	}
 
 	void krom_unlock_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		kinc_mouse_unlock();
+		krom_unlock_mouse_fast(args.This());
+	}
+
+	int krom_can_lock_mouse_fast(Local<Object> receiver) {
+		return kinc_mouse_can_lock();
 	}
 
 	void krom_can_lock_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(Int32::New(isolate, kinc_mouse_can_lock()));
+		args.GetReturnValue().Set(Int32::New(isolate, krom_can_lock_mouse_fast(args.This())));
+	}
+
+	int krom_is_mouse_locked_fast(Local<Object> receiver) {
+		return kinc_mouse_is_locked();
 	}
 
 	void krom_is_mouse_locked(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(Int32::New(isolate, kinc_mouse_is_locked()));
+		args.GetReturnValue().Set(Int32::New(isolate, krom_is_mouse_locked_fast(args.This())));
+	}
+
+	void krom_set_mouse_position_fast(Local<Object> receiver, int windowId, int x, int y) {
+		kinc_mouse_set_position(windowId, x, y);
 	}
 
 	void krom_set_mouse_position(const FunctionCallbackInfo<Value> &args) {
@@ -612,17 +636,27 @@ namespace {
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int x = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int y = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		kinc_mouse_set_position(windowId, x, y);
+		krom_set_mouse_position_fast(args.This(), windowId, x, y);
+	}
+
+	void krom_show_mouse_fast(Local<Object> receiver, int show) {
+		show ? kinc_mouse_show() : kinc_mouse_hide();
 	}
 
 	void krom_show_mouse(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() ? kinc_mouse_show() : kinc_mouse_hide();
+		int show = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		krom_show_mouse_fast(args.This(), show);
+	}
+
+	void krom_show_keyboard_fast(Local<Object> receiver, int show) {
+		show ? kinc_keyboard_show() : kinc_keyboard_hide();
 	}
 
 	void krom_show_keyboard(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value() ? kinc_keyboard_show() : kinc_keyboard_hide();
+		int show = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		krom_show_keyboard_fast(args.This(), show);
 	}
 
 	void krom_set_audio_callback(const FunctionCallbackInfo<Value> &args) {
@@ -834,12 +868,21 @@ namespace {
 		kinc_g4_set_vertex_buffers(vertex_buffers, length);
 	}
 
+	void krom_draw_indexed_vertices_fast(Local<Object> receiver, int start, int count) {
+		if (count < 0) kinc_g4_draw_indexed_vertices();
+		else kinc_g4_draw_indexed_vertices_from_to(start, count);
+	}
+
 	void krom_draw_indexed_vertices(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int start = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int count = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		if (count < 0) kinc_g4_draw_indexed_vertices();
-		else kinc_g4_draw_indexed_vertices_from_to(start, count);
+		krom_draw_indexed_vertices_fast(args.This(), start, count);
+	}
+
+	void krom_draw_indexed_vertices_instanced_fast(Local<Object> receiver, int instance_count, int start, int count) {
+		if (count < 0) kinc_g4_draw_indexed_vertices_instanced(instance_count);
+		else kinc_g4_draw_indexed_vertices_instanced_from_to(instance_count, start, count);
 	}
 
 	void krom_draw_indexed_vertices_instanced(const FunctionCallbackInfo<Value> &args) {
@@ -847,8 +890,7 @@ namespace {
 		int instance_count = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int start = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int count = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		if (count < 0) kinc_g4_draw_indexed_vertices_instanced(instance_count);
-		else kinc_g4_draw_indexed_vertices_instanced_from_to(instance_count, start, count);
+		krom_draw_indexed_vertices_instanced_fast(args.This(), instance_count, start, count);
 	}
 
 	void krom_create_vertex_shader(const FunctionCallbackInfo<Value> &args) {
@@ -1781,21 +1823,33 @@ namespace {
 		kinc_g4_set_matrix3(*location, (kinc_matrix3x3_t *)from);
 	}
 
+	double krom_get_time_fast(Local<Object> receiver) {
+		return kinc_time();
+	}
+
 	void krom_get_time(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(Number::New(isolate, kinc_time()));
+		args.GetReturnValue().Set(Number::New(isolate, krom_get_time_fast(args.This())));
+	}
+
+	int krom_window_width_fast(Local<Object> receiver, int windowId) {
+		return kinc_window_width(windowId);
 	}
 
 	void krom_window_width(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		args.GetReturnValue().Set(Int32::New(isolate, kinc_window_width(windowId)));
+		args.GetReturnValue().Set(Int32::New(isolate, krom_window_width_fast(args.This(), windowId)));
+	}
+
+	int krom_window_height_fast(Local<Object> receiver, int windowId) {
+		return kinc_window_height(windowId);
 	}
 
 	void krom_window_height(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		args.GetReturnValue().Set(Int32::New(isolate, kinc_window_height(windowId)));
+		args.GetReturnValue().Set(Int32::New(isolate, krom_window_height_fast(args.This(), windowId)));
 	}
 
 	void krom_set_window_title(const FunctionCallbackInfo<Value> &args) {
@@ -2232,7 +2286,7 @@ namespace {
 		kinc_g4_render_target_set_depth_stencil_from(render_target, source_target);
 	}
 
-	void krom_viewport_fast(v8::Local<v8::Object> receiver, int x, int y, int w, int h) {
+	void krom_viewport_fast(Local<Object> receiver, int x, int y, int w, int h) {
 		kinc_g4_viewport(x, y, w, h);
 	}
 
@@ -2245,22 +2299,34 @@ namespace {
 		krom_viewport_fast(args.This(), x, y, w, h);
 	}
 
+	void krom_scissor_fast(Local<Object> receiver, int x, int y, int w, int h) {
+		kinc_g4_scissor(x, y, w, h);
+	}
+
 	void krom_scissor(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int w = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int h = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		kinc_g4_scissor(x, y, w, h);
+		krom_scissor_fast(args.This(), x, y, w, h);
+	}
+
+	void krom_disable_scissor_fast(Local<Object> receiver) {
+		kinc_g4_disable_scissor();
 	}
 
 	void krom_disable_scissor(const FunctionCallbackInfo<Value> &args) {
-		kinc_g4_disable_scissor();
+		krom_disable_scissor_fast(args.This());
+	}
+
+	int krom_render_targets_inverted_y_fast(Local<Object> receiver) {
+		return kinc_g4_render_targets_inverted_y();
 	}
 
 	void krom_render_targets_inverted_y(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		args.GetReturnValue().Set(Int32::New(isolate, kinc_g4_render_targets_inverted_y()));
+		args.GetReturnValue().Set(Int32::New(isolate, krom_render_targets_inverted_y_fast(args.This())));
 	}
 
 	void krom_begin(const FunctionCallbackInfo<Value> &args) {
@@ -2938,7 +3004,6 @@ namespace {
 	#endif
 
 	bool window_close_callback(void *data) {
-
 		#ifdef KORE_WINDOWS
 		bool save = false;
 		Locker locker{isolate};
@@ -3717,15 +3782,15 @@ namespace {
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_language()).ToLocalChecked());
 	}
 
-	#define SET_FUNCTION_FAST(object, name, slow, fast)\
-		CFunction fast ## _ = CFunction::Make(fast);\
+	#define SET_FUNCTION_FAST(object, name, fn)\
+		CFunction fn ## _ = CFunction::Make(fn ## _fast);\
 		object->Set(String::NewFromUtf8(isolate, name).ToLocalChecked(),\
-		FunctionTemplate::New(isolate, slow, v8::Local<v8::Value>(), v8::Local<v8::Signature>(), 0,\
-		v8::ConstructorBehavior::kThrow, v8::SideEffectType::kHasNoSideEffect, &fast ## _))
+		FunctionTemplate::New(isolate, fn, Local<v8::Value>(), Local<v8::Signature>(), 0,\
+		v8::ConstructorBehavior::kThrow, v8::SideEffectType::kHasNoSideEffect, &fn ## _))
 
-	#define SET_FUNCTION(object, name, slow)\
+	#define SET_FUNCTION(object, name, fn)\
 		object->Set(String::NewFromUtf8(isolate, name).ToLocalChecked(),\
-		FunctionTemplate::New(isolate, slow, v8::Local<v8::Value>(), v8::Local<v8::Signature>(), 0,\
+		FunctionTemplate::New(isolate, fn, Local<v8::Value>(), Local<v8::Signature>(), 0,\
 		v8::ConstructorBehavior::kThrow, v8::SideEffectType::kHasNoSideEffect, nullptr))
 
 	void start_v8(char *krom_bin, int krom_bin_size) {
@@ -3757,7 +3822,7 @@ namespace {
 		SET_FUNCTION(krom, "init", krom_init);
 		SET_FUNCTION(krom, "setApplicationName", krom_set_application_name);
 		SET_FUNCTION(krom, "log", krom_log);
-		SET_FUNCTION(krom, "clear", krom_clear);
+		SET_FUNCTION_FAST(krom, "clear", krom_clear);
 		SET_FUNCTION(krom, "setCallback", krom_set_callback);
 		SET_FUNCTION(krom, "setDropFilesCallback", krom_set_drop_files_callback);
 		SET_FUNCTION(krom, "setCutCopyPasteCallback", krom_set_cut_copy_paste_callback);
@@ -3777,13 +3842,13 @@ namespace {
 		SET_FUNCTION(krom, "setPenMoveCallback", krom_set_pen_move_callback);
 		SET_FUNCTION(krom, "setGamepadAxisCallback", krom_set_gamepad_axis_callback);
 		SET_FUNCTION(krom, "setGamepadButtonCallback", krom_set_gamepad_button_callback);
-		SET_FUNCTION(krom, "lockMouse", krom_lock_mouse);
-		SET_FUNCTION(krom, "unlockMouse", krom_unlock_mouse);
-		SET_FUNCTION(krom, "canLockMouse", krom_can_lock_mouse);
-		SET_FUNCTION(krom, "isMouseLocked", krom_is_mouse_locked);
-		SET_FUNCTION(krom, "setMousePosition", krom_set_mouse_position);
-		SET_FUNCTION(krom, "showMouse", krom_show_mouse);
-		SET_FUNCTION(krom, "showKeyboard", krom_show_keyboard);
+		SET_FUNCTION_FAST(krom, "lockMouse", krom_lock_mouse);
+		SET_FUNCTION_FAST(krom, "unlockMouse", krom_unlock_mouse);
+		SET_FUNCTION_FAST(krom, "canLockMouse", krom_can_lock_mouse);
+		SET_FUNCTION_FAST(krom, "isMouseLocked", krom_is_mouse_locked);
+		SET_FUNCTION_FAST(krom, "setMousePosition", krom_set_mouse_position);
+		SET_FUNCTION_FAST(krom, "showMouse", krom_show_mouse);
+		SET_FUNCTION_FAST(krom, "showKeyboard", krom_show_keyboard);
 		SET_FUNCTION(krom, "createIndexBuffer", krom_create_indexbuffer);
 		SET_FUNCTION(krom, "deleteIndexBuffer", krom_delete_indexbuffer);
 		SET_FUNCTION(krom, "lockIndexBuffer", krom_lock_indexbuffer);
@@ -3795,8 +3860,8 @@ namespace {
 		SET_FUNCTION(krom, "unlockVertexBuffer", krom_unlock_vertex_buffer);
 		SET_FUNCTION(krom, "setVertexBuffer", krom_set_vertexbuffer);
 		SET_FUNCTION(krom, "setVertexBuffers", krom_set_vertexbuffers);
-		SET_FUNCTION(krom, "drawIndexedVertices", krom_draw_indexed_vertices);
-		SET_FUNCTION(krom, "drawIndexedVerticesInstanced", krom_draw_indexed_vertices_instanced);
+		SET_FUNCTION_FAST(krom, "drawIndexedVertices", krom_draw_indexed_vertices);
+		SET_FUNCTION_FAST(krom, "drawIndexedVerticesInstanced", krom_draw_indexed_vertices_instanced);
 		SET_FUNCTION(krom, "createVertexShader", krom_create_vertex_shader);
 		SET_FUNCTION(krom, "createVertexShaderFromSource", krom_create_vertex_shader_from_source);
 		SET_FUNCTION(krom, "createFragmentShader", krom_create_fragment_shader);
@@ -3837,9 +3902,9 @@ namespace {
 		SET_FUNCTION(krom, "setFloats", krom_set_floats);
 		SET_FUNCTION(krom, "setMatrix", krom_set_matrix);
 		SET_FUNCTION(krom, "setMatrix3", krom_set_matrix3);
-		SET_FUNCTION(krom, "getTime", krom_get_time);
-		SET_FUNCTION(krom, "windowWidth", krom_window_width);
-		SET_FUNCTION(krom, "windowHeight", krom_window_height);
+		SET_FUNCTION_FAST(krom, "getTime", krom_get_time);
+		SET_FUNCTION_FAST(krom, "windowWidth", krom_window_width);
+		SET_FUNCTION_FAST(krom, "windowHeight", krom_window_height);
 		SET_FUNCTION(krom, "setWindowTitle", krom_set_window_title);
 		SET_FUNCTION(krom, "getWindowMode", krom_get_window_mode);
 		SET_FUNCTION(krom, "setWindowMode", krom_set_window_mode);
@@ -3873,10 +3938,10 @@ namespace {
 		SET_FUNCTION(krom, "generateRenderTargetMipmaps", krom_generate_render_target_mipmaps);
 		SET_FUNCTION(krom, "setMipmaps", krom_set_mipmaps);
 		SET_FUNCTION(krom, "setDepthStencilFrom", krom_set_depth_stencil_from);
-		SET_FUNCTION_FAST(krom, "viewport", krom_viewport, krom_viewport_fast);
-		SET_FUNCTION(krom, "scissor", krom_scissor);
-		SET_FUNCTION(krom, "disableScissor", krom_disable_scissor);
-		SET_FUNCTION(krom, "renderTargetsInvertedY", krom_render_targets_inverted_y);
+		SET_FUNCTION_FAST(krom, "viewport", krom_viewport);
+		SET_FUNCTION_FAST(krom, "scissor", krom_scissor);
+		SET_FUNCTION_FAST(krom, "disableScissor", krom_disable_scissor);
+		SET_FUNCTION_FAST(krom, "renderTargetsInvertedY", krom_render_targets_inverted_y);
 		SET_FUNCTION(krom, "begin", krom_begin);
 		SET_FUNCTION(krom, "beginFace", krom_begin_face);
 		SET_FUNCTION(krom, "end", krom_end);
