@@ -26,7 +26,9 @@
 #include <kinc/graphics4/pipeline.h>
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
+#ifdef WITH_COMPUTE
 #include <kinc/compute/compute.h>
+#endif
 #ifdef KORE_LZ4X
 extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int maxOutputSize);
 #else
@@ -2507,6 +2509,7 @@ namespace {
 		#endif
 	}
 
+	#ifdef WITH_COMPUTE
 	void krom_set_bool_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -2736,6 +2739,7 @@ namespace {
 		int z = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		kinc_compute(x, y, z);
 	}
+	#endif
 
 	#ifdef WITH_G2
 	void krom_g2_init(const FunctionCallbackInfo<Value> &args) {
@@ -3952,6 +3956,7 @@ namespace {
 		SET_FUNCTION(krom, "getArg", krom_get_arg);
 		SET_FUNCTION(krom, "getFilesLocation", krom_get_files_location);
 		SET_FUNCTION(krom, "httpRequest", krom_http_request);
+		#ifdef WITH_COMPUTE
 		SET_FUNCTION(krom, "setBoolCompute", krom_set_bool_compute);
 		SET_FUNCTION(krom, "setIntCompute", krom_set_int_compute);
 		SET_FUNCTION(krom, "setFloatCompute", krom_set_float_compute);
@@ -3974,6 +3979,7 @@ namespace {
 		SET_FUNCTION(krom, "getConstantLocationCompute", krom_get_constant_location_compute);
 		SET_FUNCTION(krom, "getTextureUnitCompute", krom_get_texture_unit_compute);
 		SET_FUNCTION(krom, "compute", krom_compute);
+		#endif
 		// Extended
 		#ifdef WITH_G2
 		SET_FUNCTION(krom, "g2_init", krom_g2_init);
