@@ -25,7 +25,7 @@ static bool g2_bilinear_filter = true;
 static uint32_t g2_color = 0;
 static g2_font_t *g2_font = NULL;
 static int g2_font_size;
-static g2_is_render_target = false;
+static bool g2_is_render_target = false;
 static kinc_g4_pipeline_t *g2_last_pipeline = NULL;
 static kinc_g4_pipeline_t *g2_custom_pipeline = NULL;
 static kinc_matrix3x3_t g2_transform;
@@ -348,7 +348,8 @@ void g2_draw_image_buffer(bool end) {
 	else {
 		kinc_g4_render_target_use_color_as_texture(image_last_render_target, image_tex_unit);
 	}
-	kinc_g4_set_texture_addressing(image_tex_unit, KINC_G4_TEXTURE_ADDRESSING_CLAMP, KINC_G4_TEXTURE_ADDRESSING_CLAMP);
+	kinc_g4_set_texture_addressing(image_tex_unit, KINC_G4_TEXTURE_DIRECTION_U, KINC_G4_TEXTURE_ADDRESSING_CLAMP);
+	kinc_g4_set_texture_addressing(image_tex_unit, KINC_G4_TEXTURE_DIRECTION_V, KINC_G4_TEXTURE_ADDRESSING_CLAMP);
 	// kinc_g4_set_texture_mipmap_filter(image_tex_unit, g2_bilinear_filter ? KINC_G4_MIPMAP_FILTER_LINEAR : KINC_G4_MIPMAP_FILTER_NONE);
 	kinc_g4_set_texture_mipmap_filter(image_tex_unit, KINC_G4_MIPMAP_FILTER_NONE);
 	kinc_g4_set_texture_minification_filter(image_tex_unit, g2_bilinear_filter ? KINC_G4_TEXTURE_FILTER_LINEAR : KINC_G4_TEXTURE_FILTER_POINT);
@@ -645,7 +646,8 @@ void g2_text_draw_buffer(bool end) {
 	kinc_g4_set_vertex_buffer(&text_vertex_buffer);
 	kinc_g4_set_index_buffer(&text_index_buffer);
 	kinc_g4_set_texture(text_tex_unit, text_last_texture);
-	kinc_g4_set_texture_addressing(text_tex_unit, KINC_G4_TEXTURE_ADDRESSING_CLAMP, KINC_G4_TEXTURE_ADDRESSING_CLAMP);
+	kinc_g4_set_texture_addressing(text_tex_unit, KINC_G4_TEXTURE_DIRECTION_U, KINC_G4_TEXTURE_ADDRESSING_CLAMP);
+	kinc_g4_set_texture_addressing(text_tex_unit, KINC_G4_TEXTURE_DIRECTION_V, KINC_G4_TEXTURE_ADDRESSING_CLAMP);
 	kinc_g4_set_texture_mipmap_filter(text_tex_unit, KINC_G4_MIPMAP_FILTER_NONE);
 	kinc_g4_set_texture_minification_filter(text_tex_unit, g2_bilinear_filter ? KINC_G4_TEXTURE_FILTER_LINEAR : KINC_G4_TEXTURE_FILTER_POINT);
 	kinc_g4_set_texture_magnification_filter(text_tex_unit, g2_bilinear_filter ? KINC_G4_TEXTURE_FILTER_LINEAR : KINC_G4_TEXTURE_FILTER_POINT);
