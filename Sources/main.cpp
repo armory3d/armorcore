@@ -116,6 +116,8 @@ extern "C" {
 }
 #endif
 
+using namespace v8;
+
 #ifdef WITH_PLUGIN_EMBED
 void plugin_embed(v8::Isolate *isolate, Local<ObjectTemplate> global);
 #endif
@@ -125,8 +127,6 @@ extern "C" const char *macgetresourcepath();
 #ifdef KORE_IOS
 extern "C" const char *iphonegetresourcepath();
 #endif
-
-using namespace v8;
 
 const int KROM_API = 6;
 
