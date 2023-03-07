@@ -352,7 +352,7 @@ class Ext {
 			}
 			ui.t.TEXT_COL = _TEXT_COL;
 			ui._y = _y;
-			ui._x += (lines.length + "").length * 16 + 4;
+			ui._x += ((lines.length + "").length * 16 + 4) * ui.SCALE();
 		}
 
 		ui.g.color = ui.t.SEPARATOR_COL; // Background
