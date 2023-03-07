@@ -213,14 +213,7 @@ if (flags.with_onnx) {
 	}
 	else if (platform === Platform.Linux) {
 		// patchelf --set-rpath . Armory
-		if (armorcore) {
-			project.addLib('onnxruntime -L../../armorcore/Libraries/onnx/linux');
-		}
-		else {
-			project.addLib('onnxruntime -L../../Libraries/onnx/linux');
-			//project.addLib('onnxruntime_providers_cuda -L../../Libraries/onnx/linux');
-			//project.addLib('onnxruntime_providers_shared -L../../Libraries/onnx/linux');
-		}
+		project.addLib('onnxruntime -L' + __dirname + '/Libraries/onnx/linux');
 	}
 	else if (platform === Platform.OSX) {
 		project.addLib('Libraries/onnx/macos/libonnxruntime.1.13.1.dylib');
