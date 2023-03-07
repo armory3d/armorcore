@@ -43,10 +43,7 @@ class Graphics {
 			fontGlyphsLast = fontGlyphs;
 			Krom.g2_font_set_glyphs(fontGlyphs);
 		}
-		if (font.fontGlyphs != fontGlyphs) {
-			font.fontGlyphs = fontGlyphs;
-			font.font_ = Krom.g2_font_init(font.blob.bytes.getData(), font.fontIndex);
-		}
+		font.init();
 		Krom.g2_set_font(font.font_, fontSize);
 	}
 
