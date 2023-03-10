@@ -213,6 +213,8 @@ extern class Krom {
 	static function windowY(id: Int): Int;
 	static function language(): String;
 	static function mlInference(model: js.lib.ArrayBuffer, tensors: Array<js.lib.ArrayBuffer>, ?inputShape: Array<Array<Int>>, ?outputShape: Array<Int>, ?useGpu: Bool, ?cache: Bool): js.lib.ArrayBuffer;
+
+	static function io_obj_parse(file_bytes: js.lib.ArrayBuffer, split_code: Int, start_pos: Int, udim: Bool): Dynamic;
 }
 
 enum abstract LogLevel(Int) to Int {

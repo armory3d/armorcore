@@ -40,6 +40,8 @@ let flags = {
 	with_audio: false,
 	with_onnx: false,
 	with_worker: false,
+	with_g2: false,
+	with_iron: false,
 	on_project_created: null,
 };
 
@@ -89,10 +91,14 @@ else {
 	}
 }
 
-let with_g2 = true;
-if (with_g2) {
+if (flags.with_g2) {
 	project.addDefine('WITH_G2');
 	project.addFile('Sources/g2/*');
+}
+
+if (flags.with_iron) {
+	project.addDefine('WITH_IRON');
+	project.addFile('Sources/iron/*.c');
 }
 
 project.addIncludeDir('v8/include');

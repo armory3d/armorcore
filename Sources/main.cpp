@@ -115,6 +115,11 @@ extern "C" {
 	#include "g2/g2_ext.h"
 }
 #endif
+#ifdef WITH_IRON
+extern "C" {
+	#include "iron/io_obj.h"
+}
+#endif
 
 using namespace v8;
 
@@ -836,7 +841,7 @@ namespace {
 		int start = args[1]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		int count = args[2]->Int32Value(isolate->GetCurrentContext()).FromJust();
 		float *vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
-		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)vertices, count * kinc_g4_vertex_buffer_stride(buffer), [](void *, size_t, void *) {}, nullptr);
+		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)vertices, (uint32_t)(count * kinc_g4_vertex_buffer_stride(buffer)), [](void *, size_t, void *) {}, nullptr);
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(abuffer);
 	}
@@ -1606,7 +1611,7 @@ namespace {
 
 		kinc_file_reader_t reader;
 		if (!kinc_file_reader_open(&reader, *utf8_value, KINC_FILE_TYPE_ASSET)) return;
-		int reader_size = (int)kinc_file_reader_size(&reader);
+		uint32_t reader_size = (uint32_t)kinc_file_reader_size(&reader);
 
 		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, reader_size);
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
@@ -3786,6 +3791,58 @@ namespace {
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_language()).ToLocalChecked());
 	}
 
+	#ifdef WITH_IRON
+	void krom_io_obj_parse(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+
+		int split_code = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int start_pos = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int udim = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
+		obj_part_t *part = io_obj_parse((char *)content->Data(), split_code, start_pos, udim);
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+
+		std::unique_ptr<v8::BackingStore> backing_posa = v8::ArrayBuffer::NewBackingStore((void *)part->posa, part->vertex_count * 4 * 2, [](void *, size_t, void *) {}, nullptr);
+		Local<ArrayBuffer> buffer_posa = ArrayBuffer::New(isolate, std::move(backing_posa));
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "posa").ToLocalChecked(), Int16Array::New(buffer_posa, 0, buffer_posa->ByteLength() / 2));
+
+		std::unique_ptr<v8::BackingStore> backing_nora = v8::ArrayBuffer::NewBackingStore((void *)part->nora, part->vertex_count * 2 * 2, [](void *, size_t, void *) {}, nullptr);
+		Local<ArrayBuffer> buffer_nora = ArrayBuffer::New(isolate, std::move(backing_nora));
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "nora").ToLocalChecked(), Int16Array::New(buffer_nora, 0, buffer_nora->ByteLength() / 2));
+
+		std::unique_ptr<v8::BackingStore> backing_texa = v8::ArrayBuffer::NewBackingStore((void *)part->texa, part->vertex_count * 2 * 2, [](void *, size_t, void *) {}, nullptr);
+		Local<ArrayBuffer> buffer_texa = ArrayBuffer::New(isolate, std::move(backing_texa));
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texa").ToLocalChecked(), Int16Array::New(buffer_texa, 0, buffer_texa->ByteLength() / 2));
+
+		std::unique_ptr<v8::BackingStore> backing_inda = v8::ArrayBuffer::NewBackingStore((void *)part->inda, part->index_count * 4, [](void *, size_t, void *) {}, nullptr);
+		Local<ArrayBuffer> buffer_inda = ArrayBuffer::New(isolate, std::move(backing_inda));
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "inda").ToLocalChecked(), Uint32Array::New(buffer_inda, 0, buffer_inda->ByteLength() / 4));
+
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked(), String::NewFromUtf8(isolate, part->name).ToLocalChecked());
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "scalePos").ToLocalChecked(), Number::New(isolate, part->scale_pos));
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "has_next").ToLocalChecked(), Number::New(isolate, part->has_next));
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "pos").ToLocalChecked(), Number::New(isolate, (int)part->pos));
+
+		if (udim) {
+			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "udims_u").ToLocalChecked(), Number::New(isolate, part->udims_u));
+
+			Local<Array> udims = Array::New(isolate, part->udims_u * part->udims_v);
+			for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
+				std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)part->udims[i], part->udims_count[i] * 4, [](void *, size_t, void *) {}, nullptr);
+				Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, std::move(backing));
+				udims->Set(isolate->GetCurrentContext(), i, Uint32Array::New(buffer, 0, buffer->ByteLength() / 4));
+			}
+			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "udims").ToLocalChecked(), udims);
+		}
+
+		args.GetReturnValue().Set(obj);
+	}
+	#endif
+
 	#define SET_FUNCTION_FAST(object, name, fn)\
 		CFunction fn ## _ = CFunction::Make(fn ## _fast);\
 		object->Set(String::NewFromUtf8(isolate, name).ToLocalChecked(),\
@@ -4048,6 +4105,9 @@ namespace {
 		SET_FUNCTION(krom, "windowX", krom_window_x);
 		SET_FUNCTION(krom, "windowY", krom_window_y);
 		SET_FUNCTION(krom, "language", krom_language);
+		#ifdef WITH_IRON
+		SET_FUNCTION(krom, "io_obj_parse", krom_io_obj_parse);
+		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
