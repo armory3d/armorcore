@@ -12,7 +12,7 @@ class Graphics {
 
 	public static var current: Graphics;
 	public static var fontGlyphs: Array<Int> = [for (i in 32...127) i];
-	static var fontGlyphsLast: Array<Int> = fontGlyphs;
+	public static var fontGlyphsLast: Array<Int> = fontGlyphs;
 	static var thrown = false;
 	static var mat = new kha.arrays.Float32Array(9);
 	static var initialized = false;
@@ -39,10 +39,6 @@ class Graphics {
 	}
 
 	function set_font_and_size(font: Font, fontSize: Int) {
-		if (fontGlyphsLast != fontGlyphs) {
-			fontGlyphsLast = fontGlyphs;
-			Krom.g2_font_set_glyphs(fontGlyphs);
-		}
 		font.init();
 		Krom.g2_set_font(font.font_, fontSize);
 	}

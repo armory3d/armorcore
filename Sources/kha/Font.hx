@@ -36,6 +36,10 @@ class Font {
 	}
 
 	public function init() {
+		if (kha.graphics2.Graphics.fontGlyphsLast != kha.graphics2.Graphics.fontGlyphs) {
+			kha.graphics2.Graphics.fontGlyphsLast = kha.graphics2.Graphics.fontGlyphs;
+			Krom.g2_font_set_glyphs(kha.graphics2.Graphics.fontGlyphs);
+		}
 		if (fontGlyphs != kha.graphics2.Graphics.fontGlyphs) {
 			fontGlyphs = kha.graphics2.Graphics.fontGlyphs;
 			font_ = Krom.g2_font_init(blob.bytes.getData(), fontIndex);
