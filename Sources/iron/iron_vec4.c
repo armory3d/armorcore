@@ -141,7 +141,7 @@ bool vec4_almost_equals(kinc_vector4_t a, kinc_vector4_t b, float prec) {
 }
 
 float vec4_length(kinc_vector4_t a) {
-	return sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+	return (float)sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
 }
 
 kinc_vector4_t vec4_sub(kinc_vector4_t a, kinc_vector4_t b) {
@@ -168,7 +168,7 @@ float vec4_fdistance(float v1x, float v1y, float v1z, float v2x, float v2y, floa
 	float vx = v1x - v2x;
 	float vy = v1y - v2y;
 	float vz = v1z - v2z;
-	return sqrt(vx * vx + vy * vy + vz * vz);
+	return (float)sqrt(vx * vx + vy * vy + vz * vz);
 }
 
 kinc_vector4_t vec4_reflect(kinc_vector4_t a, kinc_vector4_t n) {
