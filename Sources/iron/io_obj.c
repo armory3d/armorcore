@@ -158,11 +158,11 @@ static bool pnpoly(float v0x, float v0y, float v1x, float v1y, float v2x, float 
 	return c;
 }
 
-kinc_vector4_t calc_normal(kinc_vector4_t p0, kinc_vector4_t p1, kinc_vector4_t p2) {
-	kinc_vector4_t cb = vec4_sub(p2, p1);
-	kinc_vector4_t ab = vec4_sub(p0, p1);
+kinc_vector4_t calc_normal(kinc_vector4_t a, kinc_vector4_t b, kinc_vector4_t c) {
+	kinc_vector4_t cb = vec4_sub(c, b);
+	kinc_vector4_t ab = vec4_sub(a, b);
 	cb = vec4_cross(cb, ab);
-	vec4_normalize(cb);
+	cb = vec4_normalize(cb);
 	return cb;
 }
 
@@ -179,6 +179,8 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, int start_pos, bo
 	part->udims_v = 1;
 	part->udims = NULL;
 	part->has_next = false;
+	part->texa = NULL;
+	part->name = str;
 
 	array_i32_t pos_indices = {0};
 	array_i32_t uv_indices = {0};
