@@ -1,4 +1,5 @@
 
+#include <stddef.h>
 #include <kinc/window.h>
 
 int iron_app_w() { return kinc_window_width(0); }

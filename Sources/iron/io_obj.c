@@ -167,7 +167,7 @@ kinc_vector4_t calc_normal(kinc_vector4_t p0, kinc_vector4_t p1, kinc_vector4_t 
 }
 
 // 'o' for object split, 'g' for groups, 'u'semtl for materials
-obj_part_t *io_obj_parse(char *file_bytes, char split_code, int start_pos, bool udim) {
+obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, int start_pos, bool udim) {
 	bytes = file_bytes;
 	bytes_length = strlen(file_bytes);
 

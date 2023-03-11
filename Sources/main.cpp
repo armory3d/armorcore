@@ -3801,7 +3801,7 @@ namespace {
 		int start_pos = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int udim = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
-		obj_part_t *part = io_obj_parse((char *)content->Data(), split_code, start_pos, udim);
+		obj_part_t *part = io_obj_parse((uint8_t *)content->Data(), split_code, start_pos, udim);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
