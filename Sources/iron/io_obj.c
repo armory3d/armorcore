@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 #include "iron_array.h"
 #include "iron_vec4.h"
 

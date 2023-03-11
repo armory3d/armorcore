@@ -1,6 +1,7 @@
 #include "iron_mat4.h"
 
 #include <math.h>
+#include <string.h>
 #include "iron_vec4.h"
 
 kinc_matrix4x4_t mat4_perspective_projection(float fovy, float aspect, float zn, float zf) {

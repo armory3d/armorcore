@@ -116,8 +116,10 @@ kinc_vector4_t vec4_apply_mat4(kinc_vector4_t a, kinc_matrix4x4_t m) {
 }
 
 kinc_vector4_t vec4_apply_axis_angle(kinc_vector4_t a, kinc_vector4_t axis, float angle) {
+	kinc_vector4_t v;
 	// kinc_quaternion_t quat = quat_from_axis_angle(axis, angle);
 	// return vec4_apply_quat(a, quat);
+	return v;
 }
 
 kinc_vector4_t vec4_apply_quat(kinc_vector4_t a, kinc_quaternion_t q) {
