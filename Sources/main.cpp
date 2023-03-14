@@ -3836,7 +3836,7 @@ namespace {
 			for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
 				std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)part->udims[i], part->udims_count[i] * 4, [](void *, size_t, void *) {}, nullptr);
 				Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, std::move(backing));
-				udims->Set(isolate->GetCurrentContext(), i, Uint32Array::New(buffer, 0, buffer->ByteLength() / 4));
+				(void) udims->Set(isolate->GetCurrentContext(), i, Uint32Array::New(buffer, 0, buffer->ByteLength() / 4));
 			}
 			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "udims").ToLocalChecked(), udims);
 		}
