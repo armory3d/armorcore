@@ -126,7 +126,7 @@ static char *read_string() {
 		part->pos++;
 	}
 	for (int i = 0; i < part->pos - begin; ++i) str[i] = bytes[begin + i];
-	str[part->pos - begin + 1] = 0;
+	str[part->pos - begin] = 0;
 	return str;
 }
 
@@ -276,21 +276,21 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, int start_pos, bo
 				}
 			}
 			else { // Convex or concave, ear clipping
-				int vind_off = split_code == 'u' ? 0 : vind_off;
-				int nind_off = split_code == 'u' ? 0 : nind_off;
+				int _vind_off = split_code == 'u' ? 0 : vind_off;
+				int _nind_off = split_code == 'u' ? 0 : nind_off;
 				float nx = 0.0;
 				float ny = 0.0;
 				float nz = 0.0;
 				if (nor_temp.length > 0) {
-					nx = nor_temp.data[(na[0] - nind_off) * 3    ];
-					ny = nor_temp.data[(na[0] - nind_off) * 3 + 1];
-					nz = nor_temp.data[(na[0] - nind_off) * 3 + 2];
+					nx = nor_temp.data[(na[0] - _nind_off) * 3    ];
+					ny = nor_temp.data[(na[0] - _nind_off) * 3 + 1];
+					nz = nor_temp.data[(na[0] - _nind_off) * 3 + 2];
 				}
 				else {
 					kinc_vector4_t n = calc_normal(
-						vec4_new(pos_temp.data[(va[0] - vind_off) * 3], pos_temp.data[(va[0] - vind_off) * 3 + 1], pos_temp.data[(va[0] - vind_off) * 3 + 2], 1.0f),
-						vec4_new(pos_temp.data[(va[1] - vind_off) * 3], pos_temp.data[(va[1] - vind_off) * 3 + 1], pos_temp.data[(va[1] - vind_off) * 3 + 2], 1.0f),
-						vec4_new(pos_temp.data[(va[2] - vind_off) * 3], pos_temp.data[(va[2] - vind_off) * 3 + 1], pos_temp.data[(va[2] - vind_off) * 3 + 2], 1.0f)
+						vec4_new(pos_temp.data[(va[0] - _vind_off) * 3], pos_temp.data[(va[0] - _vind_off) * 3 + 1], pos_temp.data[(va[0] - _vind_off) * 3 + 2], 1.0f),
+						vec4_new(pos_temp.data[(va[1] - _vind_off) * 3], pos_temp.data[(va[1] - _vind_off) * 3 + 1], pos_temp.data[(va[1] - _vind_off) * 3 + 2], 1.0f),
+						vec4_new(pos_temp.data[(va[2] - _vind_off) * 3], pos_temp.data[(va[2] - _vind_off) * 3 + 1], pos_temp.data[(va[2] - _vind_off) * 3 + 2], 1.0f)
 					);
 					nx = n.x;
 					ny = n.y;
@@ -310,9 +310,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, int start_pos, bo
 					i = (i + 1) % vi;
 					int i1 = (i + 1) % vi;
 					int i2 = (i + 2) % vi;
-					int vi0 = (va[i ] - vind_off) * 3;
-					int vi1 = (va[i1] - vind_off) * 3;
-					int vi2 = (va[i2] - vind_off) * 3;
+					int vi0 = (va[i ] - _vind_off) * 3;
+					int vi1 = (va[i1] - _vind_off) * 3;
+					int vi2 = (va[i2] - _vind_off) * 3;
 					float v0x = pos_temp.data[vi0 + axis0];
 					float v0y = pos_temp.data[vi0 + axis1];
 					float v1x = pos_temp.data[vi1 + axis0];
@@ -329,7 +329,7 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, int start_pos, bo
 
 					bool overlap = false; // Other vertex found inside this triangle
 					for (int j = 0; j < vi - 3; ++j) {
-						int j0 = (va[(i + 3 + j) % vi] - vind_off) * 3;
+						int j0 = (va[(i + 3 + j) % vi] - _vind_off) * 3;
 						float px = pos_temp.data[j0 + axis0];
 						float py = pos_temp.data[j0 + axis1];
 						if (pnpoly(v0x, v0y, v1x, v1y, v2x, v2y, px, py)) {
