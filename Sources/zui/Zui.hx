@@ -785,7 +785,8 @@ class Zui {
 	}
 
 	function submitTextEdit() {
-		submitTextHandle.changed = submitTextHandle.text != textToSubmit;
+		changed = submitTextHandle.text != textToSubmit;
+		submitTextHandle.changed = changed;
 		submitTextHandle.text = textToSubmit;
 		submitTextHandle = null;
 		textToSubmit = "";
