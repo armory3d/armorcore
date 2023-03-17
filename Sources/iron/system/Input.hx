@@ -187,6 +187,10 @@ class Mouse extends VirtualInput {
 		return buttonsStarted[buttonIndex(button)];
 	}
 
+	public function startedAny(): Bool {
+		return buttonsStarted[0] || buttonsStarted[1] || buttonsStarted[2] || buttonsStarted[3] || buttonsStarted[4];
+	}
+
 	public function released(button = "left"): Bool {
 		return buttonsReleased[buttonIndex(button)];
 	}
@@ -487,6 +491,10 @@ class Keyboard extends VirtualInput {
 	**/
 	public function started(key: String): Bool {
 		return keysStarted.get(key);
+	}
+
+	public function startedAny(): Bool {
+		return keysFrame.length > 0;
 	}
 
 	/**
