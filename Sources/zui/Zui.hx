@@ -631,8 +631,9 @@ class Zui {
 				tabY += tabH + 1 :
 				tabX += _w + 1;
 			drawRect(g, true, _x + buttonOffsetY, _y + buttonOffsetY, _w, tabH);
-			g.color = selected ? t.BUTTON_TEXT_COL : t.LABEL_COL;
-			drawString(g, tabNames[i], null, (tabH - tabHMin) / 2, t.FULL_TABS ? Align.Center : Align.Left);
+			g.color = t.BUTTON_TEXT_COL;
+			if (!selected) fadeColor(0.65);
+			drawString(g, tabNames[i], null, (tabH - tabHMin) / 2, (t.FULL_TABS || !tabVertical) ? Align.Center : Align.Left);
 
 			if (selected) { // Hide underline for active tab
 				if (tabVertical) {
@@ -647,6 +648,15 @@ class Zui {
 					g.color = t.HIGHLIGHT_COL;
 					g.fillRect(_x + buttonOffsetY, _y + buttonOffsetY, _w, 2);
 				}
+			}
+
+			if (tabVertical) {
+				g.color = t.SEPARATOR_COL - 0x00050505;
+				g.fillRect(_x, _y + tabH, _w, 1);
+			}
+			else {
+				g.color = t.SEPARATOR_COL - 0x00050505;
+				g.fillRect(_x + buttonOffsetY + _w, _y, 1, tabH);
 			}
 		}
 
@@ -1689,8 +1699,8 @@ class Zui {
 		if (bothSides) _w += TAB_W();
 	}
 
-	function fadeColor() {
-		g.color = kha.Color.fromFloats(g.color.R, g.color.G, g.color.B, 0.25);
+	function fadeColor(alpha = 0.25) {
+		g.color = kha.Color.fromFloats(g.color.R, g.color.G, g.color.B, alpha);
 	}
 
 	public function fill(x: Float, y: Float, w: Float, h: Float, color: kha.Color) {
