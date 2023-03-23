@@ -45,6 +45,7 @@ class Zui {
 	public static var onBorderHover: Handle->Int->Void = null; // Mouse over window border, use for resizing
 	public static var onTextHover: Void->Void = null; // Mouse over text input, use to set I-cursor
 	public static var onDeselectText: Void->Void = null; // Text editing finished
+	public static var onTabDrop: Handle->Int->Handle->Int->Void = null; // Tab reorder via drag and drop
 	public static var alwaysRedrawWindow = true; // Redraw cached window texture each frame or on changes only
 	public static var keyRepeat = true; // Emulate key repeat for non-character keys
 	public static var dynamicGlyphLoad = true; // Allow text input fields to push new glyphs into the font atlas
@@ -139,6 +140,8 @@ class Zui {
 	var windowEnded = true;
 	var scrollHandle: Handle = null; // Window or slider being scrolled
 	var dragHandle: Handle = null; // Window being dragged
+	var dragTabHandle: Handle = null; // Tab being dragged
+	var dragTabPosition = 0;
 	var windowHeaderW = 0.0;
 	var windowHeaderH = 0.0;
 	var restoreX = -1.0;
@@ -610,8 +613,19 @@ class Zui {
 				 t.FULL_TABS ? Std.int(_windowW / tabNames.length) :
 							   Std.int(ops.font.width(fontSize, tabNames[i]) + buttonOffsetY * 2 + 18 * SCALE());
 			var released = getReleased(tabH);
+			var started = getStarted(tabH);
 			var pushed = getPushed(tabH);
 			var hover = getHover(tabH);
+			if (onTabDrop != null) {
+				if (started) {
+					dragTabHandle = tabHandle;
+					dragTabPosition = i;
+				}
+				if (dragTabHandle != null && hover && inputReleased) {
+					onTabDrop(tabHandle, i, dragTabHandle, dragTabPosition);
+					tabHandle.position = i;
+				}
+			}
 			if (released) {
 				var h = tabHandle.nest(tabHandle.position); // Restore tab scroll
 				h.scrollOffset = currentWindow.scrollOffset;
@@ -657,6 +671,16 @@ class Zui {
 			else {
 				g.color = t.SEPARATOR_COL - 0x00050505;
 				g.fillRect(_x + buttonOffsetY + _w, _y, 1, tabH);
+			}
+		}
+
+		if (onTabDrop != null && dragTabHandle != null) {
+			if (inputDX != 0 || inputDY != 0) {
+				Krom.setMouseCursor(1); // Hand
+			}
+			if (inputReleased) {
+				Krom.setMouseCursor(0); // Default
+				dragTabHandle = null;
 			}
 		}
 
