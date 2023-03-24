@@ -346,6 +346,16 @@ class Zui {
 	}
 
 	function endInput() {
+		if (onTabDrop != null && dragTabHandle != null) {
+			if (inputDX != 0 || inputDY != 0) {
+				Krom.setMouseCursor(1); // Hand
+			}
+			if (inputReleased) {
+				Krom.setMouseCursor(0); // Default
+				dragTabHandle = null;
+			}
+		}
+
 		isKeyPressed = false;
 		inputStarted = false;
 		inputStartedR = false;
@@ -676,16 +686,6 @@ class Zui {
 			else {
 				g.color = t.SEPARATOR_COL - 0x00050505;
 				g.fillRect(_x + buttonOffsetY + _w, _y, 1, tabH);
-			}
-		}
-
-		if (onTabDrop != null && dragTabHandle != null) {
-			if (inputDX != 0 || inputDY != 0) {
-				Krom.setMouseCursor(1); // Hand
-			}
-			if (inputReleased) {
-				Krom.setMouseCursor(0); // Default
-				dragTabHandle = null;
 			}
 		}
 
