@@ -40,6 +40,11 @@ class Zui {
 	public var windowBorderBottom = 0;
 	public var windowBorderLeft = 0;
 	public var windowBorderRight = 0;
+	var hoveredTabName = "";
+	var hoveredTabX = 0.0;
+	var hoveredTabY = 0.0;
+	var hoveredTabW = 0.0;
+	var hoveredTabH = 0.0;
 	var highlightFullRow = false;
 	public static var current: Zui = null;
 	public static var onBorderHover: Handle->Int->Void = null; // Mouse over window border, use for resizing
@@ -682,6 +687,14 @@ class Zui {
 				Krom.setMouseCursor(0); // Default
 				dragTabHandle = null;
 			}
+		}
+
+		if (getInputInRect(_windowX, _windowY, _windowW, _windowH)) {
+			hoveredTabName = tabNames[tabHandle.position];
+			hoveredTabX = _windowX;
+			hoveredTabY = _windowY;
+			hoveredTabW = _windowW;
+			hoveredTabH = _windowH;
 		}
 
 		_x = 0; // Restore positions
@@ -1788,6 +1801,11 @@ class Zui {
 		return enabled && inputEnabled &&
 			inputX >= x * scale && inputX < (x + w) * scale &&
 			inputY >= y * scale && inputY < (y + h) * scale;
+	}
+
+	// Useful for drag and drop operations
+	public function getHoveredTabName(): String {
+		return getInputInRect(hoveredTabX, hoveredTabY, hoveredTabW, hoveredTabH) ? hoveredTabName : "";
 	}
 
 	public function onMouseDown(button: Int, x: Int, y: Int) { // Input events
