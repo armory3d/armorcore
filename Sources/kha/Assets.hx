@@ -4,7 +4,6 @@ import kha.Blob;
 import kha.Font;
 import kha.Sound;
 import haxe.io.Bytes;
-import haxe.io.BytesData;
 
 class Assets {
 
@@ -18,7 +17,7 @@ class Assets {
 	}
 
 	public static function loadSoundFromPath(path: String, done: Sound -> Void): Void {
-		done(new Sound(Bytes.ofData(Krom.loadSound(path))));
+		done(new Sound(Krom.loadSound(path)));
 	}
 
 	public static function loadFontFromPath(path: String, done: Font -> Void): Void {

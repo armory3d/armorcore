@@ -125,12 +125,6 @@ class System {
 		Krom.setGamepadAxisCallback(gamepadAxisCallback);
 		Krom.setGamepadButtonCallback(gamepadButtonCallback);
 
-		#if arm_audio
-		kha.audio2.Audio._init();
-		kha.audio1.Audio._init();
-		Krom.setAudioCallback(audioCallback);
-		#end
-
 		Scheduler.start();
 
 		callback(Window.get(0));
@@ -385,14 +379,6 @@ class System {
 	private static function gamepadButtonCallback(gamepad: Int, button: Int, value: Float): Void {
 		gamepads[gamepad].sendButtonEvent(button, value);
 	}
-
-	#if arm_audio
-	private static function audioCallback(samples: Int) : Void {
-		kha.audio2.Audio._callCallback(samples);
-		var buffer = @:privateAccess kha.audio2.Audio.buffer;
-		Krom.writeAudioBuffer(buffer.data.buffer, samples);
-	}
-	#end
 
 	public static function getVsync(): Bool {
 		return true;

@@ -4,8 +4,11 @@
 #include <kinc/log.h>
 #include <kinc/io/filereader.h>
 #include <kinc/io/filewriter.h>
-#include <kinc/audio2/audio.h>
+#ifdef WITH_AUDIO
+#include <kinc/audio1/audio.h>
 #include <kinc/audio1/sound.h>
+#include <kinc/audio2/audio.h>
+#endif
 #include <kinc/system.h>
 #include <kinc/window.h>
 #include <kinc/display.h>
@@ -158,8 +161,10 @@ const int constant_buffer_size = 24;
 namespace {
 	int _argc;
 	char **_argv;
-	bool enable_sound = true;
 	bool enable_window = true;
+	#ifdef WITH_AUDIO
+	bool enable_audio = true;
+	#endif
 	bool snapshot = false;
 	bool stderr_created = false;
 	bool in_background = false;
@@ -199,16 +204,10 @@ namespace {
 	Global<Function> pen_move_func;
 	Global<Function> gamepad_axis_func;
 	Global<Function> gamepad_button_func;
-	Global<Function> audio_func;
 	Global<Function> save_and_quit_func;
 	bool save_and_quit_func_set = false;
 
-	kinc_mutex_t mutex;
-	kinc_a2_buffer_t audio_buffer;
-	int audio_read_location = 0;
-
 	void update(void *data);
-	void update_audio(kinc_a2_buffer_t *buffer, int samples);
 	void drop_files(wchar_t *file_path, void *data);
 	char *cut(void *data);
 	char *copy(void *data);
@@ -341,7 +340,6 @@ namespace {
 		frame.stencil_bits = 0;
 		frame.samples_per_pixel = samples_per_pixel;
 		kinc_init(*title, width, height, &win, &frame);
-		kinc_mutex_init(&mutex);
 		kinc_random_init((int)(kinc_time() * 1000));
 
 		#ifdef KORE_WINDOWS
@@ -358,13 +356,9 @@ namespace {
 		#endif
 
 		#ifdef WITH_AUDIO
-		if (enable_sound) {
+		if (enable_audio) {
+			kinc_a1_init();
 			kinc_a2_init();
-			kinc_a2_set_callback(update_audio);
-			audio_buffer.read_location = 0;
-			audio_buffer.write_location = 0;
-			audio_buffer.data_size = 128 * 1024;
-			audio_buffer.data = new uint8_t[audio_buffer.data_size];
 		}
 		#endif
 
@@ -664,20 +658,6 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		int show = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		krom_show_keyboard_fast(args.This(), show);
-	}
-
-	void krom_set_audio_callback(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		audio_func.Reset(isolate, func);
-	}
-
-	void krom_audio_thread(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		bool lock = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		if (lock) kinc_mutex_lock(&mutex);    //Locker::Locker(isolate);
-		else kinc_mutex_unlock(&mutex);       //Unlocker(args.GetIsolate());
 	}
 
 	void krom_create_indexbuffer(const FunctionCallbackInfo<Value> &args) {
@@ -1563,47 +1543,40 @@ namespace {
 		}
 	}
 
+	#ifdef WITH_AUDIO
 	void krom_load_sound(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
-
 		kinc_a1_sound_t *sound = kinc_a1_sound_create(*utf8_value);
-		if (sound == nullptr) {
-			return;
-		}
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->SetInternalField(0, External::New(isolate, sound));
+		args.GetReturnValue().Set(obj);
+	}
 
-		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, sound->size * 2 * sizeof(float));
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		float *to = (float *)content->Data();
-
-		int16_t *left = (int16_t *)&sound->left[0];
-		int16_t *right = (int16_t *)&sound->right[0];
-		for (int i = 0; i < sound->size; i += 1) {
-			to[i * 2    ] = (float)(left [i] / 32767.0);
-			to[i * 2 + 1] = (float)(right[i] / 32767.0);
-		}
-
-		args.GetReturnValue().Set(buffer);
+	void krom_unload_sound(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_a1_sound_t *sound = (kinc_a1_sound_t *)field->Value();
 		kinc_a1_sound_destroy(sound);
 	}
 
-	void krom_write_audio_buffer(const FunctionCallbackInfo<Value> &args) {
+	void krom_play_sound(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		int samples = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		for (int i = 0; i < samples; ++i) {
-			float *values = (float *)content->Data();
-			float value = values[audio_read_location / 4];
-			audio_read_location += 4;
-			if (audio_read_location >= content->ByteLength()) audio_read_location = 0;
-
-			*(float *)&audio_buffer.data[audio_buffer.write_location] = value;
-			audio_buffer.write_location += 4;
-			if (audio_buffer.write_location >= audio_buffer.data_size) audio_buffer.write_location = 0;
-		}
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_a1_sound_t *sound = (kinc_a1_sound_t *)field->Value();
+		bool loop = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_a1_play_sound(sound, loop, 1.0, false);
 	}
+
+	void krom_stop_sound(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_a1_sound_t *sound = (kinc_a1_sound_t *)field->Value();
+		kinc_a1_stop_sound(sound);
+	}
+	#endif
 
 	void krom_load_blob(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
@@ -3939,10 +3912,12 @@ namespace {
 		SET_FUNCTION(krom, "setPipeline", krom_set_pipeline);
 		SET_FUNCTION(krom, "loadImage", krom_load_image);
 		SET_FUNCTION(krom, "unloadImage", krom_unload_image);
+		#ifdef WITH_AUDIO
 		SET_FUNCTION(krom, "loadSound", krom_load_sound);
-		SET_FUNCTION(krom, "setAudioCallback", krom_set_audio_callback);
-		SET_FUNCTION(krom, "audioThread", krom_audio_thread);
-		SET_FUNCTION(krom, "writeAudioBuffer", krom_write_audio_buffer);
+		SET_FUNCTION(krom, "unloadSound", krom_unload_sound);
+		SET_FUNCTION(krom, "playSound", krom_play_sound);
+		SET_FUNCTION(krom, "stopSound", krom_stop_sound);
+		#endif
 		SET_FUNCTION(krom, "loadBlob", krom_load_blob);
 		SET_FUNCTION(krom, "loadUrl", krom_load_url);
 		SET_FUNCTION(krom, "copyToClipboard", krom_copy_to_clipboard);
@@ -4178,44 +4153,6 @@ namespace {
 		V8::Dispose();
 	}
 
-	#ifdef WITH_AUDIO
-	void update_audio(kinc_a2_buffer_t *buffer, int samples) {
-		// kinc_mutex_lock(&mutex);
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		MicrotasksScope microtasks_scope(isolate, MicrotasksScope::kRunMicrotasks);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, audio_func);
-		Local<Value> result;
-		const int argc = 1;
-		Local<Value> argv[argc] = {Int32::New(isolate, samples)};
-		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-
-		for (int i = 0; i < samples; ++i) {
-			float sample = *(float *)&audio_buffer.data[audio_buffer.read_location];
-			audio_buffer.read_location += 4;
-			if (audio_buffer.read_location >= audio_buffer.data_size) {
-				audio_buffer.read_location = 0;
-			}
-
-			*(float *)&buffer->data[buffer->write_location] = sample;
-			buffer->write_location += 4;
-			if (buffer->write_location >= buffer->data_size) {
-				buffer->write_location = 0;
-			}
-		}
-
-		// kinc_mutex_unlock(&mutex);
-	}
-	#endif
-
 	void update(void *data) {
 		#ifdef KORE_WINDOWS
 		if (in_background && ++paused_frames > 3 && armorcore) {
@@ -4246,7 +4183,9 @@ namespace {
 		#endif
 
 		#ifdef WITH_AUDIO
-		if (enable_sound) kinc_a2_update();
+		if (enable_audio) {
+			kinc_a2_update();
+		}
 		#endif
 
 		#ifdef WITH_WORKER
@@ -4824,12 +4763,14 @@ int kickstart(int argc, char **argv) {
 
 	bool read_console_pid = false;
 	for (int i = 2; i < argc; ++i) {
-		if (strcmp(argv[i], "--nosound") == 0) {
-			enable_sound = false;
-		}
-		else if (strcmp(argv[i], "--nowindow") == 0) {
+		if (strcmp(argv[i], "--nowindow") == 0) {
 			enable_window = false;
 		}
+		#ifdef WITH_AUDIO
+		else if (strcmp(argv[i], "--nosound") == 0) {
+			enable_audio = false;
+		}
+		#endif
 		else if (strcmp(argv[i], "--snapshot") == 0) {
 			snapshot = true;
 		}
@@ -4992,17 +4933,15 @@ int kickstart(int argc, char **argv) {
 
 	kinc_start();
 
-	// #ifdef WITH_AUDIO
-	// if (enable_sound) {
-		// kinc_a2_shutdown();
-		// kinc_mutex_lock(&mutex); // Prevent audio thread from running
-	// }
-	// #endif
-
-	exit(0); // TODO
+	#ifdef WITH_AUDIO
+	if (enable_audio) {
+		kinc_a2_shutdown();
+	}
+	#endif
 
 	free(code);
 	end_v8();
+
 	#ifdef WITH_ONNX
 	if (ort != NULL) {
 		ort->ReleaseEnv(ort_env);

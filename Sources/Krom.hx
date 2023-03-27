@@ -73,11 +73,14 @@ extern class Krom {
 
 	static function loadImage(file: String, readable: Bool): Dynamic;
 	static function unloadImage(image: kha.Image): Void;
-	static function loadSound(file: String): Dynamic;
-	static function writeAudioBuffer(buffer: js.lib.ArrayBuffer, samples: Int): Void;
 	static function loadBlob(file: String): js.lib.ArrayBuffer;
 	static function loadUrl(url: String): Void;
 	static function copyToClipboard(text: String): Void;
+
+	static function loadSound(file: String): Dynamic;
+	static function unloadSound(sound: Dynamic): Void;
+	static function playSound(sound: Dynamic, loop: Bool): Void;
+	static function stopSound(sound: Dynamic): Void;
 
 	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int, frequency: Int): Void;
 	static function setApplicationName(name: String): Void;
@@ -108,7 +111,6 @@ extern class Krom {
 	static function setMousePosition(windowId: Int, x: Int, y: Int): Void;
 	static function showMouse(show: Bool): Void;
 	static function showKeyboard(show: Bool): Void;
-	static function setAudioCallback(callback: Int->Void): Void;
 	static function getTime(): Float;
 	static function windowWidth(id: Int): Int;
 	static function windowHeight(id: Int): Int;
