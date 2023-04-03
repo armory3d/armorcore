@@ -3048,6 +3048,14 @@ namespace {
 		#endif
 	}
 
+	void krom_delay_idle_sleep_fast(Local<Object> receiver) {
+		paused_frames = 0;
+	}
+
+	void krom_delay_idle_sleep(const FunctionCallbackInfo<Value> &args) {
+		krom_delay_idle_sleep_fast(args.This());
+	}
+
 	#ifdef WITH_NFD
 	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
@@ -4116,6 +4124,7 @@ namespace {
 		#endif
 		SET_FUNCTION(krom, "setSaveAndQuitCallback", krom_set_save_and_quit_callback);
 		SET_FUNCTION(krom, "setMouseCursor", krom_set_mouse_cursor);
+		SET_FUNCTION_FAST(krom, "delayIdleSleep", krom_delay_idle_sleep);
 		#if defined(WITH_NFD) || defined(KORE_IOS) || defined(KORE_ANDROID)
 		SET_FUNCTION(krom, "openDialog", krom_open_dialog);
 		SET_FUNCTION(krom, "saveDialog", krom_save_dialog);
