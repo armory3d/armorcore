@@ -514,7 +514,7 @@ class Zui {
 				}
 
 				var scrollDelta: Float = inputWheelDelta;
-				if (touchScroll && inputDown && inputDY != 0 && inputX > _windowX + windowHeaderW&& inputY > _windowY + windowHeaderH) {
+				if (touchScroll && inputDown && inputDY != 0 && inputX > _windowX + windowHeaderW && inputY > _windowY + windowHeaderH) {
 					isScrolling = true;
 					scrollDelta = -inputDY / 20;
 				}

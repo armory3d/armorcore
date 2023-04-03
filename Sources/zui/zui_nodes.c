@@ -4,8 +4,8 @@
 #include <kinc/input/keyboard.h>
 #include "zui.h"
 #include "zui_ext.h"
-#include "g2.h"
-#include "g2_ext.h"
+#include "../g2/g2.h"
+#include "../g2/g2_ext.h"
 
 static zui_nodes_t *current_nodes = NULL;
 static bool zui_nodes_elements_baked = false;
@@ -19,11 +19,11 @@ static const int zui_max_buttons = 9;
 static zui_handle_t handle;
 
 static char **zui_exclude_remove;// = []; // No removal for listed node types
-static void(*zui_on_link_drag)(zui_node_link_t *, bool) = NULL;
-static void(*zui_on_header_released)(zui_node_t *) = NULL;
-static void(*zui_on_socket_released)(zui_node_socket_t *) = NULL;
-static void(*zui_on_canvas_released)(void) = NULL;
-static void(*zui_on_node_remove)(zui_node_t *) = NULL;
+static void (*zui_on_link_drag)(zui_node_link_t *, bool) = NULL;
+static void (*zui_on_header_released)(zui_node_t *) = NULL;
+static void (*zui_on_socket_released)(zui_node_socket_t *) = NULL;
+static void (*zui_on_canvas_released)(void) = NULL;
+static void (*zui_on_node_remove)(zui_node_t *) = NULL;
 static zui_canvas_control_t (*zui_on_canvas_control)(void) = NULL; // Pan, zoom
 static int zui_node_id = -1;
 
@@ -77,7 +77,7 @@ int ZUI_BUTTONS_H(zui_node_t *node) {
 	float h = 0.0;
 	for (int i = 0; i < node->buttons_count; ++i) {
 		zui_node_button_t *but = &node->buttons[i];
-		if (strcmp(but->type, "RGBA") == 0) h += 235 * ZUI_NODES_SCALE();
+		if (strcmp(but->type, "RGBA") == 0) h += 102 * ZUI_NODES_SCALE() + ZUI_LINE_H() * 5; // Color wheel + controls
 		else if (strcmp(but->type, "VECTOR") == 0) h += ZUI_LINE_H() * 4;
 		else if (strcmp(but->type, "CUSTOM") == 0) h += ZUI_LINE_H() * but->height;
 		else h += ZUI_LINE_H();

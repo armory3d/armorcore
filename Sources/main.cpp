@@ -123,6 +123,11 @@ extern "C" {
 	#include "iron/io_obj.h"
 }
 #endif
+#ifdef WITH_ZUI
+extern "C" {
+	#include "zui/zui.h"
+}
+#endif
 
 using namespace v8;
 
@@ -3818,6 +3823,74 @@ namespace {
 	}
 	#endif
 
+	#ifdef WITH_ZUI
+	void krom_zui_init(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		g2_font_t *font = (g2_font_t *)field->Value();
+
+		zui_options_t ops;
+		ops.scale_factor = 1.0;
+		ops.font = font;
+		ops.theme = zui_theme_default();
+		zui_t *ui = (zui_t *)malloc(sizeof(zui_t));
+		zui_init(ui, ops);
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->SetInternalField(0, External::New(isolate, ui));
+		args.GetReturnValue().Set(obj);
+	}
+
+	void krom_zui_begin(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_t *ui = (zui_t *)field->Value();
+		zui_begin(ui);
+	}
+
+	void krom_zui_end(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		bool last = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_end(last);
+	}
+
+	void krom_zui_window(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		int x = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int y = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int w = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int h = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int drag = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool b = zui_window(handle, x, y, w, h, drag);
+		args.GetReturnValue().Set(Int32::New(isolate, b));
+	}
+
+	void krom_zui_button(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value text(isolate, args[0]);
+		int align = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		String::Utf8Value label(isolate, args[2]);
+		bool b = zui_button(*text, align, *label);
+		args.GetReturnValue().Set(Int32::New(isolate, b));
+	}
+
+	void krom_zui_handle(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		zui_handle_t *handle = (zui_handle_t *)malloc(sizeof(zui_handle_t));
+		memset(handle, 0, sizeof(zui_handle_t));
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->SetInternalField(0, External::New(isolate, handle));
+		args.GetReturnValue().Set(obj);
+	}
+	#endif
+
 	#define SET_FUNCTION_FAST(object, name, fn)\
 		CFunction fn ## _ = CFunction::Make(fn ## _fast);\
 		object->Set(String::NewFromUtf8(isolate, name).ToLocalChecked(),\
@@ -4084,6 +4157,15 @@ namespace {
 		SET_FUNCTION(krom, "language", krom_language);
 		#ifdef WITH_IRON
 		SET_FUNCTION(krom, "io_obj_parse", krom_io_obj_parse);
+		#endif
+		#ifdef WITH_ZUI
+		SET_FUNCTION(krom, "zui_init", krom_zui_init);
+		SET_FUNCTION(krom, "zui_begin", krom_zui_begin);
+		SET_FUNCTION(krom, "zui_end", krom_zui_end);
+		SET_FUNCTION(krom, "zui_window", krom_zui_window);
+		SET_FUNCTION(krom, "zui_button", krom_zui_button);
+		SET_FUNCTION(krom, "zui_handle", krom_zui_handle);
+		// SET_FUNCTION(krom, "zui_nest", krom_zui_nest);
 		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
@@ -4406,6 +4488,10 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
+		#ifdef WITH_ZUI
+		zui_key_down(code);
+		#endif
+
 		#ifdef IDLE_SLEEP
 		input_down = true;
 		paused_frames = 0;
@@ -4428,6 +4514,10 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
+
+		#ifdef WITH_ZUI
+		zui_key_up(code);
+		#endif
 
 		#ifdef IDLE_SLEEP
 		input_down = false;
@@ -4452,6 +4542,10 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
+		#ifdef WITH_ZUI
+		zui_key_press(character);
+		#endif
+
 		#ifdef IDLE_SLEEP
 		paused_frames = 0;
 		#endif
@@ -4474,6 +4568,10 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
+		#ifdef WITH_ZUI
+		zui_mouse_move(x, y, mx, my);
+		#endif
+
 		#ifdef IDLE_SLEEP
 		paused_frames = 0;
 		#endif
@@ -4495,6 +4593,10 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
+
+		#ifdef WITH_ZUI
+		zui_mouse_down(button, x, y);
+		#endif
 
 		#ifdef IDLE_SLEEP
 		input_down = true;
@@ -4519,6 +4621,10 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
+		#ifdef WITH_ZUI
+		zui_mouse_up(button, x, y);
+		#endif
+
 		#ifdef IDLE_SLEEP
 		input_down = false;
 		paused_frames = 0;
@@ -4542,6 +4648,10 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
+		#ifdef WITH_ZUI
+		zui_mouse_wheel(delta);
+		#endif
+
 		#ifdef IDLE_SLEEP
 		paused_frames = 0;
 		#endif
@@ -4564,6 +4674,12 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
+		#ifdef WITH_ZUI
+		#if defined(KORE_ANDROID) || defined(KORE_IOS)
+		zui_touch_move(index, x, y);
+		#endif
+		#endif
+
 		#ifdef IDLE_SLEEP
 		paused_frames = 0;
 		#endif
@@ -4585,6 +4701,12 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
+
+		#ifdef WITH_ZUI
+		#if defined(KORE_ANDROID) || defined(KORE_IOS)
+		zui_touch_down(index, x, y);
+		#endif
+		#endif
 
 		#ifdef IDLE_SLEEP
 		input_down = true;
@@ -4609,6 +4731,12 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
+		#ifdef WITH_ZUI
+		#if defined(KORE_ANDROID) || defined(KORE_IOS)
+		zui_touch_up(index, x, y);
+		#endif
+		#endif
+
 		#ifdef IDLE_SLEEP
 		input_down = false;
 		paused_frames = 0;
@@ -4631,6 +4759,10 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
+
+		#ifdef WITH_ZUI
+		zui_pen_down(x, y, pressure);
+		#endif
 
 		#ifdef IDLE_SLEEP
 		input_down = true;
@@ -4655,6 +4787,10 @@ namespace {
 			handle_exception(&try_catch);
 		}
 
+		#ifdef WITH_ZUI
+		zui_pen_up(x, y, pressure);
+		#endif
+
 		#ifdef IDLE_SLEEP
 		input_down = false;
 		paused_frames = 0;
@@ -4677,6 +4813,10 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
+
+		#ifdef WITH_ZUI
+		zui_pen_move(x, y, pressure);
+		#endif
 
 		#ifdef IDLE_SLEEP
 		paused_frames = 0;

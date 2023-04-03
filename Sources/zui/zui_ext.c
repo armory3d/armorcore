@@ -13,6 +13,10 @@ static zui_handle_t radio_handle;
 static int _ELEMENT_OFFSET = 0;
 static int _BUTTON_COL = 0;
 
+static bool text_area_line_numbers = false;
+static bool text_area_scroll_past_end = false;
+static zui_text_coloring_t *text_area_coloring = NULL;
+
 float zui_dist(float x1, float y1, float x2, float y2) {
 	float vx = x1 - x2;
 	float vy = y1 - y2;
@@ -378,10 +382,10 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 			// hex_code = hex_code[0] + hex_code[0] + hex_code[1] + hex_code[1] + hex_code[2] + hex_code[2];
 		}
 		if (strlen(hex_code) == 4) { // 4 digit CSS style values
-		// 	hex_code = hex_code[0] + hex_code[0] + hex_code[1] + hex_code[1] + hex_code[2] + hex_code[2] + hex_code[3] + hex_code[3];
+			// 	hex_code = hex_code[0] + hex_code[0] + hex_code[1] + hex_code[1] + hex_code[2] + hex_code[2] + hex_code[3] + hex_code[3];
 		}
 		if (strlen(hex_code) == 6) { // Make the alpha channel optional
-		// 	hex_code = "ff" + hex_code;
+			// 	hex_code = "ff" + hex_code;
 		}
 		handle->color = atoi(hex_code); // parseInt(hex_code, 16);
 	}
@@ -392,6 +396,25 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 
 	return handle->color;
 }
+
+static void scroll_align(zui_t *current, zui_handle_t *handle) {
+	// Scroll down
+	if ((handle->position + 1) * ZUI_ELEMENT_H() + current->current_window->scroll_offset > current->_h - current->window_header_h) {
+		current->current_window->scroll_offset -= ZUI_ELEMENT_H();
+	}
+	// Scroll up
+	else if ((handle->position + 1) * ZUI_ELEMENT_H() + current->current_window->scroll_offset < current->window_header_h) {
+		current->current_window->scroll_offset += ZUI_ELEMENT_H();
+	}
+}
+
+// static char *right_align_number(int number, int length) {
+// 	char *s = number + "";
+// 	while (s.length < length)
+// 		s = " " + s;
+
+// 	return s;
+// }
 
 char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *label, bool word_wrap) {
 	zui_t *current = zui_get_current();
@@ -404,8 +427,6 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 	bool key_pressed = selected && current->is_key_pressed;
 	current->highlight_on_select = false;
 	current->tab_switch_enabled = false;
-	g2_set_color(current->ops.theme.SEPARATOR_COL);
-	zui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w - current->button_offset_y * 2, line_count * ZUI_ELEMENT_H() - current->button_offset_y * 2);
 
 	if (word_wrap && handle->text[0] != 0) {
 		bool cursor_set = false;
@@ -440,6 +461,26 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 	}
 	int cursor_start_x = current->cursor_x;
 
+	if (text_area_line_numbers) {
+		float _y = current->_y;
+		int _TEXT_COL = current->ops.theme.TEXT_COL;
+		current->ops.theme.TEXT_COL = current->ops.theme.ACCENT_COL;
+		// int max_length = ceil(log(line_count + 0.5) / log(10)); // Express log_10 with natural log
+		for (int i = 0; i < line_count; ++i) {
+			// zui_text(right_align_number(i + 1, max_length));
+			current->_y -= ZUI_ELEMENT_OFFSET();
+		}
+		current->ops.theme.TEXT_COL = _TEXT_COL;
+		current->_y = _y;
+		// current->_x += ((line_count + "").length * 16 + 4) * ZUI_SCALE();
+	}
+
+	g2_set_color(current->ops.theme.SEPARATOR_COL); // Background
+	zui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w - current->button_offset_y * 2, line_count * ZUI_ELEMENT_H() - current->button_offset_y * 2);
+
+	zui_text_coloring_t *_text_coloring = current->text_coloring;
+	current->text_coloring = text_area_coloring;
+
 	for (int i = 0; i < line_count; ++i) { // Draw lines
 		if ((!selected && zui_get_hover(ZUI_ELEMENT_H())) || (selected && i == handle->position)) {
 			handle->position = i; // Set active line
@@ -464,14 +505,21 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 		current->_y -= ZUI_ELEMENT_OFFSET();
 	}
 	current->_y += ZUI_ELEMENT_OFFSET();
+	current->text_coloring = _text_coloring;
+
+	if (text_area_scroll_past_end) {
+		current->_y += current->_h - current->window_header_h - ZUI_ELEMENT_H() - ZUI_ELEMENT_OFFSET();
+	}
 
 	if (key_pressed) {
 		// Move cursor vertically
 		if (current->key_code == KINC_KEY_DOWN && handle->position < line_count - 1) {
 			handle->position++;
+			scroll_align(current, handle);
 		}
 		if (current->key_code == KINC_KEY_UP && handle->position > 0) {
 			handle->position--;
+			scroll_align(current, handle);
 		}
 		// New line
 		if (editable && current->key_code == KINC_KEY_RETURN && !word_wrap) {
@@ -480,6 +528,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 			// lines[handle->position - 1] = lines[handle->position - 1].substr(0, current->cursor_x);
 			zui_start_text_edit(handle, ZUI_ALIGN_LEFT);
 			current->cursor_x = current->highlight_anchor = 0;
+			scroll_align(current, handle);
 		}
 		// Delete line
 		if (editable && current->key_code == KINC_KEY_BACKSPACE && cursor_start_x == 0 && handle->position > 0) {
@@ -487,6 +536,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 			// current->cursor_x = current->highlight_anchor = lines[handle->position].length;
 			// lines[handle->position] += lines[handle->position + 1];
 			// lines.splice(handle->position + 1, 1);
+			scroll_align(current, handle);
 		}
 		// current->text_selected = lines[handle->position];
 	}

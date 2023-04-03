@@ -42,6 +42,7 @@ let flags = {
 	with_worker: false,
 	with_g2: false,
 	with_iron: false,
+	with_zui: false,
 	on_project_created: null,
 };
 
@@ -99,6 +100,11 @@ if (flags.with_g2) {
 if (flags.with_iron) {
 	project.addDefine('WITH_IRON');
 	project.addFile('Sources/iron/*.c');
+}
+
+if (flags.with_zui) {
+	project.addDefine('WITH_ZUI');
+	project.addFile('Sources/zui/*.c');
 }
 
 project.addIncludeDir('v8/include');

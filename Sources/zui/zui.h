@@ -6,7 +6,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "g2.h"
+#include "../g2/g2.h"
 
 #define ZUI_LAYOUT_VERTICAL 0
 #define ZUI_LAYOUT_HORIZONTAL 1
@@ -88,6 +88,23 @@ typedef struct zui_handle {
 	int id;
 } zui_handle_t;
 
+typedef struct zui_text_extract {
+	char *colored;
+	char *uncolored;
+} zui_text_extract_t;
+
+typedef struct zui_coloring {
+	int color;
+	char **start;
+	char *end;
+	bool separated;
+} zui_coloring_t;
+
+typedef struct zui_text_coloring {
+	zui_coloring_t *colorings;
+	int default_color;
+} zui_text_coloring_t;
+
 typedef struct zui {
 	bool is_scrolling; // Use to limit other activities
 	bool is_typing;
@@ -102,12 +119,18 @@ typedef struct zui {
 	bool always_redraw; // Hurts performance
 	bool highlight_on_select; // Highlight text edit contents on selection
 	bool tab_switch_enabled; // Allow switching focus to the next element by pressing tab
+	zui_text_coloring_t *text_coloring; // Set coloring scheme for zui_draw_string() calls
 	int window_border_top;
 	int window_border_bottom;
 	int window_border_left;
 	int window_border_right;
+	char hovered_tab_name[64];
+	float hovered_tab_x;
+	float hovered_tab_y;
+	float hovered_tab_w;
+	float hovered_tab_h;
 	bool highlight_full_row;
-	bool touch_hold;
+	bool touch_hold_activated;
 	bool slider_tooltip;
 	float slider_tooltip_x;
 	float slider_tooltip_y;
@@ -180,6 +203,8 @@ typedef struct zui {
 	bool window_ended;
 	zui_handle_t *scroll_handle; // Window or slider being scrolled
 	zui_handle_t *drag_handle; // Window being dragged
+	zui_handle_t *drag_tab_handle; // Tab being dragged
+	int drag_tab_position;
 	float window_header_w;
 	float window_header_h;
 	float restore_x;
@@ -245,13 +270,22 @@ void zui_separator(int h, bool fill);
 void zui_tooltip(char *text);
 void zui_tooltip_image(kinc_g4_texture_t *image, int max_width);
 void zui_end(bool last);
+char *zui_hovered_tab_name();
 void zui_mouse_down(int button, int x, int y); // Input events
 void zui_mouse_move(int x, int y, int movement_x, int movement_y);
 void zui_mouse_up(int button, int x, int y);
 void zui_mouse_wheel(int delta);
+void zui_pen_down(int x, int y, float pressure);
+void zui_pen_up(int x, int y, float pressure) ;
+void zui_pen_move(int x, int y, float pressure);
 void zui_key_down(int key_code);
 void zui_key_up(int key_code);
 void zui_key_press(unsigned character);
+#if defined(KORE_ANDROID) || defined(KORE_IOS)
+void zui_touch_down(int index, int x, int y);
+void zui_touch_up(int index, int x, int y);
+void zui_touch_move(int index, int x, int y);
+#endif
 zui_theme_t zui_theme_default();
 zui_t *zui_get_current();
 zui_handle_t *zui_nest(zui_handle_t *handle, int id);

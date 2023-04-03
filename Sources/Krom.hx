@@ -217,6 +217,13 @@ extern class Krom {
 	static function mlInference(model: js.lib.ArrayBuffer, tensors: Array<js.lib.ArrayBuffer>, ?inputShape: Array<Array<Int>>, ?outputShape: Array<Int>, ?useGpu: Bool, ?cache: Bool): js.lib.ArrayBuffer;
 
 	static function io_obj_parse(file_bytes: js.lib.ArrayBuffer, split_code: Int, start_pos: Int, udim: Bool): Dynamic;
+
+	static function zui_init(ops: Dynamic): Dynamic;
+	static function zui_begin(ui: Dynamic): Void;
+	static function zui_end(last: Bool): Void;
+	static function zui_window(handle: Dynamic, x: Int, y: Int, w: Int, h: Int, drag: Bool): Bool;
+	static function zui_button(text: String, align: Int, label: String): Bool;
+	static function zui_handle(ops: Dynamic): Dynamic;
 }
 
 enum abstract LogLevel(Int) to Int {
