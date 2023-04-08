@@ -81,7 +81,7 @@ class Graphics {
 	}
 
 	public function drawSubImage(img: Image, x: Float, y: Float, sx: Float, sy: Float, sw: Float, sh: Float): Void {
-		drawScaledSubImage(img, x, y, sw, sh, sx, sy, sw, sh);
+		drawScaledSubImage(img, sx, sy, sw, sh, x, y, sw, sh);
 	}
 
 	public function drawScaledImage(img: Image, dx: Float, dy: Float, dw: Float, dh: Float): Void {
