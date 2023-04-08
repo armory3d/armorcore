@@ -228,7 +228,7 @@ if (flags.with_onnx) {
 		project.addLib('onnxruntime -L' + __dirname + '/Libraries/onnx/linux');
 	}
 	else if (platform === Platform.OSX) {
-		project.addLib('Libraries/onnx/macos/libonnxruntime.1.13.1.dylib');
+		project.addLib('Libraries/onnx/macos/libonnxruntime.1.14.1.dylib');
 	}
 }
 
