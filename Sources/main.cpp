@@ -3465,12 +3465,11 @@ namespace {
 			}
 		}
 
-		bool cache = args.Length() > 5 && args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		Local<ArrayBuffer> model_buffer = Local<ArrayBuffer>::Cast(args[0]);
 		std::shared_ptr<BackingStore> model_content = model_buffer->GetBackingStore();
 
 		static void *model_content_last = 0;
-		if (!cache || model_content_last != model_content->Data()) {
+		if (model_content_last != model_content->Data() || session == NULL) {
 			if (session != NULL) {
 				ort->ReleaseSession(session);
 				session = NULL;
@@ -3568,15 +3567,14 @@ namespace {
 		ort->ReleaseMemoryInfo(memory_info);
 		ort->ReleaseValue(output_tensor);
 		for (int i = 0; i < length; ++i) ort->ReleaseValue(input_tensors[i]);
-		if (session != NULL && !cache) {
+		args.GetReturnValue().Set(output);
+	}
+
+	void krom_ml_unload(const FunctionCallbackInfo<Value> &args) {
+		if (session != NULL) {
 			ort->ReleaseSession(session);
 			session = NULL;
 		}
-		args.GetReturnValue().Set(output);
-
-		#ifdef ARM_PROFILE
-		kinc_log(KINC_LOG_LEVEL_INFO, "Inference completed in %f", kinc_time() - inference_time);
-		#endif
 	}
 	#endif
 
@@ -4146,6 +4144,7 @@ namespace {
 		#endif
 		#ifdef WITH_ONNX
 		SET_FUNCTION(krom, "mlInference", krom_ml_inference);
+		SET_FUNCTION(krom, "mlUnload", krom_ml_unload);
 		#endif
 		#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
 		SET_FUNCTION(krom, "raytraceInit", krom_raytrace_init);
@@ -4235,13 +4234,6 @@ namespace {
 		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-	}
-
-	void end_v8() {
-		update_func.Reset();
-		global_context.Reset();
-		isolate->Dispose();
-		V8::Dispose();
 	}
 
 	void update(void *data) {
@@ -5089,7 +5081,7 @@ int kickstart(int argc, char **argv) {
 	#endif
 
 	free(code);
-	end_v8();
+	V8::Dispose();
 
 	#ifdef WITH_ONNX
 	if (ort != NULL) {
