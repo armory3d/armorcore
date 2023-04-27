@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include "g2.h"
+#include "../iron/iron_vec2.h"
 
 #define MATH_PI 3.14159265358979323846
 
@@ -26,6 +27,54 @@ void g2_fill_circle(float cx, float cy, float radius, int segments) {
 		y = c * y + s * t;
 
 		g2_fill_triangle(px, py, x + cx, y + cy, cx, cy);
+	}
+}
+
+void g2_draw_inner_line(float x1, float y1, float x2, float y2, float strength) {
+	int side = y2 > y1 ? 1 : 0;
+	if (y2 == y1) {
+		side = x2 - x1 > 0 ? 1 : 0;
+	}
+
+	kinc_vector2_t vec;
+	if (y2 == y1) {
+		vec2_set(&vec, 0, -1);
+	}
+	else {
+		vec2_set(&vec, 1, -(x2 - x1) / (y2 - y1));
+	}
+	vec2_set_length(&vec, strength);
+	kinc_vector2_t p1 = {x1 + side * vec.x, y1 + side * vec.y};
+	kinc_vector2_t p2 = {x2 + side * vec.x, y2 + side * vec.y};
+	kinc_vector2_t p3 = vec2_sub(p1, vec);
+	kinc_vector2_t p4 = vec2_sub(p2, vec);
+	g2_fill_triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+	g2_fill_triangle(p3.x, p3.y, p2.x, p2.y, p4.x, p4.y);
+}
+
+void g2_draw_circle(float cx, float cy, float radius, int segments, float strength) {
+	radius += strength / 2;
+
+	if (segments <= 0) {
+		segments = (int)floor(10 * sqrt(radius));
+	}
+
+	float theta = 2 * (float)MATH_PI / segments;
+	float c = (float)cos(theta);
+	float s = (float)sin(theta);
+
+	float x = radius;
+	float y = 0.0;
+
+	for (int n = 0; n < segments; ++n) {
+		float px = x + cx;
+		float py = y + cy;
+
+		float t = x;
+		x = c * x - s * y;
+		y = c * y + s * t;
+
+		g2_draw_inner_line(x + cx, y + cy, px, py, strength);
 	}
 }
 

@@ -186,6 +186,7 @@ extern class Krom {
 	static function g2_set_pipeline(pipeline: Dynamic): Void;
 	static function g2_set_transform(matrix: js.lib.ArrayBuffer): Void;
 	static function g2_fill_circle(cx: Float, cy: Float, radius: Float, segments: Int): Void;
+	static function g2_draw_circle(cx: Float, cy: Float, radius: Float, segments: Int, strength: Float): Void;
 	static function g2_draw_cubic_bezier(x: Array<Float>, y: Array<Float>, segments: Int, strength: Float): Void;
 
 	static function setSaveAndQuitCallback(callback: Bool->Void): Void;

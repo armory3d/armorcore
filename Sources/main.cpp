@@ -2962,6 +2962,16 @@ namespace {
 		g2_fill_circle(cx, cy, radius, segments);
 	}
 
+	void krom_g2_draw_circle(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float cx = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float cy = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float radius = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int segments = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float strength = args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		g2_draw_circle(cx, cy, radius, segments, strength);
+	}
+
 	void krom_g2_draw_cubic_bezier(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
@@ -4118,6 +4128,7 @@ namespace {
 		SET_FUNCTION(krom, "g2_set_pipeline", krom_g2_set_pipeline);
 		SET_FUNCTION(krom, "g2_set_transform", krom_g2_set_transform);
 		SET_FUNCTION(krom, "g2_fill_circle", krom_g2_fill_circle);
+		SET_FUNCTION(krom, "g2_draw_circle", krom_g2_draw_circle);
 		SET_FUNCTION(krom, "g2_draw_cubic_bezier", krom_g2_draw_cubic_bezier);
 		#endif
 		SET_FUNCTION(krom, "setSaveAndQuitCallback", krom_set_save_and_quit_callback);
