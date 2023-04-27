@@ -69,26 +69,6 @@ class Object {
 	}
 
 	/**
-		Add a game Object as a child of this game Object.
-		@param	o The game Object instance to be added as a child.
-		@param	parentInverse Optional (default false) change the scale of the child object to be relative to the parents 3D space or use the original scale.
-	**/
-	@:deprecated("addChild() is deprecated, please use setParent() instead")
-	public inline function addChild(o: Object, parentInverse = false) {
-		o.setParent(this, parentInverse, false);
-	}
-
-	/**
-		Remove a child game Object from it's parentage. Does not remove the object from the scene.
-		@param	o The game Object instance to be removed.
-		@param	keepTransform Optional (defaut false) keep the transform given by the parent or revert to the objects default.
-	**/
-	@:deprecated("removeChild() is deprecated, please use setParent(null) instead")
-	public inline function removeChild(o: Object, keepTransform = false) {
-		o.setParent(null, false, keepTransform);
-	}
-
-	/**
 		Removes the game object from the scene.
 	**/
 	public function remove() {
