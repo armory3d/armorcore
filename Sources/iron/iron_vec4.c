@@ -20,12 +20,11 @@ kinc_vector4_t vec4_cross(kinc_vector4_t a, kinc_vector4_t b) {
 	return v;
 }
 
-kinc_vector4_t vec4_set(kinc_vector4_t v, float x, float y, float z, float w) {
-	v.x = x;
-	v.y = y;
-	v.z = z;
-	v.w = w;
-	return v;
+void vec4_set(kinc_vector4_t *v, float x, float y, float z, float w) {
+	v->x = x;
+	v->y = y;
+	v->z = z;
+	v->w = w;
 }
 
 kinc_vector4_t vec4_add(kinc_vector4_t a, kinc_vector4_t b) {
@@ -69,12 +68,11 @@ float vec4_dot(kinc_vector4_t a, kinc_vector4_t b) {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-kinc_vector4_t vec4_set_from(kinc_vector4_t a, kinc_vector4_t b) {
-	a.x = b.x;
-	a.y = b.y;
-	a.z = b.z;
-	a.w = b.w;
-	return a;
+void vec4_set_from(kinc_vector4_t *a, kinc_vector4_t *b) {
+	a->x = b->x;
+	a->y = b->y;
+	a->z = b->z;
+	a->w = b->w;
 }
 
 kinc_vector4_t vec4_clone(kinc_vector4_t v) {
