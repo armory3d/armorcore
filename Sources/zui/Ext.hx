@@ -126,12 +126,12 @@ class Ext {
 			if (handle.position == i) {
 				ui.g.color = ui.t.ACCENT_HOVER_COL;
 				if (!ui.enabled) ui.fadeColor();
-				ui.g.fillRect(ui._x + step * i, ui._y + ui.buttonOffsetY, step, ui.BUTTON_H());
+				ui.drawRect(ui.g, true, ui._x + step * i, ui._y + ui.buttonOffsetY, step, ui.BUTTON_H());
 			}
 			else if (hovered == i) {
 				ui.g.color = ui.t.ACCENT_COL;
 				if (!ui.enabled) ui.fadeColor();
-				ui.g.drawRect(ui._x + step * i, ui._y + ui.buttonOffsetY, step, ui.BUTTON_H());
+				ui.drawRect(ui.g, false, ui._x + step * i, ui._y + ui.buttonOffsetY, step, ui.BUTTON_H());
 			}
 			ui.g.color = ui.t.TEXT_COL; // Text
 			ui._x += step * i;

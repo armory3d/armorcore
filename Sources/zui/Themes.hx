@@ -8,7 +8,7 @@ class Themes {
 		WINDOW_TINT_COL: 0xffffffff,
 		ACCENT_COL: 0xff383838,
 		ACCENT_HOVER_COL: 0xff434343,
-		ACCENT_SELECT_COL: 0xff505050,
+		ACCENT_SELECT_COL: 0xff606060,
 		BUTTON_COL: 0xff383838,
 		BUTTON_TEXT_COL: 0xffe8e8e8,
 		BUTTON_HOVER_COL: 0xff434343,
@@ -25,8 +25,8 @@ class Themes {
 		ELEMENT_OFFSET: 4,
 		ARROW_SIZE: 5,
 		BUTTON_H: 22,
-		CHECK_SIZE: 15,
-		CHECK_SELECT_SIZE: 8,
+		CHECK_SIZE: 16,
+		CHECK_SELECT_SIZE: 12,
 		SCROLL_W: 9,
 		TEXT_OFFSET: 8,
 		TAB_W: 6,
@@ -34,7 +34,8 @@ class Themes {
 		FILL_BUTTON_BG: true,
 		FILL_ACCENT_BG: false,
 		LINK_STYLE: Line,
-		FULL_TABS: false
+		FULL_TABS: false,
+		ROUND_CORNERS: false
 	};
 }
 
@@ -71,6 +72,7 @@ typedef TTheme = {
 	var FILL_ACCENT_BG: Bool;
 	var LINK_STYLE: LinkStyle;
 	var FULL_TABS: Bool; // Make tabs take full window width
+	var ROUND_CORNERS: Bool;
 }
 
 @:enum abstract LinkStyle(Int) from Int {

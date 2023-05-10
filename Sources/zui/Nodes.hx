@@ -150,11 +150,14 @@ class Nodes {
 	function bakeElements(ui: Zui) {
 		ui.g.end();
 		elementsBaked = true;
+		if (socketImage != null) {
+			socketImage.unload();
+		}
 		socketImage = kha.Image.createRenderTarget(24, 24);
 		var g = socketImage.g2;
 		g.begin(true, 0x00000000);
 		g.color = 0xff000000;
-		kha.graphics2.GraphicsExtension.fillCircle(g, 12, 12, 12);
+		kha.graphics2.GraphicsExtension.fillCircle(g, 12, 12, 11);
 		g.color = 0xffffffff;
 		kha.graphics2.GraphicsExtension.fillCircle(g, 12, 12, 9);
 		g.end();

@@ -189,6 +189,10 @@ class Zui {
 
 	var elementsBaked = false;
 	var checkSelectImage: kha.Image = null;
+	var radioImage: kha.Image = null;
+	var radioSelectImage: kha.Image = null;
+	var roundCornerImage: kha.Image = null;
+	var filledRoundCornerImage: kha.Image = null;
 
 	public function new(ops: ZuiOptions) {
 		if (ops.theme == null) ops.theme = Themes.dark;
@@ -244,13 +248,62 @@ class Zui {
 		if (checkSelectImage != null) {
 			checkSelectImage.unload();
 		}
-		checkSelectImage = kha.Image.createRenderTarget(Std.int(CHECK_SELECT_SIZE()), Std.int(CHECK_SELECT_SIZE()), null, NoDepthAndStencil, 1);
+		var r = Std.int(CHECK_SELECT_SIZE());
+		checkSelectImage = kha.Image.createRenderTarget(r, r, null, NoDepthAndStencil, 1);
 		var g = checkSelectImage.g2;
 		g.begin(true, 0x00000000);
-		g.color = t.ACCENT_SELECT_COL;
-		g.drawLine(0, 0, checkSelectImage.width, checkSelectImage.height, 2 * SCALE());
-		g.drawLine(checkSelectImage.width, 0, 0, checkSelectImage.height, 2 * SCALE());
+		g.color = 0xffffffff;
+		g.drawLine(0, Std.int(r / 2), Std.int(r / 2 - 2 * SCALE()), Std.int(r - 2 * SCALE()), Std.int(2 * SCALE()));
+		g.drawLine(Std.int(r / 2 - 3 * SCALE()), Std.int(r - 3 * SCALE()), Std.int(r / 2 + 5 * SCALE()), Std.int(r - 11 * SCALE()), Std.int(2 * SCALE()));
 		g.end();
+
+		var r = Std.int(CHECK_SIZE());
+		if (radioImage != null) {
+			radioImage.unload();
+		}
+		radioImage = kha.Image.createRenderTarget(r, r);
+		var g = radioImage.g2;
+		g.begin(true, 0x00000000);
+		g.color = 0xffaaaaaa;
+		kha.graphics2.GraphicsExtension.fillCircle(g, Std.int(r / 2), Std.int(r / 2), Std.int(r / 2));
+		g.color = 0xffffffff;
+		kha.graphics2.GraphicsExtension.drawCircle(g, Std.int(r / 2), Std.int(r / 2), Std.int(r / 2), 0, Std.int(1.0 * SCALE()));
+		g.end();
+
+		var r = Std.int(CHECK_SELECT_SIZE());
+		if (radioSelectImage != null) {
+			radioSelectImage.unload();
+		}
+		radioSelectImage = kha.Image.createRenderTarget(r, r);
+		var g = radioSelectImage.g2;
+		g.begin(true, 0x00000000);
+		g.color = 0xffaaaaaa;
+		kha.graphics2.GraphicsExtension.fillCircle(g, Std.int(r / 2), Std.int(r / 2), Std.int(4.5 * SCALE()));
+		g.color = 0xffffffff;
+		kha.graphics2.GraphicsExtension.fillCircle(g, Std.int(r / 2), Std.int(r / 2), Std.int(4 * SCALE()));
+		g.end();
+
+		if (filledRoundCornerImage != null) {
+			filledRoundCornerImage.unload();
+		}
+		var r = Std.int(4 * SCALE());
+		filledRoundCornerImage = kha.Image.createRenderTarget(r, r, null, NoDepthAndStencil, 1);
+		var g = filledRoundCornerImage.g2;
+		g.begin(true, 0x00000000);
+		g.color = 0xffffffff;
+		kha.graphics2.GraphicsExtension.fillCircle(g, r, r, r);
+		g.end();
+
+		if (roundCornerImage != null) {
+			roundCornerImage.unload();
+		}
+		roundCornerImage = kha.Image.createRenderTarget(r, r, null, NoDepthAndStencil, 1);
+		var g = roundCornerImage.g2;
+		g.begin(true, 0x00000000);
+		g.color = 0xffffffff;
+		kha.graphics2.GraphicsExtension.drawCircle(g, r, r, r);
+		g.end();
+
 		elementsBaked = true;
 	}
 
@@ -679,13 +732,16 @@ class Zui {
 				}
 			}
 
-			if (tabVertical) {
-				g.color = t.SEPARATOR_COL - 0x00050505;
-				g.fillRect(_x, _y + tabH, _w, 1);
-			}
-			else {
-				g.color = t.SEPARATOR_COL - 0x00050505;
-				g.fillRect(_x + buttonOffsetY + _w, _y, 1, tabH);
+			// Tab separator
+			if (i < tabNames.length - 1) {
+				if (tabVertical) {
+					g.color = t.SEPARATOR_COL - 0x00050505;
+					g.fillRect(_x, _y + tabH, _w, 1);
+				}
+				else {
+					g.color = t.SEPARATOR_COL - 0x00050505;
+					g.fillRect(_x + buttonOffsetY + _w, _y, 1, tabH);
+				}
 			}
 		}
 
@@ -1168,7 +1224,13 @@ class Zui {
 
 		var x = _x + _w - arrowOffsetX - 8;
 		var y = _y + arrowOffsetY + 3;
-		g.fillTriangle(x, y, x + ARROW_SIZE(), y, x + ARROW_SIZE() / 2, y + ARROW_SIZE() / 2);
+
+		// if (handle == comboSelectedHandle) {
+		// 	g.fillTriangle(x, y, x + ARROW_SIZE(), y, x + ARROW_SIZE() / 2, y - ARROW_SIZE() / 2);
+		// }
+		// else {
+			g.fillTriangle(x, y, x + ARROW_SIZE(), y, x + ARROW_SIZE() / 2, y + ARROW_SIZE() / 2);
+		// }
 
 		if (showLabel && label != "") {
 			if (align == Align.Left) _x -= 15;
@@ -1325,7 +1387,7 @@ class Zui {
 		drawRect(g, t.FILL_ACCENT_BG, x, y, CHECK_SIZE(), CHECK_SIZE()); // Bg
 
 		if (selected) { // Check
-			g.color = kha.Color.White;
+			g.color = t.ACCENT_SELECT_COL;
 			if (!enabled) fadeColor();
 			var size = Std.int(CHECK_SELECT_SIZE());
 			g.drawScaledImage(checkSelectImage, x + checkSelectOffsetX, y + checkSelectOffsetY, size, size);
@@ -1336,12 +1398,14 @@ class Zui {
 		var x = _x + radioOffsetX;
 		var y = _y + radioOffsetY;
 		g.color = hover ? t.ACCENT_HOVER_COL : t.ACCENT_COL;
-		drawRect(g, t.FILL_ACCENT_BG, x, y, CHECK_SIZE(), CHECK_SIZE()); // Bg
+		// drawRect(g, t.FILL_ACCENT_BG, x, y, CHECK_SIZE(), CHECK_SIZE()); // Bg
+		g.drawImage(radioImage, x, y);
 
 		if (selected) { // Check
 			g.color = t.ACCENT_SELECT_COL;
 			if (!enabled) fadeColor();
-			g.fillRect(x + radioSelectOffsetX, y + radioSelectOffsetY, CHECK_SELECT_SIZE(), CHECK_SELECT_SIZE());
+			// g.fillRect(x + radioSelectOffsetX, y + radioSelectOffsetY, CHECK_SELECT_SIZE(), CHECK_SELECT_SIZE());
+			g.drawImage(radioSelectImage, x + radioSelectOffsetX, y + radioSelectOffsetY);
 		}
 	}
 
@@ -1387,7 +1451,7 @@ class Zui {
 					while (comboSelectedTexts[comboToSubmit - step].toLowerCase().indexOf(search) < 0 && comboToSubmit - step > 0)
 						++step;
 					
-					// Corner case: Current position is the top one according to the search pattern.
+					// Corner case: current position is the top one according to the search pattern
 					if (comboSelectedTexts[comboToSubmit - step].toLowerCase().indexOf(search) < 0) step = 0;
 				}
 				comboToSubmit -= step;
@@ -1400,7 +1464,7 @@ class Zui {
 					while (comboSelectedTexts[comboToSubmit + step].toLowerCase().indexOf(search) < 0 && comboToSubmit + step < comboSelectedTexts.length - 1)
 						++step;
 
-					// Corner case: Current position is the lowest one according to the search pattern.
+					// Corner case: current position is the lowest one according to the search pattern
 					if (comboSelectedTexts[comboToSubmit + step].toLowerCase().indexOf(search) < 0) step = 0;
 				}
 				
@@ -1755,9 +1819,49 @@ class Zui {
 	}
 
 	inline function drawRect(g: Graphics, fill: Bool, x: Float, y: Float, w: Float, h: Float, strength = 0.0) {
-		if (strength == 0.0) strength = 1;
+		if (strength == 0.0) strength = 1.0;
 		if (!enabled) fadeColor();
-		fill ? g.fillRect(x, y - 1, w, h + 1) : g.drawRect(x, y, w, h, strength);
+		x = Std.int(x);
+		y = Std.int(y);
+		w = Std.int(w);
+		h = Std.int(h);
+
+		if (fill) {
+			var r = filledRoundCornerImage.width;
+			if (t.ROUND_CORNERS && w >= r * 2 && enabled) {
+				y -= 1; // Make it pixel perfect with non-round draw
+				h += 1;
+				g.drawScaledImage(filledRoundCornerImage, x, y, r, r);
+				g.drawScaledImage(filledRoundCornerImage, x, y + h, r, -r);
+				g.drawScaledImage(filledRoundCornerImage, x + w, y, -r, r);
+				g.drawScaledImage(filledRoundCornerImage, x + w, y + h, -r, -r);
+				g.fillRect(x + r, y, w - r * 2, h);
+				g.fillRect(x, y + r, w, h - r * 2);
+			}
+			else {
+				g.fillRect(x, y - 1, w, h + 1);
+			}
+		}
+		else {
+			if (t.ROUND_CORNERS && enabled) {
+				x -= 1;
+				w += 1;
+				y -= 1;
+				h += 1;
+				var r = roundCornerImage.width;
+				g.drawScaledImage(roundCornerImage, x, y, r, r);
+				g.drawScaledImage(roundCornerImage, x, y + h, r, -r);
+				g.drawScaledImage(roundCornerImage, x + w, y, -r, r);
+				g.drawScaledImage(roundCornerImage, x + w, y + h, -r, -r);
+				g.fillRect(x + r, y, w - r * 2, strength);
+				g.fillRect(x + r, y + h - 1, w - r * 2, strength);
+				g.fillRect(x, y + r, strength, h - r * 2);
+				g.fillRect(x + w - 1, y + r, strength, h - r * 2);
+			}
+			else {
+				g.drawRect(x, y, w, h, strength);
+			}
+		}
 	}
 
 	function isVisible(elemH: Float): Bool {
@@ -2073,7 +2177,7 @@ typedef HandleOptions = {
 class Handle {
 	public var selected = false;
 	public var position = 0;
-	public var color = kha.Color.White;
+	public var color: kha.Color = 0xffffffff;
 	public var value = 0.0;
 	public var text = "";
 	public var texture: kha.Image = null;
