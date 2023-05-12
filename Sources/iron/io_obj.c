@@ -185,9 +185,6 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, int start_pos, bo
 	array_i32_t pos_indices = {0};
 	array_i32_t uv_indices = {0};
 	array_i32_t nor_indices = {0};
-	memset(&pos_temp, 0, sizeof(pos_temp));
-	memset(&uv_temp, 0, sizeof(uv_temp));
-	memset(&nor_temp, 0, sizeof(nor_temp));
 
 	bool reading_faces = false;
 	bool reading_object = false;
@@ -199,6 +196,11 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, int start_pos, bo
 		pos_temp = *pos_first;
 		nor_temp = *nor_first;
 		uv_temp = *uv_first;
+	}
+	else {
+		memset(&pos_temp, 0, sizeof(pos_temp));
+		memset(&uv_temp, 0, sizeof(uv_temp));
+		memset(&nor_temp, 0, sizeof(nor_temp));
 	}
 
 	while (true) {
