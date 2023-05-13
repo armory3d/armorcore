@@ -66,19 +66,29 @@ static void read_face() {
 	while (true) {
 		va[vi++] = read_int() - 1;
 		if (uv_temp.length > 0 || nor_temp.length > 0) {
-			part->pos++; // '/'
-		}
-		if (uv_temp.length > 0) {
-			ua[ui++] = read_int() - 1;
-		}
-		if (nor_temp.length > 0) {
 			part->pos++; // "/"
-			na[ni++] = read_int() - 1;
+
+			if (uv_temp.length > 0) {
+				ua[ui++] = read_int() - 1;
+			}
+			if (nor_temp.length > 0) {
+				part->pos++; // "/"
+				na[ni++] = read_int() - 1;
+			}
 		}
-		if (bytes[part->pos] == '\n' || bytes[part->pos] == '\r') break;
+		// Some exporters put "//" even when normal and uv data are not present (f 1//)
+		else if (uv_temp.length == 0 && nor_temp.length == 0 && bytes[part->pos] == '/') {
+			part->pos += 2;
+		}
+
+		if (bytes[part->pos] == '\n' || bytes[part->pos] == '\r') {
+			break;
+		}
 		part->pos++; // " "
 		// Some exporters put space at the end of "f" line
-		if (vi >= 3 && (bytes[part->pos] == '\n' || bytes[part->pos] == '\r')) break;
+		if (vi >= 3 && (bytes[part->pos] == '\n' || bytes[part->pos] == '\r')) {
+			break;
+		}
 	}
 }
 
