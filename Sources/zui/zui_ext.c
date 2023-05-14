@@ -1,7 +1,10 @@
 #include "zui_ext.h"
 #include <string.h>
+#include <stdio.h>
+#include <math.h>
 #include <kinc/input/keyboard.h>
 #include <kinc/io/filereader.h>
+#include <kinc/system.h>
 
 #define MATH_PI 3.14159265358979323846
 
@@ -164,7 +167,7 @@ char *zui_file_browser(zui_handle_t *handle, bool folders_only) {
 	// Directory contents
 	int count = zui_line_count(str);
 	for (int i = 0; i < count; ++i) {
-		char *f = zui_extract_line(i);
+		char *f = zui_extract_line(str, i);
 		if (f[0] == 0 || f[0] == '.') continue; // Skip hidden
 		if (zui_button(f, ZUI_ALIGN_LEFT, "")) {
 			handle->changed = current->changed = true;
@@ -203,12 +206,12 @@ int zui_inline_radio(zui_handle_t *handle, char **texts, int count, int align) {
 	for (int i = 0; i < count; ++i) {
 		if (handle->position == i) {
 			g2_set_color(current->ops.theme.ACCENT_HOVER_COL);
-			if (!current->enabled) zui_fade_color();
+			if (!current->enabled) zui_fade_color(0.25);
 			g2_fill_rect(current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H());
 		}
 		else if (hovered == i) {
 			g2_set_color(current->ops.theme.ACCENT_COL);
-			if (!current->enabled) zui_fade_color();
+			if (!current->enabled) zui_fade_color(0.25);
 			g2_draw_rect(current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H(), 1);
 		}
 		g2_set_color(current->ops.theme.TEXT_COL); // Text

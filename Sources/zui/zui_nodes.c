@@ -1,5 +1,7 @@
 #include "zui_nodes.h"
 
+#include <string.h>
+#include <math.h>
 #include <kinc/graphics4/graphics.h>
 #include <kinc/input/keyboard.h>
 #include "zui.h"
@@ -130,8 +132,8 @@ int ZUI_INPUT_Y(zui_node_canvas_t *canvas, zui_node_socket_t **sockets, int sock
 	return ZUI_LINE_H() * 1.62 + ZUI_INPUTS_H(canvas, sockets, sockets_count, pos);
 }
 
-int ZUI_OUTPUT_Y(zui_node_socket_t **sockets, int pos) {
-	return ZUI_LINE_H() * 1.62 + ZUI_OUTPUTS_H(sockets, pos);
+int ZUI_OUTPUT_Y(zui_node_socket_t **sockets, int sockets_count, int pos) {
+	return ZUI_LINE_H() * 1.62 + ZUI_OUTPUTS_H(sockets_count, pos);
 }
 
 float zui_p(float f) {
@@ -609,7 +611,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 					if (from == NULL && node->id != to->id) { // Snap to output
 						for (int k = 0; k < node->outputs_count; ++k) {
 							float sx = wx + ZUI_NODE_X(node) + ZUI_NODE_W(node);
-							float sy = wy + ZUI_NODE_Y(node) + ZUI_OUTPUT_Y(outs, k);
+							float sy = wy + ZUI_NODE_Y(node) + ZUI_OUTPUT_Y(outs, node->outputs_count, k);
 							float rx = sx - ZUI_LINE_H() / 2;
 							float ry = sy - ZUI_LINE_H() / 2;
 							if (zui_input_in_rect(rx, ry, ZUI_LINE_H(), ZUI_LINE_H())) {
@@ -699,7 +701,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 			if (current_nodes->link_drag == NULL) {
 				for (int j = 0; j < node->outputs_count; ++j) {
 					float sx = wx + ZUI_NODE_X(node) + ZUI_NODE_W(node);
-					float sy = wy + ZUI_NODE_Y(node) + ZUI_OUTPUT_Y(outs, j);
+					float sy = wy + ZUI_NODE_Y(node) + ZUI_OUTPUT_Y(outs, node->outputs_count, j);
 					if (zui_input_in_rect(sx - ZUI_LINE_H() / 2, sy - ZUI_LINE_H() / 2, ZUI_LINE_H(), ZUI_LINE_H())) {
 						// New link from output
 						// zui_node_link_t *l = { id: zui_get_link_id(canvas.links), from_id: node->id, from_socket: j, to_id: -1, to_socket: -1 };

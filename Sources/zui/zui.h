@@ -291,6 +291,19 @@ zui_t *zui_get_current();
 zui_handle_t *zui_nest(zui_handle_t *handle, int id);
 void zui_set_scale(float factor);
 
+bool zui_get_hover(float elem_h);
+bool zui_get_released(float elem_h);
+bool zui_input_in_rect(float x, float y, float w, float h);
+void zui_fill(float x, float y, float w, float h, int color);
+int zui_line_count(char *str);
+char *zui_extract_line(char *str, int line);
+bool zui_is_visible(float elem_h);
+void zui_end_element();
+void zui_fade_color(float alpha);
+void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool truncation);
+void zui_draw_rect(bool fill, float x, float y, float w, float h);
+void zui_start_text_edit(zui_handle_t *handle, int align);
+
 float ZUI_SCALE();
 float ZUI_ELEMENT_W();
 float ZUI_ELEMENT_H();

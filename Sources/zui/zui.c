@@ -2,9 +2,12 @@
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <kinc/graphics4/graphics.h>
 #include <kinc/input/keyboard.h>
+#include <kinc/input/mouse.h>
 #include <kinc/system.h>
 #include <kinc/window.h>
 #include <kinc/log.h>
@@ -144,7 +147,7 @@ int zui_check_start(int i, char *text, char **start) {
 	return 0;
 }
 
-void zui_extract_coloring(char *text, char *start, char *end, bool skip_first) {
+zui_text_extract_t zui_extract_coloring(char *text, char *start, char *end, bool skip_first) {
 	zui_text_extract_t e;
 	e.colored = "";
 	e.uncolored = text;
@@ -412,7 +415,7 @@ char *zui_extract_line(char *str, int line) {
 	return temp;
 }
 
- void zui_lower_case(char *dest, char *src) {
+ char *zui_lower_case(char *dest, char *src) {
 	int len = strlen(src);
 	assert(len < 1024);
 	for (int i = 0; i < len; ++i) {
@@ -1356,7 +1359,7 @@ int zui_text(const char *text, int align, int bg) {
 	g2_set_color(current->ops.theme.TEXT_COL);
 	zui_draw_string(text, current->ops.theme.TEXT_OFFSET, 0, align, true);
 
-	zui_end_element(h + ZUI_ELEMENT_OFFSET());
+	zui_end_element_of_size(h + ZUI_ELEMENT_OFFSET());
 	return started ? ZUI_STATE_STARTED : released ? ZUI_STATE_RELEASED : down ? ZUI_STATE_DOWN : ZUI_STATE_IDLE;
 }
 
@@ -1486,7 +1489,7 @@ int zui_sub_image(kinc_g4_texture_t *image, int tint, float h, int sx, int sy, i
 }
 
 int zui_image(kinc_g4_texture_t *image, int tint, float h) {
-	zui_sub_image(image, tint, h, 0, 0, image->tex_width, image->tex_height);
+	return zui_sub_image(image, tint, h, 0, 0, image->tex_width, image->tex_height);
 }
 
 char *zui_text_input(zui_handle_t *handle, char *label, int align, bool editable, bool live_update) {
