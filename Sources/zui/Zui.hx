@@ -1089,7 +1089,7 @@ class Zui {
 		if (onDeselectText != null) onDeselectText();
 	}
 
-	public function button(text: String, align = Align.Center, label = ""): Bool {
+	public function button(text: String, align = Align.Center, label = "", icon: kha.Image = null, sx = 0, sy = 0, sw = 0, sh = 0): Bool {
 		if (!isVisible(ELEMENT_H())) {
 			endElement();
 			return false;
@@ -1110,6 +1110,13 @@ class Zui {
 		if (label != "") {
 			g.color = t.LABEL_COL;
 			drawString(g, label, null, 0, align == Align.Right ? Align.Left : Align.Right);
+		}
+
+		if (icon != null) {
+			g.color = 0xffffffff;
+			imageInvertY ?
+				g.drawScaledSubImage(icon, sx, sy, sw, sh, _x + buttonOffsetY, _y - 1 + sh, sw, -sh) :
+				g.drawScaledSubImage(icon, sx, sy, sw, sh, _x + buttonOffsetY, _y - 1, sw, sh);
 		}
 
 		endElement();
