@@ -5091,15 +5091,14 @@ int kickstart(int argc, char **argv) {
 	}
 	#endif
 
-	free(code);
-	V8::Dispose();
-
 	#ifdef WITH_ONNX
 	if (ort != NULL) {
 		ort->ReleaseEnv(ort_env);
 		ort->ReleaseSessionOptions(ort_session_options);
 	}
 	#endif
+
+	free(code);
 
 	return 0;
 }
