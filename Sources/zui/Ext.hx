@@ -246,10 +246,8 @@ class Ext {
 		var h2 = handle.nest(0).nest(2);
 		if (pos == 0) {
 			h0.value = handle.color.R;
-
 			handle.color.R = ui.slider(h0, "R", 0, 1, true);
 			h1.value = handle.color.G;
-
 			handle.color.G = ui.slider(h1, "G", 0, 1, true);
 			h2.value = handle.color.B;
 			handle.color.B = ui.slider(h2, "B", 0, 1, true);
@@ -284,8 +282,10 @@ class Ext {
 		}
 		if (h0.changed || h1.changed || h2.changed) handle.changed = ui.changed = true;
 
-		if (ui.getInputInRect(ui._windowX + px, ui._windowY + py, w, h == null ? (ui._y - py) : h) && ui.inputReleased) // Do not close if user clicks
-		   ui.changed = true;
+		// Do not close if user clicks
+		if (ui.inputReleased && ui.getInputInRect(ui._windowX + px, ui._windowY + py, w, h == null ? (ui._y - py) : h)) {
+			ui.changed = true;
+		}
 
 		return handle.color;
 	}
