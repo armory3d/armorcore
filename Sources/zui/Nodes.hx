@@ -651,7 +651,7 @@ class Nodes {
 
 			if (but.type == "RGBA") {
 				ny += lineh; // 18 + 2 separator
-				ui._x = nx;
+				ui._x = nx + 1; // Offset for node selection border
 				ui._y = ny;
 				ui._w = w;
 				var val: kha.arrays.Float32Array = node.outputs[but.output].default_value;
