@@ -283,26 +283,28 @@ class Zui {
 		kha.graphics2.GraphicsExtension.fillCircle(g, Std.int(r / 2), Std.int(r / 2), Std.int(4 * SCALE()));
 		g.end();
 
-		if (filledRoundCornerImage != null) {
-			filledRoundCornerImage.unload();
-		}
-		var r = Std.int(4 * SCALE());
-		filledRoundCornerImage = kha.Image.createRenderTarget(r, r, null, NoDepthAndStencil, 1);
-		var g = filledRoundCornerImage.g2;
-		g.begin(true, 0x00000000);
-		g.color = 0xffffffff;
-		kha.graphics2.GraphicsExtension.fillCircle(g, r, r, r);
-		g.end();
+		if (t.ROUND_CORNERS) {
+			if (filledRoundCornerImage != null) {
+				filledRoundCornerImage.unload();
+			}
+			var r = Std.int(4 * SCALE());
+			filledRoundCornerImage = kha.Image.createRenderTarget(r, r, null, NoDepthAndStencil, 1);
+			var g = filledRoundCornerImage.g2;
+			g.begin(true, 0x00000000);
+			g.color = 0xffffffff;
+			kha.graphics2.GraphicsExtension.fillCircle(g, r, r, r);
+			g.end();
 
-		if (roundCornerImage != null) {
-			roundCornerImage.unload();
+			if (roundCornerImage != null) {
+				roundCornerImage.unload();
+			}
+			roundCornerImage = kha.Image.createRenderTarget(r, r, null, NoDepthAndStencil, 1);
+			var g = roundCornerImage.g2;
+			g.begin(true, 0x00000000);
+			g.color = 0xffffffff;
+			kha.graphics2.GraphicsExtension.drawCircle(g, r, r, r);
+			g.end();
 		}
-		roundCornerImage = kha.Image.createRenderTarget(r, r, null, NoDepthAndStencil, 1);
-		var g = roundCornerImage.g2;
-		g.begin(true, 0x00000000);
-		g.color = 0xffffffff;
-		kha.graphics2.GraphicsExtension.drawCircle(g, r, r, r);
-		g.end();
 
 		elementsBaked = true;
 	}
@@ -1834,8 +1836,8 @@ class Zui {
 		h = Std.int(h);
 
 		if (fill) {
-			var r = filledRoundCornerImage.width;
-			if (t.ROUND_CORNERS && w >= r * 2 && enabled) {
+			if (t.ROUND_CORNERS && enabled && filledRoundCornerImage != null && w >= filledRoundCornerImage.width * 2) {
+				var r = filledRoundCornerImage.width;
 				y -= 1; // Make it pixel perfect with non-round draw
 				h += 1;
 				g.drawScaledImage(filledRoundCornerImage, x, y, r, r);
@@ -1850,7 +1852,7 @@ class Zui {
 			}
 		}
 		else {
-			if (t.ROUND_CORNERS && enabled) {
+			if (t.ROUND_CORNERS && enabled && roundCornerImage != null) {
 				x -= 1;
 				w += 1;
 				y -= 1;
