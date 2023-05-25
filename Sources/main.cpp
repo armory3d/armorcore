@@ -2037,14 +2037,14 @@ namespace {
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
-		void* imageData = malloc(content->ByteLength());
-		memcpy(imageData, content->Data(), content->ByteLength());
-		kinc_image_init(image, imageData, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
+		void *image_data = malloc(content->ByteLength());
+		memcpy(image_data, content->Data(), content->ByteLength());
+		kinc_image_init(image, image_data, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		kinc_g4_texture_init_from_image(texture, image);
 		bool readable = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		if (!readable) {
 			kinc_image_destroy(image);
-			free(imageData);
+			free(image_data);
 			free(image);
 		}
 
@@ -2068,12 +2068,14 @@ namespace {
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t image;
-		kinc_image_init3d(&image, content->Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
+		void *image_data = malloc(content->ByteLength());
+		memcpy(image_data, content->Data(), content->ByteLength());
+		kinc_image_init3d(&image, image_data, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		kinc_g4_texture_init_from_image3d(texture, &image);
 		kinc_image_destroy(&image);
 		bool readable = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		if (!readable) {
-			delete[] content->Data();
+			free(image_data);
 		}
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
