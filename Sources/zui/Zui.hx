@@ -485,8 +485,14 @@ class Zui {
 			return false;
 		}
 
-		_x = 0;
-		_y = handle.scrollOffset;
+		if (handle.layout == Vertical) {
+			_x = 0;
+			_y = handle.scrollOffset;
+		}
+		else {
+			_x = handle.scrollOffset;
+			_y = 0;
+		}
 		if (handle.layout == Horizontal) w = Std.int(ELEMENT_W());
 		_w = !handle.scrollEnabled ? w : w - SCROLL_W(); // Exclude scrollbar if present
 		_h = h;
@@ -539,26 +545,32 @@ class Zui {
 				g.fillRect(0, 0, _windowW, HEADER_DRAG_H());
 			}
 
-			var wh = _windowH - windowHeaderH; // Exclude header
-			var fullHeight = _y - handle.scrollOffset - windowHeaderH;
-			if (fullHeight < wh || handle.layout == Horizontal || !scrollEnabled) { // Disable scrollbar
+			var windowSize = handle.layout == Vertical ? _windowH - windowHeaderH : _windowW - windowHeaderW; // Exclude header
+			var fullSize = handle.layout == Vertical ? _y - windowHeaderH : _x - windowHeaderW;
+			fullSize -= handle.scrollOffset;
+
+			if (fullSize < windowSize || !scrollEnabled) { // Disable scrollbar
 				handle.scrollEnabled = false;
 				handle.scrollOffset = 0;
 			}
 			else { // Draw window scrollbar if necessary
-				handle.scrollEnabled = true;
+
+				if (handle.layout == Vertical) {
+					handle.scrollEnabled = true;
+				}
+
 				if (tabScroll < 0) { // Restore tab
 					handle.scrollOffset = tabScroll;
 					tabScroll = 0;
 				}
 				var wy = _windowY + windowHeaderH;
-				var amountToScroll = fullHeight - wh;
+				var amountToScroll = fullSize - windowSize;
 				var amountScrolled = -handle.scrollOffset;
 				var ratio = amountScrolled / amountToScroll;
-				var barH = wh * Math.abs(wh / fullHeight);
+				var barH = windowSize * Math.abs(windowSize / fullSize);
 				barH = Math.max(barH, ELEMENT_H());
 
-				var totalScrollableArea = wh - barH;
+				var totalScrollableArea = windowSize - barH;
 				var e = amountToScroll / totalScrollableArea;
 				var barY = totalScrollableArea * ratio + windowHeaderH;
 				var barFocus = getInputInRect(_windowX + _windowW - SCROLL_W(), barY + _windowY, SCROLL_W(), barH);
@@ -574,25 +586,26 @@ class Zui {
 					scrollDelta = -inputDY / 20;
 				}
 				if (handle == scrollHandle) { // Scroll
-					scroll(inputDY * e, fullHeight);
+					scroll(inputDY * e);
 				}
-				else if (scrollDelta != 0 && comboSelectedHandle == null &&
-						 getInputInRect(_windowX, wy, _windowW, wh)) { // Wheel
-					scroll(scrollDelta * ELEMENT_H(), fullHeight);
+				else if (scrollDelta != 0 && comboSelectedHandle == null && getInputInRect(_windowX, wy, _windowW, windowSize)) { // Wheel
+					scroll(scrollDelta * ELEMENT_H());
 				}
 
 				// Stay in bounds
 				if (handle.scrollOffset > 0) {
 					handle.scrollOffset = 0;
 				}
-				else if (fullHeight + handle.scrollOffset < wh) {
-					handle.scrollOffset = wh - fullHeight;
+				else if (fullSize + handle.scrollOffset < windowSize) {
+					handle.scrollOffset = windowSize - fullSize;
 				}
 
-				g.color = t.ACCENT_COL; // Bar
-				var scrollbarFocus = getInputInRect(_windowX + _windowW - SCROLL_W(), wy, SCROLL_W(), wh);
-				var barW = (scrollbarFocus || handle == scrollHandle) ? SCROLL_W() : SCROLL_W() / 3;
-				g.fillRect(_windowW - barW - scrollAlign, barY, barW, barH);
+				if (handle.layout == Vertical) {
+					g.color = t.ACCENT_COL; // Bar
+					var scrollbarFocus = getInputInRect(_windowX + _windowW - SCROLL_W(), wy, SCROLL_W(), windowSize);
+					var barW = (scrollbarFocus || handle == scrollHandle) ? SCROLL_W() : SCROLL_W() / 3;
+					g.fillRect(_windowW - barW - scrollAlign, barY, barW, barH);
+				}
 			}
 
 			handle.lastMaxX = _x;
@@ -616,7 +629,7 @@ class Zui {
 		}
 	}
 
-	function scroll(delta: Float, fullHeight: Float) {
+	inline function scroll(delta: Float) {
 		currentWindow.scrollOffset -= delta;
 	}
 
