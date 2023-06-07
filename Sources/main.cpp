@@ -2037,14 +2037,22 @@ namespace {
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
-		void *image_data = malloc(content->ByteLength());
-		memcpy(image_data, content->Data(), content->ByteLength());
+
+		bool readable = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		void *image_data;
+		if (readable) {
+			image_data = malloc(content->ByteLength());
+			memcpy(image_data, content->Data(), content->ByteLength());
+		}
+		else {
+			image_data = content->Data();
+		}
+
 		kinc_image_init(image, image_data, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
 		kinc_g4_texture_init_from_image(texture, image);
-		bool readable = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
 		if (!readable) {
 			kinc_image_destroy(image);
-			free(image_data);
 			free(image);
 		}
 
@@ -2067,21 +2075,31 @@ namespace {
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
-		kinc_image_t image;
-		void *image_data = malloc(content->ByteLength());
-		memcpy(image_data, content->Data(), content->ByteLength());
-		kinc_image_init3d(&image, image_data, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
-		kinc_g4_texture_init_from_image3d(texture, &image);
-		kinc_image_destroy(&image);
+		kinc_image_t *image = (kinc_image_t*)malloc(sizeof(kinc_image_t));
+
 		bool readable = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		void *image_data;
+		if (readable) {
+			image_data = malloc(content->ByteLength());
+			memcpy(image_data, content->Data(), content->ByteLength());
+		}
+		else {
+			image_data = content->Data();
+		}
+
+		kinc_image_init3d(image, image_data, args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value(), (kinc_image_format_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
+		kinc_g4_texture_init_from_image3d(texture, image);
+
 		if (!readable) {
-			free(image_data);
+			kinc_image_destroy(image);
+			free(image);
 		}
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
+		templ->SetInternalFieldCount(readable ? 2 : 1);
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 		obj->SetInternalField(0, External::New(isolate, texture));
+		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depth").ToLocalChecked(), Int32::New(isolate, texture->tex_depth));
