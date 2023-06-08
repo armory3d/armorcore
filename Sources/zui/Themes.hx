@@ -35,7 +35,11 @@ class Themes {
 		FILL_ACCENT_BG: false,
 		LINK_STYLE: Line,
 		FULL_TABS: false,
+		#if (krom_android || krom_ios)
+		ROUND_CORNERS: true
+		#else
 		ROUND_CORNERS: false
+		#end
 	};
 }
 
