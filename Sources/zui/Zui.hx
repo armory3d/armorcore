@@ -382,6 +382,7 @@ class Zui {
 	public function endRegion(last = true) {
 		drawTooltip(false);
 		tabPressedHandle = null;
+		if (last) drawCombo(); // Handle active combo
 		if (last) endInput();
 	}
 
