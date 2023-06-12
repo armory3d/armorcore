@@ -597,11 +597,11 @@ class Nodes {
 
 		// Outline
 		g.color = isSelected(node) ? ui.t.LABEL_COL : ui.t.CONTEXT_COL;
-		g.fillRect(nx - 1, ny - 1, w + 2, h + 2);
+		ui.drawRect(g, true, nx - 1, ny - 1, w + 2, h + 2);
 
 		// Body
 		g.color = ui.t.WINDOW_BG_COL;
-		g.fillRect(nx, ny, w, h);
+		ui.drawRect(g, true, nx, ny, w, h);
 
 		// Header line
 		g.color = node.color;
