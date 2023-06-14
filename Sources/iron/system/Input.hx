@@ -147,7 +147,7 @@ class Mouse extends VirtualInput {
 	public var moved(default, null) = false;
 	public var movementX(default, null) = 0.0;
 	public var movementY(default, null) = 0.0;
-	public var wheelDelta(default, null) = 0;
+	public var wheelDelta(default, null) = 0.0;
 	public var locked(default, null) = false;
 	public var hidden(default, null) = false;
 	public var lastX = -1.0;
@@ -306,7 +306,7 @@ class Mouse extends VirtualInput {
 			pinchDistance = Math.sqrt(dx * dx + dy * dy);
 			pinchTotal += lastDistance != 0 ? lastDistance - pinchDistance : 0;
 			if (!pinchStarted) {
-				wheelDelta = Std.int(pinchTotal / 10);
+				wheelDelta = pinchTotal / 10;
 				if (wheelDelta != 0) {
 					pinchTotal = 0.0;
 				}

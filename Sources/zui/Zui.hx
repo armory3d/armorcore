@@ -72,7 +72,7 @@ class Zui {
 	public var inputStartedY: Float;
 	public var inputDX: Float; // Delta
 	public var inputDY: Float;
-	public var inputWheelDelta = 0;
+	public var inputWheelDelta = 0.0;
 	public var inputStarted: Bool; // Buttons
 	public var inputStartedR: Bool;
 	public var inputReleased: Bool;
@@ -728,7 +728,8 @@ class Zui {
 			tabVertical ?
 				tabY += tabH + 1 :
 				tabX += _w + 1;
-			drawRect(g, true, _x + buttonOffsetY, _y + buttonOffsetY, _w, tabH);
+			// drawRect(g, true, _x + buttonOffsetY, _y + buttonOffsetY, _w, tabH);
+			g.fillRect(_x + buttonOffsetY, _y + buttonOffsetY, _w, tabH);
 			g.color = t.BUTTON_TEXT_COL;
 			if (!selected) fadeColor(0.65);
 			drawString(g, tabNames[i], null, (tabH - tabHMin) / 2, (t.FULL_TABS || !tabVertical) ? Align.Center : Align.Left);
@@ -1290,7 +1291,7 @@ class Zui {
 			}
 		}
 		else handle.changed = false;
-		
+
 		#if (!kha_android && !kha_ios)
 		if (handle == scrollHandle && inputDX != 0) { // Scroll
 		#else
@@ -1473,7 +1474,7 @@ class Zui {
 					var search = textSelected.toLowerCase();
 					while (comboSelectedTexts[comboToSubmit - step].toLowerCase().indexOf(search) < 0 && comboToSubmit - step > 0)
 						++step;
-					
+
 					// Corner case: current position is the top one according to the search pattern
 					if (comboSelectedTexts[comboToSubmit - step].toLowerCase().indexOf(search) < 0) step = 0;
 				}
@@ -1490,7 +1491,7 @@ class Zui {
 					// Corner case: current position is the lowest one according to the search pattern
 					if (comboSelectedTexts[comboToSubmit + step].toLowerCase().indexOf(search) < 0) step = 0;
 				}
-				
+
 				comboToSubmit += step;
 				submitComboHandle = comboSelectedHandle;
 			}
@@ -2112,7 +2113,7 @@ class Zui {
 			pinchDistance = Math.sqrt(dx * dx + dy * dy);
 			pinchTotal += lastDistance != 0 ? lastDistance - pinchDistance : 0;
 			if (!pinchStarted) {
-				inputWheelDelta = Std.int(pinchTotal / 50);
+				inputWheelDelta = pinchTotal / 50;
 				if (inputWheelDelta != 0) {
 					pinchTotal = 0.0;
 				}
