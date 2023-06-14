@@ -107,10 +107,10 @@ class Nodes {
 		return node.y * SCALE() + PAN_Y();
 	}
 	inline function INPUT_Y(canvas: TNodeCanvas, sockets: Array<TNodeSocket>, pos: Int): Int {
-		return Std.int(LINE_H() * 1.62) + INPUTS_H(canvas, sockets, pos);
+		return Std.int(LINE_H() * 1.65) + INPUTS_H(canvas, sockets, pos);
 	}
 	inline function OUTPUT_Y(sockets: Array<TNodeSocket>, pos: Int): Int {
-		return Std.int(LINE_H() * 1.62) + OUTPUTS_H(sockets, pos);
+		return Std.int(LINE_H() * 1.65) + OUTPUTS_H(sockets, pos);
 	}
 	public inline function p(f: Float): Float {
 		return f * SCALE();
@@ -189,9 +189,14 @@ class Nodes {
 			zoom += controls.zoom;
 			if (zoom < 0.1) zoom = 0.1;
 			else if (zoom > 1.0) zoom = 1.0;
-			zoom = Math.round(zoom * 10) / 10;
+			zoom = Math.round(zoom * 100) / 100;
 			uiw = ui._w;
 			uih = ui._h;
+			if (Zui.touchScroll) {
+				// Zoom to finger location
+				panX -= (ui.inputX - ui._windowX - ui._windowW / 2) * controls.zoom * 5 * (1.0 - zoom);
+				panY -= (ui.inputY - ui._windowY - ui._windowH / 2) * controls.zoom * 5 * (1.0 - zoom);
+			}
 		}
 		scaleFactor = ui.SCALE();
 		ELEMENT_H = ui.t.ELEMENT_H + 2;
@@ -756,7 +761,7 @@ class Nodes {
 			var isLinked = inputLinked(canvas, node.id, i);
 			if (!isLinked && inp.type == "VALUE") {
 				ui._x = nx + p(6);
-				ui._y = ny - p(9);
+				ui._y = ny - p(ELEMENT_H / 3.0);
 				ui._w = Std.int(w - p(6));
 				var soc = inp;
 				var min = soc.min != null ? soc.min : 0.0;
