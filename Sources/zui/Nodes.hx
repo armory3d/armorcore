@@ -107,10 +107,10 @@ class Nodes {
 		return node.y * SCALE() + PAN_Y();
 	}
 	inline function INPUT_Y(canvas: TNodeCanvas, sockets: Array<TNodeSocket>, pos: Int): Int {
-		return Std.int(LINE_H() * 1.65) + INPUTS_H(canvas, sockets, pos);
+		return Std.int(LINE_H() * 1.62) + INPUTS_H(canvas, sockets, pos);
 	}
 	inline function OUTPUT_Y(sockets: Array<TNodeSocket>, pos: Int): Int {
-		return Std.int(LINE_H() * 1.65) + OUTPUTS_H(sockets, pos);
+		return Std.int(LINE_H() * 1.62) + OUTPUTS_H(sockets, pos);
 	}
 	public inline function p(f: Float): Float {
 		return f * SCALE();
