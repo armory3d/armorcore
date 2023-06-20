@@ -605,7 +605,7 @@ class Zui {
 					g.color = t.ACCENT_COL; // Bar
 					var scrollbarFocus = getInputInRect(_windowX + _windowW - SCROLL_W(), wy, SCROLL_W(), windowSize);
 					var barW = (scrollbarFocus || handle == scrollHandle) ? SCROLL_W() : SCROLL_W() / 3;
-					g.fillRect(_windowW - barW - scrollAlign, barY, barW, barH);
+					drawRect(g, true, _windowW - barW - scrollAlign, barY, barW, barH);
 				}
 			}
 
