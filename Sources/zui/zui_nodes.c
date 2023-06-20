@@ -57,21 +57,21 @@ void zui_nodes_init(zui_nodes_t *nodes) {
 	nodes->snap_to_id = -1;
 }
 
-inline float ZUI_NODES_SCALE() {
+float ZUI_NODES_SCALE() {
 	return current_nodes->scale_factor * current_nodes->zoom;
 }
 
-inline float ZUI_PAN_X() {
+float ZUI_PAN_X() {
 	float zoom_pan = (1.0 - current_nodes->zoom) * current_nodes->uiw / 2.5;
 	return current_nodes->pan_x * ZUI_NODES_SCALE() + zoom_pan;
 }
 
-inline float ZUI_PAN_Y() {
+float ZUI_PAN_Y() {
 	float zoom_pan = (1.0 - current_nodes->zoom) * current_nodes->uih / 2.5;
 	return current_nodes->pan_y * ZUI_NODES_SCALE() + zoom_pan;
 }
 
-inline int ZUI_LINE_H() {
+int ZUI_LINE_H() {
 	return current_nodes->ELEMENT_H * ZUI_NODES_SCALE();
 }
 
