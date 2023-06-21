@@ -833,11 +833,12 @@ class Zui {
 		var released = getReleased(h);
 		var hover = getHover(h);
 
-		if (curRatio == -1 && (started || down || released || hover)) {
-			if (inputX < _windowX + _x || inputX > _windowX + _x + w) {
-				started = down = released = hover = false;
-			}
-		}
+		// Limit input to image width
+		// if (curRatio == -1 && (started || down || released || hover)) {
+		// 	if (inputX < _windowX + _x || inputX > _windowX + _x + w) {
+		// 		started = down = released = hover = false;
+		// 	}
+		// }
 
 		g.color = tint;
 		if (!enabled) fadeColor();
