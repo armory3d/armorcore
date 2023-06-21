@@ -1,5 +1,5 @@
-﻿diff --git a/Backends/System/iOS/Sources/kinc/backend/GLViewController.h b/Backends/System/iOS/Sources/kinc/backend/GLViewController.h
-index ecfbf793..70841c72 100644
+diff --git a/Backends/System/iOS/Sources/kinc/backend/GLViewController.h b/Backends/System/iOS/Sources/kinc/backend/GLViewController.h
+index 4244cc92..4ad70b06 100644
 --- a/Backends/System/iOS/Sources/kinc/backend/GLViewController.h
 +++ b/Backends/System/iOS/Sources/kinc/backend/GLViewController.h
 @@ -6,7 +6,7 @@
@@ -12,15 +12,16 @@ index ecfbf793..70841c72 100644
  }
  
 diff --git a/Backends/System/iOS/Sources/kinc/backend/GLViewController.m.h b/Backends/System/iOS/Sources/kinc/backend/GLViewController.m.h
-index 7ea7d6d0..a785f6fe 100644
+index 0f6f0e38..e31a7592 100644
 --- a/Backends/System/iOS/Sources/kinc/backend/GLViewController.m.h
 +++ b/Backends/System/iOS/Sources/kinc/backend/GLViewController.m.h
-@@ -63,10 +63,62 @@ id getMetalQueue() {
+@@ -63,10 +63,68 @@ id getMetalQueue() {
  - (void)loadView {
  	visible = true;
  	self.view = glView = [[GLView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
 +
 +	[self.view addInteraction: [[UIDropInteraction alloc] initWithDelegate: self]];
++	[self setNeedsUpdateOfScreenEdgesDeferringSystemGestures];
  }
  
  - (void)setVisible:(BOOL)value {
@@ -77,18 +78,41 @@ index 7ea7d6d0..a785f6fe 100644
 +	return [[UIDropProposal alloc] initWithDropOperation: UIDropOperationCopy];
 +}
 +
++- (UIRectEdge)preferredScreenEdgesDeferringSystemGestures
++{
++    return UIRectEdgeAll;
++}
++
  @end
 diff --git a/Backends/System/iOS/Sources/kinc/backend/ios.plist b/Backends/System/iOS/Sources/kinc/backend/ios.plist
-index 4cb77811..0a247070 100644
+index 4cb77811..6c410ad7 100644
 --- a/Backends/System/iOS/Sources/kinc/backend/ios.plist
 +++ b/Backends/System/iOS/Sources/kinc/backend/ios.plist
-@@ -45,5 +45,9 @@
+@@ -22,6 +22,10 @@
+ 	<string>$(BUILD_VERSION)</string>
+ 	<key>LSRequiresIPhoneOS</key>
+ 	<true/>
++	<key>LSSupportsOpeningDocumentsInPlace</key>
++	<true/>
++	<key>UIFileSharingEnabled</key>
++	<true/>
+ 	<key>UILaunchStoryboardName</key>
+ 	<string>LaunchScreen</string>
+ 	<key>UIRequiredDeviceCapabilities</key>
+@@ -36,8 +40,6 @@
  		<string>UIInterfaceOrientationLandscapeLeft</string>
  		<string>UIInterfaceOrientationLandscapeRight</string>
  	</array>
-+	<key>UIFileSharingEnabled</key>
-+	<true/>
-+	<key>LSSupportsOpeningDocumentsInPlace</key>
-+	<true/>
+-	<key>UIViewControllerBasedStatusBarAppearance</key>
+-	<false/>
+ 	<key>UISupportedInterfaceOrientations~ipad</key>
+ 	<array>
+ 		<string>UIInterfaceOrientationPortrait</string>
+@@ -45,5 +47,7 @@
+ 		<string>UIInterfaceOrientationLandscapeLeft</string>
+ 		<string>UIInterfaceOrientationLandscapeRight</string>
+ 	</array>
++	<key>UIViewControllerBasedStatusBarAppearance</key>
++	<false/>
  </dict>
  </plist>
