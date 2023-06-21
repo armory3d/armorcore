@@ -580,7 +580,7 @@ class Zui {
 					isScrolling = true;
 				}
 
-				var scrollDelta: Float = inputWheelDelta;
+				var scrollDelta = inputWheelDelta;
 				if (touchScroll && inputDown && inputDY != 0 && inputX > _windowX + windowHeaderW && inputY > _windowY + windowHeaderH) {
 					isScrolling = true;
 					scrollDelta = -inputDY / 20;
@@ -1950,7 +1950,7 @@ class Zui {
 			return;
 		}
 
-		if (isScrolling) { // Prevent action when scrolling is active
+		if (isScrolling && !touchScroll) { // Prevent action when scrolling is active
 			isScrolling = false;
 			scrollHandle = null;
 			sliderTooltip = false;
