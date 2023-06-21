@@ -575,13 +575,13 @@ class Zui {
 				var barY = totalScrollableArea * ratio + windowHeaderH;
 				var barFocus = getInputInRect(_windowX + _windowW - SCROLL_W(), barY + _windowY, SCROLL_W(), barH);
 
-				if (inputStarted && barFocus) { // Start scrolling
+				if (handle.scrollEnabled && inputStarted && barFocus) { // Start scrolling
 					scrollHandle = handle;
 					isScrolling = true;
 				}
 
 				var scrollDelta = inputWheelDelta;
-				if (touchScroll && inputDown && inputDY != 0 && inputX > _windowX + windowHeaderW && inputY > _windowY + windowHeaderH) {
+				if (handle.scrollEnabled && touchScroll && inputDown && inputDY != 0 && inputX > _windowX + windowHeaderW && inputY > _windowY + windowHeaderH) {
 					isScrolling = true;
 					scrollDelta = -inputDY / 20;
 				}
@@ -1951,7 +1951,6 @@ class Zui {
 		}
 
 		if (isScrolling && !touchScroll) { // Prevent action when scrolling is active
-			isScrolling = false;
 			scrollHandle = null;
 			sliderTooltip = false;
 			if (x == inputStartedX && y == inputStartedY) { // Mouse not moved
@@ -1962,6 +1961,7 @@ class Zui {
 			button == 0 ? inputReleased = true : inputReleasedR = true;
 		}
 		button == 0 ? inputDown = false : inputDownR = false;
+		isScrolling = false;
 		#if (kha_android || kha_ios)
 		setInputPosition(x, y);
 		#end
