@@ -45,7 +45,6 @@ class Zui {
 	var hoveredTabY = 0.0;
 	var hoveredTabW = 0.0;
 	var hoveredTabH = 0.0;
-	var highlightFullRow = false;
 	public static var current: Zui = null;
 	public static var onBorderHover: Handle->Int->Void = null; // Mouse over window border, use for resizing
 	public static var onTextHover: Void->Void = null; // Mouse over text input, use to set I-cursor
@@ -833,11 +832,13 @@ class Zui {
 		var down = getPushed(h);
 		var released = getReleased(h);
 		var hover = getHover(h);
+
 		if (curRatio == -1 && (started || down || released || hover)) {
 			if (inputX < _windowX + _x || inputX > _windowX + _x + w) {
 				started = down = released = hover = false;
 			}
 		}
+
 		g.color = tint;
 		if (!enabled) fadeColor();
 		var h_float: Float = h; // TODO: hashlink fix
@@ -1775,7 +1776,6 @@ class Zui {
 					ratios = null;
 					_x = xBeforeSplit;
 					_w = wBeforeSplit;
-					highlightFullRow = false;
 				}
 			}
 			else { // Row
@@ -1787,13 +1787,6 @@ class Zui {
 		else { // Horizontal
 			_x += _w + ELEMENT_OFFSET();
 		}
-	}
-
-	/**
-		Highlight all upcoming elements in the next row on a `mouse-over` event.
-	**/
-	public inline function highlightNextRow() {
-		highlightFullRow = true;
 	}
 
 	inline function getRatio(ratio: Float, dyn: Float): Float {
@@ -1920,7 +1913,7 @@ class Zui {
 		if (scissor && inputY < _windowY + windowHeaderH) return false;
 		if (elemH == -1.0) elemH = ELEMENT_H();
 		isHovered = enabled && inputEnabled &&
-			inputX >= _windowX + (highlightFullRow ? 0 : _x) && inputX < (_windowX + _x + (highlightFullRow ? _windowW : _w)) &&
+			inputX >= _windowX + _x && inputX < (_windowX + _x + _w) &&
 			inputY >= _windowY + _y && inputY < (_windowY + _y + elemH);
 		return isHovered;
 	}
