@@ -1950,7 +1950,8 @@ class Zui {
 			return;
 		}
 
-		if (isScrolling && !touchScroll) { // Prevent action when scrolling is active
+		if (isScrolling) { // Prevent action when scrolling is active
+			isScrolling = false;
 			scrollHandle = null;
 			sliderTooltip = false;
 			if (x == inputStartedX && y == inputStartedY) { // Mouse not moved
@@ -1961,7 +1962,6 @@ class Zui {
 			button == 0 ? inputReleased = true : inputReleasedR = true;
 		}
 		button == 0 ? inputDown = false : inputDownR = false;
-		isScrolling = false;
 		#if (kha_android || kha_ios)
 		setInputPosition(x, y);
 		#end
