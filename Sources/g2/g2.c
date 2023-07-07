@@ -171,7 +171,7 @@ void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_
 		image_rect_verts = kinc_g4_vertex_buffer_lock_all(&image_vertex_buffer);
 
 		kinc_g4_index_buffer_init(&image_index_buffer, G2_BUFFER_SIZE * 3 * 2, KINC_G4_INDEX_BUFFER_FORMAT_32BIT, KINC_G4_USAGE_STATIC);
-		int *indices = kinc_g4_index_buffer_lock(&image_index_buffer);
+		int *indices = kinc_g4_index_buffer_lock_all(&image_index_buffer);
 		for (int i = 0; i < G2_BUFFER_SIZE; ++i) {
 			indices[i * 3 * 2 + 0] = i * 4 + 0;
 			indices[i * 3 * 2 + 1] = i * 4 + 1;
@@ -180,7 +180,7 @@ void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_
 			indices[i * 3 * 2 + 4] = i * 4 + 2;
 			indices[i * 3 * 2 + 5] = i * 4 + 3;
 		}
-		kinc_g4_index_buffer_unlock(&image_index_buffer);
+		kinc_g4_index_buffer_unlock_all(&image_index_buffer);
 	}
 
 	// Colored painter
@@ -210,7 +210,7 @@ void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_
 		colored_rect_verts = kinc_g4_vertex_buffer_lock_all(&colored_rect_vertex_buffer);
 
 		kinc_g4_index_buffer_init(&colored_rect_index_buffer, G2_BUFFER_SIZE * 3 * 2, KINC_G4_INDEX_BUFFER_FORMAT_32BIT, KINC_G4_USAGE_STATIC);
-		int *indices = kinc_g4_index_buffer_lock(&colored_rect_index_buffer);
+		int *indices = kinc_g4_index_buffer_lock_all(&colored_rect_index_buffer);
 		for (int i = 0; i < G2_BUFFER_SIZE; ++i) {
 			indices[i * 3 * 2 + 0] = i * 4 + 0;
 			indices[i * 3 * 2 + 1] = i * 4 + 1;
@@ -219,19 +219,19 @@ void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_
 			indices[i * 3 * 2 + 4] = i * 4 + 2;
 			indices[i * 3 * 2 + 5] = i * 4 + 3;
 		}
-		kinc_g4_index_buffer_unlock(&colored_rect_index_buffer);
+		kinc_g4_index_buffer_unlock_all(&colored_rect_index_buffer);
 
 		kinc_g4_vertex_buffer_init(&colored_tris_vertex_buffer, G2_BUFFER_SIZE * 3, &structure, KINC_G4_USAGE_DYNAMIC, 0);
 		colored_tris_verts = kinc_g4_vertex_buffer_lock_all(&colored_tris_vertex_buffer);
 
 		kinc_g4_index_buffer_init(&colored_tris_index_buffer, G2_BUFFER_SIZE * 3, KINC_G4_INDEX_BUFFER_FORMAT_32BIT, KINC_G4_USAGE_STATIC);
-		indices = kinc_g4_index_buffer_lock(&colored_tris_index_buffer);
+		indices = kinc_g4_index_buffer_lock_all(&colored_tris_index_buffer);
 		for (int i = 0; i < G2_BUFFER_SIZE; ++i) {
 			indices[i * 3 + 0] = i * 3 + 0;
 			indices[i * 3 + 1] = i * 3 + 1;
 			indices[i * 3 + 2] = i * 3 + 2;
 		}
-		kinc_g4_index_buffer_unlock(&colored_tris_index_buffer);
+		kinc_g4_index_buffer_unlock_all(&colored_tris_index_buffer);
 	}
 
 	// Text painter
@@ -275,7 +275,7 @@ void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_
 		text_rect_verts = kinc_g4_vertex_buffer_lock_all(&text_vertex_buffer);
 
 		kinc_g4_index_buffer_init(&text_index_buffer, G2_BUFFER_SIZE * 3 * 2, KINC_G4_INDEX_BUFFER_FORMAT_32BIT, KINC_G4_USAGE_STATIC);
-		int *indices = kinc_g4_index_buffer_lock(&text_index_buffer);
+		int *indices = kinc_g4_index_buffer_lock_all(&text_index_buffer);
 		for (int i = 0; i < G2_BUFFER_SIZE; ++i) {
 			indices[i * 3 * 2 + 0] = i * 4 + 0;
 			indices[i * 3 * 2 + 1] = i * 4 + 1;
@@ -284,7 +284,7 @@ void g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_
 			indices[i * 3 * 2 + 4] = i * 4 + 2;
 			indices[i * 3 * 2 + 5] = i * 4 + 3;
 		}
-		kinc_g4_index_buffer_unlock(&text_index_buffer);
+		kinc_g4_index_buffer_unlock_all(&text_index_buffer);
 	}
 }
 
