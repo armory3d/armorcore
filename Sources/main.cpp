@@ -39,7 +39,7 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
-#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
+#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
 #include <kinc/graphics5/constantbuffer.h>
 #include <kinc/graphics5/commandlist.h>
 #include <kinc/graphics5/raytrace.h>
@@ -151,7 +151,7 @@ char mobile_title[1024];
 extern void krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype);
 #endif
 
-#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
+#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
 extern "C" {
 	extern kinc_g5_command_list_t commandList;
 }
@@ -3588,7 +3588,7 @@ namespace {
 	}
 	#endif
 
-	#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
+	#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
 	void krom_raytrace_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
@@ -4157,7 +4157,7 @@ namespace {
 		SET_FUNCTION(krom, "mlInference", krom_ml_inference);
 		SET_FUNCTION(krom, "mlUnload", krom_ml_unload);
 		#endif
-		#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN)
+		#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
 		SET_FUNCTION(krom, "raytraceInit", krom_raytrace_init);
 		SET_FUNCTION(krom, "raytraceSetTextures", krom_raytrace_set_textures);
 		SET_FUNCTION(krom, "raytraceDispatchRays", krom_raytrace_dispatch_rays);
