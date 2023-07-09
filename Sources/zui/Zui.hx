@@ -381,7 +381,7 @@ class Zui {
 	public function endRegion(last = true) {
 		drawTooltip(false);
 		tabPressedHandle = null;
-		if (last) drawCombo(); // Handle active combo
+		if (last) drawCombo(false); // Handle active combo
 		if (last) endInput();
 	}
 
@@ -1454,11 +1454,11 @@ class Zui {
 	}
 
 	static var comboFirst = true;
-	function drawCombo() {
+	function drawCombo(begin = true) {
 		if (comboSelectedHandle == null) return;
 		var _g = g;
 		globalG.color = t.SEPARATOR_COL;
-		globalG.begin(false);
+		if (begin) globalG.begin(false);
 
 		var comboH = (comboSelectedTexts.length + (comboSelectedLabel != "" ? 1 : 0) + (comboSearchBar ? 1 : 0)) * Std.int(ELEMENT_H());
 		var distTop = comboSelectedY - comboH - Std.int(ELEMENT_H()) - windowBorderTop;
@@ -1572,7 +1572,7 @@ class Zui {
 		else comboFirst = false;
 		inputEnabled = comboSelectedHandle == null;
 		endRegion(false);
-		globalG.end();
+		if (begin) globalG.end();
 		g = _g; // Restore
 	}
 
