@@ -376,6 +376,7 @@ class Zui {
 		_x = x;
 		_y = y;
 		_w = w;
+		_h = 0;
 	}
 
 	public function endRegion(last = true) {
