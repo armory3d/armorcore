@@ -1836,7 +1836,7 @@ class Zui {
 		g.color = 0xffffffff;
 	}
 
-	inline function drawRect(g: Graphics, fill: Bool, x: Float, y: Float, w: Float, h: Float, strength = 0.0) {
+	public function drawRect(g: Graphics, fill: Bool, x: Float, y: Float, w: Float, h: Float, strength = 0.0) {
 		if (strength == 0.0) strength = 1.0;
 		if (!enabled) fadeColor();
 		x = Std.int(x);
