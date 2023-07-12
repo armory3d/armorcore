@@ -1,5 +1,5 @@
 diff --git a/Backends/System/iOS/Sources/kinc/backend/GLView.m.h b/Backends/System/iOS/Sources/kinc/backend/GLView.m.h
-index bdf70950..36913cf3 100644
+index bdf70950..b3898fe1 100644
 --- a/Backends/System/iOS/Sources/kinc/backend/GLView.m.h
 +++ b/Backends/System/iOS/Sources/kinc/backend/GLView.m.h
 @@ -80,6 +80,14 @@ extern int kinc_ios_gl_framebuffer;
@@ -10,8 +10,8 @@ index bdf70950..36913cf3 100644
 +	CGPoint point = [recognizer locationInView:self];
 +	float x = point.x * self.contentScaleFactor;
 +	float y = point.y * self.contentScaleFactor;
-+	kinc_internal_mouse_trigger_move(0, x, y);
-+	kinc_internal_surface_trigger_move(0, x, y);
++	// Pencil hover
++	kinc_internal_pen_trigger_move(0, x, y, 0.0);
 +}
 +
  - (id)initWithFrame:(CGRect)frame {
