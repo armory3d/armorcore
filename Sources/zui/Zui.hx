@@ -2005,6 +2005,16 @@ class Zui {
 	}
 
 	public function onPenMove(x: Int, y: Int, pressure: Float) {
+		#if kha_ios
+		// Listen to pen hover if no other input is active
+		if (pressure == 0.0) {
+			if (!inputDown && !inputDownR) {
+				setInputPosition(x, y);
+			}
+			return;
+		}
+		#end
+
 		#if (kha_android || kha_ios)
 		return;
 		#end

@@ -183,6 +183,10 @@ class Mouse extends VirtualInput {
 		return buttonsDown[buttonIndex(button)];
 	}
 
+	public function downAny(): Bool {
+		return buttonsDown[0] || buttonsDown[1] || buttonsDown[2] || buttonsDown[3] || buttonsDown[4];
+	}
+
 	public function started(button = "left"): Bool {
 		return buttonsStarted[buttonIndex(button)];
 	}
@@ -410,6 +414,16 @@ class Pen extends VirtualInput {
 	}
 
 	function moveListener(x: Int, y: Int, pressure: Float) {
+		#if kha_ios
+		// Listen to pen hover if no other input is active
+		if (!buttonsDown[0] && pressure == 0.0) {
+			if (!Input.getMouse().downAny()) {
+				@:privateAccess Input.getMouse().moveListener(x, y, 0, 0);
+			}
+			return;
+		}
+		#end
+
 		if (lastX == -1.0 && lastY == -1.0) { // First frame init
 			lastX = x;
 			lastY = y;
