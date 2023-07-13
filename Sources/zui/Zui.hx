@@ -764,13 +764,7 @@ class Zui {
 			}
 		}
 
-		if (getInputInRect(_windowX, _windowY, _windowW, _windowH)) {
-			hoveredTabName = tabNames[tabHandle.position];
-			hoveredTabX = _windowX;
-			hoveredTabY = _windowY;
-			hoveredTabW = _windowW;
-			hoveredTabH = _windowH;
-		}
+		setHoveredTabName(tabNames[tabHandle.position]);
 
 		_x = 0; // Restore positions
 		_y = origy;
@@ -1931,6 +1925,16 @@ class Zui {
 	// Useful for drag and drop operations
 	public function getHoveredTabName(): String {
 		return getInputInRect(hoveredTabX, hoveredTabY, hoveredTabW, hoveredTabH) ? hoveredTabName : "";
+	}
+
+	function setHoveredTabName(name: String) {
+		if (getInputInRect(_windowX, _windowY, _windowW, _windowH)) {
+			hoveredTabName = name;
+			hoveredTabX = _windowX;
+			hoveredTabY = _windowY;
+			hoveredTabW = _windowW;
+			hoveredTabH = _windowH;
+		}
 	}
 
 	public function onMouseDown(button: Int, x: Int, y: Int) { // Input events
