@@ -606,7 +606,7 @@ class Zui {
 				if (handle.layout == Vertical) {
 					g.color = t.ACCENT_COL; // Bar
 					var scrollbarFocus = getInputInRect(_windowX + _windowW - SCROLL_W(), wy, SCROLL_W(), windowSize);
-					var barW = (scrollbarFocus || handle == scrollHandle) ? SCROLL_W() : SCROLL_W() / 3;
+					var barW = (scrollbarFocus || handle == scrollHandle) ? SCROLL_W() : SCROLL_MINI_W();
 					drawRect(g, true, _windowW - barW - scrollAlign, barY, barW, barH);
 				}
 			}
@@ -2169,6 +2169,9 @@ class Zui {
 	}
 	public inline function SCROLL_W(): Int {
 		return Std.int(t.SCROLL_W * SCALE());
+	}
+	public inline function SCROLL_MINI_W(): Int {
+		return Std.int(t.SCROLL_MINI_W * SCALE());
 	}
 	public inline function TEXT_OFFSET(): Float {
 		return t.TEXT_OFFSET * SCALE();

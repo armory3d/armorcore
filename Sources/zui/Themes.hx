@@ -28,6 +28,7 @@ class Themes {
 		CHECK_SIZE: 16,
 		CHECK_SELECT_SIZE: 12,
 		SCROLL_W: 9,
+		SCROLL_MINI_W: 3,
 		TEXT_OFFSET: 8,
 		TAB_W: 6,
 		FILL_WINDOW_BG: false,
@@ -69,6 +70,7 @@ typedef TTheme = {
 	var CHECK_SIZE: Int;
 	var CHECK_SELECT_SIZE: Int;
 	var SCROLL_W: Int;
+	var SCROLL_MINI_W: Int;
 	var TEXT_OFFSET: Int;
 	var TAB_W: Int; // Indentation
 	var FILL_WINDOW_BG: Bool;
