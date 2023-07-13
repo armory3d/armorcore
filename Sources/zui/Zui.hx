@@ -390,6 +390,7 @@ class Zui {
 	public function beginSticky() {
 		sticky = true;
 		_y -= currentWindow.scrollOffset;
+		if (currentWindow.scrollEnabled) _w += SCROLL_W(); // Use full width since there is no scroll bar in sticky region
 	}
 
 	public function endSticky() {
@@ -399,6 +400,7 @@ class Zui {
 		windowHeaderH += _y - windowHeaderH;
 		_y += currentWindow.scrollOffset;
 		isHovered = false;
+		if (currentWindow.scrollEnabled) _w -= SCROLL_W();
 	}
 
 	function endInput() {
