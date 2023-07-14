@@ -65,7 +65,7 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
 extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // Kore/Windows.h
-
+bool show_window = false;
 // Enable visual styles for ui controls
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
@@ -334,7 +334,11 @@ namespace {
 		win.width = width;
 		win.height = height;
 		win.display_index = -1;
+		#ifdef KORE_WINDOWS
+		win.visible = false; // Prevent white flicker when opening the window
+		#else
 		win.visible = enable_window;
+		#endif
 		win.window_features = window_features;
 		win.mode = (kinc_window_mode_t)window_mode;
 		kinc_framebuffer_options_t frame;
@@ -358,6 +362,8 @@ namespace {
 		RegGetValueW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, vdata, &cbdata);
 		BOOL use_dark_mode = int(vdata[3] << 24 | vdata[2] << 16 | vdata[1] << 8 | vdata[0]) != 1;
 		DwmSetWindowAttribute(kinc_windows_window_handle(0), DWMWA_USE_IMMERSIVE_DARK_MODE, &use_dark_mode, sizeof(use_dark_mode));
+
+		show_window = true;
 		#endif
 
 		#ifdef WITH_AUDIO
@@ -4282,6 +4288,11 @@ namespace {
 
 	void update(void *data) {
 		#ifdef KORE_WINDOWS
+		if (show_window && enable_window) {
+			show_window = false;
+			kinc_window_show(0);
+		}
+
 		if (in_background && ++paused_frames > 3 && armorcore) {
 			Sleep(1);
 			return;
