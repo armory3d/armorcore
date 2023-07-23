@@ -524,6 +524,7 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, int start_pos, bo
 				uvtiles[uv_indices.data[i3] * 2 + 1] = tile_v;
 			}
 			for (int i = 0; i < uv_temp.length; ++i) uv_temp.data[i] -= uvtiles[i];
+			free(uvtiles);
 		}
 
 		part->texa = (int16_t *)malloc(uv_indices.length * 2 * sizeof(int16_t));

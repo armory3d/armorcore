@@ -3838,21 +3838,21 @@ namespace {
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 
-		std::unique_ptr<v8::BackingStore> backing_posa = v8::ArrayBuffer::NewBackingStore((void *)part->posa, part->vertex_count * 4 * 2, [](void *, size_t, void *) {}, nullptr);
+		std::unique_ptr<v8::BackingStore> backing_posa = v8::ArrayBuffer::NewBackingStore((void *)part->posa, part->vertex_count * 4 * 2, [](void *data, size_t, void *) { free(data); }, nullptr);
 		Local<ArrayBuffer> buffer_posa = ArrayBuffer::New(isolate, std::move(backing_posa));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "posa").ToLocalChecked(), Int16Array::New(buffer_posa, 0, buffer_posa->ByteLength() / 2));
 
-		std::unique_ptr<v8::BackingStore> backing_nora = v8::ArrayBuffer::NewBackingStore((void *)part->nora, part->vertex_count * 2 * 2, [](void *, size_t, void *) {}, nullptr);
+		std::unique_ptr<v8::BackingStore> backing_nora = v8::ArrayBuffer::NewBackingStore((void *)part->nora, part->vertex_count * 2 * 2, [](void *data, size_t, void *) { free(data); }, nullptr);
 		Local<ArrayBuffer> buffer_nora = ArrayBuffer::New(isolate, std::move(backing_nora));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "nora").ToLocalChecked(), Int16Array::New(buffer_nora, 0, buffer_nora->ByteLength() / 2));
 
 		if (part->texa != NULL) {
-			std::unique_ptr<v8::BackingStore> backing_texa = v8::ArrayBuffer::NewBackingStore((void *)part->texa, part->vertex_count * 2 * 2, [](void *, size_t, void *) {}, nullptr);
+			std::unique_ptr<v8::BackingStore> backing_texa = v8::ArrayBuffer::NewBackingStore((void *)part->texa, part->vertex_count * 2 * 2, [](void *data, size_t, void *) { free(data); }, nullptr);
 			Local<ArrayBuffer> buffer_texa = ArrayBuffer::New(isolate, std::move(backing_texa));
 			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texa").ToLocalChecked(), Int16Array::New(buffer_texa, 0, buffer_texa->ByteLength() / 2));
 		}
 
-		std::unique_ptr<v8::BackingStore> backing_inda = v8::ArrayBuffer::NewBackingStore((void *)part->inda, part->index_count * 4, [](void *, size_t, void *) {}, nullptr);
+		std::unique_ptr<v8::BackingStore> backing_inda = v8::ArrayBuffer::NewBackingStore((void *)part->inda, part->index_count * 4, [](void *data, size_t, void *) { free(data); }, nullptr);
 		Local<ArrayBuffer> buffer_inda = ArrayBuffer::New(isolate, std::move(backing_inda));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "inda").ToLocalChecked(), Uint32Array::New(buffer_inda, 0, buffer_inda->ByteLength() / 4));
 
@@ -3866,7 +3866,7 @@ namespace {
 
 			Local<Array> udims = Array::New(isolate, part->udims_u * part->udims_v);
 			for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
-				std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)part->udims[i], part->udims_count[i] * 4, [](void *, size_t, void *) {}, nullptr);
+				std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)part->udims[i], part->udims_count[i] * 4, [](void *data, size_t, void *) { free(data); }, nullptr);
 				Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, std::move(backing));
 				(void) udims->Set(isolate->GetCurrentContext(), i, Uint32Array::New(buffer, 0, buffer->ByteLength() / 4));
 			}
