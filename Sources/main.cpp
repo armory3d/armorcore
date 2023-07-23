@@ -39,6 +39,9 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
+#ifdef KORE_DIRECT3D12
+#include <d3d12.h>
+#endif
 #if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
 #include <kinc/graphics5/constantbuffer.h>
 #include <kinc/graphics5/commandlist.h>
@@ -2226,6 +2229,19 @@ namespace {
 
 		uint8_t *b = (uint8_t *)content->Data();
 		kinc_g4_render_target_get_pixels(rt, b);
+
+		// Release staging texture immediately to save memory
+		#ifdef KORE_DIRECT3D11
+		rt->impl.textureStaging->Release();
+		rt->impl.textureStaging = NULL;
+		#elif defined(KORE_DIRECT3D12)
+		rt->impl._renderTarget.impl.renderTargetReadback->Release();
+		rt->impl._renderTarget.impl.renderTargetReadback = NULL;
+		#elif defined(KORE_METAL)
+		// id<MTLTexture> texReadback = (__bridge_transfer id<MTLTexture>)rt->impl._renderTarget.impl._texReadback;
+		// texReadback = nil;
+		// rt->impl._renderTarget.impl._texReadback = NULL;
+		#endif
 	}
 
 	void krom_lock_texture(const FunctionCallbackInfo<Value> &args) {
