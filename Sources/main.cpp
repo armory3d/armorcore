@@ -39,6 +39,9 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
+#ifdef KORE_DIRECT3D11
+#include <d3d11.h>
+#endif
 #ifdef KORE_DIRECT3D12
 #include <d3d12.h>
 #endif
