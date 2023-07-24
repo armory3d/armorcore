@@ -22,5 +22,5 @@ typedef struct obj_part {
 	int udims_v;
 } obj_part_t;
 
-obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, int start_pos, bool udim);
+obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_pos, bool udim);
 void io_obj_destroy(obj_part_t *part);
