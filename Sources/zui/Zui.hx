@@ -1282,6 +1282,7 @@ class Zui {
 			scrollHandle = handle;
 			isScrolling = true;
 			changed = handle.changed = true;
+			handle.valueStart = handle.value;
 			if (touchTooltip) {
 				sliderTooltip = true;
 				sliderTooltipX = _x + _windowX;
@@ -1297,21 +1298,37 @@ class Zui {
 		if (handle == scrollHandle) { // Scroll
 		#end
 			var range = to - from;
-			var sliderX = _x + _windowX + buttonOffsetY;
 			var sliderW = _w - buttonOffsetY * 2;
 			var step = range / sliderW;
-			var value = from + (inputX - sliderX) * step;
-			handle.value = Math.round(value * precision) / precision;
+			var value = 0.0;
+			var adjustedP = precision;
+			
+			if (isShiftDown) { // Precise selection
+				value = handle.valueStart + (inputX - inputStartedX) * step * 0.1;
+				adjustedP = adjustedP * 10.0;
+			} else {
+				value = handle.valueStart + (inputX - inputStartedX) * step;
+			}
+			
+			if (isCtrlDown) adjustedP = adjustedP * 0.1;
+			
+			handle.value = Math.round(value * adjustedP) / adjustedP;
 			if (handle.value < from) handle.value = from; // Stay in bounds
 			else if (handle.value > to) handle.value = to;
 			handle.changed = changed = true;
+		}
+		
+		var released = false;
+		if (getReleased()) { // Round to expected precision, in case the user releases mouse before shift
+			handle.value = Math.round(handle.value * precision) / precision;
+			released = true;
 		}
 
 		var hover = getHover();
 		drawSlider(handle.value, from, to, filled, hover); // Slider
 
 		// Text edit
-		var startEdit = (getReleased() || tabPressed) && textEdit;
+		var startEdit = (released || tabPressed) && textEdit;
 		if (startEdit) { // Mouse did not move
 			handle.text = handle.value + "";
 			startTextEdit(handle);
@@ -2217,6 +2234,7 @@ class Handle {
 	public var position = 0;
 	public var color: kha.Color = 0xffffffff;
 	public var value = 0.0;
+	public var valueStart = 0.0;
 	public var text = "";
 	public var texture: kha.Image = null;
 	public var redraws = 2;
