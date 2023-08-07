@@ -180,6 +180,7 @@ class Zui {
 	var tooltipTime = 0.0;
 	var tabNames: Array<String> = null; // Number of tab calls since window begin
 	var tabColors: Array<Int> = null;
+	var tabEnabled: Array<Bool> = null;
 	var tabHandle: Handle = null;
 	var tabScroll = 0.0;
 	var tabVertical = false;
@@ -640,6 +641,7 @@ class Zui {
 		if (tabNames == null) { // First tab
 			tabNames = [];
 			tabColors = [];
+			tabEnabled = [];
 			tabHandle = handle;
 			tabVertical = vertical;
 			_w -= tabVertical ? Std.int(ELEMENT_OFFSET() + ELEMENT_W() - 1 * SCALE()) : 0; // Shrink window area by width of vertical tabs
@@ -655,6 +657,7 @@ class Zui {
 		}
 		tabNames.push(text);
 		tabColors.push(color);
+		tabEnabled.push(enabled);
 		return handle.position == tabNames.length - 1;
 	}
 
@@ -691,8 +694,10 @@ class Zui {
 			g.fillRect(buttonOffsetY, _y + buttonOffsetY + tabH + 2, _windowW - buttonOffsetY * 2, 1);
 
 		var basey = tabVertical ? _y : _y + 2;
+		var _enabled = enabled;
 
 		for (i in 0...tabNames.length) {
+			enabled = tabEnabled[i];
 			_x = tabX;
 			_y = basey + tabY;
 			_w = tabVertical ? Std.int(ELEMENT_W() - 1 * SCALE()) :
@@ -769,6 +774,7 @@ class Zui {
 		_x = 0; // Restore positions
 		_y = origy;
 		_w = Std.int(!currentWindow.scrollEnabled ? _windowW : _windowW - SCROLL_W());
+		enabled = _enabled;
 	}
 
 	public function panel(handle: Handle, text: String, isTree = false, filled = true, pack = true): Bool {
