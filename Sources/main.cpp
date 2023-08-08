@@ -2224,11 +2224,15 @@ namespace {
 
 	void krom_lock_texture(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		Local<Object> textureobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<External> field = Local<External>::Cast(textureobj->GetInternalField(0));
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)field->Value();
 		uint8_t *tex = kinc_g4_texture_lock(texture);
 
-		int byteLength = kinc_g4_texture_stride(texture) * texture->tex_height * texture->tex_depth;
+		int stride = kinc_g4_texture_stride(texture);
+		(void) textureobj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stride").ToLocalChecked(), Int32::New(isolate, stride));
+
+		int byteLength = stride * texture->tex_height * texture->tex_depth;
 		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)tex, byteLength, [](void *, size_t, void *) {}, nullptr);
 		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, std::move(backing));
 		args.GetReturnValue().Set(abuffer);
