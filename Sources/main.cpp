@@ -44,6 +44,7 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 #ifdef KORE_DIRECT3D12
 #include <d3d12.h>
+extern "C" extern bool waitAfterNextDraw;
 #endif
 #if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
 #include <kinc/graphics5/constantbuffer.h>
@@ -873,6 +874,10 @@ namespace {
 	}
 
 	void krom_draw_indexed_vertices_fast(Local<Object> receiver, int start, int count) {
+		#ifdef KORE_DIRECT3D12
+		// TODO: Prevent heapIndex overflow in texture.c.h/kinc_g5_internal_set_textures
+		waitAfterNextDraw = true;
+		#endif
 		if (count < 0) kinc_g4_draw_indexed_vertices();
 		else kinc_g4_draw_indexed_vertices_from_to(start, count);
 	}
@@ -914,7 +919,6 @@ namespace {
 	}
 
 	void krom_create_vertex_shader_from_source(const FunctionCallbackInfo<Value> &args) {
-
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 
@@ -1078,7 +1082,6 @@ namespace {
 	}
 
 	void krom_create_fragment_shader_from_source(const FunctionCallbackInfo<Value> &args) {
-
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 
@@ -2801,6 +2804,9 @@ namespace {
 	}
 
 	void krom_g2_draw_scaled_sub_image(const FunctionCallbackInfo<Value> &args) {
+		#ifdef KORE_DIRECT3D12
+		waitAfterNextDraw = true;
+		#endif
 		HandleScope scope(args.GetIsolate());
 		Local<Object> image = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		float sx = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -3015,7 +3021,7 @@ namespace {
 		float cy = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float radius = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int segments = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float strength = args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float strength = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		g2_draw_circle(cx, cy, radius, segments, strength);
 	}
 
