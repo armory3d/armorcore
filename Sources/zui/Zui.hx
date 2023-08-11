@@ -769,12 +769,12 @@ class Zui {
 			}
 		}
 
+		enabled = _enabled;
 		setHoveredTabName(tabNames[tabHandle.position]);
 
 		_x = 0; // Restore positions
 		_y = origy;
 		_w = Std.int(!currentWindow.scrollEnabled ? _windowW : _windowW - SCROLL_W());
-		enabled = _enabled;
 	}
 
 	public function panel(handle: Handle, text: String, isTree = false, filled = true, pack = true): Bool {
