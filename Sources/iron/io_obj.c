@@ -110,8 +110,8 @@ static float read_float() {
 		buf[bi++] = c;
 	}
 	float res = 0.0; // Parse buffer into float
-	int dot = 1;
-	int dec = 1;
+	int64_t dot = 1;
+	int64_t dec = 1;
 	int off = buf[0] == '-' ? 1 : 0;
 	int len = bi - 1;
 	for (int i = 0; i < bi - off; ++i) {
