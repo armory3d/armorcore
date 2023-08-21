@@ -10,13 +10,13 @@ static obj_part_t *part = NULL;
 static array_f32_t pos_temp;
 static array_f32_t uv_temp;
 static array_f32_t nor_temp;
-static uint32_t va[60];
-static uint32_t ua[60];
-static uint32_t na[60];
+static uint32_t va[128];
+static uint32_t ua[128];
+static uint32_t na[128];
 static int vi = 0;
 static int ui = 0;
 static int ni = 0;
-static uint8_t buf[64];
+static uint8_t buf[128];
 static uint8_t str[256];
 
 static int vind_off = 0;
