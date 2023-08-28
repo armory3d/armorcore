@@ -1,5 +1,5 @@
 diff --git a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/raytrace.m.h b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/raytrace.m.h
-index eaa8c33c..eee6bf2e 100644
+index e4b01ef..71c771c 100644
 --- a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/raytrace.m.h
 +++ b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/raytrace.m.h
 @@ -8,7 +8,7 @@
@@ -11,8 +11,8 @@ index eaa8c33c..eee6bf2e 100644
  static kinc_g5_constant_buffer_t *constant_buf;
  
  id getMetalDevice(void);
-@@ -19,8 +19,25 @@ NSMutableArray *_primitive_accels;
- id <MTLAccelerationStructure> _instance_accel;
+@@ -19,9 +19,25 @@ NSMutableArray *_primitive_accels;
+ id<MTLAccelerationStructure> _instance_accel;
  dispatch_semaphore_t _sem;
  
 +static kinc_g5_render_target_t *_texpaint0;
@@ -30,22 +30,21 @@ index eaa8c33c..eee6bf2e 100644
 +	return device.supportsRaytracing;
 +}
 +
- void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list_t *command_list, void *ray_shader, int ray_shader_size, kinc_g5_constant_buffer_t *constant_buffer) {
+ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list_t *command_list, void *ray_shader, int ray_shader_size,
+                                  kinc_g5_constant_buffer_t *constant_buffer) {
  	id<MTLDevice> device = getMetalDevice();
 +	if (!device.supportsRaytracing) return;
-+
  	constant_buf = constant_buffer;
  
  	NSError *error = nil;
-@@ -77,19 +94,26 @@ id <MTLAccelerationStructure> create_acceleration_sctructure(MTLAccelerationStru
- 	return compacted_acceleration_structure;
+@@ -73,19 +89,25 @@ id<MTLAccelerationStructure> create_acceleration_sctructure(MTLAccelerationStruc
  }
  
--void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *vb, kinc_g5_index_buffer_t *ib) {
-+void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *vb, kinc_g5_index_buffer_t *ib, float scale) {
+ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *vb,
+-                                               kinc_g5_index_buffer_t *ib) {
++                                               kinc_g5_index_buffer_t *ib, float scale) {
 +	id<MTLDevice> device = getMetalDevice();
 +	if (!device.supportsRaytracing) return;
-+
  #if !TARGET_OS_IPHONE
  	MTLResourceOptions options = MTLResourceStorageModeManaged;
  #else
@@ -64,13 +63,13 @@ index eaa8c33c..eee6bf2e 100644
 +	descriptor.vertexFormat = MTLAttributeFormatShort4Normalized;
  
  	MTLPrimitiveAccelerationStructureDescriptor *accel_descriptor = [MTLPrimitiveAccelerationStructureDescriptor descriptor];
- 	accel_descriptor.geometryDescriptors = @[descriptor];
-@@ -97,16 +121,15 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
+ 	accel_descriptor.geometryDescriptors = @[ descriptor ];
+@@ -93,16 +115,15 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  	_primitive_accels = [[NSMutableArray alloc] init];
  	[_primitive_accels addObject:acceleration_structure];
  
 -	id<MTLDevice> device = getMetalDevice();
- 	id <MTLBuffer> instance_buffer = [device newBufferWithLength:sizeof(MTLAccelerationStructureInstanceDescriptor) * 1 options:options];
+ 	id<MTLBuffer> instance_buffer = [device newBufferWithLength:sizeof(MTLAccelerationStructureInstanceDescriptor) * 1 options:options];
  
  	MTLAccelerationStructureInstanceDescriptor *instance_descriptors = (MTLAccelerationStructureInstanceDescriptor *)instance_buffer.contents;
  	instance_descriptors[0].accelerationStructureIndex = 0;
@@ -85,9 +84,9 @@ index eaa8c33c..eee6bf2e 100644
  	instance_descriptors[0].transformationMatrix.columns[3] = MTLPackedFloat3Make(0, 0, 0);
  
  #if !TARGET_OS_IPHONE
-@@ -124,6 +147,16 @@ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_str
+@@ -118,6 +139,16 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
  
- }
+ void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_structure_t *accel) {}
  
 +void kinc_raytrace_set_textures(kinc_g5_render_target_t *texpaint0, kinc_g5_render_target_t *texpaint1, kinc_g5_render_target_t *texpaint2, kinc_g5_texture_t *texenv, kinc_g5_texture_t *texsobol, kinc_g5_texture_t *texscramble, kinc_g5_texture_t *texrank) {
 +	_texpaint0 = texpaint0;
@@ -102,7 +101,7 @@ index eaa8c33c..eee6bf2e 100644
  void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *_accel) {
  	accel = _accel;
  }
-@@ -132,11 +165,14 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
+@@ -126,11 +157,13 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
  	pipeline = _pipeline;
  }
  
@@ -114,13 +113,12 @@ index eaa8c33c..eee6bf2e 100644
  void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
 +	id<MTLDevice> device = getMetalDevice();
 +	if (!device.supportsRaytracing) return;
-+
  	dispatch_semaphore_wait(_sem, DISPATCH_TIME_FOREVER);
  
  	id<MTLCommandQueue> queue = getMetalQueue();
-@@ -156,7 +192,16 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
- 	id <MTLComputeCommandEncoder> compute_encoder = [command_buffer computeCommandEncoder];
- 	[compute_encoder setBuffer: (__bridge id<MTLBuffer>)constant_buf->impl._buffer offset:0 atIndex:0];
+@@ -149,7 +182,16 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+ 	id<MTLComputeCommandEncoder> compute_encoder = [command_buffer computeCommandEncoder];
+ 	[compute_encoder setBuffer:(__bridge id<MTLBuffer>)constant_buf->impl._buffer offset:0 atIndex:0];
  	[compute_encoder setAccelerationStructure:_instance_accel atBufferIndex:1];
 +	[compute_encoder setBuffer: (__bridge id<MTLBuffer>)_ib->impl.metal_buffer offset:0 atIndex:2];
 +	[compute_encoder setBuffer: (__bridge id<MTLBuffer>)_vb->impl.mtlBuffer offset:0 atIndex:3];
@@ -133,10 +131,10 @@ index eaa8c33c..eee6bf2e 100644
 +	[compute_encoder setTexture:(__bridge id<MTLTexture>)_texscramble->impl._tex atIndex:6];
 +	[compute_encoder setTexture:(__bridge id<MTLTexture>)_texrank->impl._tex atIndex:7];
  
- 	for (id <MTLAccelerationStructure> primitive_accel in _primitive_accels)
+ 	for (id<MTLAccelerationStructure> primitive_accel in _primitive_accels)
  		[compute_encoder useResource:primitive_accel usage:MTLResourceUsageRead];
 diff --git a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/rendertarget.m.h b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/rendertarget.m.h
-index 89e79232..0049b8a6 100644
+index 89e7923..0049b8a 100644
 --- a/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/rendertarget.m.h
 +++ b/Backends/Graphics5/Metal/Sources/kinc/backend/graphics5/rendertarget.m.h
 @@ -45,7 +45,7 @@ static void render_target_init(kinc_g5_render_target_t *target, int width, int h
@@ -149,7 +147,7 @@ index 89e79232..0049b8a6 100644
  
  	target->impl._tex = (__bridge_retained void *)[device newTextureWithDescriptor:descriptor];
 diff --git a/Sources/kinc/graphics5/raytrace.h b/Sources/kinc/graphics5/raytrace.h
-index 03d0ed56..4b894da6 100644
+index 03d0ed5..5d86a68 100644
 --- a/Sources/kinc/graphics5/raytrace.h
 +++ b/Sources/kinc/graphics5/raytrace.h
 @@ -26,6 +26,7 @@ typedef struct kinc_raytrace_pipeline {
@@ -165,7 +163,7 @@ index 03d0ed56..4b894da6 100644
  
  KINC_FUNC void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, struct kinc_g5_command_list *command_list,
 -                                                         struct kinc_g5_vertex_buffer *vb, struct kinc_g5_index_buffer *ib);
-+														 struct kinc_g5_vertex_buffer *vb, struct kinc_g5_index_buffer *ib, float scale);
++                                                         struct kinc_g5_vertex_buffer *vb, struct kinc_g5_index_buffer *ib, float scale);
  KINC_FUNC void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_structure_t *accel);
 +KINC_FUNC void kinc_raytrace_set_textures(struct kinc_g5_render_target *texpaint0, struct kinc_g5_render_target *texpaint1, struct kinc_g5_render_target *texpaint2, struct kinc_g5_texture *texenv, struct kinc_g5_texture *texsobol, struct kinc_g5_texture *texscramble, struct kinc_g5_texture *texrank);
  
