@@ -102,6 +102,9 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 #endif
+#ifdef WITH_MPEG_WRITE
+#include <jo_mpeg.h>
+#endif
 #ifdef WITH_ZLIB
 #include <zlib.h>
 #endif
@@ -3493,6 +3496,13 @@ namespace {
 	#endif
 	#endif
 
+	#ifdef WITH_MPEG_WRITE
+	void krom_write_mpeg(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+
+	}
+	#endif
+
 	#ifdef WITH_ONNX
 	void krom_ml_inference(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
@@ -4219,6 +4229,9 @@ namespace {
 		SET_FUNCTION(krom, "writePng", krom_write_png);
 		SET_FUNCTION(krom, "encodeJpg", krom_encode_jpg);
 		SET_FUNCTION(krom, "encodePng", krom_encode_png);
+		#endif
+		#ifdef WITH_MPEG_WRITE
+		SET_FUNCTION(krom, "writeMpeg", krom_write_mpeg);
 		#endif
 		#ifdef WITH_ONNX
 		SET_FUNCTION(krom, "mlInference", krom_ml_inference);

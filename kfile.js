@@ -37,6 +37,7 @@ let flags = {
 	with_tinydir: false,
 	with_zlib: false,
 	with_stb_image_write: false,
+	with_mpeg_write: false,
 	with_audio: false,
 	with_onnx: false,
 	with_worker: false,
@@ -216,6 +217,10 @@ if (flags.with_zlib) {
 if (flags.with_stb_image_write) {
 	project.addDefine('WITH_STB_IMAGE_WRITE');
 	project.addIncludeDir("Libraries/stb");
+}
+if (flags.with_mpeg_write) {
+	project.addDefine('WITH_MPEG_WRITE');
+	project.addIncludeDir("Libraries/jo_mpeg");
 }
 if (flags.with_onnx) {
 	project.addDefine('WITH_ONNX');
