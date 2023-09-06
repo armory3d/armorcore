@@ -1,30 +1,17 @@
-diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
-index 6678b2e7..bc963547 100644
---- a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
-+++ b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.java
-@@ -1,6 +1,7 @@
- package tech.kinc;
- 
- import android.app.NativeActivity;
+diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
+index 4a9e545..f202a40 100644
+--- a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
++++ b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
+@@ -17,6 +17,19 @@ import android.view.View
+ import android.view.WindowManager
+ import android.view.inputmethod.InputMethodManager
+ import kotlin.system.exitProcess
 +import android.content.ContentResolver;
- import android.content.Context;
- import android.content.Intent;
- import android.content.pm.ApplicationInfo;
-@@ -13,10 +14,24 @@ import android.os.Message;
- import android.os.Vibrator;
- import android.os.VibrationEffect;
- import android.os.Build;
 +import android.view.DragAndDropPermissions;
 +import android.view.DragEvent;
- import android.view.KeyEvent;
- import android.view.View;
- import android.view.WindowManager;
- import android.view.inputmethod.InputMethodManager;
 +import android.webkit.MimeTypeMap;
-+
-+import static android.view.DragEvent.ACTION_DRAG_STARTED;
-+import static android.view.DragEvent.ACTION_DROP;
-+
++import android.view.DragEvent.ACTION_DRAG_STARTED;
++import android.view.DragEvent.ACTION_DROP;
 +import java.io.BufferedInputStream;
 +import java.io.File;
 +import java.io.FileNotFoundException;
@@ -33,105 +20,141 @@ index 6678b2e7..bc963547 100644
 +import java.io.InputStream;
 +import java.io.OutputStream;
  
- public class KincActivity extends NativeActivity implements KeyEvent.Callback {
- 	private static KincActivity instance;
-@@ -46,6 +61,24 @@ public class KincActivity extends NativeActivity implements KeyEvent.Callback {
-         } catch (PackageManager.NameNotFoundException|NullPointerException e) {
-             isDisabledStickyImmersiveMode = false;
-         }
+ class KincActivity: NativeActivity(), KeyEvent.Callback {
+ 	companion object {
+@@ -63,6 +76,7 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+ 			return manager.defaultDisplay.rotation
+ 		}
+ 
++		@JvmStatic
+ 		fun getScreenDpi(): Int {
+ 			val context: Context = instance!!.applicationContext
+ 			val manager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+@@ -71,12 +85,14 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+ 			return metrics.xdpi.toInt()
+ 		}
+ 
++		@JvmStatic
+ 		fun getRefreshRate(): Int {
+ 			val context: Context = instance!!.applicationContext
+ 			val manager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+ 			return manager.defaultDisplay.refreshRate.toInt()
+ 		}
+ 
++		@JvmStatic
+ 		fun getDisplayWidth(): Int {
+ 			val context: Context = instance!!.applicationContext
+ 			val manager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+@@ -85,6 +101,7 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+ 			return size.x
+ 		}
+ 
++		@JvmStatic
+ 		fun getDisplayHeight(): Int {
+ 			val context: Context = instance!!.applicationContext
+ 			val manager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+@@ -108,6 +125,13 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+ 				kincActivity.hideSystemUI()
+ 			}
+ 		}
 +
-+		getWindow().getDecorView().setOnDragListener(
-+			new View.OnDragListener() {
-+				@Override
-+				public boolean onDrag(View view, DragEvent dragEvent) {
-+					switch(dragEvent.getAction()) {
-+						case ACTION_DRAG_STARTED:
-+							return true;
-+						case ACTION_DROP:
-+							DragAndDropPermissions dropPermissions = requestDragAndDropPermissions(dragEvent);
-+							importFile(dragEvent.getClipData().getItemAt(0).getUri());
-+							dropPermissions.release();
-+							return true;
++		@JvmStatic
++		public fun pickFile() {
++			val intent: Intent = Intent(Intent.ACTION_GET_CONTENT)
++			intent.type = "*/*"
++			instance!!.startActivityForResult(Intent.createChooser(intent, "Select File"), 1)
++		}
+ 	}
+ 
+ 	var inputManager: InputMethodManager? = null
+@@ -129,6 +153,19 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+ 		} catch (e: NullPointerException) {
+ 			false
+ 		}
++
++		window.decorView.setOnDragListener(
++				fun (view: View, dragEvent: DragEvent): Boolean {
++					if (dragEvent.action == ACTION_DRAG_STARTED) return true
++					if (dragEvent.action == ACTION_DROP) {
++						val dropPermissions = requestDragAndDropPermissions(dragEvent)
++						importFile(dragEvent.clipData.getItemAt(0).uri)
++						dropPermissions.release()
++						return true
 +					}
-+					return false;
++					return false
 +				}
-+			}
 +		);
  	}
  
-     private void hideSystemUI() {
-@@ -157,4 +190,74 @@ public class KincActivity extends NativeActivity implements KeyEvent.Callback {
+     private fun hideSystemUI() {
+@@ -158,4 +195,70 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
  	}
  
- 	private native void nativeKincKeyPress(String chars);
+ 	private external fun nativeKincKeyPress(chars: String)
 +
-+	private native void onAndroidFilePicked(String pickedPath);
-+	private native String getMobileTitle();
++	private external fun onAndroidFilePicked(pickedPath: String)
++	private external fun getMobileTitle(): String
 +
-+	@Override
-+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-+		super.onActivityResult(requestCode, resultCode, data);
++	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
++		super.onActivityResult(requestCode, resultCode, data)
 +		if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
-+			importFile(data.getData());
++			importFile(data.data!!)
 +		}
 +	}
 +
-+	public static void pickFile() {
-+		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-+		intent.setType("*/*");
-+		getInstance().startActivityForResult(Intent.createChooser(intent, "Select File"), 1);
-+	}
-+
-+	private void importFile(Uri pickedFile) {
-+		ContentResolver resolver = getApplicationContext().getContentResolver();
-+		try (InputStream is = resolver.openInputStream(pickedFile)) {
-+			BufferedInputStream bis = new BufferedInputStream(is);
-+			File dir = new File(getFilesDir() + "/" + getMobileTitle());
-+			dir.mkdirs();
-+			String[] path = pickedFile.getPath().split("/");
++	fun importFile(pickedFile: Uri) {
++		val resolver: ContentResolver = applicationContext.contentResolver
++		val inps: InputStream = resolver.openInputStream(pickedFile)!!
++		try {
++			val bis: BufferedInputStream = BufferedInputStream(inps)
++			val dir: File = File(filesDir.absolutePath + "/" + getMobileTitle())
++			dir.mkdirs()
++			var path: List<String> = pickedFile.path!!.split("/")
 +
 +			// Samsung files app removes extension from fileName
-+			String[] filePath = { android.provider.MediaStore.Images.Media.DATA };
-+			android.database.Cursor cursor = getContentResolver().query(pickedFile, filePath, null, null, null);
-+			cursor.moveToFirst();
-+			String pickedPath = cursor.getString(cursor.getColumnIndex(filePath[0]));
++			val filePath: Array<String> = arrayOf(android.provider.MediaStore.Images.Media.DATA)
++			val cursor: android.database.Cursor = contentResolver.query(pickedFile, filePath, null, null, null)!!
++			cursor.moveToFirst()
++			val pickedPath: String = cursor.getString(cursor.getColumnIndex(filePath[0]))
 +			if (pickedPath != null) {
-+				path = pickedPath.split("/");
++				path = pickedPath.split("/")
 +			}
-+			cursor.close();
++			cursor.close()
 +
-+			String fileName = path[path.length - 1];
++			var fileName: String = path[path.size - 1]
 +
 +			// Extension still unknown
 +			if (!fileName.contains(".")) {
-+				String ext = MimeTypeMap.getSingleton().getExtensionFromMimeType(getContentResolver().getType(pickedFile));
++				var ext: String = MimeTypeMap.getSingleton().getExtensionFromMimeType(contentResolver.getType(pickedFile))!!
 +				// Note: for obj/fbx file, the extension returned is bin..
 +				if (ext.equals("bin")) {
-+					bis.mark(0);
-+					byte[] buf = new byte[18];
-+					StringBuilder header = new StringBuilder();
-+					for (int i = 0; i < 18; ++i) {
-+						int c = bis.read();
-+						if (c == -1) break;
-+						header.append(Character.toString((char) c));
++					bis.mark(0)
++					val header: StringBuilder = StringBuilder()
++					for (i in 0..17) {
++						val c: Int = bis.read()
++						if (c == -1) break
++						header.append(c.toChar())
 +					}
-+					ext = header.toString().equals("Kaydara FBX Binary") ? "fbx" : "obj";
-+					bis.reset();
++					ext = if (header.toString() == "Kaydara FBX Binary") "fbx" else "obj"
++					bis.reset()
 +				}
-+				fileName += "." + ext;
++				fileName += "." + ext
 +			}
 +
-+			String dst = getFilesDir() + "/" + getMobileTitle() + "/" + fileName;
-+			try (OutputStream os = new FileOutputStream(dst)) {
-+				byte[] buf = new byte[1024];
-+				int len;
-+				while ((len = bis.read(buf)) > 0) {
-+					os.write(buf, 0, len);
++			val dst: String = filesDir.absolutePath + "/" + getMobileTitle() + "/" + fileName
++			val os: OutputStream = FileOutputStream(dst)
++			try {
++				var buf = ByteArray(1024)
++				var len = bis.read(buf)
++				while (len > 0) {
++					os.write(buf, 0, len)
++					len = bis.read(buf)
 +				}
-+				onAndroidFilePicked(dst);
++				onAndroidFilePicked(dst)
 +			}
++			catch (e: IOException) {}
 +		}
-+		catch (java.io.FileNotFoundException e) {}
-+		catch (IOException e) {}
++		catch (e: FileNotFoundException) {}
++		catch (e: IOException) {}
 +	}
  }

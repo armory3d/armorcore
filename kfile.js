@@ -114,7 +114,6 @@ if (platform === Platform.Android) {
 	project.addFile('Sources/android/android_file_dialog.c');
 	project.addFile('Sources/android/android_http_request.c');
 	project.addDefine('IDLE_SLEEP');
-	project.addJavaDir('Sources/android/java');
 
 	project.targetOptions.android.package = flags.package;
 	project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];

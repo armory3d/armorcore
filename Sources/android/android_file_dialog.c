@@ -12,7 +12,7 @@ extern char mobile_title[1024];
 ANativeActivity *kinc_android_get_activity(void);
 jclass kinc_android_find_class(JNIEnv *env, const char *name);
 
-JNIEXPORT void JNICALL Java_tech_kode_kore_KoreActivity_onAndroidFilePicked(JNIEnv *env, jobject jobj, jstring jstr) {
+JNIEXPORT void JNICALL Java_tech_kinc_KincActivity_onAndroidFilePicked(JNIEnv *env, jobject jobj, jstring jstr) {
 	if (jstr == NULL) return;
 	const char *str = (*env)->GetStringUTFChars(env, jstr, 0);
 	size_t len = strlen(str);
@@ -24,7 +24,7 @@ JNIEXPORT void JNICALL Java_tech_kode_kore_KoreActivity_onAndroidFilePicked(JNIE
 	(*env)->ReleaseStringUTFChars(env, jstr, str);
 }
 
-JNIEXPORT jstring JNICALL Java_tech_kode_kore_KoreActivity_getMobileTitle(JNIEnv *env, jobject jobj) {
+JNIEXPORT jstring JNICALL Java_tech_kinc_KincActivity_getMobileTitle(JNIEnv *env, jobject jobj) {
 	jstring result = (*env)->NewStringUTF(env, mobile_title);
 	return result;
 }
@@ -34,8 +34,8 @@ void AndroidFileDialogOpen() {
 	JNIEnv *env;
 	JavaVM *vm = kinc_android_get_activity()->vm;
 	(*vm)->AttachCurrentThread(vm, &env, NULL);
-	jclass koreActivityClass = kinc_android_find_class(env, "tech.kinc.KincActivity");
-	(*env)->CallStaticVoidMethod(env, koreActivityClass, (*env)->GetStaticMethodID(env, koreActivityClass, "pickFile", "()V"));
+	jclass kincActivityClass = kinc_android_find_class(env, "tech.kinc.KincActivity");
+	(*env)->CallStaticVoidMethod(env, kincActivityClass, (*env)->GetStaticMethodID(env, kincActivityClass, "pickFile", "()V"));
 	(*vm)->DetachCurrentThread(vm);
 }
 
@@ -100,12 +100,12 @@ void android_check_permissions() {
 	JNIEnv *env;
 	JavaVM *vm = kinc_android_get_activity()->vm;
 	(*vm)->AttachCurrentThread(vm, &env, NULL);
-	jclass koreActivityClass = kinc_android_find_class(env, "tech.kinc.KincActivity");
+	jclass kincActivityClass = kinc_android_find_class(env, "tech.kinc.KincActivity");
 	JNINativeMethod methodTable[] = {
-		{"onAndroidFilePicked", "(Ljava/lang/String;)V", (void *)Java_tech_kode_kore_KoreActivity_onAndroidFilePicked},
-		{"getMobileTitle", "()Ljava/lang/String;", (void *)Java_tech_kode_kore_KoreActivity_getMobileTitle}
+		{"onAndroidFilePicked", "(Ljava/lang/String;)V", (void *)Java_tech_kinc_KincActivity_onAndroidFilePicked},
+		{"getMobileTitle", "()Ljava/lang/String;", (void *)Java_tech_kinc_KincActivity_getMobileTitle}
 	};
 	int methodTableSize = sizeof(methodTable) / sizeof(methodTable[0]);
-	(*env)->RegisterNatives(env, koreActivityClass, methodTable, methodTableSize);
+	(*env)->RegisterNatives(env, kincActivityClass, methodTable, methodTableSize);
 	(*vm)->DetachCurrentThread(vm);
 }
