@@ -1,17 +1,19 @@
-diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
-index 4a9e545..f202a40 100644
+﻿diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
+index 4a9e545..1ccdd3d 100644
 --- a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
 +++ b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
-@@ -17,6 +17,19 @@ import android.view.View
+@@ -17,6 +17,22 @@ import android.view.View
  import android.view.WindowManager
  import android.view.inputmethod.InputMethodManager
  import kotlin.system.exitProcess
 +import android.content.ContentResolver;
++import android.util.Log
 +import android.view.DragAndDropPermissions;
 +import android.view.DragEvent;
 +import android.webkit.MimeTypeMap;
 +import android.view.DragEvent.ACTION_DRAG_STARTED;
 +import android.view.DragEvent.ACTION_DROP;
++import androidx.core.database.getStringOrNull
 +import java.io.BufferedInputStream;
 +import java.io.File;
 +import java.io.FileNotFoundException;
@@ -19,10 +21,11 @@ index 4a9e545..f202a40 100644
 +import java.io.IOException;
 +import java.io.InputStream;
 +import java.io.OutputStream;
++import kotlin.math.log
  
  class KincActivity: NativeActivity(), KeyEvent.Callback {
  	companion object {
-@@ -63,6 +76,7 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+@@ -63,6 +79,7 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
  			return manager.defaultDisplay.rotation
  		}
  
@@ -30,7 +33,7 @@ index 4a9e545..f202a40 100644
  		fun getScreenDpi(): Int {
  			val context: Context = instance!!.applicationContext
  			val manager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-@@ -71,12 +85,14 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+@@ -71,12 +88,14 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
  			return metrics.xdpi.toInt()
  		}
  
@@ -45,7 +48,7 @@ index 4a9e545..f202a40 100644
  		fun getDisplayWidth(): Int {
  			val context: Context = instance!!.applicationContext
  			val manager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-@@ -85,6 +101,7 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+@@ -85,6 +104,7 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
  			return size.x
  		}
  
@@ -53,7 +56,7 @@ index 4a9e545..f202a40 100644
  		fun getDisplayHeight(): Int {
  			val context: Context = instance!!.applicationContext
  			val manager: WindowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-@@ -108,6 +125,13 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+@@ -108,6 +128,13 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
  				kincActivity.hideSystemUI()
  			}
  		}
@@ -67,7 +70,7 @@ index 4a9e545..f202a40 100644
  	}
  
  	var inputManager: InputMethodManager? = null
-@@ -129,6 +153,19 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+@@ -129,6 +156,19 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
  		} catch (e: NullPointerException) {
  			false
  		}
@@ -87,7 +90,7 @@ index 4a9e545..f202a40 100644
  	}
  
      private fun hideSystemUI() {
-@@ -158,4 +195,70 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
+@@ -158,4 +198,70 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
  	}
  
  	private external fun nativeKincKeyPress(chars: String)
@@ -97,12 +100,12 @@ index 4a9e545..f202a40 100644
 +
 +	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
 +		super.onActivityResult(requestCode, resultCode, data)
-+		if (requestCode == 1 && resultCode == RESULT_OK && data != null) {
++		if (requestCode == 1 && resultCode == RESULT_OK) {
 +			importFile(data.data!!)
 +		}
 +	}
 +
-+	fun importFile(pickedFile: Uri) {
++	private fun importFile(pickedFile: Uri) {
 +		val resolver: ContentResolver = applicationContext.contentResolver
 +		val inps: InputStream = resolver.openInputStream(pickedFile)!!
 +		try {
@@ -115,7 +118,7 @@ index 4a9e545..f202a40 100644
 +			val filePath: Array<String> = arrayOf(android.provider.MediaStore.Images.Media.DATA)
 +			val cursor: android.database.Cursor = contentResolver.query(pickedFile, filePath, null, null, null)!!
 +			cursor.moveToFirst()
-+			val pickedPath: String = cursor.getString(cursor.getColumnIndex(filePath[0]))
++			val pickedPath: String? = cursor.getStringOrNull(cursor.getColumnIndex(filePath[0]))
 +			if (pickedPath != null) {
 +				path = pickedPath.split("/")
 +			}
@@ -127,7 +130,7 @@ index 4a9e545..f202a40 100644
 +			if (!fileName.contains(".")) {
 +				var ext: String = MimeTypeMap.getSingleton().getExtensionFromMimeType(contentResolver.getType(pickedFile))!!
 +				// Note: for obj/fbx file, the extension returned is bin..
-+				if (ext.equals("bin")) {
++				if (ext == "bin") {
 +					bis.mark(0)
 +					val header: StringBuilder = StringBuilder()
 +					for (i in 0..17) {
@@ -144,7 +147,7 @@ index 4a9e545..f202a40 100644
 +			val dst: String = filesDir.absolutePath + "/" + getMobileTitle() + "/" + fileName
 +			val os: OutputStream = FileOutputStream(dst)
 +			try {
-+				var buf = ByteArray(1024)
++				val buf = ByteArray(1024)
 +				var len = bis.read(buf)
 +				while (len > 0) {
 +					os.write(buf, 0, len)
