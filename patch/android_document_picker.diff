@@ -1,4 +1,4 @@
-﻿diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
+diff --git a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
 index 4a9e545..1ccdd3d 100644
 --- a/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
 +++ b/Backends/System/Android/Java-Sources/tech/kinc/KincActivity.kt
