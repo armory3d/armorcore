@@ -3711,6 +3711,10 @@ namespace {
 			#ifdef KORE_DIRECT3D12
 			Local<External> texfield = Local<External>::Cast(texpaint0_tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+			if (!texture->impl._uploaded) {
+				kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
+				texture->impl._uploaded = true;
+			}
 			texpaint0 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
 			texpaint0->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
 			#endif
@@ -3728,6 +3732,10 @@ namespace {
 			#ifdef KORE_DIRECT3D12
 			Local<External> texfield = Local<External>::Cast(texpaint1_tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+			if (!texture->impl._uploaded) {
+				kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
+				texture->impl._uploaded = true;
+			}
 			texpaint1 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
 			texpaint1->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
 			#endif
@@ -3745,6 +3753,10 @@ namespace {
 			#ifdef KORE_DIRECT3D12
 			Local<External> texfield = Local<External>::Cast(texpaint2_tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+			if (!texture->impl._uploaded) {
+				kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
+				texture->impl._uploaded = true;
+			}
 			texpaint2 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
 			texpaint2->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
 			#endif
