@@ -194,7 +194,7 @@ extern class Krom {
 	static function delayIdleSleep(): Void;
 	static function raytraceSupported(): Bool;
 	static function raytraceInit(shader: js.lib.ArrayBuffer, vb: Dynamic, ib: Dynamic, scale: Float): Void;
-	static function raytraceSetTextures(tex0: Dynamic, tex1: Dynamic, tex2: Dynamic, texenv: Dynamic, tex_sobol: Dynamic, tex_scramble: Dynamic, tex_rank: Dynamic): Void;
+	static function raytraceSetTextures(tex0: kha.Image, tex1: kha.Image, tex2: kha.Image, texenv: Dynamic, tex_sobol: Dynamic, tex_scramble: Dynamic, tex_rank: Dynamic): Void;
 	static function raytraceDispatchRays(target: Dynamic, cb: js.lib.ArrayBuffer): Void;
 	static function vrBegin(): Void;
 	static function vrBeginRender(eye: Int): Void;

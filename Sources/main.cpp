@@ -3699,14 +3699,60 @@ namespace {
 	void krom_raytrace_set_textures(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
-		Local<External> rtfield0 = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t *texpaint0 = (kinc_g4_render_target_t *)rtfield0->Value();
+		kinc_g4_render_target_t *texpaint0;
+		kinc_g4_render_target_t *texpaint1;
+		kinc_g4_render_target_t *texpaint2;
 
-		Local<External> rtfield1 = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t *texpaint1 = (kinc_g4_render_target_t *)rtfield1->Value();
+		Local<Object> texpaint0_image = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<Value> texpaint0_tex = texpaint0_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
+		Local<Value> texpaint0_rt = texpaint0_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
 
-		Local<External> rtfield2 = Local<External>::Cast(args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t *texpaint2 = (kinc_g4_render_target_t *)rtfield2->Value();
+		if (texpaint0_tex->IsObject()) {
+			#ifdef KORE_DIRECT3D12
+			Local<External> texfield = Local<External>::Cast(texpaint0_tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+			texpaint0 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
+			texpaint0->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
+			#endif
+		}
+		else {
+			Local<External> rtfield = Local<External>::Cast(texpaint0_rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			texpaint0 = (kinc_g4_render_target_t *)rtfield->Value();
+		}
+
+		Local<Object> texpaint1_image = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<Value> texpaint1_tex = texpaint1_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
+		Local<Value> texpaint1_rt = texpaint1_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
+
+		if (texpaint1_tex->IsObject()) {
+			#ifdef KORE_DIRECT3D12
+			Local<External> texfield = Local<External>::Cast(texpaint1_tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+			texpaint1 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
+			texpaint1->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
+			#endif
+		}
+		else {
+			Local<External> rtfield = Local<External>::Cast(texpaint1_rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			texpaint1 = (kinc_g4_render_target_t *)rtfield->Value();
+		}
+
+		Local<Object> texpaint2_image = args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<Value> texpaint2_tex = texpaint2_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
+		Local<Value> texpaint2_rt = texpaint2_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
+
+		if (texpaint2_tex->IsObject()) {
+			#ifdef KORE_DIRECT3D12
+			Local<External> texfield = Local<External>::Cast(texpaint2_tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+			texpaint2 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
+			texpaint2->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
+			#endif
+		}
+		else {
+			Local<External> rtfield = Local<External>::Cast(texpaint2_rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			texpaint2 = (kinc_g4_render_target_t *)rtfield->Value();
+		}
 
 		Local<External> envfield = Local<External>::Cast(args[3]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		kinc_g4_texture_t *texenv = (kinc_g4_texture_t *)envfield->Value();
@@ -3738,6 +3784,18 @@ namespace {
 		}
 
 		kinc_raytrace_set_textures(&texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture, &texsobol->impl._texture, &texscramble->impl._texture, &texrank->impl._texture);
+
+		if (texpaint0_tex->IsObject()) {
+			free(texpaint0);
+		}
+
+		if (texpaint1_tex->IsObject()) {
+			free(texpaint1);
+		}
+
+		if (texpaint2_tex->IsObject()) {
+			free(texpaint2);
+		}
 	}
 
 	void krom_raytrace_dispatch_rays(const FunctionCallbackInfo<Value> &args) {
