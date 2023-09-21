@@ -68,7 +68,7 @@ void update(void *data) {
 	kinc_g4_swap_buffers();
 }
 
-void key_down(int code) {
+void key_down(int code, void *data) {
 	// keyboard_down_func(code);
 	stbsp_sprintf(temp_buffer, "js_keyboard_down_func(%d);", code);
 	js_eval(temp_buffer);
@@ -78,7 +78,7 @@ void key_down(int code) {
 	#endif
 }
 
-void key_up(int code) {
+void key_up(int code, void *data) {
 	// keyboard_up_func(code);
 	stbsp_sprintf(temp_buffer, "js_keyboard_up_func(%d);", code);
 	js_eval(temp_buffer);
@@ -88,7 +88,7 @@ void key_up(int code) {
 	#endif
 }
 
-void key_press(unsigned int code) {
+void key_press(unsigned int code, void *data) {
 	// keyboard_press_func(code);
 	stbsp_sprintf(temp_buffer, "js_keyboard_press_func(%d);", code);
 	js_eval(temp_buffer);
@@ -326,9 +326,9 @@ __attribute__((export_name("_init"))) void _init(char *title, int width, int hei
 	// kinc_set_background_callback(background);
 	// kinc_set_shutdown_callback(shutdown);
 
-	kinc_keyboard_set_key_down_callback(key_down);
-	kinc_keyboard_set_key_up_callback(key_up);
-	kinc_keyboard_set_key_press_callback(key_press);
+	kinc_keyboard_set_key_down_callback(key_down, NULL);
+	kinc_keyboard_set_key_up_callback(key_up, NULL);
+	kinc_keyboard_set_key_press_callback(key_press, NULL);
 	kinc_mouse_set_move_callback(mouse_move, NULL);
 	kinc_mouse_set_press_callback(mouse_down, NULL);
 	kinc_mouse_set_release_callback(mouse_up, NULL);
@@ -476,12 +476,12 @@ __attribute__((export_name("_index_buffer_size"))) int _index_buffer_size(kinc_g
 }
 
 __attribute__((export_name("_lockIndexBuffer"))) int *_lockIndexBuffer(kinc_g4_index_buffer_t *buffer) {
-	int *vertices = kinc_g4_index_buffer_lock(buffer);
+	int *vertices = kinc_g4_index_buffer_lock_all(buffer);
 	return vertices;
 }
 
 __attribute__((export_name("_unlockIndexBuffer"))) void _unlockIndexBuffer(kinc_g4_index_buffer_t *buffer) {
-	kinc_g4_index_buffer_unlock(buffer);
+	kinc_g4_index_buffer_unlock_all(buffer);
 }
 
 __attribute__((export_name("_setIndexBuffer"))) void _setIndexBuffer(kinc_g4_index_buffer_t *buffer) {
