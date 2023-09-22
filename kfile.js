@@ -83,6 +83,7 @@ if (flags.with_audio) {
 
 if (platform === Platform.Wasm) {
 	project.addFile('Sources/main_wasm.c');
+	project.addFile('Shaders/**');
 }
 else {
 	project.addFile('Sources/main.cpp');
