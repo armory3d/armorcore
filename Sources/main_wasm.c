@@ -25,12 +25,14 @@
 #include <kinc/display.h>
 #define STB_SPRINTF_IMPLEMENTATION
 #include <kinc/libs/stb_sprintf.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include <kinc/libs/stb_image.h>
 #ifdef KORE_LZ4X
 int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int maxOutputSize);
 #else
 #include <kinc/io/lz4/lz4.h>
+#endif
+#ifdef WITH_G2
+#include "g2/g2.h"
+#include "g2/g2_ext.h"
 #endif
 
 const int KROM_API = 6;
@@ -638,67 +640,80 @@ __attribute__((export_name("_loadImage"))) kinc_g4_texture_t *_loadImage(char *f
 	bool success = true;
 	kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
-	kinc_file_reader_t reader;
-	if (kinc_file_reader_open(&reader, file, KINC_FILE_TYPE_ASSET)) {
-		unsigned char *image_data;
-		int image_width;
-		int image_height;
-		kinc_image_format_t image_format = KINC_IMAGE_FORMAT_RGBA32;
-		int size = (int)kinc_file_reader_size(&reader);
-		int comp;
-		unsigned char *data = (unsigned char *)malloc(size);
-		kinc_file_reader_read(&reader, data, size);
-		kinc_file_reader_close(&reader);
+	// kinc_file_reader_t reader;
+	// if (kinc_file_reader_open(&reader, file, KINC_FILE_TYPE_ASSET)) {
+	// 	unsigned char *image_data;
+	// 	int image_width;
+	// 	int image_height;
+	// 	kinc_image_format_t image_format = KINC_IMAGE_FORMAT_RGBA32;
+	// 	int size = (int)kinc_file_reader_size(&reader);
+	// 	int comp;
+	// 	unsigned char *data = (unsigned char *)malloc(size);
+	// 	kinc_file_reader_read(&reader, data, size);
+	// 	kinc_file_reader_close(&reader);
 
-		if (ends_with(file, "k")) {
-			image_width = kinc_read_s32le(data);
-			image_height = kinc_read_s32le(data + 4);
-			char fourcc[5];
-			fourcc[0] = data[8];
-			fourcc[1] = data[9];
-			fourcc[2] = data[10];
-			fourcc[3] = data[11];
-			fourcc[4] = 0;
-			int compressedSize = size - 12;
-			if (strcmp(fourcc, "LZ4 ") == 0) {
-				int outputSize = image_width * image_height * 4;
-				image_data = (unsigned char *)malloc(outputSize);
-				LZ4_decompress_safe((char *)(data + 12), (char *)image_data, compressedSize, outputSize);
-			}
-			else if (strcmp(fourcc, "LZ4F") == 0) {
-				int outputSize = image_width * image_height * 16;
-				image_data = (unsigned char *)malloc(outputSize);
-				LZ4_decompress_safe((char *)(data + 12), (char *)image_data, compressedSize, outputSize);
-				image_format = KINC_IMAGE_FORMAT_RGBA128;
-			}
-			else {
-				success = false;
-			}
-		}
-		else if (ends_with(file, "hdr")) {
-			image_data = (unsigned char *)stbi_loadf_from_memory(data, size, &image_width, &image_height, &comp, 4);
-			if (image_data == NULL) {
-				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
-				success = false;
-			}
-			image_format = KINC_IMAGE_FORMAT_RGBA128;
-		}
-		else { // jpg, png, ..
-			image_data = stbi_load_from_memory(data, size, &image_width, &image_height, &comp, 4);
-			if (image_data == NULL) {
-				kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
-				success = false;
-			}
-		}
-		free(data);
+	// 	if (ends_with(file, "k")) {
+	// 		image_width = kinc_read_s32le(data);
+	// 		image_height = kinc_read_s32le(data + 4);
+	// 		char fourcc[5];
+	// 		fourcc[0] = data[8];
+	// 		fourcc[1] = data[9];
+	// 		fourcc[2] = data[10];
+	// 		fourcc[3] = data[11];
+	// 		fourcc[4] = 0;
+	// 		int compressedSize = size - 12;
+	// 		if (strcmp(fourcc, "LZ4 ") == 0) {
+	// 			int outputSize = image_width * image_height * 4;
+	// 			image_data = (unsigned char *)malloc(outputSize);
+	// 			LZ4_decompress_safe((char *)(data + 12), (char *)image_data, compressedSize, outputSize);
+	// 		}
+	// 		else if (strcmp(fourcc, "LZ4F") == 0) {
+	// 			int outputSize = image_width * image_height * 16;
+	// 			image_data = (unsigned char *)malloc(outputSize);
+	// 			LZ4_decompress_safe((char *)(data + 12), (char *)image_data, compressedSize, outputSize);
+	// 			image_format = KINC_IMAGE_FORMAT_RGBA128;
+	// 		}
+	// 		else {
+	// 			success = false;
+	// 		}
+	// 	}
+	// 	else if (ends_with(file, "hdr")) {
+	// 		image_data = (unsigned char *)stbi_loadf_from_memory(data, size, &image_width, &image_height, &comp, 4);
+	// 		if (image_data == NULL) {
+	// 			kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+	// 			success = false;
+	// 		}
+	// 		image_format = KINC_IMAGE_FORMAT_RGBA128;
+	// 	}
+	// 	else { // jpg, png, ..
 
-		if (success) {
-			kinc_image_init(image, image_data, image_width, image_height, image_format);
-		}
-	}
-	else {
+	// 		image_data = stbi_load_from_memory(data, size, &image_width, &image_height, &comp, 4);
+	// 		if (image_data == NULL) {
+	// 			_log(stbi_failure_reason());
+	// 			kinc_log(KINC_LOG_LEVEL_ERROR, stbi_failure_reason());
+	// 			success = false;
+	// 		}
+	// 	}
+	// 	free(data);
+
+	// 	if (success) {
+	// 		kinc_image_init(image, image_data, image_width, image_height, image_format);
+	// 	}
+	// }
+	// else {
+	// 	success = false;
+	// }
+
+	//
+	size_t byte_size = kinc_image_size_from_file(file);
+	if (byte_size == 0) {
 		success = false;
 	}
+	else {
+		void *memory = malloc(byte_size);
+		kinc_image_init_from_file(image, memory, file);
+	}
+	//
 
 	if (!success) {
 		free(image);
@@ -1022,16 +1037,16 @@ __attribute__((export_name("_createTextureFromEncodedBytes"))) kinc_g4_texture_t
 			image_format = KINC_IMAGE_FORMAT_RGBA128;
 		}
 	}
-	else if (ends_with(format, "hdr")) {
-		int comp;
-		image_data = (unsigned char *)stbi_loadf_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
-		image_format = KINC_IMAGE_FORMAT_RGBA128;
-	}
-	else { // jpg, png, ..
-		int comp;
-		image_data = stbi_load_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
-		image_format = KINC_IMAGE_FORMAT_RGBA32;
-	}
+	// else if (ends_with(format, "hdr")) {
+	// 	int comp;
+	// 	image_data = (unsigned char *)stbi_loadf_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
+	// 	image_format = KINC_IMAGE_FORMAT_RGBA128;
+	// }
+	// else { // jpg, png, ..
+	// 	int comp;
+	// 	image_data = stbi_load_from_memory(content_data, content_length, &image_width, &image_height, &comp, 4);
+	// 	image_format = KINC_IMAGE_FORMAT_RGBA32;
+	// }
 
 	kinc_image_init(image, image_data, image_width, image_height, image_format);
 	kinc_g4_texture_init_from_image(texture, image);
@@ -1242,6 +1257,30 @@ __attribute__((export_name("_compute"))) void _compute() {
 
 }
 
+#ifdef WITH_G2
+
+__attribute__((export_name("_g2_init"))) void _g2_init(char *image_vert, int image_vert_length, char *image_frag, int image_frag_length, char *colored_vert, int colored_vert_length, char *colored_frag, int colored_frag_length, char *text_vert, int text_vert_length, char *text_frag, int text_frag_length) {
+	g2_init(image_vert, image_vert_length, image_frag, image_frag_length, colored_vert, colored_vert_length, colored_frag, colored_frag_length, text_vert, text_vert_length, text_frag, text_frag_length);
+}
+
+__attribute__((export_name("_g2_begin"))) void _g2_begin() {
+	g2_begin();
+}
+
+__attribute__((export_name("_g2_end"))) void _g2_end() {
+	g2_end();
+}
+
+__attribute__((export_name("_g2_draw_scaled_sub_image"))) void _g2_draw_scaled_sub_image(kinc_g4_texture_t *texture, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh) {
+	g2_draw_scaled_sub_image(texture, sx, sy, sw, sh, dx, dy, dw, dh);
+}
+
+__attribute__((export_name("_g2_draw_scaled_sub_render_target"))) void _g2_draw_scaled_sub_render_target(kinc_g4_render_target_t *render_target, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh) {
+	g2_draw_scaled_sub_render_target(render_target, sx, sy, sw, sh, dx, dy, dw, dh);
+}
+
+#endif
+
 __attribute__((export_name("_setSaveAndQuitCallback"))) void _setSaveAndQuitCallback() {
 
 }
@@ -1273,8 +1312,22 @@ int kickstart(int argc, char **argv) {
 
 	char *code_header = "\
 	let _exports = instance.exports;\
-	let _buffers = {};\
+	let _buffers = new Map();\
 	let string = function(str, off = 0) { if (str == null) return null; let ptr = _exports._get_temp_buffer() + off; write_string(ptr, str); return ptr; };\
+	let _write_buffer = function(buf) {\
+		let b = new Uint8Array(buf);\
+		let start = _buffers.get(buf).start;\
+		let byteLength = _buffers.get(buf).byteLength;\
+		let u8 = new Uint8Array(heapu8.buffer, start, byteLength);\
+		for (let i = 0; i < byteLength; ++i) u8[i] = b[i];\
+	};\
+	let _write_buffer_external = function(buf) {\
+		let b = new Uint8Array(_buffers.get(buf).buffer);\
+		let start = _buffers.get(buf).start;\
+		let byteLength = _buffers.get(buf).byteLength;\
+		let u8 = new Uint8Array(heapu8.buffer, start, byteLength);\
+		for (let i = 0; i < byteLength; ++i) u8[i] = b[i];\
+	};\
 	let update_func = null;\
 	let keyboard_down_func = null;\
 	let keyboard_up_func = null;\
@@ -1353,15 +1406,11 @@ int kickstart(int argc, char **argv) {
 		let start = _exports._lockVertexBuffer(vbuffer, vstart, vcount);\
 		let byteLength = _exports._vertex_buffer_size(vbuffer);\
 		let b = heapu8.buffer.slice(start, start + byteLength);\
-		_buffers[vbuffer] = { buffer: b, start: start, byteLength: byteLength };\
+		_buffers.set(vbuffer, { buffer: b, start: start, byteLength: byteLength });\
 		return b;\
 	};\
 	Krom.unlockVertexBuffer = function(vbuffer, count) {\
-		let b = new Uint8Array(_buffers[vbuffer].buffer);\
-		let start = _buffers[vbuffer].start;\
-		let byteLength = _buffers[vbuffer].byteLength;\
-		let u8 = new Uint8Array(heapu8.buffer, start, byteLength);\
-		for (let i = 0; i < byteLength; ++i) u8[i] = b[i];\
+		_write_buffer_external(vbuffer);\
 		_exports._unlockVertexBuffer(vbuffer, count);\
 	};\
 	Krom.setVertexBuffer = _exports._setVertexBuffer;\
@@ -1369,21 +1418,13 @@ int kickstart(int argc, char **argv) {
 	Krom.drawIndexedVertices = _exports._drawIndexedVertices;\
 	Krom.drawIndexedVerticesInstanced = _exports._drawIndexedVerticesInstanced;\
 	Krom.createVertexShader = function(buffer, name) {\
-		let b = new Uint8Array(buffer);\
-		let start = _buffers[buffer].start;\
-		let byteLength = _buffers[buffer].byteLength;\
-		let u8 = new Uint8Array(heapu8.buffer, start, byteLength);\
-		for (let i = 0; i < byteLength; ++i) u8[i] = b[i];\
-		return _exports._createVertexShader(_buffers[buffer].start, byteLength, string(name));\
+		_write_buffer(buffer);\
+		return _exports._createVertexShader(_buffers.get(buffer).start, _buffers.get(buffer).byteLength, string(name));\
 	};\
 	Krom.createVertexShaderFromSource = function(str) { return _exports._createVertexShaderFromSource(string(str)); };\
 	Krom.createFragmentShader = function(buffer, name) {\
-		let b = new Uint8Array(buffer);\
-		let start = _buffers[buffer].start;\
-		let byteLength = _buffers[buffer].byteLength;\
-		let u8 = new Uint8Array(heapu8.buffer, start, byteLength);\
-		for (let i = 0; i < byteLength; ++i) u8[i] = b[i];\
-		return _exports._createFragmentShader(_buffers[buffer].start, byteLength, string(name));\
+		_write_buffer(buffer);\
+		return _exports._createFragmentShader(_buffers.get(buffer).start, byteLength, string(name));\
 	};\
 	Krom.createFragmentShaderFromSource = function(str) { return _exports._createFragmentShaderFromSource(string(str)); };\
 	Krom.createGeometryShader = _exports._createGeometryShader;\
@@ -1428,7 +1469,7 @@ int kickstart(int argc, char **argv) {
 		let start = _exports._loadBlob(string(path));\
 		let byteLength = _exports._readerSize();\
 		let b = heapu8.buffer.slice(start, start + byteLength);\
-		_buffers[b] = { start: start, byteLength: byteLength };\
+		_buffers.set(b, { start: start, byteLength: byteLength });\
 		return b;\
 	};\
 	Krom.loadUrl = function(url) { _exports._loadUrl(string(url)); };\
@@ -1594,6 +1635,20 @@ int kickstart(int argc, char **argv) {
 	Krom.getConstantLocationCompute = _exports._getConstantLocationCompute;\
 	Krom.getTextureUnitCompute = _exports._getTextureUnitCompute;\
 	Krom.compute = _exports._compute;\
+	Krom.g2_init = function(image_vert, image_frag, colored_vert, colored_frag, text_vert, text_frag) {\
+		_exports._g2_init(_buffers.get(image_vert).start, _buffers.get(image_vert).byteLength,\
+						  _buffers.get(image_frag).start, _buffers.get(image_frag).byteLength,\
+						  _buffers.get(colored_vert).start, _buffers.get(colored_vert).byteLength,\
+						  _buffers.get(colored_frag).start, _buffers.get(colored_frag).byteLength,\
+						  _buffers.get(text_vert).start, _buffers.get(text_vert).byteLength,\
+						  _buffers.get(text_frag).start, _buffers.get(text_frag).byteLength);\
+	};\
+	Krom.g2_begin = _exports._g2_begin;\
+	Krom.g2_end = _exports._g2_end;\
+	Krom.g2_draw_scaled_sub_image = function(image, sx, sy, sw, sh, dx, dy, dw, dh) {\
+		if (image.texture_ != null) _exports._g2_draw_scaled_sub_image(image.texture_.self, sx, sy, sw, sh, dx, dy, dw, dh);\
+		else _exports._g2_draw_scaled_sub_render_target(image.renderTarget_.self, sx, sy, sw, sh, dx, dy, dw, dh);\
+	};\
 	Krom.setSaveAndQuitCallback = _exports._setSaveAndQuitCallback;\
 	Krom.setMouseCursor = _exports._setMouseCursor;\
 	Krom.windowX = _exports._windowX;\
