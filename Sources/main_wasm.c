@@ -1279,6 +1279,20 @@ __attribute__((export_name("_g2_draw_scaled_sub_render_target"))) void _g2_draw_
 	g2_draw_scaled_sub_render_target(render_target, sx, sy, sw, sh, dx, dy, dw, dh);
 }
 
+__attribute__((export_name("_g2_draw_string"))) void _g2_draw_string(char *text, float x, float y) {
+	g2_draw_string(text, x, y);
+}
+
+__attribute__((export_name("_g2_set_font"))) void _g2_set_font(g2_font_t *font, int size) {
+	g2_set_font(font, size);
+}
+
+__attribute__((export_name("_g2_font_init"))) g2_font_t *_g2_font_init(void *blob, int font_index) {
+	g2_font_t *font = (g2_font_t *)malloc(sizeof(g2_font_t));
+	g2_font_init(font, blob, font_index);
+	return font;
+}
+
 #endif
 
 __attribute__((export_name("_setSaveAndQuitCallback"))) void _setSaveAndQuitCallback() {
@@ -1649,6 +1663,9 @@ int kickstart(int argc, char **argv) {
 		if (image.texture_ != null) _exports._g2_draw_scaled_sub_image(image.texture_.self, sx, sy, sw, sh, dx, dy, dw, dh);\
 		else _exports._g2_draw_scaled_sub_render_target(image.renderTarget_.self, sx, sy, sw, sh, dx, dy, dw, dh);\
 	};\
+	Krom.g2_draw_string = function(text, x, y) { _exports._g2_draw_string(string(text), x, y); };\
+	Krom.g2_set_font = _exports._g2_set_font;\
+	Krom.g2_font_init = function(blob, font_index) { return _exports._g2_font_init(_buffers.get(blob).start, font_index); };\
 	Krom.setSaveAndQuitCallback = _exports._setSaveAndQuitCallback;\
 	Krom.setMouseCursor = _exports._setMouseCursor;\
 	Krom.windowX = _exports._windowX;\
