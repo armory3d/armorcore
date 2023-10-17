@@ -758,12 +758,11 @@ class Zui {
 
 			// Tab separator
 			if (i < tabNames.length - 1) {
+				g.color = t.SEPARATOR_COL - 0x00050505;
 				if (tabVertical) {
-					g.color = t.SEPARATOR_COL - 0x00050505;
 					g.fillRect(_x, _y + tabH, _w, 1);
 				}
 				else {
-					g.color = t.SEPARATOR_COL - 0x00050505;
 					g.fillRect(_x + buttonOffsetY + _w, _y, 1, tabH);
 				}
 			}
