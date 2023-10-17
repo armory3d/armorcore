@@ -750,7 +750,7 @@ class Zui {
 				}
 				else {
 					g.color = t.WINDOW_BG_COL;
-					g.fillRect(_x + buttonOffsetY + 1, _y + buttonOffsetY + tabH, _w - 1, 1);
+					g.fillRect(_x + buttonOffsetY, _y + buttonOffsetY + tabH, _w, 1);
 					g.color = t.HIGHLIGHT_COL;
 					g.fillRect(_x + buttonOffsetY, _y + buttonOffsetY, _w, 2);
 				}
