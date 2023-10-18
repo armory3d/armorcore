@@ -300,6 +300,7 @@ class Ext {
 	public static var textAreaLineNumbers = false;
 	public static var textAreaScrollPastEnd = false;
 	public static var textAreaColoring: TTextColoring = null;
+	static var textAreaSelectionStart = -1;
 
 	public static function textArea(ui: Zui, handle: Handle, align = Align.Left, editable = true, label = "", wordWrap = false): String {
 		handle.text = StringTools.replace(handle.text, "\t", "    ");
@@ -363,7 +364,10 @@ class Ext {
 		var _textColoring = ui.textColoring;
 		ui.textColoring = textAreaColoring;
 
+		if (ui.inputStarted) textAreaSelectionStart = -1;
+
 		for (i in 0...lines.length) { // Draw lines
+			// Text input
 			if ((!selected && ui.getHover()) || (selected && i == handle.position)) {
 				handle.position = i; // Set active line
 				handle.text = lines[i];
@@ -373,6 +377,7 @@ class Ext {
 					lines[i] = ui.textSelected;
 				}
 			}
+			// Text
 			else {
 				if (showLabel) {
 					var TEXT_COL = ui.t.TEXT_COL;
@@ -381,6 +386,16 @@ class Ext {
 					ui.t.TEXT_COL = TEXT_COL;
 				}
 				else {
+					// Multi-line selection highlight
+					if (textAreaSelectionStart > -1 &&
+						(i >= textAreaSelectionStart && i < handle.position) ||
+						(i <= textAreaSelectionStart && i > handle.position)) {
+						var lineHeight = ui.ELEMENT_H();
+						var cursorHeight = lineHeight - ui.buttonOffsetY * 3.0;
+						var linew = ui.ops.font.width(ui.fontSize, lines[i]);
+						ui.g.color = ui.t.ACCENT_SELECT_COL;
+						ui.g.fillRect(ui._x + ui.ELEMENT_OFFSET() * 2, ui._y + ui.buttonOffsetY * 1.5, linew, cursorHeight);
+					}
 					ui.text(lines[i], align);
 				}
 			}
@@ -396,10 +411,12 @@ class Ext {
 		if (keyPressed) {
 			// Move cursor vertically
 			if (ui.key == KeyCode.Down && handle.position < lines.length - 1) {
+				handleLineSelect(ui, handle);
 				handle.position++;
 				scrollAlign(ui, handle);
 			}
 			if (ui.key == KeyCode.Up && handle.position > 0) {
+				handleLineSelect(ui, handle);
 				handle.position--;
 				scrollAlign(ui, handle);
 			}
@@ -438,6 +455,16 @@ class Ext {
 		else if ((handle.position + 1) * ui.ELEMENT_H() + ui.currentWindow.scrollOffset < ui.windowHeaderH) {
 			ui.currentWindow.scrollOffset += ui.ELEMENT_H();
 		}
+	}
+
+	static function handleLineSelect(ui: Zui, handle: Handle) {
+		if (ui.isShiftDown) {
+			ui.highlightAnchor = 0;
+			if (textAreaSelectionStart == -1) {
+				textAreaSelectionStart = handle.position;
+			}
+		}
+		else textAreaSelectionStart = -1;
 	}
 
 	static var _ELEMENT_OFFSET = 0;
