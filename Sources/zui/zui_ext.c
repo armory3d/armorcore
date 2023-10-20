@@ -498,11 +498,11 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 			if (show_label) {
 				int TEXT_COL = current->ops.theme.TEXT_COL;
 				current->ops.theme.TEXT_COL = current->ops.theme.LABEL_COL;
-				zui_text(label, ZUI_ALIGN_RIGHT, "");
+				zui_text(label, ZUI_ALIGN_RIGHT, 0x00000000);
 				current->ops.theme.TEXT_COL = TEXT_COL;
 			}
 			else {
-				// zui_text(lines[i], align, "");
+				// zui_text(lines[i], align, 0x00000000);
 			}
 		}
 		current->_y -= ZUI_ELEMENT_OFFSET();
