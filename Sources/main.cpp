@@ -158,7 +158,7 @@ char mobile_title[1024];
 #endif
 
 #if defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
-extern void krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype);
+extern "C" extern int krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype, int version);
 #endif
 
 #if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
@@ -1045,7 +1045,7 @@ namespace {
 
 		char *output = new char[1024 * 1024];
 		int length;
-		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "vert");
+		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "vert", -1);
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_VERTEX);
 
@@ -1187,7 +1187,7 @@ namespace {
 
 		char *output = new char[1024 * 1024];
 		int length;
-		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "frag");
+		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "frag", -1);
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_FRAGMENT);
 
