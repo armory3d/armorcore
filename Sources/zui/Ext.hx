@@ -149,10 +149,22 @@ class Ext {
 	static var gradientSelectedHandle: Handle = null;
 	public static function colorWheel(ui: Zui, handle: Handle, alpha = false, w: Null<Float> = null, h: Null<Float> = null, colorPreview = true, picker: Void->Void = null): kha.Color {
 		if (w == null) w = ui._w;
-		rgbToHsv(handle.color.R, handle.color.G, handle.color.B, ar);
-		var chue = ar[0];
-		var csat = ar[1];
-		var cval = ar[2];
+
+		var lastHSV = [handle.lastMaxX, handle.lastMaxY, handle.scrollOffset];
+
+		hsvToRgb(lastHSV[0], lastHSV[1], lastHSV[2], ar);
+		// Did the color change? If yes update the hsv.
+		if (Math.abs(ar[0] - handle.color.R) > 0.01 || Math.abs(ar[1] - handle.color.G) > 0.01 || Math.abs(ar[2] - handle.color.B) > 0.01) {
+			rgbToHsv(handle.color.R, handle.color.G, handle.color.B, ar);
+			lastHSV = ar;
+			handle.lastMaxX = lastHSV[0];
+			handle.lastMaxY = lastHSV[1];
+			handle.scrollOffset = lastHSV[2];
+		}
+
+		var chue = lastHSV[0];
+		var csat = lastHSV[1];
+		var cval = lastHSV[2];
 		var calpha = handle.color.A;
 		// Wheel
 		var px = ui._x;
@@ -170,6 +182,10 @@ class Ext {
 			picker();
 			ui.changed = false;
 			handle.changed = false;
+			rgbToHsv(handle.color.R, handle.color.G, handle.color.B, lastHSV);
+			handle.lastMaxX = lastHSV[0];
+			handle.lastMaxY = lastHSV[1];
+			handle.scrollOffset = lastHSV[2];
 			return handle.color;
 		}
 		ui._x = _x;
@@ -236,6 +252,10 @@ class Ext {
 		}
 		// Save as rgb
 		hsvToRgb(chue, csat, cval, ar);
+		lastHSV = [chue, csat, cval];
+		handle.lastMaxX = lastHSV[0];
+		handle.lastMaxY = lastHSV[1];
+		handle.scrollOffset = lastHSV[2];
 		handle.color = kha.Color.fromFloats(ar[0], ar[1], ar[2], calpha);
 
 		if (colorPreview) ui.text("", Right, handle.color);
@@ -253,13 +273,16 @@ class Ext {
 			handle.color.B = ui.slider(h2, "B", 0, 1, true);
 		}
 		else if (pos == 1) {
-			rgbToHsv(handle.color.R, handle.color.G, handle.color.B, ar);
-			h0.value = ar[0];
-			h1.value = ar[1];
-			h2.value = ar[2];
+			h0.value = lastHSV[0];
+			h1.value = lastHSV[1];
+			h2.value = lastHSV[2];
 			var chue = ui.slider(h0, "H", 0, 1, true);
 			var csat = ui.slider(h1, "S", 0, 1, true);
 			var cval = ui.slider(h2, "V", 0, 1, true);
+			lastHSV = [chue, csat, cval];
+			handle.lastMaxX = lastHSV[0];
+			handle.lastMaxY = lastHSV[1];
+			handle.scrollOffset = lastHSV[2];
 			hsvToRgb(chue, csat, cval, ar);
 			handle.color = kha.Color.fromFloats(ar[0], ar[1], ar[2]);
 		}
