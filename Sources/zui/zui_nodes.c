@@ -167,11 +167,14 @@ int zui_get_socket_id(zui_node_t **nodes, int nodes_count) {
 }
 
 void zui_nodes_bake_elements() {
+	if (zui_socket_image.width != 0) {
+		kinc_g4_render_target_destroy(&zui_socket_image);
+	}
 	kinc_g4_render_target_init(&zui_socket_image, 24, 24, KINC_G4_RENDER_TARGET_FORMAT_32BIT, 0, 0);
 	g2_set_render_target(&zui_socket_image);
 	kinc_g4_clear(KINC_G4_CLEAR_COLOR, 0x00000000, 0, 0);
 	g2_set_color(0xff000000);
-	g2_fill_circle(12, 12, 12, 0);
+	g2_fill_circle(12, 12, 11, 0);
 	g2_set_color(0xffffffff);
 	g2_fill_circle(12, 12, 9, 0);
 	g2_restore_render_target();
@@ -281,11 +284,11 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 
 	// Outline
 	g2_set_color(zui_is_selected(node) ? current->ops.theme.LABEL_COL : current->ops.theme.CONTEXT_COL);
-	g2_fill_rect(nx - 1, ny - 1, w + 2, h + 2);
+	zui_draw_rect(true, nx - 1, ny - 1, w + 2, h + 2);
 
 	// Body
 	g2_set_color(current->ops.theme.WINDOW_BG_COL);
-	g2_fill_rect(nx, ny, w, h);
+	zui_draw_rect(true, nx, ny, w, h);
 
 	// Header line
 	g2_set_color(node->color);
@@ -337,7 +340,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 
 		if (strcmp(but->type, "RGBA") == 0) {
 			ny += lineh; // 18 + 2 separator
-			current->_x = nx;
+			current->_x = nx + 1; // Offset for node selection border
 			current->_y = ny;
 			current->_w = w;
 			float *val = node->outputs[but->output]->default_value;
@@ -442,7 +445,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 		bool is_linked = zui_input_linked(canvas, node->id, i);
 		if (!is_linked && strcmp(inp->type, "VALUE") == 0) {
 			current->_x = nx + zui_p(6);
-			current->_y = ny - zui_p(9);
+			current->_y = ny - zui_p(current_nodes->ELEMENT_H / 3.0);
 			current->_w = w - zui_p(6);
 			zui_node_socket_t *soc = inp;
 			float min = soc->min != 0 ? soc->min : 0.0; // != NULL
@@ -557,9 +560,14 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 		current_nodes->zoom += controls.zoom;
 		if (current_nodes->zoom < 0.1) current_nodes->zoom = 0.1;
 		else if (current_nodes->zoom > 1.0) current_nodes->zoom = 1.0;
-		current_nodes->zoom = round(current_nodes->zoom * 10) / 10;
+		current_nodes->zoom = round(current_nodes->zoom * 100) / 100;
 		current_nodes->uiw = current->_w;
 		current_nodes->uih = current->_h;
+		// if (zui_touch_scroll) {
+		// 	// Zoom to finger location
+		// 	current_nodes->pan_x -= (current->input_x - current->_window_x - current->_window_w / 2) * controls.zoom * 5 * (1.0 - current_nodes->zoom);
+		// 	current_nodes->pan_y -= (current->input_y - current->_window_y - current->_window_h / 2) * controls.zoom * 5 * (1.0 - current_nodes->zoom);
+		// }
 	}
 	current_nodes->scale_factor = ZUI_SCALE();
 	current_nodes->ELEMENT_H = current->ops.theme.ELEMENT_H + 2;
@@ -679,7 +687,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 				else if (current_nodes->nodes_selected_count <= 1) {
 					// Selecting single node, otherwise wait for input release
 					// current_nodes->nodes_selected = [node];
-					current_nodes->nodes_selected[0] = *node;
+					current_nodes->nodes_selected[0] = node;
 					current_nodes->nodes_selected_count = 1;
 				}
 				current_nodes->move_on_top = node; // Place selected node on top
@@ -689,7 +697,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 			else if (current->input_released && !current->is_shift_down && !current->is_ctrl_down && !current_nodes->dragged) {
 				// No drag performed, select single node
 				// nodes_selected = [node];
-				current_nodes->nodes_selected[0] = *node;
+				current_nodes->nodes_selected[0] = node;
 				current_nodes->nodes_selected_count = 1;
 				if (zui_on_header_released != NULL) {
 					zui_on_header_released(node);

@@ -19,6 +19,7 @@ static int _BUTTON_COL = 0;
 static bool text_area_line_numbers = false;
 static bool text_area_scroll_past_end = false;
 static zui_text_coloring_t *text_area_coloring = NULL;
+static int text_area_selection_start = -1;
 
 float zui_dist(float x1, float y1, float x2, float y2) {
 	float vx = x1 - x2;
@@ -207,12 +208,12 @@ int zui_inline_radio(zui_handle_t *handle, char **texts, int count, int align) {
 		if (handle->position == i) {
 			g2_set_color(current->ops.theme.ACCENT_HOVER_COL);
 			if (!current->enabled) zui_fade_color(0.25);
-			g2_fill_rect(current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H());
+			zui_draw_rect(true, current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H());
 		}
 		else if (hovered == i) {
 			g2_set_color(current->ops.theme.ACCENT_COL);
 			if (!current->enabled) zui_fade_color(0.25);
-			g2_draw_rect(current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H(), 1);
+			zui_draw_rect(false, current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H());
 		}
 		g2_set_color(current->ops.theme.TEXT_COL); // Text
 		current->_x += step * i;
@@ -394,8 +395,10 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	}
 	if (h0->changed || h1->changed || h2->changed) handle->changed = current->changed = true;
 
-	if (zui_input_in_rect(current->_window_x + px, current->_window_y + py, w, h == -1 ? (current->_y - py) : h) && current->input_released) // Do not close if user clicks
+	// Do not close if user clicks
+	if (current->input_released && zui_input_in_rect(current->_window_x + px, current->_window_y + py, w, h == -1 ? (current->_y - py) : h) && current->input_released) {
 		current->changed = true;
+	}
 
 	return handle->color;
 }
@@ -418,6 +421,16 @@ static void scroll_align(zui_t *current, zui_handle_t *handle) {
 
 // 	return s;
 // }
+
+static void handle_line_select(zui_t *current, zui_handle_t *handle) {
+	if (current->is_shift_down) {
+		current->highlight_anchor = 0;
+		if (text_area_selection_start == -1) {
+			text_area_selection_start = handle->position;
+		}
+	}
+	else text_area_selection_start = -1;
+}
 
 char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *label, bool word_wrap) {
 	zui_t *current = zui_get_current();
@@ -475,7 +488,9 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 		}
 		current->ops.theme.TEXT_COL = _TEXT_COL;
 		current->_y = _y;
-		// current->_x += ((line_count + "").length * 16 + 4) * ZUI_SCALE();
+		// int numbers_w = ((line_count + "").length * 16 + 4) * ZUI_SCALE();
+		// current->_x += numbers_w;
+		// current->_w -= numbers_w - ZUI_SCROLL_W();
 	}
 
 	g2_set_color(current->ops.theme.SEPARATOR_COL); // Background
@@ -484,7 +499,10 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 	zui_text_coloring_t *_text_coloring = current->text_coloring;
 	current->text_coloring = text_area_coloring;
 
+	if (current->input_started) text_area_selection_start = -1;
+
 	for (int i = 0; i < line_count; ++i) { // Draw lines
+		// Text input
 		if ((!selected && zui_get_hover(ZUI_ELEMENT_H())) || (selected && i == handle->position)) {
 			handle->position = i; // Set active line
 			// handle->text = lines[i];
@@ -494,6 +512,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 				// lines[i] = current->text_selected;
 			}
 		}
+		// Text
 		else {
 			if (show_label) {
 				int TEXT_COL = current->ops.theme.TEXT_COL;
@@ -502,6 +521,16 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 				current->ops.theme.TEXT_COL = TEXT_COL;
 			}
 			else {
+				// Multi-line selection highlight
+				if (text_area_selection_start > -1 &&
+					(i >= text_area_selection_start && i < handle->position) ||
+					(i <= text_area_selection_start && i > handle->position)) {
+					int line_height = ZUI_ELEMENT_H();
+					int cursor_height = line_height - current->button_offset_y * 3.0;
+					// int linew = g2_string_width(current->ops.font, current->font_size, lines[i]);
+					g2_set_color(current->ops.theme.ACCENT_SELECT_COL);
+					// g2_fill_rect(current->_x + ZUI_ELEMENT_OFFSET() * 2, current->_y + current->button_offset_y * 1.5, linew, cursor_height);
+				}
 				// zui_text(lines[i], align, 0x00000000);
 			}
 		}
@@ -517,10 +546,12 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 	if (key_pressed) {
 		// Move cursor vertically
 		if (current->key_code == KINC_KEY_DOWN && handle->position < line_count - 1) {
+			handle_line_select(current, handle);
 			handle->position++;
 			scroll_align(current, handle);
 		}
 		if (current->key_code == KINC_KEY_UP && handle->position > 0) {
+			handle_line_select(current, handle);
 			handle->position--;
 			scroll_align(current, handle);
 		}

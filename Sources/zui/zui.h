@@ -51,6 +51,7 @@ typedef struct zui_theme {
 	int CHECK_SIZE;
 	int CHECK_SELECT_SIZE;
 	int SCROLL_W;
+	int SCROLL_MINI_W;
 	int TEXT_OFFSET;
 	int TAB_W; // Indentation
 	bool FILL_WINDOW_BG;
@@ -58,6 +59,7 @@ typedef struct zui_theme {
 	bool FILL_ACCENT_BG;
 	int LINK_STYLE;
 	bool FULL_TABS; // Make tabs take full window width
+	bool ROUND_CORNERS;
 } zui_theme_t;
 
 typedef struct zui_options {
@@ -71,7 +73,7 @@ typedef struct zui_options {
 typedef struct zui_handle {
 	bool selected;
 	int position;
-	int color;
+	int color; // = 0xffffffff
 	float value;
 	char *text;
 	kinc_g4_render_target_t texture;
@@ -129,7 +131,6 @@ typedef struct zui {
 	float hovered_tab_y;
 	float hovered_tab_w;
 	float hovered_tab_h;
-	bool highlight_full_row;
 	bool touch_hold_activated;
 	bool slider_tooltip;
 	float slider_tooltip_x;
@@ -142,7 +143,7 @@ typedef struct zui {
 	float input_started_y;
 	float input_dx; // Delta
 	float input_dy;
-	int input_wheel_delta;
+	float input_wheel_delta;
 	bool input_started; // Buttons
 	bool input_started_r;
 	bool input_released;
@@ -240,6 +241,7 @@ typedef struct zui {
 	double tooltip_time;
 	char tab_names[16][64];
 	int tab_colors[16];
+	bool tab_enabled[16];
 	int tab_count; // Number of tab calls since window begin
 	zui_handle_t *tab_handle;
 	float tab_scroll;
@@ -249,20 +251,26 @@ typedef struct zui {
 
 	bool elements_baked;
 	kinc_g4_render_target_t check_select_image;
+	kinc_g4_render_target_t radio_image;
+	kinc_g4_render_target_t radio_select_image;
+	kinc_g4_render_target_t round_corner_image;
+	kinc_g4_render_target_t filled_round_corner_image;
 } zui_t;
 
 void zui_init(zui_t *ui, zui_options_t ops);
 void zui_begin(zui_t *ui);
+void zui_begin_region(int x, int y, int w);
+void zui_end_region(bool last);
 bool zui_window(zui_handle_t *handle, int x, int y, int w, int h, bool drag); // Returns true if redraw is needed
-bool zui_button(const char *text, int align, const char *label);
-int zui_text(const char *text, int align, int bg);
-bool zui_tab(zui_handle_t *handle, const char *text, bool vertical, uint32_t color);
-bool zui_panel(zui_handle_t *handle, const char *text, bool is_tree, bool filled, bool pack);
+bool zui_button(char *text, int align, char *label);
+int zui_text(char *text, int align, int bg);
+bool zui_tab(zui_handle_t *handle, char *text, bool vertical, uint32_t color);
+bool zui_panel(zui_handle_t *handle, char *text, bool is_tree, bool filled, bool pack);
 int zui_sub_image(kinc_g4_texture_t *image, int tint, float h, int sx, int sy, int sw, int sh);
 int zui_image(kinc_g4_texture_t *image, int tint, float h);
 char *zui_text_input(zui_handle_t *handle, char *label, int align, bool editable, bool live_update);
-bool zui_check(zui_handle_t *handle, const char *text, const char *label);
-bool zui_radio(zui_handle_t *handle, int position, const char *text, const char *label);
+bool zui_check(zui_handle_t *handle, char *text, char *label);
+bool zui_radio(zui_handle_t *handle, int position, char *text, char *label);
 int zui_combo(zui_handle_t *handle, char **texts, int count, char *label, bool show_label, int align, bool search_bar);
 float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool filled, float precision, bool display_value, int align, bool text_edit);
 void zui_row(float *ratios, int count);

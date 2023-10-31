@@ -70,7 +70,7 @@ typedef struct zui_node_canvas {
 
 typedef struct zui_nodes {
 	bool nodes_drag;
-	zui_node_t *nodes_selected; // = [];
+	zui_node_t **nodes_selected; // = [];
 	int nodes_selected_count;
 	float pan_x;
 	float pan_y;
