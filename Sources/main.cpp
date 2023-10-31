@@ -1525,7 +1525,7 @@ namespace {
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_g4_texture_init_from_image(texture, image);
 		if (!readable) {
-			delete[] image->data;
+			free(image->data);
 			kinc_image_destroy(image);
 			free(image);
 			// free(memory);
@@ -2178,7 +2178,7 @@ namespace {
 		kinc_image_init(image, image_data, image_width, image_height, image_format);
 		kinc_g4_texture_init_from_image(texture, image);
 		if (!readable) {
-			delete[] image->data;
+			free(image->data);
 			kinc_image_destroy(image);
 			free(image);
 		}
@@ -3144,12 +3144,12 @@ namespace {
 			if (openMultiple) {
 				for (int i = 0; i < pathCount; ++i) {
 					nfdchar_t* outPath = NFD_PathSet_GetPath(&outPaths, i);
-					result->Set(isolate->GetCurrentContext(), i, String::NewFromUtf8(isolate, outPath).ToLocalChecked());
+					(void)result->Set(isolate->GetCurrentContext(), i, String::NewFromUtf8(isolate, outPath).ToLocalChecked());
 				}
 				NFD_PathSet_Free(&outPaths);
 			}
 			else {
-				result->Set(isolate->GetCurrentContext(), 0, String::NewFromUtf8(isolate, outPath).ToLocalChecked());
+				(void)result->Set(isolate->GetCurrentContext(), 0, String::NewFromUtf8(isolate, outPath).ToLocalChecked());
 				free(outPath);
 			}
 
