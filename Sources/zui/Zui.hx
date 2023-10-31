@@ -165,6 +165,7 @@ class Zui {
 	var comboSelectedX: Int;
 	var comboSelectedY: Int;
 	var comboSelectedW: Int;
+	var comboSearchHandle = null;
 	var comboSearchBar = false;
 	var submitComboHandle: Handle = null;
 	var comboToSubmit = 0;
@@ -1511,7 +1512,7 @@ class Zui {
 		var search = "";
 		if (comboSearchBar) {
 			if (unrollUp) _y -= ELEMENT_H() * 2;
-			var comboSearchHandle = Id.handle();
+			if (comboSearchHandle == null) comboSearchHandle = new Handle();
 			if (comboFirst) comboSearchHandle.text = "";
 			fill(0, 0, _w / SCALE(), ELEMENT_H() / SCALE(), t.SEPARATOR_COL);
 			search = textInput(comboSearchHandle, "", Align.Left, true, true).toLowerCase();
@@ -2256,14 +2257,6 @@ class Handle {
 		}
 		return c;
 	}
-
-	public function unnest(i: Int) {
-		if (children != null) {
-			children.remove(i);
-		}
-	}
-
-	public static var global = new Handle();
 }
 
 @:enum abstract Layout(Int) from Int {

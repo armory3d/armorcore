@@ -1,19 +1,17 @@
 package zui;
 
-import haxe.macro.Context;
-import haxe.macro.Expr;
-import haxe.macro.ExprTools;
+import zui.Zui;
 
 class Id {
 
-	static var i = 0;
+	public static var children: Map<String, Handle> = [];
 
-	macro public static function pos(): Expr {
-		return macro $v{i++};
-	}
-
-	macro public static function handle(ops: Expr = null): Expr {
-		var code = "zui.Zui.Handle.global.nest(zui.Id.pos()," + ExprTools.toString(ops) + ")";
-	    return Context.parse(code, Context.currentPos());
+	public static function handle(s: String, ops: HandleOptions = null): Handle {
+		var h = children.get(s);
+		if (h == null) {
+			h = new Handle(ops);
+			children.set(s, h);
+		}
+		return h;
 	}
 }

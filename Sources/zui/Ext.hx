@@ -147,6 +147,7 @@ class Ext {
 
 	static var wheelSelectedHandle: Handle = null;
 	static var gradientSelectedHandle: Handle = null;
+	static var wheelTypeHandle: Handle = null;
 	public static function colorWheel(ui: Zui, handle: Handle, alpha = false, w: Null<Float> = null, h: Null<Float> = null, colorPreview = true, picker: Void->Void = null): kha.Color {
 		if (w == null) w = ui._w;
 		rgbToHsv(handle.color.R, handle.color.G, handle.color.B, ar);
@@ -240,7 +241,8 @@ class Ext {
 
 		if (colorPreview) ui.text("", Right, handle.color);
 
-		var pos = Ext.inlineRadio(ui, Id.handle(), ["RGB", "HSV", "Hex"]);
+		if (wheelTypeHandle == null) wheelTypeHandle = new Handle();
+		var pos = Ext.inlineRadio(ui, wheelTypeHandle, ["RGB", "HSV", "Hex"]);
 		var h0 = handle.nest(0).nest(0);
 		var h1 = handle.nest(0).nest(1);
 		var h2 = handle.nest(0).nest(2);
