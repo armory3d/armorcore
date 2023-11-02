@@ -25,15 +25,13 @@ import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import haxe.io.Eof;
 import iron.data.SceneFormat;
-#if (!macro)
 import kha.arrays.Float32Array;
 import kha.arrays.Uint32Array;
 import kha.arrays.Int16Array;
-#end
 
 class ArmPack {
 
-	public static inline function decode<T>(b: Bytes): T {
+	public static function decode<T>(b: Bytes): T {
 		var i = new BytesInput(b);
 		i.bigEndian = false;
 		return read(i);
@@ -121,53 +119,7 @@ class ArmPack {
 		return out;
 	}
 
-	#if (!js)
-	static function getClass(key: String, parentKey: String): Class<Dynamic> {
-		return switch (key) {
-			case "": TSceneFormat;
-			case "mesh_datas": TMeshData;
-			case "light_datas": TLightData;
-			case "probe_datas": TProbeData;
-			case "probe": TProbeData;
-			case "camera_datas": TCameraData;
-			case "material_datas": TMaterialData;
-			case "particle_datas": TParticleData;
-			case "shader_datas": TShaderData;
-			case "speaker_datas": TSpeakerData;
-			case "world_datas": TWorldData;
-			case "terrain_datas": TTerrainData;
-			case "tilesheet_datas": TTilesheetData;
-			case "objects": TObj;
-			case "children": TObj;
-			case "groups": TGroup;
-			case "traits": TTrait;
-			case "properties": TProperty;
-			case "vertex_arrays": TVertexArray;
-			case "index_arrays": TIndexArray;
-			case "skin": TSkin;
-			case "transform": TTransform;
-			case "constraints": TConstraint;
-			case "contexts": parentKey == "material_datas" ? TMaterialContext : TShaderContext;
-			case "override_context": TShaderOverride;
-			case "bind_constants": TBindConstant;
-			case "bind_textures": TBindTexture;
-			case "vertex_elements": TVertexElement;
-			case "constants": TShaderConstant;
-			case "texture_units": TTextureUnit;
-			case "actions": TTilesheetAction;
-			case "particle_refs": TParticleReference;
-			case "lods": TLod;
-			case "anim": TAnimation;
-			case "tracks": TTrack;
-			case "morph_target": TMorphTarget;
-			case _: TSceneFormat;
-		}
-	}
-	#end
-
-	#if (!macro && armorcore)
-
-	public static inline function encode(d: Dynamic): Bytes {
+	public static function encode(d: Dynamic): Bytes {
 		var o = new BytesOutput();
 		o.bigEndian = false;
 		write(o, d);
@@ -234,6 +186,4 @@ class ArmPack {
 			write(o, Reflect.field(d, k));
 		}
 	}
-
-	#end
 }
