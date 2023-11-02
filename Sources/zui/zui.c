@@ -38,63 +38,63 @@ static zui_handle_t *zui_nested = NULL;
 static int zui_nested_count = 0;
 static zui_handle_t zui_combo_search_handle;
 
-inline float ZUI_SCALE() {
+float ZUI_SCALE() {
 	return current->ops.scale_factor;
 }
 
-inline float ZUI_ELEMENT_W() {
+float ZUI_ELEMENT_W() {
 	return current->ops.theme.ELEMENT_W * ZUI_SCALE();
 }
 
-inline float ZUI_ELEMENT_H() {
+float ZUI_ELEMENT_H() {
 	return current->ops.theme.ELEMENT_H * ZUI_SCALE();
 }
 
-inline float ZUI_ELEMENT_OFFSET() {
+float ZUI_ELEMENT_OFFSET() {
 	return current->ops.theme.ELEMENT_OFFSET * ZUI_SCALE();
 }
 
-inline float ZUI_ARROW_SIZE() {
+float ZUI_ARROW_SIZE() {
 	return current->ops.theme.ARROW_SIZE * ZUI_SCALE();
 }
 
-inline float ZUI_BUTTON_H() {
+float ZUI_BUTTON_H() {
 	return current->ops.theme.BUTTON_H * ZUI_SCALE();
 }
 
-inline float ZUI_CHECK_SIZE() {
+float ZUI_CHECK_SIZE() {
 	return current->ops.theme.CHECK_SIZE * ZUI_SCALE();
 }
 
-inline float ZUI_CHECK_SELECT_SIZE() {
+float ZUI_CHECK_SELECT_SIZE() {
 	return current->ops.theme.CHECK_SELECT_SIZE * ZUI_SCALE();
 }
 
-inline int ZUI_FONT_SIZE() {
+int ZUI_FONT_SIZE() {
 	return current->ops.theme.FONT_SIZE * ZUI_SCALE();
 }
 
-inline int ZUI_SCROLL_W() {
+int ZUI_SCROLL_W() {
 	return current->ops.theme.SCROLL_W * ZUI_SCALE();
 }
 
-inline int ZUI_SCROLL_MINI_W() {
+int ZUI_SCROLL_MINI_W() {
 	return current->ops.theme.SCROLL_MINI_W * ZUI_SCALE();
 }
 
-inline float ZUI_TEXT_OFFSET() {
+float ZUI_TEXT_OFFSET() {
 	return current->ops.theme.TEXT_OFFSET * ZUI_SCALE();
 }
 
-inline int ZUI_TAB_W() {
+int ZUI_TAB_W() {
 	return current->ops.theme.TAB_W * ZUI_SCALE();
 }
 
-inline int ZUI_HEADER_DRAG_H() {
+int ZUI_HEADER_DRAG_H() {
 	return 15 * ZUI_SCALE();
 }
 
-inline float ZUI_TOOLTIP_DELAY() {
+float ZUI_TOOLTIP_DELAY() {
 	return 1.0;
 }
 
@@ -265,6 +265,7 @@ void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool
 		}
 	}
 
+	if (x_offset < 0) x_offset = current->ops.theme.TEXT_OFFSET;
 	x_offset *= ZUI_SCALE();
 	g2_set_font(current->ops.font, current->font_size);
 	if (align == ZUI_ALIGN_CENTER) x_offset = current->_w / 2 - g2_string_width(current->ops.font, current->font_size, text) / 2;
@@ -332,8 +333,10 @@ float zui_get_ratio(float ratio, float dyn) {
 // Draw the upcoming elements in the same row
 // Negative values will be treated as absolute, positive values as ratio to `window width`
 void zui_row(float *ratios, int count) {
-	assert(count < 32);
-	current->ratios = ratios;
+	assert(count <= 32);
+	for (int i = 0; i < count; ++i) {
+		current->ratios[i] = ratios[i];
+	}
 	current->ratios_count = count;
 	current->current_ratio = 0;
 	current->x_before_split = current->_x;
@@ -484,6 +487,11 @@ void zui_draw_tooltip_text(bool bind_global_g) {
 		if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) w = current->tooltip_img_max_width;
 		off = current->tooltip_img->tex_height * (w / current->tooltip_img->tex_width);
 	}
+	else if (current->tooltip_rt != NULL) {
+		float w = current->tooltip_rt->width;
+		if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) w = current->tooltip_img_max_width;
+		off = current->tooltip_rt->height * (w / current->tooltip_rt->width);
+	}
 	g2_fill_rect(current->tooltip_x, current->tooltip_y + off, tooltip_w + 20, font_height * line_count);
 	g2_set_font(current->ops.font, current->font_size);
 	g2_set_color(current->ops.theme.ACCENT_COL);
@@ -506,6 +514,21 @@ void zui_draw_tooltip_image(bool bind_global_g) {
 	current->tooltip_invert_y ?
 		g2_draw_scaled_image(current->tooltip_img, current->tooltip_x, current->tooltip_y + h, w, -h) :
 		g2_draw_scaled_image(current->tooltip_img, current->tooltip_x, current->tooltip_y, w, h);
+}
+
+void zui_draw_tooltip_rt(bool bind_global_g) {
+	int w = current->tooltip_rt->width;
+	if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) w = current->tooltip_img_max_width;
+	int h = current->tooltip_rt->height * (w / current->tooltip_rt->width);
+	current->tooltip_x = fmin(current->tooltip_x, kinc_window_width(0) - w - 20);
+	current->tooltip_y = fmin(current->tooltip_y, kinc_window_height(0) - h - 20);
+	if (bind_global_g) g2_restore_render_target();
+	g2_set_color(0xff000000);
+	g2_fill_rect(current->tooltip_x, current->tooltip_y, w, h);
+	g2_set_color(0xffffffff);
+	current->tooltip_invert_y ?
+		g2_draw_scaled_render_target(current->tooltip_rt, current->tooltip_x, current->tooltip_y + h, w, -h) :
+		g2_draw_scaled_render_target(current->tooltip_rt, current->tooltip_x, current->tooltip_y, w, h);
 }
 
 void zui_draw_tooltip(bool bind_global_g) {
@@ -536,7 +559,7 @@ void zui_draw_tooltip(bool bind_global_g) {
 		g2_draw_string(current->text_selected, x - x_off, y - y_off);
 	}
 
-	if (current->tooltip_text != NULL || current->tooltip_img != NULL) {
+	if (current->tooltip_text != NULL || current->tooltip_img != NULL || current->tooltip_rt != NULL) {
 		if (zui_input_changed()) {
 			current->tooltip_shown = false;
 			current->tooltip_wait = current->input_dx == 0 && current->input_dy == 0; // Wait for movement before showing up again
@@ -548,6 +571,7 @@ void zui_draw_tooltip(bool bind_global_g) {
 		}
 		if (!current->tooltip_wait && kinc_time() - current->tooltip_time > ZUI_TOOLTIP_DELAY()) {
 			if (current->tooltip_img != NULL) zui_draw_tooltip_image(bind_global_g);
+			if (current->tooltip_rt != NULL) zui_draw_tooltip_rt(bind_global_g);
 			if (current->tooltip_text != NULL) zui_draw_tooltip_text(bind_global_g);
 		}
 	}
@@ -627,7 +651,7 @@ void zui_draw_combo(bool begin /*= true*/) {
 	search[0] = 0;
 	if (current->combo_search_bar) {
 		if (unroll_up) current->_y -= ZUI_ELEMENT_H() * 2;
-		if (zui_combo_first) zui_combo_search_handle.text = ""; ////
+		if (zui_combo_first) zui_combo_search_handle.text[0] = 0; ////
 		zui_fill(0, 0, current->_w / ZUI_SCALE(), ZUI_ELEMENT_H() / ZUI_SCALE(), current->ops.theme.SEPARATOR_COL);
 		// search = zui_text_input(&zui_combo_search_handle, "", ZUI_ALIGN_LEFT, true, true);
 		zui_text_input(&zui_combo_search_handle, "", ZUI_ALIGN_LEFT, true, true);
@@ -764,6 +788,7 @@ void zui_begin_region(int x, int y, int w) {
 	current->current_window = NULL;
 	current->tooltip_text = NULL;
 	current->tooltip_img = NULL;
+	current->tooltip_rt = NULL;
 	current->_window_x = 0;
 	current->_window_y = 0;
 	current->_window_w = w;
@@ -814,7 +839,7 @@ void zui_start_text_edit(zui_handle_t *handle, int align) {
 void zui_submit_text_edit() {
 	current->changed = strcmp(current->submit_text_handle->text, current->text_to_submit) != 0;
 	current->submit_text_handle->changed = current->changed;
-	current->submit_text_handle->text = current->text_to_submit;
+	// current->submit_text_handle->text = current->text_to_submit; ////
 	current->submit_text_handle = NULL;
 	current->text_to_submit[0] = 0;
 	current->text_selected[0] = 0;
@@ -961,7 +986,7 @@ void zui_update_text_edit(int align, bool editable, bool live_update) {
 	current->text_selected = (char *)text;
 	if (live_update && current->text_selected_handle != NULL) {
 		current->text_selected_handle->changed = current->text_selected_handle->text != current->text_selected;
-		current->text_selected_handle->text = current->text_selected;
+		// current->text_selected_handle->text = current->text_selected; ////
 	}
 }
 
@@ -1396,6 +1421,7 @@ bool zui_window(zui_handle_t *handle, int x, int y, int w, int h, bool drag) {
 	current->_h = h;
 	current->tooltip_text = NULL;
 	current->tooltip_img = NULL;
+	current->tooltip_rt = NULL;
 	current->tab_count = 0;
 
 	if (current->ops.theme.FILL_WINDOW_BG) {
@@ -1556,9 +1582,45 @@ bool zui_panel(zui_handle_t *handle, char *text, bool is_tree, bool filled, bool
 	return handle->selected;
 }
 
-int zui_sub_image(kinc_g4_texture_t *image, int tint, float h, int sx, int sy, int sw, int sh) {
-	float iw = (sw > 0 ? sw : image->tex_width) * ZUI_SCALE();
-	float ih = (sh > 0 ? sh : image->tex_height) * ZUI_SCALE();
+static int image_width(void *image, bool is_rt) {
+	if (is_rt) {
+		return ((kinc_g4_render_target_t *)image)->width;
+	}
+	else {
+		return ((kinc_g4_texture_t *)image)->tex_width;
+	}
+}
+
+static int image_height(void *image, bool is_rt) {
+	if (is_rt) {
+		return ((kinc_g4_render_target_t *)image)->height;
+	}
+	else {
+		return ((kinc_g4_texture_t *)image)->tex_height;
+	}
+}
+
+static void draw_scaled_image(void *image, bool is_rt, float dx, float dy, float dw, float dh) {
+	if (is_rt) {
+		g2_draw_scaled_render_target((kinc_g4_render_target_t *)image, dx, dy, dw, dh);
+	}
+	else {
+		g2_draw_scaled_image((kinc_g4_texture_t *)image, dx, dy, dw, dh);
+	}
+}
+
+static void draw_scaled_sub_image(void *image, bool is_rt, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh) {
+	if (is_rt) {
+		g2_draw_scaled_sub_render_target((kinc_g4_render_target_t *)image, sx, sy, sw, sh, dx, dy, dw, dh);
+	}
+	else {
+		g2_draw_scaled_sub_image((kinc_g4_texture_t *)image, sx, sy, sw, sh, dx, dy, dw, dh);
+	}
+}
+
+int zui_sub_image(/*kinc_g4_texture_t kinc_g4_render_target_t*/ void *image, bool is_rt, int tint, int h, int sx, int sy, int sw, int sh) {
+	float iw = (sw > 0 ? sw : image_width(image, is_rt)) * ZUI_SCALE();
+	float ih = (sh > 0 ? sh : image_height(image, is_rt)) * ZUI_SCALE();
 	float w = fmin(iw, current->_w);
 	float x = current->_x;
 	float scroll = current->current_window != NULL ? current->current_window->scroll_enabled : false;
@@ -1604,18 +1666,18 @@ int zui_sub_image(kinc_g4_texture_t *image, int tint, float h, int sx, int sy, i
 	if (!current->enabled) zui_fade_color(0.25);
 	if (sw > 0) { // Source rect specified
 		if (current->image_invert_y) {
-			g2_draw_scaled_sub_image(image, sx, sy, sw, sh, x, current->_y + h, w, -h);
+			draw_scaled_sub_image(image, is_rt, sx, sy, sw, sh, x, current->_y + h, w, -h);
 		}
 		else {
-			g2_draw_scaled_sub_image(image, sx, sy, sw, sh, x, current->_y, w, h);
+			draw_scaled_sub_image(image, is_rt, sx, sy, sw, sh, x, current->_y, w, h);
 		}
 	}
 	else {
 		if (current->image_invert_y) {
-			g2_draw_scaled_image(image, x, current->_y + h, w, -h);
+			draw_scaled_image(image, is_rt, x, current->_y + h, w, -h);
 		}
 		else {
-			g2_draw_scaled_image(image, x, current->_y, w, h);
+			draw_scaled_image(image, is_rt, x, current->_y, w, h);
 		}
 	}
 
@@ -1623,8 +1685,8 @@ int zui_sub_image(kinc_g4_texture_t *image, int tint, float h, int sx, int sy, i
 	return started ? ZUI_STATE_STARTED : released ? ZUI_STATE_RELEASED : down ? ZUI_STATE_DOWN : hover ? ZUI_STATE_HOVERED : ZUI_STATE_IDLE;
 }
 
-int zui_image(kinc_g4_texture_t *image, int tint, float h) {
-	return zui_sub_image(image, tint, h, 0, 0, image->tex_width, image->tex_height);
+int zui_image(/*kinc_g4_texture_t kinc_g4_render_target_t*/ void *image, bool is_rt, int tint, int h) {
+	return zui_sub_image(image, is_rt, tint, h, 0, 0, image_width(image, is_rt), image_height(image, is_rt));
 }
 
 char *zui_text_input(zui_handle_t *handle, char *label, int align, bool editable, bool live_update) {
@@ -1904,6 +1966,13 @@ void zui_tooltip_image(kinc_g4_texture_t *image, int max_width) {
 	current->tooltip_y = current->_y + current->_window_y;
 }
 
+void zui_tooltip_render_target(kinc_g4_render_target_t *image, int max_width) {
+	current->tooltip_rt = image;
+	current->tooltip_img_max_width = max_width;
+	current->tooltip_invert_y = current->image_invert_y;
+	current->tooltip_y = current->_y + current->_window_y;
+}
+
 void zui_end(bool last) {
 	if (!current->window_ended) zui_end_window(true);
 	zui_draw_combo(true); // Handle active combo
@@ -2175,7 +2244,8 @@ zui_theme_t zui_theme_default() {
 	t.SCROLL_MINI_W = 3;
 	t.TEXT_OFFSET = 8;
 	t.TAB_W = 6;
-	t.FILL_WINDOW_BG = false;
+	// t.FILL_WINDOW_BG = false;
+	t.FILL_WINDOW_BG = true;
 	t.FILL_BUTTON_BG = true;
 	t.FILL_ACCENT_BG = false;
 	t.LINK_STYLE = ZUI_LINK_STYLE_LINE;

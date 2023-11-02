@@ -75,7 +75,7 @@ typedef struct zui_handle {
 	int position;
 	int color; // = 0xffffffff
 	float value;
-	char *text;
+	char text[128];
 	kinc_g4_render_target_t texture;
 	int redraws; // = 2
 	float scroll_offset;
@@ -167,7 +167,7 @@ typedef struct zui {
 	float input_started_time;
 	int cursor_x; // Text input
 	int highlight_anchor;
-	float *ratios; // Splitting rows
+	float ratios[32]; // Splitting rows
 	int ratios_count;
 	int current_ratio;
 	float x_before_split;
@@ -232,6 +232,7 @@ typedef struct zui {
 	int combo_initial_value;
 	char *tooltip_text;
 	kinc_g4_texture_t *tooltip_img;
+	kinc_g4_render_target_t *tooltip_rt;
 	int tooltip_img_max_width;
 	bool tooltip_invert_y;
 	float tooltip_x;
@@ -259,6 +260,8 @@ typedef struct zui {
 
 void zui_init(zui_t *ui, zui_options_t ops);
 void zui_begin(zui_t *ui);
+void zui_begin_sticky();
+void zui_end_sticky();
 void zui_begin_region(int x, int y, int w);
 void zui_end_region(bool last);
 bool zui_window(zui_handle_t *handle, int x, int y, int w, int h, bool drag); // Returns true if redraw is needed
@@ -266,8 +269,8 @@ bool zui_button(char *text, int align, char *label);
 int zui_text(char *text, int align, int bg);
 bool zui_tab(zui_handle_t *handle, char *text, bool vertical, uint32_t color);
 bool zui_panel(zui_handle_t *handle, char *text, bool is_tree, bool filled, bool pack);
-int zui_sub_image(kinc_g4_texture_t *image, int tint, float h, int sx, int sy, int sw, int sh);
-int zui_image(kinc_g4_texture_t *image, int tint, float h);
+int zui_sub_image(/*kinc_g4_texture_t kinc_g4_render_target_t*/ void *image, bool is_rt, int tint, int h, int sx, int sy, int sw, int sh);
+int zui_image(/*kinc_g4_texture_t kinc_g4_render_target_t*/ void *image, bool is_rt, int tint, int h);
 char *zui_text_input(zui_handle_t *handle, char *label, int align, bool editable, bool live_update);
 bool zui_check(zui_handle_t *handle, char *text, char *label);
 bool zui_radio(zui_handle_t *handle, int position, char *text, char *label);
@@ -277,7 +280,9 @@ void zui_row(float *ratios, int count);
 void zui_separator(int h, bool fill);
 void zui_tooltip(char *text);
 void zui_tooltip_image(kinc_g4_texture_t *image, int max_width);
+void zui_tooltip_render_target(kinc_g4_render_target_t *image, int max_width);
 void zui_end(bool last);
+void zui_end_window(bool bind_global_g);
 char *zui_hovered_tab_name();
 void zui_mouse_down(int button, int x, int y); // Input events
 void zui_mouse_move(int x, int y, int movement_x, int movement_y);
@@ -303,10 +308,13 @@ bool zui_get_hover(float elem_h);
 bool zui_get_released(float elem_h);
 bool zui_input_in_rect(float x, float y, float w, float h);
 void zui_fill(float x, float y, float w, float h, int color);
+void zui_rect(float x, float y, float w, float h, int color, float strength);
 int zui_line_count(char *str);
 char *zui_extract_line(char *str, int line);
 bool zui_is_visible(float elem_h);
 void zui_end_element();
+void zui_end_element_of_size(float element_size);
+void zui_end_input();
 void zui_fade_color(float alpha);
 void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool truncation);
 void zui_draw_rect(bool fill, float x, float y, float w, float h);

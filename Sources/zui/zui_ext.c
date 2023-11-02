@@ -85,7 +85,7 @@ float zui_float_input(zui_handle_t *handle, const char *label, int align, float 
 }
 
 void zui_init_path(zui_handle_t *handle, const char *system_id) {
-	handle->text = strcmp(system_id, "Windows") == 0 ? "C:\\Users" : "/";
+	// handle->text = strcmp(system_id, "Windows") == 0 ? "C:\\Users" : "/"; ////
 	// %HOMEDRIVE% + %HomePath%
 	// ~
 }
@@ -122,8 +122,8 @@ char *zui_file_browser(zui_handle_t *handle, bool folders_only) {
 		strcpy(cmd, "dir /b ");
 		if (folders_only) strcat(cmd, "/ad ");
 		sep = "\\";
-		handle->text = zui_str_replace(handle->text, "\\\\", "\\"); //// free()
-		handle->text = zui_str_replace(handle->text, "\r", ""); //// free()
+		// handle->text = zui_str_replace(handle->text, "\\\\", "\\"); //// free()
+		// handle->text = zui_str_replace(handle->text, "\r", ""); //// free()
 	}
 	if (handle->text[0] == 0) zui_init_path(handle, system_id);
 
@@ -281,7 +281,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	current->_w = _w;
 
 	uint32_t col = zui_color(round(cval * 255), round(cval * 255), round(cval * 255), 255);
-	zui_image(current->ops.color_wheel, col, -1);
+	zui_image(current->ops.color_wheel, false, col, -1);
 	// Picker
 	float ph = current->_y - py;
 	float ox = px + w / 2;
@@ -303,7 +303,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 
 	current->_x = px - (scroll ? 0 : ZUI_SCROLL_W() / 2);
 	current->_y = py;
-	zui_image(current->ops.black_white_gradient, 0xffffffff, -1);
+	zui_image(current->ops.black_white_gradient, false, 0xffffffff, -1);
 
 	g2_set_color(0xff000000);
 	g2_fill_rect(cx - 3 * ZUI_SCALE(), cy - 3 * ZUI_SCALE(), 6 * ZUI_SCALE(), 6 * ZUI_SCALE());
@@ -434,7 +434,7 @@ static void handle_line_select(zui_t *current, zui_handle_t *handle) {
 
 char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *label, bool word_wrap) {
 	zui_t *current = zui_get_current();
-	handle->text = zui_str_replace(handle->text, "\t", "    "); //// free()
+	// handle->text = zui_str_replace(handle->text, "\t", "    "); //// free()
 	bool selected = current->text_selected_handle == handle; // Text being edited
 	// char **lines = handle->text.split("\n");
 	int line_count = zui_line_count(handle->text);
