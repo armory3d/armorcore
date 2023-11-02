@@ -223,11 +223,46 @@ extern class Krom {
 	static function io_obj_parse(file_bytes: js.lib.ArrayBuffer, split_code: Int, start_pos: Int, udim: Bool): Dynamic;
 
 	static function zui_init(ops: Dynamic): Dynamic;
+	static function zui_set_scale(factor: Float): Void;
 	static function zui_begin(ui: Dynamic): Void;
 	static function zui_end(last: Bool): Void;
+	static function zui_begin_region(x: Int, y: Int, w: Int): Void;
+	static function zui_end_region(last: Bool): Void;
+	static function zui_begin_sticky(): Void;
+	static function zui_end_sticky(): Void;
+	static function zui_end_input(): Void;
+	static function zui_end_window(bind_global_g: Bool): Void;
+	static function zui_end_element(element_size: Float): Void;
+	static function zui_start_text_edit(handle: Dynamic, align: Int): Void;
+	static function zui_input_in_rect(x: Float, y: Float, w: Float, h: Float): Bool;
 	static function zui_window(handle: Dynamic, x: Int, y: Int, w: Int, h: Int, drag: Bool): Bool;
 	static function zui_button(text: String, align: Int, label: String): Bool;
+	static function zui_check(handle: Dynamic, text: String, label: String): Bool;
+	static function zui_radio(handle: Dynamic, position: Int, text: String, label: String): Bool;
+	static function zui_combo(handle: Dynamic, texts: Array<String>, label: String, show_label: Bool, align: Int, search_bar: Bool): Int;
+	static function zui_slider(handle: Dynamic, text: String, from: Float, to: Float, filled: Bool, precision: Float, display_value: Bool, align: Int, text_edit: Bool): Float;
+	static function zui_image(image: kha.Image, tint: Int, h: Int, sx: Int, sy: Int, sw: Int, sh: Int): Int;
+	static function zui_text(text: String, align: Int, bg: Int): Int;
+	static function zui_text_input(handle: Dynamic, label: String, align: Int, editable: Bool, live_update: Bool): String;
+	static function zui_tab(handle: Dynamic, text: String, vertical: Bool, color: Int): Bool;
+	static function zui_panel(handle: Dynamic, text: String, isTree: Bool, filled: Bool, pack: Bool): Bool;
 	static function zui_handle(ops: Dynamic): Dynamic;
+	static function zui_separator(h: Int, fill: Bool): Void;
+	static function zui_tooltip(text: String): Void;
+	static function zui_tooltip_image(image: kha.Image, max_width: Int): Void;
+	static function zui_row(ratios: Array<Float>): Void;
+	static function zui_fill(x: Float, y: Float, w: Float, h: Float, color: Int): Void;
+	static function zui_rect(x: Float, y: Float, w: Float, h: Float, color: Int, strength: Float): Void;
+	static function zui_draw_rect(fill: Bool, x: Float, y: Float, w: Float, h: Float, strength: Float): Void;
+	static function zui_draw_string(text: String, x_offset: Float, y_offset: Float, align: Int, truncation: Bool): Void;
+	static function zui_begin_menu(): Void;
+	static function zui_end_menu(): Void;
+	static function zui_menu_button(text: String): Bool;
+	static function zui_float_input(handle: Dynamic, label: String, align: Int, precision: Float): Float;
+	static function zui_inline_radio(handle: Dynamic, texts: Array<String>, align: Int): Int;
+	static function zui_color_wheel(handle: Dynamic, alpha: Bool, w: Float, h: Float, color_preview: Bool, picker: Void->Void): Int;
+	static function zui_text_area(handle: Dynamic, align: Int, editable: Bool, label: String, word_wrap: Bool): String;
+	static function zui_nodes_init(): Dynamic;
 }
 
 enum abstract LogLevel(Int) to Int {

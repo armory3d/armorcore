@@ -136,6 +136,8 @@ extern "C" {
 #ifdef WITH_ZUI
 extern "C" {
 	#include "zui/zui.h"
+	#include "zui/zui_ext.h"
+	#include "zui/zui_nodes.h"
 }
 #endif
 
@@ -3990,13 +3992,15 @@ namespace {
 	void krom_zui_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		g2_font_t *font = (g2_font_t *)field->Value();
-
 		zui_options_t ops;
 		ops.scale_factor = 1.0;
-		ops.font = font;
 		ops.theme = zui_theme_default();
+
+		Local<Object> arg0 = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<Value> font = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "font").ToLocalChecked()).ToLocalChecked();
+		Local<External> fontfield = Local<External>::Cast(font->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		ops.font = (g2_font_t *)fontfield->Value();
+
 		zui_t *ui = (zui_t *)malloc(sizeof(zui_t));
 		zui_init(ui, ops);
 
@@ -4005,6 +4009,12 @@ namespace {
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 		obj->SetInternalField(0, External::New(isolate, ui));
 		args.GetReturnValue().Set(obj);
+	}
+
+	void krom_zui_set_scale(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float factor = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_set_scale(factor);
 	}
 
 	void krom_zui_begin(const FunctionCallbackInfo<Value> &args) {
@@ -4018,6 +4028,66 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		bool last = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		zui_end(last);
+	}
+
+	void krom_zui_begin_region(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		int x = (int)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int y = (int)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int w = (int)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_begin_region(x, y, w);
+	}
+
+	void krom_zui_end_region(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		bool last = (bool)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_end_region(last);
+	}
+
+	void krom_zui_begin_sticky(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		zui_begin_sticky();
+	}
+
+	void krom_zui_end_sticky(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		zui_end_sticky();
+	}
+
+	void krom_zui_end_input(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		zui_end_input();
+	}
+
+	void krom_zui_end_window(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		bool bing_global_g = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_end_window(bing_global_g);
+	}
+
+	void krom_zui_end_element(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float element_size = args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		if (element_size < 0) zui_end_element();
+		else zui_end_element_of_size(element_size);
+	}
+
+	void krom_zui_start_text_edit(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		int align = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_start_text_edit(handle, align);
+	}
+
+	void krom_zui_input_in_rect(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float w = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float h = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool b = zui_input_in_rect(x, y, w, h);
+		args.GetReturnValue().Set(Int32::New(isolate, b));
 	}
 
 	void krom_zui_window(const FunctionCallbackInfo<Value> &args) {
@@ -4042,14 +4112,328 @@ namespace {
 		args.GetReturnValue().Set(Int32::New(isolate, b));
 	}
 
+	void krom_zui_check(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		String::Utf8Value text(isolate, args[1]);
+		String::Utf8Value label(isolate, args[2]);
+		bool b = zui_check(handle, *text, *label);
+		args.GetReturnValue().Set(Int32::New(isolate, b));
+	}
+
+	void krom_zui_radio(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		int position = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		String::Utf8Value text(isolate, args[2]);
+		String::Utf8Value label(isolate, args[3]);
+		bool b = zui_radio(handle, position, *text, *label);
+		args.GetReturnValue().Set(Int32::New(isolate, b));
+	}
+
+	char combo_texts[32][64];
+	char *combo_temp[32];
+	void krom_zui_combo(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		String::Utf8Value label(isolate, args[2]);
+		int show_label = (int)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int align = (int)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int search_bar = (int)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
+		Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		assert(length <= 32);
+		for (int i = 0; i < length; ++i) {
+			String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
+			strcpy(combo_texts[i], *str);
+			combo_temp[i] = combo_texts[i];
+		}
+
+		int i = zui_combo(handle, combo_temp, length, *label, show_label, align, search_bar);
+		args.GetReturnValue().Set(Int32::New(isolate, i));
+	}
+
+	void krom_zui_slider(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		String::Utf8Value text(isolate, args[1]);
+		float from = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float to = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool filled = (bool)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float precision = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool display_value = (bool)args[6]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int align = (int)args[7]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool text_edit = (bool)args[8]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float f = zui_slider(handle, *text, from, to, filled, precision, display_value, align, text_edit);
+		args.GetReturnValue().Set(Number::New(isolate, f));
+	}
+
+	void krom_zui_image(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Object> image_object = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		int tint = (int)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int h = (int)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int sx = (int)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int sy = (int)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int sw = (int)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int sh = (int)args[6]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		void *image;
+		bool is_rt;
+		Local<Value> tex = image_object->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
+		if (tex->IsObject()) {
+			Local<External> texfield = Local<External>::Cast(tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			image = (void *)texfield->Value();
+			is_rt = false;
+		}
+		else {
+			Local<Value> rt = image_object->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
+			Local<External> rtfield = Local<External>::Cast(rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			image = (void *)rtfield->Value();
+			is_rt = true;
+		}
+		int i = zui_sub_image(image, is_rt, tint, h, sx, sy, sw, sh);
+		args.GetReturnValue().Set(Int32::New(isolate, i));
+	}
+
+	void krom_zui_text(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value text(isolate, args[0]);
+		int align = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int bg = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int i = zui_text(*text, align, bg);
+		args.GetReturnValue().Set(Int32::New(isolate, i));
+	}
+
+	void krom_zui_text_input(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		String::Utf8Value label(isolate, args[1]);
+		int align = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int editable = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int live_update = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		char *str = zui_text_input(handle, *label, align, editable, live_update);
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, str).ToLocalChecked());
+	}
+
+	void krom_zui_tab(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		String::Utf8Value text(isolate, args[1]);
+		int vertical = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int color = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool b = zui_tab(handle, *text, vertical, color);
+		args.GetReturnValue().Set(Int32::New(isolate, b));
+	}
+
+	void krom_zui_panel(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		String::Utf8Value text(isolate, args[1]);
+		int is_tree = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int filled = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int pack = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_panel(handle, *text, is_tree, filled, pack);
+	}
+
 	void krom_zui_handle(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
+		Local<Object> ops = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		zui_handle_t *handle = (zui_handle_t *)malloc(sizeof(zui_handle_t));
 		memset(handle, 0, sizeof(zui_handle_t));
+		handle->redraws = 2;
+		handle->selected = (int)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "selected").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		handle->position = (int)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "position").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		handle->value = (float)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "value").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		Local<Value> str = ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "text").ToLocalChecked()).ToLocalChecked();
+		String::Utf8Value text(isolate, str);
+		assert(strlen(*text) < 128);
+		strcpy(handle->text, *text);
+		handle->color = (int)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "color").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		handle->layout = (int)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "layout").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 		obj->SetInternalField(0, External::New(isolate, handle));
+		args.GetReturnValue().Set(obj);
+	}
+
+	void krom_zui_separator(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		int h = (int)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool fill = (bool)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_separator(h, fill);
+	}
+
+	void krom_zui_tooltip(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value text(isolate, args[0]);
+		zui_tooltip(*text);
+	}
+
+	void krom_zui_tooltip_image(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		int max_width = (int)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		Local<Object> image_object = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<Value> tex = image_object->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
+		if (tex->IsObject()) {
+			Local<External> texfield = Local<External>::Cast(tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			kinc_g4_texture_t *image = (kinc_g4_texture_t *)texfield->Value();
+			zui_tooltip_image(image, max_width);
+		}
+		else {
+			Local<Value> rt = image_object->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
+			Local<External> rtfield = Local<External>::Cast(rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			kinc_g4_render_target_t *image = (kinc_g4_render_target_t *)rtfield->Value();
+			zui_tooltip_render_target(image, max_width);
+		}
+	}
+
+	void krom_zui_row(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Object> jsarray = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		assert(length <= 32);
+		float ratios[32];
+		for (int i = 0; i < length; ++i) {
+			ratios[i] = (float)jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		}
+		zui_row(ratios, length);
+	}
+
+	void krom_zui_fill(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float w = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float h = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int color = (int)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_fill(x, y, w, h, color);
+	}
+
+	void krom_zui_rect(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float w = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float h = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int color = (int)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float strength = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_rect(x, y, w, h, color, strength);
+	}
+
+	void krom_zui_draw_rect(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		bool fill = (bool)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float x = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float w = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float h = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		// float strength = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		// zui_draw_rect(fill, x, y, w, h, strength);
+		zui_draw_rect(fill, x, y, w, h);
+	}
+
+	void krom_zui_draw_string(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value text(isolate, args[0]);
+		float x_offset = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float y_offset = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int align = (int)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool truncation = (bool)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		zui_draw_string(*text, x_offset, y_offset, align, truncation);
+	}
+
+	void krom_zui_begin_menu(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		zui_begin_menu();
+	}
+
+	void krom_zui_end_menu(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		zui_end_menu();
+	}
+
+	void krom_zui_menu_button(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value text(isolate, args[0]);
+		bool b = zui_menu_button(*text);
+		args.GetReturnValue().Set(Int32::New(isolate, b));
+	}
+
+	void krom_zui_float_input(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		String::Utf8Value label(isolate, args[1]);
+		int align = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float precision = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float f = zui_float_input(handle, *label, align, precision);
+		args.GetReturnValue().Set(Number::New(isolate, f));
+	}
+
+	char radio_texts[32][64];
+	char *radio_temp[32];
+	void krom_zui_inline_radio(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		int align = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
+		Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		assert(length <= 32);
+		for (int i = 0; i < length; ++i) {
+			String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
+			strcpy(radio_texts[i], *str);
+			radio_temp[i] = radio_texts[i];
+		}
+
+		int i = zui_inline_radio(handle, radio_temp, length, align);
+		args.GetReturnValue().Set(Int32::New(isolate, i));
+	}
+
+	void krom_zui_color_wheel(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		bool alpha = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float w = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float h = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool color_preview = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int i = zui_color_wheel(handle, alpha, w, h, color_preview); //// picker: Void->Void
+		args.GetReturnValue().Set(Int32::New(isolate, i));
+	}
+
+	void krom_zui_text_area(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		int align = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		bool editable = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		String::Utf8Value label(isolate, args[3]);
+		bool word_wrap = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		char *str = zui_text_area(handle, align, editable, *label, word_wrap);
+		args.GetReturnValue().Set(String::NewFromUtf8(isolate, str).ToLocalChecked());
+	}
+
+	void krom_zui_nodes_init(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+
+		zui_nodes_t *nodes = (zui_nodes_t *)malloc(sizeof(zui_nodes_t));
+		zui_nodes_init(nodes);
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->SetInternalField(0, External::New(isolate, nodes));
 		args.GetReturnValue().Set(obj);
 	}
 	#endif
@@ -4330,12 +4714,46 @@ namespace {
 		#endif
 		#ifdef WITH_ZUI
 		SET_FUNCTION(krom, "zui_init", krom_zui_init);
+		SET_FUNCTION(krom, "zui_set_scale", krom_zui_set_scale);
 		SET_FUNCTION(krom, "zui_begin", krom_zui_begin);
 		SET_FUNCTION(krom, "zui_end", krom_zui_end);
+		SET_FUNCTION(krom, "zui_begin_region", krom_zui_begin_region);
+		SET_FUNCTION(krom, "zui_end_region", krom_zui_end_region);
+		SET_FUNCTION(krom, "zui_begin_sticky", krom_zui_begin_sticky);
+		SET_FUNCTION(krom, "zui_end_sticky", krom_zui_end_sticky);
+		SET_FUNCTION(krom, "zui_end_input", krom_zui_end_input);
+		SET_FUNCTION(krom, "zui_end_window", krom_zui_end_window);
+		SET_FUNCTION(krom, "zui_end_element", krom_zui_end_element);
+		SET_FUNCTION(krom, "zui_start_text_edit", krom_zui_start_text_edit);
+		SET_FUNCTION(krom, "zui_input_in_rect", krom_zui_input_in_rect);
 		SET_FUNCTION(krom, "zui_window", krom_zui_window);
 		SET_FUNCTION(krom, "zui_button", krom_zui_button);
+		SET_FUNCTION(krom, "zui_check", krom_zui_check);
+		SET_FUNCTION(krom, "zui_radio", krom_zui_radio);
+		SET_FUNCTION(krom, "zui_combo", krom_zui_combo);
+		SET_FUNCTION(krom, "zui_slider", krom_zui_slider);
+		SET_FUNCTION(krom, "zui_image", krom_zui_image);
+		SET_FUNCTION(krom, "zui_text", krom_zui_text);
+		SET_FUNCTION(krom, "zui_text_input", krom_zui_text_input);
+		SET_FUNCTION(krom, "zui_tab", krom_zui_tab);
+		SET_FUNCTION(krom, "zui_panel", krom_zui_panel);
 		SET_FUNCTION(krom, "zui_handle", krom_zui_handle);
-		// SET_FUNCTION(krom, "zui_nest", krom_zui_nest);
+		SET_FUNCTION(krom, "zui_separator", krom_zui_separator);
+		SET_FUNCTION(krom, "zui_tooltip", krom_zui_tooltip);
+		SET_FUNCTION(krom, "zui_tooltip_image", krom_zui_tooltip_image);
+		SET_FUNCTION(krom, "zui_row", krom_zui_row);
+		SET_FUNCTION(krom, "zui_fill", krom_zui_fill);
+		SET_FUNCTION(krom, "zui_rect", krom_zui_rect);
+		SET_FUNCTION(krom, "zui_draw_rect", krom_zui_draw_rect);
+		SET_FUNCTION(krom, "zui_draw_string", krom_zui_draw_string);
+		SET_FUNCTION(krom, "zui_begin_menu", krom_zui_begin_menu);
+		SET_FUNCTION(krom, "zui_end_menu", krom_zui_end_menu);
+		SET_FUNCTION(krom, "zui_menu_button", krom_zui_menu_button);
+		SET_FUNCTION(krom, "zui_float_input", krom_zui_float_input);
+		SET_FUNCTION(krom, "zui_inline_radio", krom_zui_inline_radio);
+		SET_FUNCTION(krom, "zui_color_wheel", krom_zui_color_wheel);
+		SET_FUNCTION(krom, "zui_text_area", krom_zui_text_area);
+		SET_FUNCTION(krom, "zui_nodes_init", krom_zui_nodes_init);
 		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);

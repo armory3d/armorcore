@@ -72,12 +72,12 @@ typedef TTheme = {
 	var SCROLL_W: Int;
 	var SCROLL_MINI_W: Int;
 	var TEXT_OFFSET: Int;
-	var TAB_W: Int; // Indentation
+	var TAB_W: Int;
 	var FILL_WINDOW_BG: Bool;
 	var FILL_BUTTON_BG: Bool;
 	var FILL_ACCENT_BG: Bool;
 	var LINK_STYLE: LinkStyle;
-	var FULL_TABS: Bool; // Make tabs take full window width
+	var FULL_TABS: Bool;
 	var ROUND_CORNERS: Bool;
 }
 
