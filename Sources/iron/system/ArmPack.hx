@@ -24,7 +24,6 @@ import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import haxe.io.Eof;
-import iron.data.SceneFormat;
 import kha.arrays.Float32Array;
 import kha.arrays.Uint32Array;
 import kha.arrays.Int16Array;
@@ -37,7 +36,7 @@ class ArmPack {
 		return read(i);
 	}
 
-	static function read(i: BytesInput, key = "", parentKey = ""): Any {
+	static function read(i: BytesInput): Any {
 		try {
 			var b = i.readByte();
 			switch (b) {
@@ -58,15 +57,15 @@ class ArmPack {
 				case 0xd9: return i.readString(i.readByte());
 				case 0xda: return i.readString(i.readUInt16());
 				case 0xdb: return i.readString(i.readInt32());
-				case 0xdc: return readArray(i, i.readUInt16(), key, parentKey);
-				case 0xdd: return readArray(i, i.readInt32(), key, parentKey);
-				case 0xde: return readMap(i, i.readUInt16(), key, parentKey);
-				case 0xdf: return readMap(i, i.readInt32(), key, parentKey);
+				case 0xdc: return readArray(i, i.readUInt16());
+				case 0xdd: return readArray(i, i.readInt32());
+				case 0xde: return readMap(i, i.readUInt16());
+				case 0xdf: return readMap(i, i.readInt32());
 
 				default: {
 					if (b < 0x80) return b; // positive fix num
-					else if (b < 0x90) return readMap(i, (0xf & b), key, parentKey); // fix map
-					else if (b < 0xa0) return readArray(i, (0xf & b), key, parentKey); // fix array
+					else if (b < 0x90) return readMap(i, (0xf & b)); // fix map
+					else if (b < 0xa0) return readArray(i, (0xf & b)); // fix array
 					else if (b < 0xc0) return i.readString(0x1f & b); // fix string
 					else if (b > 0xdf) return 0xffffff00 | b; // negative fix num
 				}
@@ -76,7 +75,7 @@ class ArmPack {
 		return null;
 	}
 
-	static function readArray(i: BytesInput, length: Int, key = "", parentKey = ""): Any {
+	static function readArray(i: BytesInput, length: Int): Any {
 		var b = i.readByte();
 		i.position--;
 
@@ -100,20 +99,16 @@ class ArmPack {
 		}
 		else { // Dynamic type-value
 			var a: Array<Dynamic> = [];
-			for (x in 0...length) a.push(read(i, key, parentKey));
+			for (x in 0...length) a.push(read(i));
 			return a;
 		}
 	}
 
-	static function readMap(i: BytesInput, length: Int, key = "", parentKey = ""): Any {
-		#if js
+	static function readMap(i: BytesInput, length: Int): Any {
 		var out = {};
-		#else
-		var out = Type.createEmptyInstance(getClass(key, parentKey));
-		#end
 		for (n in 0...length) {
 			var k = Std.string(read(i));
-			var v = read(i, k, key);
+			var v = read(i);
 			Reflect.setField(out, k, v);
 		}
 		return out;
