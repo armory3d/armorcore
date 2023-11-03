@@ -131,6 +131,7 @@ extern "C" {
 #ifdef WITH_IRON
 extern "C" {
 	#include "iron/io_obj.h"
+	#include "iron/iron_armpack.h"
 }
 #endif
 #ifdef WITH_ZUI
@@ -3986,6 +3987,16 @@ namespace {
 
 		args.GetReturnValue().Set(obj);
 	}
+
+	void krom_armpack_decode(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+
+		zui_node_canvas_t *decoded = (zui_node_canvas_t *)malloc(content->ByteLength());
+		armpack_decode(decoded, content->Data(), (int)content->ByteLength());
+	}
 	#endif
 
 	#ifdef WITH_ZUI
@@ -4711,6 +4722,7 @@ namespace {
 		SET_FUNCTION(krom, "language", krom_language);
 		#ifdef WITH_IRON
 		SET_FUNCTION(krom, "io_obj_parse", krom_io_obj_parse);
+		SET_FUNCTION(krom, "armpack_decode", krom_armpack_decode);
 		#endif
 		#ifdef WITH_ZUI
 		SET_FUNCTION(krom, "zui_init", krom_zui_init);

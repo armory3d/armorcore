@@ -221,6 +221,7 @@ extern class Krom {
 	static function mlUnload(): Void;
 
 	static function io_obj_parse(file_bytes: js.lib.ArrayBuffer, split_code: Int, start_pos: Int, udim: Bool): Dynamic;
+	static function armpack_decode(bytes: js.lib.ArrayBuffer): Void;
 
 	static function zui_init(ops: Dynamic): Dynamic;
 	static function zui_set_scale(factor: Float): Void;
