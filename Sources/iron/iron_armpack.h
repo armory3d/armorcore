@@ -51,15 +51,20 @@ int armpack_size_f32();
 		point_t a;
 		a.x = 3;
 		a.y = 9;
-		int type_count = 2;
 
-		encode_pos = 0;
-		uint32_t struct_size = sizeof(point_t);
-		uint32_t encoded_size = struct_size + type_count;
-		void *encoded = malloc(encoded_size);
-		armpack_encode_i32(encoded, a.x);
-		armpack_encode_i32(encoded, a.y);
+		uint32_t size = 0;
+		size += armpack_size_map();
+		size += armpack_size_string("x");
+		size += armpack_size_i32();
+		size += armpack_size_string("y");
+		size += armpack_size_i32();
 
-		point_t *decoded = armpack_decode(encoded, encoded_size);
+		void *encoded = malloc(size);
+		armpack_encode_start(encoded);
+		armpack_encode_map(2);
+		armpack_encode_i32(a.x);
+		armpack_encode_i32(a.y);
+
+		point_t *decoded = armpack_decode(encoded, size);
 	}
 */
