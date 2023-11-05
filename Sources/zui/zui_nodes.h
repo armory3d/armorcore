@@ -15,32 +15,37 @@ typedef struct zui_node_socket {
 	char *type;
 	int color;
 	void *default_value;
+	int default_value_count;
 	float min; // optional
 	float max; // optional
 	float precision; // optional
 	int display; // optional
 	char *tooltip; // optional
-} zui_node_socket_t;
+}__attribute__((packed)) zui_node_socket_t;
 
 typedef struct zui_node_button {
 	char *name;
 	char *type;
 	int output; // optional
 	void *default_value; // optional
+	int default_value_count;
 	void *data; // optional
+	int data_count;
 	float min; // optional
 	float max; // optional
 	float precision; // optional
 	float height; // optional
 	char *tooltip; // optional
-} zui_node_button_t;
+}__attribute__((packed)) zui_node_button_t;
 
 typedef struct zui_node {
 	int id;
 	char *name;
 	char *type;
-	float x;
-	float y;
+	// float x;
+	int x;
+	// float y;
+	int y;
 	zui_node_socket_t **inputs;
 	int inputs_count;
 	zui_node_socket_t **outputs;
@@ -48,9 +53,10 @@ typedef struct zui_node {
 	zui_node_button_t **buttons;
 	int buttons_count;
 	int color;
-	float width; // optional
+	// float width; // optional
+	int width; // optional
 	char *tooltip; // optional
-} zui_node_t;
+}__attribute__((packed)) zui_node_t;
 
 typedef struct zui_node_link {
 	int id;
@@ -58,7 +64,7 @@ typedef struct zui_node_link {
 	int from_socket;
 	int to_id;
 	int to_socket;
-} zui_node_link_t;
+}__attribute__((packed)) zui_node_link_t;
 
 typedef struct zui_node_canvas {
 	char *name;
@@ -66,7 +72,7 @@ typedef struct zui_node_canvas {
 	int nodes_count;
 	zui_node_link_t **links;
 	int links_count;
-} zui_node_canvas_t;
+}__attribute__((packed)) zui_node_canvas_t;
 
 typedef struct zui_nodes {
 	bool nodes_drag;
@@ -94,3 +100,5 @@ typedef struct zui_nodes {
 
 void zui_nodes_init(zui_nodes_t *nodes);
 void zui_node_canvas(zui_node_canvas_t *canvas);
+void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas);
+uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas);

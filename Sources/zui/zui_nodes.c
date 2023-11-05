@@ -8,6 +8,7 @@
 #include "zui_ext.h"
 #include "../g2/g2.h"
 #include "../g2/g2_ext.h"
+#include "../iron/iron_armpack.h"
 
 static zui_nodes_t *current_nodes = NULL;
 static bool zui_nodes_elements_baked = false;
@@ -50,11 +51,12 @@ char *zui_tr(char *id/*, map<char *, char *> vars*/) { // inline
 
 void zui_nodes_init(zui_nodes_t *nodes) {
 	current_nodes = nodes;
-	nodes->zoom = 1.0;
-	nodes->scale_factor = 1.0;
-	nodes->ELEMENT_H = 25;
-	nodes->snap_from_id = -1;
-	nodes->snap_to_id = -1;
+	memset(current_nodes, 0, sizeof(zui_nodes_t));
+	current_nodes->zoom = 1.0;
+	current_nodes->scale_factor = 1.0;
+	current_nodes->ELEMENT_H = 25;
+	current_nodes->snap_from_id = -1;
+	current_nodes->snap_to_id = -1;
 }
 
 float ZUI_NODES_SCALE() {
@@ -78,7 +80,7 @@ int ZUI_LINE_H() {
 int ZUI_BUTTONS_H(zui_node_t *node) {
 	float h = 0.0;
 	for (int i = 0; i < node->buttons_count; ++i) {
-		zui_node_button_t *but = &node->buttons[i];
+		zui_node_button_t *but = node->buttons[i];
 		if (strcmp(but->type, "RGBA") == 0) h += 102 * ZUI_NODES_SCALE() + ZUI_LINE_H() * 5; // Color wheel + controls
 		else if (strcmp(but->type, "VECTOR") == 0) h += ZUI_LINE_H() * 4;
 		else if (strcmp(but->type, "CUSTOM") == 0) h += ZUI_LINE_H() * but->height;
@@ -97,7 +99,7 @@ int ZUI_OUTPUTS_H(int sockets_count, int length) {
 
 bool zui_input_linked(zui_node_canvas_t *canvas, int node_id, int i) {
 	for (int x = 0; i < canvas->links_count; ++x) {
-		zui_node_link_t *l = &canvas->links[x];
+		zui_node_link_t *l = canvas->links[x];
 		if (l->to_id == node_id && l->to_socket == i) return true;
 	}
 	return false;
@@ -141,7 +143,7 @@ float zui_p(float f) {
 }
 
 zui_node_t *zui_get_node(zui_node_t **nodes, int nodes_count, int id) {
-	for (int i = 0; i < nodes_count; ++i) if (nodes[i]->id == id) return &nodes[i];
+	for (int i = 0; i < nodes_count; ++i) if (nodes[i]->id == id) return nodes[i];
 	return NULL;
 }
 
@@ -159,7 +161,7 @@ int zui_get_link_id(zui_node_link_t **links, int links_count) {
 int zui_get_socket_id(zui_node_t **nodes, int nodes_count) {
 	int id = 0;
 	for (int i = 0; i < nodes_count; ++i) {
-		zui_node_t *n = &nodes[i];
+		zui_node_t *n = nodes[i];
 		for (int j = 0; j < n->inputs_count; ++j) if (n->inputs[j]->id >= id) id = n->inputs[j]->id + 1;
 		for (int j = 0; j < n->outputs_count; ++j) if (n->outputs[j]->id >= id) id = n->outputs[j]->id + 1;
 	}
@@ -215,7 +217,7 @@ void zui_remove_node(zui_node_t *n, zui_node_canvas_t *canvas) {
 	if (n == NULL) return;
 	int i = 0;
 	while (i < canvas->links_count) {
-		zui_node_link_t *l = &canvas->links[i];
+		zui_node_link_t *l = canvas->links[i];
 		if (l->from_id == n->id || l->to_id == n->id) {
 			// canvas.links.splice(i, 1);
 		}
@@ -228,7 +230,7 @@ void zui_remove_node(zui_node_t *n, zui_node_canvas_t *canvas) {
 }
 
 bool zui_is_selected(zui_node_t *node) {
-	for (int i = 0; i < current_nodes->nodes_selected_count; ++i) if (&current_nodes->nodes_selected[i] == node) return true;
+	for (int i = 0; i < current_nodes->nodes_selected_count; ++i) if (current_nodes->nodes_selected[i] == node) return true;
 	return false;
 }
 
@@ -307,7 +309,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 
 	// Outputs
 	for (int i = 0; i < node->outputs_count; ++i) {
-		zui_node_socket_t *out = &node->outputs[i];
+		zui_node_socket_t *out = node->outputs[i];
 		ny += lineh;
 		g2_set_color(out->color);
 		g2_draw_scaled_render_target(&zui_socket_image, nx + w - zui_p(6), ny - zui_p(3), zui_p(12), zui_p(12));
@@ -315,7 +317,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	ny -= lineh * node->outputs_count;
 	g2_set_color(current->ops.theme.LABEL_COL);
 	for (int i = 0; i < node->outputs_count; ++i) {
-		zui_node_socket_t *out = &node->outputs[i];
+		zui_node_socket_t *out = node->outputs[i];
 		ny += lineh;
 		float strw = g2_string_width(current->ops.font, current->font_size, zui_tr(out->name));
 		g2_draw_string(zui_tr(out->name), nx + w - strw - zui_p(12), ny - zui_p(3));
@@ -336,7 +338,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	zui_handle_t *nhandle = zui_nest(&handle, node->id);
 	ny -= lineh / 3; // Fix align
 	for (int buti = 0; buti < node->buttons_count; ++buti) {
-		zui_node_button_t *but = &node->buttons[buti];
+		zui_node_button_t *but = node->buttons[buti];
 
 		if (strcmp(but->type, "RGBA") == 0) {
 			ny += lineh; // 18 + 2 separator
@@ -353,9 +355,10 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			// 		current->changed = true;
 			// 	};
 			// });
-			val[0] = zui_color_r(nhandle->color) / 255;
-			val[1] = zui_color_g(nhandle->color) / 255;
-			val[2] = zui_color_b(nhandle->color) / 255;
+
+			//val[0] = zui_color_r(nhandle->color) / 255;
+			//val[1] = zui_color_g(nhandle->color) / 255;
+			//val[2] = zui_color_b(nhandle->color) / 255;
 		}
 		else if (strcmp(but->type, "VECTOR") == 0) {
 			ny += lineh;
@@ -384,7 +387,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_x = nx;
 			current->_y = ny;
 			current->_w = w;
-			zui_node_socket_t *soc = &node->outputs[but->output];
+			zui_node_socket_t *soc = node->outputs[but->output];
 			float min = but->min != 0 ? but->min : 0.0; // != NULL
 			float max = but->max != 1 ? but->max : 1.0; // != NULL
 			float prec = but->precision != 100 ? but->precision : 100.0; // != NULL
@@ -399,7 +402,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_x = nx;
 			current->_y = ny;
 			current->_w = w;
-			zui_node_socket_t *soc = but->output != NULL ? &node->outputs[but->output] : NULL;
+			zui_node_socket_t *soc = but->output != NULL ? node->outputs[but->output] : NULL;
 			// but->default_value = zui_text_input(nhandle.nest(buti, {text: soc != NULL ? soc->default_value : but->default_value != NULL ? but->default_value : ""}), zui_tr(but->name));
 			if (soc != NULL) soc->default_value = but->default_value;
 			if (current->is_hovered && but->tooltip != NULL) zui_tooltip(zui_tr(but->tooltip));
@@ -438,7 +441,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 
 	// Inputs
 	for (int i = 0; i < node->inputs_count; ++i) {
-		zui_node_socket_t *inp = &node->inputs[i];
+		zui_node_socket_t *inp = node->inputs[i];
 		ny += lineh;
 		g2_set_color(inp->color);
 		g2_draw_scaled_render_target(&zui_socket_image, nx - zui_p(6), ny - zui_p(3), zui_p(12), zui_p(12));
@@ -576,7 +579,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 	g2_set_font(current->ops.font, current->font_size);
 
 	for (int i = 0; i < canvas->links_count; ++i) {
-		zui_node_link_t *link = &canvas->links[i];
+		zui_node_link_t *link = canvas->links[i];
 		zui_node_t *from = zui_get_node(canvas->nodes, canvas->nodes_count, link->from_id);
 		zui_node_t *to = zui_get_node(canvas->nodes, canvas->nodes_count, link->to_id);
 		float from_x = from == NULL ? current->input_x : wx + ZUI_NODE_X(from) + ZUI_NODE_W(from);
@@ -652,7 +655,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 
 		bool selected = false;
 		for (int j = 0; j < current_nodes->nodes_selected_count; ++j) {
-			zui_node_t *n = &current_nodes->nodes_selected[j];
+			zui_node_t *n = current_nodes->nodes_selected[j];
 			if (link->from_id == n->id || link->to_id == n->id) {
 				selected = true;
 				break;
@@ -727,7 +730,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 					if (zui_input_in_rect(sx - ZUI_LINE_H() / 2, sy - ZUI_LINE_H() / 2, ZUI_LINE_H(), ZUI_LINE_H())) {
 						// Already has a link - disconnect
 						for (int k = 0; k < canvas->links_count; ++k) {
-							zui_node_link_t *l = &canvas->links[k];
+							zui_node_link_t *l = canvas->links[k];
 							if (l->to_id == node->id && l->to_socket == j) {
 								l->to_id = l->to_socket = -1;
 								current_nodes->link_drag = l;
@@ -756,7 +759,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 			if (current_nodes->snap_to_id != -1) { // Connect to input
 				// Force single link per input
 				for (int j = 0; j < canvas->links_count; ++j) {
-					zui_node_link_t *l = &canvas->links[j];
+					zui_node_link_t *l = canvas->links[j];
 					if (l->to_id == current_nodes->snap_to_id && l->to_socket == current_nodes->snap_socket) {
 						// canvas.links.remove(l);
 						break;
@@ -827,7 +830,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 			bottom = t;
 		}
 		for (int j = 0; j < canvas->nodes_count; ++j) {
-			zui_node_t *n = &canvas->nodes[j];
+			zui_node_t *n = canvas->nodes[j];
 			if (ZUI_NODE_X(n) + ZUI_NODE_W(n) > left && ZUI_NODE_X(n) < right &&
 				ZUI_NODE_Y(n) + ZUI_NODE_H(canvas, n) > top && ZUI_NODE_Y(n) < bottom) {
 				// nodes.push(n);
@@ -849,13 +852,13 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 	if (false) {
 		zui_node_t **copy_nodes;
 		for (int i = 0; i < current_nodes->nodes_selected_count; ++i) {
-			zui_node_t *n = &current_nodes->nodes_selected[i];
+			zui_node_t *n = current_nodes->nodes_selected[i];
 			// if (zui_exclude_remove.indexOf(n.type) >= 0) continue;
 			// copy_nodes.push(n);
 		}
 		zui_node_link_t **copy_links;
 		for (int i = 0; i < canvas->links_count; ++i) {
-			zui_node_link_t *l = &canvas->links[i];
+			zui_node_link_t *l = canvas->links[i];
 			zui_node_t *from = zui_get_node(current_nodes->nodes_selected, current_nodes->nodes_selected_count, l->from_id);
 			zui_node_t *to = zui_get_node(current_nodes->nodes_selected, current_nodes->nodes_selected_count, l->to_id);
 			// if (from != NULL && zui_exclude_remove.indexOf(from->type) == -1 &&
@@ -884,7 +887,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 		// catch(_) {}
 		if (paste_canvas != NULL) {
 			for (int i = 0; i < paste_canvas->links_count; ++i) {
-				zui_node_link_t *l = &paste_canvas->links[i];
+				zui_node_link_t *l = paste_canvas->links[i];
 				// Assign unique link id
 				l->id = zui_get_link_id(canvas->links, canvas->links_count);
 				// canvas.links.push(l);
@@ -892,7 +895,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 			int offset_x = (int)(((int)(current->input_x / ZUI_SCALE()) * ZUI_NODES_SCALE() - wx - ZUI_PAN_X()) / ZUI_NODES_SCALE()) - paste_canvas->nodes[paste_canvas->nodes_count - 1]->x;
 			int offset_y = (int)(((int)(current->input_y / ZUI_SCALE()) * ZUI_NODES_SCALE() - wy - ZUI_PAN_Y()) / ZUI_NODES_SCALE()) - paste_canvas->nodes[paste_canvas->nodes_count - 1]->y;
 			for (int i = 0; i < paste_canvas->nodes_count; ++i) {
-				zui_node_t *n = &paste_canvas->nodes[i];
+				zui_node_t *n = paste_canvas->nodes[i];
 				// Assign unique node id
 				int old_id = n->id;
 				n->id = zui_get_node_id(canvas->nodes, canvas->nodes_count);
@@ -908,7 +911,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 					soc->node_id = n->id;
 				}
 				for (int j = 0; j < paste_canvas->links_count; ++j) {
-					zui_node_link_t *l = &paste_canvas->links[j];
+					zui_node_link_t *l = paste_canvas->links[j];
 					if (l->from_id == old_id) l->from_id = n->id;
 					else if (l->to_id == old_id) l->to_id = n->id;
 				}
@@ -932,7 +935,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 	if (current->input_enabled && (current->is_backspace_down || current->is_delete_down || cut_selected) && !current->is_typing) {
 		int i = current_nodes->nodes_selected_count - 1;
 		while (i >= 0) {
-			zui_node_t *n = &current_nodes->nodes_selected[i--];
+			zui_node_t *n = current_nodes->nodes_selected[i--];
 			// if (zui_exclude_remove.indexOf(n.type) >= 0) continue;
 			zui_remove_node(n, canvas);
 			current->changed = true;
@@ -957,4 +960,262 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 			zui_popup_commands = NULL;
 		}
 	}
+}
+
+void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
+	armpack_encode_start(encoded);
+	armpack_encode_map(3);
+	armpack_encode_string("name");
+	armpack_encode_string(canvas->name);
+
+	armpack_encode_string("nodes");
+	armpack_encode_array(canvas->nodes_count);
+	for (int i = 0; i < canvas->nodes_count; ++i) {
+		armpack_encode_map(11);
+		armpack_encode_string("id");
+		armpack_encode_i32(canvas->nodes[i]->id);
+		armpack_encode_string("name");
+		armpack_encode_string(canvas->nodes[i]->name);
+		armpack_encode_string("type");
+		armpack_encode_string(canvas->nodes[i]->type);
+		armpack_encode_string("x");
+		armpack_encode_i32(canvas->nodes[i]->x);
+		armpack_encode_string("y");
+		armpack_encode_i32(canvas->nodes[i]->y);
+
+		armpack_encode_string("inputs");
+		armpack_encode_array(canvas->nodes[i]->inputs_count);
+		for (int j = 0; j < canvas->nodes[i]->inputs_count; ++j) {
+			armpack_encode_map(11);
+			armpack_encode_string("id");
+			armpack_encode_i32(canvas->nodes[i]->inputs[j]->id);
+			armpack_encode_string("node_id");
+			armpack_encode_i32(canvas->nodes[i]->inputs[j]->node_id);
+			armpack_encode_string("name");
+			armpack_encode_string(canvas->nodes[i]->inputs[j]->name);
+			armpack_encode_string("type");
+			armpack_encode_string(canvas->nodes[i]->inputs[j]->type);
+			armpack_encode_string("color");
+			armpack_encode_i32(canvas->nodes[i]->inputs[j]->color);
+			armpack_encode_string("default_value");
+			armpack_encode_array(0);
+			armpack_encode_string("min");
+			armpack_encode_f32(canvas->nodes[i]->inputs[j]->min);
+			armpack_encode_string("max");
+			armpack_encode_f32(canvas->nodes[i]->inputs[j]->max);
+			armpack_encode_string("precision");
+			armpack_encode_f32(canvas->nodes[i]->inputs[j]->precision);
+			armpack_encode_string("display");
+			armpack_encode_i32(canvas->nodes[i]->inputs[j]->display);
+			armpack_encode_string("tooltip");
+			armpack_encode_string(canvas->nodes[i]->inputs[j]->tooltip);
+		}
+
+		armpack_encode_string("outputs");
+		armpack_encode_array(canvas->nodes[i]->outputs_count);
+		for (int j = 0; j < canvas->nodes[i]->outputs_count; ++j) {
+			armpack_encode_map(11);
+			armpack_encode_string("id");
+			armpack_encode_i32(canvas->nodes[i]->outputs[j]->id);
+			armpack_encode_string("node_id");
+			armpack_encode_i32(canvas->nodes[i]->outputs[j]->node_id);
+			armpack_encode_string("name");
+			armpack_encode_string(canvas->nodes[i]->outputs[j]->name);
+			armpack_encode_string("type");
+			armpack_encode_string(canvas->nodes[i]->outputs[j]->type);
+			armpack_encode_string("color");
+			armpack_encode_i32(canvas->nodes[i]->outputs[j]->color);
+			armpack_encode_string("default_value");
+			armpack_encode_array(0);
+			armpack_encode_string("min");
+			armpack_encode_f32(canvas->nodes[i]->outputs[j]->min);
+			armpack_encode_string("max");
+			armpack_encode_f32(canvas->nodes[i]->outputs[j]->max);
+			armpack_encode_string("precision");
+			armpack_encode_f32(canvas->nodes[i]->outputs[j]->precision);
+			armpack_encode_string("display");
+			armpack_encode_i32(canvas->nodes[i]->outputs[j]->display);
+			armpack_encode_string("tooltip");
+			armpack_encode_string(canvas->nodes[i]->outputs[j]->tooltip);
+		}
+
+		armpack_encode_string("buttons");
+		armpack_encode_array(canvas->nodes[i]->buttons_count);
+		for (int j = 0; j < canvas->nodes[i]->buttons_count; ++j) {
+			armpack_encode_map(10);
+			armpack_encode_string("name");
+			armpack_encode_string(canvas->nodes[i]->buttons[j]->name);
+			armpack_encode_string("type");
+			armpack_encode_string(canvas->nodes[i]->buttons[j]->type);
+			armpack_encode_string("output");
+			armpack_encode_i32(canvas->nodes[i]->buttons[j]->output);
+			armpack_encode_string("default_value");
+			armpack_encode_array(0);
+			armpack_encode_string("data");
+			armpack_encode_array(0);
+			armpack_encode_string("min");
+			armpack_encode_f32(canvas->nodes[i]->buttons[j]->min);
+			armpack_encode_string("max");
+			armpack_encode_f32(canvas->nodes[i]->buttons[j]->max);
+			armpack_encode_string("precision");
+			armpack_encode_f32(canvas->nodes[i]->buttons[j]->precision);
+			armpack_encode_string("height");
+			armpack_encode_f32(canvas->nodes[i]->buttons[j]->height);
+			armpack_encode_string("tooltip");
+			armpack_encode_string(canvas->nodes[i]->buttons[j]->tooltip);
+		}
+
+		armpack_encode_string("color");
+		armpack_encode_i32(canvas->nodes[i]->color);
+		armpack_encode_string("width");
+		armpack_encode_i32(canvas->nodes[i]->width);
+		armpack_encode_string("tooltip");
+		armpack_encode_string(canvas->nodes[i]->tooltip);
+	}
+
+	armpack_encode_string("links");
+	armpack_encode_array(canvas->links_count);
+	for (int i = 0; i < canvas->links_count; ++i) {
+		armpack_encode_map(5);
+		armpack_encode_string("id");
+		armpack_encode_i32(canvas->links[i]->id);
+		armpack_encode_string("from_id");
+		armpack_encode_i32(canvas->links[i]->from_id);
+		armpack_encode_string("from_socket");
+		armpack_encode_i32(canvas->links[i]->from_socket);
+		armpack_encode_string("to_id");
+		armpack_encode_i32(canvas->links[i]->to_id);
+		armpack_encode_string("to_socket");
+		armpack_encode_i32(canvas->links[i]->to_socket);
+	}
+}
+
+uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
+	uint32_t size = 0;
+	size += armpack_size_map();
+	size += armpack_size_string("name");
+	size += armpack_size_string(canvas->name);
+
+	size += armpack_size_string("nodes");
+	size += armpack_size_array();
+	for (int i = 0; i < canvas->nodes_count; ++i) {
+		size += armpack_size_map();
+		size += armpack_size_string("id");
+		size += armpack_size_i32();
+		size += armpack_size_string("name");
+		size += armpack_size_string(canvas->nodes[i]->name);
+		size += armpack_size_string("type");
+		size += armpack_size_string(canvas->nodes[i]->type);
+		size += armpack_size_string("x");
+		size += armpack_size_i32();
+		size += armpack_size_string("y");
+		size += armpack_size_i32();
+
+		size += armpack_size_string("inputs");
+		size += armpack_size_array();
+		for (int j = 0; j < canvas->nodes[i]->inputs_count; ++j) {
+			size += armpack_size_map();
+			size += armpack_size_string("id");
+			size += armpack_size_i32();
+			size += armpack_size_string("node_id");
+			size += armpack_size_i32();
+			size += armpack_size_string("name");
+			size += armpack_size_string(canvas->nodes[i]->inputs[j]->name);
+			size += armpack_size_string("type");
+			size += armpack_size_string(canvas->nodes[i]->inputs[j]->type);
+			size += armpack_size_string("color");
+			size += armpack_size_i32();
+			size += armpack_size_string("default_value");
+			size += armpack_size_array();
+			size += armpack_size_string("min");
+			size += armpack_size_f32();
+			size += armpack_size_string("max");
+			size += armpack_size_f32();
+			size += armpack_size_string("precision");
+			size += armpack_size_f32();
+			size += armpack_size_string("display");
+			size += armpack_size_i32();
+			size += armpack_size_string("tooltip");
+			size += armpack_size_string(canvas->nodes[i]->inputs[j]->tooltip);
+		}
+
+		size += armpack_size_string("outputs");
+		size += armpack_size_array();
+		for (int j = 0; j < canvas->nodes[i]->outputs_count; ++j) {
+			size += armpack_size_map();
+			size += armpack_size_string("id");
+			size += armpack_size_i32();
+			size += armpack_size_string("node_id");
+			size += armpack_size_i32();
+			size += armpack_size_string("name");
+			size += armpack_size_string(canvas->nodes[i]->outputs[j]->name);
+			size += armpack_size_string("type");
+			size += armpack_size_string(canvas->nodes[i]->outputs[j]->type);
+			size += armpack_size_string("color");
+			size += armpack_size_i32();
+			size += armpack_size_string("default_value");
+			size += armpack_size_array();
+			size += armpack_size_string("min");
+			size += armpack_size_f32();
+			size += armpack_size_string("max");
+			size += armpack_size_f32();
+			size += armpack_size_string("precision");
+			size += armpack_size_f32();
+			size += armpack_size_string("display");
+			size += armpack_size_i32();
+			size += armpack_size_string("tooltip");
+			size += armpack_size_string(canvas->nodes[i]->outputs[j]->tooltip);
+		}
+
+		size += armpack_size_string("buttons");
+		size += armpack_size_array();
+		for (int j = 0; j < canvas->nodes[i]->buttons_count; ++j) {
+			size += armpack_size_map();
+			size += armpack_size_string("name");
+			size += armpack_size_string(canvas->nodes[i]->buttons[j]->name);
+			size += armpack_size_string("type");
+			size += armpack_size_string(canvas->nodes[i]->buttons[j]->type);
+			size += armpack_size_string("output");
+			size += armpack_size_i32();
+			size += armpack_size_string("default_value");
+			size += armpack_size_array();
+			size += armpack_size_string("data");
+			size += armpack_size_array();
+			size += armpack_size_string("min");
+			size += armpack_size_f32();
+			size += armpack_size_string("max");
+			size += armpack_size_f32();
+			size += armpack_size_string("precision");
+			size += armpack_size_f32();
+			size += armpack_size_string("height");
+			size += armpack_size_f32();
+			size += armpack_size_string("tooltip");
+			size += armpack_size_string(canvas->nodes[i]->buttons[j]->tooltip);
+		}
+
+		size += armpack_size_string("color");
+		size += armpack_size_i32();
+		size += armpack_size_string("width");
+		size += armpack_size_i32();
+		size += armpack_size_string("tooltip");
+		size += armpack_size_string(canvas->nodes[i]->tooltip);
+	}
+
+	size += armpack_size_string("links");
+	size += armpack_size_array();
+	for (int i = 0; i < canvas->links_count; ++i) {
+		size += armpack_size_map();
+		size += armpack_size_string("id");
+		size += armpack_size_i32();
+		size += armpack_size_string("from_id");
+		size += armpack_size_i32();
+		size += armpack_size_string("from_socket");
+		size += armpack_size_i32();
+		size += armpack_size_string("to_id");
+		size += armpack_size_i32();
+		size += armpack_size_string("to_socket");
+		size += armpack_size_i32();
+	}
+
+	return size;
 }
