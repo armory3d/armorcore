@@ -6,7 +6,60 @@
 
 #include <stdint.h>
 
-void armpack_decode(void *decoded, void *encoded, uint32_t len);
-void armpack_encode_u8(void *encoded, uint8_t u8);
-void armpack_encode_f32(void *encoded, float f32);
-void armpack_encode_i32(void *encoded, int32_t i32);
+void *armpack_decode(void *encoded, uint32_t len);
+
+void armpack_encode_start(void *encoded);
+void armpack_encode_map(uint32_t count);
+void armpack_encode_array(uint32_t count);
+void armpack_encode_string(char *str);
+void armpack_encode_i32(int32_t i32);
+void armpack_encode_f32(float f32);
+
+int armpack_size_map();
+int armpack_size_array();
+int armpack_size_string(char *str);
+int armpack_size_i32();
+int armpack_size_f32();
+
+/* JS object:
+
+	let test = {
+		name: "test",
+		point: { x: 2, y: 4 },
+		array: new Int32Array([1, 2, 3])
+	};
+*/
+
+/*	C struct:
+
+	typedef struct point {
+		int x;
+		int y;
+	}__attribute__((packed)) point_t;
+
+	typedef struct test {
+		char *name;
+		point_t point;
+		int *array;
+		int array_count;
+	}__attribute__((packed)) test_t;
+
+*/
+
+/*
+	void encode_decode_test() {
+		point_t a;
+		a.x = 3;
+		a.y = 9;
+		int type_count = 2;
+
+		encode_pos = 0;
+		uint32_t struct_size = sizeof(point_t);
+		uint32_t encoded_size = struct_size + type_count;
+		void *encoded = malloc(encoded_size);
+		armpack_encode_i32(encoded, a.x);
+		armpack_encode_i32(encoded, a.y);
+
+		point_t *decoded = armpack_decode(encoded, encoded_size);
+	}
+*/
