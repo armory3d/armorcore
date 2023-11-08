@@ -221,13 +221,12 @@ extern class Krom {
 	static function mlUnload(): Void;
 
 	static function io_obj_parse(file_bytes: js.lib.ArrayBuffer, split_code: Int, start_pos: Int, udim: Bool): Dynamic;
-	static function armpack_decode(bytes: js.lib.ArrayBuffer): Void;
 
 	static function zui_init(ops: Dynamic): Dynamic;
 	static function zui_set_scale(factor: Float): Void;
 	static function zui_begin(ui: Dynamic): Void;
 	static function zui_end(last: Bool): Void;
-	static function zui_begin_region(x: Int, y: Int, w: Int): Void;
+	static function zui_begin_region(ui: Dynamic, x: Int, y: Int, w: Int): Void;
 	static function zui_end_region(last: Bool): Void;
 	static function zui_begin_sticky(): Void;
 	static function zui_end_sticky(): Void;
@@ -256,6 +255,8 @@ extern class Krom {
 	static function zui_rect(x: Float, y: Float, w: Float, h: Float, color: Int, strength: Float): Void;
 	static function zui_draw_rect(fill: Bool, x: Float, y: Float, w: Float, h: Float, strength: Float): Void;
 	static function zui_draw_string(text: String, x_offset: Float, y_offset: Float, align: Int, truncation: Bool): Void;
+	static function zui_get_hovered_tab_name(): String;
+	static function zui_set_hovered_tab_name(name: String): Void;
 	static function zui_begin_menu(): Void;
 	static function zui_end_menu(): Void;
 	static function zui_menu_button(text: String): Bool;
@@ -264,6 +265,15 @@ extern class Krom {
 	static function zui_color_wheel(handle: Dynamic, alpha: Bool, w: Float, h: Float, color_preview: Bool, picker: Void->Void): Int;
 	static function zui_text_area(handle: Dynamic, align: Int, editable: Bool, label: String, word_wrap: Bool): String;
 	static function zui_nodes_init(): Dynamic;
+	static function zui_node_canvas(packed: js.lib.ArrayBuffer): js.lib.ArrayBuffer;
+	static function zui_nodes_rgba_popup(handle: Dynamic, val: js.lib.ArrayBuffer, x: Int, y: Int): Void;
+	static function zui_get(ui: Dynamic, name: String): Dynamic;
+	static function zui_set(ui: Dynamic, name: String, val: Dynamic): Void;
+	static function zui_handle_get(handle: Dynamic, name: String): Dynamic;
+	static function zui_handle_set(handle: Dynamic, name: String, val: Dynamic): Void;
+	static function zui_theme_init(): Dynamic;
+	static function zui_theme_get(theme: Dynamic, name: String): Dynamic;
+	static function zui_theme_set(theme: Dynamic, name: String, val: Dynamic): Void;
 }
 
 enum abstract LogLevel(Int) to Int {
