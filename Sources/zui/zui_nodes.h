@@ -20,7 +20,6 @@ typedef struct zui_node_socket {
 	float max; // optional
 	float precision; // optional
 	int display; // optional
-	char *tooltip; // optional
 }__attribute__((packed)) zui_node_socket_t;
 
 typedef struct zui_node_button {
@@ -35,7 +34,6 @@ typedef struct zui_node_button {
 	float max; // optional
 	float precision; // optional
 	float height; // optional
-	char *tooltip; // optional
 }__attribute__((packed)) zui_node_button_t;
 
 typedef struct zui_node {
@@ -46,16 +44,15 @@ typedef struct zui_node {
 	int x;
 	// float y;
 	int y;
+	int color;
 	zui_node_socket_t **inputs;
 	int inputs_count;
 	zui_node_socket_t **outputs;
 	int outputs_count;
 	zui_node_button_t **buttons;
 	int buttons_count;
-	int color;
 	// float width; // optional
 	int width; // optional
-	char *tooltip; // optional
 }__attribute__((packed)) zui_node_t;
 
 typedef struct zui_node_link {
@@ -76,7 +73,7 @@ typedef struct zui_node_canvas {
 
 typedef struct zui_nodes {
 	bool nodes_drag;
-	zui_node_t **nodes_selected; // = [];
+	zui_node_t *nodes_selected[32];
 	int nodes_selected_count;
 	float pan_x;
 	float pan_y;
@@ -100,5 +97,7 @@ typedef struct zui_nodes {
 
 void zui_nodes_init(zui_nodes_t *nodes);
 void zui_node_canvas(zui_node_canvas_t *canvas);
+void zui_nodes_rgba_popup(zui_handle_t *nhandle, float *val, int x, int y);
+
 void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas);
 uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas);

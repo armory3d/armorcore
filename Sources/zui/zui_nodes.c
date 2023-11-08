@@ -39,15 +39,9 @@ int zui_popup_w = 0;
 int zui_popup_h = 0;
 void (*zui_popup_commands)(zui_t *) = NULL;
 
-// #ifdef ZUI_TRANSLATE
-// char *zui_tr(char *id, map<char *, char *> vars = NULL) { // non-inline
-// 	return id;
-// }
-// #else
-char *zui_tr(char *id/*, map<char *, char *> vars*/) { // inline
+char *zui_tr(char *id/*, map<char *, char *> vars*/) {
 	return id;
 }
-// #endif
 
 void zui_nodes_init(zui_nodes_t *nodes) {
 	current_nodes = nodes;
@@ -194,11 +188,11 @@ zui_canvas_control_t zui_on_default_canvas_control() {
 
 void zui_draw_link(float x1, float y1, float x2, float y2, bool highlight) {
 	zui_t *current = zui_get_current();
-	int c1 = current->ops.theme.LABEL_COL;
-	int c2 = current->ops.theme.ACCENT_SELECT_COL;
+	int c1 = current->ops.theme->LABEL_COL;
+	int c2 = current->ops.theme->ACCENT_SELECT_COL;
 	int c = highlight ? c1 : c2;
 	g2_set_color(zui_color(zui_color_r(c), zui_color_g(c), zui_color_b(c), 210));
-	if (current->ops.theme.LINK_STYLE == ZUI_LINK_STYLE_LINE) {
+	if (current->ops.theme->LINK_STYLE == ZUI_LINK_STYLE_LINE) {
 		g2_draw_line(x1, y1, x2, y2, 1.0);
 		g2_set_color(zui_color(zui_color_r(c), zui_color_g(c), zui_color_b(c), 150)); // AA
 		g2_draw_line(x1 + 0.5, y1, x2 + 0.5, y2, 1.0);
@@ -206,7 +200,7 @@ void zui_draw_link(float x1, float y1, float x2, float y2, bool highlight) {
 		g2_draw_line(x1, y1 + 0.5, x2, y2 + 0.5, 1.0);
 		g2_draw_line(x1, y1 - 0.5, x2, y2 - 0.5, 1.0);
 	}
-	else if (current->ops.theme.LINK_STYLE == ZUI_LINK_STYLE_CUBIC_BEZIER) {
+	else if (current->ops.theme->LINK_STYLE == ZUI_LINK_STYLE_CUBIC_BEZIER) {
 		float x[] = { x1, x1 + fabs(x1 - x2) / 2, x2 - fabs(x1 - x2) / 2, x2 };
 		float y[] = { y1, y1, y2, y2 };
 		g2_draw_cubic_bezier(x, y, 30, highlight ? 2.0 : 1.0);
@@ -242,8 +236,8 @@ void zui_popup(int x, int y, int w, int h, void (*commands)(zui_t *)) {
 	zui_popup_commands = commands;
 }
 
-void zui_rgba_popup(zui_handle_t *nhandle, float *val, int x, int y) {
-	// zui_popup(x, y, 140 * scale_factor, current->ops.theme.ELEMENT_H * 10, function(zui_t *ui) {
+void zui_nodes_rgba_popup(zui_handle_t *nhandle, float *val, int x, int y) {
+	// zui_popup(x, y, 140 * scale_factor, current->ops.theme->ELEMENT_H * 10, function(zui_t *ui) {
 	// 	nhandle.color = kha.Color.fromFloats(val[0], val[1], val[2]);
 	// 	zui_color_wheel(nhandle, false, NULL, true, function () {
 	// 		color_picker_callback = function (int color) {
@@ -285,11 +279,11 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	}
 
 	// Outline
-	g2_set_color(zui_is_selected(node) ? current->ops.theme.LABEL_COL : current->ops.theme.CONTEXT_COL);
+	g2_set_color(zui_is_selected(node) ? current->ops.theme->LABEL_COL : current->ops.theme->CONTEXT_COL);
 	zui_draw_rect(true, nx - 1, ny - 1, w + 2, h + 2);
 
 	// Body
-	g2_set_color(current->ops.theme.WINDOW_BG_COL);
+	g2_set_color(current->ops.theme->WINDOW_BG_COL);
 	zui_draw_rect(true, nx, ny, w, h);
 
 	// Header line
@@ -297,14 +291,9 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	g2_fill_rect(nx, ny + lineh - zui_p(3), w, zui_p(3));
 
 	// Title
-	g2_set_color(current->ops.theme.LABEL_COL);
+	g2_set_color(current->ops.theme->LABEL_COL);
 	float textw = g2_string_width(current->ops.font, current->font_size, text);
 	g2_draw_string(text, nx + zui_p(10), ny + zui_p(6));
-	current->_x = nx; // Use the whole line for hovering and not just the drawn string.
-	current->_y = ny;
-	current->_w = w;
-	if (zui_get_hover(lineh) && node->tooltip != NULL) zui_tooltip(zui_tr(node->tooltip));
-
 	ny += lineh * 0.5;
 
 	// Outputs
@@ -315,16 +304,12 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 		g2_draw_scaled_render_target(&zui_socket_image, nx + w - zui_p(6), ny - zui_p(3), zui_p(12), zui_p(12));
 	}
 	ny -= lineh * node->outputs_count;
-	g2_set_color(current->ops.theme.LABEL_COL);
+	g2_set_color(current->ops.theme->LABEL_COL);
 	for (int i = 0; i < node->outputs_count; ++i) {
 		zui_node_socket_t *out = node->outputs[i];
 		ny += lineh;
 		float strw = g2_string_width(current->ops.font, current->font_size, zui_tr(out->name));
 		g2_draw_string(zui_tr(out->name), nx + w - strw - zui_p(12), ny - zui_p(3));
-		current->_x = nx;
-		current->_y = ny;
-		current->_w = w;
-		if (zui_get_hover(lineh) && out->tooltip != NULL) zui_tooltip(zui_tr(out->tooltip));
 
 		if (zui_on_socket_released != NULL && current->input_enabled && (current->input_released || current->input_released_r)) {
 			if (current->input_x > wx + nx && current->input_x < wx + nx + w && current->input_y > wy + ny && current->input_y < wy + ny + lineh) {
@@ -367,18 +352,14 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_w = w;
 			float min = but->min != 0 ? but->min : 0.0; // != NULL
 			float max = but->max != 1 ? but->max : 1.0; // != NULL
-			float text_off = current->ops.theme.TEXT_OFFSET;
-			current->ops.theme.TEXT_OFFSET = 6;
+			float text_off = current->ops.theme->TEXT_OFFSET;
+			current->ops.theme->TEXT_OFFSET = 6;
 			zui_text(zui_tr(but->name), ZUI_ALIGN_LEFT, 0);
-			if (current->is_hovered && but->tooltip != NULL) zui_tooltip(zui_tr(but->tooltip));
 			float *val = (float *)but->default_value;
-			// val[0] = zui_slider(nhandle.nest(buti).nest(0, {value: val[0]}), "X", min, max, true, 100, true, Left);
-			if (current->is_hovered && but->tooltip != NULL) zui_tooltip(zui_tr(but->tooltip));
-			// val[1] = zui_slider(nhandle.nest(buti).nest(1, {value: val[1]}), "Y", min, max, true, 100, true, Left);
-			if (current->is_hovered && but->tooltip != NULL) zui_tooltip(zui_tr(but->tooltip));
-			// val[2] = zui_slider(nhandle.nest(buti).nest(2, {value: val[2]}), "Z", min, max, true, 100, true, Left);
-			if (current->is_hovered && but->tooltip != NULL) zui_tooltip(zui_tr(but->tooltip));
-			current->ops.theme.TEXT_OFFSET = text_off;
+			// val[0] = zui_slider(nhandle.nest(buti).nest(0, {value: val[0]}), "X", min, max, true, 100, true, ZUI_ALIGN_LEFT);
+			// val[1] = zui_slider(nhandle.nest(buti).nest(1, {value: val[1]}), "Y", min, max, true, 100, true, ZUI_ALIGN_LEFT);
+			// val[2] = zui_slider(nhandle.nest(buti).nest(2, {value: val[2]}), "Z", min, max, true, 100, true, ZUI_ALIGN_LEFT);
+			current->ops.theme->TEXT_OFFSET = text_off;
 			if (but->output != NULL) node->outputs[but->output]->default_value = but->default_value;
 			ny += lineh * 3;
 		}
@@ -388,14 +369,15 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_y = ny;
 			current->_w = w;
 			zui_node_socket_t *soc = node->outputs[but->output];
-			float min = but->min != 0 ? but->min : 0.0; // != NULL
-			float max = but->max != 1 ? but->max : 1.0; // != NULL
-			float prec = but->precision != 100 ? but->precision : 100.0; // != NULL
-			float text_off = current->ops.theme.TEXT_OFFSET;
-			current->ops.theme.TEXT_OFFSET = 6;
-			// soc->default_value = zui_slider(nhandle.nest(buti, {value: soc->default_value}), "Value", min, max, true, prec, true, Left);
-			if (current->is_hovered && but->tooltip != NULL) zui_tooltip(zui_tr(but->tooltip));
-			current->ops.theme.TEXT_OFFSET = text_off;
+			float min = but->min;
+			float max = but->max;
+			float prec = but->precision;
+			float text_off = current->ops.theme->TEXT_OFFSET;
+			current->ops.theme->TEXT_OFFSET = 6;
+			zui_handle_t *soc_handle = zui_nest(nhandle, buti);
+			if (!soc_handle->initialized) soc_handle->value = ((float *)soc->default_value)[0];
+			((float *)soc->default_value)[0] = zui_slider(soc_handle, "Value", min, max, true, prec, true, ZUI_ALIGN_LEFT, true);
+			current->ops.theme->TEXT_OFFSET = text_off;
 		}
 		else if (strcmp(but->type, "STRING") == 0) {
 			ny += lineh;
@@ -405,7 +387,6 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			zui_node_socket_t *soc = but->output != NULL ? node->outputs[but->output] : NULL;
 			// but->default_value = zui_text_input(nhandle.nest(buti, {text: soc != NULL ? soc->default_value : but->default_value != NULL ? but->default_value : ""}), zui_tr(but->name));
 			if (soc != NULL) soc->default_value = but->default_value;
-			if (current->is_hovered && but->tooltip != NULL) zui_tooltip(zui_tr(but->tooltip));
 		}
 		else if (strcmp(but->type, "ENUM") == 0) {
 			ny += lineh;
@@ -416,7 +397,6 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			zui_handle_t *but_handle = zui_nest(nhandle, buti);
 			but_handle->position = *(int *)but->default_value;
 			// but->default_value = zui_combo(but_handle, texts, zui_tr(but->name));
-			if (current->is_hovered && but->tooltip != NULL) zui_tooltip(zui_tr(but->tooltip));
 		}
 		else if (strcmp(but->type, "BOOL") == 0) {
 			ny += lineh;
@@ -424,7 +404,6 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_y = ny;
 			current->_w = w;
 			// but->default_value = zui_check(nhandle.nest(buti, {selected: but->default_value}), zui_tr(but->name));
-			if (current->is_hovered && but->tooltip != NULL) zui_tooltip(zui_tr(but->tooltip));
 		}
 		else if (strcmp(but->type, "CUSTOM") == 0) { // Calls external function for custom button drawing
 			ny += lineh;
@@ -451,33 +430,31 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_y = ny - zui_p(current_nodes->ELEMENT_H / 3.0);
 			current->_w = w - zui_p(6);
 			zui_node_socket_t *soc = inp;
-			float min = soc->min != 0 ? soc->min : 0.0; // != NULL
-			float max = soc->max != 1 ? soc->max : 1.0; // != NULL
-			float prec = soc->precision != 100 ? soc->precision : 100.0; // != NULL
-			float text_off = current->ops.theme.TEXT_OFFSET;
-			current->ops.theme.TEXT_OFFSET = 6;
-			// soc->default_value = zui_slider(nhandle.nest(zui_max_buttons).nest(i, {value: soc->default_value}), zui_tr(inp->name), min, max, true, prec, true, Left);
-			if (current->is_hovered && inp->tooltip != NULL) zui_tooltip(zui_tr(inp->tooltip));
-			current->ops.theme.TEXT_OFFSET = text_off;
+			float min = soc->min;
+			float max = soc->max;
+			float prec = soc->precision;
+			float text_off = current->ops.theme->TEXT_OFFSET;
+			current->ops.theme->TEXT_OFFSET = 6;
+
+			zui_handle_t *_handle = zui_nest(nhandle, zui_max_buttons);
+			zui_handle_t *soc_handle = zui_nest(_handle, i);
+			if (!soc_handle->initialized) soc_handle->value = ((float *)soc->default_value)[0];
+			((float *)soc->default_value)[0] = zui_slider(soc_handle, zui_tr(inp->name), min, max, true, prec, true, ZUI_ALIGN_LEFT, true);
+			current->ops.theme->TEXT_OFFSET = text_off;
 		}
 		else if (!is_linked && strcmp(inp->type, "STRING") == 0) {
 			current->_x = nx + zui_p(6);
 			current->_y = ny - zui_p(9);
 			current->_w = w - zui_p(6);
 			zui_node_socket_t *soc = inp;
-			float text_off = current->ops.theme.TEXT_OFFSET;
-			current->ops.theme.TEXT_OFFSET = 6;
-			// soc->default_value = zui_text_input(nhandle.nest(zui_max_buttons).nest(i, {text: soc->default_value}), zui_tr(inp->name), Left);
-			if (current->is_hovered && inp->tooltip != NULL) zui_tooltip(zui_tr(inp->tooltip));
-			current->ops.theme.TEXT_OFFSET = text_off;
+			float text_off = current->ops.theme->TEXT_OFFSET;
+			current->ops.theme->TEXT_OFFSET = 6;
+			// soc->default_value = zui_text_input(nhandle.nest(zui_max_buttons).nest(i, {text: soc->default_value}), zui_tr(inp->name), ZUI_ALIGN_LEFT);
+			current->ops.theme->TEXT_OFFSET = text_off;
 		}
 		else if (!is_linked && strcmp(inp->type, "RGBA") == 0) {
-			g2_set_color(current->ops.theme.LABEL_COL);
+			g2_set_color(current->ops.theme->LABEL_COL);
 			g2_draw_string(zui_tr(inp->name), nx + zui_p(12), ny - zui_p(3));
-			current->_x = nx;
-			current->_y = ny;
-			current->_w = w;
-			if (zui_get_hover(lineh) && inp->tooltip != NULL) zui_tooltip(zui_tr(inp->tooltip));
 			zui_node_socket_t *soc = inp;
 			g2_set_color(0xff000000);
 			g2_fill_rect(nx + w - zui_p(38), ny - zui_p(6), zui_p(36), zui_p(18));
@@ -492,40 +469,30 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			float iy = current->input_y - wy;
 			if (current->input_started && ix > rx && iy > ry && ix < rx + rw && iy < ry + rh) {
 				current_nodes->_input_started = current->input_started = false;
-				zui_rgba_popup(nhandle, (float *)soc->default_value, (int)(rx), (int)(ry + ZUI_ELEMENT_H()));
+				zui_nodes_rgba_popup(nhandle, (float *)soc->default_value, (int)(rx), (int)(ry + ZUI_ELEMENT_H()));
 			}
 		}
 		else if (!is_linked && strcmp(inp->type, "VECTOR") == 0 && inp->display == 1) {
-			g2_set_color(current->ops.theme.LABEL_COL);
+			g2_set_color(current->ops.theme->LABEL_COL);
 			g2_draw_string(zui_tr(inp->name), nx + zui_p(12), ny - zui_p(3));
+			ny += lineh / 2;
 			current->_x = nx;
 			current->_y = ny;
 			current->_w = w;
-			if (zui_get_hover(lineh) && inp->tooltip != NULL) zui_tooltip(zui_tr(inp->tooltip));
-
-			ny += lineh / 2;
-			current->_y = ny;
 			float min = inp->min != 0 ? inp->min : 0.0; // != NULL
 			float max = inp->max != 1 ? inp->max : 1.0; // != NULL
-			float text_off = current->ops.theme.TEXT_OFFSET;
-			current->ops.theme.TEXT_OFFSET = 6;
+			float text_off = current->ops.theme->TEXT_OFFSET;
+			current->ops.theme->TEXT_OFFSET = 6;
 			float *val = (float *)inp->default_value;
-			// val[0] = zui_slider(nhandle.nest(zui_max_buttons).nest(i).nest(0, {value: val[0]}), "X", min, max, true, 100, true, Left);
-			if (current->is_hovered && inp->tooltip != NULL) zui_tooltip(zui_tr(inp->tooltip));
-			// val[1] = zui_slider(nhandle.nest(zui_max_buttons).nest(i).nest(1, {value: val[1]}), "Y", min, max, true, 100, true, Left);
-			if (current->is_hovered && inp->tooltip != NULL) zui_tooltip(zui_tr(inp->tooltip));
-			// val[2] = zui_slider(nhandle.nest(zui_max_buttons).nest(i).nest(2, {value: val[2]}), "Z", min, max, true, 100, true, Left);
-			if (current->is_hovered && inp->tooltip != NULL) zui_tooltip(zui_tr(inp->tooltip));
-			current->ops.theme.TEXT_OFFSET = text_off;
+			// val[0] = zui_slider(nhandle.nest(zui_max_buttons).nest(i).nest(0, {value: val[0]}), "X", min, max, true, 100, true, ZUI_ALIGN_LEFT);
+			// val[1] = zui_slider(nhandle.nest(zui_max_buttons).nest(i).nest(1, {value: val[1]}), "Y", min, max, true, 100, true, ZUI_ALIGN_LEFT);
+			// val[2] = zui_slider(nhandle.nest(zui_max_buttons).nest(i).nest(2, {value: val[2]}), "Z", min, max, true, 100, true, ZUI_ALIGN_LEFT);
+			current->ops.theme->TEXT_OFFSET = text_off;
 			ny += lineh * 2.5;
 		}
 		else {
-			g2_set_color(current->ops.theme.LABEL_COL);
+			g2_set_color(current->ops.theme->LABEL_COL);
 			g2_draw_string(zui_tr(inp->name), nx + zui_p(12), ny - zui_p(3));
-			current->_x = nx;
-			current->_y = ny;
-			current->_w = w;
-			if (zui_get_hover(lineh) && inp->tooltip != NULL) zui_tooltip(zui_tr(inp->tooltip));
 		}
 		if (zui_on_socket_released != NULL && current->input_enabled && (current->input_released || current->input_released_r)) {
 			if (current->input_x > wx + nx && current->input_x < wx + nx + w && current->input_y > wy + ny && current->input_y < wy + ny + lineh) {
@@ -573,7 +540,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 		// }
 	}
 	current_nodes->scale_factor = ZUI_SCALE();
-	current_nodes->ELEMENT_H = current->ops.theme.ELEMENT_H + 2;
+	current_nodes->ELEMENT_H = current->ops.theme->ELEMENT_H + 2;
 	zui_set_scale(ZUI_NODES_SCALE()); // Apply zoomed scale
 	current->elements_baked = true;
 	g2_set_font(current->ops.font, current->font_size);
@@ -920,7 +887,9 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 				// canvas->nodes.push(n);
 			}
 			current_nodes->nodes_drag = true;
-			current_nodes->nodes_selected = paste_canvas->nodes;
+			for (int i = 0; i < paste_canvas->nodes_count; ++i){
+				current_nodes->nodes_selected[i] = paste_canvas->nodes[i];
+			}
 			current->changed = true;
 		}
 	}
@@ -951,8 +920,8 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 		current->_y = zui_popup_y;
 		current->_w = zui_popup_w;
 
-		zui_fill(-6, -6, current->_w / ZUI_SCALE() + 12, zui_popup_h + 12, current->ops.theme.ACCENT_SELECT_COL);
-		zui_fill(-5, -5, current->_w / ZUI_SCALE() + 10, zui_popup_h + 10, current->ops.theme.SEPARATOR_COL);
+		zui_fill(-6, -6, current->_w / ZUI_SCALE() + 12, zui_popup_h + 12, current->ops.theme->ACCENT_SELECT_COL);
+		zui_fill(-5, -5, current->_w / ZUI_SCALE() + 10, zui_popup_h + 10, current->ops.theme->SEPARATOR_COL);
 		zui_popup_commands(current);
 
 		bool hide = (current->input_started || current->input_started_r) && (current->input_x - wx < zui_popup_x - 6 || current->input_x - wx > zui_popup_x + zui_popup_w + 6 || current->input_y - wy < zui_popup_y - 6 || current->input_y - wy > zui_popup_y + zui_popup_h * ZUI_SCALE() + 6);
@@ -971,7 +940,7 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 	armpack_encode_string("nodes");
 	armpack_encode_array(canvas->nodes_count);
 	for (int i = 0; i < canvas->nodes_count; ++i) {
-		armpack_encode_map(11);
+		armpack_encode_map(10);
 		armpack_encode_string("id");
 		armpack_encode_i32(canvas->nodes[i]->id);
 		armpack_encode_string("name");
@@ -982,11 +951,13 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 		armpack_encode_i32(canvas->nodes[i]->x);
 		armpack_encode_string("y");
 		armpack_encode_i32(canvas->nodes[i]->y);
+		armpack_encode_string("color");
+		armpack_encode_i32(canvas->nodes[i]->color);
 
 		armpack_encode_string("inputs");
 		armpack_encode_array(canvas->nodes[i]->inputs_count);
 		for (int j = 0; j < canvas->nodes[i]->inputs_count; ++j) {
-			armpack_encode_map(11);
+			armpack_encode_map(10);
 			armpack_encode_string("id");
 			armpack_encode_i32(canvas->nodes[i]->inputs[j]->id);
 			armpack_encode_string("node_id");
@@ -998,7 +969,7 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("color");
 			armpack_encode_i32(canvas->nodes[i]->inputs[j]->color);
 			armpack_encode_string("default_value");
-			armpack_encode_array(0);
+			armpack_encode_array_f32(canvas->nodes[i]->inputs[j]->default_value, 1);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes[i]->inputs[j]->min);
 			armpack_encode_string("max");
@@ -1007,14 +978,12 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_f32(canvas->nodes[i]->inputs[j]->precision);
 			armpack_encode_string("display");
 			armpack_encode_i32(canvas->nodes[i]->inputs[j]->display);
-			armpack_encode_string("tooltip");
-			armpack_encode_string(canvas->nodes[i]->inputs[j]->tooltip);
 		}
 
 		armpack_encode_string("outputs");
 		armpack_encode_array(canvas->nodes[i]->outputs_count);
 		for (int j = 0; j < canvas->nodes[i]->outputs_count; ++j) {
-			armpack_encode_map(11);
+			armpack_encode_map(10);
 			armpack_encode_string("id");
 			armpack_encode_i32(canvas->nodes[i]->outputs[j]->id);
 			armpack_encode_string("node_id");
@@ -1035,14 +1004,12 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_f32(canvas->nodes[i]->outputs[j]->precision);
 			armpack_encode_string("display");
 			armpack_encode_i32(canvas->nodes[i]->outputs[j]->display);
-			armpack_encode_string("tooltip");
-			armpack_encode_string(canvas->nodes[i]->outputs[j]->tooltip);
 		}
 
 		armpack_encode_string("buttons");
 		armpack_encode_array(canvas->nodes[i]->buttons_count);
 		for (int j = 0; j < canvas->nodes[i]->buttons_count; ++j) {
-			armpack_encode_map(10);
+			armpack_encode_map(9);
 			armpack_encode_string("name");
 			armpack_encode_string(canvas->nodes[i]->buttons[j]->name);
 			armpack_encode_string("type");
@@ -1061,16 +1028,10 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_f32(canvas->nodes[i]->buttons[j]->precision);
 			armpack_encode_string("height");
 			armpack_encode_f32(canvas->nodes[i]->buttons[j]->height);
-			armpack_encode_string("tooltip");
-			armpack_encode_string(canvas->nodes[i]->buttons[j]->tooltip);
 		}
 
-		armpack_encode_string("color");
-		armpack_encode_i32(canvas->nodes[i]->color);
 		armpack_encode_string("width");
 		armpack_encode_i32(canvas->nodes[i]->width);
-		armpack_encode_string("tooltip");
-		armpack_encode_string(canvas->nodes[i]->tooltip);
 	}
 
 	armpack_encode_string("links");
@@ -1110,6 +1071,8 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 		size += armpack_size_i32();
 		size += armpack_size_string("y");
 		size += armpack_size_i32();
+		size += armpack_size_string("color");
+		size += armpack_size_i32();
 
 		size += armpack_size_string("inputs");
 		size += armpack_size_array();
@@ -1126,7 +1089,7 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("color");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array();
+			size += armpack_size_array_f32(1);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");
@@ -1135,8 +1098,6 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_f32();
 			size += armpack_size_string("display");
 			size += armpack_size_i32();
-			size += armpack_size_string("tooltip");
-			size += armpack_size_string(canvas->nodes[i]->inputs[j]->tooltip);
 		}
 
 		size += armpack_size_string("outputs");
@@ -1163,8 +1124,6 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_f32();
 			size += armpack_size_string("display");
 			size += armpack_size_i32();
-			size += armpack_size_string("tooltip");
-			size += armpack_size_string(canvas->nodes[i]->outputs[j]->tooltip);
 		}
 
 		size += armpack_size_string("buttons");
@@ -1189,16 +1148,10 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_f32();
 			size += armpack_size_string("height");
 			size += armpack_size_f32();
-			size += armpack_size_string("tooltip");
-			size += armpack_size_string(canvas->nodes[i]->buttons[j]->tooltip);
 		}
 
-		size += armpack_size_string("color");
-		size += armpack_size_i32();
 		size += armpack_size_string("width");
 		size += armpack_size_i32();
-		size += armpack_size_string("tooltip");
-		size += armpack_size_string(canvas->nodes[i]->tooltip);
 	}
 
 	size += armpack_size_string("links");

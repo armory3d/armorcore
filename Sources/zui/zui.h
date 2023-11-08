@@ -64,7 +64,7 @@ typedef struct zui_theme {
 
 typedef struct zui_options {
 	g2_font_t *font;
-	zui_theme_t theme;
+	zui_theme_t *theme;
 	float scale_factor;
 	kinc_g4_texture_t *color_wheel;
 	kinc_g4_texture_t *black_white_gradient;
@@ -73,11 +73,11 @@ typedef struct zui_options {
 typedef struct zui_handle {
 	bool selected;
 	int position;
-	int color; // = 0xffffffff
+	int color;
 	float value;
 	char text[128];
 	kinc_g4_render_target_t texture;
-	int redraws; // = 2
+	int redraws;
 	float scroll_offset;
 	bool scroll_enabled;
 	int layout;
@@ -88,6 +88,7 @@ typedef struct zui_handle {
 	int drag_y;
 	bool changed;
 	int id;
+	bool initialized;
 } zui_handle_t;
 
 typedef struct zui_text_extract {
@@ -167,7 +168,7 @@ typedef struct zui {
 	float input_started_time;
 	int cursor_x; // Text input
 	int highlight_anchor;
-	float ratios[32]; // Splitting rows
+	float ratios[128]; // Splitting rows
 	int ratios_count;
 	int current_ratio;
 	float x_before_split;
@@ -230,7 +231,7 @@ typedef struct zui {
 	zui_handle_t *submit_combo_handle;
 	int combo_to_submit;
 	int combo_initial_value;
-	char *tooltip_text;
+	char tooltip_text[512];
 	kinc_g4_texture_t *tooltip_img;
 	kinc_g4_render_target_t *tooltip_rt;
 	int tooltip_img_max_width;
@@ -262,7 +263,7 @@ void zui_init(zui_t *ui, zui_options_t ops);
 void zui_begin(zui_t *ui);
 void zui_begin_sticky();
 void zui_end_sticky();
-void zui_begin_region(int x, int y, int w);
+void zui_begin_region(zui_t *ui, int x, int y, int w);
 void zui_end_region(bool last);
 bool zui_window(zui_handle_t *handle, int x, int y, int w, int h, bool drag); // Returns true if redraw is needed
 bool zui_button(char *text, int align, char *label);
@@ -284,6 +285,7 @@ void zui_tooltip_render_target(kinc_g4_render_target_t *image, int max_width);
 void zui_end(bool last);
 void zui_end_window(bool bind_global_g);
 char *zui_hovered_tab_name();
+void zui_set_hovered_tab_name(char *name);
 void zui_mouse_down(int button, int x, int y); // Input events
 void zui_mouse_move(int x, int y, int movement_x, int movement_y);
 void zui_mouse_up(int button, int x, int y);
@@ -299,7 +301,7 @@ void zui_touch_down(int index, int x, int y);
 void zui_touch_up(int index, int x, int y);
 void zui_touch_move(int index, int x, int y);
 #endif
-zui_theme_t zui_theme_default();
+void zui_theme_default(zui_theme_t *t);
 zui_t *zui_get_current();
 zui_handle_t *zui_nest(zui_handle_t *handle, int id);
 void zui_set_scale(float factor);
@@ -335,3 +337,11 @@ int ZUI_TAB_W();
 int ZUI_HEADER_DRAG_H();
 float ZUI_FLASH_SPEED();
 float ZUI_TOOLTIP_DELAY();
+
+extern bool zui_always_redraw_window;
+extern bool zui_touch_scroll;
+extern bool zui_touch_hold;
+extern bool zui_touch_tooltip;
+extern bool zui_is_cut;
+extern bool zui_is_copy;
+extern bool zui_is_paste;

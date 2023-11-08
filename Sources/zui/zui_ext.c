@@ -206,20 +206,20 @@ int zui_inline_radio(zui_handle_t *handle, char **texts, int count, int align) {
 
 	for (int i = 0; i < count; ++i) {
 		if (handle->position == i) {
-			g2_set_color(current->ops.theme.ACCENT_HOVER_COL);
+			g2_set_color(current->ops.theme->ACCENT_HOVER_COL);
 			if (!current->enabled) zui_fade_color(0.25);
 			zui_draw_rect(true, current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H());
 		}
 		else if (hovered == i) {
-			g2_set_color(current->ops.theme.ACCENT_COL);
+			g2_set_color(current->ops.theme->ACCENT_COL);
 			if (!current->enabled) zui_fade_color(0.25);
 			zui_draw_rect(false, current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H());
 		}
-		g2_set_color(current->ops.theme.TEXT_COL); // Text
+		g2_set_color(current->ops.theme->TEXT_COL); // Text
 		current->_x += step * i;
 		float _w = current->_w;
 		current->_w = (int)step;
-		zui_draw_string(texts[i], current->ops.theme.TEXT_OFFSET, 0, align, true);
+		zui_draw_string(texts[i], current->ops.theme->TEXT_OFFSET, 0, align, true);
 		current->_x -= step * i;
 		current->_w = _w;
 	}
@@ -479,21 +479,21 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 
 	if (text_area_line_numbers) {
 		float _y = current->_y;
-		int _TEXT_COL = current->ops.theme.TEXT_COL;
-		current->ops.theme.TEXT_COL = current->ops.theme.ACCENT_COL;
+		int _TEXT_COL = current->ops.theme->TEXT_COL;
+		current->ops.theme->TEXT_COL = current->ops.theme->ACCENT_COL;
 		// int max_length = ceil(log(line_count + 0.5) / log(10)); // Express log_10 with natural log
 		for (int i = 0; i < line_count; ++i) {
 			// zui_text(right_align_number(i + 1, max_length));
 			current->_y -= ZUI_ELEMENT_OFFSET();
 		}
-		current->ops.theme.TEXT_COL = _TEXT_COL;
+		current->ops.theme->TEXT_COL = _TEXT_COL;
 		current->_y = _y;
 		// int numbers_w = ((line_count + "").length * 16 + 4) * ZUI_SCALE();
 		// current->_x += numbers_w;
 		// current->_w -= numbers_w - ZUI_SCROLL_W();
 	}
 
-	g2_set_color(current->ops.theme.SEPARATOR_COL); // Background
+	g2_set_color(current->ops.theme->SEPARATOR_COL); // Background
 	zui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w - current->button_offset_y * 2, line_count * ZUI_ELEMENT_H() - current->button_offset_y * 2);
 
 	zui_text_coloring_t *_text_coloring = current->text_coloring;
@@ -515,10 +515,10 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 		// Text
 		else {
 			if (show_label) {
-				int TEXT_COL = current->ops.theme.TEXT_COL;
-				current->ops.theme.TEXT_COL = current->ops.theme.LABEL_COL;
+				int TEXT_COL = current->ops.theme->TEXT_COL;
+				current->ops.theme->TEXT_COL = current->ops.theme->LABEL_COL;
 				zui_text(label, ZUI_ALIGN_RIGHT, 0x00000000);
-				current->ops.theme.TEXT_COL = TEXT_COL;
+				current->ops.theme->TEXT_COL = TEXT_COL;
 			}
 			else {
 				// Multi-line selection highlight
@@ -528,7 +528,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 					int line_height = ZUI_ELEMENT_H();
 					int cursor_height = line_height - current->button_offset_y * 3.0;
 					// int linew = g2_string_width(current->ops.font, current->font_size, lines[i]);
-					g2_set_color(current->ops.theme.ACCENT_SELECT_COL);
+					g2_set_color(current->ops.theme->ACCENT_SELECT_COL);
 					// g2_fill_rect(current->_x + ZUI_ELEMENT_OFFSET() * 2, current->_y + current->button_offset_y * 1.5, linew, cursor_height);
 				}
 				// zui_text(lines[i], align, 0x00000000);
@@ -588,18 +588,18 @@ float ZUI_MENUBAR_H() {
 
 void zui_begin_menu() {
 	zui_t *current = zui_get_current();
-	_ELEMENT_OFFSET = current->ops.theme.ELEMENT_OFFSET;
-	_BUTTON_COL = current->ops.theme.BUTTON_COL;
-	current->ops.theme.ELEMENT_OFFSET = 0;
-	current->ops.theme.BUTTON_COL = current->ops.theme.SEPARATOR_COL;
-	g2_set_color(current->ops.theme.SEPARATOR_COL);
+	_ELEMENT_OFFSET = current->ops.theme->ELEMENT_OFFSET;
+	_BUTTON_COL = current->ops.theme->BUTTON_COL;
+	current->ops.theme->ELEMENT_OFFSET = 0;
+	current->ops.theme->BUTTON_COL = current->ops.theme->SEPARATOR_COL;
+	g2_set_color(current->ops.theme->SEPARATOR_COL);
 	g2_fill_rect(0, 0, current->_window_w, ZUI_MENUBAR_H());
 }
 
 void zui_end_menu() {
 	zui_t *current = zui_get_current();
-	current->ops.theme.ELEMENT_OFFSET = _ELEMENT_OFFSET;
-	current->ops.theme.BUTTON_COL = _BUTTON_COL;
+	current->ops.theme->ELEMENT_OFFSET = _ELEMENT_OFFSET;
+	current->ops.theme->BUTTON_COL = _BUTTON_COL;
 }
 
 bool zui_menu_button(char *text) {
