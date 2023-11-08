@@ -1085,6 +1085,7 @@ void g2_set_transform(kinc_matrix3x3_t *m) {
 }
 
 void g2_set_font(g2_font_t *font, int size) {
+	g2_end(); // flush
 	g2_font = font;
 	g2_font_size = size;
 	g2_font_load(font, size);
