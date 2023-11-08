@@ -77,27 +77,24 @@ class ArmPack {
 
 	static function readArray(i: BytesInput, length: Int): Any {
 		var b = i.readByte();
-		i.position--;
 
 		if (b == 0xca) { // Typed float32
-			i.position++;
 			var a = new Float32Array(length);
 			for (x in 0...length) a[x] = i.readFloat();
 			return a;
 		}
 		else if (b == 0xd2) { // Typed int32
-			i.position++;
 			var a = new Uint32Array(length);
 			for (x in 0...length) a[x] = i.readInt32();
 			return a;
 		}
 		else if (b == 0xd1) { // Typed int16
-			i.position++;
 			var a = new Int16Array(length);
 			for (x in 0...length) a[x] = i.readInt16();
 			return a;
 		}
 		else { // Dynamic type-value
+			i.position--;
 			var a: Array<Dynamic> = [];
 			for (x in 0...length) a.push(read(i));
 			return a;
