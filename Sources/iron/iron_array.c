@@ -29,6 +29,10 @@ void array_f32_free(array_f32_t *a) {
 	array_free(a);
 }
 
+void array_u64_free(array_u64_t *a) {
+	array_free(a);
+}
+
 static void array_alloc(void *a, uint8_t element_size) {
 	array_u8_t *tmp = (array_u8_t *)a;
 	if (tmp->length == tmp->capacity) {
@@ -60,5 +64,10 @@ void array_u32_push(array_u32_t *a, uint32_t e) {
 
 void array_f32_push(array_f32_t *a, float e) {
 	array_alloc(a, sizeof(float));
+	a->data[a->length++] = e;
+}
+
+void array_u64_push(array_u64_t *a, uint64_t e) {
+	array_alloc(a, sizeof(uint64_t));
 	a->data[a->length++] = e;
 }
