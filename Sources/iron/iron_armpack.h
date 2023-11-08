@@ -11,12 +11,14 @@ void *armpack_decode(void *encoded, uint32_t len);
 void armpack_encode_start(void *encoded);
 void armpack_encode_map(uint32_t count);
 void armpack_encode_array(uint32_t count);
+void armpack_encode_array_f32(float *f32, uint32_t count);
 void armpack_encode_string(char *str);
 void armpack_encode_i32(int32_t i32);
 void armpack_encode_f32(float f32);
 
 int armpack_size_map();
 int armpack_size_array();
+int armpack_size_array_f32(uint32_t count);
 int armpack_size_string(char *str);
 int armpack_size_i32();
 int armpack_size_f32();

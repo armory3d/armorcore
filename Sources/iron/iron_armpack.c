@@ -285,6 +285,15 @@ void armpack_encode_array(uint32_t count) {
 	armpack_write_i32(count);
 }
 
+void armpack_encode_array_f32(float *f32, uint32_t count) {
+	armpack_write_u8(0xdd);
+	armpack_write_i32(count);
+	armpack_write_u8(0xca);
+	for (int i = 0; i < count; ++i) {
+		armpack_write_f32(f32[i]);
+	}
+}
+
 void armpack_encode_string(char *str) {
 	armpack_write_u8(0xdb);
 	size_t len = strlen(str);
@@ -310,6 +319,10 @@ int armpack_size_map() {
 
 int armpack_size_array() {
 	return 1 + 4; // u8 tag + i32 count
+}
+
+int armpack_size_array_f32(uint32_t count) {
+	return 1 + 4 + 1 + count * 4; // u8 tag + i32 count + u8 flag + f32* contents
 }
 
 int armpack_size_string(char *str) {
