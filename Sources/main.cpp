@@ -4015,10 +4015,34 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
+	void krom_zui_get_scale(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_t *ui = (zui_t *)field->Value();
+		zui_t *current = zui_get_current();
+		zui_set_current(ui);
+		args.GetReturnValue().Set(Number::New(isolate, ZUI_SCALE()));
+		zui_set_current(current);
+	}
+
 	void krom_zui_set_scale(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		float factor = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_t *ui = (zui_t *)field->Value();
+		zui_t *current = zui_get_current();
+		zui_set_current(ui);
+		float factor = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		zui_set_scale(factor);
+		zui_set_current(current);
+	}
+
+	void krom_zui_set_font(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_t *ui = (zui_t *)field->Value();
+		Local<External> fontfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		g2_font_t *font = (g2_font_t *)fontfield->Value();
+		ui->ops.font = font;
 	}
 
 	void krom_zui_begin(const FunctionCallbackInfo<Value> &args) {
@@ -4139,8 +4163,9 @@ namespace {
 		args.GetReturnValue().Set(Int32::New(isolate, b));
 	}
 
-	char combo_texts[32][64];
-	char *combo_temp[32];
+	char combo_texts_data[32][64];
+	char *combo_texts[32];
+	char combo_label[32];
 	void krom_zui_combo(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -4149,17 +4174,31 @@ namespace {
 		int show_label = (int)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int align = (int)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int search_bar = (int)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
 		Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		assert(length <= 32);
-		for (int i = 0; i < length; ++i) {
-			String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-			strcpy(combo_texts[i], *str);
-			combo_temp[i] = combo_texts[i];
+
+		int i;
+		if (zui_get_current()->combo_selected_handle == NULL) {
+			for (int i = 0; i < length; ++i) {
+				String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
+				strcpy(combo_texts_data[i], *str);
+				combo_texts[i] = combo_texts_data[i];
+			}
+			strcpy(combo_label, *label);
+			i = zui_combo(handle, combo_texts, length, combo_label, show_label, align, search_bar);
+		}
+		else {
+			char combo_temp_data[32][64];
+			char *combo_temp[32];
+			for (int i = 0; i < length; ++i) {
+				String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
+				strcpy(combo_temp_data[i], *str);
+				combo_temp[i] = combo_temp_data[i];
+			}
+			i = zui_combo(handle, combo_temp, length, *label, show_label, align, search_bar);
 		}
 
-		int i = zui_combo(handle, combo_temp, length, *label, show_label, align, search_bar);
 		args.GetReturnValue().Set(Int32::New(isolate, i));
 	}
 
@@ -4462,6 +4501,7 @@ namespace {
 		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 
+		// TODO: decode on change
 		zui_node_canvas_t *decoded = (zui_node_canvas_t *)armpack_decode(content->Data(), (int)content->ByteLength());
 		zui_node_canvas(decoded);
 
@@ -4489,6 +4529,24 @@ namespace {
 		int x = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int y = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		zui_nodes_rgba_popup(handle, val, x, y);
+	}
+
+	void krom_zui_nodes_scale(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float f = ZUI_NODES_SCALE();
+		args.GetReturnValue().Set(Number::New(isolate, f));
+	}
+
+	void krom_zui_nodes_pan_x(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float f = ZUI_NODES_PAN_X();
+		args.GetReturnValue().Set(Number::New(isolate, f));
+	}
+
+	void krom_zui_nodes_pan_y(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		float f = ZUI_NODES_PAN_Y();
+		args.GetReturnValue().Set(Number::New(isolate, f));
 	}
 
 	#define ZUI_GET_I32_GLOBAL(prop)\
@@ -5025,7 +5083,9 @@ namespace {
 		#endif
 		#ifdef WITH_ZUI
 		SET_FUNCTION(krom, "zui_init", krom_zui_init);
+		SET_FUNCTION(krom, "zui_get_scale", krom_zui_get_scale);
 		SET_FUNCTION(krom, "zui_set_scale", krom_zui_set_scale);
+		SET_FUNCTION(krom, "zui_set_font", krom_zui_set_font);
 		SET_FUNCTION(krom, "zui_begin", krom_zui_begin);
 		SET_FUNCTION(krom, "zui_end", krom_zui_end);
 		SET_FUNCTION(krom, "zui_begin_region", krom_zui_begin_region);
@@ -5069,6 +5129,9 @@ namespace {
 		SET_FUNCTION(krom, "zui_nodes_init", krom_zui_nodes_init);
 		SET_FUNCTION(krom, "zui_node_canvas", krom_zui_node_canvas);
 		SET_FUNCTION(krom, "zui_nodes_rgba_popup", krom_zui_nodes_rgba_popup);
+		SET_FUNCTION(krom, "zui_nodes_scale", krom_zui_nodes_scale);
+		SET_FUNCTION(krom, "zui_nodes_pan_x", krom_zui_nodes_pan_x);
+		SET_FUNCTION(krom, "zui_nodes_pan_y", krom_zui_nodes_pan_y);
 		SET_FUNCTION(krom, "zui_set", krom_zui_set);
 		SET_FUNCTION(krom, "zui_get", krom_zui_get);
 		SET_FUNCTION(krom, "zui_handle_get", krom_zui_handle_get);

@@ -20,6 +20,9 @@ class Zui {
 	public static var onTextHover: Void->Void = null;
 	public static var onDeselectText: Void->Void = null;
 	public static var onTabDrop: Handle->Int->Handle->Int->Void = null;
+	public static var textAreaLineNumbers = false;
+	public static var textAreaScrollPastEnd = false;
+	public static var textAreaColoring: TTextColoring = null;
 
 	public static var alwaysRedrawWindow(get, never): Bool;
 	static function get_alwaysRedrawWindow(): Bool { return Krom.zui_get(null, "zui_always_redraw_window"); }
@@ -199,27 +202,28 @@ class Zui {
 
 	public var g: Graphics;
 	public var t: zui.Theme;
-	public var ops: ZuiOptions; ////
-
+	public var font: kha.Font;
 	public var zui_: Dynamic;
 
 	public function new(ops: ZuiOptions) {
-		this.ops = ops; ////
 		zui_ = Krom.zui_init({ font: ops.font.font_, theme: ops.theme.theme_, scaleFactor: ops.scaleFactor, color_wheel: ops.color_wheel, black_white_gradient: ops.black_white_gradient });
 		current = this;
 		t = ops.theme;
+		font = ops.font;
 	}
 
-	// getFont()
-	// getScaleFactor
+	public function setFont(font: kha.Font) {
+		font.init(); // Make sure font_ is ready
+		this.font = font;
+		Krom.zui_set_font(zui_, font.font_);
+	}
 
 	public function SCALE(): Float {
-		// return ops.scaleFactor;
-		return 1.0;
+		return Krom.zui_get_scale(zui_);
 	}
 
 	public function setScale(factor: Float) {
-		Krom.zui_set_scale(factor);
+		Krom.zui_set_scale(zui_, factor);
 	}
 
 	public function begin(g: Graphics) {
@@ -233,6 +237,7 @@ class Zui {
 	}
 
 	public function beginRegion(g: Graphics, x: Int, y: Int, w: Int) {
+		current = this;
 		this.g = g;
 		Krom.zui_begin_region(zui_, x, y, w);
 	}
@@ -365,10 +370,6 @@ class Zui {
 		return t.ELEMENT_OFFSET * SCALE();
 	}
 
-	public static var textAreaLineNumbers = false;
-	public static var textAreaScrollPastEnd = false;
-	public static var textAreaColoring: TTextColoring = null;
-
 	public function floatInput(handle: Handle, label = "", align: Align = Left, precision = 1000.0): Float {
 		return Krom.zui_float_input(handle.handle_, label, align, precision);
 	}
@@ -398,8 +399,8 @@ class Zui {
 	}
 
 	public function MENUBAR_H(): Float {
-		// return ui.BUTTON_H() * 1.1 + 2 + ui.buttonOffsetY; ////
-		return 30;
+		var buttonOffsetY = (t.ELEMENT_H * SCALE() - t.BUTTON_H * SCALE()) / 2;
+		return t.BUTTON_H * SCALE() * 1.1 + 2 + buttonOffsetY;
 	}
 
 	public static var children: Map<String, Handle> = [];
@@ -520,7 +521,6 @@ typedef TTextColoring = {
 
 @:keep
 class Theme {
-
 	public var theme_: Dynamic;
 
 	public function new() {
@@ -660,13 +660,12 @@ class Theme {
 	function set_ROUND_CORNERS(a: Bool) { Krom.zui_theme_set(theme_, "ROUND_CORNERS", a); return a; }
 }
 
-@:enum abstract LinkStyle(Int) from Int {
-	var Line = 0;
-	var CubicBezier = 1;
-}
+// @:enum abstract LinkStyle(Int) from Int {
+// 	var Line = 0;
+// 	var CubicBezier = 1;
+// }
 
 class Nodes {
-
 	public static var excludeRemove: Array<String> = [];
 	public static var onLinkDrag: TNodeLink->Bool->Void = null;
 	public static var onSocketReleased: TNodeSocket->Void = null;
@@ -683,23 +682,15 @@ class Nodes {
 	public var panY = 0.0;
 	public var zoom = 1.0;
 	public var _inputStarted = false;
-
 	public var colorPickerCallback: kha.Color->Void = null;
 	public var linkDrag: TNodeLink = null;
-	public var handle = new Zui.Handle();
 
+	public var handle = new Zui.Handle();
+	public var ELEMENT_H = 25;
 	public var nodes_: Dynamic;
 
 	public function new() {
 		nodes_ = Krom.zui_nodes_init();
-	}
-
-	// public static dynamic function tr(id: String, vars: Map<String, String> = null) {
-	// 	return id;
-	// }
-
-	public function p(f: Float): Float {
-		return f;
 	}
 
 	public function getNode(nodes: Array<TNode>, id: Int): TNode {
@@ -732,6 +723,7 @@ class Nodes {
 
 	public function nodeCanvas(ui: Zui, canvas: TNodeCanvas) {
 
+		// TODO: deprecated
 		// Fill in optional values
 		for (n in canvas.nodes) {
 			for (soc in n.inputs) {
@@ -778,6 +770,8 @@ class Nodes {
 		canvas.name = canvas_.name;
 		canvas.nodes = canvas_.nodes;
 		canvas.links = canvas_.links;
+
+		ELEMENT_H = ui.t.ELEMENT_H + 2;
 	}
 
 	public function rgbaPopup(ui: Zui, nhandle: zui.Zui.Handle, val: kha.arrays.Float32Array, x: Int, y: Int) {
@@ -800,41 +794,81 @@ class Nodes {
 		}
 	}
 
-	public function NODE_H(canvas: TNodeCanvas, node: TNode): Int {
-		return 1;
-	}
-	public function NODE_W(node: TNode): Int {
-		return 1;
-	}
-	public function NODE_X(node: TNode): Float {
-		return 1;
-	}
-	public function NODE_Y(node: TNode): Float {
-		return 1;
-	}
-	public function BUTTONS_H(node: TNode): Int {
-		return 1;
-	}
-	public function OUTPUTS_H(sockets: Array<TNodeSocket>, length: Null<Int> = null): Int {
-		return 1;
-	}
-	public function INPUT_Y(canvas: TNodeCanvas, sockets: Array<TNodeSocket>, pos: Int): Int {
-		return 1;
-	}
-	public function OUTPUT_Y(sockets: Array<TNodeSocket>, pos: Int): Int {
-		return 1;
-	}
 	public function SCALE(): Float {
-		return 1;
+		return Krom.zui_nodes_scale();
 	}
+
 	public function PAN_X(): Float {
-		return 1;
+		return Krom.zui_nodes_pan_x();
 	}
+
 	public function PAN_Y(): Float {
-		return 1;
+		return Krom.zui_nodes_pan_y();
 	}
+
+	public function NODE_H(canvas: TNodeCanvas, node: TNode): Int {
+		return Std.int(LINE_H() * 1.2 + INPUTS_H(canvas, node.inputs) + OUTPUTS_H(node.outputs) + BUTTONS_H(node));
+	}
+
+	public function NODE_W(node: TNode): Int {
+		return Std.int((node.width != null ? node.width : 140) * SCALE());
+	}
+
+	public function NODE_X(node: TNode): Float {
+		return node.x * SCALE() + PAN_X();
+	}
+
+	public function NODE_Y(node: TNode): Float {
+		return node.y * SCALE() + PAN_Y();
+	}
+
+	public function BUTTONS_H(node: TNode): Int {
+		var h = 0.0;
+		for (but in node.buttons) {
+			if (but.type == "RGBA") h += 102 * SCALE() + LINE_H() * 5; // Color wheel + controls
+			else if (but.type == "VECTOR") h += LINE_H() * 4;
+			else if (but.type == "CUSTOM") h += LINE_H() * but.height;
+			else h += LINE_H();
+		}
+		return Std.int(h);
+	}
+
+	public function OUTPUTS_H(sockets: Array<TNodeSocket>, length: Null<Int> = null): Int {
+		var h = 0.0;
+		for (i in 0...(length == null ? sockets.length : length)) {
+			h += LINE_H();
+		}
+		return Std.int(h);
+	}
+
+	function inputLinked(canvas: TNodeCanvas, node_id: Int, i: Int): Bool {
+		for (l in canvas.links) if (l.to_id == node_id && l.to_socket == i) return true;
+		return false;
+	}
+
+	public function INPUTS_H(canvas: TNodeCanvas, sockets: Array<TNodeSocket>, length: Null<Int> = null): Int {
+		var h = 0.0;
+		for (i in 0...(length == null ? sockets.length : length)) {
+			if (sockets[i].type == "VECTOR" && sockets[i].display == 1 && !inputLinked(canvas, sockets[i].node_id, i)) h += LINE_H() * 4;
+			else h += LINE_H();
+		}
+		return Std.int(h);
+	}
+
+	public function INPUT_Y(canvas: TNodeCanvas, sockets: Array<TNodeSocket>, pos: Int): Int {
+		return Std.int(LINE_H() * 1.62) + INPUTS_H(canvas, sockets, pos);
+	}
+
+	public function OUTPUT_Y(sockets: Array<TNodeSocket>, pos: Int): Int {
+		return Std.int(LINE_H() * 1.62) + OUTPUTS_H(sockets, pos);
+	}
+
 	public function LINE_H(): Int {
-		return 1;
+		return Std.int(ELEMENT_H * SCALE());
+	}
+
+	public function p(f: Float): Float {
+		return f * SCALE();
 	}
 }
 

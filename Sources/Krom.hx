@@ -223,7 +223,9 @@ extern class Krom {
 	static function io_obj_parse(file_bytes: js.lib.ArrayBuffer, split_code: Int, start_pos: Int, udim: Bool): Dynamic;
 
 	static function zui_init(ops: Dynamic): Dynamic;
-	static function zui_set_scale(factor: Float): Void;
+	static function zui_get_scale(ui: Dynamic): Float;
+	static function zui_set_scale(ui: Dynamic, factor: Float): Void;
+	static function zui_set_font(ui: Dynamic, font: Dynamic): Void;
 	static function zui_begin(ui: Dynamic): Void;
 	static function zui_end(last: Bool): Void;
 	static function zui_begin_region(ui: Dynamic, x: Int, y: Int, w: Int): Void;
@@ -267,6 +269,9 @@ extern class Krom {
 	static function zui_nodes_init(): Dynamic;
 	static function zui_node_canvas(packed: js.lib.ArrayBuffer): js.lib.ArrayBuffer;
 	static function zui_nodes_rgba_popup(handle: Dynamic, val: js.lib.ArrayBuffer, x: Int, y: Int): Void;
+	static function zui_nodes_scale(): Float;
+	static function zui_nodes_pan_x(): Float;
+	static function zui_nodes_pan_y(): Float;
 	static function zui_get(ui: Dynamic, name: String): Dynamic;
 	static function zui_set(ui: Dynamic, name: String, val: Dynamic): Void;
 	static function zui_handle_get(handle: Dynamic, name: String): Dynamic;
