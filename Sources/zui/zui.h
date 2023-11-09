@@ -303,6 +303,7 @@ void zui_touch_move(int index, int x, int y);
 #endif
 void zui_theme_default(zui_theme_t *t);
 zui_t *zui_get_current();
+void zui_set_current(zui_t *current);
 zui_handle_t *zui_nest(zui_handle_t *handle, int id);
 void zui_set_scale(float factor);
 

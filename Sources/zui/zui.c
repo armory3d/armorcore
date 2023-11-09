@@ -105,6 +105,10 @@ zui_t *zui_get_current() {
 	return current;
 }
 
+void zui_set_current(zui_t *_current) {
+	current = _current;
+}
+
 zui_handle_t *zui_nest(zui_handle_t *handle, int id) {
 	++id; // Start at 1
 	if (handle->id == 0) handle->id = zui_nested_count + 1;
@@ -772,6 +776,7 @@ void zui_bake_elements() {
 		kinc_g4_clear(KINC_G4_CLEAR_COLOR, 0x00000000, 0, 0);
 		g2_set_color(0xffffffff);
 		g2_fill_circle(r, r, r, 0);
+		g2_end();
 
 		if (current->round_corner_image.width != 0) {
 			kinc_g4_render_target_destroy(&current->round_corner_image);
@@ -781,6 +786,7 @@ void zui_bake_elements() {
 		kinc_g4_clear(KINC_G4_CLEAR_COLOR, 0x00000000, 0, 0);
 		g2_set_color(0xffffffff);
 		g2_draw_circle(r, r, r, 0, 1);
+		g2_end();
 	}
 
 	g2_restore_render_target();

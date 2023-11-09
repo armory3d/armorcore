@@ -249,7 +249,7 @@ uint32_t zui_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 
 int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool color_preview/*, picker: Void->Void = NULL*/) {
 	zui_t *current = zui_get_current();
-	if (w == -1) w = current->_w;
+	if (w < 0) w = current->_w;
 	float r = zui_color_r(handle->color) / 255;
 	float g = zui_color_g(handle->color) / 255;
 	float b = zui_color_b(handle->color) / 255;
@@ -396,7 +396,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	if (h0->changed || h1->changed || h2->changed) handle->changed = current->changed = true;
 
 	// Do not close if user clicks
-	if (current->input_released && zui_input_in_rect(current->_window_x + px, current->_window_y + py, w, h == -1 ? (current->_y - py) : h) && current->input_released) {
+	if (current->input_released && zui_input_in_rect(current->_window_x + px, current->_window_y + py, w, h < 0 ? (current->_y - py) : h) && current->input_released) {
 		current->changed = true;
 	}
 

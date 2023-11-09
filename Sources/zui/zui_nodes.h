@@ -73,7 +73,8 @@ typedef struct zui_node_canvas {
 
 typedef struct zui_nodes {
 	bool nodes_drag;
-	zui_node_t *nodes_selected[32];
+	// zui_node_t *nodes_selected[32];
+	int nodes_selected_id[32];
 	int nodes_selected_count;
 	float pan_x;
 	float pan_y;
@@ -98,6 +99,9 @@ typedef struct zui_nodes {
 void zui_nodes_init(zui_nodes_t *nodes);
 void zui_node_canvas(zui_node_canvas_t *canvas);
 void zui_nodes_rgba_popup(zui_handle_t *nhandle, float *val, int x, int y);
+float ZUI_NODES_SCALE();
+float ZUI_NODES_PAN_X();
+float ZUI_NODES_PAN_Y();
 
 void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas);
 uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas);
