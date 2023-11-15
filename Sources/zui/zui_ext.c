@@ -8,8 +8,8 @@
 
 #define MATH_PI 3.14159265358979323846
 
-const char *data_path = "";
-const char last_path[512];
+static char data_path[128] = "";
+static char last_path[512];
 static zui_handle_t *wheel_selected_handle = NULL;
 static zui_handle_t *gradient_selected_handle = NULL;
 static zui_handle_t radio_handle;
@@ -77,7 +77,7 @@ void zui_rgb_to_hsv(float cr, float cg, float cb, float *out) {
 	out[2] = qx;
 }
 
-float zui_float_input(zui_handle_t *handle, const char *label, int align, float precision) {
+float zui_float_input(zui_handle_t *handle, char *label, int align, float precision) {
 	sprintf(handle->text, "%f", round(handle->value * precision) / precision);
 	char *text = zui_text_input(handle, label, align, true, false);
 	handle->value = atof(text);
@@ -85,30 +85,37 @@ float zui_float_input(zui_handle_t *handle, const char *label, int align, float 
 }
 
 void zui_init_path(zui_handle_t *handle, const char *system_id) {
-	// handle->text = strcmp(system_id, "Windows") == 0 ? "C:\\Users" : "/"; ////
+	strcpy(handle->text, strcmp(system_id, "Windows") == 0 ? "C:\\Users" : "/");
 	// %HOMEDRIVE% + %HomePath%
 	// ~
 }
 
 char *zui_str_replace(char *str, char *what, char *with) {
-    char *tmp;
-    int what_len = strlen(what);
-    char *ins = str;
-    int count;
-    for (count = 0; tmp = strstr(ins, what); ++count) {
-        ins = tmp + what_len;
-    }
-    int with_len = strlen(with);
-    char *result = tmp = malloc(strlen(str) + (with_len - what_len) * count + 1);
-    while (count--) {
-        ins = strstr(str, what);
-        int len_front = ins - str;
-        tmp = strncpy(tmp, str, len_front) + len_front;
-        tmp = strcpy(tmp, with) + with_len;
-        str += len_front + what_len;
-    }
-    strcpy(tmp, str);
-    return result;
+	char *result = str;
+	int what_len = strlen(what);
+	int with_len = strlen(with);
+	char *ins = str;
+	char *tmp;
+	int count;
+	for (count = 0; (tmp = strstr(ins, what)); ++count) {
+		ins = tmp + what_len;
+	}
+
+	// Must free the result
+	// char *result = tmp = malloc(strlen(str) + (with_len - what_len) * count + 1);
+	char buf[512];
+	tmp = &buf[0];
+
+	while (count--) {
+		ins = strstr(str, what);
+		int len_front = ins - str;
+		tmp = strncpy(tmp, str, len_front) + len_front;
+		tmp = strcpy(tmp, with) + with_len;
+		str += len_front + what_len;
+	}
+	strcpy(tmp, str);
+	strcpy(result, buf);
+	return result;
 }
 
 char *zui_file_browser(zui_handle_t *handle, bool folders_only) {
@@ -122,12 +129,12 @@ char *zui_file_browser(zui_handle_t *handle, bool folders_only) {
 		strcpy(cmd, "dir /b ");
 		if (folders_only) strcat(cmd, "/ad ");
 		sep = "\\";
-		// handle->text = zui_str_replace(handle->text, "\\\\", "\\"); //// free()
-		// handle->text = zui_str_replace(handle->text, "\r", ""); //// free()
+		zui_str_replace(handle->text, "\\\\", "\\");
+		zui_str_replace(handle->text, "\r", "");
 	}
-	if (handle->text[0] == 0) zui_init_path(handle, system_id);
+	if (handle->text[0] == '\0') zui_init_path(handle, system_id);
 
-	char save[256]; // Krom.getFilesLocation
+	char save[256];
 	strcpy(save, kinc_internal_get_files_location());
 	strcat(save, sep);
 	strcat(save, data_path);
@@ -169,7 +176,7 @@ char *zui_file_browser(zui_handle_t *handle, bool folders_only) {
 	int count = zui_line_count(str);
 	for (int i = 0; i < count; ++i) {
 		char *f = zui_extract_line(str, i);
-		if (f[0] == 0 || f[0] == '.') continue; // Skip hidden
+		if (f[0] == '\0' || f[0] == '.') continue; // Skip hidden
 		if (zui_button(f, ZUI_ALIGN_LEFT, "")) {
 			handle->changed = current->changed = true;
 			if (handle->text[strlen(handle->text) - 1] != sep[0]) strcat(handle->text, sep);
@@ -247,17 +254,21 @@ uint32_t zui_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 	return (a << 24) | (r << 16) | (g << 8) | b;
 }
 
+static zui_handle_t temp0;
+static zui_handle_t temp1;
+static zui_handle_t temp2;
+
 int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool color_preview/*, picker: Void->Void = NULL*/) {
 	zui_t *current = zui_get_current();
 	if (w < 0) w = current->_w;
-	float r = zui_color_r(handle->color) / 255;
-	float g = zui_color_g(handle->color) / 255;
-	float b = zui_color_b(handle->color) / 255;
+	float r = zui_color_r(handle->color) / 255.0f;
+	float g = zui_color_g(handle->color) / 255.0f;
+	float b = zui_color_b(handle->color) / 255.0f;
 	zui_rgb_to_hsv(r, g, b, ar);
 	float chue = ar[0];
 	float csat = ar[1];
 	float cval = ar[2];
-	float calpha = zui_color_a(handle->color) / 255;
+	float calpha = zui_color_a(handle->color) / 255.0f;
 	// Wheel
 	float px = current->_x;
 	float py = current->_y;
@@ -353,20 +364,20 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 
 	char *strings[] = {"RGB", "HSV", "Hex"};
 	int pos = zui_inline_radio(&radio_handle, strings, 3, ZUI_ALIGN_LEFT);
-	zui_handle_t *h0 = zui_nest(zui_nest(handle, 0), 0);
-	zui_handle_t *h1 = zui_nest(zui_nest(handle, 0), 1);
-	zui_handle_t *h2 = zui_nest(zui_nest(handle, 0), 2);
+	zui_handle_t *h0 = &temp0;
+	zui_handle_t *h1 = &temp1;
+	zui_handle_t *h2 = &temp2;
 	if (pos == 0) {
-		h0->value = zui_color_r(handle->color) / 255;
+		h0->value = zui_color_r(handle->color) / 255.0f;
 		float r = zui_slider(h0, "R", 0, 1, true, 100, true, ZUI_ALIGN_LEFT, true);
-		h1->value = zui_color_g(handle->color) / 255;
+		h1->value = zui_color_g(handle->color) / 255.0f;
 		float g = zui_slider(h1, "G", 0, 1, true, 100, true, ZUI_ALIGN_LEFT, true);
-		h2->value = zui_color_b(handle->color) / 255;
+		h2->value = zui_color_b(handle->color) / 255.0f;
 		float b = zui_slider(h2, "B", 0, 1, true, 100, true, ZUI_ALIGN_LEFT, true);
 		handle->color = zui_color(r * 255, g * 255, b * 255, 255);
 	}
 	else if (pos == 1) {
-		zui_rgb_to_hsv(zui_color_r(handle->color) / 255, zui_color_g(handle->color) / 255, zui_color_b(handle->color) / 255, ar);
+		zui_rgb_to_hsv(zui_color_r(handle->color) / 255.0f, zui_color_g(handle->color) / 255.0f, zui_color_b(handle->color) / 255.0f, ar);
 		h0->value = ar[0];
 		h1->value = ar[1];
 		h2->value = ar[2];
@@ -379,7 +390,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	else if (pos == 2) {
 		// handle->text = untyped (handle->color >> 0).toString(16);
 		char *hex_code = zui_text_input(handle, "#", ZUI_ALIGN_LEFT, true, false);
-		if (strlen(hex_code) >= 1 && hex_code[0] == "#") { // Allow # at the beginning
+		if (strlen(hex_code) >= 1 && hex_code[0] == '#') { // Allow # at the beginning
 			hex_code = strcpy(hex_code, hex_code + 1);
 		}
 		if (strlen(hex_code) == 3) { // 3 digit CSS style values like fa0 --> ffaa00
@@ -432,7 +443,7 @@ static void handle_line_select(zui_t *current, zui_handle_t *handle) {
 	else text_area_selection_start = -1;
 }
 
-char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *label, bool word_wrap) {
+char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label, bool word_wrap) {
 	zui_t *current = zui_get_current();
 	// handle->text = zui_str_replace(handle->text, "\t", "    "); //// free()
 	bool selected = current->text_selected_handle == handle; // Text being edited
@@ -444,7 +455,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, const char *
 	current->highlight_on_select = false;
 	current->tab_switch_enabled = false;
 
-	if (word_wrap && handle->text[0] != 0) {
+	if (word_wrap && handle->text[0] != '\0') {
 		bool cursor_set = false;
 		int cursor_pos = current->cursor_x;
 		for (int i = 0; i < handle->position; ++i) {

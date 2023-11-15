@@ -13,9 +13,6 @@
 #include <kinc/log.h>
 #include "../g2/g2_ext.h"
 
-#define MAX_INSTANCES 8
-static zui_t *instances[MAX_INSTANCES];
-static int instances_length;
 static zui_t *current = NULL;
 static void (*zui_on_border_hover)(zui_handle_t *, int) = NULL; // Mouse over window border, use for resizing
 static void (*zui_on_text_hover)(void) = NULL; // Mouse over text input, use to set I-cursor
@@ -30,9 +27,9 @@ static zui_t *zui_copy_receiver = NULL;
 static int zui_copy_frame = 0;
 static bool zui_combo_first = true;
 static char temp[1024];
-static zui_handle_t *zui_nested = NULL;
-static int zui_nested_count = 0;
 static zui_handle_t zui_combo_search_handle;
+zui_t *zui_instances[ZUI_MAX_INSTANCES];
+int zui_instances_count;
 bool zui_always_redraw_window = true; // Redraw cached window texture each frame or on changes only
 bool zui_touch_scroll = false; // Pan with finger to scroll
 bool zui_touch_hold = false; // Touch and hold finger for right click
@@ -40,6 +37,7 @@ bool zui_touch_tooltip = false; // Show extra tooltips above finger / on-screen 
 bool zui_is_cut = false;
 bool zui_is_copy = false;
 bool zui_is_paste = false;
+float krom_js_eval(char *str);
 
 float ZUI_SCALE() {
 	return current->ops.scale_factor;
@@ -109,17 +107,15 @@ void zui_set_current(zui_t *_current) {
 	current = _current;
 }
 
-zui_handle_t *zui_nest(zui_handle_t *handle, int id) {
-	++id; // Start at 1
-	if (handle->id == 0) handle->id = zui_nested_count + 1;
-	int hash = (handle->id << 16) | id;
-	for (int i = 0; i < zui_nested_count; i++) {
-		if (zui_nested[i].id == hash) return &zui_nested[i];
+zui_handle_t *zui_nest(zui_handle_t *handle, int pos) {
+	while(pos >= handle->children_count) {
+		handle->children_count++;
+		handle->children = realloc(handle->children, handle->children_count * sizeof(zui_handle_t *));
+		zui_handle_t *h = (zui_handle_t *)malloc(sizeof(zui_handle_t));
+		memset(h, 0, sizeof(zui_handle_t));
+		handle->children[handle->children_count - 1] = h;
 	}
-	zui_nested = realloc(zui_nested, (++zui_nested_count) * sizeof(zui_handle_t));
-	zui_nested[zui_nested_count - 1].initialized = false;
-	zui_nested[zui_nested_count - 1].id = hash;
-	return &zui_nested[zui_nested_count - 1];
+	return handle->children[pos];
 }
 
 void zui_fade_color(float alpha) {
@@ -148,12 +144,10 @@ void zui_rect(float x, float y, float w, float h, int color, float strength) {
 void zui_draw_rect(bool fill, float x, float y, float w, float h) {
 	float strength = 1.0;
 	if (!current->enabled) zui_fade_color(0.25);
-
 	x = (int)x;
 	y = (int)y;
 	w = (int)w;
 	h = (int)h;
-
 	if (fill) {
 		int r = current->filled_round_corner_image.width;
 		if (current->ops.theme->ROUND_CORNERS && current->enabled && r > 0 && w >= r * 2) {
@@ -196,48 +190,62 @@ bool zui_is_char(int code) {
 	return (code >= 65 && code <= 90) || (code >= 97 && code <= 122);
 }
 
-int zui_check_start(int i, char *text, char **start) {
-	// for (s in start) if (text.substr(i, s.length) == s) return s.length;
+int zui_check_start(int i, char *text, char **start, int start_count) {
+	for (int x = 0; x < start_count; ++x) {
+		char temp[128];
+		strncpy(temp, text + i, strlen(start[x]));
+		if (strcmp(temp, start[x]) == 0) {
+			return strlen(start[x]);
+		}
+	}
 	return 0;
 }
 
-zui_text_extract_t zui_extract_coloring(char *text, char *start, char *end, bool skip_first) {
-	zui_text_extract_t e;
-	e.colored = "";
-	e.uncolored = text;
-	return e;
-
-	// bool coloring = false;
-	// int start_from = 0;
-	// int start_length = 0;
-	// for (i in 0...text.length) {
-	// 	bool skip_first = false;
-	// 	// Check if upcoming text should be colored
-	// 	int length = zui_check_start(i, text, col.start);
-	// 	// Not touching another character
-	// 	var separated_left = i == 0 || !zui_is_char(text.charCodeAt(i - 1));
-	// 	var separated_right = i + length >= text.length || !zui_is_char(text.charCodeAt(i + length));
-	// 	var is_separated = separated_left && separated_right;
-	// 	// Start coloring
-	// 	if (length > 0 && (!coloring || col.end == "") && (!col.separated || is_separated)) {
-	// 		coloring = true;
-	// 		start_from = i;
-	// 		start_length = length;
-	// 		if (col.end != "" && col.end != "\n") skip_first = true;
-	// 	}
-	// 	// End coloring
-	// 	else if (col.end == "") {
-	// 		if (i == start_from + start_length) coloring = false;
-	// 	}
-	// 	else if (text.substr(i, col.end.length) == col.end) {
-	// 		coloring = false;
-	// 	}
-	// 	// If true, add current character to colored string
-	// 	var b = coloring && !skip_first;
-	// 	res.colored += b ? text.charAt(i) : " ";
-	// 	res.uncolored += b ? " " : text.charAt(i);
-	// }
-	// return res;
+zui_text_extract_t zui_extract_coloring(char *text, zui_coloring_t *col) {
+	zui_text_extract_t res;
+	bool coloring = false;
+	int start_from = 0;
+	int start_length = 0;
+	for (int i = 0; i < strlen(text); ++i) {
+		bool skip_first = false;
+		// Check if upcoming text should be colored
+		int length = zui_check_start(i, text, col->start, col->start_count);
+		// Not touching another character
+		bool separated_left = i == 0 || !zui_is_char(text[i - 1]);
+		bool separated_right = i + length >= strlen(text) || !zui_is_char(text[i + length]);
+		bool is_separated = separated_left && separated_right;
+		// Start coloring
+		if (length > 0 && (!coloring || col->end[0] == '\0') && (!col->separated || is_separated)) {
+			coloring = true;
+			start_from = i;
+			start_length = length;
+			if (col->end[0] != '\0' && col->end[0] != '\n') skip_first = true;
+		}
+		// End coloring
+		else if (col->end[0] == '\0') {
+			if (i == start_from + start_length) coloring = false;
+		}
+		// else if (text.substr(i, col.end.length) == col.end) {
+		else if (strncmp(text + i, col->end, strlen(col->end)) == 0) {
+			coloring = false;
+		}
+		// If true, add current character to colored string
+		int len_c = strlen(res.colored);
+		int len_uc = strlen(res.uncolored);
+		if (coloring && !skip_first) {
+			res.colored[len_c] = text[i];
+			res.colored[len_c + 1] = '\0';
+			res.uncolored[len_uc] = ' ';
+			res.uncolored[len_uc + 1] = '\0';
+		}
+		else {
+			res.colored[len_c] = ' ';
+			res.colored[len_c + 1] = '\0';
+			res.uncolored[len_uc] = text[i];
+			res.uncolored[len_uc + 1] = '\0';
+		}
+	}
+	return res;
 }
 
 void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool truncation) {
@@ -268,7 +276,7 @@ void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool
 		for (int i = 0; i < len; ++i) {
 			if (text[i] > 126 && !g2_font_has_glyph((int)text[i])) {
 				int glyph = text[i];
-				// g2_font_add_glyphs(&glyph, 1);
+				g2_font_add_glyph(glyph);
 			}
 		}
 	}
@@ -286,16 +294,17 @@ void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool
 	}
 	else {
 		// Monospace fonts only for now
-		// for (coloring in current->text_coloring->colorings) {
-		// 	zui_text_extract_t result = zui_extract_coloring(text, coloring);
-		// 	if (result.colored != "") {
-		// 		g2_set_color(coloring->color);
-		// 		g2_draw_string(result.colored, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
-		// 	}
-		// 	text = result.uncolored;
-		// }
-		// g2_set_color(current->text_coloring->default_color);
-		// g2_draw_string(text, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
+		for (int i = 0; i < current->text_coloring->colorings_count; ++i) {
+			zui_coloring_t *coloring = current->text_coloring->colorings[i];
+			zui_text_extract_t result = zui_extract_coloring(text, coloring);
+			if (result.colored[0] != '\0') {
+				g2_set_color(coloring->color);
+				g2_draw_string(result.colored, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
+			}
+			text = result.uncolored;
+		}
+		g2_set_color(current->text_coloring->default_color);
+		g2_draw_string(text, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
 	}
 }
 
@@ -445,10 +454,11 @@ void zui_scroll(float delta) {
 }
 
 int zui_line_count(char *str) {
-	if (str == NULL || str[0] == 0) return 0;
+	// if (str == NULL || str[0] == '\0') return 0;
+	if (str == NULL) return 0;
 	int i = 0;
 	int count = 1;
-	while (str[i] != 0) {
+	while (str[i] != '\0') {
 		if (str[i] == '\n') count++;
 		i++;
 	}
@@ -504,8 +514,7 @@ void zui_draw_tooltip_text(bool bind_global_g) {
 	g2_set_font(current->ops.font, current->font_size);
 	g2_set_color(current->ops.theme->ACCENT_COL);
 	for (int i = 0; i < line_count; ++i) {
-		// g2_draw_string(zui_extract_line(current->tooltip_text, i), current->tooltip_x + 5, current->tooltip_y + off + i * current->font_size);
-		g2_draw_string(zui_extract_line(current->tooltip_text, i), current->tooltip_x + 5, current->font_offset_y * 0.7 + current->tooltip_y + off + i * current->font_size);
+		g2_draw_string(zui_extract_line(current->tooltip_text, i), current->tooltip_x + 5, current->tooltip_y + off + i * current->font_size);
 	}
 }
 
@@ -567,7 +576,7 @@ void zui_draw_tooltip(bool bind_global_g) {
 		g2_draw_string(current->text_selected, x - x_off, y - y_off);
 	}
 
-	if (current->tooltip_text[0] != 0 || current->tooltip_img != NULL || current->tooltip_rt != NULL) {
+	if (current->tooltip_text[0] != '\0' || current->tooltip_img != NULL || current->tooltip_rt != NULL) {
 		if (zui_input_changed()) {
 			current->tooltip_shown = false;
 			current->tooltip_wait = current->input_dx == 0 && current->input_dy == 0; // Wait for movement before showing up again
@@ -580,7 +589,7 @@ void zui_draw_tooltip(bool bind_global_g) {
 		if (!current->tooltip_wait && kinc_time() - current->tooltip_time > ZUI_TOOLTIP_DELAY()) {
 			if (current->tooltip_img != NULL) zui_draw_tooltip_image(bind_global_g);
 			else if (current->tooltip_rt != NULL) zui_draw_tooltip_rt(bind_global_g);
-			if (current->tooltip_text[0] != 0) zui_draw_tooltip_text(bind_global_g);
+			if (current->tooltip_text[0] != '\0') zui_draw_tooltip_text(bind_global_g);
 		}
 	}
 	else current->tooltip_shown = false;
@@ -656,13 +665,12 @@ void zui_draw_combo(bool begin /*= true*/) {
 	float unroll_right = current->_x + current->combo_selected_w * 2 < kinc_window_width(0) - current->window_border_right ? 1 : -1;
 	bool reset_position = false;
 	char search[512];
-	search[0] = 0;
+	search[0] = '\0';
 	if (current->combo_search_bar) {
 		if (unroll_up) current->_y -= ZUI_ELEMENT_H() * 2;
-		if (zui_combo_first) zui_combo_search_handle.text[0] = 0; ////
+		if (zui_combo_first) zui_combo_search_handle.text[0] = '\0';
 		zui_fill(0, 0, current->_w / ZUI_SCALE(), ZUI_ELEMENT_H() / ZUI_SCALE(), current->ops.theme->SEPARATOR_COL);
-		// search = zui_text_input(&zui_combo_search_handle, "", ZUI_ALIGN_LEFT, true, true);
-		zui_text_input(&zui_combo_search_handle, "", ZUI_ALIGN_LEFT, true, true);
+		strcpy(search, zui_text_input(&zui_combo_search_handle, "", ZUI_ALIGN_LEFT, true, true));
 		zui_lower_case(search, search);
 		if (current->is_released) zui_combo_first = true; // Keep combo open
 		if (zui_combo_first) {
@@ -676,8 +684,9 @@ void zui_draw_combo(bool begin /*= true*/) {
 	for (int i = 0; i < current->combo_selected_count; ++i) {
 		char str[512];
 		zui_lower_case(str, current->combo_selected_texts[i]);
-		if (strlen(search) > 0 && strstr(str, search) == NULL)
+		if (strlen(search) > 0 && strstr(str, search) == NULL) {
 			continue; // Don't show items that don't fit the current search pattern
+		}
 
 		if (reset_position) { // The search has changed, select first entry that matches
 			current->combo_to_submit = current->combo_selected_handle->position = i;
@@ -800,7 +809,7 @@ void zui_begin_region(zui_t *ui, int x, int y, int w) {
 	}
 	current->changed = false;
 	current->current_window = NULL;
-	current->tooltip_text[0] = 0;
+	current->tooltip_text[0] = '\0';
 	current->tooltip_img = NULL;
 	current->tooltip_rt = NULL;
 	current->_window_x = 0;
@@ -834,9 +843,9 @@ void zui_set_cursor_to_input(int align) {
 void zui_start_text_edit(zui_handle_t *handle, int align) {
 	current->is_typing = true;
 	current->submit_text_handle = current->text_selected_handle;
-	current->text_to_submit = current->text_selected;
+	strcpy(current->text_to_submit, current->text_selected);
 	current->text_selected_handle = handle;
-	current->text_selected = handle->text;
+	strcpy(current->text_selected, handle->text);
 	current->cursor_x = strlen(handle->text);
 	if (current->tab_pressed) {
 		current->tab_pressed = false;
@@ -853,16 +862,16 @@ void zui_start_text_edit(zui_handle_t *handle, int align) {
 void zui_submit_text_edit() {
 	current->changed = strcmp(current->submit_text_handle->text, current->text_to_submit) != 0;
 	current->submit_text_handle->changed = current->changed;
-	// current->submit_text_handle->text = current->text_to_submit; ////
+	strcpy(current->submit_text_handle->text, current->text_to_submit);
 	current->submit_text_handle = NULL;
-	current->text_to_submit[0] = 0;
-	current->text_selected[0] = 0;
+	current->text_to_submit[0] = '\0';
+	current->text_selected[0] = '\0';
 }
 
 void zui_deselect_text() {
 	if (current->text_selected_handle == NULL) return;
 	current->submit_text_handle = current->text_selected_handle;
-	current->text_to_submit = current->text_selected;
+	strcpy(current->text_to_submit, current->text_selected);
 	current->text_selected_handle = NULL;
 	current->is_typing = false;
 	if (current->current_window != NULL) current->current_window->redraws = 2;
@@ -871,8 +880,37 @@ void zui_deselect_text() {
 	if (zui_on_deselect_text != NULL) zui_on_deselect_text();
 }
 
+void zui_remove_char_at(char *str, int at) {
+	int len = strlen(str);
+	for (int i = at; i <= len; ++i) {
+		str[i - 1] = str[i];
+	}
+}
+
+void zui_remove_chars_at(char *str, int at, int count) {
+	for (int i = 0; i < count; ++i) {
+		zui_remove_char_at(str, at);
+	}
+}
+
+void zui_insert_char_at(char *str, int at, char c) {
+	int len = strlen(str);
+	for (int i = len + 1; i > at; --i) {
+		str[i] = str[i - 1];
+	}
+	str[at] = c;
+}
+
+void zui_insert_chars_at(char *str, int at, char *cs) {
+	int len = strlen(cs);
+	for (int i = 0; i < len; ++i) {
+		zui_insert_char_at(str, at, cs[i]);
+	}
+}
+
 void zui_update_text_edit(int align, bool editable, bool live_update) {
-	char *text = current->text_selected;
+	char text[256];
+	strcpy(text, current->text_selected);
 	if (current->is_key_pressed) { // Process input
 		if (current->key_code == KINC_KEY_LEFT) { // Move cursor
 			if (current->cursor_x > 0) current->cursor_x--;
@@ -882,34 +920,38 @@ void zui_update_text_edit(int align, bool editable, bool live_update) {
 		}
 		else if (editable && current->key_code == KINC_KEY_BACKSPACE) { // Remove char
 			if (current->cursor_x > 0 && current->highlight_anchor == current->cursor_x) {
-				// text = text.substr(0, current->cursor_x - 1) + text.substr(current->cursor_x, strlen(text)); ////
+				zui_remove_char_at(text, current->cursor_x);
 				current->cursor_x--;
 			}
 			else if (current->highlight_anchor < current->cursor_x) {
-				// text = text.substr(0, current->highlight_anchor) + text.substr(current->cursor_x, strlen(text)); ////
+				int count = current->cursor_x - current->highlight_anchor;
+				zui_remove_chars_at(text, current->highlight_anchor, count);
 				current->cursor_x = current->highlight_anchor;
 			}
 			else {
-				// text = text.substr(0, current->cursor_x) + text.substr(current->highlight_anchor, strlen(text)); ////
+				int count = current->highlight_anchor - current->cursor_x;
+				zui_remove_chars_at(text, current->cursor_x, count);
 			}
 		}
 		else if (editable && current->key_code == KINC_KEY_DELETE) {
 			if (current->highlight_anchor == current->cursor_x) {
-				// text = text.substr(0, current->cursor_x) + text.substr(current->cursor_x + 1); ////
+				zui_remove_char_at(text, current->cursor_x);
 			}
 			else if (current->highlight_anchor < current->cursor_x) {
-				// text = text.substr(0, current->highlight_anchor) + text.substr(current->cursor_x, strlen(text)); ////
+				int count = current->cursor_x - current->highlight_anchor;
+				zui_remove_chars_at(text, current->highlight_anchor, count);
 				current->cursor_x = current->highlight_anchor;
 			}
 			else {
-				// text = text.substr(0, current->cursor_x) + text.substr(current->highlight_anchor, strlen(text)); ////
+				int count = current->highlight_anchor - current->cursor_x;
+				zui_remove_chars_at(text, current->cursor_x, count);
 			}
 		}
 		else if (current->key_code == KINC_KEY_RETURN) { // Deselect
 			zui_deselect_text();
 		}
 		else if (current->key_code == KINC_KEY_ESCAPE) { // Cancel
-			current->text_selected = current->text_selected_handle->text;
+			strcpy(current->text_selected, current->text_selected_handle->text);
 			zui_deselect_text();
 		}
 		else if (current->key_code == KINC_KEY_TAB && current->tab_switch_enabled && !current->is_ctrl_down) { // Next field
@@ -935,36 +977,51 @@ void zui_update_text_edit(int align, bool editable, bool live_update) {
 				 current->key_code != KINC_KEY_ALT &&
 				 current->key_code != KINC_KEY_UP &&
 				 current->key_code != KINC_KEY_DOWN &&
-				 // current->key_char != 0 &&
-				 // current->key_char != "" &&
 				 current->key_char >= 32) {
-			// text = text.substr(0, current->highlight_anchor) + current->key_char + text.substr(current->cursor_x); ////
+			zui_remove_chars_at(text, current->highlight_anchor, current->cursor_x - current->highlight_anchor);
+			zui_insert_char_at(text, current->highlight_anchor, current->key_char);
+
 			current->cursor_x = current->cursor_x + 1 > strlen(text) ? strlen(text) : current->cursor_x + 1;
 		}
 		bool selecting = current->is_shift_down && (current->key_code == KINC_KEY_LEFT || current->key_code == KINC_KEY_RIGHT || current->key_code == KINC_KEY_SHIFT);
 		// isCtrlDown && isAltDown is the condition for AltGr was pressed
 		// AltGr is part of the German keyboard layout and part of key combinations like AltGr + e -> €
-		if (!selecting && (!current->is_ctrl_down || (current->is_ctrl_down && current->is_alt_down))) current->highlight_anchor = current->cursor_x;
+		if (!selecting && (!current->is_ctrl_down || (current->is_ctrl_down && current->is_alt_down))) {
+			current->highlight_anchor = current->cursor_x;
+		}
 	}
 
-	if (editable && zui_text_to_paste[0] != 0) { // Process cut copy paste
-		// text = text.substr(0, current->highlight_anchor) + zui_text_to_paste + text.substr(current->cursor_x); //// strncpy() + \0
+	if (editable && zui_text_to_paste[0] != '\0') { // Process cut copy paste
+		zui_remove_chars_at(text, current->highlight_anchor, current->cursor_x - current->highlight_anchor);
+		zui_insert_chars_at(text, current->highlight_anchor, zui_text_to_paste);
 		current->cursor_x += strlen(zui_text_to_paste);
 		current->highlight_anchor = current->cursor_x;
 		zui_text_to_paste[0] = 0;
 		zui_is_paste = false;
 	}
-	if (current->highlight_anchor == current->cursor_x) strcpy(zui_text_to_copy, text); // Copy
-	// else if (current->highlight_anchor < current->cursor_x) zui_text_to_copy = text.substring(current->highlight_anchor, current->cursor_x); ////
-	// else zui_text_to_copy = text.substring(current->cursor_x, current->highlight_anchor); ////
+	if (current->highlight_anchor == current->cursor_x) {
+		strcpy(zui_text_to_copy, text); // Copy
+	}
+	else if (current->highlight_anchor < current->cursor_x) {
+		int len = current->cursor_x - current->highlight_anchor;
+		strncpy(zui_text_to_copy, text + current->highlight_anchor, len);
+		zui_text_to_copy[len] = '\0';
+	}
+	else {
+		int len = current->highlight_anchor - current->cursor_x;
+		strncpy(zui_text_to_copy, text + current->cursor_x, len);
+		zui_text_to_copy[len] = '\0';
+	}
 	if (editable && zui_is_cut) { // Cut
-		if (current->highlight_anchor == current->cursor_x) text = "";
+		if (current->highlight_anchor == current->cursor_x) {
+			text[0] = '\0';
+		}
 		else if (current->highlight_anchor < current->cursor_x) {
-			// text = text.substr(0, current->highlight_anchor) + text.substr(current->cursor_x, strlen(text)); ////
+			zui_remove_chars_at(text, current->highlight_anchor, current->cursor_x - current->highlight_anchor);
 			current->cursor_x = current->highlight_anchor;
 		}
 		else {
-			// text = text.substr(0, current->cursor_x) + text.substr(current->highlight_anchor, strlen(text)); ////
+			zui_remove_chars_at(text, current->cursor_x, current->highlight_anchor - current->cursor_x);
 		}
 	}
 
@@ -979,34 +1036,35 @@ void zui_update_text_edit(int align, bool editable, bool live_update) {
 			istart = current->highlight_anchor;
 			iend = current->cursor_x;
 		}
-		// char *hlstr = text.substr(istart, iend - istart);
-		// float hlstrw = g2_string_width(current->ops.font, current->font_size, hlstr);
-		// float start_off = g2_string_width(current->ops.font, current->font_size, text.substr(0, istart));
-		// float hl_start = align == ZUI_ALIGN_LEFT ? current->_x + start_off + off : current->_x + current->_w - hlstrw - off;
-		// if (align == ZUI_ALIGN_RIGHT) {
-		// 	hl_start -= g2_string_width(current->ops.font, current->font_size, text.substr(iend, strlen(text)));
-		// }
-		// g2_set_color(current->ops.theme->ACCENT_SELECT_COL);
-		// g2_fill_rect(hl_start, current->_y + current->button_offset_y * 1.5, hlstrw, cursor_height);
+
+		float hlstrw = g2_sub_string_width(current->ops.font, current->font_size, text, istart, iend);
+		float start_off = g2_sub_string_width(current->ops.font, current->font_size, text, 0, istart);
+		float hl_start = align == ZUI_ALIGN_LEFT ? current->_x + start_off + off : current->_x + current->_w - hlstrw - off;
+		if (align == ZUI_ALIGN_RIGHT) {
+			hl_start -= g2_sub_string_width(current->ops.font, current->font_size, text, iend, strlen(text));
+		}
+		g2_set_color(current->ops.theme->ACCENT_SELECT_COL);
+		g2_fill_rect(hl_start, current->_y + current->button_offset_y * 1.5, hlstrw, cursor_height);
 	}
 
 	// Draw cursor
-	// char *str = align == ZUI_ALIGN_LEFT ? text.substr(0, current->cursor_x) : text.substring(current->cursor_x, strlen(text));
-	// float strw = g2_string_width(current->ops.font, current->font_size, str);
-	// float cursor_x = align == ZUI_ALIGN_LEFT ? current->_x + strw + off : current->_x + current->_w - strw - off;
-	// g2_set_color(current->ops.theme->TEXT_COL); // Cursor
-	// g2_fill_rect(current->cursor_x, current->_y + current->button_offset_y * 1.5, 1 * ZUI_SCALE(), cursor_height);
+	int str_start = align == ZUI_ALIGN_LEFT ? 0 : current->cursor_x;
+	int str_length = align == ZUI_ALIGN_LEFT ? current->cursor_x : (strlen(text) - current->cursor_x);
+	float strw = g2_sub_string_width(current->ops.font, current->font_size, text, str_start, str_length);
+	float cursor_x = align == ZUI_ALIGN_LEFT ? current->_x + strw + off : current->_x + current->_w - strw - off;
+	g2_set_color(current->ops.theme->TEXT_COL); // Cursor
+	g2_fill_rect(cursor_x, current->_y + current->button_offset_y * 1.5, 1.0 * ZUI_SCALE(), cursor_height);
 
-	current->text_selected = (char *)text;
+	strcpy(current->text_selected, text);
 	if (live_update && current->text_selected_handle != NULL) {
 		current->text_selected_handle->changed = current->text_selected_handle->text != current->text_selected;
-		// current->text_selected_handle->text = current->text_selected; ////
+		strcpy(current->text_selected_handle->text, current->text_selected);
 	}
 }
 
 void zui_set_hovered_tab_name(char *name) {
 	if (zui_input_in_rect(current->_window_x, current->_window_y, current->_window_w, current->_window_h)) {
-		// current->hovered_tab_name = name; // !!!!
+		strcpy(current->hovered_tab_name, name);
 		current->hovered_tab_x = current->_window_x;
 		current->hovered_tab_y = current->_window_y;
 		current->hovered_tab_w = current->_window_w;
@@ -1097,7 +1155,7 @@ void zui_draw_tabs() {
 		else {
 			tab_x += current->_w + 1;
 		}
-		// zui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w, tab_h);
+		// zui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w, tab_h); // Round corners
 		g2_fill_rect(current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w, tab_h);
 		g2_set_color(current->ops.theme->BUTTON_TEXT_COL);
 		if (!selected) zui_fade_color(0.65);
@@ -1105,14 +1163,18 @@ void zui_draw_tabs() {
 
 		if (selected) { // Hide underline for active tab
 			if (current->tab_vertical) {
+				// Hide underline
 				// g2_set_color(current->ops.theme->WINDOW_BG_COL);
 				// g2_fill_rect(current->_x + current->button_offset_y + current->_w - 1, current->_y + current->button_offset_y - 1, 2, tab_h + current->button_offset_y);
+				// Highlight
 				g2_set_color(current->ops.theme->HIGHLIGHT_COL);
 				g2_fill_rect(current->_x + current->button_offset_y, current->_y + current->button_offset_y - 1, 2, tab_h + current->button_offset_y);
 			}
 			else {
+				// Hide underline
 				g2_set_color(current->ops.theme->WINDOW_BG_COL);
 				g2_fill_rect(current->_x + current->button_offset_y, current->_y + current->button_offset_y + tab_h, current->_w, 1);
+				// Highlight
 				g2_set_color(current->ops.theme->HIGHLIGHT_COL);
 				g2_fill_rect(current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w, 2);
 			}
@@ -1187,13 +1249,17 @@ void zui_draw_radio(bool selected, bool hover) {
 	float x = current->_x + current->radio_offset_x;
 	float y = current->_y + current->radio_offset_y;
 	g2_set_color(hover ? current->ops.theme->ACCENT_HOVER_COL : current->ops.theme->ACCENT_COL);
-	// zui_draw_rect(current->ops.theme->FILL_ACCENT_BG, x, y, ZUI_CHECK_SIZE(), ZUI_CHECK_SIZE()); // Bg
+	// Rect bg
+	// zui_draw_rect(current->ops.theme->FILL_ACCENT_BG, x, y, ZUI_CHECK_SIZE(), ZUI_CHECK_SIZE());
+	// Circle bg
 	g2_draw_render_target(&current->radio_image, x, y);
 
 	if (selected) { // Check
 		g2_set_color(current->ops.theme->ACCENT_SELECT_COL);
 		if (!current->enabled) zui_fade_color(0.25);
+		// Rect
 		// g2_fill_rect(x + current->radio_select_offset_x, y + current->radio_select_offset_y, ZUI_CHECK_SELECT_SIZE(), ZUI_CHECK_SELECT_SIZE());
+		// Circle
 		g2_draw_render_target(&current->radio_select_image, x + current->radio_select_offset_x, y + current->radio_select_offset_y);
 	}
 }
@@ -1237,8 +1303,8 @@ void zui_set_scale(float factor) {
 }
 
 void zui_init(zui_t *ui, zui_options_t ops) {
-	assert(instances_length < MAX_INSTANCES);
-	instances[instances_length++] = ui;
+	assert(zui_instances_count < ZUI_MAX_INSTANCES);
+	zui_instances[zui_instances_count++] = ui;
 	current = ui;
 	memset(current, 0, sizeof(zui_t));
 	current->ops = ops;
@@ -1495,15 +1561,17 @@ bool zui_button(char *text, int align, char *label/*, kinc_g4_texture_t *icon, i
 		zui_draw_string(label, current->ops.theme->TEXT_OFFSET, 0, align == ZUI_ALIGN_RIGHT ? ZUI_ALIGN_LEFT : ZUI_ALIGN_RIGHT, true);
 	}
 
-	// if (icon != NULL) {
-	// 	g2_set_color(0xffffffff);
-	// 	if (current->image_invert_y) {
-	// 		g2_draw_scaled_sub_image(icon, sx, sy, sw, sh, _x + current->button_offset_y, _y - 1 + sh, sw, -sh);
-	// 	}
-	// 	else {
-	// 		g2_draw_scaled_sub_image(icon, sx, sy, sw, sh, _x + current->button_offset_y, _y - 1, sw, sh);
-	// 	}
-	// }
+	/*
+	if (icon != NULL) {
+		g2_set_color(0xffffffff);
+		if (current->image_invert_y) {
+			g2_draw_scaled_sub_image(icon, sx, sy, sw, sh, _x + current->button_offset_y, _y - 1 + sh, sw, -sh);
+		}
+		else {
+			g2_draw_scaled_sub_image(icon, sx, sy, sw, sh, _x + current->button_offset_y, _y - 1, sw, sh);
+		}
+	}
+	*/
 
 	zui_end_element();
 	return released;
@@ -1733,7 +1801,7 @@ char *zui_text_input(zui_handle_t *handle, char *label, int align, bool editable
 	if (current->text_selected_handle == handle) zui_update_text_edit(align, editable, live_update);
 	if (current->submit_text_handle == handle) zui_submit_text_edit();
 
-	if (label[0] != 0) {
+	if (label[0] != '\0') {
 		g2_set_color(current->ops.theme->LABEL_COL); // Label
 		int label_align = align == ZUI_ALIGN_RIGHT ? ZUI_ALIGN_LEFT : ZUI_ALIGN_RIGHT;
 		zui_draw_string(label, label_align == ZUI_ALIGN_LEFT ? current->ops.theme->TEXT_OFFSET : 0, 0, label_align, true);
@@ -1768,7 +1836,7 @@ bool zui_check(zui_handle_t *handle, char *text, char *label) {
 	g2_set_color(current->ops.theme->TEXT_COL); // Text
 	zui_draw_string(text, current->title_offset_x, 0, ZUI_ALIGN_LEFT, true);
 
-	if (label[0] != 0) {
+	if (label[0] != '\0') {
 		g2_set_color(current->ops.theme->LABEL_COL);
 		zui_draw_string(label, current->ops.theme->TEXT_OFFSET, 0, ZUI_ALIGN_RIGHT, true);
 	}
@@ -1797,7 +1865,7 @@ bool zui_radio(zui_handle_t *handle, int position, char *text, char *label) {
 	g2_set_color(current->ops.theme->TEXT_COL); // Text
 	zui_draw_string(text, current->title_offset_x, 0, ZUI_ALIGN_LEFT, true);
 
-	if (label[0] != 0) {
+	if (label[0] != '\0') {
 		g2_set_color(current->ops.theme->LABEL_COL);
 		zui_draw_string(label, current->ops.theme->TEXT_OFFSET, 0, ZUI_ALIGN_RIGHT, true);
 	}
@@ -1861,13 +1929,14 @@ int zui_combo(zui_handle_t *handle, char **texts, int count, char *label, bool s
 	int y = current->_y + current->arrow_offset_y + 3;
 
 	// if (handle == current->combo_selected_handle) {
+	//	// Flip arrow when combo is open
 	//	g2_fill_triangle(x, y, x + ZUI_ARROW_SIZE(), y, x + ZUI_ARROW_SIZE() / 2, y - ZUI_ARROW_SIZE() / 2);
 	// }
 	// else {
 		g2_fill_triangle(x, y, x + ZUI_ARROW_SIZE(), y, x + ZUI_ARROW_SIZE() / 2, y + ZUI_ARROW_SIZE() / 2);
 	// }
 
-	if (show_label && label[0] != 0) {
+	if (show_label && label[0] != '\0') {
 		if (align == ZUI_ALIGN_LEFT) current->_x -= 15;
 		g2_set_color(current->ops.theme->LABEL_COL);
 		zui_draw_string(label, current->ops.theme->TEXT_OFFSET, 0, align == ZUI_ALIGN_LEFT ? ZUI_ALIGN_RIGHT : ZUI_ALIGN_LEFT, true);
@@ -1925,7 +1994,7 @@ float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool fi
 	// Text edit
 	bool start_edit = (zui_get_released(ZUI_ELEMENT_H()) || current->tab_pressed) && text_edit;
 	if (start_edit) { // Mouse did not move
-		// sprintf(handle->text, "%f", handle->value);
+		sprintf(handle->text, "%.2g", handle->value);
 		zui_start_text_edit(handle, ZUI_ALIGN_LEFT);
 		handle->changed = current->changed = true;
 	}
@@ -1935,11 +2004,8 @@ float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool fi
 	}
 	if (current->submit_text_handle == handle) {
 		zui_submit_text_edit();
-		// try {
-		// 	handle->value = js.Lib.eval(handle.text);
-		// }
-		// catch(_) {}
-		handle->value = atof(handle->text);
+		handle->value = krom_js_eval(handle->text);
+		// handle->value = atof(handle->text);
 		handle->changed = current->changed = true;
 	}
 
@@ -2001,11 +2067,11 @@ void zui_end(bool last) {
 	if (last) zui_end_input();
 }
 
-void zui_set_input_position(int x, int y) {
-	current->input_dx += x - current->input_x;
-	current->input_dy += y - current->input_y;
-	current->input_x = x;
-	current->input_y = y;
+void zui_set_input_position(zui_t *ui, int x, int y) {
+	ui->input_dx += x - ui->input_x;
+	ui->input_dy += y - ui->input_y;
+	ui->input_x = x;
+	ui->input_y = y;
 }
 
 // Useful for drag and drop operations
@@ -2013,115 +2079,82 @@ char *zui_hovered_tab_name() {
 	return zui_input_in_rect(current->hovered_tab_x, current->hovered_tab_y, current->hovered_tab_w, current->hovered_tab_h) ? current->hovered_tab_name : "";
 }
 
-void zui_mouse_down(int button, int x, int y) {
-	zui_t *_current = current;
-	for (int i = 0; i < instances_length; ++ i) {
-		current = instances[i];
-
-		if (current == NULL) return;
-		if (current->pen_in_use) return;
-		if (button == 0) { current->input_started = current->input_down = true; }
-		else 			 { current->input_started_r = current->input_down_r = true; }
-		current->input_started_time = kinc_time();
-		#if defined(KORE_ANDROID) || defined(KORE_IOS)
-		zui_set_input_position(x, y);
-		#endif
-		current->input_started_x = x;
-		current->input_started_y = y;
-	}
-	current = _current;
+void zui_mouse_down(zui_t *ui, int button, int x, int y) {
+	if (ui->pen_in_use) return;
+	if (button == 0) { ui->input_started = ui->input_down = true; }
+	else { ui->input_started_r = ui->input_down_r = true; }
+	ui->input_started_time = kinc_time();
+	#if defined(KORE_ANDROID) || defined(KORE_IOS)
+	zui_set_input_position(ui, x, y);
+	#endif
+	ui->input_started_x = x;
+	ui->input_started_y = y;
 }
 
-void zui_mouse_move(int x, int y, int movement_x, int movement_y) {
-	zui_t *_current = current;
-	for (int i = 0; i < instances_length; ++ i) {
-		current = instances[i];
-
-		if (current == NULL) return;
-		#if !defined(KORE_ANDROID) && !defined(KORE_IOS)
-		zui_set_input_position(x, y);
-		#endif
-	}
-	current = _current;
+void zui_mouse_move(zui_t *ui, int x, int y, int movement_x, int movement_y) {
+	#if !defined(KORE_ANDROID) && !defined(KORE_IOS)
+	zui_set_input_position(ui, x, y);
+	#endif
 }
 
-void zui_mouse_up(int button, int x, int y) {
-	zui_t *_current = current;
-	for (int i = 0; i < instances_length; ++ i) {
-		current = instances[i];
+void zui_mouse_up(zui_t *ui, int button, int x, int y) {
+	if (ui->pen_in_use) return;
 
-		if (current == NULL) return;
-		if (current->pen_in_use) return;
+	if (ui->touch_hold_activated) {
+		ui->touch_hold_activated = false;
+		return;
+	}
 
-		if (current->touch_hold_activated) {
-			current->touch_hold_activated = false;
-			return;
+	if (ui->is_scrolling) { // Prevent action when scrolling is active
+		ui->is_scrolling = false;
+		ui->scroll_handle = NULL;
+		ui->slider_tooltip = false;
+		if (x == ui->input_started_x && y == ui->input_started_y) { // Mouse not moved
+			if (button == 0) ui->input_released = true;
+			else ui->input_released_r = true;
 		}
-
-		if (current->is_scrolling) { // Prevent action when scrolling is active
-			current->is_scrolling = false;
-			current->scroll_handle = NULL;
-			current->slider_tooltip = false;
-			if (x == current->input_started_x && y == current->input_started_y) { // Mouse not moved
-				if (button == 0) current->input_released = true;
-				else current->input_released_r = true;
-			}
-		}
-		else {
-			if (button == 0) current->input_released = true;
-			else current->input_released_r = true;
-		}
-		if (button == 0) current->input_down = false;
-		else current->input_down_r = false;
-		#if defined(KORE_ANDROID) || defined(KORE_IOS)
-		zui_set_input_position(x, y);
-		#endif
-		zui_deselect_text();
 	}
-	current = _current;
+	else {
+		if (button == 0) ui->input_released = true;
+		else ui->input_released_r = true;
+	}
+
+	if (button == 0) ui->input_down = false;
+	else ui->input_down_r = false;
+	#if defined(KORE_ANDROID) || defined(KORE_IOS)
+	zui_set_input_position(ui, x, y);
+	#endif
+	zui_deselect_text();
 }
 
-void zui_mouse_wheel(int delta) {
-	zui_t *_current = current;
-	for (int i = 0; i < instances_length; ++ i) {
-		current = instances[i];
-
-		if (current == NULL) return;
-		current->input_wheel_delta = delta;
-	}
-	current = _current;
+void zui_mouse_wheel(zui_t *ui, int delta) {
+	ui->input_wheel_delta = delta;
 }
 
-void zui_pen_down(int x, int y, float pressure) {
-	if (current == NULL) return;
-
+void zui_pen_down(zui_t *ui, int x, int y, float pressure) {
 	#if defined(KORE_ANDROID) || defined(KORE_IOS)
 	return;
 	#endif
 
-	zui_mouse_down(0, x, y);
+	zui_mouse_down(ui, 0, x, y);
 }
 
-void zui_pen_up(int x, int y, float pressure) {
-	if (current == NULL) return;
-
+void zui_pen_up(zui_t *ui, int x, int y, float pressure) {
 	#if defined(KORE_ANDROID) || defined(KORE_IOS)
 	return;
 	#endif
 
-	if (current->input_started) { current->input_started = false; current->pen_in_use = true; return; }
-	zui_mouse_up(0, x, y);
-	current->pen_in_use = true; // On pen release, additional mouse down & up events are fired at once - filter those out
+	if (ui->input_started) { ui->input_started = false; ui->pen_in_use = true; return; }
+	zui_mouse_up(ui, 0, x, y);
+	ui->pen_in_use = true; // On pen release, additional mouse down & up events are fired at once - filter those out
 }
 
-void zui_pen_move(int x, int y, float pressure) {
-	if (current == NULL) return;
-
+void zui_pen_move(zui_t *ui, int x, int y, float pressure) {
 	#if defined(KORE_IOS)
 	// Listen to pen hover if no other input is active
 	if (pressure == 0.0) {
-		if (!current->input_down && !current->input_down_r) {
-			zui_set_input_position(x, y);
+		if (!ui->input_down && !ui->input_down_r) {
+			zui_set_input_position(ui, x, y);
 		}
 		return;
 	}
@@ -2131,61 +2164,58 @@ void zui_pen_move(int x, int y, float pressure) {
 	return;
 	#endif
 
-	zui_mouse_move(x, y, 0, 0);
+	zui_mouse_move(ui, x, y, 0, 0);
 }
 
-void zui_key_down(int key_code) {
-	if (current == NULL) return;
-	current->key_code = key_code;
-	current->is_key_pressed = true;
-	current->is_key_down = true;
+void zui_key_down(zui_t *ui, int key_code) {
+	ui->key_code = key_code;
+	ui->is_key_pressed = true;
+	ui->is_key_down = true;
 	zui_key_repeat_time = kinc_time() + 0.4;
 	switch (key_code) {
-		case KINC_KEY_SHIFT: current->is_shift_down = true; break;
-		case KINC_KEY_CONTROL: current->is_ctrl_down = true; break;
+		case KINC_KEY_SHIFT: ui->is_shift_down = true; break;
+		case KINC_KEY_CONTROL: ui->is_ctrl_down = true; break;
 		#ifdef KORE_DARWIN
-		case KINC_KEY_META: current->is_ctrl_down = true; break;
+		case KINC_KEY_META: ui->is_ctrl_down = true; break;
 		#endif
-		case KINC_KEY_ALT: current->is_alt_down = true; break;
-		case KINC_KEY_BACKSPACE: current->is_backspace_down = true; break;
-		case KINC_KEY_DELETE: current->is_delete_down = true; break;
-		case KINC_KEY_ESCAPE: current->is_escape_down = true; break;
-		case KINC_KEY_RETURN: current->is_return_down = true; break;
-		case KINC_KEY_TAB: current->is_tab_down = true; break;
-		case KINC_KEY_A: current->is_a_down = true; break;
-		case KINC_KEY_SPACE: current->key_char = ' '; break;
+		case KINC_KEY_ALT: ui->is_alt_down = true; break;
+		case KINC_KEY_BACKSPACE: ui->is_backspace_down = true; break;
+		case KINC_KEY_DELETE: ui->is_delete_down = true; break;
+		case KINC_KEY_ESCAPE: ui->is_escape_down = true; break;
+		case KINC_KEY_RETURN: ui->is_return_down = true; break;
+		case KINC_KEY_TAB: ui->is_tab_down = true; break;
+		case KINC_KEY_A: ui->is_a_down = true; break;
+		case KINC_KEY_SPACE: ui->key_char = ' '; break;
 		#ifdef ZUI_ANDROID_RMB // Detect right mouse button on Android..
-		case KINC_KEY_BACK: if (!current->input_down_r) zui_mouse_down(1, current->input_x, current->input_y); break;
+		case KINC_KEY_BACK: if (!ui->input_down_r) zui_mouse_down(ui, 1, ui->input_x, ui->input_y); break;
 		#endif
 	}
 }
 
-void zui_key_up(int key_code) {
-	if (current == NULL) return;
-	current->is_key_down = false;
+void zui_key_up(zui_t *ui, int key_code) {
+	ui->is_key_down = false;
 	switch (key_code) {
-		case KINC_KEY_SHIFT: current->is_shift_down = false; break;
-		case KINC_KEY_CONTROL: current->is_ctrl_down = false; break;
+		case KINC_KEY_SHIFT: ui->is_shift_down = false; break;
+		case KINC_KEY_CONTROL: ui->is_ctrl_down = false; break;
 		#ifdef KORE_DARWIN
-		case KINC_KEY_META: current->is_ctrl_down = false; break;
+		case KINC_KEY_META: ui->is_ctrl_down = false; break;
 		#endif
-		case KINC_KEY_ALT: current->is_alt_down = false; break;
-		case KINC_KEY_BACKSPACE: current->is_backspace_down = false; break;
-		case KINC_KEY_DELETE: current->is_delete_down = false; break;
-		case KINC_KEY_ESCAPE: current->is_escape_down = false; break;
-		case KINC_KEY_RETURN: current->is_return_down = false; break;
-		case KINC_KEY_TAB: current->is_tab_down = false; break;
-		case KINC_KEY_A: current->is_a_down = false; break;
+		case KINC_KEY_ALT: ui->is_alt_down = false; break;
+		case KINC_KEY_BACKSPACE: ui->is_backspace_down = false; break;
+		case KINC_KEY_DELETE: ui->is_delete_down = false; break;
+		case KINC_KEY_ESCAPE: ui->is_escape_down = false; break;
+		case KINC_KEY_RETURN: ui->is_return_down = false; break;
+		case KINC_KEY_TAB: ui->is_tab_down = false; break;
+		case KINC_KEY_A: ui->is_a_down = false; break;
 		#ifdef ZUI_ANDROID_RMB
-		case KINC_KEY_BACK: zui_mouse_down(1, current->input_x, current->input_y); break;
+		case KINC_KEY_BACK: zui_mouse_down(ui, 1, ui->input_x, ui->input_y); break;
 		#endif
 	}
 }
 
-void zui_key_press(unsigned key_char) {
-	if (current == NULL) return;
-	current->key_char = key_char;
-	current->is_key_pressed = true;
+void zui_key_press(zui_t *ui, unsigned key_char) {
+	ui->key_char = key_char;
+	ui->is_key_pressed = true;
 }
 
 #if defined(KORE_ANDROID) || defined(KORE_IOS)
@@ -2193,49 +2223,46 @@ static float zui_pinch_distance = 0.0;
 static float zui_pinch_total = 0.0;
 static bool zui_pinch_started = false;
 
-void zui_touch_down(int index, int x, int y) {
-	if (current == NULL) return;
+void zui_touch_down(zui_t *ui, int index, int x, int y) {
 	// Reset movement delta on touch start
 	if (index == 0) {
-		current->input_dx = 0;
-		current->input_dy = 0;
-		current->input_x = x;
-		current->input_y = y;
+		ui->input_dx = 0;
+		ui->input_dy = 0;
+		ui->input_x = x;
+		ui->input_y = y;
 	}
 	// Two fingers down - right mouse button
 	else if (index == 1) {
-		current->input_down = false;
-		zui_mouse_down(1, current->input_x, current->input_y);
+		ui->input_down = false;
+		zui_mouse_down(ui, 1, ui->input_x, ui->input_y);
 		zui_pinch_started = true;
 		zui_pinch_total = 0.0;
 		zui_pinch_distance = 0.0;
 	}
 	// Three fingers down - middle mouse button
 	else if (index == 2) {
-		current->input_down_r = false;
-		zui_mouse_down(2, current->input_x, current->input_y);
+		ui->input_down_r = false;
+		zui_mouse_down(ui, 2, ui->input_x, ui->input_y);
 	}
 }
 
-void zui_touch_up(int index, int x, int y) {
-	if (current == NULL) return;
-	if (index == 1) zui_mouse_up(1, current->input_x, current->input_y);
+void zui_touch_up(zui_t *ui, int index, int x, int y) {
+	if (index == 1) zui_mouse_up(ui, 1, ui->input_x, ui->input_y);
 }
 
-void zui_touch_move(int index, int x, int y) {
-	if (current == NULL) return;
-	if (index == 0) zui_set_input_position(x, y);
+void zui_touch_move(zui_t *ui, int index, int x, int y) {
+	if (index == 0) zui_set_input_position(ui, x, y);
 
 	// Pinch to zoom - mouse wheel
 	if (index == 1) {
 		float last_distance = zui_pinch_distance;
-		float dx = current->input_x - x;
-		float dy = current->input_y - y;
+		float dx = ui->input_x - x;
+		float dy = ui->input_y - y;
 		zui_pinch_distance = sqrt(dx * dx + dy * dy);
 		zui_pinch_total += last_distance != 0 ? last_distance - zui_pinch_distance : 0;
 		if (!zui_pinch_started) {
-			current->input_wheel_delta = zui_pinch_total / 50;
-			if (current->input_wheel_delta != 0) {
+			ui->input_wheel_delta = zui_pinch_total / 50;
+			if (ui->input_wheel_delta != 0) {
 				zui_pinch_total = 0.0;
 			}
 		}

@@ -343,17 +343,17 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			// 	};
 			// });
 
-			//val[0] = zui_color_r(nhandle->color) / 255;
-			//val[1] = zui_color_g(nhandle->color) / 255;
-			//val[2] = zui_color_b(nhandle->color) / 255;
+			val[0] = zui_color_r(nhandle->color) / 255.0f;
+			val[1] = zui_color_g(nhandle->color) / 255.0f;
+			val[2] = zui_color_b(nhandle->color) / 255.0f;
 		}
 		else if (strcmp(but->type, "VECTOR") == 0) {
 			ny += lineh;
 			current->_x = nx;
 			current->_y = ny;
 			current->_w = w;
-			float min = but->min != 0 ? but->min : 0.0; // != NULL
-			float max = but->max != 1 ? but->max : 1.0; // != NULL
+			float min = but->min;
+			float max = but->max;
 			float text_off = current->ops.theme->TEXT_OFFSET;
 			current->ops.theme->TEXT_OFFSET = 6;
 			zui_text(zui_tr(but->name), ZUI_ALIGN_LEFT, 0);
@@ -362,7 +362,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			// val[1] = zui_slider(nhandle.nest(buti).nest(1, {value: val[1]}), "Y", min, max, true, 100, true, ZUI_ALIGN_LEFT);
 			// val[2] = zui_slider(nhandle.nest(buti).nest(2, {value: val[2]}), "Z", min, max, true, 100, true, ZUI_ALIGN_LEFT);
 			current->ops.theme->TEXT_OFFSET = text_off;
-			if (but->output != NULL) node->outputs[but->output]->default_value = but->default_value;
+			if (but->output >= 0) node->outputs[but->output]->default_value = but->default_value;
 			ny += lineh * 3;
 		}
 		else if (strcmp(but->type, "VALUE") == 0) {
@@ -386,7 +386,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_x = nx;
 			current->_y = ny;
 			current->_w = w;
-			zui_node_socket_t *soc = but->output != NULL ? node->outputs[but->output] : NULL;
+			zui_node_socket_t *soc = but->output >= 0 ? node->outputs[but->output] : NULL;
 			// but->default_value = zui_text_input(nhandle.nest(buti, {text: soc != NULL ? soc->default_value : but->default_value != NULL ? but->default_value : ""}), zui_tr(but->name));
 			if (soc != NULL) soc->default_value = but->default_value;
 		}
@@ -481,8 +481,8 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_x = nx;
 			current->_y = ny;
 			current->_w = w;
-			float min = inp->min != 0 ? inp->min : 0.0; // != NULL
-			float max = inp->max != 1 ? inp->max : 1.0; // != NULL
+			float min = inp->min;
+			float max = inp->max;
 			float text_off = current->ops.theme->TEXT_OFFSET;
 			current->ops.theme->TEXT_OFFSET = 6;
 			float *val = (float *)inp->default_value;
@@ -973,7 +973,7 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("color");
 			armpack_encode_i32(canvas->nodes[i]->inputs[j]->color);
 			armpack_encode_string("default_value");
-			armpack_encode_array_f32(canvas->nodes[i]->inputs[j]->default_value, 1);
+			armpack_encode_array_f32(canvas->nodes[i]->inputs[j]->default_value, 4);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes[i]->inputs[j]->min);
 			armpack_encode_string("max");
@@ -999,7 +999,7 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("color");
 			armpack_encode_i32(canvas->nodes[i]->outputs[j]->color);
 			armpack_encode_string("default_value");
-			armpack_encode_array(0);
+			armpack_encode_array_f32(canvas->nodes[i]->outputs[j]->default_value, 4);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes[i]->outputs[j]->min);
 			armpack_encode_string("max");
@@ -1021,9 +1021,9 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("output");
 			armpack_encode_i32(canvas->nodes[i]->buttons[j]->output);
 			armpack_encode_string("default_value");
-			armpack_encode_array(0);
+			armpack_encode_array_f32(canvas->nodes[i]->buttons[j]->default_value, 4);
 			armpack_encode_string("data");
-			armpack_encode_array(0);
+			armpack_encode_array_f32(canvas->nodes[i]->buttons[j]->data, 4);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes[i]->buttons[j]->min);
 			armpack_encode_string("max");
@@ -1093,7 +1093,7 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("color");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array_f32(1);
+			size += armpack_size_array_f32(4);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");
@@ -1119,7 +1119,7 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("color");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array();
+			size += armpack_size_array_f32(4);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");
@@ -1141,9 +1141,9 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("output");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array();
+			size += armpack_size_array_f32(4);
 			size += armpack_size_string("data");
-			size += armpack_size_array();
+			size += armpack_size_array_f32(4);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");
