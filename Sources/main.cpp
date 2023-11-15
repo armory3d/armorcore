@@ -480,16 +480,16 @@ namespace {
 	}
 
 	void krom_set_cut_copy_paste_callback(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> cutArg = args[0];
-		Local<Function> cutFunc = Local<Function>::Cast(cutArg);
-		cut_func.Reset(isolate, cutFunc);
-		Local<Value> copyArg = args[1];
-		Local<Function> copyFunc = Local<Function>::Cast(copyArg);
-		copy_func.Reset(isolate, copyFunc);
-		Local<Value> pasteArg = args[2];
-		Local<Function> pasteFunc = Local<Function>::Cast(pasteArg);
-		paste_func.Reset(isolate, pasteFunc);
+		// HandleScope scope(args.GetIsolate());
+		// Local<Value> cutArg = args[0];
+		// Local<Function> cutFunc = Local<Function>::Cast(cutArg);
+		// cut_func.Reset(isolate, cutFunc);
+		// Local<Value> copyArg = args[1];
+		// Local<Function> copyFunc = Local<Function>::Cast(copyArg);
+		// copy_func.Reset(isolate, copyFunc);
+		// Local<Value> pasteArg = args[2];
+		// Local<Function> pasteFunc = Local<Function>::Cast(pasteArg);
+		// paste_func.Reset(isolate, pasteFunc);
 	}
 
 	void krom_set_application_state_callback(const FunctionCallbackInfo<Value> &args) {
@@ -3990,12 +3990,28 @@ namespace {
 	#endif
 
 	#ifdef WITH_ZUI
+	extern "C" float krom_js_eval(char *str) {
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		Local<String> source = String::NewFromUtf8(isolate, str, NewStringType::kNormal).ToLocalChecked();
+		TryCatch try_catch(isolate);
+		Local<Script> compiled_script = Script::Compile(isolate->GetCurrentContext(), source).ToLocalChecked();
+		Local<Value> result;
+		if (!compiled_script->Run(context).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+		return (float)result->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+	}
+
 	void krom_zui_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> arg0 = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
 
 		zui_options_t ops;
-		ops.scale_factor = 1.0;
+		ops.scale_factor = (float)arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "scale_factor").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		Local<Value> theme = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "theme").ToLocalChecked()).ToLocalChecked();
 		Local<External> themefield = Local<External>::Cast(theme->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -4004,6 +4020,14 @@ namespace {
 		Local<Value> font = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "font").ToLocalChecked()).ToLocalChecked();
 		Local<External> fontfield = Local<External>::Cast(font->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		ops.font = (g2_font_t *)fontfield->Value();
+
+		Local<Value> colorwheel = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "color_wheel").ToLocalChecked()).ToLocalChecked();
+		Local<External> colorwheelfield = Local<External>::Cast(colorwheel->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		ops.color_wheel = (kinc_g4_texture_t *)colorwheelfield->Value();
+
+		Local<Value> blackwhitegradient = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "black_white_gradient").ToLocalChecked()).ToLocalChecked();
+		Local<External> blackwhitegradientfield = Local<External>::Cast(blackwhitegradient->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		ops.black_white_gradient = (kinc_g4_texture_t *)blackwhitegradientfield->Value();
 
 		zui_t *ui = (zui_t *)malloc(sizeof(zui_t));
 		zui_init(ui, ops);
@@ -4850,7 +4874,7 @@ namespace {
 		SET_FUNCTION_FAST(krom, "clear", krom_clear);
 		SET_FUNCTION(krom, "setCallback", krom_set_callback);
 		SET_FUNCTION(krom, "setDropFilesCallback", krom_set_drop_files_callback);
-		SET_FUNCTION(krom, "setCutCopyPasteCallback", krom_set_cut_copy_paste_callback);
+		SET_FUNCTION(krom, "setCutCopyPasteCallback", krom_set_cut_copy_paste_callback); ////
 		SET_FUNCTION(krom, "setApplicationStateCallback", krom_set_application_state_callback);
 		SET_FUNCTION(krom, "setKeyboardDownCallback", krom_set_keyboard_down_callback);
 		SET_FUNCTION(krom, "setKeyboardUpCallback", krom_set_keyboard_up_callback);
@@ -5302,59 +5326,73 @@ namespace {
 	}
 
 	char *copy(void *data) {
-		Locker locker{isolate};
+		// Locker locker{isolate};
 
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
+		// Isolate::Scope isolate_scope(isolate);
+		// HandleScope handle_scope(isolate);
+		// Local<Context> context = Local<Context>::New(isolate, global_context);
+		// Context::Scope context_scope(context);
 
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, copy_func);
-		Local<Value> result;
-		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-		String::Utf8Value cutCopyString(isolate, result);
-		strcpy(temp_string, *cutCopyString);
+		// TryCatch try_catch(isolate);
+		// Local<Function> func = Local<Function>::New(isolate, copy_func);
+		// Local<Value> result;
+		// if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+		// 	handle_exception(&try_catch);
+		// }
+		// String::Utf8Value cutCopyString(isolate, result);
+		// strcpy(temp_string, *cutCopyString);
+
+		#ifdef WITH_ZUI
+		strcpy(temp_string, zui_copy());
+		#endif
+
 		return temp_string;
 	}
 
 	char *cut(void *data) {
-		Locker locker{isolate};
+		// Locker locker{isolate};
 
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
+		// Isolate::Scope isolate_scope(isolate);
+		// HandleScope handle_scope(isolate);
+		// Local<Context> context = Local<Context>::New(isolate, global_context);
+		// Context::Scope context_scope(context);
 
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, cut_func);
-		Local<Value> result;
-		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-		String::Utf8Value cutCopyString(isolate, result);
-		strcpy(temp_string, *cutCopyString);
+		// TryCatch try_catch(isolate);
+		// Local<Function> func = Local<Function>::New(isolate, cut_func);
+		// Local<Value> result;
+		// if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+		// 	handle_exception(&try_catch);
+		// }
+		// String::Utf8Value cutCopyString(isolate, result);
+		// strcpy(temp_string, *cutCopyString);
+
+		#ifdef WITH_ZUI
+		strcpy(temp_string, zui_cut());
+		#endif
+
 		return temp_string;
 	}
 
 	void paste(char *text, void *data) {
-		Locker locker{isolate};
+		// Locker locker{isolate};
 
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
+		// Isolate::Scope isolate_scope(isolate);
+		// HandleScope handle_scope(isolate);
+		// Local<Context> context = Local<Context>::New(isolate, global_context);
+		// Context::Scope context_scope(context);
 
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, paste_func);
-		Local<Value> result;
-		const int argc = 1;
-		Local<Value> argv[argc] = {String::NewFromUtf8(isolate, text).ToLocalChecked()};
-		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
+		// TryCatch try_catch(isolate);
+		// Local<Function> func = Local<Function>::New(isolate, paste_func);
+		// Local<Value> result;
+		// const int argc = 1;
+		// Local<Value> argv[argc] = {String::NewFromUtf8(isolate, text).ToLocalChecked()};
+		// if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+		// 	handle_exception(&try_catch);
+		// }
+
+		#ifdef WITH_ZUI
+		zui_paste(text);
+		#endif
 	}
 
 	void foreground(void *data) {
@@ -5460,7 +5498,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_key_down(code);
+		for (int i = 0; i < zui_instances_count; ++i) zui_key_down(zui_instances[i], code);
 		#endif
 
 		#ifdef IDLE_SLEEP
@@ -5487,7 +5525,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_key_up(code);
+		for (int i = 0; i < zui_instances_count; ++i) zui_key_up(zui_instances[i], code);
 		#endif
 
 		#ifdef IDLE_SLEEP
@@ -5514,7 +5552,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_key_press(character);
+		for (int i = 0; i < zui_instances_count; ++i) zui_key_press(zui_instances[i], character);
 		#endif
 
 		#ifdef IDLE_SLEEP
@@ -5540,7 +5578,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_mouse_move(x, y, mx, my);
+		for (int i = 0; i < zui_instances_count; ++i) zui_mouse_move(zui_instances[i], x, y, mx, my);
 		#endif
 
 		#ifdef IDLE_SLEEP
@@ -5566,7 +5604,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_mouse_down(button, x, y);
+		for (int i = 0; i < zui_instances_count; ++i) zui_mouse_down(zui_instances[i], button, x, y);
 		#endif
 
 		#ifdef IDLE_SLEEP
@@ -5593,7 +5631,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_mouse_up(button, x, y);
+		for (int i = 0; i < zui_instances_count; ++i) zui_mouse_up(zui_instances[i], button, x, y);
 		#endif
 
 		#ifdef IDLE_SLEEP
@@ -5620,7 +5658,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_mouse_wheel(delta);
+		for (int i = 0; i < zui_instances_count; ++i) zui_mouse_wheel(zui_instances[i], delta);
 		#endif
 
 		#ifdef IDLE_SLEEP
@@ -5647,7 +5685,7 @@ namespace {
 
 		#ifdef WITH_ZUI
 		#if defined(KORE_ANDROID) || defined(KORE_IOS)
-		zui_touch_move(index, x, y);
+		for (int i = 0; i < zui_instances_count; ++i) zui_touch_move(zui_instances[i], index, x, y);
 		#endif
 		#endif
 
@@ -5675,7 +5713,7 @@ namespace {
 
 		#ifdef WITH_ZUI
 		#if defined(KORE_ANDROID) || defined(KORE_IOS)
-		zui_touch_down(index, x, y);
+		for (int i = 0; i < zui_instances_count; ++i) zui_touch_down(zui_instances[i], index, x, y);
 		#endif
 		#endif
 
@@ -5704,7 +5742,7 @@ namespace {
 
 		#ifdef WITH_ZUI
 		#if defined(KORE_ANDROID) || defined(KORE_IOS)
-		zui_touch_up(index, x, y);
+		for (int i = 0; i < zui_instances_count; ++i) zui_touch_up(zui_instances[i], index, x, y);
 		#endif
 		#endif
 
@@ -5732,7 +5770,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_pen_down(x, y, pressure);
+		for (int i = 0; i < zui_instances_count; ++i) zui_pen_down(zui_instances[i], x, y, pressure);
 		#endif
 
 		#ifdef IDLE_SLEEP
@@ -5759,7 +5797,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_pen_up(x, y, pressure);
+		for (int i = 0; i < zui_instances_count; ++i) zui_pen_up(zui_instances[i], x, y, pressure);
 		#endif
 
 		#ifdef IDLE_SLEEP
@@ -5786,7 +5824,7 @@ namespace {
 		}
 
 		#ifdef WITH_ZUI
-		zui_pen_move(x, y, pressure);
+		for (int i = 0; i < zui_instances_count; ++i) zui_pen_move(zui_instances[i], x, y, pressure);
 		#endif
 
 		#ifdef IDLE_SLEEP

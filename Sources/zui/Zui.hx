@@ -206,7 +206,7 @@ class Zui {
 	public var zui_: Dynamic;
 
 	public function new(ops: ZuiOptions) {
-		zui_ = Krom.zui_init({ font: ops.font.font_, theme: ops.theme.theme_, scaleFactor: ops.scaleFactor, color_wheel: ops.color_wheel, black_white_gradient: ops.black_white_gradient });
+		zui_ = Krom.zui_init({ font: ops.font.font_, theme: ops.theme.theme_, scale_factor: ops.scaleFactor, color_wheel: ops.color_wheel.texture_, black_white_gradient: ops.black_white_gradient.texture_ });
 		current = this;
 		t = ops.theme;
 		font = ops.font;
@@ -721,8 +721,7 @@ class Nodes {
 
 	static inline var eps = 0.00001;
 
-	public function nodeCanvas(ui: Zui, canvas: TNodeCanvas) {
-
+	public static function updateCanvasFormat(canvas: TNodeCanvas) {
 		// TODO: deprecated
 		// Fill in optional values
 		for (n in canvas.nodes) {
@@ -732,10 +731,11 @@ class Nodes {
 				if (soc.precision == null) soc.precision = 100.0 + eps;
 				if (soc.display == null) soc.display = 0;
 				if (!Std.isOfType(soc.default_value, js.lib.Float32Array)) {
-					var f32 = new js.lib.Float32Array(1);
+					var f32 = new js.lib.Float32Array(4);
 					f32[0] = soc.default_value;
 					soc.default_value = f32;
 				}
+				// if (soc.default_value.length < 4) soc.default_value = new js.lib.Float32Array(4);
 			}
 			for (soc in n.outputs) {
 				if (soc.min == null) soc.min = 0.0 + eps;
@@ -743,20 +743,22 @@ class Nodes {
 				if (soc.precision == null) soc.precision = 100.0 + eps;
 				if (soc.display == null) soc.display = 0;
 				if (!Std.isOfType(soc.default_value, js.lib.Float32Array)) {
-					var f32 = new js.lib.Float32Array(1);
+					var f32 = new js.lib.Float32Array(4);
 					f32[0] = soc.default_value;
 					soc.default_value = f32;
 				}
+				// if (soc.default_value.length < 4) soc.default_value = new js.lib.Float32Array(4);
 			}
 			for (but in n.buttons) {
-				if (but.output == null) but.output = 0;
-				if (but.default_value == null) but.default_value = new js.lib.Float32Array(1);
+				if (but.output == null) but.output = -1;
+				if (but.default_value == null) but.default_value = new js.lib.Float32Array(4);
 				if (!Std.isOfType(but.default_value, js.lib.Float32Array)) {
-					var f32 = new js.lib.Float32Array(1);
+					var f32 = new js.lib.Float32Array(4);
 					f32[0] = but.default_value;
 					but.default_value = f32;
 				}
-				if (but.data == null) but.data = new js.lib.Float32Array(1);
+				// if (but.default_value.length < 4) but.default_value = new js.lib.Float32Array(4);
+				if (but.data == null) but.data = new js.lib.Float32Array(4);
 				if (but.min == null) but.min = 0.0 + eps;
 				if (but.max == null) but.max = 1.0 + eps;
 				if (but.precision == null) but.precision = 100.0 + eps;
@@ -764,7 +766,10 @@ class Nodes {
 			}
 			if (n.width == null) n.width = 0;
 		}
+	}
 
+	public function nodeCanvas(ui: Zui, canvas: TNodeCanvas) {
+		updateCanvasFormat(canvas);
 		var packed = Krom.zui_node_canvas(iron.system.ArmPack.encode(canvas).getData());
 		var canvas_: TNodeCanvas = iron.system.ArmPack.decode(haxe.io.Bytes.ofData(packed));
 		canvas.name = canvas_.name;
