@@ -17,7 +17,7 @@ static int vi = 0;
 static int ui = 0;
 static int ni = 0;
 static uint8_t buf[128];
-static uint8_t str[256];
+static char str[256];
 
 static int vind_off = 0;
 static int tind_off = 0;
@@ -136,7 +136,7 @@ static char *read_string() {
 		part->pos++;
 	}
 	for (int i = 0; i < part->pos - begin; ++i) str[i] = bytes[begin + i];
-	str[part->pos - begin] = 0;
+	str[part->pos - begin] = '\0';
 	return str;
 }
 
@@ -179,7 +179,7 @@ kinc_vector4_t calc_normal(kinc_vector4_t a, kinc_vector4_t b, kinc_vector4_t c)
 // 'o' for object split, 'g' for groups, 'u'semtl for materials
 obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_pos, bool udim) {
 	bytes = file_bytes;
-	bytes_length = strlen(file_bytes);
+	bytes_length = strlen((char *)file_bytes);
 
 	part = (obj_part_t *)malloc(sizeof(obj_part_t));
 	part->scale_pos = 1.0;
