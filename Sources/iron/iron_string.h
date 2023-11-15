@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 typedef struct string {
-	uint8_t *data;
+	char *data;
 	int length;
 } string_t;
 
