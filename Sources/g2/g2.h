@@ -50,7 +50,7 @@ void g2_font_set_glyphs(int *glyphs, int count);
 void g2_font_add_glyph(int glyph);
 int g2_font_count(g2_font_t *font);
 float g2_font_height(g2_font_t *font, int font_size);
-float g2_sub_string_width(g2_font_t *font, int font_size, const char *text, int start, int length);
+float g2_sub_string_width(g2_font_t *font, int font_size, const char *text, int start, int end);
 float g2_string_width(g2_font_t *font, int font_size, const char *text);
 void g2_set_bilinear_filter(bool bilinear);
 void g2_restore_render_target(void);

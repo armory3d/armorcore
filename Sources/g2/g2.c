@@ -1033,11 +1033,11 @@ float g2_font_get_char_width_internal(g2_font_image_t *img, int char_index) {
 	return img->chars[g2_font_get_char_index_internal(img, char_index)].xadvance;
 }
 
-float g2_sub_string_width(g2_font_t *font, int font_size, const char *text, int start, int length) {
+float g2_sub_string_width(g2_font_t *font, int font_size, const char *text, int start, int end) {
 	g2_font_load(font, font_size);
 	g2_font_image_t *img = g2_font_get_image_internal(font, font_size);
 	float width = 0.0;
-	for (int i = start; i < length; ++i) {
+	for (int i = start; i < end; ++i) {
 		width += g2_font_get_char_width_internal(img, text[i]);
 	}
 	return width;
