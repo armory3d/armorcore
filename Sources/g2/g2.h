@@ -47,6 +47,7 @@ void g2_font_init(g2_font_t *font, void *blob, int font_index);
 void g2_font_13(g2_font_t *font, void *blob);
 bool g2_font_has_glyph(int glyph);
 void g2_font_set_glyphs(int *glyphs, int count);
+void g2_font_add_glyph(int glyph);
 int g2_font_count(g2_font_t *font);
 float g2_font_height(g2_font_t *font, int font_size);
 float g2_sub_string_width(g2_font_t *font, int font_size, const char *text, int start, int length);

@@ -1011,6 +1011,15 @@ void g2_font_set_glyphs(int *glyphs, int count) {
 	g2_font_glyph_blocks[blocks * 2 - 1] = glyphs[count - 1];
 }
 
+void g2_font_add_glyph(int glyph) {
+	// TODO: slow
+	g2_font_num_glyphs++;
+	int *font_glyphs = (int *)malloc(g2_font_num_glyphs * sizeof(int));
+	for (int i = 0; i < g2_font_num_glyphs - 1; ++i) font_glyphs[i] = g2_font_glyphs[i];
+	font_glyphs[g2_font_num_glyphs - 1] = glyph;
+	g2_font_set_glyphs(font_glyphs, g2_font_num_glyphs);
+}
+
 int g2_font_count(g2_font_t *font) {
 	return stbtt_GetNumberOfFonts(font->blob);
 }
