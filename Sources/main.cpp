@@ -223,6 +223,7 @@ namespace {
 	Global<Function> gamepad_axis_func;
 	Global<Function> gamepad_button_func;
 	Global<Function> save_and_quit_func;
+	Global<Function> picker_func;
 	bool save_and_quit_func_set = false;
 
 	void update(void *data);
@@ -4481,6 +4482,22 @@ namespace {
 		args.GetReturnValue().Set(Int32::New(isolate, i));
 	}
 
+	void krom_picker_callback(void *data) {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, picker_func);
+		Local<Value> result;
+		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
 	void krom_zui_color_wheel(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -4489,7 +4506,10 @@ namespace {
 		float w = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		float h = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		bool color_preview = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int i = zui_color_wheel(handle, alpha, w, h, color_preview); //// picker: Void->Void
+		Local<Value> picker_arg = args[5];
+		Local<Function> pickerFunc = Local<Function>::Cast(picker_arg);
+		picker_func.Reset(isolate, pickerFunc);
+		int i = zui_color_wheel(handle, alpha, w, h, color_preview, &krom_picker_callback, NULL);
 		args.GetReturnValue().Set(Int32::New(isolate, i));
 	}
 

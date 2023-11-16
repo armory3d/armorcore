@@ -775,7 +775,8 @@ class Nodes {
 		canvas.name = canvas_.name;
 		canvas.nodes = canvas_.nodes;
 		canvas.links = canvas_.links;
-
+		if (canvas.nodes == null) canvas.nodes = [];
+		if (canvas.links == null) canvas.links = [];
 		ELEMENT_H = ui.t.ELEMENT_H + 2;
 	}
 
