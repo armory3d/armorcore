@@ -16,34 +16,32 @@ typedef struct zui_node_socket {
 	int color;
 	void *default_value;
 	int default_value_count;
-	float min; // optional
-	float max; // optional
-	float precision; // optional
-	int display; // optional
+	float min;
+	float max;
+	float precision;
+	int display;
 }__attribute__((packed)) zui_node_socket_t;
 
 typedef struct zui_node_button {
 	char *name;
 	char *type;
-	int output; // optional
-	void *default_value; // optional
+	int output;
+	void *default_value;
 	int default_value_count;
-	void *data; // optional
+	void *data;
 	int data_count;
-	float min; // optional
-	float max; // optional
-	float precision; // optional
-	float height; // optional
+	float min;
+	float max;
+	float precision;
+	float height;
 }__attribute__((packed)) zui_node_button_t;
 
 typedef struct zui_node {
 	int id;
 	char *name;
 	char *type;
-	// float x;
-	int x;
-	// float y;
-	int y;
+	int x; // float x;
+	int y; // float y;
 	int color;
 	zui_node_socket_t **inputs;
 	int inputs_count;
@@ -51,8 +49,7 @@ typedef struct zui_node {
 	int outputs_count;
 	zui_node_button_t **buttons;
 	int buttons_count;
-	// float width; // optional
-	int width; // optional
+	int width; // float width
 }__attribute__((packed)) zui_node_t;
 
 typedef struct zui_node_link {
@@ -83,6 +80,7 @@ typedef struct zui_nodes {
 	int uih;
 	bool _input_started;
 	void (*color_picker_callback)(int);
+	void *color_picker_callback_data;
 	float scale_factor;
 	float ELEMENT_H;
 	bool dragged;

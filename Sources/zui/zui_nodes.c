@@ -21,7 +21,7 @@ static int zui_box_select_y = 0;
 static const int zui_max_buttons = 9;
 static zui_handle_t handle;
 
-static char **zui_exclude_remove;// = []; // No removal for listed node types
+static char *zui_exclude_remove[64]; // No removal for listed node types
 static void (*zui_on_link_drag)(zui_node_link_t *, bool) = NULL;
 static void (*zui_on_header_released)(zui_node_t *) = NULL;
 static void (*zui_on_socket_released)(zui_node_socket_t *) = NULL;
@@ -37,7 +37,9 @@ int zui_popup_x = 0;
 int zui_popup_y = 0;
 int zui_popup_w = 0;
 int zui_popup_h = 0;
-void (*zui_popup_commands)(zui_t *) = NULL;
+void (*zui_popup_commands)(zui_t *, void *, void *) = NULL;
+void *zui_popup_data;
+void *zui_popup_data2;
 
 char *zui_tr(char *id/*, map<char *, char *> vars*/) {
 	return id;
@@ -141,7 +143,12 @@ zui_node_t *zui_get_node(zui_node_t **nodes, int nodes_count, int id) {
 	return NULL;
 }
 
-int zui_get_node_id(zui_node_t **nodes, int nodes_count) {
+int zui_get_node_index(zui_node_t **nodes, int nodes_count, int id) {
+	for (int i = 0; i < nodes_count; ++i) if (nodes[i]->id == id) return i;
+	return -1;
+}
+
+int zui_next_node_id(zui_node_t **nodes, int nodes_count) {
 	if (zui_node_id == -1) for (int i = 0; i < nodes_count; ++i) if (zui_node_id < nodes[i]->id) zui_node_id = nodes[i]->id;
 	return ++zui_node_id;
 }
@@ -207,49 +214,84 @@ void zui_draw_link(float x1, float y1, float x2, float y2, bool highlight) {
 	}
 }
 
+static void zui_remove_link_at(zui_node_canvas_t *canvas, int at) {
+	canvas->links[at] = NULL;
+	for (int i = at; i < canvas->links_count - 1; ++i) {
+		canvas->links[i] = canvas->links[i + 1];
+	}
+	canvas->links_count--;
+}
+
+static void zui_remove_node_at(zui_node_canvas_t *canvas, int at) {
+	canvas->nodes[at] = NULL;
+	for (int i = at; i < canvas->nodes_count - 1; ++i) {
+		canvas->nodes[i] = canvas->nodes[i + 1];
+	}
+	canvas->nodes_count--;
+}
+
 void zui_remove_node(zui_node_t *n, zui_node_canvas_t *canvas) {
 	if (n == NULL) return;
 	int i = 0;
 	while (i < canvas->links_count) {
 		zui_node_link_t *l = canvas->links[i];
 		if (l->from_id == n->id || l->to_id == n->id) {
-			// canvas.links.splice(i, 1);
+			zui_remove_link_at(canvas, i);
 		}
 		else i++;
 	}
-	// canvas->nodes.remove(n);
+	zui_remove_node_at(canvas, zui_get_node_index(canvas->nodes, canvas->nodes_count, n->id));
 	if (zui_on_node_remove != NULL) {
-		zui_on_node_remove(n);
+		(*zui_on_node_remove)(n);
 	}
 }
 
 bool zui_is_selected(zui_node_t *node) {
-	// for (int i = 0; i < current_nodes->nodes_selected_count; ++i) if (current_nodes->nodes_selected[i] == node) return true;
-	for (int i = 0; i < current_nodes->nodes_selected_count; ++i) if (current_nodes->nodes_selected_id[i] == node->id) return true;
+	for (int i = 0; i < current_nodes->nodes_selected_count; ++i) {
+		if (current_nodes->nodes_selected_id[i] == node->id) {
+			return true;
+		}
+	}
 	return false;
 }
 
-void zui_popup(int x, int y, int w, int h, void (*commands)(zui_t *)) {
+void zui_popup(int x, int y, int w, int h, void (*commands)(zui_t *, void *, void *), void *data, void *data2) {
 	zui_popup_x = x;
 	zui_popup_y = y;
 	zui_popup_w = w;
 	zui_popup_h = h;
 	zui_popup_commands = commands;
+	zui_popup_data = data;
+	zui_popup_data2 = data2;
+}
+
+static void color_picker_callback(int color) {
+	zui_t *current = zui_get_current();
+	float *val = (float *)current_nodes->color_picker_callback_data;
+	val[0] = zui_color_r(color) / 255.0f;
+	val[1] = zui_color_g(color) / 255.0f;
+	val[2] = zui_color_b(color) / 255.0f;
+	current->changed = true;
+}
+
+void zui_color_wheel_picker(void *data) {
+	current_nodes->color_picker_callback_data = data;
+	current_nodes->color_picker_callback = &color_picker_callback;
+}
+
+static void rgba_popup_commands(zui_t *ui, void *data, void *data2) {
+	zui_handle_t *nhandle = (zui_handle_t *)data;
+	float *val = (float *)data2;
+	nhandle->color = zui_color(val[0] * 255, val[1] * 255, val[2] * 255, 255);
+	zui_color_wheel(nhandle, false, -1, -1, true, &zui_color_wheel_picker, val);
+	val[0] = zui_color_r(nhandle->color) / 255.0f;
+	val[1] = zui_color_g(nhandle->color) / 255.0f;
+	val[2] = zui_color_b(nhandle->color) / 255.0f;
 }
 
 void zui_nodes_rgba_popup(zui_handle_t *nhandle, float *val, int x, int y) {
-	// zui_popup(x, y, 140 * scale_factor, current->ops.theme->ELEMENT_H * 10, function(zui_t *ui) {
-	// 	nhandle.color = kha.Color.fromFloats(val[0], val[1], val[2]);
-	// 	zui_color_wheel(nhandle, false, NULL, true, function () {
-	// 		color_picker_callback = function (int color) {
-	// 			val[0] = color.R;
-	// 			val[1] = color.G;
-	// 			val[2] = color.B;
-	// 			current->changed = true;
-	// 		};
-	// 	});
-	// 	val[0] = nhandle.color.R; val[1] = nhandle.color.G; val[2] = nhandle.color.B;
-	// });
+	zui_t *current = zui_get_current();
+	zui_popup(x, y, 140 * current_nodes->scale_factor, current->ops.theme->ELEMENT_H * 10, &rgba_popup_commands, nhandle, val);
 }
 
 void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
@@ -333,16 +375,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_w = w;
 			float *val = node->outputs[but->output]->default_value;
 			nhandle->color = zui_color(val[0] * 255, val[1] * 255, val[2] * 255, 255);
-			zui_color_wheel(nhandle, false, -1, -1, true);
-			// zui_color_wheel(nhandle, false, NULL, NULL, true,  function () {
-			// 	color_picker_callback = function (color: kha.Color) {
-			// 		node->outputs[but->output]->default_value[0] = zui_color_r(color) / 255;
-			// 		node->outputs[but->output]->default_value[1] = zui_color_g(color) / 255;
-			// 		node->outputs[but->output]->default_value[2] = zui_color_b(color) / 255;
-			// 		current->changed = true;
-			// 	};
-			// });
-
+			zui_color_wheel(nhandle, false, -1, -1, true, &zui_color_wheel_picker, val);
 			val[0] = zui_color_r(nhandle->color) / 255.0f;
 			val[1] = zui_color_g(nhandle->color) / 255.0f;
 			val[2] = zui_color_b(nhandle->color) / 255.0f;
@@ -508,6 +541,14 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	current->_y = ui_y;
 	current->_w = ui_w;
 	current->input_started = current_nodes->_input_started;
+}
+
+bool zui_is_node_type_excluded(char *type) {
+	for (int i = 0; i < 64; ++i) {
+		if (zui_exclude_remove[i] == NULL) break;
+		if (strcmp(zui_exclude_remove[i], type) == 0) return true;
+	}
+	return false;
 }
 
 void zui_node_canvas(zui_node_canvas_t *canvas) {
@@ -869,7 +910,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 				zui_node_t *n = paste_canvas->nodes[i];
 				// Assign unique node id
 				int old_id = n->id;
-				n->id = zui_get_node_id(canvas->nodes, canvas->nodes_count);
+				n->id = zui_next_node_id(canvas->nodes, canvas->nodes_count);
 
 				for (int j = 0; j < n->inputs_count; ++j) {
 					zui_node_socket_t *soc = n->inputs[j];
@@ -909,8 +950,11 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 		int i = current_nodes->nodes_selected_count - 1;
 		while (i >= 0) {
 			// zui_node_t *n = current_nodes->nodes_selected[i--];
-			// if (zui_exclude_remove.indexOf(n.type) >= 0) continue;
-			// zui_remove_node(n, canvas);
+			int nid = current_nodes->nodes_selected_id[i--];
+			zui_node_t *n = zui_get_node(canvas->nodes, canvas->nodes_count, nid);
+			if (n == NULL) continue; ////
+			if (zui_is_node_type_excluded(n->type)) continue;
+			zui_remove_node(n, canvas);
 			current->changed = true;
 		}
 	}
@@ -926,7 +970,7 @@ void zui_node_canvas(zui_node_canvas_t *canvas) {
 
 		zui_fill(-6, -6, current->_w / ZUI_SCALE() + 12, zui_popup_h + 12, current->ops.theme->ACCENT_SELECT_COL);
 		zui_fill(-5, -5, current->_w / ZUI_SCALE() + 10, zui_popup_h + 10, current->ops.theme->SEPARATOR_COL);
-		zui_popup_commands(current);
+		(*zui_popup_commands)(current, zui_popup_data, zui_popup_data2);
 
 		bool hide = (current->input_started || current->input_started_r) && (current->input_x - wx < zui_popup_x - 6 || current->input_x - wx > zui_popup_x + zui_popup_w + 6 || current->input_y - wy < zui_popup_y - 6 || current->input_y - wy > zui_popup_y + zui_popup_h * ZUI_SCALE() + 6);
 		if (hide || current->is_escape_down) {

@@ -454,7 +454,6 @@ void zui_scroll(float delta) {
 }
 
 int zui_line_count(char *str) {
-	// if (str == NULL || str[0] == '\0') return 0;
 	if (str == NULL) return 0;
 	int i = 0;
 	int count = 1;
@@ -470,7 +469,7 @@ char *zui_extract_line(char *str, int line) {
 	int len = strlen(str);
 	int line_i = 0;
 	for (int i = 0; i < len; ++i) {
-		if (str[i] == '\n') line_i++;
+		if (str[i] == '\n') { line_i++; continue; }
 		if (line_i < line) continue;
 		if (line_i > line) break;
 		temp[pos++] = str[i];

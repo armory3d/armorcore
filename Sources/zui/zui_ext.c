@@ -101,11 +101,8 @@ char *zui_str_replace(char *str, char *what, char *with) {
 		ins = tmp + what_len;
 	}
 
-	// Must free the result
-	// char *result = tmp = malloc(strlen(str) + (with_len - what_len) * count + 1);
 	char buf[512];
 	tmp = &buf[0];
-
 	while (count--) {
 		ins = strstr(str, what);
 		int len_front = ins - str;
@@ -258,7 +255,7 @@ static zui_handle_t temp0;
 static zui_handle_t temp1;
 static zui_handle_t temp2;
 
-int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool color_preview/*, picker: Void->Void = NULL*/) {
+int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool color_preview, void (*picker)(void *), void *data) {
 	zui_t *current = zui_get_current();
 	if (w < 0) w = current->_w;
 	float r = zui_color_r(handle->color) / 255.0f;
@@ -281,12 +278,12 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	float _y = current->_y;
 	float _w = current->_w;
 	current->_w = (int)(28 * ZUI_SCALE());
-	// if (picker != NULL && zui_button("P", ZUI_ALIGN_LEFT, "")) {
-	// 	picker();
-	// 	current->changed = false;
-	// 	handle->changed = false;
-	// 	return handle->color;
-	// }
+	if (picker != NULL && zui_button("P", ZUI_ALIGN_LEFT, "")) {
+		(*picker)(data);
+		current->changed = false;
+		handle->changed = false;
+		return handle->color;
+	}
 	current->_x = _x;
 	current->_y = _y;
 	current->_w = _w;
@@ -388,21 +385,40 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 		handle->color = zui_color(ar[0] * 255, ar[1] * 255, ar[2] * 255, 255);
 	}
 	else if (pos == 2) {
-		// handle->text = untyped (handle->color >> 0).toString(16);
+		sprintf(handle->text, "%x", handle->color);
 		char *hex_code = zui_text_input(handle, "#", ZUI_ALIGN_LEFT, true, false);
 		if (strlen(hex_code) >= 1 && hex_code[0] == '#') { // Allow # at the beginning
 			hex_code = strcpy(hex_code, hex_code + 1);
 		}
 		if (strlen(hex_code) == 3) { // 3 digit CSS style values like fa0 --> ffaa00
-			// hex_code = hex_code[0] + hex_code[0] + hex_code[1] + hex_code[1] + hex_code[2] + hex_code[2];
+			hex_code[5] = hex_code[2];
+			hex_code[4] = hex_code[2];
+			hex_code[3] = hex_code[1];
+			hex_code[2] = hex_code[1];
+			hex_code[1] = hex_code[0];
+			hex_code[6] = '\0';
 		}
 		if (strlen(hex_code) == 4) { // 4 digit CSS style values
-			// 	hex_code = hex_code[0] + hex_code[0] + hex_code[1] + hex_code[1] + hex_code[2] + hex_code[2] + hex_code[3] + hex_code[3];
+			hex_code[7] = hex_code[3];
+			hex_code[6] = hex_code[3];
+			hex_code[5] = hex_code[2];
+			hex_code[4] = hex_code[2];
+			hex_code[3] = hex_code[1];
+			hex_code[2] = hex_code[1];
+			hex_code[1] = hex_code[0];
+			hex_code[8] = '\0';
 		}
 		if (strlen(hex_code) == 6) { // Make the alpha channel optional
-			// 	hex_code = "ff" + hex_code;
+			hex_code[7] = hex_code[5];
+			hex_code[6] = hex_code[4];
+			hex_code[5] = hex_code[3];
+			hex_code[4] = hex_code[2];
+			hex_code[3] = hex_code[1];
+			hex_code[2] = hex_code[0];
+			hex_code[0] = 'f';
+			hex_code[1] = 'f';
 		}
-		handle->color = atoi(hex_code); // parseInt(hex_code, 16);
+		handle->color = strtol(hex_code, NULL, 16);
 	}
 	if (h0->changed || h1->changed || h2->changed) handle->changed = current->changed = true;
 
@@ -425,13 +441,14 @@ static void scroll_align(zui_t *current, zui_handle_t *handle) {
 	}
 }
 
-// static char *right_align_number(int number, int length) {
-// 	char *s = number + "";
-// 	while (s.length < length)
-// 		s = " " + s;
-
-// 	return s;
-// }
+static char *right_align_number(char *s, int number, int length) {
+	sprintf(s, "%d", number);
+	while (strlen(s) < length) {
+		for (int i = strlen(s) + 1; i > 0; --i) s[i] = s[i - 1];
+		s[0] = ' ';
+	}
+	return s;
+}
 
 static void handle_line_select(zui_t *current, zui_handle_t *handle) {
 	if (current->is_shift_down) {
@@ -445,12 +462,13 @@ static void handle_line_select(zui_t *current, zui_handle_t *handle) {
 
 char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label, bool word_wrap) {
 	zui_t *current = zui_get_current();
-	// handle->text = zui_str_replace(handle->text, "\t", "    "); //// free()
+	zui_str_replace(handle->text, "\t", "    ");
 	bool selected = current->text_selected_handle == handle; // Text being edited
-	// char **lines = handle->text.split("\n");
-	int line_count = zui_line_count(handle->text);
-	// bool show_label = (line_count == 1 && lines[0] == "");
-	bool show_label = (line_count == 0);
+
+	char lines[512];
+	strcpy(lines, handle->text);
+	int line_count = zui_line_count(lines);
+	bool show_label = (line_count == 1 && lines[0] == '\0');
 	bool key_pressed = selected && current->is_key_pressed;
 	current->highlight_on_select = false;
 	current->tab_switch_enabled = false;
@@ -459,7 +477,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		bool cursor_set = false;
 		int cursor_pos = current->cursor_x;
 		for (int i = 0; i < handle->position; ++i) {
-			// cursor_pos += lines[i].length + 1; // + \n
+			cursor_pos += strlen(zui_extract_line(lines, i)) + 1; // + '\n'
 		}
 		// char **words = lines.join(" ").split(" ");
 		// char lines = [];
@@ -492,16 +510,19 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		float _y = current->_y;
 		int _TEXT_COL = current->ops.theme->TEXT_COL;
 		current->ops.theme->TEXT_COL = current->ops.theme->ACCENT_COL;
-		// int max_length = ceil(log(line_count + 0.5) / log(10)); // Express log_10 with natural log
+		int max_length = ceil(log(line_count + 0.5) / log(10)); // Express log_10 with natural log
+		char s[64];
 		for (int i = 0; i < line_count; ++i) {
-			// zui_text(right_align_number(i + 1, max_length));
+			zui_text(right_align_number(&s[0], i + 1, max_length), ZUI_ALIGN_LEFT, 0x00000000);
 			current->_y -= ZUI_ELEMENT_OFFSET();
 		}
 		current->ops.theme->TEXT_COL = _TEXT_COL;
 		current->_y = _y;
-		// int numbers_w = ((line_count + "").length * 16 + 4) * ZUI_SCALE();
-		// current->_x += numbers_w;
-		// current->_w -= numbers_w - ZUI_SCROLL_W();
+
+		sprintf(s, "%d", line_count);
+		int numbers_w = (strlen(s) * 16 + 4) * ZUI_SCALE();
+		current->_x += numbers_w;
+		current->_w -= numbers_w - ZUI_SCROLL_W();
 	}
 
 	g2_set_color(current->ops.theme->SEPARATOR_COL); // Background
@@ -513,14 +534,15 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 	if (current->input_started) text_area_selection_start = -1;
 
 	for (int i = 0; i < line_count; ++i) { // Draw lines
+		char *line = zui_extract_line(lines, i);
 		// Text input
 		if ((!selected && zui_get_hover(ZUI_ELEMENT_H())) || (selected && i == handle->position)) {
 			handle->position = i; // Set active line
-			// handle->text = lines[i];
+			strcpy(handle->text, line);
 			current->submit_text_handle = NULL;
 			zui_text_input(handle, show_label ? label : "", align, editable, false);
 			if (key_pressed && current->key_code != KINC_KEY_RETURN && current->key_code != KINC_KEY_ESCAPE) { // Edit text
-				// lines[i] = current->text_selected;
+				strcpy(line, current->text_selected);
 			}
 		}
 		// Text
@@ -538,11 +560,11 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 					(i <= text_area_selection_start && i > handle->position)) {
 					int line_height = ZUI_ELEMENT_H();
 					int cursor_height = line_height - current->button_offset_y * 3.0;
-					// int linew = g2_string_width(current->ops.font, current->font_size, lines[i]);
+					int linew = g2_string_width(current->ops.font, current->font_size, line);
 					g2_set_color(current->ops.theme->ACCENT_SELECT_COL);
-					// g2_fill_rect(current->_x + ZUI_ELEMENT_OFFSET() * 2, current->_y + current->button_offset_y * 1.5, linew, cursor_height);
+					g2_fill_rect(current->_x + ZUI_ELEMENT_OFFSET() * 2, current->_y + current->button_offset_y * 1.5, linew, cursor_height);
 				}
-				// zui_text(lines[i], align, 0x00000000);
+				zui_text(line, align, 0x00000000);
 			}
 		}
 		current->_y -= ZUI_ELEMENT_OFFSET();
@@ -583,12 +605,12 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 			// lines.splice(handle->position + 1, 1);
 			scroll_align(current, handle);
 		}
-		// current->text_selected = lines[handle->position];
+		strcpy(current->text_selected, zui_extract_line(lines, handle->position));
 	}
 
 	current->highlight_on_select = true;
 	current->tab_switch_enabled = true;
-	// handle->text = lines.join("\n");
+	strcpy(handle->text, lines);
 	return handle->text;
 }
 
