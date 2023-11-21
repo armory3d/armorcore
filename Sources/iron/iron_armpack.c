@@ -94,6 +94,12 @@ static char *read_string() {
 static uint32_t traverse() {
 	uint8_t flag = read_u8();
 	switch (flag) {
+	case 0xc2: // false
+		ei += 1;
+		return 1;
+	case 0xc3: // true
+		ei += 1;
+		return 1;
 	case 0xca: // f32
 		ei += 4;
 		return 4;
@@ -220,10 +226,10 @@ static void read_store() {
 		// store_i32(0); // NULL
 		break;
 	case 0xc2:
-		// store_i32(false);
+		store_u8(false);
 		break;
 	case 0xc3:
-		// store_i32(true);
+		store_u8(true);
 		break;
 	case 0xca:
 		store_f32(read_f32());
