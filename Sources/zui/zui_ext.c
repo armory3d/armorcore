@@ -15,11 +15,10 @@ static zui_handle_t *gradient_selected_handle = NULL;
 static zui_handle_t radio_handle;
 static int _ELEMENT_OFFSET = 0;
 static int _BUTTON_COL = 0;
-
-static bool text_area_line_numbers = false;
-static bool text_area_scroll_past_end = false;
-static zui_text_coloring_t *text_area_coloring = NULL;
 static int text_area_selection_start = -1;
+bool zui_text_area_line_numbers = false;
+bool zui_text_area_scroll_past_end = false;
+zui_text_coloring_t *zui_text_area_coloring = NULL;
 
 float zui_dist(float x1, float y1, float x2, float y2) {
 	float vx = x1 - x2;
@@ -460,6 +459,37 @@ static void handle_line_select(zui_t *current, zui_handle_t *handle) {
 	else text_area_selection_start = -1;
 }
 
+static int zui_word_count(char *str) {
+	if (str == NULL || str[0] == '\0') return 0;
+	int i = 0;
+	int count = 1;
+	while (str[i] != '\0') {
+		if (str[i] == ' ' || str[i] == '\n') count++;
+		i++;
+	}
+	return count;
+}
+
+static char temp[128];
+
+static char *zui_extract_word(char *str, int word) {
+	int pos = 0;
+	int len = strlen(str);
+	int word_i = 0;
+	for (int i = 0; i < len; ++i) {
+		if (str[i] == ' ' || str[i] == '\n') { word_i++; continue; }
+		if (word_i < word) continue;
+		if (word_i > word) break;
+		temp[pos++] = str[i];
+	}
+	temp[pos] = 0;
+	return temp;
+}
+
+static int zui_line_pos(char *str, int line) {
+	return zui_extract_line(str, line) - str;
+}
+
 char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label, bool word_wrap) {
 	zui_t *current = zui_get_current();
 	zui_str_replace(handle->text, "\t", "    ");
@@ -479,34 +509,53 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		for (int i = 0; i < handle->position; ++i) {
 			cursor_pos += strlen(zui_extract_line(lines, i)) + 1; // + '\n'
 		}
-		// char **words = lines.join(" ").split(" ");
-		// char lines = [];
-		// char *line = "";
-		// for (w in words) {
-			// float linew = g2_string_width(current->ops.font, current->font_size, line + " " + w);
-			// float wordw = g2_string_width(current->ops.font, current->font_size, " " + w);
-			// if (linew > current->_w - 10 && linew > wordw) {
-				// lines.push(line);
-				// line = "";
-			// }
-			// line = line == "" ? w : line + " " + w;
+		int word_count = zui_word_count(lines);
+		char line[256];
+		line[0] = '\0';
+		char new_lines[512];
+		new_lines[0] = '\0';
+		for (int i = 0; i < word_count; ++i) {
+			char *w = zui_extract_word(lines, i);
+			float spacew = g2_string_width(current->ops.font, current->font_size, " ");
+			float wordw = spacew + g2_string_width(current->ops.font, current->font_size, w);
+			float linew = wordw + g2_string_width(current->ops.font, current->font_size, line);
+			if (linew > current->_w - 10 && linew > wordw) {
+				strcat(new_lines, line);
+				strcat(new_lines, "\n");
+				line[0] = '\0';
+			}
+
+			if (line[0] == '\0') {
+				strcpy(line, w);
+			}
+			else {
+				strcat(line, " ");
+				strcat(line, w);
+			}
 
 			int lines_len = line_count;
-			// for (l in lines) lines_len += l.length;
-			// if (selected && !cursor_set && cursor_pos <= lines_len + line.length) {
-				// cursor_set = true;
-				// handle->position = line_count;
-				// current->cursor_x = current->highlight_anchor = cursor_pos - lines_len;
-			// }
-		// }
-		// lines.push(line);
-		// if (selected) {
-			// current->text_selected = handle->text = lines[handle->position];
-		// }
+			int new_line_count = zui_line_count(new_lines);
+			for (int i = 0; i < new_line_count; ++i) {
+				lines_len += strlen(zui_extract_line(new_lines, i));
+			}
+
+			if (selected && !cursor_set && cursor_pos <= lines_len + strlen(line)) {
+				cursor_set = true;
+				handle->position = line_count;
+				current->cursor_x = current->highlight_anchor = cursor_pos - lines_len;
+			}
+		}
+		strcat(new_lines, line);
+		strcat(new_lines, "\n");
+		if (selected) {
+			strcpy(handle->text, zui_extract_line(new_lines, handle->position));
+			strcpy(current->text_selected, handle->text);
+		}
+		strcpy(lines, new_lines);
 	}
 	int cursor_start_x = current->cursor_x;
 
-	if (text_area_line_numbers) {
+	if (zui_text_area_line_numbers) {
 		float _y = current->_y;
 		int _TEXT_COL = current->ops.theme->TEXT_COL;
 		current->ops.theme->TEXT_COL = current->ops.theme->ACCENT_COL;
@@ -529,7 +578,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 	zui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w - current->button_offset_y * 2, line_count * ZUI_ELEMENT_H() - current->button_offset_y * 2);
 
 	zui_text_coloring_t *_text_coloring = current->text_coloring;
-	current->text_coloring = text_area_coloring;
+	current->text_coloring = zui_text_area_coloring;
 
 	if (current->input_started) text_area_selection_start = -1;
 
@@ -572,7 +621,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 	current->_y += ZUI_ELEMENT_OFFSET();
 	current->text_coloring = _text_coloring;
 
-	if (text_area_scroll_past_end) {
+	if (zui_text_area_scroll_past_end) {
 		current->_y += current->_h - current->window_header_h - ZUI_ELEMENT_H() - ZUI_ELEMENT_OFFSET();
 	}
 
@@ -591,8 +640,10 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		// New line
 		if (editable && current->key_code == KINC_KEY_RETURN && !word_wrap) {
 			handle->position++;
-			// lines.insert(handle->position, lines[handle->position - 1].substr(current->cursor_x));
-			// lines[handle->position - 1] = lines[handle->position - 1].substr(0, current->cursor_x);
+			char *tmp = zui_extract_line(lines, handle->position - 1);
+			strcat(tmp, "\n");
+			zui_insert_chars_at(lines, zui_line_pos(lines, handle->position), tmp + current->cursor_x);
+			zui_remove_chars_at(lines, zui_line_pos(lines, handle->position - 1), current->cursor_x);
 			zui_start_text_edit(handle, ZUI_ALIGN_LEFT);
 			current->cursor_x = current->highlight_anchor = 0;
 			scroll_align(current, handle);
@@ -600,12 +651,13 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		// Delete line
 		if (editable && current->key_code == KINC_KEY_BACKSPACE && cursor_start_x == 0 && handle->position > 0) {
 			handle->position--;
-			// current->cursor_x = current->highlight_anchor = lines[handle->position].length;
-			// lines[handle->position] += lines[handle->position + 1];
-			// lines.splice(handle->position + 1, 1);
+			current->cursor_x = current->highlight_anchor = strlen(zui_extract_line(lines, handle->position));
+			char *tmp = zui_extract_line(lines, handle->position + 1);
+			zui_insert_chars_at(lines, zui_line_pos(lines, handle->position), tmp);
+			zui_remove_chars_at(lines, zui_line_pos(lines, handle->position + 1), strlen(tmp) + 1);
 			scroll_align(current, handle);
 		}
-		strcpy(current->text_selected, zui_extract_line(lines, handle->position));
+		// strcpy(current->text_selected, zui_extract_line(lines, handle->position)); ////
 	}
 
 	current->highlight_on_select = true;

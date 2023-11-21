@@ -14,10 +14,6 @@
 #include "../g2/g2_ext.h"
 
 static zui_t *current = NULL;
-static void (*zui_on_border_hover)(zui_handle_t *, int) = NULL; // Mouse over window border, use for resizing
-static void (*zui_on_text_hover)(void) = NULL; // Mouse over text input, use to set I-cursor
-static void (*zui_on_deselect_text)(void) = NULL; // Text editing finished
-static void (*zui_on_tab_drop)(zui_handle_t *, int, zui_handle_t *, int) = NULL; // Tab reorder via drag and drop
 static bool zui_key_repeat = true; // Emulate key repeat for non-character keys
 static bool zui_dynamic_glyph_load = true; // Allow text input fields to push new glyphs into the font atlas
 static float zui_key_repeat_time = 0.0;
@@ -37,6 +33,10 @@ bool zui_touch_tooltip = false; // Show extra tooltips above finger / on-screen 
 bool zui_is_cut = false;
 bool zui_is_copy = false;
 bool zui_is_paste = false;
+void (*zui_on_border_hover)(zui_handle_t *, int) = NULL; // Mouse over window border, use for resizing
+void (*zui_on_text_hover)(void) = NULL; // Mouse over text input, use to set I-cursor
+void (*zui_on_deselect_text)(void) = NULL; // Text editing finished
+void (*zui_on_tab_drop)(zui_handle_t *, int, zui_handle_t *, int) = NULL; // Tab reorder via drag and drop
 float krom_js_eval(char *str);
 
 float ZUI_SCALE() {
@@ -192,9 +192,7 @@ bool zui_is_char(int code) {
 
 int zui_check_start(int i, char *text, char **start, int start_count) {
 	for (int x = 0; x < start_count; ++x) {
-		char temp[128];
-		strncpy(temp, text + i, strlen(start[x]));
-		if (strcmp(temp, start[x]) == 0) {
+		if (strncmp(text + i, start[x], strlen(start[x])) == 0) {
 			return strlen(start[x]);
 		}
 	}
@@ -203,6 +201,8 @@ int zui_check_start(int i, char *text, char **start, int start_count) {
 
 zui_text_extract_t zui_extract_coloring(char *text, zui_coloring_t *col) {
 	zui_text_extract_t res;
+	res.colored[0] = '\0';
+	res.uncolored[0] = '\0';
 	bool coloring = false;
 	int start_from = 0;
 	int start_length = 0;
@@ -225,7 +225,6 @@ zui_text_extract_t zui_extract_coloring(char *text, zui_coloring_t *col) {
 		else if (col->end[0] == '\0') {
 			if (i == start_from + start_length) coloring = false;
 		}
-		// else if (text.substr(i, col.end.length) == col.end) {
 		else if (strncmp(text + i, col->end, strlen(col->end)) == 0) {
 			coloring = false;
 		}
@@ -294,17 +293,17 @@ void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool
 	}
 	else {
 		// Monospace fonts only for now
+		zui_text_extract_t result;
 		for (int i = 0; i < current->text_coloring->colorings_count; ++i) {
 			zui_coloring_t *coloring = current->text_coloring->colorings[i];
-			zui_text_extract_t result = zui_extract_coloring(text, coloring);
+			result = zui_extract_coloring(text, coloring);
 			if (result.colored[0] != '\0') {
 				g2_set_color(coloring->color);
 				g2_draw_string(result.colored, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
 			}
-			text = result.uncolored;
 		}
 		g2_set_color(current->text_coloring->default_color);
-		g2_draw_string(text, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
+		g2_draw_string(result.uncolored, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
 	}
 }
 
@@ -478,7 +477,7 @@ char *zui_extract_line(char *str, int line) {
 	return temp;
 }
 
- char *zui_lower_case(char *dest, char *src) {
+char *zui_lower_case(char *dest, char *src) {
 	int len = strlen(src);
 	assert(len < 1024);
 	for (int i = 0; i < len; ++i) {

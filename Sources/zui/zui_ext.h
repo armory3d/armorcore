@@ -18,3 +18,7 @@ uint8_t zui_color_g(uint32_t color);
 uint8_t zui_color_b(uint32_t color);
 uint8_t zui_color_a(uint32_t color);
 uint32_t zui_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+
+extern bool zui_text_area_line_numbers;
+extern bool zui_text_area_scroll_past_end;
+extern zui_text_coloring_t *zui_text_area_coloring;

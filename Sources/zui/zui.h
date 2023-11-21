@@ -103,13 +103,13 @@ typedef struct zui_coloring {
 	int start_count;
 	char *end;
 	bool separated;
-} zui_coloring_t;
+}__attribute__((packed)) zui_coloring_t;
 
 typedef struct zui_text_coloring {
 	zui_coloring_t **colorings;
 	int colorings_count;
 	int default_color;
-} zui_text_coloring_t;
+}__attribute__((packed)) zui_text_coloring_t;
 
 typedef struct zui {
 	bool is_scrolling; // Use to limit other activities
@@ -328,6 +328,10 @@ void zui_fade_color(float alpha);
 void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool truncation);
 void zui_draw_rect(bool fill, float x, float y, float w, float h);
 void zui_start_text_edit(zui_handle_t *handle, int align);
+void zui_remove_char_at(char *str, int at);
+void zui_remove_chars_at(char *str, int at, int count);
+void zui_insert_char_at(char *str, int at, char c);
+void zui_insert_chars_at(char *str, int at, char *cs);
 
 float ZUI_SCALE();
 float ZUI_ELEMENT_W();
@@ -355,3 +359,7 @@ extern bool zui_touch_tooltip;
 extern bool zui_is_cut;
 extern bool zui_is_copy;
 extern bool zui_is_paste;
+extern void (*zui_on_border_hover)(zui_handle_t *, int);
+extern void (*zui_on_text_hover)(void);
+extern void (*zui_on_deselect_text)(void);
+extern void (*zui_on_tab_drop)(zui_handle_t *, int, zui_handle_t *, int);
