@@ -266,6 +266,7 @@ extern class Krom {
 	static function zui_inline_radio(handle: Dynamic, texts: Array<String>, align: Int): Int;
 	static function zui_color_wheel(handle: Dynamic, alpha: Bool, w: Float, h: Float, color_preview: Bool, picker: Void->Void): Int;
 	static function zui_text_area(handle: Dynamic, align: Int, editable: Bool, label: String, word_wrap: Bool): String;
+	static function zui_text_area_coloring(packed: js.lib.ArrayBuffer): Void;
 	static function zui_nodes_init(): Dynamic;
 	static function zui_node_canvas(packed: js.lib.ArrayBuffer): js.lib.ArrayBuffer;
 	static function zui_nodes_rgba_popup(handle: Dynamic, val: js.lib.ArrayBuffer, x: Int, y: Int): Void;
@@ -276,9 +277,14 @@ extern class Krom {
 	static function zui_set(ui: Dynamic, name: String, val: Dynamic): Void;
 	static function zui_handle_get(handle: Dynamic, name: String): Dynamic;
 	static function zui_handle_set(handle: Dynamic, name: String, val: Dynamic): Void;
+	static function zui_handle_ptr(handle: Dynamic): Int;
 	static function zui_theme_init(): Dynamic;
 	static function zui_theme_get(theme: Dynamic, name: String): Dynamic;
 	static function zui_theme_set(theme: Dynamic, name: String, val: Dynamic): Void;
+	static function zui_set_on_border_hover(f: Dynamic->Int->Void): Void;
+	static function zui_set_on_text_hover(f: Void->Void): Void;
+	static function zui_set_on_deselect_text(f: Void->Void): Void;
+	static function zui_set_on_tab_drop(f: Dynamic->Int->Dynamic->Int->Void): Void;
 }
 
 enum abstract LogLevel(Int) to Int {

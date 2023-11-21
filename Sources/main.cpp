@@ -224,8 +224,14 @@ namespace {
 	Global<Function> gamepad_button_func;
 	Global<Function> save_and_quit_func;
 	Global<Function> picker_func;
-	bool save_and_quit_func_set = false;
+	#ifdef WITH_ZUI
+	Global<Function> on_border_hover_func;
+	Global<Function> on_text_hover_func;
+	Global<Function> on_deselect_text_func;
+	Global<Function> on_tab_drop_func;
+	#endif
 
+	bool save_and_quit_func_set = false;
 	void update(void *data);
 	void drop_files(wchar_t *file_path, void *data);
 	char *cut(void *data);
@@ -4007,6 +4013,74 @@ namespace {
 		return (float)result->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 	}
 
+	void krom_zui_on_border_hover(zui_handle_t *handle, int side) {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, on_border_hover_func);
+		Local<Value> result;
+		const int argc = 2;
+		Local<Value> argv[argc] = {Number::New(isolate, (size_t)handle), Int32::New(isolate, side)};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
+	void krom_zui_on_text_hover() {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, on_text_hover_func);
+		Local<Value> result;
+		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
+	void krom_zui_on_deselect_text() {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, on_deselect_text_func);
+		Local<Value> result;
+		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
+	void krom_zui_on_tab_drop(zui_handle_t *to, int to_pos, zui_handle_t *from, int from_pos) {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, on_tab_drop_func);
+		Local<Value> result;
+		const int argc = 4;
+		Local<Value> argv[argc] = {Number::New(isolate, (size_t)to), Int32::New(isolate, to_pos), Number::New(isolate, (size_t)from), Int32::New(isolate, from_pos)};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
 	void krom_zui_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> arg0 = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
@@ -4038,6 +4112,11 @@ namespace {
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 		obj->SetInternalField(0, External::New(isolate, ui));
 		args.GetReturnValue().Set(obj);
+
+		zui_on_border_hover = &krom_zui_on_border_hover;
+		zui_on_text_hover = &krom_zui_on_text_hover;
+		zui_on_deselect_text = &krom_zui_on_deselect_text;
+		zui_on_tab_drop = &krom_zui_on_tab_drop;
 	}
 
 	void krom_zui_get_scale(const FunctionCallbackInfo<Value> &args) {
@@ -4525,6 +4604,20 @@ namespace {
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, str).ToLocalChecked());
 	}
 
+	void krom_zui_text_area_coloring(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		if (zui_text_area_coloring != NULL) {
+			free(zui_text_area_coloring);
+		}
+		if (args[0]->IsNullOrUndefined()) {
+			zui_text_area_coloring = NULL;
+			return;
+		}
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		zui_text_area_coloring = (zui_text_coloring_t *)armpack_decode(content->Data(), (int)content->ByteLength());
+	}
+
 	void krom_zui_nodes_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
@@ -4605,6 +4698,12 @@ namespace {
 			return;\
 		}
 
+	#define ZUI_GET_PTR(obj, prop)\
+		if (strcmp(*name, #prop) == 0) {\
+			args.GetReturnValue().Set(Number::New(isolate, (size_t)obj->prop));\
+			return;\
+		}
+
 	#define ZUI_GET_F32(obj, prop)\
 		if (strcmp(*name, #prop) == 0) {\
 			args.GetReturnValue().Set(Number::New(isolate, obj->prop));\
@@ -4665,6 +4764,9 @@ namespace {
 		ZUI_GET_I32(ui, font_size)
 		ZUI_GET_I32(ui, _w)
 		ZUI_GET_I32(ui, key_code)
+		ZUI_GET_PTR(ui, text_selected_handle)
+		ZUI_GET_PTR(ui, submit_text_handle)
+		ZUI_GET_PTR(ui, combo_selected_handle)
 		ZUI_GET_F32(ui, input_x)
 		ZUI_GET_F32(ui, input_y)
 		ZUI_GET_F32(ui, input_started_x)
@@ -4691,6 +4793,8 @@ namespace {
 			ZUI_SET_I32_GLOBAL(zui_is_cut)
 			ZUI_SET_I32_GLOBAL(zui_is_copy)
 			ZUI_SET_I32_GLOBAL(zui_is_paste)
+			ZUI_SET_I32_GLOBAL(zui_text_area_line_numbers)
+			ZUI_SET_I32_GLOBAL(zui_text_area_scroll_past_end)
 			return;
 		}
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -4755,6 +4859,13 @@ namespace {
 			String::Utf8Value text(isolate, args[2]);
 			strcpy(handle->text, *text);
 		}
+	}
+
+	void krom_zui_handle_ptr(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_handle_t *handle = (zui_handle_t *)field->Value();
+		args.GetReturnValue().Set(Number::New(isolate, (size_t)handle));
 	}
 
 	void krom_zui_theme_init(const FunctionCallbackInfo<Value> &args) {
@@ -4848,6 +4959,34 @@ namespace {
 		ZUI_SET_I32(theme, LINK_STYLE)
 		ZUI_SET_I32(theme, FULL_TABS)
 		ZUI_SET_I32(theme, ROUND_CORNERS)
+	}
+
+	void krom_zui_set_on_border_hover(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		on_border_hover_func.Reset(isolate, func);
+	}
+
+	void krom_zui_set_on_text_hover(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		on_text_hover_func.Reset(isolate, func);
+	}
+
+	void krom_zui_set_on_deselect_text(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		on_deselect_text_func.Reset(isolate, func);
+	}
+
+	void krom_zui_set_on_tab_drop(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		on_tab_drop_func.Reset(isolate, func);
 	}
 	#endif
 
@@ -5170,6 +5309,7 @@ namespace {
 		SET_FUNCTION(krom, "zui_inline_radio", krom_zui_inline_radio);
 		SET_FUNCTION(krom, "zui_color_wheel", krom_zui_color_wheel);
 		SET_FUNCTION(krom, "zui_text_area", krom_zui_text_area);
+		SET_FUNCTION(krom, "zui_text_area_coloring", krom_zui_text_area_coloring);
 		SET_FUNCTION(krom, "zui_nodes_init", krom_zui_nodes_init);
 		SET_FUNCTION(krom, "zui_node_canvas", krom_zui_node_canvas);
 		SET_FUNCTION(krom, "zui_nodes_rgba_popup", krom_zui_nodes_rgba_popup);
@@ -5180,9 +5320,14 @@ namespace {
 		SET_FUNCTION(krom, "zui_get", krom_zui_get);
 		SET_FUNCTION(krom, "zui_handle_get", krom_zui_handle_get);
 		SET_FUNCTION(krom, "zui_handle_set", krom_zui_handle_set);
+		SET_FUNCTION(krom, "zui_handle_ptr", krom_zui_handle_ptr);
 		SET_FUNCTION(krom, "zui_theme_init", krom_zui_theme_init);
-		SET_FUNCTION(krom, "zui_theme_set", krom_zui_theme_set);
 		SET_FUNCTION(krom, "zui_theme_get", krom_zui_theme_get);
+		SET_FUNCTION(krom, "zui_theme_set", krom_zui_theme_set);
+		SET_FUNCTION(krom, "zui_set_on_border_hover", krom_zui_set_on_border_hover);
+		SET_FUNCTION(krom, "zui_set_on_text_hover", krom_zui_set_on_text_hover);
+		SET_FUNCTION(krom, "zui_set_on_deselect_text", krom_zui_set_on_deselect_text);
+		SET_FUNCTION(krom, "zui_set_on_tab_drop", krom_zui_set_on_tab_drop);
 		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);

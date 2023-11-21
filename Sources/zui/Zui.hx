@@ -16,13 +16,29 @@ typedef ZuiOptions = {
 class Zui {
 	public static var current: Zui = null;
 
-	public static var onBorderHover: Handle->Int->Void = null;
-	public static var onTextHover: Void->Void = null;
-	public static var onDeselectText: Void->Void = null;
-	public static var onTabDrop: Handle->Int->Handle->Int->Void = null;
-	public static var textAreaLineNumbers = false;
-	public static var textAreaScrollPastEnd = false;
-	public static var textAreaColoring: TTextColoring = null;
+	public static var onBorderHover(never, set): Dynamic->Int->Void;
+	static function set_onBorderHover(f: Dynamic->Int->Void) { Krom.zui_set_on_border_hover(f); return f; }
+
+	public static var onTextHover(never, set): Void->Void ;
+	static function set_onTextHover(f: Void->Void) { Krom.zui_set_on_text_hover(f); return f; }
+
+	public static var onDeselectText(never, set): Void->Void ;
+	static function set_onDeselectText(f: Void->Void) { Krom.zui_set_on_deselect_text(f); return f; }
+
+	public static var onTabDrop(never, set): Dynamic->Int->Dynamic->Int->Void ;
+	static function set_onTabDrop(f: Dynamic->Int->Dynamic->Int->Void) { Krom.zui_set_on_tab_drop(f); return f; }
+
+	public static var textAreaLineNumbers(never, set): Bool;
+	static function set_textAreaLineNumbers(a: Bool): Bool { Krom.zui_set(null, "zui_text_area_line_numbers", a); return a; }
+
+	public static var textAreaScrollPastEnd(never, set): Bool;
+	static function set_textAreaScrollPastEnd(a: Bool): Bool { Krom.zui_set(null, "zui_text_area_scroll_past_end", a); return a; }
+
+	public static var textAreaColoring(never, set): TTextColoring;
+	static function set_textAreaColoring(coloring: TTextColoring): TTextColoring {
+		Krom.zui_text_area_coloring(coloring == null ? null : iron.system.ArmPack.encode(coloring).getData());
+		return coloring;
+	}
 
 	public static var alwaysRedrawWindow(get, never): Bool;
 	static function get_alwaysRedrawWindow(): Bool { return Krom.zui_get(null, "zui_always_redraw_window"); }
@@ -196,9 +212,14 @@ class Zui {
 	public var elementsBaked(never, set): Bool;
 	function set_elementsBaked(a: Bool) { Krom.zui_set(zui_, "elements_baked", a); return a; }
 
-	public var textSelectedHandle: Handle = null;
-	public var submitTextHandle: Handle = null;
-	public var comboSelectedHandle: Handle = null;
+	public var textSelectedHandle_ptr(get, never): Null<Int>;
+	function get_textSelectedHandle_ptr(): Null<Int> { var h = Krom.zui_get(zui_, "text_selected_handle"); return h == 0 ? null : h; }
+
+	public var submitTextHandle_ptr(get, never): Null<Int>;
+	function get_submitTextHandle_ptr(): Null<Int> { var h = Krom.zui_get(zui_, "submit_text_handle"); return h == 0 ? null : h; }
+
+	public var comboSelectedHandle_ptr(get, never): Null<Int>;
+	function get_comboSelectedHandle_ptr(): Null<Int> { var h = Krom.zui_get(zui_, "combo_selected_handle"); return h == 0 ? null : h; }
 
 	public var g: Graphics;
 	public var t: zui.Theme;
@@ -463,6 +484,9 @@ class Handle {
 	function get_changed(): Bool { return Krom.zui_handle_get(handle_, "changed"); }
 	function set_changed(a: Bool) { Krom.zui_handle_set(handle_, "changed", a); return a; }
 
+	public var ptr(get, never): Null<Int>;
+	function get_ptr(): Null<Int> { return Krom.zui_handle_ptr(handle_); }
+
 	public var children: Map<Int, Handle>;
 	public var handle_: Dynamic;
 
@@ -659,11 +683,6 @@ class Theme {
 	function get_ROUND_CORNERS(): Bool { return Krom.zui_theme_get(theme_, "ROUND_CORNERS") > 0; }
 	function set_ROUND_CORNERS(a: Bool) { Krom.zui_theme_set(theme_, "ROUND_CORNERS", a); return a; }
 }
-
-// @:enum abstract LinkStyle(Int) from Int {
-// 	var Line = 0;
-// 	var CubicBezier = 1;
-// }
 
 class Nodes {
 	public static var excludeRemove: Array<String> = [];
