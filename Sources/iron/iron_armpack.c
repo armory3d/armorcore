@@ -6,9 +6,9 @@
 #include <string.h>
 
 static const int PTR_SIZE = 8;
-static uint32_t di;
-static uint32_t ei;
-static uint32_t bottom;
+static uint32_t di; // Decoded index
+static uint32_t ei; // Encoded index
+static uint32_t bottom; // Decoded bottom
 static void *decoded;
 static void *encoded;
 static uint32_t capacity;
@@ -41,15 +41,19 @@ static void store_ptr(uint32_t ptr) {
 	di += PTR_SIZE;
 }
 
+static void store_string_bytes(char *str) {
+	for (int i = 0; i < string_length; ++i) {
+		store_u8(str[i]);
+	}
+	store_u8('\0');
+}
+
 static void store_string(char *str) {
 	// Put string at the bottom and store a pointer to it
 	store_ptr(bottom);
 	uint32_t _di = di;
 	di = bottom;
-	for (int i = 0; i < string_length; ++i) {
-		store_u8(str[i]);
-	}
-	store_u8('\0');
+	store_string_bytes(str);
 	bottom = di;
 	di = _di;
 }
@@ -199,24 +203,53 @@ static void read_store_array(int count) {
 	if (is_typed_array(flag)) {
 		store_typed_array(flag, count);
 		bottom = di;
-		di = _di;
 	}
+	// Dynamic (type - value)
 	else {
-		// Dynamic (type - value)
 		ei -= 1;
 		array_count = count;
-		uint32_t size = get_struct_length();
-		for (int i = 0; i < count; ++i) {
-			store_ptr(bottom + count * PTR_SIZE + i * size);
+
+		// Strings
+		if (flag == 0xdb) {
+			// String pointers
+			uint32_t _ei = ei;
+			uint32_t strings_length = 0;
+			for (int i = 0; i < count; ++i) {
+				store_ptr(bottom + count * PTR_SIZE + strings_length);
+				if (i < count -1) {
+					ei += 1; // String flag
+					uint32_t length = read_u32(); // String length
+					ei += length;
+					strings_length += length;
+					strings_length += 1; // '\0'
+				}
+			}
+			ei = _ei;
+
+			// String bytes
+			for (int i = 0; i < count; ++i) {
+				ei += 1; // String flag
+				store_string_bytes(read_string());
+			}
+			bottom = di;
+		}
+		// Structs
+		else {
+			uint32_t size = get_struct_length();
+			for (int i = 0; i < count; ++i) {
+				store_ptr(bottom + count * PTR_SIZE + i * size);
+			}
+
+			bottom = di;
+			for (int i = 0; i < count; ++i) {
+				read_store();
+			}
 		}
 
-		bottom = di;
-		for (int i = 0; i < count; ++i) {
-			read_store();
-		}
 		array_count = 1;
-		di = _di;
 	}
+
+	di = _di;
 }
 
 static void read_store() {
