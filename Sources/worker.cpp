@@ -244,7 +244,7 @@ namespace {
 		global->Set(String::NewFromUtf8(isolate, "postMessage").ToLocalChecked(), FunctionTemplate::New(isolate, worker_post_message, extern_message_port));
 		global->SetAccessor(String::NewFromUtf8(isolate, "onmessage").ToLocalChecked(), (AccessorGetterCallback)worker_onmessage_get, (AccessorSetterCallback)worker_onmessage_set, extern_message_port);
 		global->Set(String::NewFromUtf8(isolate, "addEventListener").ToLocalChecked(), FunctionTemplate::New(isolate, worker_add_event_listener, extern_message_port));
-		
+
 		IntervalFunctions interval_functions;
 		interval_functions.latestId = 0;
 		Local<External> extern_interval_functions = External::New(isolate, &interval_functions);
