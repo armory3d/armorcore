@@ -4389,7 +4389,8 @@ namespace {
 		int is_tree = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int filled = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int pack = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_panel(handle, *text, is_tree, filled, pack);
+		bool b = zui_panel(handle, *text, is_tree, filled, pack);
+		args.GetReturnValue().Set(Int32::New(isolate, b));
 	}
 
 	void krom_zui_handle(const FunctionCallbackInfo<Value> &args) {

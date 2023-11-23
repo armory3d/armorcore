@@ -222,7 +222,20 @@ class Zui {
 	function get_comboSelectedHandle_ptr(): Null<Int> { var h = Krom.zui_get(zui_, "combo_selected_handle"); return h == 0 ? null : h; }
 
 	public var g: Graphics;
-	public var t: zui.Theme;
+	public var t(default, set): zui.Theme = null;
+	function set_t(theme: zui.Theme) {
+		if (t != null) {
+			for (key in Type.getInstanceFields(zui.Theme)) {
+				if (key == "theme_") continue;
+				if (StringTools.startsWith(key, "set_")) continue;
+				if (StringTools.startsWith(key, "get_")) key = key.substr(4);
+				Reflect.setProperty(t, key, Reflect.getProperty(theme, key));
+			}
+			theme.theme_ = t.theme_;
+		}
+		return t = theme;
+	}
+
 	public var font: kha.Font;
 	public var zui_: Dynamic;
 
