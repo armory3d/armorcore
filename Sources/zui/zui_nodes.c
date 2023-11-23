@@ -265,7 +265,7 @@ void zui_popup(int x, int y, int w, int h, void (*commands)(zui_t *, void *, voi
 	zui_popup_data2 = data2;
 }
 
-static void color_picker_callback(int color) {
+static void color_picker_callback(uint32_t color) {
 	zui_t *current = zui_get_current();
 	float *val = (float *)current_nodes->color_picker_callback_data;
 	val[0] = zui_color_r(color) / 255.0f;

@@ -13,7 +13,7 @@ typedef struct zui_node_socket {
 	int node_id;
 	char *name;
 	char *type;
-	int color;
+	uint32_t color;
 	void *default_value;
 	int default_value_count;
 	float min;
@@ -42,7 +42,7 @@ typedef struct zui_node {
 	char *type;
 	int x; // float x;
 	int y; // float y;
-	int color;
+	uint32_t color;
 	zui_node_socket_t **inputs;
 	int inputs_count;
 	zui_node_socket_t **outputs;

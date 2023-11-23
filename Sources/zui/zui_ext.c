@@ -487,7 +487,15 @@ static char *zui_extract_word(char *str, int word) {
 }
 
 static int zui_line_pos(char *str, int line) {
-	return zui_extract_line(str, line) - str;
+	int i = 0;
+	int current_line = 0;
+	while (str[i] != '\0' && current_line < line) {
+		if (str[i] == '\n') {
+			current_line++;
+		}
+		i++;
+	}
+	return i;
 }
 
 char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label, bool word_wrap) {
@@ -591,7 +599,10 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 			current->submit_text_handle = NULL;
 			zui_text_input(handle, show_label ? label : "", align, editable, false);
 			if (key_pressed && current->key_code != KINC_KEY_RETURN && current->key_code != KINC_KEY_ESCAPE) { // Edit text
+				int line_pos = zui_line_pos(lines, i);
+				zui_remove_chars_at(lines, line_pos, strlen(line));
 				strcpy(line, current->text_selected);
+				zui_insert_chars_at(lines, line_pos, line);
 			}
 		}
 		// Text
@@ -640,10 +651,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		// New line
 		if (editable && current->key_code == KINC_KEY_RETURN && !word_wrap) {
 			handle->position++;
-			char *tmp = zui_extract_line(lines, handle->position - 1);
-			strcat(tmp, "\n");
-			zui_insert_chars_at(lines, zui_line_pos(lines, handle->position), tmp + current->cursor_x);
-			zui_remove_chars_at(lines, zui_line_pos(lines, handle->position - 1), current->cursor_x);
+			zui_insert_char_at(lines, zui_line_pos(lines, handle->position - 1) + current->cursor_x, '\n');
 			zui_start_text_edit(handle, ZUI_ALIGN_LEFT);
 			current->cursor_x = current->highlight_anchor = 0;
 			scroll_align(current, handle);
@@ -652,12 +660,10 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		if (editable && current->key_code == KINC_KEY_BACKSPACE && cursor_start_x == 0 && handle->position > 0) {
 			handle->position--;
 			current->cursor_x = current->highlight_anchor = strlen(zui_extract_line(lines, handle->position));
-			char *tmp = zui_extract_line(lines, handle->position + 1);
-			zui_insert_chars_at(lines, zui_line_pos(lines, handle->position), tmp);
-			zui_remove_chars_at(lines, zui_line_pos(lines, handle->position + 1), strlen(tmp) + 1);
+			zui_remove_chars_at(lines, zui_line_pos(lines, handle->position + 1) - 1, 1); // Remove '\n' of the previous line
 			scroll_align(current, handle);
 		}
-		// strcpy(current->text_selected, zui_extract_line(lines, handle->position)); ////
+		strcpy(current->text_selected, zui_extract_line(lines, handle->position));
 	}
 
 	current->highlight_on_select = true;

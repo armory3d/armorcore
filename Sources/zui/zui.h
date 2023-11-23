@@ -73,7 +73,7 @@ typedef struct zui_options {
 typedef struct zui_handle {
 	bool selected;
 	int position;
-	int color;
+	uint32_t color;
 	float value;
 	char text[256];
 	kinc_g4_render_target_t texture;
@@ -98,7 +98,7 @@ typedef struct zui_text_extract {
 } zui_text_extract_t;
 
 typedef struct zui_coloring {
-	int color;
+	uint32_t color;
 	char **start;
 	int start_count;
 	char *end;
@@ -108,7 +108,7 @@ typedef struct zui_coloring {
 typedef struct zui_text_coloring {
 	zui_coloring_t **colorings;
 	int colorings_count;
-	int default_color;
+	uint32_t default_color;
 }__attribute__((packed)) zui_text_coloring_t;
 
 typedef struct zui {
@@ -245,7 +245,7 @@ typedef struct zui {
 	bool tooltip_wait;
 	double tooltip_time;
 	char tab_names[16][64];
-	int tab_colors[16];
+	uint32_t tab_colors[16];
 	bool tab_enabled[16];
 	int tab_count; // Number of tab calls since window begin
 	zui_handle_t *tab_handle;
@@ -316,8 +316,8 @@ void zui_set_scale(float factor);
 bool zui_get_hover(float elem_h);
 bool zui_get_released(float elem_h);
 bool zui_input_in_rect(float x, float y, float w, float h);
-void zui_fill(float x, float y, float w, float h, int color);
-void zui_rect(float x, float y, float w, float h, int color, float strength);
+void zui_fill(float x, float y, float w, float h, uint32_t color);
+void zui_rect(float x, float y, float w, float h, uint32_t color, float strength);
 int zui_line_count(char *str);
 char *zui_extract_line(char *str, int line);
 bool zui_is_visible(float elem_h);
