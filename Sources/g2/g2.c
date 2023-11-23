@@ -1038,6 +1038,7 @@ float g2_sub_string_width(g2_font_t *font, int font_size, const char *text, int 
 	g2_font_image_t *img = g2_font_get_image_internal(font, font_size);
 	float width = 0.0;
 	for (int i = start; i < end; ++i) {
+		if (text[i] == '\0') break;
 		width += g2_font_get_char_width_internal(img, text[i]);
 	}
 	return width;
