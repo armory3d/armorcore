@@ -221,7 +221,6 @@ class Zui {
 	public var comboSelectedHandle_ptr(get, never): Null<Int>;
 	function get_comboSelectedHandle_ptr(): Null<Int> { var h = Krom.zui_get(zui_, "combo_selected_handle"); return h == 0 ? null : h; }
 
-	public var g: Graphics;
 	public var t(default, set): zui.Theme = null;
 	function set_t(theme: zui.Theme) {
 		if (t != null) {
@@ -236,6 +235,7 @@ class Zui {
 		return t = theme;
 	}
 
+	public var g: Graphics;
 	public var font: kha.Font;
 	public var zui_: Dynamic;
 
@@ -262,12 +262,13 @@ class Zui {
 
 	public function begin(g: Graphics) {
 		current = this;
-		this.g = g;
 		Krom.zui_begin(zui_);
+		Graphics.current = g;
 	}
 
 	public function end(last = true) {
 		Krom.zui_end(last);
+		Graphics.current = null;
 	}
 
 	public function beginRegion(g: Graphics, x: Int, y: Int, w: Int) {
@@ -293,6 +294,9 @@ class Zui {
 	}
 
 	public function window(handle: Handle, x: Int, y: Int, w: Int, h: Int, drag = false): Bool {
+		var img = @:privateAccess new kha.Image(null);
+		img.renderTarget_ = handle.texture;
+		Graphics.current = g = img.g2;
 		return Krom.zui_window(handle.handle_, x, y, w, h, drag);
 	}
 
@@ -413,7 +417,7 @@ class Zui {
 	}
 
 	public function colorWheel(handle: Handle, alpha = false, w: Null<Float> = null, h: Null<Float> = null, colorPreview = true, picker: Void->Void = null): kha.Color {
-		return Krom.zui_color_wheel(handle.handle_, alpha, w != null ? w : 0, h != null ? h : 0, colorPreview, picker);
+		return Krom.zui_color_wheel(handle.handle_, alpha, w != null ? w : -1, h != null ? h : -1, colorPreview, picker);
 	}
 
 	public function textArea(handle: Handle, align = Align.Left, editable = true, label = "", wordWrap = false): String {
@@ -496,6 +500,9 @@ class Handle {
 	public var changed(get, set): Bool;
 	function get_changed(): Bool { return Krom.zui_handle_get(handle_, "changed"); }
 	function set_changed(a: Bool) { Krom.zui_handle_set(handle_, "changed", a); return a; }
+
+	public var texture(get, never): Dynamic;
+	function get_texture(): Dynamic { return Krom.zui_handle_get(handle_, "texture"); }
 
 	public var ptr(get, never): Null<Int>;
 	function get_ptr(): Null<Int> { return Krom.zui_handle_ptr(handle_); }
@@ -802,7 +809,23 @@ class Nodes {
 
 	public function nodeCanvas(ui: Zui, canvas: TNodeCanvas) {
 		updateCanvasFormat(canvas);
-		var packed = Krom.zui_node_canvas(iron.system.ArmPack.encode(canvas).getData());
+
+		// Reserve capacity and ensure properties order
+		var canvas_: TNodeCanvas = {
+			name: canvas.name,
+			nodes: canvas.nodes.copy(),
+			nodes_count: canvas.nodes.length,
+			links: canvas.links.copy(),
+			links_count: canvas.links.length,
+		}
+		while (canvas_.nodes.length < 128) {
+			canvas_.nodes.push({ id: -1, name: "", type: "", x: 0, y: 0, color: 0, inputs: [], outputs: [], buttons: [], width: 0 });
+		}
+		while (canvas_.links.length < 256) {
+			canvas_.links.push({ id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
+		}
+
+		var packed = Krom.zui_node_canvas(iron.system.ArmPack.encode(canvas_).getData());
 		var canvas_: TNodeCanvas = iron.system.ArmPack.decode(haxe.io.Bytes.ofData(packed));
 		canvas.name = canvas_.name;
 		canvas.nodes = canvas_.nodes;
@@ -919,7 +942,9 @@ typedef CanvasControl = {
 typedef TNodeCanvas = {
 	var name: String;
 	var nodes: Array<TNode>;
+	@:optional var nodes_count: Int;
 	var links: Array<TNodeLink>;
+	@:optional var links_count: Int;
 }
 
 typedef TNode = {

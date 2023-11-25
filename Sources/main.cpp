@@ -4841,6 +4841,15 @@ namespace {
 		if (strcmp(*name, "text") == 0) {
 			args.GetReturnValue().Set(String::NewFromUtf8(isolate, handle->text).ToLocalChecked());
 		}
+		else if (strcmp(*name, "texture") == 0) {
+			Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+			templ->SetInternalFieldCount(1);
+			Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+			obj->SetInternalField(0, External::New(isolate, &handle->texture));
+			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, handle->texture.width));
+			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, handle->texture.height));
+			args.GetReturnValue().Set(obj);
+		}
 	}
 
 	void krom_zui_handle_set(const FunctionCallbackInfo<Value> &args) {
