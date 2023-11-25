@@ -271,13 +271,13 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	bool scroll = current->current_window != NULL ? current->current_window->scroll_enabled : false;
 	if (!scroll) {
 		w -= ZUI_SCROLL_W();
-		px += ZUI_SCROLL_W() / 2;
+		px += ZUI_SCROLL_W() / 2.0;
 	}
 	float _x = current->_x;
 	float _y = current->_y;
 	float _w = current->_w;
-	current->_w = (int)(28 * ZUI_SCALE());
-	if (picker != NULL && zui_button("P", ZUI_ALIGN_LEFT, "")) {
+	current->_w = (int)(28.0 * ZUI_SCALE());
+	if (picker != NULL && zui_button("P", ZUI_ALIGN_CENTER, "")) {
 		(*picker)(data);
 		current->changed = false;
 		handle->changed = false;
@@ -287,14 +287,14 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	current->_y = _y;
 	current->_w = _w;
 
-	uint32_t col = zui_color(round(cval * 255), round(cval * 255), round(cval * 255), 255);
+	uint32_t col = zui_color(round(cval * 255.0f), round(cval * 255.0f), round(cval * 255.0f), 255);
 	zui_image(current->ops.color_wheel, false, col, -1);
 	// Picker
 	float ph = current->_y - py;
-	float ox = px + w / 2;
-	float oy = py + ph / 2;
+	float ox = px + w / 2.0;
+	float oy = py + ph / 2.0;
 	float cw = w * 0.7;
-	float cwh = cw / 2;
+	float cwh = cw / 2.0;
 	float cx = ox;
 	float cy = oy + csat * cwh; // Sat is distance from center
 	float grad_tx = px + 0.897 * w;
@@ -308,26 +308,26 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	cx = cx2;
 	cy = cy2;
 
-	current->_x = px - (scroll ? 0 : ZUI_SCROLL_W() / 2);
+	current->_x = px - (scroll ? 0 : ZUI_SCROLL_W() / 2.0);
 	current->_y = py;
 	zui_image(current->ops.black_white_gradient, false, 0xffffffff, -1);
 
 	g2_set_color(0xff000000);
-	g2_fill_rect(cx - 3 * ZUI_SCALE(), cy - 3 * ZUI_SCALE(), 6 * ZUI_SCALE(), 6 * ZUI_SCALE());
+	g2_fill_rect(cx - 3.0 * ZUI_SCALE(), cy - 3.0 * ZUI_SCALE(), 6.0 * ZUI_SCALE(), 6.0 * ZUI_SCALE());
 	g2_set_color(0xffffffff);
-	g2_fill_rect(cx - 2 * ZUI_SCALE(), cy - 2 * ZUI_SCALE(), 4 * ZUI_SCALE(), 4 * ZUI_SCALE());
+	g2_fill_rect(cx - 2.0 * ZUI_SCALE(), cy - 2.0 * ZUI_SCALE(), 4.0 * ZUI_SCALE(), 4.0 * ZUI_SCALE());
 
 	g2_set_color(0xff000000);
-	g2_fill_rect(grad_tx + grad_w / 2 - 3 * ZUI_SCALE(), grad_ty + (1 - cval) * grad_h - 3 * ZUI_SCALE(), 6 * ZUI_SCALE(), 6 * ZUI_SCALE());
+	g2_fill_rect(grad_tx + grad_w / 2.0 - 3.0 * ZUI_SCALE(), grad_ty + (1.0 - cval) * grad_h - 3.0 * ZUI_SCALE(), 6.0 * ZUI_SCALE(), 6.0 * ZUI_SCALE());
 	g2_set_color(0xffffffff);
-	g2_fill_rect(grad_tx + grad_w / 2 - 2 * ZUI_SCALE(), grad_ty + (1 - cval) * grad_h - 2 * ZUI_SCALE(), 4 * ZUI_SCALE(), 4 * ZUI_SCALE());
+	g2_fill_rect(grad_tx + grad_w / 2.0 - 2.0 * ZUI_SCALE(), grad_ty + (1.0 - cval) * grad_h - 2.0 * ZUI_SCALE(), 4.0 * ZUI_SCALE(), 4.0 * ZUI_SCALE());
 
 	if (alpha) {
 		zui_handle_t *alpha_handle = zui_nest(handle, 1);
 		static bool first = true;
 		if (first) {
 			first = false;
-			alpha_handle->value = round(calpha * 100) / 100;
+			alpha_handle->value = round(calpha * 100.0) / 100.0;
 		}
 		calpha = zui_slider(alpha_handle, "Alpha", 0.0, 1.0, true, 100, true, ZUI_ALIGN_LEFT, true);
 		if (alpha_handle->changed) handle->changed = current->changed = true;
@@ -341,20 +341,20 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 		csat = fmin(zui_dist(gx, gy, current->input_x, current->input_y), cwh) / cwh;
 		float angle = atan2(current->input_x - gx, current->input_y - gy);
 		if (angle < 0) angle = MATH_PI + (MATH_PI - fabs(angle));
-		angle = MATH_PI * 2 - angle;
-		chue = angle / (MATH_PI * 2);
+		angle = MATH_PI * 2.0 - angle;
+		chue = angle / (MATH_PI * 2.0);
 		handle->changed = current->changed = true;
 	}
 	// Mouse picking for cval
 	if (current->input_started && zui_input_in_rect(grad_tx + current->_window_x, grad_ty + current->_window_y, grad_w, grad_h)) gradient_selected_handle = handle;
 	if (current->input_released && gradient_selected_handle != NULL) { gradient_selected_handle = NULL; handle->changed = current->changed = true; }
 	if (current->input_down && gradient_selected_handle == handle) {
-		cval = fmax(0.01, fmin(1, 1 - (current->input_y - grad_ty - current->_window_y) / grad_h));
+		cval = fmax(0.01, fmin(1.0, 1.0 - (current->input_y - grad_ty - current->_window_y) / grad_h));
 		handle->changed = current->changed = true;
 	}
 	// Save as rgb
 	zui_hsv_to_rgb(chue, csat, cval, ar);
-	handle->color = zui_color(round(ar[0] * 255), round(ar[1] * 255), round(ar[2] * 255), round(calpha * 255));
+	handle->color = zui_color(round(ar[0] * 255.0), round(ar[1] * 255.0), round(ar[2] * 255.0), round(calpha * 255.0));
 
 	if (color_preview) zui_text("", ZUI_ALIGN_RIGHT, handle->color);
 
@@ -370,7 +370,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 		float g = zui_slider(h1, "G", 0, 1, true, 100, true, ZUI_ALIGN_LEFT, true);
 		h2->value = zui_color_b(handle->color) / 255.0f;
 		float b = zui_slider(h2, "B", 0, 1, true, 100, true, ZUI_ALIGN_LEFT, true);
-		handle->color = zui_color(r * 255, g * 255, b * 255, 255);
+		handle->color = zui_color(r * 255.0, g * 255.0, b * 255.0, 255.0);
 	}
 	else if (pos == 1) {
 		zui_rgb_to_hsv(zui_color_r(handle->color) / 255.0f, zui_color_g(handle->color) / 255.0f, zui_color_b(handle->color) / 255.0f, ar);
@@ -381,7 +381,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 		float csat = zui_slider(h1, "S", 0, 1, true, 100, true, ZUI_ALIGN_LEFT, true);
 		float cval = zui_slider(h2, "V", 0, 1, true, 100, true, ZUI_ALIGN_LEFT, true);
 		zui_hsv_to_rgb(chue, csat, cval, ar);
-		handle->color = zui_color(ar[0] * 255, ar[1] * 255, ar[2] * 255, 255);
+		handle->color = zui_color(ar[0] * 255.0, ar[1] * 255.0, ar[2] * 255.0, 255.0);
 	}
 	else if (pos == 2) {
 		sprintf(handle->text, "%x", handle->color);
@@ -577,7 +577,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		current->_y = _y;
 
 		sprintf(s, "%d", line_count);
-		int numbers_w = (strlen(s) * 16 + 4) * ZUI_SCALE();
+		float numbers_w = (strlen(s) * 16 + 4) * ZUI_SCALE();
 		current->_x += numbers_w;
 		current->_w -= numbers_w - ZUI_SCROLL_W();
 	}
@@ -622,7 +622,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 					int cursor_height = line_height - current->button_offset_y * 3.0;
 					int linew = g2_string_width(current->ops.font, current->font_size, line);
 					g2_set_color(current->ops.theme->ACCENT_SELECT_COL);
-					g2_fill_rect(current->_x + ZUI_ELEMENT_OFFSET() * 2, current->_y + current->button_offset_y * 1.5, linew, cursor_height);
+					g2_fill_rect(current->_x + ZUI_ELEMENT_OFFSET() * 2.0, current->_y + current->button_offset_y * 1.5, linew, cursor_height);
 				}
 				zui_text(line, align, 0x00000000);
 			}
@@ -674,7 +674,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 
 float ZUI_MENUBAR_H() {
 	zui_t *current = zui_get_current();
-	return ZUI_BUTTON_H() * 1.1 + 2 + current->button_offset_y;
+	return ZUI_BUTTON_H() * 1.1 + 2.0 + current->button_offset_y;
 }
 
 void zui_begin_menu() {
@@ -695,6 +695,6 @@ void zui_end_menu() {
 
 bool zui_menu_button(char *text) {
 	zui_t *current = zui_get_current();
-	current->_w = g2_string_width(current->ops.font, current->font_size, text) + 25 * ZUI_SCALE();
-	return zui_button(text, ZUI_ALIGN_LEFT, "");
+	current->_w = g2_string_width(current->ops.font, current->font_size, text) + 25.0 * ZUI_SCALE();
+	return zui_button(text, ZUI_ALIGN_CENTER, "");
 }

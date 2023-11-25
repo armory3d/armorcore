@@ -63,14 +63,15 @@ typedef struct zui_node_link {
 typedef struct zui_node_canvas {
 	char *name;
 	zui_node_t **nodes;
+	int nodes_capacity; // 128
 	int nodes_count;
 	zui_node_link_t **links;
+	int links_capacity; // 256
 	int links_count;
 }__attribute__((packed)) zui_node_canvas_t;
 
 typedef struct zui_nodes {
 	bool nodes_drag;
-	// zui_node_t *nodes_selected[32];
 	int nodes_selected_id[32];
 	int nodes_selected_count;
 	float pan_x;
@@ -79,13 +80,13 @@ typedef struct zui_nodes {
 	int uiw;
 	int uih;
 	bool _input_started;
-	void (*color_picker_callback)(int);
+	void (*color_picker_callback)(uint32_t);
 	void *color_picker_callback_data;
 	float scale_factor;
 	float ELEMENT_H;
 	bool dragged;
 	zui_node_t *move_on_top;
-	zui_node_link_t *link_drag;
+	int link_drag_id;
 	bool is_new_link;
 	int snap_from_id;
 	int snap_to_id;
