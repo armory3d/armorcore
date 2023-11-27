@@ -229,6 +229,7 @@ namespace {
 	Global<Function> on_text_hover_func;
 	Global<Function> on_deselect_text_func;
 	Global<Function> on_tab_drop_func;
+	Global<Function> enum_texts_func;
 	#endif
 
 	bool save_and_quit_func_set = false;
@@ -4081,6 +4082,37 @@ namespace {
 		}
 	}
 
+	char enum_texts_data[32][64];
+	char *enum_texts[32];
+	char **krom_zui_nodes_enum_texts(char *type) {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, enum_texts_func);
+		Local<Value> result;
+		const int argc = 1;
+		Local<Value> argv[argc] = {String::NewFromUtf8(isolate, type).ToLocalChecked()};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+
+		Local<Object> jsarray = result->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		assert(length <= 32);
+		for (int i = 0; i < length; ++i) {
+			String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
+			strcpy(enum_texts_data[i], *str);
+			enum_texts[i] = enum_texts_data[i];
+		}
+		enum_texts[length] = NULL;
+		return enum_texts;
+	}
+
 	void krom_zui_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> arg0 = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
@@ -4117,6 +4149,7 @@ namespace {
 		zui_on_text_hover = &krom_zui_on_text_hover;
 		zui_on_deselect_text = &krom_zui_on_deselect_text;
 		zui_on_tab_drop = &krom_zui_on_tab_drop;
+		zui_nodes_enum_texts = &krom_zui_nodes_enum_texts;
 	}
 
 	void krom_zui_get_scale(const FunctionCallbackInfo<Value> &args) {
@@ -4998,6 +5031,13 @@ namespace {
 		Local<Function> func = Local<Function>::Cast(arg);
 		on_tab_drop_func.Reset(isolate, func);
 	}
+
+	void krom_zui_nodes_set_enum_texts(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		enum_texts_func.Reset(isolate, func);
+	}
 	#endif
 
 	#define SET_FUNCTION_FAST(object, name, fn)\
@@ -5338,6 +5378,7 @@ namespace {
 		SET_FUNCTION(krom, "zui_set_on_text_hover", krom_zui_set_on_text_hover);
 		SET_FUNCTION(krom, "zui_set_on_deselect_text", krom_zui_set_on_deselect_text);
 		SET_FUNCTION(krom, "zui_set_on_tab_drop", krom_zui_set_on_tab_drop);
+		SET_FUNCTION(krom, "zui_nodes_set_enum_texts", krom_zui_nodes_set_enum_texts);
 		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);

@@ -711,7 +711,11 @@ class Nodes {
 	public static var onCanvasReleased: Void->Void = null;
 	public static var onNodeRemove: TNode->Void = null;
 	public static var onCanvasControl: Void->CanvasControl = null;
-	public static var enumTexts: String->Array<String> = null;
+
+	public static var enumTextsHaxe: String->Array<String> = null;
+	public static var enumTexts(never, set): String->Array<String>;
+	static function set_enumTexts(f: String->Array<String>) { Krom.zui_nodes_set_enum_texts(f); return f; }
+
 	public static var socketReleased = false;
 	public static var clipboard = "";
 
@@ -760,57 +764,171 @@ class Nodes {
 
 	static inline var eps = 0.00001;
 
+	static function jsToC(type: String, d: Dynamic): js.lib.Uint8Array {
+		if (type == "RGBA") {
+			if (d == null) return new js.lib.Uint8Array(16);
+			if (Type.typeof(d) == TObject) {
+				var f32 = new js.lib.Float32Array(4);
+				f32[0] = d[0];
+				f32[1] = d[1];
+				f32[2] = d[2];
+				f32[3] = d[3];
+				d = new js.lib.Uint8Array(f32.buffer);
+			}
+			return new js.lib.Uint8Array(d.buffer);
+		}
+		if (type == "VECTOR") {
+			if (d == null) return new js.lib.Uint8Array(12);
+			if (Type.typeof(d) == TObject) {
+				var f32 = new js.lib.Float32Array(4);
+				f32[0] = d[0];
+				f32[1] = d[1];
+				f32[2] = d[2];
+				d = new js.lib.Uint8Array(f32.buffer);
+			}
+			return new js.lib.Uint8Array(d.buffer);
+		}
+		if (type == "VALUE") {
+			if (d == null) return new js.lib.Uint8Array(4);
+			var f32 = new js.lib.Float32Array([d]);
+			return new js.lib.Uint8Array(f32.buffer);
+		}
+		if (type == "STRING") {
+			if (d == null) return new js.lib.Uint8Array(1);
+			var s: String = cast d;
+			var u8 = new js.lib.Uint8Array(s.length + 1);
+			for (i in 0...s.length) u8[i] = s.charCodeAt(i);
+			return u8;
+		}
+		if (type == "ENUM") {
+			if (d == null) return new js.lib.Uint8Array(1);
+			var u32 = new js.lib.Uint32Array([d]);
+			return new js.lib.Uint8Array(u32.buffer);
+		}
+		if (type == "BOOL") {
+			if (d == null) return new js.lib.Uint8Array(1);
+			var u8 = new js.lib.Uint8Array(1);
+			u8[0] = d == true ? 1 : 0;
+			return u8;
+		}
+		if (type == "CUSTOM") {
+
+		}
+		return null;
+	}
+
+	static function jsToCData(type: String, d: Dynamic): js.lib.Uint8Array {
+		if (type == "ENUM") {
+			if (d == null) return new js.lib.Uint8Array(1);
+			var a: Array<String> = cast d;
+			var length = 0;
+			for (s in a) {
+				length += s.length + 1;
+			}
+			if (length == 0) return new js.lib.Uint8Array(1);
+			var u8 = new js.lib.Uint8Array(length);
+			var pos = 0;
+			for (s in a) {
+				for (i in 0...s.length) u8[pos++] = s.charCodeAt(i);
+				u8[pos++] = 0; // '\0'
+			}
+			return u8;
+		}
+		if (type == "CUSTOM") {
+
+		}
+		return new js.lib.Uint8Array(1);
+	}
+
+	static function cToJs(type: String, u8: js.lib.Uint8Array): Dynamic {
+		if (type == "RGBA") {
+			return new js.lib.Float32Array(u8.buffer);
+		}
+		if (type == "VECTOR") {
+			return new js.lib.Float32Array(u8.buffer);
+		}
+		if (type == "VALUE") {
+			var f32 = new js.lib.Float32Array(u8.buffer);
+			return f32[0];
+		}
+		if (type == "STRING") {
+			var s = "";
+			for (i in 0...u8.length - 1) s += String.fromCharCode(u8[i]);
+			return s;
+		}
+		if (type == "ENUM") {
+			var u32 = new js.lib.Uint32Array(u8.buffer);
+			return u32[0];
+		}
+		if (type == "BOOL") {
+			return u8[0] > 0 ? true : false;
+		}
+		if (type == "CUSTOM") {
+
+		}
+		return null;
+	}
+
+	static function cToJsData(type: String, u8: js.lib.Uint8Array): Dynamic {
+		if (type == "ENUM") {
+			var a: Array<String> = [];
+			var s = "";
+			for (i in 0...u8.length) {
+				if (u8[i] == 0) {
+					a.push(s);
+					s = "";
+				}
+				else {
+					s += String.fromCharCode(u8[i]);
+				}
+			}
+			return a;
+		}
+		if (type == "CUSTOM") {
+
+		}
+		return null;
+	}
+
 	public static function updateCanvasFormat(canvas: TNodeCanvas) {
-		// TODO: deprecated
-		// Fill in optional values
 		for (n in canvas.nodes) {
 			for (soc in n.inputs) {
-				if (soc.min == null) soc.min = 0.0 + eps;
-				if (soc.max == null) soc.max = 1.0 + eps;
-				if (soc.precision == null) soc.precision = 100.0 + eps;
+				if (soc.min == null) soc.min = 0.0;
+				if (soc.max == null) soc.max = 1.0;
+				if (soc.precision == null) soc.precision = 100.0;
 				if (soc.display == null) soc.display = 0;
-				if (!Std.isOfType(soc.default_value, js.lib.Float32Array)) {
-					var f32 = new js.lib.Float32Array(4);
-					f32[0] = soc.default_value;
-					soc.default_value = f32;
-				}
-				// if (soc.default_value.length < 4) soc.default_value = new js.lib.Float32Array(4);
+				if (soc.min - Std.int(soc.min) == 0.0) soc.min += eps;
+				if (soc.max - Std.int(soc.max) == 0.0) soc.max += eps;
+				if (soc.precision - Std.int(soc.precision) == 0.0) soc.precision += eps;
 			}
 			for (soc in n.outputs) {
-				if (soc.min == null) soc.min = 0.0 + eps;
-				if (soc.max == null) soc.max = 1.0 + eps;
-				if (soc.precision == null) soc.precision = 100.0 + eps;
+				if (soc.min == null) soc.min = 0.0;
+				if (soc.max == null) soc.max = 1.0;
+				if (soc.precision == null) soc.precision = 100.0;
 				if (soc.display == null) soc.display = 0;
-				if (!Std.isOfType(soc.default_value, js.lib.Float32Array)) {
-					var f32 = new js.lib.Float32Array(4);
-					f32[0] = soc.default_value;
-					soc.default_value = f32;
-				}
-				// if (soc.default_value.length < 4) soc.default_value = new js.lib.Float32Array(4);
+				if (soc.min - Std.int(soc.min) == 0.0) soc.min += eps;
+				if (soc.max - Std.int(soc.max) == 0.0) soc.max += eps;
+				if (soc.precision - Std.int(soc.precision) == 0.0) soc.precision += eps;
 			}
 			for (but in n.buttons) {
 				if (but.output == null) but.output = -1;
-				if (but.default_value == null) but.default_value = new js.lib.Float32Array(4);
-				if (!Std.isOfType(but.default_value, js.lib.Float32Array)) {
-					var f32 = new js.lib.Float32Array(4);
-					f32[0] = but.default_value;
-					but.default_value = f32;
-				}
-				// if (but.default_value.length < 4) but.default_value = new js.lib.Float32Array(4);
-				if (but.data == null) but.data = new js.lib.Float32Array(4);
-				if (but.min == null) but.min = 0.0 + eps;
-				if (but.max == null) but.max = 1.0 + eps;
-				if (but.precision == null) but.precision = 100.0 + eps;
+				if (but.min == null) but.min = 0.0;
+				if (but.max == null) but.max = 1.0;
+				if (but.precision == null) but.precision = 100.0;
 				if (but.height == null) but.height = 0;
+				if (but.min - Std.int(but.min) == 0.0) but.min += eps;
+				if (but.max - Std.int(but.max) == 0.0) but.max += eps;
+				if (but.precision - Std.int(but.precision) == 0.0) but.precision += eps;
 			}
 			if (n.width == null) n.width = 0;
 		}
 	}
 
 	public function nodeCanvas(ui: Zui, canvas: TNodeCanvas) {
+		// Fill in optional values
 		updateCanvasFormat(canvas);
 
-		// Reserve capacity and ensure properties order
+		// Ensure properties order
 		var canvas_: TNodeCanvas = {
 			name: canvas.name,
 			nodes: canvas.nodes.copy(),
@@ -818,6 +936,67 @@ class Nodes {
 			links: canvas.links.copy(),
 			links_count: canvas.links.length,
 		}
+
+		// Convert default data
+		for (n in canvas_.nodes) {
+			for (soc in n.inputs) {
+				soc.default_value = jsToC(soc.type, soc.default_value);
+			}
+			for (soc in n.outputs) {
+				soc.default_value = jsToC(soc.type, soc.default_value);
+			}
+			for (but in n.buttons) {
+				but.default_value = jsToC(but.type, but.default_value);
+				but.data = jsToCData(but.type, but.data);
+			}
+		}
+
+		// Ensure properties order
+		for (n in canvas_.nodes) {
+			for (i in 0...n.inputs.length) {
+				n.inputs[i] = {
+					id: n.inputs[i].id,
+					node_id: n.inputs[i].node_id,
+					name: n.inputs[i].name,
+					type: n.inputs[i].type,
+					color: n.inputs[i].color,
+					default_value: n.inputs[i].default_value,
+					min: n.inputs[i].min,
+					max: n.inputs[i].max,
+					precision: n.inputs[i].precision,
+					display: n.inputs[i].display,
+				};
+			}
+			for (i in 0...n.outputs.length) {
+				n.outputs[i] = {
+					id: n.outputs[i].id,
+					node_id: n.outputs[i].node_id,
+					name: n.outputs[i].name,
+					type: n.outputs[i].type,
+					color: n.outputs[i].color,
+					default_value: n.outputs[i].default_value,
+					min: n.outputs[i].min,
+					max: n.outputs[i].max,
+					precision: n.outputs[i].precision,
+					display: n.outputs[i].display,
+				};
+			}
+			for (i in 0...n.buttons.length) {
+				n.buttons[i] = {
+					name: n.buttons[i].name,
+					type: n.buttons[i].type,
+					output: n.buttons[i].output,
+					default_value: n.buttons[i].default_value,
+					data: n.buttons[i].data,
+					min: n.buttons[i].min,
+					max: n.buttons[i].max,
+					precision: n.buttons[i].precision,
+					height: n.buttons[i].height,
+				};
+			}
+		}
+
+		// Reserve capacity
 		while (canvas_.nodes.length < 128) {
 			canvas_.nodes.push({ id: -1, name: "", type: "", x: 0, y: 0, color: 0, inputs: [], outputs: [], buttons: [], width: 0 });
 		}
@@ -827,11 +1006,27 @@ class Nodes {
 
 		var packed = Krom.zui_node_canvas(iron.system.ArmPack.encode(canvas_).getData());
 		var canvas_: TNodeCanvas = iron.system.ArmPack.decode(haxe.io.Bytes.ofData(packed));
+		if (canvas_.nodes == null) canvas_.nodes = [];
+		if (canvas_.links == null) canvas_.links = [];
+
+		// Convert default data
+		for (n in canvas_.nodes) {
+			for (soc in n.inputs) {
+				soc.default_value = cToJs(soc.type, soc.default_value);
+			}
+			for (soc in n.outputs) {
+				soc.default_value = cToJs(soc.type, soc.default_value);
+			}
+			for (but in n.buttons) {
+				but.default_value = cToJs(but.type, but.default_value);
+				but.data = cToJsData(but.type, but.data);
+			}
+		}
+
 		canvas.name = canvas_.name;
 		canvas.nodes = canvas_.nodes;
 		canvas.links = canvas_.links;
-		if (canvas.nodes == null) canvas.nodes = [];
-		if (canvas.links == null) canvas.links = [];
+
 		ELEMENT_H = ui.t.ELEMENT_H + 2;
 	}
 
