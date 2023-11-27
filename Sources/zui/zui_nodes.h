@@ -15,7 +15,7 @@ typedef struct zui_node_socket {
 	char *type;
 	uint32_t color;
 	void *default_value;
-	int default_value_count;
+	int default_value_count; // Byte length
 	float min;
 	float max;
 	float precision;
@@ -27,9 +27,9 @@ typedef struct zui_node_button {
 	char *type;
 	int output;
 	void *default_value;
-	int default_value_count;
+	int default_value_count; // Byte length
 	void *data;
-	int data_count;
+	int data_count; // Byte length
 	float min;
 	float max;
 	float precision;
@@ -101,6 +101,7 @@ void zui_nodes_rgba_popup(zui_handle_t *nhandle, float *val, int x, int y);
 float ZUI_NODES_SCALE();
 float ZUI_NODES_PAN_X();
 float ZUI_NODES_PAN_Y();
+extern char **(*zui_nodes_enum_texts)(char *);
 
 void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas);
 uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas);
