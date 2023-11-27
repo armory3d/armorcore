@@ -27,6 +27,7 @@ import haxe.io.Eof;
 import kha.arrays.Float32Array;
 import kha.arrays.Uint32Array;
 import kha.arrays.Int16Array;
+import kha.arrays.Uint8Array;
 
 class ArmPack {
 
@@ -93,6 +94,11 @@ class ArmPack {
 			for (x in 0...length) a[x] = i.readInt16();
 			return a;
 		}
+		else if (b == 0xc4) { // Typed uint8
+			var a = new Uint8Array(length);
+			for (x in 0...length) a[x] = i.readByte();
+			return a;
+		}
 		else { // Dynamic type-value
 			i.position--;
 			var a: Array<Dynamic> = [];
@@ -135,11 +141,16 @@ class ArmPack {
 					case "Array", null: { // kha.arrays give null
 						o.writeByte(0xdd);
 						o.writeInt32(d.length);
+						var isUint8 = Std.isOfType(d, #if js js.lib.Uint8Array #else Uint8ArrayPrivate #end);
 						var isInt16 = Std.isOfType(d, #if js js.lib.Int16Array #else Int16ArrayPrivate #end);
 						var isInt = Std.isOfType(d[0], Int) && !Std.isOfType(d, #if js js.lib.Float32Array #else Float32ArrayPrivate #end);
 						var isFloat = Std.isOfType(d[0], Float);
 
-						if (isInt16) { // Int16Array
+						if (isUint8) { // Uint8Array
+							o.writeByte(0xc4);
+							for (i in 0...d.length) o.writeByte(d[i]);
+						}
+						else if (isInt16) { // Int16Array
 							o.writeByte(0xd1);
 							for (i in 0...d.length) o.writeInt16(d[i]);
 						}
