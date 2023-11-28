@@ -868,15 +868,15 @@ void zui_submit_text_edit() {
 	current->text_selected[0] = '\0';
 }
 
-void zui_deselect_text() {
-	if (current->text_selected_handle == NULL) return;
-	current->submit_text_handle = current->text_selected_handle;
-	strcpy(current->text_to_submit, current->text_selected);
-	current->text_selected_handle = NULL;
-	current->is_typing = false;
-	if (current->current_window != NULL) current->current_window->redraws = 2;
+void zui_deselect_text(zui_t *ui) {
+	if (ui->text_selected_handle == NULL) return;
+	ui->submit_text_handle = ui->text_selected_handle;
+	strcpy(ui->text_to_submit, ui->text_selected);
+	ui->text_selected_handle = NULL;
+	ui->is_typing = false;
+	if (ui->current_window != NULL) ui->current_window->redraws = 2;
 	kinc_keyboard_hide();
-	current->highlight_anchor = current->cursor_x;
+	ui->highlight_anchor = ui->cursor_x;
 	if (zui_on_deselect_text != NULL) zui_on_deselect_text();
 }
 
@@ -948,15 +948,15 @@ void zui_update_text_edit(int align, bool editable, bool live_update) {
 			}
 		}
 		else if (current->key_code == KINC_KEY_RETURN) { // Deselect
-			zui_deselect_text();
+			zui_deselect_text(current);
 		}
 		else if (current->key_code == KINC_KEY_ESCAPE) { // Cancel
 			strcpy(current->text_selected, current->text_selected_handle->text);
-			zui_deselect_text();
+			zui_deselect_text(current);
 		}
 		else if (current->key_code == KINC_KEY_TAB && current->tab_switch_enabled && !current->is_ctrl_down) { // Next field
 			current->tab_pressed = true;
-			zui_deselect_text();
+			zui_deselect_text(current);
 			current->key_code = 0;
 		}
 		else if (current->key_code == KINC_KEY_HOME) {
@@ -2136,7 +2136,7 @@ void zui_mouse_up(zui_t *ui, int button, int x, int y) {
 	#if defined(KORE_ANDROID) || defined(KORE_IOS)
 	zui_set_input_position(ui, x, y);
 	#endif
-	zui_deselect_text();
+	zui_deselect_text(ui);
 }
 
 void zui_mouse_wheel(zui_t *ui, int delta) {

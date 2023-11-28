@@ -102,6 +102,7 @@ float ZUI_NODES_SCALE();
 float ZUI_NODES_PAN_X();
 float ZUI_NODES_PAN_Y();
 extern char **(*zui_nodes_enum_texts)(char *);
+extern void (*zui_nodes_on_custom_button)(int, char *);
 
 void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas);
 uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas);

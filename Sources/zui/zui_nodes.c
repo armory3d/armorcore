@@ -30,8 +30,8 @@ static void (*zui_on_node_remove)(zui_node_t *) = NULL;
 static zui_canvas_control_t (*zui_on_canvas_control)(void) = NULL; // Pan, zoom
 static int zui_node_id = -1;
 
-// Retrieve combo items for buttons of type ENUM
-char **(*zui_nodes_enum_texts)(char *) = NULL;
+char **(*zui_nodes_enum_texts)(char *) = NULL; // Retrieve combo items for buttons of type ENUM
+void (*zui_nodes_on_custom_button)(int, char *) = NULL; // Call external function
 
 int zui_popup_x = 0;
 int zui_popup_y = 0;
@@ -40,6 +40,8 @@ int zui_popup_h = 0;
 void (*zui_popup_commands)(zui_t *, void *, void *) = NULL;
 void *zui_popup_data;
 void *zui_popup_data2;
+int zui_popup_handle_node_id = -1;
+int zui_popup_handle_node_socket_id = -1;
 
 char *zui_tr(char *id/*, map<char *, char *> vars*/) {
 	return id;
@@ -70,11 +72,11 @@ float ZUI_NODES_PAN_Y() {
 	return current_nodes->pan_y * ZUI_NODES_SCALE() + zoom_pan;
 }
 
-int ZUI_LINE_H() {
+float ZUI_LINE_H() {
 	return current_nodes->ELEMENT_H * ZUI_NODES_SCALE();
 }
 
-int ZUI_BUTTONS_H(zui_node_t *node) {
+float ZUI_BUTTONS_H(zui_node_t *node) {
 	float h = 0.0;
 	for (int i = 0; i < node->buttons_count; ++i) {
 		zui_node_button_t *but = node->buttons[i];
@@ -86,7 +88,7 @@ int ZUI_BUTTONS_H(zui_node_t *node) {
 	return h;
 }
 
-int ZUI_OUTPUTS_H(int sockets_count, int length) {
+float ZUI_OUTPUTS_H(int sockets_count, int length) {
 	float h = 0.0;
 	for (int i = 0; i < (length < 0 ? sockets_count : length); ++i) {
 		h += ZUI_LINE_H();
@@ -127,11 +129,11 @@ float ZUI_NODE_Y(zui_node_t *node) {
 	return node->y * ZUI_NODES_SCALE() + ZUI_NODES_PAN_Y();
 }
 
-int ZUI_INPUT_Y(zui_node_canvas_t *canvas, zui_node_socket_t **sockets, int sockets_count, int pos) {
+float ZUI_INPUT_Y(zui_node_canvas_t *canvas, zui_node_socket_t **sockets, int sockets_count, int pos) {
 	return ZUI_LINE_H() * 1.62 + ZUI_INPUTS_H(canvas, sockets, sockets_count, pos);
 }
 
-int ZUI_OUTPUT_Y(int sockets_count, int pos) {
+float ZUI_OUTPUT_Y(int sockets_count, int pos) {
 	return ZUI_LINE_H() * 1.62 + ZUI_OUTPUTS_H(sockets_count, pos);
 }
 
@@ -320,6 +322,10 @@ void zui_nodes_rgba_popup(zui_handle_t *nhandle, float *val, int x, int y) {
 	zui_popup(x, y, 140.0 * current_nodes->scale_factor, current->ops.theme->ELEMENT_H * 10.0, &rgba_popup_commands, nhandle, val);
 }
 
+static char enum_label[32];
+static char enum_texts_data[32][64];
+static char *enum_texts[32];
+
 void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	zui_t *current = zui_get_current();
 	float wx = current->_window_x;
@@ -466,14 +472,22 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_x = nx;
 			current->_y = ny;
 			current->_w = w;
-			char *texts[64];
+			char temp_label[32];
+			char temp_texts_data[32][64];
+			char *temp_texts[32];
+			bool combo_selected = current->combo_selected_handle != NULL;
+			char *label = combo_selected ? temp_label : enum_label;
+			char (*texts_data)[64] = combo_selected ? temp_texts_data : enum_texts_data;
+			char **texts = combo_selected ? temp_texts : enum_texts;
+
 			int texts_count = 0;
 			if (but->data_count > 1) {
 				bool string_start = true;
 				for (int i = 0; i < but->data_count; ++i) {
 					if (string_start) {
 						string_start = false;
-						texts[texts_count] = zui_tr(&((char *)but->data)[i]);
+						strcpy(texts_data[texts_count], zui_tr(&((char *)but->data)[i]));
+						texts[texts_count] = texts_data[texts_count];
 						texts_count++;
 					}
 					if (((char *)but->data)[i] == '\0') string_start = true;
@@ -482,13 +496,15 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			else {
 				char **strings = (*zui_nodes_enum_texts)(node->type);
 				while (strings[texts_count] != NULL) {
-					texts[texts_count] = strings[texts_count];
+					strcpy(texts_data[texts_count], strings[texts_count]);
+					texts[texts_count] = texts_data[texts_count];
 					texts_count++;
 				}
 			}
+			strcpy(label, zui_tr(but->name));
 			zui_handle_t *but_handle = zui_nest(nhandle, buti);
 			but_handle->position = ((int *)but->default_value)[0];
-			((int *)but->default_value)[0] = zui_combo(but_handle, texts, texts_count, zui_tr(but->name), false, ZUI_ALIGN_LEFT, true);
+			((int *)but->default_value)[0] = zui_combo(but_handle, texts, texts_count, label, false, ZUI_ALIGN_LEFT, true);
 		}
 		else if (strcmp(but->type, "BOOL") == 0) {
 			ny += lineh;
@@ -504,9 +520,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_x = nx;
 			current->_y = ny;
 			current->_w = w;
-			// int dot = strrchr(but->name, '.') - but->name; // but->name specifies external function path
-			// void *fn = Reflect.field(Type.resolveClass(but->name.substr(0, dot)), but->name.substr(dot + 1));
-			// fn(ui, this, node);
+			zui_nodes_on_custom_button(node->id, but->name);
 			ny += lineh * (but->height - 1); // but->height specifies vertical button size
 		}
 	}
@@ -566,7 +580,14 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			float iy = current->input_y - wy;
 			if (current->input_started && ix > rx && iy > ry && ix < rx + rw && iy < ry + rh) {
 				current_nodes->_input_started = current->input_started = false;
-				zui_nodes_rgba_popup(nhandle, (float *)soc->default_value, (int)(rx), (int)(ry + ZUI_ELEMENT_H()));
+				zui_nodes_rgba_popup(nhandle, soc->default_value, (int)(rx), (int)(ry + ZUI_ELEMENT_H()));
+				zui_popup_handle_node_id = node->id;
+				zui_popup_handle_node_socket_id = soc->id;
+			}
+			if (zui_popup_commands != NULL && zui_popup_handle_node_id == node->id && zui_popup_handle_node_socket_id == soc->id) {
+				// armpack data may have been moved in memory
+				zui_popup_data = nhandle;
+				zui_popup_data2 = soc->default_value;
 			}
 		}
 		else if (!is_linked && strcmp(inp->type, "VECTOR") == 0 && inp->display == 1) {
