@@ -705,27 +705,29 @@ class Theme {
 }
 
 class Nodes {
+	public static var current: Nodes;
+	public static var currentCanvas: TNodeCanvas;
+
 	public static var excludeRemove: Array<String> = [];
 	public static var onLinkDrag: TNodeLink->Bool->Void = null;
 	public static var onSocketReleased: TNodeSocket->Void = null;
 	public static var onCanvasReleased: Void->Void = null;
 	public static var onNodeRemove: TNode->Void = null;
 	public static var onCanvasControl: Void->CanvasControl = null;
-
-	public static var enumTextsHaxe: String->Array<String> = null;
-	public static var enumTexts(never, set): String->Array<String>;
-	static function set_enumTexts(f: String->Array<String>) { Krom.zui_nodes_set_enum_texts(f); return f; }
-
 	public static var socketReleased = false;
 	public static var clipboard = "";
 
+	public static var enumTextsHaxe: String->Array<String> = null;
+	public static var enumTexts(never, set): String->Array<String>;
+	static function set_enumTexts(f: String->Array<String>) { enumTextsHaxe = f; Krom.zui_nodes_set_enum_texts(f); return f; }
+
+	// public var _inputStarted = false;
+	public var colorPickerCallback: kha.Color->Void = null;
 	public var nodesSelected: Array<TNode> = [];
 	public var nodesDrag = false;
 	public var panX = 0.0;
 	public var panY = 0.0;
 	public var zoom = 1.0;
-	public var _inputStarted = false;
-	public var colorPickerCallback: kha.Color->Void = null;
 	public var linkDrag: TNodeLink = null;
 
 	public var handle = new Zui.Handle();
@@ -734,6 +736,13 @@ class Nodes {
 
 	public function new() {
 		nodes_ = Krom.zui_nodes_init();
+		Krom.zui_nodes_set_on_custom_button(on_custom_button);
+	}
+
+	public static function on_custom_button(node_id: Int, button_name: String) {
+		var dot = button_name.lastIndexOf("."); // button_name specifies external function path
+		var fn = Reflect.field(Type.resolveClass(button_name.substr(0, dot)), button_name.substr(dot + 1));
+		fn(Zui.current, current, current.getNode(currentCanvas.nodes, node_id));
 	}
 
 	public function getNode(nodes: Array<TNode>, id: Int): TNode {
@@ -812,9 +821,9 @@ class Nodes {
 			return u8;
 		}
 		if (type == "CUSTOM") {
-
+			return new js.lib.Uint8Array(1);
 		}
-		return null;
+		return new js.lib.Uint8Array(1);
 	}
 
 	static function jsToCData(type: String, d: Dynamic): js.lib.Uint8Array {
@@ -835,7 +844,7 @@ class Nodes {
 			return u8;
 		}
 		if (type == "CUSTOM") {
-
+			return new js.lib.Uint8Array(1);
 		}
 		return new js.lib.Uint8Array(1);
 	}
@@ -864,7 +873,7 @@ class Nodes {
 			return u8[0] > 0 ? true : false;
 		}
 		if (type == "CUSTOM") {
-
+			return 0;
 		}
 		return null;
 	}
@@ -885,7 +894,7 @@ class Nodes {
 			return a;
 		}
 		if (type == "CUSTOM") {
-
+			return 0;
 		}
 		return null;
 	}
@@ -915,7 +924,8 @@ class Nodes {
 				if (but.min == null) but.min = 0.0;
 				if (but.max == null) but.max = 1.0;
 				if (but.precision == null) but.precision = 100.0;
-				if (but.height == null) but.height = 0;
+				if (but.height == null) but.height = 0.0;
+				if (but.height - Std.int(but.height) == 0.0) but.height += eps;
 				if (but.min - Std.int(but.min) == 0.0) but.min += eps;
 				if (but.max - Std.int(but.max) == 0.0) but.max += eps;
 				if (but.precision - Std.int(but.precision) == 0.0) but.precision += eps;
@@ -924,7 +934,12 @@ class Nodes {
 		}
 	}
 
+	public static var node_replace: Array<TNode> = [];
+
 	public function nodeCanvas(ui: Zui, canvas: TNodeCanvas) {
+		current = this;
+		currentCanvas = canvas;
+
 		// Fill in optional values
 		updateCanvasFormat(canvas);
 
@@ -1026,6 +1041,17 @@ class Nodes {
 		canvas.name = canvas_.name;
 		canvas.nodes = canvas_.nodes;
 		canvas.links = canvas_.links;
+
+		// Restore nodes modified in js while Krom.zui_node_canvas was running
+		for (n in node_replace) {
+			for (i in 0...canvas.nodes.length) {
+				if (canvas.nodes[i].id == n.id) {
+					canvas.nodes[i] = n;
+					break;
+				}
+			}
+		}
+		node_replace = [];
 
 		ELEMENT_H = ui.t.ELEMENT_H + 2;
 	}

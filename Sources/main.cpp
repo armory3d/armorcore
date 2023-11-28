@@ -230,6 +230,7 @@ namespace {
 	Global<Function> on_deselect_text_func;
 	Global<Function> on_tab_drop_func;
 	Global<Function> enum_texts_func;
+	Global<Function> on_custom_button_func;
 	#endif
 
 	bool save_and_quit_func_set = false;
@@ -4113,6 +4114,24 @@ namespace {
 		return enum_texts;
 	}
 
+	void krom_zui_nodes_on_custom_button(int node_id, char *button_name) {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, on_custom_button_func);
+		Local<Value> result;
+		const int argc = 2;
+		Local<Value> argv[argc] = {Int32::New(isolate, node_id), String::NewFromUtf8(isolate, button_name).ToLocalChecked()};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
 	void krom_zui_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> arg0 = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
@@ -4150,6 +4169,7 @@ namespace {
 		zui_on_deselect_text = &krom_zui_on_deselect_text;
 		zui_on_tab_drop = &krom_zui_on_tab_drop;
 		zui_nodes_enum_texts = &krom_zui_nodes_enum_texts;
+		zui_nodes_on_custom_button = &krom_zui_nodes_on_custom_button;
 	}
 
 	void krom_zui_get_scale(const FunctionCallbackInfo<Value> &args) {
@@ -4300,14 +4320,14 @@ namespace {
 		args.GetReturnValue().Set(Int32::New(isolate, b));
 	}
 
+	char combo_label[32];
 	char combo_texts_data[32][64];
 	char *combo_texts[32];
-	char combo_label[32];
 	void krom_zui_combo(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
 		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		String::Utf8Value label(isolate, args[2]);
+		String::Utf8Value utf8label(isolate, args[2]);
 		int show_label = (int)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int align = (int)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int search_bar = (int)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -4315,27 +4335,20 @@ namespace {
 		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		assert(length <= 32);
 
-		int i;
-		if (zui_get_current()->combo_selected_handle == NULL) {
-			for (int i = 0; i < length; ++i) {
-				String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-				strcpy(combo_texts_data[i], *str);
-				combo_texts[i] = combo_texts_data[i];
-			}
-			strcpy(combo_label, *label);
-			i = zui_combo(handle, combo_texts, length, combo_label, show_label, align, search_bar);
+		char temp_label[32];
+		char temp_texts_data[32][64];
+		char *temp_texts[32];
+		bool combo_selected = zui_get_current()->combo_selected_handle != NULL;
+		char *label = combo_selected ? temp_label : combo_label;
+		char (*texts_data)[64] = combo_selected ? temp_texts_data : combo_texts_data;
+		char **texts = combo_selected ? temp_texts : combo_texts;
+		for (int i = 0; i < length; ++i) {
+			String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
+			strcpy(texts_data[i], *str);
+			texts[i] = texts_data[i];
 		}
-		else {
-			char combo_temp_data[32][64];
-			char *combo_temp[32];
-			for (int i = 0; i < length; ++i) {
-				String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-				strcpy(combo_temp_data[i], *str);
-				combo_temp[i] = combo_temp_data[i];
-			}
-			i = zui_combo(handle, combo_temp, length, *label, show_label, align, search_bar);
-		}
-
+		strcpy(label, *utf8label);
+		int i = zui_combo(handle, texts, length, label, show_label, align, search_bar);
 		args.GetReturnValue().Set(Int32::New(isolate, i));
 	}
 
@@ -5038,6 +5051,13 @@ namespace {
 		Local<Function> func = Local<Function>::Cast(arg);
 		enum_texts_func.Reset(isolate, func);
 	}
+
+	void krom_zui_nodes_set_on_custom_button(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		on_custom_button_func.Reset(isolate, func);
+	}
 	#endif
 
 	#define SET_FUNCTION_FAST(object, name, fn)\
@@ -5379,6 +5399,7 @@ namespace {
 		SET_FUNCTION(krom, "zui_set_on_deselect_text", krom_zui_set_on_deselect_text);
 		SET_FUNCTION(krom, "zui_set_on_tab_drop", krom_zui_set_on_tab_drop);
 		SET_FUNCTION(krom, "zui_nodes_set_enum_texts", krom_zui_nodes_set_enum_texts);
+		SET_FUNCTION(krom, "zui_nodes_set_on_custom_button", krom_zui_nodes_set_on_custom_button);
 		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);

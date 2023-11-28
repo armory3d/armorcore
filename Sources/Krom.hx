@@ -286,6 +286,7 @@ extern class Krom {
 	static function zui_set_on_deselect_text(f: Void->Void): Void;
 	static function zui_set_on_tab_drop(f: Dynamic->Int->Dynamic->Int->Void): Void;
 	static function zui_nodes_set_enum_texts(f: String->Array<String>): Void;
+	static function zui_nodes_set_on_custom_button(f: Int->String->Void): Void;
 }
 
 enum abstract LogLevel(Int) to Int {
