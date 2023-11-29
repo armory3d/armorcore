@@ -268,7 +268,7 @@ extern class Krom {
 	static function zui_text_area(handle: Dynamic, align: Int, editable: Bool, label: String, word_wrap: Bool): String;
 	static function zui_text_area_coloring(packed: js.lib.ArrayBuffer): Void;
 	static function zui_nodes_init(): Dynamic;
-	static function zui_node_canvas(packed: js.lib.ArrayBuffer): js.lib.ArrayBuffer;
+	static function zui_node_canvas(nodes: Dynamic, packed: js.lib.ArrayBuffer): js.lib.ArrayBuffer;
 	static function zui_nodes_rgba_popup(handle: Dynamic, val: js.lib.ArrayBuffer, x: Int, y: Int): Void;
 	static function zui_nodes_scale(): Float;
 	static function zui_nodes_pan_x(): Float;
@@ -281,12 +281,18 @@ extern class Krom {
 	static function zui_theme_init(): Dynamic;
 	static function zui_theme_get(theme: Dynamic, name: String): Dynamic;
 	static function zui_theme_set(theme: Dynamic, name: String, val: Dynamic): Void;
+	static function zui_nodes_get(nodes: Dynamic, name: String): Dynamic;
+	static function zui_nodes_set(nodes: Dynamic, name: String, val: Dynamic): Void;
 	static function zui_set_on_border_hover(f: Dynamic->Int->Void): Void;
 	static function zui_set_on_text_hover(f: Void->Void): Void;
 	static function zui_set_on_deselect_text(f: Void->Void): Void;
 	static function zui_set_on_tab_drop(f: Dynamic->Int->Dynamic->Int->Void): Void;
 	static function zui_nodes_set_enum_texts(f: String->Array<String>): Void;
 	static function zui_nodes_set_on_custom_button(f: Int->String->Void): Void;
+	static function zui_nodes_set_on_canvas_control(f: Void->Dynamic): Void;
+	static function zui_nodes_set_on_canvas_released(f: Void->Void): Void;
+	static function zui_nodes_set_on_socket_released(f: Int->Void): Void;
+	static function zui_nodes_set_on_link_drag(f: Int->Bool->Void): Void;
 }
 
 enum abstract LogLevel(Int) to Int {

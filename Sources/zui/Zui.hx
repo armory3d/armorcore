@@ -708,27 +708,57 @@ class Nodes {
 	public static var current: Nodes;
 	public static var currentCanvas: TNodeCanvas;
 
-	public static var excludeRemove: Array<String> = [];
-	public static var onLinkDrag: TNodeLink->Bool->Void = null;
-	public static var onSocketReleased: TNodeSocket->Void = null;
-	public static var onCanvasReleased: Void->Void = null;
-	public static var onNodeRemove: TNode->Void = null;
-	public static var onCanvasControl: Void->CanvasControl = null;
-	public static var socketReleased = false;
 	public static var clipboard = "";
+
+	public static var excludeRemove: Array<String> = ["OUTPUT_MATERIAL_PBR", "GROUP_OUTPUT", "GROUP_INPUT", "BrushOutputNode"];
+
+	public static var onLinkDrag(never, set): Int->Bool->Void;
+	static function set_onLinkDrag(f: Int->Bool->Void) { Krom.zui_nodes_set_on_link_drag(f); return f; }
+
+	public static var onSocketReleased(never, set): Int->Void;
+	static function set_onSocketReleased(f: Int->Void) { Krom.zui_nodes_set_on_socket_released(f); return f; }
+
+	public static var onCanvasReleased(never, set): Void->Void;
+	static function set_onCanvasReleased(f: Void->Void) { Krom.zui_nodes_set_on_canvas_released(f); return f; }
+
+	// public static var onNodeRemove(never, set): Int->Void;
+
+	public static var onCanvasControl(never, set): Void->CanvasControl;
+	static function set_onCanvasControl(f: Void->CanvasControl) { Krom.zui_nodes_set_on_canvas_control(f); return f; }
+
+	public static var socketReleased(get, never): Bool;
+	static function get_socketReleased(): Bool { return Krom.zui_nodes_get(null, "socket_released"); }
 
 	public static var enumTextsHaxe: String->Array<String> = null;
 	public static var enumTexts(never, set): String->Array<String>;
 	static function set_enumTexts(f: String->Array<String>) { enumTextsHaxe = f; Krom.zui_nodes_set_enum_texts(f); return f; }
 
-	// public var _inputStarted = false;
 	public var colorPickerCallback: kha.Color->Void = null;
-	public var nodesSelected: Array<TNode> = [];
-	public var nodesDrag = false;
-	public var panX = 0.0;
-	public var panY = 0.0;
-	public var zoom = 1.0;
-	public var linkDrag: TNodeLink = null;
+
+	public var nodesSelectedId(get ,set): Array<Int>;
+	function get_nodesSelectedId(): Array<Int> { return Krom.zui_nodes_get(nodes_, "nodes_selected_id"); }
+	function set_nodesSelectedId(a: Array<Int>) { Krom.zui_nodes_set(nodes_, "nodes_selected_id", a); return a; }
+
+	public var _inputStarted(never, set): Bool;
+	function set__inputStarted(a: Bool) { Krom.zui_nodes_set(nodes_, "_input_started", a); return a; }
+
+	public var nodesDrag(never, set): Bool;
+	function set_nodesDrag(a: Bool) { Krom.zui_nodes_set(nodes_, "nodes_drag", a); return a; }
+
+	public var panX(get, set): Float;
+	function get_panX(): Float { return Krom.zui_nodes_get(nodes_, "pan_x"); }
+	function set_panX(a: Float) { Krom.zui_nodes_set(nodes_, "pan_x", a); return a; }
+
+	public var panY(get, set): Float;
+	function get_panY(): Float { return Krom.zui_nodes_get(nodes_, "pan_y"); }
+	function set_panY(a: Float) { Krom.zui_nodes_set(nodes_, "pan_y", a); return a; }
+
+	public var zoom(never, set): Float;
+	function set_zoom(a: Float) { Krom.zui_nodes_set(nodes_, "zoom", a); return a; }
+
+	public var linkDragId(get, set): Int;
+	function get_linkDragId(): Int { return Krom.zui_nodes_get(nodes_, "link_drag_id"); }
+	function set_linkDragId(a: Int) { Krom.zui_nodes_set(nodes_, "link_drag_id", a); return a; }
 
 	public var handle = new Zui.Handle();
 	public var ELEMENT_H = 25;
@@ -756,10 +786,23 @@ class Nodes {
 		return ++nodeId;
 	}
 
+	public function getLink(links: Array<TNodeLink>, id: Int): TNodeLink {
+		for (link in links) if (link.id == id) return link;
+		return null;
+	}
+
 	public function getLinkId(links: Array<TNodeLink>): Int {
 		var id = 0;
 		for (l in links) if (l.id >= id) id = l.id + 1;
 		return id;
+	}
+
+	public function getSocket(nodes: Array<TNode>, id: Int): TNodeSocket {
+		for (n in nodes) {
+			for (s in n.inputs) if (s.id == id) return s;
+			for (s in n.outputs) if (s.id == id) return s;
+		}
+		return null;
 	}
 
 	public function getSocketId(nodes: Array<TNode>): Int {
@@ -1019,7 +1062,7 @@ class Nodes {
 			canvas_.links.push({ id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
 		}
 
-		var packed = Krom.zui_node_canvas(iron.system.ArmPack.encode(canvas_).getData());
+		var packed = Krom.zui_node_canvas(nodes_, iron.system.ArmPack.encode(canvas_).getData());
 		var canvas_: TNodeCanvas = iron.system.ArmPack.decode(haxe.io.Bytes.ofData(packed));
 		if (canvas_.nodes == null) canvas_.nodes = [];
 		if (canvas_.links == null) canvas_.links = [];
@@ -1071,9 +1114,9 @@ class Nodes {
 			else i++;
 		}
 		canvas.nodes.remove(n);
-		if (onNodeRemove != null) {
-			onNodeRemove(n);
-		}
+		// if (onNodeRemove != null) {
+		// 	onNodeRemove(n);
+		// }
 	}
 
 	public function SCALE(): Float {
@@ -1093,7 +1136,7 @@ class Nodes {
 	}
 
 	public function NODE_W(node: TNode): Int {
-		return Std.int((node.width != null ? node.width : 140) * SCALE());
+		return Std.int((node.width != 0 ? node.width : 140) * SCALE());
 	}
 
 	public function NODE_X(node: TNode): Float {

@@ -231,6 +231,10 @@ namespace {
 	Global<Function> on_tab_drop_func;
 	Global<Function> enum_texts_func;
 	Global<Function> on_custom_button_func;
+	Global<Function> on_canvas_control_func;
+	Global<Function> on_canvas_released_func;
+	Global<Function> on_socket_released_func;
+	Global<Function> on_link_drag_func;
 	#endif
 
 	bool save_and_quit_func_set = false;
@@ -4132,6 +4136,81 @@ namespace {
 		}
 	}
 
+	zui_canvas_control_t krom_zui_nodes_on_canvas_control() {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, on_canvas_control_func);
+		Local<Value> result;
+		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+
+		Local<Object> jso = result->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		zui_canvas_control_t c;
+		c.pan_x = jso->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "panX").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		c.pan_y = jso->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "panY").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		c.zoom = jso->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "zoom").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		return c;
+	}
+
+	void krom_zui_nodes_on_canvas_released() {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, on_canvas_released_func);
+		Local<Value> result;
+		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
+	void krom_zui_nodes_on_socket_released(int socket_id) {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, on_socket_released_func);
+		Local<Value> result;
+		const int argc = 1;
+		Local<Value> argv[argc] = {Int32::New(isolate, socket_id)};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
+	void krom_zui_nodes_on_link_drag(int link_drag_id, bool is_new_link) {
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, on_link_drag_func);
+		Local<Value> result;
+		const int argc = 2;
+		Local<Value> argv[argc] = {Int32::New(isolate, link_drag_id), Int32::New(isolate, is_new_link)};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+	}
+
 	void krom_zui_init(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Object> arg0 = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
@@ -4170,6 +4249,10 @@ namespace {
 		zui_on_tab_drop = &krom_zui_on_tab_drop;
 		zui_nodes_enum_texts = &krom_zui_nodes_enum_texts;
 		zui_nodes_on_custom_button = &krom_zui_nodes_on_custom_button;
+		zui_nodes_on_canvas_control = &krom_zui_nodes_on_canvas_control;
+		zui_nodes_on_canvas_released = &krom_zui_nodes_on_canvas_released;
+		zui_nodes_on_socket_released = &krom_zui_nodes_on_socket_released;
+		zui_nodes_on_link_drag = &krom_zui_nodes_on_link_drag;
 	}
 
 	void krom_zui_get_scale(const FunctionCallbackInfo<Value> &args) {
@@ -4676,18 +4759,25 @@ namespace {
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
 		obj->SetInternalField(0, External::New(isolate, nodes));
 		args.GetReturnValue().Set(obj);
+
+		zui_nodes_exclude_remove[0] = (char *)"OUTPUT_MATERIAL_PBR";
+		zui_nodes_exclude_remove[1] = (char *)"GROUP_OUTPUT";
+		zui_nodes_exclude_remove[2] = (char *)"GROUP_INPUT";
+		zui_nodes_exclude_remove[3] = (char *)"BrushOutputNode";
 	}
 
 	void *encoded = NULL;
 	uint32_t encoded_size = 0;
 	void krom_zui_node_canvas(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_nodes_t *nodes = (zui_nodes_t *)field->Value();
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
 		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
 
 		// TODO: decode on change
 		zui_node_canvas_t *decoded = (zui_node_canvas_t *)armpack_decode(content->Data(), (int)content->ByteLength());
-		zui_node_canvas(decoded);
+		zui_node_canvas(nodes, decoded);
 
 		int byteLength = zui_node_canvas_encoded_size(decoded);
 		if (byteLength > encoded_size) {
@@ -5017,6 +5107,49 @@ namespace {
 		ZUI_SET_I32(theme, ROUND_CORNERS)
 	}
 
+	void krom_zui_nodes_get(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value name(isolate, args[1]);
+		if (args[0]->IsNullOrUndefined()) {
+			ZUI_GET_I32_GLOBAL(zui_nodes_socket_released)
+			return;
+		}
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_nodes_t *nodes = (zui_nodes_t *)field->Value();
+		ZUI_GET_F32(nodes, pan_x)
+		ZUI_GET_F32(nodes, pan_y)
+		ZUI_GET_F32(nodes, link_drag_id)
+		if (strcmp(*name, "nodes_selected_id") == 0) {
+			Local<Array> result = Array::New(isolate, nodes->nodes_selected_count);
+			for (int i = 0; i < nodes->nodes_selected_count; ++i) {
+				(void)result->Set(isolate->GetCurrentContext(), i, Int32::New(isolate, nodes->nodes_selected_id[i]));
+			}
+			args.GetReturnValue().Set(result);
+		}
+	}
+
+	void krom_zui_nodes_set(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		String::Utf8Value name(isolate, args[1]);
+		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		zui_nodes_t *nodes = (zui_nodes_t *)field->Value();
+		ZUI_SET_F32(nodes, pan_x)
+		ZUI_SET_F32(nodes, pan_y)
+		ZUI_SET_F32(nodes, zoom)
+		ZUI_SET_I32(nodes, _input_started)
+		ZUI_SET_I32(nodes, link_drag_id)
+		ZUI_SET_I32(nodes, nodes_drag)
+		if (strcmp(*name, "nodes_selected_id") == 0) {
+			Local<Object> jsarray = args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+			int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+			for (int i = 0; i < length; ++i) {
+				int32_t j = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+				nodes->nodes_selected_id[i] = j;
+			}
+			nodes->nodes_selected_count = length;
+		}
+	}
+
 	void krom_zui_set_on_border_hover(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
@@ -5057,6 +5190,34 @@ namespace {
 		Local<Value> arg = args[0];
 		Local<Function> func = Local<Function>::Cast(arg);
 		on_custom_button_func.Reset(isolate, func);
+	}
+
+	void krom_zui_nodes_set_on_canvas_control(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		on_canvas_control_func.Reset(isolate, func);
+	}
+
+	void krom_zui_nodes_set_on_canvas_released(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		on_canvas_released_func.Reset(isolate, func);
+	}
+
+	void krom_zui_nodes_set_on_socket_released(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		on_socket_released_func.Reset(isolate, func);
+	}
+
+	void krom_zui_nodes_set_on_link_drag(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		on_link_drag_func.Reset(isolate, func);
 	}
 	#endif
 
@@ -5394,12 +5555,18 @@ namespace {
 		SET_FUNCTION(krom, "zui_theme_init", krom_zui_theme_init);
 		SET_FUNCTION(krom, "zui_theme_get", krom_zui_theme_get);
 		SET_FUNCTION(krom, "zui_theme_set", krom_zui_theme_set);
+		SET_FUNCTION(krom, "zui_nodes_get", krom_zui_nodes_get);
+		SET_FUNCTION(krom, "zui_nodes_set", krom_zui_nodes_set);
 		SET_FUNCTION(krom, "zui_set_on_border_hover", krom_zui_set_on_border_hover);
 		SET_FUNCTION(krom, "zui_set_on_text_hover", krom_zui_set_on_text_hover);
 		SET_FUNCTION(krom, "zui_set_on_deselect_text", krom_zui_set_on_deselect_text);
 		SET_FUNCTION(krom, "zui_set_on_tab_drop", krom_zui_set_on_tab_drop);
 		SET_FUNCTION(krom, "zui_nodes_set_enum_texts", krom_zui_nodes_set_enum_texts);
 		SET_FUNCTION(krom, "zui_nodes_set_on_custom_button", krom_zui_nodes_set_on_custom_button);
+		SET_FUNCTION(krom, "zui_nodes_set_on_canvas_control", krom_zui_nodes_set_on_canvas_control);
+		SET_FUNCTION(krom, "zui_nodes_set_on_canvas_released", krom_zui_nodes_set_on_canvas_released);
+		SET_FUNCTION(krom, "zui_nodes_set_on_socket_released", krom_zui_nodes_set_on_socket_released);
+		SET_FUNCTION(krom, "zui_nodes_set_on_link_drag", krom_zui_nodes_set_on_link_drag);
 		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
