@@ -44,7 +44,7 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #endif
 #ifdef KORE_DIRECT3D12
 #include <d3d12.h>
-extern "C" extern bool waitAfterNextDraw;
+extern "C" bool waitAfterNextDraw;
 #endif
 #if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
 #include <kinc/graphics5/constantbuffer.h>
@@ -71,7 +71,7 @@ extern "C" extern bool waitAfterNextDraw;
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
-extern "C" { struct HWND__ *kinc_windows_window_handle(int window_index); } // Kore/Windows.h
+extern "C" struct HWND__ *kinc_windows_window_handle(int window_index); // Kore/Windows.h
 bool show_window = false;
 // Enable visual styles for ui controls
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -161,13 +161,11 @@ char mobile_title[1024];
 #endif
 
 #if defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
-extern "C" extern int krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype, int version);
+extern "C" int krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype, int version);
 #endif
 
 #if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
-extern "C" {
-	extern kinc_g5_command_list_t commandList;
-}
+extern "C" kinc_g5_command_list_t commandList;
 static kinc_g5_constant_buffer_t constant_buffer;
 static kinc_g4_render_target_t *render_target;
 static kinc_raytrace_pipeline_t pipeline;
@@ -4924,6 +4922,7 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value name(isolate, args[1]);
 		if (args[0]->IsNullOrUndefined()) {
+			ZUI_SET_I32_GLOBAL(zui_always_redraw_window)
 			ZUI_SET_I32_GLOBAL(zui_touch_scroll)
 			ZUI_SET_I32_GLOBAL(zui_touch_hold)
 			ZUI_SET_I32_GLOBAL(zui_touch_tooltip)
