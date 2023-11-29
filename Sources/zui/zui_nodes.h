@@ -96,13 +96,19 @@ typedef struct zui_nodes {
 } zui_nodes_t;
 
 void zui_nodes_init(zui_nodes_t *nodes);
-void zui_node_canvas(zui_node_canvas_t *canvas);
+void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas);
 void zui_nodes_rgba_popup(zui_handle_t *nhandle, float *val, int x, int y);
 float ZUI_NODES_SCALE();
 float ZUI_NODES_PAN_X();
 float ZUI_NODES_PAN_Y();
+extern char *zui_nodes_exclude_remove[64];
+extern bool zui_nodes_socket_released;
 extern char **(*zui_nodes_enum_texts)(char *);
 extern void (*zui_nodes_on_custom_button)(int, char *);
+extern zui_canvas_control_t (*zui_nodes_on_canvas_control)(void);
+extern void (*zui_nodes_on_canvas_released)(void);
+extern void (*zui_nodes_on_socket_released)(int);
+extern void (*zui_nodes_on_link_drag)(int, bool);
 
 void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas);
 uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas);
