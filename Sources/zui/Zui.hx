@@ -40,8 +40,9 @@ class Zui {
 		return coloring;
 	}
 
-	public static var alwaysRedrawWindow(get, never): Bool;
+	public static var alwaysRedrawWindow(get, set): Bool;
 	static function get_alwaysRedrawWindow(): Bool { return Krom.zui_get(null, "zui_always_redraw_window"); }
+	static function set_alwaysRedrawWindow(a: Bool): Bool { Krom.zui_set(null, "zui_always_redraw_window", a); return a; }
 
 	public static var touchScroll(get, set): Bool;
 	static function get_touchScroll(): Bool { return Krom.zui_get(null, "zui_touch_scroll"); }
@@ -707,6 +708,7 @@ class Theme {
 class Nodes {
 	public static var current: Nodes;
 	public static var currentCanvas: TNodeCanvas;
+	public static var tr: String->?Map<String, String>->String;
 
 	public static var clipboard = "";
 
@@ -1011,11 +1013,12 @@ class Nodes {
 
 		// Ensure properties order
 		for (n in canvas_.nodes) {
+			n.name = tr(n.name);
 			for (i in 0...n.inputs.length) {
 				n.inputs[i] = {
 					id: n.inputs[i].id,
 					node_id: n.inputs[i].node_id,
-					name: n.inputs[i].name,
+					name: tr(n.inputs[i].name),
 					type: n.inputs[i].type,
 					color: n.inputs[i].color,
 					default_value: n.inputs[i].default_value,
@@ -1029,7 +1032,7 @@ class Nodes {
 				n.outputs[i] = {
 					id: n.outputs[i].id,
 					node_id: n.outputs[i].node_id,
-					name: n.outputs[i].name,
+					name: tr(n.outputs[i].name),
 					type: n.outputs[i].type,
 					color: n.outputs[i].color,
 					default_value: n.outputs[i].default_value,
@@ -1041,7 +1044,7 @@ class Nodes {
 			}
 			for (i in 0...n.buttons.length) {
 				n.buttons[i] = {
-					name: n.buttons[i].name,
+					name: tr(n.buttons[i].name),
 					type: n.buttons[i].type,
 					output: n.buttons[i].output,
 					default_value: n.buttons[i].default_value,
