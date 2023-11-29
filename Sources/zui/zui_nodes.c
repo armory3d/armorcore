@@ -1,5 +1,6 @@
 #include "zui_nodes.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <kinc/graphics4/graphics.h>
