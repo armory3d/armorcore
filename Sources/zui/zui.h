@@ -6,6 +6,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "../iron/iron_armpack.h"
 #include "../g2/g2.h"
 
 #define ZUI_LAYOUT_VERTICAL 0
@@ -97,19 +98,19 @@ typedef struct zui_text_extract {
 	char uncolored[128];
 } zui_text_extract_t;
 
-typedef struct zui_coloring {
+typedef PACK(struct zui_coloring {
 	uint32_t color;
 	char **start;
 	int start_count;
 	char *end;
 	bool separated;
-}__attribute__((packed)) zui_coloring_t;
+}) zui_coloring_t;
 
-typedef struct zui_text_coloring {
+typedef PACK(struct zui_text_coloring {
 	zui_coloring_t **colorings;
 	int colorings_count;
 	uint32_t default_color;
-}__attribute__((packed)) zui_text_coloring_t;
+}) zui_text_coloring_t;
 
 typedef struct zui {
 	bool is_scrolling; // Use to limit other activities

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "zui.h"
+#include "../iron/iron_armpack.h"
 
 typedef struct zui_canvas_control {
 	float pan_x;
@@ -8,7 +9,7 @@ typedef struct zui_canvas_control {
 	float zoom;
 } zui_canvas_control_t;
 
-typedef struct zui_node_socket {
+typedef PACK(struct zui_node_socket {
 	int id;
 	int node_id;
 	char *name;
@@ -20,9 +21,9 @@ typedef struct zui_node_socket {
 	float max;
 	float precision;
 	int display;
-}__attribute__((packed)) zui_node_socket_t;
+}) zui_node_socket_t;
 
-typedef struct zui_node_button {
+typedef PACK(struct zui_node_button {
 	char *name;
 	char *type;
 	int output;
@@ -34,9 +35,9 @@ typedef struct zui_node_button {
 	float max;
 	float precision;
 	float height;
-}__attribute__((packed)) zui_node_button_t;
+}) zui_node_button_t;
 
-typedef struct zui_node {
+typedef PACK(struct zui_node {
 	int id;
 	char *name;
 	char *type;
@@ -50,17 +51,17 @@ typedef struct zui_node {
 	zui_node_button_t **buttons;
 	int buttons_count;
 	int width; // float width
-}__attribute__((packed)) zui_node_t;
+}) zui_node_t;
 
-typedef struct zui_node_link {
+typedef PACK(struct zui_node_link {
 	int id;
 	int from_id;
 	int from_socket;
 	int to_id;
 	int to_socket;
-}__attribute__((packed)) zui_node_link_t;
+}) zui_node_link_t;
 
-typedef struct zui_node_canvas {
+typedef PACK(struct zui_node_canvas {
 	char *name;
 	zui_node_t **nodes;
 	int nodes_capacity; // 128
@@ -68,7 +69,7 @@ typedef struct zui_node_canvas {
 	zui_node_link_t **links;
 	int links_capacity; // 256
 	int links_count;
-}__attribute__((packed)) zui_node_canvas_t;
+}) zui_node_canvas_t;
 
 typedef struct zui_nodes {
 	bool nodes_drag;

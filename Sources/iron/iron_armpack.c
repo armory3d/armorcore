@@ -9,8 +9,8 @@ static const int PTR_SIZE = 8;
 static uint32_t di; // Decoded index
 static uint32_t ei; // Encoded index
 static uint32_t bottom; // Decoded bottom
-static void *decoded;
-static void *encoded;
+static uint8_t *decoded;
+static uint8_t *encoded;
 static uint32_t capacity;
 static uint32_t string_length;
 static uint32_t array_count;
