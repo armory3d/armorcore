@@ -528,8 +528,8 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 			float wordw = spacew + g2_string_width(current->ops.font, current->font_size, w);
 			float linew = wordw + g2_string_width(current->ops.font, current->font_size, line);
 			if (linew > current->_w - 10 && linew > wordw) {
+				if (new_lines[0] != '\0') strcat(new_lines, "\n");
 				strcat(new_lines, line);
-				strcat(new_lines, "\n");
 				line[0] = '\0';
 			}
 
@@ -541,20 +541,20 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 				strcat(line, w);
 			}
 
-			int lines_len = line_count;
-			int new_line_count = zui_line_count(new_lines);
+			int new_line_count = new_lines[0] == '\0' ? 0 : zui_line_count(new_lines);
+			int lines_len = new_line_count;
 			for (int i = 0; i < new_line_count; ++i) {
 				lines_len += strlen(zui_extract_line(new_lines, i));
 			}
 
 			if (selected && !cursor_set && cursor_pos <= lines_len + strlen(line)) {
 				cursor_set = true;
-				handle->position = line_count;
+				handle->position = new_line_count;
 				current->cursor_x = current->highlight_anchor = cursor_pos - lines_len;
 			}
 		}
+		if (new_lines[0] != '\0') strcat(new_lines, "\n");
 		strcat(new_lines, line);
-		strcat(new_lines, "\n");
 		if (selected) {
 			strcpy(handle->text, zui_extract_line(new_lines, handle->position));
 			strcpy(current->text_selected, handle->text);
