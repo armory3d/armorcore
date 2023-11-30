@@ -508,8 +508,12 @@ class Handle {
 	public var ptr(get, never): Null<Int>;
 	function get_ptr(): Null<Int> { return Krom.zui_handle_ptr(handle_); }
 
+	public var ops: HandleOptions;
 	public var children: Map<Int, Handle>;
-	public var handle_: Dynamic;
+
+	public var handle__: Dynamic = null;
+	public var handle_(get, never): Dynamic;
+	function get_handle_(): Dynamic { if (handle__ == null) handle__ = Krom.zui_handle(ops); return handle__; }
 
 	public function new(ops: HandleOptions = null) {
 		if (ops == null) ops = {};
@@ -519,7 +523,7 @@ class Handle {
 		if (ops.text == null) ops.text = "";
 		if (ops.color == null) ops.color = 0xffffffff;
 		if (ops.layout == null) ops.layout = Vertical;
-		handle_ = Krom.zui_handle(ops);
+		this.ops = ops;
 	}
 
 	public function nest(i: Int, ops: HandleOptions = null): Handle {
