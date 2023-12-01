@@ -39,7 +39,6 @@ let flags = {
 	with_stb_image_write: false,
 	with_mpeg_write: false,
 	with_audio: false,
-	with_onnx: false,
 	with_worker: false,
 	with_g2: false,
 	with_iron: false,
@@ -221,20 +220,6 @@ if (flags.with_stb_image_write) {
 if (flags.with_mpeg_write) {
 	project.addDefine('WITH_MPEG_WRITE');
 	project.addIncludeDir("Libraries/jo_mpeg");
-}
-if (flags.with_onnx) {
-	project.addDefine('WITH_ONNX');
-	project.addIncludeDir("Libraries/onnx/include");
-	if (platform === Platform.Windows) {
-		project.addLib('Libraries/onnx/win32/onnxruntime');
-	}
-	else if (platform === Platform.Linux) {
-		// patchelf --set-rpath . Armory
-		project.addLib('onnxruntime -L' + __dirname + '/Libraries/onnx/linux');
-	}
-	else if (platform === Platform.OSX) {
-		project.addLib('Libraries/onnx/macos/libonnxruntime.1.14.1.dylib');
-	}
 }
 
 if (flags.on_project_created) {
