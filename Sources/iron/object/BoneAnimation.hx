@@ -2,7 +2,6 @@ package iron.object;
 
 #if arm_skin
 
-import kha.FastFloat;
 import kha.arrays.Float32Array;
 import iron.math.Vec4;
 import iron.math.Mat4;
@@ -101,14 +100,14 @@ class BoneAnimation extends Animation {
 		}
 		ar.push(o);
 	}
-	
+
 	public function removeBoneChild(bone: String, o: Object) {
 		if (boneChildren != null) {
 			var ar = boneChildren.get(bone);
 			if (ar != null) ar.remove(o);
 		}
 	}
- 
+
 	@:access(iron.object.Transform)
 	function updateBoneChildren(bone: TObj, bm: Mat4) {
 		var ar = boneChildren.get(bone.name);
@@ -208,7 +207,7 @@ class BoneAnimation extends Animation {
 		blendFactor = 0.0;
 	}
 
-	override public function blend(action1: String, action2: String, factor: FastFloat) {
+	override public function blend(action1: String, action2: String, factor: Float) {
 		if (factor == 0.0) {
 			setAction(action1);
 			return;
@@ -218,7 +217,7 @@ class BoneAnimation extends Animation {
 		super.blend(action1, action2, factor);
 	}
 
-	override public function update(delta: FastFloat) {
+	override public function update(delta: Float) {
 		if (!isSkinned && skeletonBones == null) setAction(armature.actions[0].name);
 		if (object != null && (!object.visible || object.culled)) return;
 		if (skeletonBones == null || skeletonBones.length == 0) return;
@@ -405,7 +404,7 @@ class BoneAnimation extends Animation {
 	function updateSkinGpu() {
 		var bones = skeletonBones;
 
-		var s: FastFloat = blendCurrent / blendTime;
+		var s: Float = blendCurrent / blendTime;
 		s = s * s * (3.0 - 2.0 * s); // Smoothstep
 		if (blendFactor != 0.0) s = 1.0 - blendFactor;
 
@@ -513,7 +512,7 @@ class BoneAnimation extends Animation {
 		return wm;
 	}
 
-	public function getBoneLen(bone: TObj): FastFloat {
+	public function getBoneLen(bone: TObj): Float {
 		var refs = data.geom.skeletonBoneRefs;
 		var lens = data.geom.skeletonBoneLens;
 		for (i in 0...refs.length) if (refs[i] == bone.name) return lens[i];
@@ -521,7 +520,7 @@ class BoneAnimation extends Animation {
 	}
 
 	// Returns bone length with scale applied
-	public function getBoneAbsLen(bone: TObj): FastFloat {
+	public function getBoneAbsLen(bone: TObj): Float {
 		var refs = data.geom.skeletonBoneRefs;
 		var lens = data.geom.skeletonBoneLens;
 		var scale = object.parent.transform.world.getScale().z;
@@ -541,7 +540,7 @@ class BoneAnimation extends Animation {
 		var bones: Array<TObj> = [];
 
 		// Array of bones lengths, effector length at 0
-		var lengths: Array<FastFloat> = [];
+		var lengths: Array<Float> = [];
 
 		// Array of bones matrices in world coordinates, effector at 0
 		var boneWorldMats: Array<Mat4>;
@@ -578,7 +577,7 @@ class BoneAnimation extends Animation {
 		var dist = Vec4.distance(goal, rootWorldMat.getLoc());
 
 		// Total bones length
-		var totalLength: FastFloat = 0.0;
+		var totalLength: Float = 0.0;
 		for (l in lengths) totalLength += l;
 
 		// Unreachable distance

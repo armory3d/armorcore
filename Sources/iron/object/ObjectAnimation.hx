@@ -1,6 +1,5 @@
 package iron.object;
 
-import kha.FastFloat;
 import kha.arrays.Uint32Array;
 import iron.math.Vec4;
 import iron.math.Mat4;
@@ -12,7 +11,7 @@ class ObjectAnimation extends Animation {
 	public var object: Object;
 	public var oactions: Array<TSceneFormat>;
 	var oaction: TObj;
-	var s0: FastFloat = 0.0;
+	var s0: Float = 0.0;
 	var bezierFrameIndex = -1;
 
 	public function new(object: Object, oactions: Array<TSceneFormat>) {
@@ -36,7 +35,7 @@ class ObjectAnimation extends Animation {
 		}
 	}
 
-	override public function update(delta: FastFloat) {
+	override public function update(delta: Float) {
 		if (!object.visible || object.culled || oaction == null) return;
 
 		#if arm_debug
@@ -57,12 +56,12 @@ class ObjectAnimation extends Animation {
 		object.transform.buildMatrix();
 	}
 
-	inline function interpolateLinear(t: FastFloat, t1: FastFloat, t2: FastFloat, v1: FastFloat, v2: FastFloat): FastFloat {
+	inline function interpolateLinear(t: Float, t1: Float, t2: Float, v1: Float, v2: Float): Float {
 		var s = (t - t1) / (t2 - t1);
 		return (1.0 - s) * v1 + s * v2;
 	}
 
-	// inline function interpolateTcb(): FastFloat { return 0.0; }
+	// inline function interpolateTcb(): Float { return 0.0; }
 
 	override function isTrackEnd(track: TTrack): Bool {
 		return speed > 0 ?
@@ -70,7 +69,7 @@ class ObjectAnimation extends Animation {
 			frameIndex <= 0;
 	}
 
-	inline function checkFrameIndexT(frameValues: Uint32Array, t: FastFloat): Bool {
+	inline function checkFrameIndexT(frameValues: Uint32Array, t: Float): Bool {
 		return speed > 0 ?
 			frameIndex < frameValues.length - 2 && t > frameValues[frameIndex + 1] * frameTime :
 			frameIndex > 1 && t > frameValues[frameIndex - 1] * frameTime;

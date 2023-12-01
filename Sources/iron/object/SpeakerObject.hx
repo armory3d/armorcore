@@ -1,6 +1,5 @@
 package iron.object;
 
-import kha.FastFloat;
 import kha.audio1.AudioChannel;
 import iron.data.Data;
 import iron.data.SceneFormat;
@@ -15,7 +14,7 @@ class SpeakerObject extends Object {
 	public var paused(default, null) = false;
 	public var sound(default, null): kha.Sound = null;
 	public var channels(default, null): Array<AudioChannel> = [];
-	public var volume(default, null) : FastFloat;
+	public var volume(default, null) : Float;
 
 	public function new(data: TSpeakerData) {
 		super();

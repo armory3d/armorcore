@@ -1,14 +1,12 @@
 package iron.math;
 
-import kha.FastFloat;
-
 class Mat3 {
 
 	public var self: kha.math.FastMatrix3;
 
-	public inline function new(_00: FastFloat, _10: FastFloat, _20: FastFloat,
-							   _01: FastFloat, _11: FastFloat, _21: FastFloat,
-							   _02: FastFloat, _12: FastFloat, _22: FastFloat) {
+	public inline function new(_00: Float, _10: Float, _20: Float,
+							   _01: Float, _11: Float, _21: Float,
+							   _02: Float, _12: Float, _22: Float) {
 		self = new kha.math.FastMatrix3(_00, _10, _20, _01, _11, _21, _02, _12, _22);
 	}
 
@@ -32,13 +30,13 @@ class Mat3 {
 		_22 = m._22;
 	}
 
-	public var _00(get, set): FastFloat; inline function get__00(): FastFloat { return self._00; } inline function set__00(f: FastFloat): FastFloat { return self._00 = f; }
-	public var _01(get, set): FastFloat; inline function get__01(): FastFloat { return self._01; } inline function set__01(f: FastFloat): FastFloat { return self._01 = f; }
-	public var _02(get, set): FastFloat; inline function get__02(): FastFloat { return self._02; } inline function set__02(f: FastFloat): FastFloat { return self._02 = f; }
-	public var _10(get, set): FastFloat; inline function get__10(): FastFloat { return self._10; } inline function set__10(f: FastFloat): FastFloat { return self._10 = f; }
-	public var _11(get, set): FastFloat; inline function get__11(): FastFloat { return self._11; } inline function set__11(f: FastFloat): FastFloat { return self._11 = f; }
-	public var _12(get, set): FastFloat; inline function get__12(): FastFloat { return self._12; } inline function set__12(f: FastFloat): FastFloat { return self._12 = f; }
-	public var _20(get, set): FastFloat; inline function get__20(): FastFloat { return self._20; } inline function set__20(f: FastFloat): FastFloat { return self._20 = f; }
-	public var _21(get, set): FastFloat; inline function get__21(): FastFloat { return self._21; } inline function set__21(f: FastFloat): FastFloat { return self._21 = f; }
-	public var _22(get, set): FastFloat; inline function get__22(): FastFloat { return self._22; } inline function set__22(f: FastFloat): FastFloat { return self._22 = f; }
+	public var _00(get, set): Float; inline function get__00(): Float { return self._00; } inline function set__00(f: Float): Float { return self._00 = f; }
+	public var _01(get, set): Float; inline function get__01(): Float { return self._01; } inline function set__01(f: Float): Float { return self._01 = f; }
+	public var _02(get, set): Float; inline function get__02(): Float { return self._02; } inline function set__02(f: Float): Float { return self._02 = f; }
+	public var _10(get, set): Float; inline function get__10(): Float { return self._10; } inline function set__10(f: Float): Float { return self._10 = f; }
+	public var _11(get, set): Float; inline function get__11(): Float { return self._11; } inline function set__11(f: Float): Float { return self._11 = f; }
+	public var _12(get, set): Float; inline function get__12(): Float { return self._12; } inline function set__12(f: Float): Float { return self._12 = f; }
+	public var _20(get, set): Float; inline function get__20(): Float { return self._20; } inline function set__20(f: Float): Float { return self._20 = f; }
+	public var _21(get, set): Float; inline function get__21(): Float { return self._21; } inline function set__21(f: Float): Float { return self._21 = f; }
+	public var _22(get, set): Float; inline function get__22(): Float { return self._22; } inline function set__22(f: Float): Float { return self._22 = f; }
 }

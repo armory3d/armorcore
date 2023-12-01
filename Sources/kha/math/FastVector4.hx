@@ -2,18 +2,18 @@ package kha.math;
 
 @:structInit
 class FastVector4 {
-	public inline function new(x: FastFloat = 0, y: FastFloat = 0, z: FastFloat = 0, w: FastFloat = 1): Void {
+	public inline function new(x: Float = 0, y: Float = 0, z: Float = 0, w: Float = 1): Void {
 		this.x = x;
 		this.y = y;
 		this.z = z;
 		this.w = w;
 	}
 
-	public var x: FastFloat;
-	public var y: FastFloat;
-	public var z: FastFloat;
-	public var w: FastFloat;
-	public var length(get, set): FastFloat;
+	public var x: Float;
+	public var y: Float;
+	public var z: Float;
+	public var w: Float;
+	public var length(get, set): Float;
 
 	@:extern public inline function setFrom(v: FastVector4): Void {
 		this.x = v.x;
@@ -22,11 +22,11 @@ class FastVector4 {
 		this.w = v.w;
 	}
 
-	private inline function get_length(): FastFloat {
+	private inline function get_length(): Float {
 		return Math.sqrt(x * x + y * y + z * z + w * w);
 	}
 
-	private function set_length(length: FastFloat): FastFloat {
+	private function set_length(length: Float): Float {
 		var currentLength = get_length();
 		if (currentLength == 0) return 0;
 		var mul = length / currentLength;
@@ -45,7 +45,7 @@ class FastVector4 {
 		return new FastVector4(x - vec.x, y - vec.y, z - vec.z, w - vec.w);
 	}
 
-	@:extern public inline function mult(value: FastFloat): FastVector4 {
+	@:extern public inline function mult(value: Float): FastVector4 {
 		return new FastVector4(x * value, y * value, z * value, w * value);
 	}
 

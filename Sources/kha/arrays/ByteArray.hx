@@ -1,7 +1,6 @@
 package kha.arrays;
 
 import js.lib.DataView;
-import kha.FastFloat;
 
 @:forward
 abstract ByteArray(DataView) to DataView {
@@ -45,7 +44,7 @@ abstract ByteArray(DataView) to DataView {
 		return this.getUint32(byteOffset, LITTLE_ENDIAN);
 	}
 
-	public inline function getFloat32(byteOffset: Int): FastFloat {
+	public inline function getFloat32(byteOffset: Int): Float {
 		return this.getFloat32(byteOffset, LITTLE_ENDIAN);
 	}
 
@@ -77,7 +76,7 @@ abstract ByteArray(DataView) to DataView {
 		this.setUint32(byteOffset, value, LITTLE_ENDIAN);
 	}
 
-	public inline function setFloat32(byteOffset: Int, value: FastFloat): Void {
+	public inline function setFloat32(byteOffset: Int, value: Float): Void {
 		this.setFloat32(byteOffset, value, true);
 	}
 
@@ -101,7 +100,7 @@ abstract ByteArray(DataView) to DataView {
 		return this.getUint32(byteOffset, true);
 	}
 
-	public inline function getFloat32LE(byteOffset: Int): FastFloat {
+	public inline function getFloat32LE(byteOffset: Int): Float {
 		return this.getFloat32(byteOffset, true);
 	}
 
@@ -125,7 +124,7 @@ abstract ByteArray(DataView) to DataView {
 		this.setUint32(byteOffset, value, true);
 	}
 
-	public inline function setFloat32LE(byteOffset: Int, value: FastFloat): Void {
+	public inline function setFloat32LE(byteOffset: Int, value: Float): Void {
 		this.setFloat32(byteOffset, value, true);
 	}
 
@@ -149,7 +148,7 @@ abstract ByteArray(DataView) to DataView {
 		return this.getUint32(byteOffset);
 	}
 
-	public inline function getFloat32BE(byteOffset: Int): FastFloat {
+	public inline function getFloat32BE(byteOffset: Int): Float {
 		return this.getFloat32(byteOffset);
 	}
 
@@ -173,7 +172,7 @@ abstract ByteArray(DataView) to DataView {
 		this.setUint32(byteOffset, value);
 	}
 
-	public inline function setFloat32BE(byteOffset: Int, value: FastFloat): Void {
+	public inline function setFloat32BE(byteOffset: Int, value: Float): Void {
 		this.setFloat32(byteOffset, value);
 	}
 

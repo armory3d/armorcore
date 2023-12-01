@@ -37,7 +37,7 @@ class Transform {
 	/**
 		Uniform scale factor for `world` matrix.
 	**/
-	public var scaleWorld: kha.FastFloat = 1.0;
+	public var scaleWorld: Float = 1.0;
 	/**
 		The world matrix with `scaleWorld` applied (read-only).
 	**/
@@ -59,7 +59,7 @@ class Transform {
 		The radius of the smallest sphere that encompasses the object in local
 		space.
 	**/
-	public var radius: kha.FastFloat;
+	public var radius: Float;
 
 	static var temp = Mat4.identity();
 	static var q = new Quat();
@@ -68,17 +68,17 @@ class Transform {
 	var lastWorld: Mat4 = null;
 
 	// Wrong order returned from getEuler(), store last state for animation
-	var _eulerX: kha.FastFloat;
-	var _eulerY: kha.FastFloat;
-	var _eulerZ: kha.FastFloat;
+	var _eulerX: Float;
+	var _eulerY: Float;
+	var _eulerZ: Float;
 
 	// Animated delta transform
 	var dloc: Vec4 = null;
 	var drot: Quat = null;
 	var dscale: Vec4 = null;
-	var _deulerX: kha.FastFloat;
-	var _deulerY: kha.FastFloat;
-	var _deulerZ: kha.FastFloat;
+	var _deulerX: Float;
+	var _deulerY: Float;
+	var _deulerZ: Float;
 
 	public function new(object: Object) {
 		this.object = object;
@@ -170,7 +170,7 @@ class Transform {
 		@param	y Amount to move on the local y axis.
 		@param	z Amount to move on the local z axis.
 	**/
-	public function translate(x: kha.FastFloat, y: kha.FastFloat, z: kha.FastFloat) {
+	public function translate(x: Float, y: Float, z: Float) {
 		loc.x += x;
 		loc.y += y;
 		loc.z += z;
@@ -212,7 +212,7 @@ class Transform {
 		@param	axis The axis to rotate around.
 		@param	f The magnitude of the rotation in radians.
 	**/
-	public function rotate(axis: Vec4, f: kha.FastFloat) {
+	public function rotate(axis: Vec4, f: Float) {
 		q.fromAxisAngle(axis, f);
 		rot.multquats(q, rot);
 		buildMatrix();
@@ -235,7 +235,7 @@ class Transform {
 		@param	y Set the y axis rotation in radians.
 		@param	z Set the z axis rotation in radians.
 	**/
-	public function setRotation(x: kha.FastFloat, y: kha.FastFloat, z: kha.FastFloat) {
+	public function setRotation(x: Float, y: Float, z: Float) {
 		rot.fromEuler(x, y, z);
 		_eulerX = x;
 		_eulerY = y;
@@ -319,21 +319,21 @@ class Transform {
 	/**
 		@return The world x location.
 	**/
-	public inline function worldx(): kha.FastFloat {
+	public inline function worldx(): Float {
 		return world._30;
 	}
 
 	/**
 		@return The world y location.
 	**/
-	public inline function worldy(): kha.FastFloat {
+	public inline function worldy(): Float {
 		return world._31;
 	}
 
 	/**
 		@return The world z location.
 	**/
-	public inline function worldz(): kha.FastFloat {
+	public inline function worldz(): Float {
 		return world._32;
 	}
 }

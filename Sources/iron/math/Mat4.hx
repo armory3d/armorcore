@@ -1,17 +1,15 @@
 package iron.math;
 
-import kha.FastFloat;
-
 class Mat4 {
 
 	public var self: kha.math.FastMatrix4;
 	static var helpVec = new Vec4();
 	static var helpMat = Mat4.identity();
 
-	public inline function new(_00: FastFloat, _10: FastFloat, _20: FastFloat, _30: FastFloat,
-							   _01: FastFloat, _11: FastFloat, _21: FastFloat, _31: FastFloat,
-							   _02: FastFloat, _12: FastFloat, _22: FastFloat, _32: FastFloat,
-							   _03: FastFloat, _13: FastFloat, _23: FastFloat, _33: FastFloat) {
+	public inline function new(_00: Float, _10: Float, _20: Float, _30: Float,
+							   _01: Float, _11: Float, _21: Float, _31: Float,
+							   _02: Float, _12: Float, _22: Float, _32: Float,
+							   _03: Float, _13: Float, _23: Float, _33: Float) {
 		self = new kha.math.FastMatrix4(_00, _10, _20, _30, _01, _11, _21, _31, _02, _12, _22, _32, _03, _13, _23, _33);
 	}
 
@@ -157,7 +155,7 @@ class Mat4 {
 		@param	z The z location.
 		@return	This matrix.
 	**/
-	public inline function initTranslate(x: FastFloat = 0.0, y: FastFloat = 0.0, z: FastFloat = 0.0): Mat4 {
+	public inline function initTranslate(x: Float = 0.0, y: Float = 0.0, z: Float = 0.0): Mat4 {
 		_00 = 1.0; _01 = 0.0; _02 = 0.0; _03 = 0.0;
 		_10 = 0.0; _11 = 1.0; _12 = 0.0; _13 = 0.0;
 		_20 = 0.0; _21 = 0.0; _22 = 1.0; _23 = 0.0;
@@ -172,7 +170,7 @@ class Mat4 {
 		@param	z The distance to move in the x direction.
 		@return	This matrix
 	**/
-	public inline function translate(x: FastFloat, y: FastFloat, z: FastFloat): Mat4 {
+	public inline function translate(x: Float, y: Float, z: Float): Mat4 {
 		_00 += x * _03; _01 += y * _03; _02 += z * _03;
 		_10 += x * _13; _11 += y * _13; _12 += z * _13;
 		_20 += x * _23; _21 += y * _23; _22 += z * _23;
@@ -421,7 +419,7 @@ class Mat4 {
 		@param	s The value to multiply by.
 		@return	This matrix.
 	**/
-	public inline function mult(s: FastFloat): Mat4 {
+	public inline function mult(s: Float): Mat4 {
 		_00 *= s; _10 *= s; _20 *= s; _30 *= s;
 		_01 *= s; _11 *= s; _21 *= s; _31 *= s;
 		_02 *= s; _12 *= s; _22 *= s; _32 *= s;
@@ -465,7 +463,7 @@ class Mat4 {
 		@param	zf The depth of the far floor of the frustum.
 		@return	A new matrix.
 	**/
-	public static inline function persp(fovY: FastFloat, aspect: FastFloat, zn: FastFloat, zf: FastFloat): Mat4 {
+	public static inline function persp(fovY: Float, aspect: Float, zn: Float, zf: Float): Mat4 {
 		var uh = 1.0 / Math.tan(fovY / 2);
 		var uw = uh / aspect;
 		return new Mat4(
@@ -486,7 +484,7 @@ class Mat4 {
 		@param	far The depth of the far floor of the box.
 		@return	A new matrix.
 	**/
-	public static inline function ortho(left: FastFloat, right: FastFloat, bottom: FastFloat, top: FastFloat, near: FastFloat, far: FastFloat): Mat4 {
+	public static inline function ortho(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float): Mat4 {
 		var rl = right - left;
 		var tb = top - bottom;
 		var fn = far - near;
@@ -575,22 +573,22 @@ class Mat4 {
 		return new Vec4(_20, _21, _22);
 	}
 
-	public var _00(get, set): FastFloat; inline function get__00(): FastFloat { return self._00; } inline function set__00(f: FastFloat): FastFloat { return self._00 = f; }
-	public var _01(get, set): FastFloat; inline function get__01(): FastFloat { return self._01; } inline function set__01(f: FastFloat): FastFloat { return self._01 = f; }
-	public var _02(get, set): FastFloat; inline function get__02(): FastFloat { return self._02; } inline function set__02(f: FastFloat): FastFloat { return self._02 = f; }
-	public var _03(get, set): FastFloat; inline function get__03(): FastFloat { return self._03; } inline function set__03(f: FastFloat): FastFloat { return self._03 = f; }
-	public var _10(get, set): FastFloat; inline function get__10(): FastFloat { return self._10; } inline function set__10(f: FastFloat): FastFloat { return self._10 = f; }
-	public var _11(get, set): FastFloat; inline function get__11(): FastFloat { return self._11; } inline function set__11(f: FastFloat): FastFloat { return self._11 = f; }
-	public var _12(get, set): FastFloat; inline function get__12(): FastFloat { return self._12; } inline function set__12(f: FastFloat): FastFloat { return self._12 = f; }
-	public var _13(get, set): FastFloat; inline function get__13(): FastFloat { return self._13; } inline function set__13(f: FastFloat): FastFloat { return self._13 = f; }
-	public var _20(get, set): FastFloat; inline function get__20(): FastFloat { return self._20; } inline function set__20(f: FastFloat): FastFloat { return self._20 = f; }
-	public var _21(get, set): FastFloat; inline function get__21(): FastFloat { return self._21; } inline function set__21(f: FastFloat): FastFloat { return self._21 = f; }
-	public var _22(get, set): FastFloat; inline function get__22(): FastFloat { return self._22; } inline function set__22(f: FastFloat): FastFloat { return self._22 = f; }
-	public var _23(get, set): FastFloat; inline function get__23(): FastFloat { return self._23; } inline function set__23(f: FastFloat): FastFloat { return self._23 = f; }
-	public var _30(get, set): FastFloat; inline function get__30(): FastFloat { return self._30; } inline function set__30(f: FastFloat): FastFloat { return self._30 = f; }
-	public var _31(get, set): FastFloat; inline function get__31(): FastFloat { return self._31; } inline function set__31(f: FastFloat): FastFloat { return self._31 = f; }
-	public var _32(get, set): FastFloat; inline function get__32(): FastFloat { return self._32; } inline function set__32(f: FastFloat): FastFloat { return self._32 = f; }
-	public var _33(get, set): FastFloat; inline function get__33(): FastFloat { return self._33; } inline function set__33(f: FastFloat): FastFloat { return self._33 = f; }
+	public var _00(get, set): Float; inline function get__00(): Float { return self._00; } inline function set__00(f: Float): Float { return self._00 = f; }
+	public var _01(get, set): Float; inline function get__01(): Float { return self._01; } inline function set__01(f: Float): Float { return self._01 = f; }
+	public var _02(get, set): Float; inline function get__02(): Float { return self._02; } inline function set__02(f: Float): Float { return self._02 = f; }
+	public var _03(get, set): Float; inline function get__03(): Float { return self._03; } inline function set__03(f: Float): Float { return self._03 = f; }
+	public var _10(get, set): Float; inline function get__10(): Float { return self._10; } inline function set__10(f: Float): Float { return self._10 = f; }
+	public var _11(get, set): Float; inline function get__11(): Float { return self._11; } inline function set__11(f: Float): Float { return self._11 = f; }
+	public var _12(get, set): Float; inline function get__12(): Float { return self._12; } inline function set__12(f: Float): Float { return self._12 = f; }
+	public var _13(get, set): Float; inline function get__13(): Float { return self._13; } inline function set__13(f: Float): Float { return self._13 = f; }
+	public var _20(get, set): Float; inline function get__20(): Float { return self._20; } inline function set__20(f: Float): Float { return self._20 = f; }
+	public var _21(get, set): Float; inline function get__21(): Float { return self._21; } inline function set__21(f: Float): Float { return self._21 = f; }
+	public var _22(get, set): Float; inline function get__22(): Float { return self._22; } inline function set__22(f: Float): Float { return self._22 = f; }
+	public var _23(get, set): Float; inline function get__23(): Float { return self._23; } inline function set__23(f: Float): Float { return self._23 = f; }
+	public var _30(get, set): Float; inline function get__30(): Float { return self._30; } inline function set__30(f: Float): Float { return self._30 = f; }
+	public var _31(get, set): Float; inline function get__31(): Float { return self._31; } inline function set__31(f: Float): Float { return self._31 = f; }
+	public var _32(get, set): Float; inline function get__32(): Float { return self._32; } inline function set__32(f: Float): Float { return self._32 = f; }
+	public var _33(get, set): Float; inline function get__33(): Float { return self._33; } inline function set__33(f: Float): Float { return self._33 = f; }
 
 	public function toString(): String {
         return '[[$_00, $_10, $_20, $_30], [$_01, $_11, $_21, $_31], [$_02, $_12, $_22, $_32], [$_03, $_13, $_23, $_33]]';

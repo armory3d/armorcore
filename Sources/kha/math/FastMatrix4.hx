@@ -4,15 +4,15 @@ class FastMatrix4 {
 	private static inline var width: Int = 4;
 	private static inline var height: Int = 4;
 
-	public var _00: FastFloat; public var _10: FastFloat; public var _20: FastFloat; public var _30: FastFloat;
-	public var _01: FastFloat; public var _11: FastFloat; public var _21: FastFloat; public var _31: FastFloat;
-	public var _02: FastFloat; public var _12: FastFloat; public var _22: FastFloat; public var _32: FastFloat;
-	public var _03: FastFloat; public var _13: FastFloat; public var _23: FastFloat; public var _33: FastFloat;
+	public var _00: Float; public var _10: Float; public var _20: Float; public var _30: Float;
+	public var _01: Float; public var _11: Float; public var _21: Float; public var _31: Float;
+	public var _02: Float; public var _12: Float; public var _22: Float; public var _32: Float;
+	public var _03: Float; public var _13: Float; public var _23: Float; public var _33: Float;
 
-	public inline function new(_00: FastFloat, _10: FastFloat, _20: FastFloat, _30: FastFloat,
-								_01: FastFloat, _11: FastFloat, _21: FastFloat, _31: FastFloat,
-								_02: FastFloat, _12: FastFloat, _22: FastFloat, _32: FastFloat,
-								_03: FastFloat, _13: FastFloat, _23: FastFloat, _33: FastFloat) {
+	public inline function new(_00: Float, _10: Float, _20: Float, _30: Float,
+								_01: Float, _11: Float, _21: Float, _31: Float,
+								_02: Float, _12: Float, _22: Float, _32: Float,
+								_03: Float, _13: Float, _23: Float, _33: Float) {
 		this._00 = _00; this._10 = _10; this._20 = _20; this._30 = _30;
 		this._01 = _01; this._11 = _11; this._21 = _21; this._31 = _31;
 		this._02 = _02; this._12 = _12; this._22 = _22; this._32 = _32;
@@ -26,7 +26,7 @@ class FastMatrix4 {
 		this._03 = m._03; this._13 = m._13; this._23 = m._23; this._33 = m._33;
 	}
 
-	@:extern public static inline function translation(x: FastFloat, y: FastFloat, z: FastFloat): FastMatrix4 {
+	@:extern public static inline function translation(x: Float, y: Float, z: Float): FastMatrix4 {
 		return new FastMatrix4(
 			1, 0, 0, x,
 			0, 1, 0, y,
@@ -53,7 +53,7 @@ class FastMatrix4 {
 		);
 	}
 
-	@:extern public static inline function scale(x: FastFloat, y: FastFloat, z: FastFloat): FastMatrix4 {
+	@:extern public static inline function scale(x: Float, y: Float, z: Float): FastMatrix4 {
 		return new FastMatrix4(
 			x, 0, 0, 0,
 			0, y, 0, 0,
@@ -62,7 +62,7 @@ class FastMatrix4 {
 		);
 	}
 
-	@:extern public static inline function rotationX(alpha: FastFloat): FastMatrix4 {
+	@:extern public static inline function rotationX(alpha: Float): FastMatrix4 {
 		var ca = Math.cos(alpha);
 		var sa = Math.sin(alpha);
 		return new FastMatrix4(
@@ -73,7 +73,7 @@ class FastMatrix4 {
 		);
 	}
 
-	@:extern public static inline function rotationY(alpha: FastFloat): FastMatrix4 {
+	@:extern public static inline function rotationY(alpha: Float): FastMatrix4 {
 		var ca = Math.cos(alpha);
 		var sa = Math.sin(alpha);
 		return new FastMatrix4(
@@ -84,7 +84,7 @@ class FastMatrix4 {
 		);
 	}
 
-	@:extern public static inline function rotationZ(alpha: FastFloat): FastMatrix4 {
+	@:extern public static inline function rotationZ(alpha: Float): FastMatrix4 {
 		var ca = Math.cos(alpha);
 		var sa = Math.sin(alpha);
 		return new FastMatrix4(
@@ -95,7 +95,7 @@ class FastMatrix4 {
 		);
 	}
 
-	@:extern public static inline function rotation(yaw: FastFloat, pitch: FastFloat, roll: FastFloat): FastMatrix4 {
+	@:extern public static inline function rotation(yaw: Float, pitch: Float, roll: Float): FastMatrix4 {
 		var sy = Math.sin(yaw);
 		var cy = Math.cos(yaw);
 		var sx = Math.sin(pitch);
@@ -111,10 +111,10 @@ class FastMatrix4 {
 	}
 
 	// Inlining with `2` instead of `2.0` leads to wrong temp var type in Java/C#
-	public static inline function orthogonalProjection(left: FastFloat, right: FastFloat, bottom: FastFloat, top: FastFloat, zn: FastFloat, zf: FastFloat): FastMatrix4 {
-		var tx: FastFloat = -(right + left) / (right - left);
-		var ty: FastFloat = -(top + bottom) / (top - bottom);
-		var tz: FastFloat = -(zf + zn) / (zf - zn);
+	public static inline function orthogonalProjection(left: Float, right: Float, bottom: Float, top: Float, zn: Float, zf: Float): FastMatrix4 {
+		var tx: Float = -(right + left) / (right - left);
+		var ty: Float = -(top + bottom) / (top - bottom);
+		var tz: Float = -(zf + zn) / (zf - zn);
 		return new FastMatrix4(
 			2 / (right - left), 0,                  0,              tx,
 			0,                  2.0 / (top - bottom), 0,              ty,
@@ -123,7 +123,7 @@ class FastMatrix4 {
 		);
 	}
 
-	public static inline function perspectiveProjection(fovY: FastFloat, aspect: FastFloat, zn: FastFloat, zf: FastFloat): FastMatrix4 {
+	public static inline function perspectiveProjection(fovY: Float, aspect: Float, zn: Float, zf: Float): FastMatrix4 {
 		var uh = 1.0 / Math.tan(fovY / 2);
 		var uw = uh / aspect;
 		return new FastMatrix4(
@@ -165,7 +165,7 @@ class FastMatrix4 {
 		);
 	}
 
-	@:extern public inline function mult(value: FastFloat): FastMatrix4 {
+	@:extern public inline function mult(value: Float): FastMatrix4 {
 		return new FastMatrix4(
 			_00 * value, _10 * value, _20 * value, _30 * value,
 			_01 * value, _11 * value, _21 * value, _31 * value,
@@ -192,7 +192,7 @@ class FastMatrix4 {
 		);
 	}
 
-	@:extern public inline function trace(): FastFloat {
+	@:extern public inline function trace(): Float {
 		return _00 + _11 + _22 + _33;
 	}
 
@@ -214,13 +214,13 @@ class FastMatrix4 {
 		return product;
 	}
 
-	@:extern public inline function cofactor(m0: FastFloat, m1: FastFloat, m2: FastFloat,
-											m3: FastFloat, m4: FastFloat, m5: FastFloat,
-											m6: FastFloat, m7: FastFloat, m8: FastFloat): FastFloat {
+	@:extern public inline function cofactor(m0: Float, m1: Float, m2: Float,
+											m3: Float, m4: Float, m5: Float,
+											m6: Float, m7: Float, m8: Float): Float {
 		return m0 * ( m4 * m8 - m5 * m7 ) - m1 * ( m3 * m8 - m5 * m6 ) + m2 * ( m3 * m7 - m4 * m6 );
 	}
 
-	@:extern public inline function determinant(): FastFloat {
+	@:extern public inline function determinant(): Float {
 		var c00 = cofactor(_11, _21, _31, _12, _22, _32, _13, _23, _33);
 		var c01 = cofactor(_10, _20, _30, _12, _22, _32, _13, _23, _33);
 		var c02 = cofactor(_10, _20, _30, _11, _21, _31, _13, _23, _33);
@@ -234,7 +234,7 @@ class FastMatrix4 {
 		var c02 = cofactor(_10, _20, _30, _11, _21, _31, _13, _23, _33);
 		var c03 = cofactor(_10, _20, _30, _11, _21, _31, _12, _22, _32);
 
-		var det: FastFloat = _00 * c00 - _01 * c01 + _02 * c02 - _03 * c03;
+		var det: Float = _00 * c00 - _01 * c01 + _02 * c02 - _03 * c03;
 		if (Math.abs(det) < 0.000001) {
 			throw "determinant is too small";
 		}
@@ -254,7 +254,7 @@ class FastMatrix4 {
 		var c32 = cofactor(_00, _10, _20, _01, _11, _21, _03, _13, _23);
 		var c33 = cofactor(_00, _10, _20, _01, _11, _21, _02, _12, _22);
 
-		var invdet: FastFloat = 1.0 / det;
+		var invdet: Float = 1.0 / det;
 		return new FastMatrix4(
 			c00 * invdet,  -c01 * invdet,  c02 * invdet, -c03 * invdet,
 			-c10 * invdet,  c11 * invdet, -c12 * invdet,  c13 * invdet,

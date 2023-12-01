@@ -1,7 +1,6 @@
 package kha.compute;
 
 import kha.Image;
-import kha.FastFloat;
 import kha.arrays.Float32Array;
 import kha.math.FastMatrix3;
 import kha.math.FastMatrix4;
@@ -23,19 +22,19 @@ class Compute {
 		Krom.setIntCompute(location, value);
 	}
 
-	public static function setFloat(location: ConstantLocation, value: FastFloat) {
+	public static function setFloat(location: ConstantLocation, value: Float) {
 		Krom.setFloatCompute(location, value);
 	}
 
-	public static function setFloat2(location: ConstantLocation, value1: FastFloat, value2: FastFloat) {
+	public static function setFloat2(location: ConstantLocation, value1: Float, value2: Float) {
 		Krom.setFloat2Compute(location, value1, value2);
 	}
 
-	public static function setFloat3(location: ConstantLocation, value1: FastFloat, value2: FastFloat, value3: FastFloat) {
+	public static function setFloat3(location: ConstantLocation, value1: Float, value2: Float, value3: Float) {
 		Krom.setFloat3Compute(location, value1, value2, value3);
 	}
 
-	public static function setFloat4(location: ConstantLocation, value1: FastFloat, value2: FastFloat, value3: FastFloat, value4: FastFloat) {
+	public static function setFloat4(location: ConstantLocation, value1: Float, value2: Float, value3: Float, value4: Float) {
 		Krom.setFloat4Compute(location, value1, value2, value3, value4);
 	}
 

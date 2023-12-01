@@ -1,6 +1,5 @@
 package iron.object;
 
-import kha.FastFloat;
 import kha.arrays.Uint32Array;
 import iron.math.Vec4;
 import iron.math.Mat4;
@@ -29,18 +28,18 @@ class Animation {
 	static var vp = new Vec4();
 	static var vs = new Vec4();
 
-	public var time: FastFloat = 0.0;
-	public var speed: FastFloat = 1.0;
+	public var time: Float = 0.0;
+	public var speed: Float = 1.0;
 	public var loop = true;
 	public var frameIndex = 0;
 	public var onComplete: Void->Void = null;
 	public var paused = false;
-	var frameTime: FastFloat = 1 / 60;
+	var frameTime: Float = 1 / 60;
 
-	var blendTime: FastFloat = 0.0;
-	var blendCurrent: FastFloat = 0.0;
+	var blendTime: Float = 0.0;
+	var blendCurrent: Float = 0.0;
 	var blendAction = "";
-	var blendFactor: FastFloat = 0.0;
+	var blendFactor: Float = 0.0;
 
 	var lastFrameIndex = -1;
 	var markerEvents: Map<String, Array<Void->Void>> = null;
@@ -69,7 +68,7 @@ class Animation {
 		paused = false;
 	}
 
-	public function blend(action1: String, action2: String, factor: FastFloat) {
+	public function blend(action1: String, action2: String, factor: Float) {
 		blendTime = 1.0; // Enable blending
 		blendFactor = factor;
 	}
@@ -86,7 +85,7 @@ class Animation {
 		Scene.active.animations.remove(this);
 	}
 
-	public function update(delta: FastFloat) {
+	public function update(delta: Float) {
 		if (paused || speed == 0.0) return;
 		time += delta * speed;
 
@@ -157,7 +156,7 @@ class Animation {
 		var ti = frameIndex;
 		var t1 = track.frames[ti] * frameTime;
 		var t2 = track.frames[ti + sign] * frameTime;
-		var s: FastFloat = (t - t1) / (t2 - t1); // Linear
+		var s: Float = (t - t1) / (t2 - t1); // Linear
 
 		m1.setF32(track.values, ti * 16); // Offset to 4x4 matrix array
 		m2.setF32(track.values, (ti + sign) * 16);

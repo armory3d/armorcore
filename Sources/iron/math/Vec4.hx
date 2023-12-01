@@ -1,15 +1,13 @@
 package iron.math;
 
-import kha.FastFloat;
-
 class Vec4 {
 
-	public var x: FastFloat;
-	public var y: FastFloat;
-	public var z: FastFloat;
-	public var w: FastFloat;
+	public var x: Float;
+	public var y: Float;
+	public var z: Float;
+	public var w: Float;
 
-	public inline function new(x: FastFloat = 0.0, y: FastFloat = 0.0, z: FastFloat = 0.0, w: FastFloat = 1.0) {
+	public inline function new(x: Float = 0.0, y: Float = 0.0, z: Float = 0.0, w: Float = 1.0) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -34,7 +32,7 @@ class Vec4 {
 		return this;
 	}
 
-	public inline function set(x: FastFloat, y: FastFloat, z: FastFloat, w: FastFloat = 1.0): Vec4{
+	public inline function set(x: Float, y: Float, z: Float, w: Float = 1.0): Vec4{
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -49,7 +47,7 @@ class Vec4 {
 		return this;
 	}
 
-	public inline function addf(x: FastFloat, y: FastFloat, z: FastFloat): Vec4 {
+	public inline function addf(x: Float, y: Float, z: Float): Vec4 {
 		this.x += x;
 		this.y += y;
 		this.z += z;
@@ -81,14 +79,14 @@ class Vec4 {
 		return this;
 	}
 
-	public inline function mult(f: FastFloat): Vec4 {
+	public inline function mult(f: Float): Vec4 {
 		x *= f;
 		y *= f;
 		z *= f;
 		return this;
 	}
 
-	public inline function dot(v: Vec4): FastFloat {
+	public inline function dot(v: Vec4): Float {
 		return x * v.x + y * v.y + z * v.z;
 	}
 
@@ -104,7 +102,7 @@ class Vec4 {
 		return new Vec4(x, y, z, w);
 	}
 
-	public inline function lerp(from: Vec4, to: Vec4, s: FastFloat): Vec4 {
+	public inline function lerp(from: Vec4, to: Vec4, s: Float): Vec4 {
 		x = from.x + (to.x - from.x) * s;
 		y = from.y + (to.y - from.y) * s;
 		z = from.z + (to.z - from.z) * s;
@@ -137,7 +135,7 @@ class Vec4 {
 		return this;
 	}
 
-	public inline function applyAxisAngle(axis: Vec4, angle: FastFloat): Vec4 {
+	public inline function applyAxisAngle(axis: Vec4, angle: Float): Vec4 {
 		var quat = new Quat();
 		quat.fromAxisAngle(axis, angle);
 		return applyQuat(quat);
@@ -158,11 +156,11 @@ class Vec4 {
 		return x == v.x && y == v.y && z == v.z;
 	}
 
-	public inline function almostEquals(v: Vec4, prec: FastFloat): Bool {
+	public inline function almostEquals(v: Vec4, prec: Float): Bool {
 		return Math.abs(x - v.x) < prec && Math.abs(y - v.y) < prec && Math.abs(z - v.z) < prec;
 	}
 
-	public inline function length(): FastFloat {
+	public inline function length(): Float {
 		return Math.sqrt(x * x + y * y + z * z);
 	}
 
@@ -178,18 +176,18 @@ class Vec4 {
 		return this;
 	}
 
-	public static inline function distance(v1: Vec4, v2: Vec4): FastFloat {
+	public static inline function distance(v1: Vec4, v2: Vec4): Float {
 		return distancef(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
 	}
 
-	public static inline function distancef(v1x: FastFloat, v1y: FastFloat, v1z: FastFloat, v2x: FastFloat, v2y: FastFloat, v2z: FastFloat): FastFloat {
+	public static inline function distancef(v1x: Float, v1y: Float, v1z: Float, v2x: Float, v2y: Float, v2z: Float): Float {
 		var vx = v1x - v2x;
 		var vy = v1y - v2y;
 		var vz = v1z - v2z;
 		return Math.sqrt(vx * vx + vy * vy + vz * vz);
 	}
 
-	public inline function distanceTo(p: Vec4): FastFloat {
+	public inline function distanceTo(p: Vec4): Float {
 		return Math.sqrt((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y) + (p.z - z) * (p.z - z));
 	}
 
@@ -201,7 +199,7 @@ class Vec4 {
 		return this;
 	}
 
-	public inline function clamp(min: FastFloat, max: FastFloat): Vec4 {
+	public inline function clamp(min: Float, max: Float): Vec4 {
 		var l = length();
 		if (l < min) normalize().mult(min);
 		else if (l > max) normalize().mult(max);

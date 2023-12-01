@@ -1,13 +1,11 @@
 package iron.math;
 
-import kha.FastFloat;
-
 class Quat {
 
-	public var x: FastFloat;
-	public var y: FastFloat;
-	public var z: FastFloat;
-	public var w: FastFloat;
+	public var x: Float;
+	public var y: Float;
+	public var z: Float;
+	public var w: Float;
 
 	static var helpVec0 = new Vec4();
 	static var helpVec1 = new Vec4();
@@ -15,17 +13,17 @@ class Quat {
 	static var helpMat = Mat4.identity();
 	static var xAxis = Vec4.xAxis();
 	static var yAxis = Vec4.yAxis();
-	
-	static inline var SQRT2: FastFloat = 1.4142135623730951;
 
-	public inline function new(x: FastFloat = 0.0, y: FastFloat = 0.0, z: FastFloat = 0.0, w: FastFloat = 1.0) {
+	static inline var SQRT2: Float = 1.4142135623730951;
+
+	public inline function new(x: Float = 0.0, y: Float = 0.0, z: Float = 0.0, w: Float = 1.0) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
 		this.w = w;
 	}
 
-	public inline function set(x: FastFloat, y: FastFloat, z: FastFloat, w: FastFloat): Quat {
+	public inline function set(x: Float, y: Float, z: Float, w: Float): Quat {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -65,8 +63,8 @@ class Quat {
 		return this;
 	}
 
-	public inline function fromAxisAngle(axis: Vec4, angle: FastFloat): Quat {
-		var s: FastFloat = Math.sin(angle * 0.5);
+	public inline function fromAxisAngle(axis: Vec4, angle: Float): Quat {
+		var s: Float = Math.sin(angle * 0.5);
 		x = axis.x * s;
 		y = axis.y * s;
 		z = axis.z * s;
@@ -74,7 +72,7 @@ class Quat {
 		return normalize();
 	}
 
-	public inline function toAxisAngle(axis: Vec4): FastFloat {
+	public inline function toAxisAngle(axis: Vec4): Float {
 		normalize();
 		var angle = 2 * Math.acos(w);
 		var s = Math.sqrt(1 - w * w);
@@ -137,7 +135,7 @@ class Quat {
 	}
 
 	// Multiply this quaternion by float
-	public inline function scale(scale: FastFloat): Quat {
+	public inline function scale(scale: Float): Quat {
 		this.x *= scale;
 		this.y *= scale;
 		this.z *= scale;
@@ -145,7 +143,7 @@ class Quat {
 		return this;
 	}
 
-	public inline function scalequat(q: Quat, scale: FastFloat): Quat {
+	public inline function scalequat(q: Quat, scale: Float): Quat {
 		q.x *= scale;
 		q.y *= scale;
 		q.z *= scale;
@@ -178,7 +176,7 @@ class Quat {
 		return this;
 	}
 
-	public inline function module(): FastFloat {
+	public inline function module(): Float {
 		return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z + this.w * this.w);
 	}
 
@@ -238,7 +236,7 @@ class Quat {
 		@param	z The Euler's z component.
 		@return	This quaternion.
 	**/
-	public inline function fromEuler(x: FastFloat, y: FastFloat, z: FastFloat): Quat {
+	public inline function fromEuler(x: Float, y: Float, z: Float): Quat {
 		var f = x / 2;
 		var c1 = Math.cos(f);
 		var s1 = Math.sin(f);
@@ -274,20 +272,20 @@ class Quat {
 	public inline function toEulerOrdered(p: String): Vec4{
 		// normalize quat ?
 
-		var q0: FastFloat = SQRT2 * this.w;
-		var q1: FastFloat = SQRT2 * this.x;
-		var q2: FastFloat = SQRT2 * this.y;
-		var q3: FastFloat = SQRT2 * this.z;
+		var q0: Float = SQRT2 * this.w;
+		var q1: Float = SQRT2 * this.x;
+		var q2: Float = SQRT2 * this.y;
+		var q3: Float = SQRT2 * this.z;
 
-		var qda: FastFloat = q0 * q1;
-		var qdb: FastFloat = q0 * q2;
-		var qdc: FastFloat = q0 * q3;
-		var qaa: FastFloat = q1 * q1;
-		var qab: FastFloat = q1 * q2;
-		var qac: FastFloat = q1 * q3;
-		var qbb: FastFloat = q2 * q2;
-		var qbc: FastFloat = q2 * q3;
-		var qcc: FastFloat = q3 * q3;
+		var qda: Float = q0 * q1;
+		var qdb: Float = q0 * q2;
+		var qdc: Float = q0 * q3;
+		var qaa: Float = q1 * q1;
+		var qab: Float = q1 * q2;
+		var qac: Float = q1 * q3;
+		var qbb: Float = q2 * q2;
+		var qbc: Float = q2 * q3;
+		var qcc: Float = q3 * q3;
 
 		var m = new Mat3(
 			// OK, *this* matrix is transposed with respect to what armory expects.
@@ -307,10 +305,10 @@ class Quat {
 		);
 
 		// now define what is necessary to perform look-ups in that matrix
-		var ml: Array<Array<FastFloat>> = [[m._00, m._10, m._20],
+		var ml: Array<Array<Float>> = [[m._00, m._10, m._20],
 		                                   [m._01, m._11, m._21],
 		                                   [m._02, m._12, m._22]];
-		var eull: Array<FastFloat> = [0, 0, 0];
+		var eull: Array<Float> = [0, 0, 0];
 
 		var i: Int = p.charCodeAt(0) - "X".charCodeAt(0);
 		var j: Int = p.charCodeAt(1) - "X".charCodeAt(0);
@@ -327,7 +325,7 @@ class Quat {
 		else if (p.charAt(2) == "Y") k = 1;
 		else k = 2;
 
-		var cy: FastFloat = Math.sqrt(ml[i][i] * ml[i][i] + ml[i][j] * ml[i][j]);
+		var cy: Float = Math.sqrt(ml[i][i] * ml[i][i] + ml[i][j] * ml[i][j]);
 
 		var eul1 = new Vec4();
 
@@ -406,12 +404,12 @@ class Quat {
 				`to`, and 0.5 being half way between the two.
 		@return	This quaternion.
 	**/
-	public inline function lerp(from: Quat, to: Quat, s: FastFloat): Quat {
+	public inline function lerp(from: Quat, to: Quat, s: Float): Quat {
 		var fromx = from.x;
 		var fromy = from.y;
 		var fromz = from.z;
 		var fromw = from.w;
-		var dot: FastFloat = from.dot(to);
+		var dot: Float = from.dot(to);
 		if (dot < 0.0) {
 			fromx = -fromx;
 			fromy = -fromy;
@@ -426,7 +424,7 @@ class Quat {
 	}
 
 	// Slerp is shorthand for spherical linear interpolation
-	public inline function slerp(from: Quat, to: Quat, t: FastFloat): Quat {
+	public inline function slerp(from: Quat, to: Quat, t: Float): Quat {
 		var epsilon: Float = 0.0005;
 
 		var dot = from.dot(to);
@@ -452,7 +450,7 @@ class Quat {
 		@param	q The other quaternion.
 		@return	The dot product.
 	**/
-	public inline function dot(q: Quat): FastFloat {
+	public inline function dot(q: Quat): Float {
 		return (x * q.x) + (y * q.y) + (z * q.z) + (w * q.w);
 	}
 

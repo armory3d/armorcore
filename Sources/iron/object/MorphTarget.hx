@@ -4,7 +4,6 @@ package iron.object;
 
 import kha.arrays.Float32Array;
 import kha.Image;
-import kha.FastFloat;
 import iron.data.Data;
 import iron.data.SceneFormat;
 
@@ -14,8 +13,8 @@ class MorphTarget {
     public var numMorphTargets: Int = 0;
     public var morphImageSize: Int = 0;
     public var morphBlockSize: Int = 0;
-    public var scaling: FastFloat;
-    public var offset: FastFloat;
+    public var scaling: Float;
+    public var offset: Float;
     public var morphWeights: Float32Array;
     public var morphDataPos: Image;
     public var morphDataNor: Image;

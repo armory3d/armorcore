@@ -1,7 +1,5 @@
 package kha.arrays;
 
-import kha.FastFloat;
-
 abstract Float32Array(js.lib.Float32Array) {
 	public inline function new(elements: Int) {
 		this = new js.lib.Float32Array(elements);
@@ -19,11 +17,11 @@ abstract Float32Array(js.lib.Float32Array) {
 		return this.length;
 	}
 
-	public inline function set(index: Int, value: FastFloat): FastFloat {
+	public inline function set(index: Int, value: Float): Float {
 		return this[index] = value;
 	}
 
-	public inline function get(index: Int): FastFloat {
+	public inline function get(index: Int): Float {
 		return this[index];
 	}
 
@@ -32,12 +30,12 @@ abstract Float32Array(js.lib.Float32Array) {
 	}
 
 	@:arrayAccess
-	public inline function arrayRead(index: Int): FastFloat {
+	public inline function arrayRead(index: Int): Float {
 		return this[index];
 	}
 
 	@:arrayAccess
-	public inline function arrayWrite(index: Int, value: FastFloat): FastFloat {
+	public inline function arrayWrite(index: Int, value: Float): Float {
 		return this[index] = value;
 	}
 

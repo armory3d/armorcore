@@ -32,7 +32,7 @@ class LightObject extends Object {
 	var cascadeData: Float32Array = null;
 	var cascadeVP: Array<Mat4>;
 	var camSlicedP: Array<Mat4> = null;
-	var cascadeSplit: Array<kha.FastFloat>;
+	var cascadeSplit: Array<Float>;
 	var bias = Mat4.identity();
 	#else
 	var camSlicedP: Mat4 = null;
@@ -380,7 +380,7 @@ class LightObject extends Object {
 	}
 	#end
 
-	static function getRadius(strength: kha.FastFloat): kha.FastFloat {
+	static function getRadius(strength: Float): Float {
 		// (1.0 / (dist * dist)) * strength = 0.01
 		return Math.sqrt(strength / 0.004);
 	}

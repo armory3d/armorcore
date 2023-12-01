@@ -1,7 +1,6 @@
 package iron.data;
 
 #if !macro
-import kha.FastFloat;
 import kha.arrays.Float32Array;
 import kha.arrays.Uint32Array;
 import kha.arrays.Int16Array;
@@ -11,7 +10,6 @@ import kha.arrays.Int16Array;
 typedef Float32Array = haxe.io.Float32Array;
 typedef Uint32Array = haxe.io.UInt32Array;
 typedef Int16Array = haxe.io.UInt16Array;
-typedef FastFloat = Float;
 #end
 
 #if js
@@ -37,7 +35,7 @@ typedef TSceneFormat = {
 	@:optional public var gravity: Float32Array;
 	@:optional public var traits: Array<TTrait>; // Scene root traits
 	@:optional public var embedded_datas: Array<String>; // Preload for this scene, images only for now
-	@:optional public var frame_time: Null<FastFloat>;
+	@:optional public var frame_time: Null<Float>;
 	@:optional public var irradiance: Float32Array; // Blob with spherical harmonics, bands 0,1,2
 	@:optional public var terrain_datas: Array<TTerrainData>;
 	@:optional public var terrain_ref: String;
@@ -55,8 +53,8 @@ typedef TMeshData = {
 	@:optional public var skin: TSkin;
 	@:optional public var instanced_data: Float32Array;
 	@:optional public var instanced_type: Null<Int>; // off, loc, loc+rot, loc+scale, loc+rot+scale
-	@:optional public var scale_pos: Null<FastFloat>; // Unpack pos from (-1,1) coords
-	@:optional public var scale_tex: Null<FastFloat>; // Unpack tex from (-1,1) coords
+	@:optional public var scale_pos: Null<Float>; // Unpack pos from (-1,1) coords
+	@:optional public var scale_tex: Null<Float>; // Unpack tex from (-1,1) coords
 	@:optional public var morph_target: TMorphTarget;
 }
 
@@ -66,8 +64,8 @@ typedef TMorphTarget = {
 @:structInit class TMorphTarget {
 #end
 	public var morph_target_data_file: String;
-	public var morph_scale: FastFloat;
-	public var morph_offset: FastFloat;
+	public var morph_scale: Float;
+	public var morph_offset: Float;
 	public var num_morph_targets: Int;
 	public var morph_img_size: Int;
 	public var morph_block_size: Int;
@@ -119,19 +117,19 @@ typedef TLightData = {
 	public var name: String;
 	public var type: String; // sun, point, spot
 	public var color: Float32Array;
-	public var strength: FastFloat;
+	public var strength: Float;
 	@:optional public var cast_shadow: Null<Bool>;
-	@:optional public var near_plane: Null<FastFloat>;
-	@:optional public var far_plane: Null<FastFloat>;
-	@:optional public var fov: Null<FastFloat>;
-	@:optional public var shadows_bias: Null<FastFloat>;
+	@:optional public var near_plane: Null<Float>;
+	@:optional public var far_plane: Null<Float>;
+	@:optional public var fov: Null<Float>;
+	@:optional public var shadows_bias: Null<Float>;
 	@:optional public var shadowmap_size: Null<Int>;
 	@:optional public var shadowmap_cube: Null<Bool>; // Omni shadows for point
-	@:optional public var spot_size: Null<FastFloat>;
-	@:optional public var spot_blend: Null<FastFloat>;
-	@:optional public var light_size: Null<FastFloat>; // Shadow soft size
-	@:optional public var size: Null<FastFloat>; // Area light
-	@:optional public var size_y: Null<FastFloat>;
+	@:optional public var spot_size: Null<Float>;
+	@:optional public var spot_blend: Null<Float>;
+	@:optional public var light_size: Null<Float>; // Shadow soft size
+	@:optional public var size: Null<Float>; // Area light
+	@:optional public var size_y: Null<Float>;
 }
 
 #if js
@@ -140,11 +138,11 @@ typedef TCameraData = {
 @:structInit class TCameraData {
 #end
 	public var name: String;
-	public var near_plane: FastFloat;
-	public var far_plane: FastFloat;
-	public var fov: FastFloat;
+	public var near_plane: Float;
+	public var far_plane: Float;
+	public var fov: Float;
 	@:optional public var clear_color: Float32Array;
-	@:optional public var aspect: Null<FastFloat>;
+	@:optional public var aspect: Null<Float>;
 	@:optional public var frustum_culling: Null<Bool>;
 	@:optional public var ortho: Float32Array; // Indicates ortho camera, left, right, bottom, top
 }
@@ -192,7 +190,7 @@ typedef TBindConstant = {
 	@:optional public var vec4: Float32Array;
 	@:optional public var vec3: Float32Array;
 	@:optional public var vec2: Float32Array;
-	@:optional public var float: Null<FastFloat>;
+	@:optional public var float: Null<Float>;
 	@:optional public var bool: Null<Bool>;
 	@:optional public var int: Null<Int>;
 }
@@ -277,7 +275,7 @@ typedef TShaderConstant = {
 	@:optional public var vec4: Float32Array;
 	@:optional public var vec3: Float32Array;
 	@:optional public var vec2: Float32Array;
-	@:optional public var float: Null<FastFloat>;
+	@:optional public var float: Null<Float>;
 	@:optional public var bool: Null<Bool>;
 	@:optional public var int: Null<Int>;
 	@:optional public var is_arm_parameter: Null<Bool>;
@@ -310,13 +308,13 @@ typedef TSpeakerData = {
 	public var muted: Bool;
 	public var loop: Bool;
 	public var stream: Bool;
-	public var volume: FastFloat;
-	public var pitch: FastFloat;
-	public var volume_min: FastFloat;
-	public var volume_max: FastFloat;
-	public var attenuation: FastFloat;
-	public var distance_max: FastFloat;
-	public var distance_reference: FastFloat;
+	public var volume: Float;
+	public var pitch: Float;
+	public var volume_min: Float;
+	public var volume_max: Float;
+	public var attenuation: Float;
+	public var distance_max: Float;
+	public var distance_reference: Float;
 	public var play_on_start: Bool;
 }
 
@@ -328,8 +326,8 @@ typedef TTerrainData = {
 	public var name: String;
 	public var sectors_x: Int;
 	public var sectors_y: Int;
-	public var sector_size: FastFloat;
-	public var height_scale: FastFloat;
+	public var sector_size: Float;
+	public var height_scale: Float;
 	public var material_ref: String;
 }
 
@@ -342,8 +340,8 @@ typedef TWorldData = {
 	public var background_color: Int;
 	public var probe: TProbeData;
 	@:optional public var sun_direction: Float32Array; // Sky data
-	@:optional public var turbidity: Null<FastFloat>;
-	@:optional public var ground_albedo: Null<FastFloat>;
+	@:optional public var turbidity: Null<Float>;
+	@:optional public var ground_albedo: Null<Float>;
 	@:optional public var envmap: String;
 	@:optional public var nishita_density: Float32Array; // Rayleigh, Mie, ozone
 }
@@ -355,7 +353,7 @@ typedef TProbeData = {
 #end
 	public var name: String;
 	public var type: String; // grid, planar, cubemap
-	public var strength: FastFloat;
+	public var strength: Float;
 	@:optional public var irradiance: String; // Reference to TIrradiance blob
 	@:optional public var radiance: String;
 	@:optional public var radiance_mipmaps: Null<Int>;
@@ -393,19 +391,19 @@ typedef TParticleData = {
 	public var type: Int; // 0 - Emitter, Hair
 	public var loop: Bool;
 	public var count: Int;
-	public var frame_start: FastFloat;
-	public var frame_end: FastFloat;
-	public var lifetime: FastFloat;
-	public var lifetime_random: FastFloat;
+	public var frame_start: Float;
+	public var frame_end: Float;
+	public var lifetime: Float;
+	public var lifetime_random: Float;
 	public var emit_from: Int; // 0 - Vert, 1 - Face, 2 - Volume
 	public var object_align_factor: Float32Array;
-	public var factor_random: FastFloat;
+	public var factor_random: Float;
 	public var physics_type: Int; // 0 - No, 1 - Newton
-	public var particle_size: FastFloat; // Object scale
-	public var size_random: FastFloat; // Random scale
-	public var mass: FastFloat;
+	public var particle_size: Float; // Object scale
+	public var size_random: Float; // Random scale
+	public var mass: Float;
 	public var instance_object: String; // Object reference
-	public var weight_gravity: FastFloat;
+	public var weight_gravity: Float;
 }
 
 #if js
@@ -485,7 +483,7 @@ typedef TLod = {
 @:structInit class TLod {
 #end
 	public var object_ref: String; // Empty when limiting draw distance
-	public var screen_size: FastFloat; // (0-1) size compared to lod0
+	public var screen_size: Float; // (0-1) size compared to lod0
 }
 
 #if js
@@ -504,7 +502,7 @@ typedef TConstraint = {
 	@:optional public var invert_y: Null<Bool>;
 	@:optional public var invert_z: Null<Bool>;
 	@:optional public var use_offset: Null<Bool>;
-	@:optional public var influence: Null<FastFloat>;
+	@:optional public var influence: Null<Float>;
 }
 
 #if js
@@ -548,7 +546,7 @@ typedef TAnimationTransform = {
 	public var type: String; // translation, translation_x, ...
 	@:optional public var name: String;
 	@:optional public var values: Float32Array; // translation
-	@:optional public var value: Null<FastFloat>; // translation_x
+	@:optional public var value: Null<Float>; // translation_x
 }
 
 #if js

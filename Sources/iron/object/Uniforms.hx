@@ -47,11 +47,11 @@ class Uniforms {
 	public static var externalVec4Links: Array<Object->MaterialData->String->Vec4> = null;
 	public static var externalVec3Links: Array<Object->MaterialData->String->Vec4> = null;
 	public static var externalVec2Links: Array<Object->MaterialData->String->Vec4> = null;
-	public static var externalFloatLinks: Array<Object->MaterialData->String->Null<kha.FastFloat>> = null;
+	public static var externalFloatLinks: Array<Object->MaterialData->String->Null<Float>> = null;
 	public static var externalFloatsLinks: Array<Object->MaterialData->String->Float32Array> = null;
 	public static var externalIntLinks: Array<Object->MaterialData->String->Null<Int>> = null;
-	public static var posUnpack: Null<kha.FastFloat> = null;
-	public static var texUnpack: Null<kha.FastFloat> = null;
+	public static var posUnpack: Null<Float> = null;
+	public static var texUnpack: Null<Float> = null;
 
 	#if (rp_resolution_filter == "Point")
 	public static var defaultFilter = TextureFilter.PointFilter;
@@ -415,9 +415,9 @@ class Uniforms {
 				#if arm_ltc
 				case "_lightArea0": {
 					if (light != null && light.data.raw.size != null) {
-						var f2: kha.FastFloat = 0.5;
-						var sx: kha.FastFloat = light.data.raw.size * f2;
-						var sy: kha.FastFloat = light.data.raw.size_y * f2;
+						var f2: Float = 0.5;
+						var sx: Float = light.data.raw.size * f2;
+						var sy: Float = light.data.raw.size_y * f2;
 						helpVec.set(-sx, sy, 0.0);
 						helpVec.applymat(light.transform.world);
 						v = helpVec;
@@ -425,9 +425,9 @@ class Uniforms {
 				}
 				case "_lightArea1": {
 					if (light != null && light.data.raw.size != null) {
-						var f2: kha.FastFloat = 0.5;
-						var sx: kha.FastFloat = light.data.raw.size * f2;
-						var sy: kha.FastFloat = light.data.raw.size_y * f2;
+						var f2: Float = 0.5;
+						var sx: Float = light.data.raw.size * f2;
+						var sy: Float = light.data.raw.size_y * f2;
 						helpVec.set(sx, sy, 0.0);
 						helpVec.applymat(light.transform.world);
 						v = helpVec;
@@ -435,9 +435,9 @@ class Uniforms {
 				}
 				case "_lightArea2": {
 					if (light != null && light.data.raw.size != null) {
-						var f2: kha.FastFloat = 0.5;
-						var sx: kha.FastFloat = light.data.raw.size * f2;
-						var sy: kha.FastFloat = light.data.raw.size_y * f2;
+						var f2: Float = 0.5;
+						var sx: Float = light.data.raw.size * f2;
+						var sy: Float = light.data.raw.size_y * f2;
 						helpVec.set(sx, -sy, 0.0);
 						helpVec.applymat(light.transform.world);
 						v = helpVec;
@@ -445,9 +445,9 @@ class Uniforms {
 				}
 				case "_lightArea3": {
 					if (light != null && light.data.raw.size != null) {
-						var f2: kha.FastFloat = 0.5;
-						var sx: kha.FastFloat = light.data.raw.size * f2;
-						var sy: kha.FastFloat = light.data.raw.size_y * f2;
+						var f2: Float = 0.5;
+						var sx: Float = light.data.raw.size * f2;
+						var sy: Float = light.data.raw.size_y * f2;
 						helpVec.set(-sx, -sy, 0.0);
 						helpVec.applymat(light.transform.world);
 						v = helpVec;
@@ -605,11 +605,11 @@ class Uniforms {
 				}
 				case "_lightPlaneProj": { // shadowCube
 					if (light != null) {
-						var near: kha.FastFloat = light.data.raw.near_plane;
-						var far: kha.FastFloat = light.data.raw.far_plane;
-						var a: kha.FastFloat = far + near;
-						var b: kha.FastFloat = far - near;
-						var f2: kha.FastFloat = 2.0;
+						var near: Float = light.data.raw.near_plane;
+						var far: Float = light.data.raw.far_plane;
+						var a: Float = far + near;
+						var b: Float = far - near;
+						var f2: Float = 2.0;
 						var c = f2 * far * near;
 						v = helpVec;
 						v.x = a / b;
@@ -635,7 +635,7 @@ class Uniforms {
 			return true;
 		}
 		else if (c.type == "float") {
-			var f: Null<kha.FastFloat> = null;
+			var f: Null<Float> = null;
 			switch (c.link) {
 				case "_time": {
 					f = Time.time();
@@ -1012,8 +1012,8 @@ class Uniforms {
 			g.setFloat3(location, v.x, v.y, v.z);
 		}
 		else if (c.type == "vec2") {
-			var vx: Null<kha.FastFloat> = null;
-			var vy: Null<kha.FastFloat> = null;
+			var vx: Null<Float> = null;
+			var vy: Null<Float> = null;
 			switch (c.link) {
 				case "_tilesheetOffset": {
 					var ts = cast(object, MeshObject).tilesheet;
@@ -1049,7 +1049,7 @@ class Uniforms {
 			g.setFloat2(location, vx, vy);
 		}
 		else if (c.type == "float") {
-			var f: Null<kha.FastFloat> = null;
+			var f: Null<Float> = null;
 			switch (c.link) {
 				case "_objectInfoIndex": {
 					f = object.uid;
