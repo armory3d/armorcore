@@ -125,9 +125,6 @@ class MeshObject extends Object {
 	function setCulled(isShadow: Bool, b: Bool): Bool {
 		isShadow ? culledShadow = b : culledMesh = b;
 		culled = culledMesh && culledShadow;
-		#if arm_debug
-		if (b) RenderPath.culled++;
-		#end
 		return b;
 	}
 
@@ -261,9 +258,6 @@ class MeshObject extends Object {
 			}
 			if (lod == null) return; // Empty object
 		}
-		#if arm_debug
-		else computeScreenSize(Scene.active.camera);
-		#end
 		if (isLodMaterial() && !validContext(mats, context)) return;
 
 		// Get context
@@ -324,13 +318,6 @@ class MeshObject extends Object {
 				g.drawIndexedVertices(ldata.geom.start, ldata.geom.count);
 			}
 		}
-
-		#if arm_debug
-		var isShadow = context == "shadowmap";
-		if (meshContext) RenderPath.numTrisMesh += ldata.geom.numTris;
-		else if (isShadow) RenderPath.numTrisShadow += ldata.geom.numTris;
-		RenderPath.drawCalls++;
-		#end
 
 		#if arm_veloc
 		prevMatrix.setFrom(transform.worldUnpack);

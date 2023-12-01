@@ -79,7 +79,7 @@ class System {
 	private static var mouseLockListeners: Array<Void->Void> = [];
 
 	public static function start(options: SystemOptions, callback: Window -> Void): Void {
-		Krom.init(options.title, options.width, options.height, options.framebuffer.samplesPerPixel, options.framebuffer.verticalSync, cast options.window.mode, options.window.windowFeatures, Krom.KROM_API, options.window.x, options.window.y, options.framebuffer.frequency);
+		Krom.init(options.title, options.width, options.height, options.framebuffer.samplesPerPixel, options.framebuffer.verticalSync, cast options.window.mode, options.window.windowFeatures, 0, options.window.x, options.window.y, options.framebuffer.frequency);
 
 		startTime = Krom.getTime();
 

@@ -1,7 +1,5 @@
 package iron.data;
 
-#if js
-
 class Wasm {
 
 	public var exports: Dynamic;
@@ -14,14 +12,6 @@ class Wasm {
 			new js.lib.webassembly.Instance(module, importObject).exports;
 		return new Wasm(exports);
 	}
-
-	#if kha_html5_js
-	public static function instantiateStreaming(blob: kha.Blob, importObject: Dynamic = null, done: Wasm->Void) {
-		js.lib.WebAssembly.instantiateStreaming(new js.html.Response(blob.toBytes().getData(), {
-			headers: new js.html.Headers({"Content-Type": "application/wasm"})
-		}), importObject).then(m -> done(new Wasm(m.instance.exports)));
-	}
-	#end
 
 	function new(exports: Dynamic) {
 		this.exports = exports;
@@ -48,5 +38,3 @@ class Wasm {
 		return new kha.arrays.Uint32Array(exports.memory.buffer).subarray(offset, length);
 	}
 }
-
-#end

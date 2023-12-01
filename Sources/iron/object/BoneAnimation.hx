@@ -222,10 +222,6 @@ class BoneAnimation extends Animation {
 		if (object != null && (!object.visible || object.culled)) return;
 		if (skeletonBones == null || skeletonBones.length == 0) return;
 
-		#if arm_debug
-		Animation.beginProfile();
-		#end
-
 		super.update(delta);
 		if (paused || speed == 0.0) return;
 
@@ -279,10 +275,6 @@ class BoneAnimation extends Animation {
 
 		if (isSkinned) updateSkinGpu();
 		else updateBonesOnly();
-
-		#if arm_debug
-		Animation.endProfile();
-		#end
 	}
 
 	function multParent(i: Int, fasts: Array<Mat4>, bones: Array<TObj>, mats: Array<Mat4>) {

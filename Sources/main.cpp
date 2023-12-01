@@ -51,9 +51,6 @@ extern "C" bool waitAfterNextDraw;
 #include <kinc/graphics5/commandlist.h>
 #include <kinc/graphics5/raytrace.h>
 #endif
-#ifdef KORE_VR
-#include <kinc/vr/vrinterface.h>
-#endif
 
 #include <libplatform/libplatform.h>
 #ifdef KORE_LINUX // xlib defines conflicting with v8
@@ -153,8 +150,6 @@ extern "C" const char *macgetresourcepath();
 #ifdef KORE_IOS
 extern "C" const char *iphonegetresourcepath();
 #endif
-
-const int KROM_API = 6;
 
 #if defined(KORE_IOS) || defined(KORE_ANDROID)
 char mobile_title[1024];
@@ -328,7 +323,7 @@ namespace {
 		bool vertical_sync = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int window_mode = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int window_features = args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int api_version = args[7]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		// int api_version = args[7]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		int x = -1;
 		int y = -1;
 		int frequency = 60;
@@ -337,18 +332,6 @@ namespace {
 			x = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 			y = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 			frequency = args[10]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		}
-
-		if (api_version != KROM_API) {
-			const char *outdated;
-			if (api_version < KROM_API) {
-				outdated = "Kha";
-			}
-			else if (KROM_API < api_version) {
-				outdated = "Krom";
-			}
-			kinc_log(KINC_LOG_LEVEL_INFO, "Krom uses API version %i but Kha targets API version %i. Please update %s.", KROM_API, api_version, outdated);
-			exit(1);
 		}
 
 		kinc_window_options_t win;
@@ -437,27 +420,19 @@ namespace {
 	}
 
 	void krom_log(const FunctionCallbackInfo<Value> &args) {
-		if (args.Length() < 1) return;
 		HandleScope scope(args.GetIsolate());
 		Local<Value> arg = args[0];
 		String::Utf8Value value(isolate, arg);
 		size_t len = strlen(*value);
-        kinc_log_level_t level;
-        if (args.Length() > 1) {
-            level = (kinc_log_level_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-        }
-        else {
-            level = KINC_LOG_LEVEL_INFO;
-        }
 		if (len < 2048) {
-			kinc_log(level, *value);
+			kinc_log(KINC_LOG_LEVEL_INFO, *value);
 		}
 		else {
 			int pos = 0;
 			while (pos < len) {
 				strncpy(temp_string, *value + pos, 2047);
 				temp_string[2047] = 0;
-				kinc_log(level, temp_string);
+				kinc_log(KINC_LOG_LEVEL_INFO, temp_string);
 				pos += 2047;
 			}
 		}
@@ -3847,88 +3822,6 @@ namespace {
 	}
 	#endif
 
-	#ifdef KORE_VR
-	void krom_vr_begin(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		kinc_vr_interface_begin();
-	}
-
-	void krom_vr_begin_render(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		kinc_vr_interface_begin_render(eye);
-	}
-
-	void krom_vr_end_render(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		kinc_vr_interface_end_render(eye);
-	}
-
-	void krom_vr_warp_swap(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		kinc_vr_interface_warp_swap();
-	}
-
-	void krom_vr_get_sensor_state_view(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(eye);
-		kinc_matrix4x4_t view = state.pose.vrPose.eye;
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_00").ToLocalChecked(), Number::New(isolate, view.m[0]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_01").ToLocalChecked(), Number::New(isolate, view.m[1]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_02").ToLocalChecked(), Number::New(isolate, view.m[2]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_03").ToLocalChecked(), Number::New(isolate, view.m[3]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_10").ToLocalChecked(), Number::New(isolate, view.m[4]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_11").ToLocalChecked(), Number::New(isolate, view.m[5]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_12").ToLocalChecked(), Number::New(isolate, view.m[6]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_13").ToLocalChecked(), Number::New(isolate, view.m[7]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_20").ToLocalChecked(), Number::New(isolate, view.m[8]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_21").ToLocalChecked(), Number::New(isolate, view.m[9]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_22").ToLocalChecked(), Number::New(isolate, view.m[10]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_23").ToLocalChecked(), Number::New(isolate, view.m[11]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_30").ToLocalChecked(), Number::New(isolate, view.m[12]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_31").ToLocalChecked(), Number::New(isolate, view.m[13]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_32").ToLocalChecked(), Number::New(isolate, view.m[14]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_33").ToLocalChecked(), Number::New(isolate, view.m[15]));
-		args.GetReturnValue().Set(obj);
-	}
-
-	void krom_vr_get_sensor_state_projection(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int eye = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(eye);
-		kinc_matrix4x4_t proj = state.pose.vrPose.projection;
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_00").ToLocalChecked(), Number::New(isolate, proj.m[0]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_01").ToLocalChecked(), Number::New(isolate, proj.m[1]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_02").ToLocalChecked(), Number::New(isolate, proj.m[2]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_03").ToLocalChecked(), Number::New(isolate, proj.m[3]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_10").ToLocalChecked(), Number::New(isolate, proj.m[4]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_11").ToLocalChecked(), Number::New(isolate, proj.m[5]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_12").ToLocalChecked(), Number::New(isolate, proj.m[6]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_13").ToLocalChecked(), Number::New(isolate, proj.m[7]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_20").ToLocalChecked(), Number::New(isolate, proj.m[8]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_21").ToLocalChecked(), Number::New(isolate, proj.m[9]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_22").ToLocalChecked(), Number::New(isolate, proj.m[10]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_23").ToLocalChecked(), Number::New(isolate, proj.m[11]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_30").ToLocalChecked(), Number::New(isolate, proj.m[12]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_31").ToLocalChecked(), Number::New(isolate, proj.m[13]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_32").ToLocalChecked(), Number::New(isolate, proj.m[14]));
-		obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "_33").ToLocalChecked(), Number::New(isolate, proj.m[15]));
-		args.GetReturnValue().Set(obj);
-	}
-
-	void krom_vr_get_sensor_state_hmd_mounted(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		kinc_vr_sensor_state_t state = kinc_vr_interface_get_sensor_state(0);
-		args.GetReturnValue().Set(Int32::New(isolate, state.pose.hmdMounted));
-	}
-	#endif
-
 	void krom_window_x(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
@@ -5478,15 +5371,6 @@ namespace {
 		SET_FUNCTION(krom, "raytraceInit", krom_raytrace_init);
 		SET_FUNCTION(krom, "raytraceSetTextures", krom_raytrace_set_textures);
 		SET_FUNCTION(krom, "raytraceDispatchRays", krom_raytrace_dispatch_rays);
-		#endif
-		#ifdef KORE_VR
-		SET_FUNCTION(krom, "vrBegin", krom_vr_begin);
-		SET_FUNCTION(krom, "vrBeginRender", krom_vr_begin_render);
-		SET_FUNCTION(krom, "vrEndRender", krom_vr_end_render);
-		SET_FUNCTION(krom, "vrWarpSwap", krom_vr_warp_swap);
-		SET_FUNCTION(krom, "vrGetSensorStateView", krom_vr_get_sensor_state_view);
-		SET_FUNCTION(krom, "vrGetSensorStateProjection", krom_vr_get_sensor_state_projection);
-		SET_FUNCTION(krom, "vrGetSensorStateHmdMounted", krom_vr_get_sensor_state_hmd_mounted);
 		#endif
 		SET_FUNCTION(krom, "windowX", krom_window_x);
 		SET_FUNCTION(krom, "windowY", krom_window_y);

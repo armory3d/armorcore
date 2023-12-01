@@ -1,5 +1,4 @@
 extern class Krom {
-	static inline var KROM_API: Int = 6;
 
 	static function clear(flags: Int, color: Int, depth: Float, stencil: Int): Void;
 	static function createVertexShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
@@ -84,7 +83,7 @@ extern class Krom {
 
 	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int, frequency: Int): Void;
 	static function setApplicationName(name: String): Void;
-	static function log(v: Dynamic, ?level: LogLevel): Void;
+	static function log(v: Dynamic): Void;
 	static function setCallback(callback: Void->Void): Void;
 	static function setDropFilesCallback(callback: String->Void): Void;
 	static function setCutCopyPasteCallback(cutCallback: Void->String, copyCallback: Void->String, pasteCallback: String->Void): Void;
@@ -162,6 +161,7 @@ extern class Krom {
 	static function getConstantLocationCompute(shader: Dynamic, name: String): Dynamic;
 	static function getTextureUnitCompute(shader: Dynamic, name: String): Dynamic;
 	static function compute(x: Int, y: Int, z: Int): Void;
+
 	// Extended
 	static function g2_init(image_vert: js.lib.ArrayBuffer, image_frag: js.lib.ArrayBuffer, colored_vert: js.lib.ArrayBuffer, colored_frag: js.lib.ArrayBuffer, text_vert: js.lib.ArrayBuffer, text_frag: js.lib.ArrayBuffer): Void;
 	static function g2_begin(): Void;
@@ -196,13 +196,6 @@ extern class Krom {
 	static function raytraceInit(shader: js.lib.ArrayBuffer, vb: Dynamic, ib: Dynamic, scale: Float): Void;
 	static function raytraceSetTextures(tex0: kha.Image, tex1: kha.Image, tex2: kha.Image, texenv: Dynamic, tex_sobol: Dynamic, tex_scramble: Dynamic, tex_rank: Dynamic): Void;
 	static function raytraceDispatchRays(target: Dynamic, cb: js.lib.ArrayBuffer): Void;
-	static function vrBegin(): Void;
-	static function vrBeginRender(eye: Int): Void;
-	static function vrEndRender(eye: Int): Void;
-	static function vrWarpSwap(): Void;
-	static function vrGetSensorStateView(eye: Int): Dynamic;
-	static function vrGetSensorStateProjection(eye: Int): Dynamic;
-	static function vrGetSensorStateHmdMounted(): Bool;
 	static function saveDialog(filterList: String, defaultPath: String): String;
 	static function openDialog(filterList: String, defaultPath: String, openMultiple: Bool): Array<String>;
 	static function readDirectory(path: String, foldersOnly: Bool): String;
@@ -293,10 +286,4 @@ extern class Krom {
 	static function zui_nodes_set_on_canvas_released(f: Void->Void): Void;
 	static function zui_nodes_set_on_socket_released(f: Int->Void): Void;
 	static function zui_nodes_set_on_link_drag(f: Int->Bool->Void): Void;
-}
-
-enum abstract LogLevel(Int) to Int {
-    var Info;
-    var Warning;
-    var Error;
 }

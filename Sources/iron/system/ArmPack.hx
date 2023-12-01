@@ -141,9 +141,9 @@ class ArmPack {
 					case "Array", null: { // kha.arrays give null
 						o.writeByte(0xdd);
 						o.writeInt32(d.length);
-						var isUint8 = Std.isOfType(d, #if js js.lib.Uint8Array #else Uint8ArrayPrivate #end);
-						var isInt16 = Std.isOfType(d, #if js js.lib.Int16Array #else Int16ArrayPrivate #end);
-						var isInt = Std.isOfType(d[0], Int) && !Std.isOfType(d, #if js js.lib.Float32Array #else Float32ArrayPrivate #end);
+						var isUint8 = Std.isOfType(d, js.lib.Uint8Array);
+						var isInt16 = Std.isOfType(d, js.lib.Int16Array);
+						var isInt = Std.isOfType(d[0], Int) && !Std.isOfType(d, js.lib.Float32Array);
 						var isFloat = Std.isOfType(d[0], Float);
 
 						if (isUint8) { // Uint8Array

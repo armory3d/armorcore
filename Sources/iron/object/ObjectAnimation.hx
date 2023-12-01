@@ -38,17 +38,9 @@ class ObjectAnimation extends Animation {
 	override public function update(delta: Float) {
 		if (!object.visible || object.culled || oaction == null) return;
 
-		#if arm_debug
-		Animation.beginProfile();
-		#end
-
 		super.update(delta);
 		if (paused) return;
 		if (!isSkinned) updateObjectAnim();
-
-		#if arm_debug
-		Animation.endProfile();
-		#end
 	}
 
 	function updateObjectAnim() {

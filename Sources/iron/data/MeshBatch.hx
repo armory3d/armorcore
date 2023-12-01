@@ -102,16 +102,7 @@ class MeshBatch {
 				#if arm_veloc
 				m.prevMatrix.setFrom(m.transform.worldUnpack);
 				#end
-
-				#if arm_debug
-				RenderPath.drawCalls++;
-				RenderPath.batchCalls++;
-				#end
 			}
-
-			#if arm_debug
-			RenderPath.batchBuckets++;
-			#end
 		}
 
 		// Render non-batched meshes

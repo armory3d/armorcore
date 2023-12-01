@@ -16,13 +16,6 @@ class App {
 	static var traitRenders2D: Array<kha.graphics2.Graphics->Void> = [];
 	public static var framebuffer: kha.Framebuffer;
 	public static var pauseUpdates = false;
-
-	#if arm_debug
-	static var startTime: Float;
-	public static var updateTime: Float;
-	public static var renderPathTime: Float;
-	public static var endFrameCallbacks: Array<Void->Void> = [];
-	#end
 	static var lastw = -1;
 	static var lasth = -1;
 	public static var onResize: Void->Void = null;
@@ -50,10 +43,6 @@ class App {
 		if (Scene.active == null || !Scene.active.ready) return;
 		if (pauseUpdates) return;
 
-		#if arm_debug
-		startTime = kha.Scheduler.realTime();
-		#end
-
 		Scene.active.updateFrame();
 
 		var i = 0;
@@ -78,12 +67,6 @@ class App {
 		}
 
 		if (onEndFrames != null) for (f in onEndFrames) f();
-
-		#if arm_debug
-		iron.object.Animation.endFrame();
-		for (cb in endFrameCallbacks) cb();
-		updateTime = kha.Scheduler.realTime() - startTime;
-		#end
 
 		// Rebuild projection on window resize
 		if (lastw == -1) {
@@ -113,10 +96,6 @@ class App {
 			return;
 		}
 
-		#if arm_debug
-		startTime = kha.Scheduler.realTime();
-		#end
-
 		if (traitInits.length > 0) {
 			for (f in traitInits) {
 				traitInits.length > 0 ? f() : break;
@@ -131,10 +110,6 @@ class App {
 		}
 
 		render2D(frame);
-
-		#if arm_debug
-		renderPathTime = kha.Scheduler.realTime() - startTime;
-		#end
 	}
 
 	static function render2D(frame: kha.Framebuffer) {

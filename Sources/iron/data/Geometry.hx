@@ -421,11 +421,7 @@ class Geometry {
 	}
 }
 
-#if js
 typedef InterleavedVertexBuffer = {
-#else
-@:structInit class InterleavedVertexBuffer {
-#end
 	public var name: String;
 	public var buffer: VertexBuffer;
 }

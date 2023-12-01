@@ -25,7 +25,7 @@ class ShaderData {
 	public var raw: TShaderData;
 	public var contexts: Array<ShaderContext> = [];
 
-	#if (arm_noembed && kha_krom)
+	#if arm_noembed
 	public static var shaderPath = "../krom-resources/";
 	public static inline var shaderExt = #if kha_vulkan ".spirv" #elseif (krom_android || krom_wasm) ".essl" #elseif kha_opengl ".glsl" #elseif kha_metal ".metal" #else ".d3d11" #end ;
 	#end
@@ -155,19 +155,16 @@ class ShaderContext {
 			pipeState.vertexShader = VertexShader.fromSource(raw.vertex_shader);
 			pipeState.fragmentShader = FragmentShader.fromSource(raw.fragment_shader);
 
-			#if kha_krom
 			// Shader compile error
 			if (pipeState.vertexShader.shader == null || pipeState.fragmentShader.shader == null) {
 				done(null);
 				return;
 			}
-			#end
-
 			finishCompile(done);
 		}
 		else {
 
-			#if (arm_noembed && kha_krom) // Load shaders manually
+			#if arm_noembed // Load shaders manually
 
 			var shadersLoaded = 0;
 			var numShaders = 2;
@@ -259,15 +256,9 @@ class ShaderContext {
 		var irot = false;
 		var iscl = false;
 		for (elem in raw.vertex_elements) {
-			#if cpp
-			if (Reflect.field(elem, "name") == "ipos") { ipos = true; continue; }
-			if (Reflect.field(elem, "name") == "irot") { irot = true; continue; }
-			if (Reflect.field(elem, "name") == "iscl") { iscl = true; continue; }
-			#else
 			if (elem.name == "ipos") { ipos = true; continue; }
 			if (elem.name == "irot") { irot = true; continue; }
 			if (elem.name == "iscl") { iscl = true; continue; }
-			#end
 			structure.add(elem.name, parseData(elem.data));
 		}
 		if (ipos && !irot && !iscl) instancingType = 1;

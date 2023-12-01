@@ -22,7 +22,7 @@ using StringTools;
 // Structure for setting shader uniforms
 class Uniforms {
 
-	#if (kha_opengl || (kha_webgl && !arm_shadowmap_atlas) || (!kha_webgl && arm_shadowmap_atlas))
+	#if kha_opengl
 	public static var biasMat = new Mat4(
 		0.5, 0.0, 0.0, 0.5,
 		0.0, 0.5, 0.0, 0.5,
@@ -204,15 +204,11 @@ class Uniforms {
 						}
 						if (samplerID.startsWith("shadowMap")) {
 							if (rt.isCubeMap) {
-								#if (!arm_legacy)
 								g.setCubeMapCompareMode(context.textureUnits[j], true);
-								#end
 							}
 							else {
 								g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
-								#if (!arm_legacy)
 								g.setTextureCompareMode(context.textureUnits[j], true);
-								#end
 							}
 							paramsSet = true;
 						}
@@ -322,12 +318,6 @@ class Uniforms {
 			var v: Vec4 = null;
 			helpVec.set(0, 0, 0, 0);
 			switch (c.link) {
-				#if arm_debug
-				case "_input": {
-					helpVec.set(Input.getMouse().x / iron.App.w(), Input.getMouse().y / iron.App.h(), Input.getMouse().down() ? 1.0 : 0.0, 0.0);
-					v = helpVec;
-				}
-				#end
 				default:
 					return false;
 			}

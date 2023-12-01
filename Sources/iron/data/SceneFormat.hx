@@ -1,22 +1,10 @@
 package iron.data;
 
-#if !macro
 import kha.arrays.Float32Array;
 import kha.arrays.Uint32Array;
 import kha.arrays.Int16Array;
-#end
 
-#if macro
-typedef Float32Array = haxe.io.Float32Array;
-typedef Uint32Array = haxe.io.UInt32Array;
-typedef Int16Array = haxe.io.UInt16Array;
-#end
-
-#if js
 typedef TSceneFormat = {
-#else
-@:structInit class TSceneFormat {
-#end
 	@:optional public var name: String;
 	@:optional public var mesh_datas: Array<TMeshData>;
 	@:optional public var light_datas: Array<TLightData>;
@@ -41,11 +29,7 @@ typedef TSceneFormat = {
 	@:optional public var terrain_ref: String;
 }
 
-#if js
 typedef TMeshData = {
-#else
-@:structInit class TMeshData {
-#end
 	public var name: String;
 	public var vertex_arrays: Array<TVertexArray>;
 	public var index_arrays: Array<TIndexArray>;
@@ -58,11 +42,7 @@ typedef TMeshData = {
 	@:optional public var morph_target: TMorphTarget;
 }
 
-#if js
 typedef TMorphTarget = {
-#else
-@:structInit class TMorphTarget {
-#end
 	public var morph_target_data_file: String;
 	public var morph_scale: Float;
 	public var morph_offset: Float;
@@ -73,11 +53,7 @@ typedef TMorphTarget = {
 	public var morph_target_defaults: Float32Array;
 }
 
-#if js
 typedef TSkin = {
-#else
-@:structInit class TSkin {
-#end
 	public var transform: TTransform;
 	public var bone_ref_array: Array<String>;
 	public var bone_len_array: Float32Array;
@@ -88,11 +64,7 @@ typedef TSkin = {
 	public var constraints: Array<TConstraint>;
 }
 
-#if js
 typedef TVertexArray = {
-#else
-@:structInit class TVertexArray {
-#end
 	public var attrib: String;
 	public var values: Int16Array;
 	public var data: String; // short4norm, short2norm
@@ -100,20 +72,12 @@ typedef TVertexArray = {
 	@:optional public var size: Null<Int>;
 }
 
-#if js
 typedef TIndexArray = {
-#else
-@:structInit class TIndexArray {
-#end
 	public var values: Uint32Array; // size = 3
 	public var material: Int;
 }
 
-#if js
 typedef TLightData = {
-#else
-@:structInit class TLightData {
-#end
 	public var name: String;
 	public var type: String; // sun, point, spot
 	public var color: Float32Array;
@@ -132,11 +96,7 @@ typedef TLightData = {
 	@:optional public var size_y: Null<Float>;
 }
 
-#if js
 typedef TCameraData = {
-#else
-@:structInit class TCameraData {
-#end
 	public var name: String;
 	public var near_plane: Float;
 	public var far_plane: Float;
@@ -147,11 +107,7 @@ typedef TCameraData = {
 	@:optional public var ortho: Float32Array; // Indicates ortho camera, left, right, bottom, top
 }
 
-#if js
 typedef TMaterialData = {
-#else
-@:structInit class TMaterialData {
-#end
 	public var name: String;
 	public var shader: String;
 	public var contexts: Array<TMaterialContext>;
@@ -159,33 +115,21 @@ typedef TMaterialData = {
 	@:optional public var override_context: TShaderOverride;
 }
 
-#if js
 typedef TShaderOverride = {
-#else
-@:structInit class TShaderOverride {
-#end
 	@:optional public var cull_mode: String;
 	@:optional public var addressing: String;
 	@:optional public var filter: String;
 	@:optional public var shared_sampler: String;
 }
 
-#if js
 typedef TMaterialContext = {
-#else
-@:structInit class TMaterialContext {
-#end
 	public var name: String;
 	@:optional public var depth_read: Null<Bool>;
 	@:optional public var bind_constants: Array<TBindConstant>;
 	@:optional public var bind_textures: Array<TBindTexture>;
 }
 
-#if js
 typedef TBindConstant = {
-#else
-@:structInit class TBindConstant {
-#end
 	public var name: String;
 	@:optional public var vec4: Float32Array;
 	@:optional public var vec3: Float32Array;
@@ -195,11 +139,7 @@ typedef TBindConstant = {
 	@:optional public var int: Null<Int>;
 }
 
-#if js
 typedef TBindTexture = {
-#else
-@:structInit class TBindTexture {
-#end
 	public var name: String;
 	public var file: String;
 	@:optional public var format: String; // RGBA32, RGBA64, R8
@@ -213,20 +153,12 @@ typedef TBindTexture = {
 	@:optional public var source: String; // file, movie
 }
 
-#if js
 typedef TShaderData = {
-#else
-@:structInit class TShaderData {
-#end
 	public var name: String;
 	public var contexts: Array<TShaderContext>;
 }
 
-#if js
 typedef TShaderContext = {
-#else
-@:structInit class TShaderContext {
-#end
 	public var name: String;
 	public var depth_write: Bool;
 	public var compare_mode: String;
@@ -255,20 +187,12 @@ typedef TShaderContext = {
 	@:optional public var shader_from_source: Null<Bool>; // Build shader at runtime using fromSource()
 }
 
-#if js
 typedef TVertexElement = {
-#else
-@:structInit class TVertexElement {
-#end
 	public var name: String;
 	public var data: String; // "float4", "short2norm"
 }
 
-#if js
 typedef TShaderConstant = {
-#else
-@:structInit class TShaderConstant {
-#end
 	public var name: String;
 	public var type: String;
 	@:optional public var link: String;
@@ -281,11 +205,7 @@ typedef TShaderConstant = {
 	@:optional public var is_arm_parameter: Null<Bool>;
 }
 
-#if js
 typedef TTextureUnit = {
-#else
-@:structInit class TTextureUnit {
-#end
 	public var name: String;
 	@:optional public var is_image: Null<Bool>; // image2D
 	@:optional public var link: String;
@@ -298,11 +218,7 @@ typedef TTextureUnit = {
 	@:optional public var is_arm_parameter: Null<Bool>;
 }
 
-#if js
 typedef TSpeakerData = {
-#else
-@:structInit class TSpeakerData {
-#end
 	public var name: String;
 	public var sound: String;
 	public var muted: Bool;
@@ -318,11 +234,7 @@ typedef TSpeakerData = {
 	public var play_on_start: Bool;
 }
 
-#if js
 typedef TTerrainData = {
-#else
-@:structInit class TTerrainData {
-#end
 	public var name: String;
 	public var sectors_x: Int;
 	public var sectors_y: Int;
@@ -331,11 +243,7 @@ typedef TTerrainData = {
 	public var material_ref: String;
 }
 
-#if js
 typedef TWorldData = {
-#else
-@:structInit class TWorldData {
-#end
 	public var name: String;
 	public var background_color: Int;
 	public var probe: TProbeData;
@@ -346,11 +254,7 @@ typedef TWorldData = {
 	@:optional public var nishita_density: Float32Array; // Rayleigh, Mie, ozone
 }
 
-#if js
 typedef TProbeData = {
-#else
-@:structInit class TProbeData {
-#end
 	public var name: String;
 	public var type: String; // grid, planar, cubemap
 	public var strength: Float;
@@ -359,11 +263,7 @@ typedef TProbeData = {
 	@:optional public var radiance_mipmaps: Null<Int>;
 }
 
-#if js
 typedef TTilesheetData = {
-#else
-@:structInit class TTilesheetData {
-#end
 	public var name: String;
 	public var tilesx: Int;
 	public var tilesy: Int;
@@ -371,22 +271,14 @@ typedef TTilesheetData = {
 	public var actions: Array<TTilesheetAction>;
 }
 
-#if js
 typedef TTilesheetAction = {
-#else
-@:structInit class TTilesheetAction {
-#end
 	public var name: String;
 	public var start: Int;
 	public var end: Int;
 	public var loop: Bool;
 }
 
-#if js
 typedef TParticleData = {
-#else
-@:structInit class TParticleData {
-#end
 	public var name: String;
 	public var type: Int; // 0 - Emitter, Hair
 	public var loop: Bool;
@@ -406,21 +298,13 @@ typedef TParticleData = {
 	public var weight_gravity: Float;
 }
 
-#if js
 typedef TParticleReference = {
-#else
-@:structInit class TParticleReference {
-#end
 	public var name: String;
 	public var particle: String;
 	public var seed: Int;
 }
 
-#if js
 typedef TObj = {
-#else
-@:structInit class TObj {
-#end
 	public var type: String; // object, mesh_object, light_object, camera_object, speaker_object, decal_object
 	public var name: String;
 	public var data_ref: String;
@@ -458,39 +342,23 @@ typedef TObj = {
 	@:optional public var relative_bone_constraints: Null<Bool>; // Use parent relative bone constraints
 }
 
-#if js
 typedef TProperty = {
-#else
-@:structInit class TProperty {
-#end
 	public var name: String;
 	public var value: Dynamic;
 }
 
-#if js
 typedef TGroup = {
-#else
-@:structInit class TGroup {
-#end
 	public var name: String;
 	public var instance_offset: Float32Array;
 	public var object_refs: Array<String>;
 }
 
-#if js
 typedef TLod = {
-#else
-@:structInit class TLod {
-#end
 	public var object_ref: String; // Empty when limiting draw distance
 	public var screen_size: Float; // (0-1) size compared to lod0
 }
 
-#if js
 typedef TConstraint = {
-#else
-@:structInit class TConstraint {
-#end
 	public var name: String;
 	public var type: String;
 	@:optional public var bone: String; // Bone constraint
@@ -505,31 +373,19 @@ typedef TConstraint = {
 	@:optional public var influence: Null<Float>;
 }
 
-#if js
 typedef TTrait = {
-#else
-@:structInit class TTrait {
-#end
 	public var type: String;
 	public var class_name: String;
 	@:optional public var parameters: Array<String>; // constructor params
 	@:optional public var props: Array<Dynamic>; // name - type - value list
 }
 
-#if js
 typedef TTransform = {
-#else
-@:structInit class TTransform {
-#end
 	@:optional public var target: String;
 	public var values: Float32Array;
 }
 
-#if js
 typedef TAnimation = {
-#else
-@:structInit class TAnimation {
-#end
 	public var tracks: Array<TTrack>;
 	@:optional public var begin: Null<Int>; // Frames, for non-sampled
 	@:optional public var end: Null<Int>;
@@ -538,22 +394,14 @@ typedef TAnimation = {
 	@:optional public var marker_names: Array<String>;
 }
 
-#if js
 typedef TAnimationTransform = {
-#else
-@:structInit class TAnimationTransform {
-#end
 	public var type: String; // translation, translation_x, ...
 	@:optional public var name: String;
 	@:optional public var values: Float32Array; // translation
 	@:optional public var value: Null<Float>; // translation_x
 }
 
-#if js
 typedef TTrack = {
-#else
-@:structInit class TTrack {
-#end
 	public var target: String;
 	public var frames: Uint32Array;
 	public var values: Float32Array; // sampled - full matrix transforms, non-sampled - values

@@ -78,15 +78,6 @@ class RenderPath {
 	}
 	#end
 
-	#if arm_debug
-	public static var drawCalls = 0;
-	public static var batchBuckets = 0;
-	public static var batchCalls = 0;
-	public static var culled = 0;
-	public static var numTrisMesh = 0;
-	public static var numTrisShadow = 0;
-	#end
-
 	public static function setActive(renderPath: RenderPath) {
 		active = renderPath;
 	}
@@ -102,15 +93,6 @@ class RenderPath {
 
 		frameTime = Time.time() - lastFrameTime;
 		lastFrameTime = Time.time();
-
-		#if arm_debug
-		drawCalls = 0;
-		batchBuckets = 0;
-		batchCalls = 0;
-		culled = 0;
-		numTrisMesh = 0;
-		numTrisShadow = 0;
-		#end
 
 		// Render to screen or probe
 		var cam = Scene.active.camera;
@@ -315,14 +297,6 @@ class RenderPath {
 
 		if (!drawn) submitDraw(context);
 
-		#if arm_debug
-		// Callbacks to specific context
-		if (contextEvents != null) {
-			var ar = contextEvents.get(context);
-			if (ar != null) for (i in 0...ar.length) ar[i](currentG, i, ar.length);
-		}
-		#end
-
 		end();
 	}
 
@@ -380,19 +354,6 @@ class RenderPath {
 			m.render(g, context, _bindParams);
 		}
 	}
-
-	#if arm_debug
-	static var contextEvents: Map<String, Array<Graphics->Int->Int->Void>> = null;
-	public static function notifyOnContext(name: String, onContext: Graphics->Int->Int->Void) {
-		if (contextEvents == null) contextEvents = new Map();
-		var ar = contextEvents.get(name);
-		if (ar == null) {
-			ar = [];
-			contextEvents.set(name, ar);
-		}
-		ar.push(onContext);
-	}
-	#end
 
 	#if rp_decals
 	public function drawDecals(context: String) {
@@ -763,18 +724,6 @@ class RenderPath {
 		#end
 
 		submitDraw(context);
-
-		#if arm_debug
-		// Callbacks to specific context
-		if (contextEvents != null) {
-			var ar = contextEvents.get(context);
-			if (ar != null) {
-				for (i in 0...ar.length) {
-					ar[i](currentG, i, ar.length);
-				}
-			}
-		}
-		#end
 	}
 	#end // arm_shadowmap_atlas
 }

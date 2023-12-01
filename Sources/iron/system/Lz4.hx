@@ -22,13 +22,8 @@
 package iron.system;
 
 import haxe.io.Bytes;
-#if macro
-import haxe.io.Int32Array;
-typedef Uint8Array = haxe.io.UInt8Array;
-#else
 import kha.arrays.Int32Array;
 import kha.arrays.Uint8Array;
-#end
 
 class Lz4 {
 
@@ -39,14 +34,7 @@ class Lz4 {
 	}
 
 	public static function encode(b: Bytes): Bytes {
-		#if armorcore
 		var iBuf = new Uint8Array(cast b.getData());
-
-		#else
-		var iBuf: Uint8Array = new Uint8Array(b.length);
-		for (i in 0...b.length) iBuf[i] = b.get(i);
-		#end
-
 		var iLen = iBuf.length;
 		if (iLen >= 0x7e000000) {
 			trace("LZ4 range error");
@@ -164,30 +152,11 @@ class Lz4 {
 			oBuf[oPos++] = iBuf[anchorPos++];
 		}
 
-		#if js
 		return Bytes.ofData(untyped oBuf.buffer.slice(0, oPos));
-
-		#elseif hl
-		return oBuf.getData().toBytes(oPos);
-
-		#else
-		var bOut = Bytes.alloc(oPos);
-		for (i in 0...oPos) {
-			bOut.set(i, oBuf[i]);
-		}
-		return bOut;
-		#end
 	}
 
 	public static function decode(b: Bytes, oLen: Int): Bytes {
-		#if armorcore
 		var iBuf = new Uint8Array(cast b.getData());
-
-		#else
-		var iBuf: Uint8Array = new Uint8Array(b.length);
-		for (i in 0...b.length) iBuf[i] = b.get(i);
-		#end
-
 		var iLen = iBuf.length;
 		var oBuf = new Uint8Array(oLen);
 		var iPos = 0;
@@ -244,18 +213,6 @@ class Lz4 {
 			}
 		}
 
-		#if js
 		return Bytes.ofData(untyped oBuf.buffer);
-
-		#elseif hl
-		return oBuf.getData().toBytes(oBuf.length);
-
-		#else
-		var bOut = Bytes.alloc(oLen);
-		for (i in 0...oLen) {
-			bOut.set(i, oBuf[i]);
-		}
-		return bOut;
-		#end
 	}
 }
