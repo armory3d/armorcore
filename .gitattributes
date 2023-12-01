@@ -1,2 +1,2 @@
 *.diff binary
-Tools/tsc/* binary
+Tools/tsc/* linguist-detectable=false
