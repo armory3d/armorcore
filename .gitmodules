@@ -1,6 +1,7 @@
 [submodule "Kinc"]
 	path = Kinc
 	url = https://github.com/armory3d/Kinc
+	shallow = true
 [submodule "v8"]
 	path = v8
 	url = https://github.com/armory3d/v8_bin
