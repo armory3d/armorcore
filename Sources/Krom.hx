@@ -139,29 +139,6 @@ extern class Krom {
 	static function getFilesLocation(): String;
 	static function httpRequest(url: String, size: Int, callback: js.lib.ArrayBuffer->Void): Void;
 
-	static function setBoolCompute(location: kha.compute.ConstantLocation, value: Bool): Void;
-	static function setIntCompute(location: kha.compute.ConstantLocation, value: Int): Void;
-	static function setFloatCompute(location: kha.compute.ConstantLocation, value: Float): Void;
-	static function setFloat2Compute(location: kha.compute.ConstantLocation, value1: Float, value2: Float): Void;
-	static function setFloat3Compute(location: kha.compute.ConstantLocation, value1: Float, value2: Float, value3: Float): Void;
-	static function setFloat4Compute(location: kha.compute.ConstantLocation, value1: Float, value2: Float, value3: Float, value4: Float): Void;
-	static function setFloatsCompute(location: kha.compute.ConstantLocation, values: js.lib.ArrayBuffer): Void;
-	static function setMatrixCompute(location: kha.compute.ConstantLocation, matrix: js.lib.ArrayBuffer): Void;
-	static function setMatrix3Compute(location: kha.compute.ConstantLocation, matrix: js.lib.ArrayBuffer): Void;
-	static function setTextureCompute(unit: kha.compute.TextureUnit, texture: Dynamic, access: Int): Void;
-	static function setRenderTargetCompute(unit: kha.compute.TextureUnit, renderTarget: Dynamic, access: Int): Void;
-	static function setSampledTextureCompute(unit: kha.compute.TextureUnit, texture: Dynamic): Void;
-	static function setSampledRenderTargetCompute(unit: kha.compute.TextureUnit, renderTarget: Dynamic): Void;
-	static function setSampledDepthTextureCompute(unit: kha.compute.TextureUnit, texture: Dynamic): Void;
-	static function setTextureParametersCompute(texunit: kha.compute.TextureUnit, uAddressing: Int, vAddressing: Int, minificationFilter: Int, magnificationFilter: Int, mipmapFilter: Int): Void;
-	static function setTexture3DParametersCompute(texunit: kha.compute.TextureUnit, uAddressing: Int, vAddressing: Int, wAddressing: Int, minificationFilter: Int, magnificationFilter: Int, mipmapFilter: Int): Void;
-	static function setShaderCompute(shader: Dynamic): Void;
-	static function deleteShaderCompute(shader: Dynamic): Void;
-	static function createShaderCompute(bytes: js.lib.ArrayBuffer): Dynamic;
-	static function getConstantLocationCompute(shader: Dynamic, name: String): Dynamic;
-	static function getTextureUnitCompute(shader: Dynamic, name: String): Dynamic;
-	static function compute(x: Int, y: Int, z: Int): Void;
-
 	// Extended
 	static function g2_init(image_vert: js.lib.ArrayBuffer, image_frag: js.lib.ArrayBuffer, colored_vert: js.lib.ArrayBuffer, colored_frag: js.lib.ArrayBuffer, text_vert: js.lib.ArrayBuffer, text_frag: js.lib.ArrayBuffer): Void;
 	static function g2_begin(): Void;

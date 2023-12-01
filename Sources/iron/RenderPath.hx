@@ -419,10 +419,6 @@ class RenderPath {
 		end();
 	}
 
-	public function getComputeShader(handle: String): kha.compute.Shader {
-		return Reflect.field(kha.Shaders, handle + "_comp");
-	}
-
 	#if (kha_krom && arm_vr)
 	public function drawStereo(drawMeshes: Int->Void) {
 		for (eye in 0...2) {
