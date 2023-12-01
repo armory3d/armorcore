@@ -22,8 +22,8 @@
 package iron.system;
 
 import haxe.io.Bytes;
-import kha.arrays.Int32Array;
-import kha.arrays.Uint8Array;
+import js.lib.Int32Array;
+import js.lib.Uint8Array;
 
 class Lz4 {
 

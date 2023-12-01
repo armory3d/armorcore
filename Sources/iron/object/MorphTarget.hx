@@ -2,7 +2,7 @@ package iron.object;
 
 #if arm_morph_target
 
-import kha.arrays.Float32Array;
+import js.lib.Float32Array;
 import kha.Image;
 import iron.data.Data;
 import iron.data.SceneFormat;

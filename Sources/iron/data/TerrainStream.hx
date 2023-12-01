@@ -1,8 +1,8 @@
 package iron.data;
 
 import haxe.ds.Vector;
-import kha.arrays.Int16Array;
-import kha.arrays.Uint32Array;
+import js.lib.Int16Array;
+import js.lib.Uint32Array;
 import iron.data.SceneFormat;
 import iron.object.Object;
 import iron.object.CameraObject;

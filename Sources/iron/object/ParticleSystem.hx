@@ -3,7 +3,7 @@ package iron.object;
 #if arm_particles
 
 import kha.graphics4.Usage;
-import kha.arrays.Float32Array;
+import js.lib.Float32Array;
 import iron.data.Data;
 import iron.data.ParticleData;
 import iron.data.SceneFormat;
@@ -159,9 +159,9 @@ class ParticleSystem {
 
 				for (p in particles) {
 					var j = Std.int(fhash(i) * (pa.values.length / pa.size));
-					instancedData.set(i, pa.values[j * pa.size    ] * normFactor * scaleFactor.x); i++;
-					instancedData.set(i, pa.values[j * pa.size + 1] * normFactor * scaleFactor.y); i++;
-					instancedData.set(i, pa.values[j * pa.size + 2] * normFactor * scaleFactor.z); i++;
+					instancedData[i] = pa.values[j * pa.size    ] * normFactor * scaleFactor.x; i++;
+					instancedData[i] = pa.values[j * pa.size + 1] * normFactor * scaleFactor.y; i++;
+					instancedData[i] = pa.values[j * pa.size + 2] * normFactor * scaleFactor.z; i++;
 				}
 
 			case 1: // Face
@@ -182,9 +182,9 @@ class ParticleSystem {
 
 					var pos = randomPointInTriangle(v0, v1, v2);
 
-					instancedData.set(i, pos.x * normFactor * scaleFactor.x); i++;
-					instancedData.set(i, pos.y * normFactor * scaleFactor.y); i++;
-					instancedData.set(i, pos.z * normFactor * scaleFactor.z); i++;
+					instancedData[i] = pos.x * normFactor * scaleFactor.x; i++;
+					instancedData[i] = pos.y * normFactor * scaleFactor.y; i++;
+					instancedData[i] = pos.z * normFactor * scaleFactor.z; i++;
 				}
 
 			case 2: // Volume
@@ -192,9 +192,9 @@ class ParticleSystem {
 				scaleFactorVolume.mult(0.5 / (particleSize * scalePosParticle));
 
 				for (p in particles) {
-					instancedData.set(i, (Math.random() * 2.0 - 1.0) * scaleFactorVolume.x); i++;
-					instancedData.set(i, (Math.random() * 2.0 - 1.0) * scaleFactorVolume.y); i++;
-					instancedData.set(i, (Math.random() * 2.0 - 1.0) * scaleFactorVolume.z); i++;
+					instancedData[i] = (Math.random() * 2.0 - 1.0) * scaleFactorVolume.x; i++;
+					instancedData[i] = (Math.random() * 2.0 - 1.0) * scaleFactorVolume.y; i++;
+					instancedData[i] = (Math.random() * 2.0 - 1.0) * scaleFactorVolume.z; i++;
 				}
 		}
 		object.data.geom.setupInstanced(instancedData, 1, Usage.StaticUsage);

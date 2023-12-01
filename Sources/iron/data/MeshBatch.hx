@@ -141,7 +141,7 @@ class Bucket {
 	function copyAttribute(attribSize: Int, count: Int, to: ByteArray, toStride: Int, toOffset: Int, from: ByteArray, fromStride: Int, fromOffset: Int) {
 		for (i in 0...count) {
 			for (j in 0...attribSize) {
-				to.setInt16((i * toStride + toOffset + j) * 2, from.getInt16((i * fromStride + fromOffset + j) * 2));
+				to.setInt16((i * toStride + toOffset + j) * 2, from.getInt16((i * fromStride + fromOffset + j) * 2), true);
 			}
 		}
 	}

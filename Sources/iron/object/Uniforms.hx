@@ -5,7 +5,7 @@ import kha.graphics4.ConstantLocation;
 import kha.graphics4.TextureAddressing;
 import kha.graphics4.TextureFilter;
 import kha.graphics4.MipMapFilter;
-import kha.arrays.Float32Array;
+import js.lib.Float32Array;
 import iron.math.Vec4;
 import iron.math.Quat;
 import iron.math.Mat3;

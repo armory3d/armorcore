@@ -30,11 +30,11 @@ class Wasm {
 		return new js.lib.Uint8Array(exports.memory.buffer, offset, length);
 	}
 
-	public inline function getMemoryF32(offset: Int, length: Int): kha.arrays.Float32Array {
-		return new kha.arrays.Float32Array(exports.memory.buffer).subarray( offset, length );
+	public inline function getMemoryF32(offset: Int, length: Int): js.lib.Float32Array {
+		return new js.lib.Float32Array(exports.memory.buffer).subarray( offset, length );
 	}
 
-	public inline function getMemoryU32(offset: Int, length: Int): kha.arrays.Uint32Array {
-		return new kha.arrays.Uint32Array(exports.memory.buffer).subarray(offset, length);
+	public inline function getMemoryU32(offset: Int, length: Int): js.lib.Uint32Array {
+		return new js.lib.Uint32Array(exports.memory.buffer).subarray(offset, length);
 	}
 }

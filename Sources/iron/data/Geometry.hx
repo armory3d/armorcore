@@ -6,10 +6,10 @@ import kha.graphics4.IndexBuffer;
 import kha.graphics4.Usage;
 import kha.graphics4.VertexStructure;
 import kha.graphics4.VertexData;
-import kha.arrays.ByteArray;
-import kha.arrays.Float32Array;
-import kha.arrays.Uint32Array;
-import kha.arrays.Int16Array;
+import js.lib.DataView;
+import js.lib.Float32Array;
+import js.lib.Uint32Array;
+import js.lib.Int16Array;
 import iron.math.Vec4;
 import iron.math.Mat4;
 import iron.data.SceneFormat;
@@ -28,7 +28,7 @@ class Geometry {
 	public var name = "";
 
 	public var ready = false;
-	public var vertices: ByteArray;
+	public var vertices: DataView;
 	public var indices: Array<Uint32Array>;
 	public var numTris = 0;
 	public var materialIndices: Array<Int>;
@@ -140,30 +140,30 @@ class Geometry {
 		instanceCount = Std.int(data.length / Std.int(structure.byteSize() / 4));
 		instancedVB = new VertexBuffer(instanceCount, structure, usage, 1);
 		var vertices = instancedVB.lock();
-		for (i in 0...Std.int(vertices.byteLength / 4)) vertices.setFloat32(i * 4, data[i]);
+		for (i in 0...Std.int(vertices.byteLength / 4)) vertices.setFloat32(i * 4, data[i], true);
 		instancedVB.unlock();
 	}
 
-	public function copyVertices(vertices: ByteArray, offset = 0, fakeUVs = false) {
+	public function copyVertices(vertices: DataView, offset = 0, fakeUVs = false) {
 		buildVertices(vertices, vertexArrays, offset, fakeUVs);
 	}
 
-	static function buildVertices(vertices: ByteArray, vertexArrays: Array<TVertexArray>, offset = 0, fakeUVs = false, uvsIndex = -1) {
+	static function buildVertices(vertices: DataView, vertexArrays: Array<TVertexArray>, offset = 0, fakeUVs = false, uvsIndex = -1) {
 		var numVertices = verticesCount(vertexArrays[0]);
 		var di = -1 + offset;
 		for (i in 0...numVertices) {
 			for (va in 0...vertexArrays.length) {
 				var l = vertexArrays[va].size;
 				if (fakeUVs && va == uvsIndex) { // Add fake uvs if uvs where "asked" for but not found
-					for (j in 0...l) vertices.setInt16(++di * 2, 0);
+					for (j in 0...l) vertices.setInt16(++di * 2, 0, true);
 					continue;
 				}
 				for (o in 0...l) {
-					vertices.setInt16(++di * 2, vertexArrays[va].values[i * l + o]);
+					vertices.setInt16(++di * 2, vertexArrays[va].values[i * l + o], true);
 				}
 				if (vertexArrays[va].padding != null) {
 					if (vertexArrays[va].padding == 1) {
-						vertices.setInt16(++di * 2, 0);
+						vertices.setInt16(++di * 2, 0, true);
 					}
 				}
 			}
@@ -272,14 +272,14 @@ class Geometry {
 	}
 
 #if arm_deinterleaved
-	function makeDeinterleavedVB(data: ByteArray, name: String, structLength: Int): VertexBuffer {
+	function makeDeinterleavedVB(data: DataView, name: String, structLength: Int): VertexBuffer {
 		var struct = new VertexStructure();
 		struct.add(name, structLength == 2 ? VertexData.Short2Norm : VertexData.Short4Norm);
 
 		var vertexBuffer = new VertexBuffer(Std.int(data.byteLength / 2 / structLength), struct, usage);
 
 		var vertices = vertexBuffer.lock();
-		for (i in 0...Std.int(vertices.byteLength / 2)) vertices.setInt16(i * 2, data.getInt16(i * 2));
+		for (i in 0...Std.int(vertices.byteLength / 2)) vertices.setInt16(i * 2, data.getInt16(i * 2), true);
 		vertexBuffer.unlock();
 
 		return vertexBuffer;

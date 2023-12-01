@@ -31,7 +31,7 @@ class ConstData {
 		structure.add("pos", VertexData.Float2);
 		screenAlignedVB = new VertexBuffer(Std.int(data.length / Std.int(structure.byteSize() / 4)), structure, Usage.StaticUsage);
 		var vertices = screenAlignedVB.lock();
-		for (i in 0...Std.int(vertices.byteLength / 4)) vertices.setFloat32(i * 4, data[i]);
+		for (i in 0...Std.int(vertices.byteLength / 4)) vertices.setFloat32(i * 4, data[i], true);
 		screenAlignedVB.unlock();
 
 		screenAlignedIB = new IndexBuffer(indices.length, Usage.StaticUsage);
@@ -58,7 +58,7 @@ class ConstData {
 		structure.add("pos", VertexData.Float3);
 		boxVB = new VertexBuffer(Std.int(data.length / Std.int(structure.byteSize() / 4)), structure, Usage.StaticUsage);
 		var vertices = boxVB.lock();
-		for (i in 0...Std.int(vertices.byteLength / 4)) vertices.setFloat32(i * 4, data[i]);
+		for (i in 0...Std.int(vertices.byteLength / 4)) vertices.setFloat32(i * 4, data[i], true);
 		boxVB.unlock();
 
 		boxIB = new IndexBuffer(indices.length, Usage.StaticUsage);
@@ -81,9 +81,9 @@ class ConstData {
 		skydomeVB[0] = new VertexBuffer(Std.int(pos.length / 3), structure, Usage.StaticUsage);
 		var vertices = skydomeVB[0].lock();
 		for (i in 0...Std.int(vertices.byteLength / 4 / structLength)) {
-			vertices.setFloat32((i * structLength) * 4, pos[i * 3]);
-			vertices.setFloat32((i * structLength + 1) * 4, pos[i * 3 + 1]);
-			vertices.setFloat32((i * structLength + 2) * 4, pos[i * 3 + 2]);
+			vertices.setFloat32((i * structLength) * 4, pos[i * 3], true);
+			vertices.setFloat32((i * structLength + 1) * 4, pos[i * 3 + 1], true);
+			vertices.setFloat32((i * structLength + 2) * 4, pos[i * 3 + 2], true);
 		}
 		skydomeVB[0].unlock();
 
@@ -93,9 +93,9 @@ class ConstData {
 		skydomeVB[1] = new VertexBuffer(Std.int(nor.length / 3), structure, Usage.StaticUsage);
 		vertices = skydomeVB[1].lock();
 		for (i in 0...Std.int(vertices.byteLength / 4 / structLength)) {
-			vertices.setFloat32((i * structLength) * 4, nor[i * 3]);
-			vertices.setFloat32((i * structLength + 1) * 4, nor[i * 3 + 1]);
-			vertices.setFloat32((i * structLength + 2) * 4, nor[i * 3 + 2]);
+			vertices.setFloat32((i * structLength) * 4, nor[i * 3], true);
+			vertices.setFloat32((i * structLength + 1) * 4, nor[i * 3 + 1], true);
+			vertices.setFloat32((i * structLength + 2) * 4, nor[i * 3 + 2], true);
 		}
 		skydomeVB[1].unlock();
 		#else
@@ -106,12 +106,12 @@ class ConstData {
 		skydomeVB = new VertexBuffer(Std.int(pos.length / 3), structure, Usage.StaticUsage);
 		var vertices = skydomeVB.lock();
 		for (i in 0...Std.int(vertices.byteLength / 4 / structLength)) {
-			vertices.setFloat32((i * structLength) * 4, pos[i * 3]);
-			vertices.setFloat32((i * structLength + 1) * 4, pos[i * 3 + 1]);
-			vertices.setFloat32((i * structLength + 2) * 4, pos[i * 3 + 2]);
-			vertices.setFloat32((i * structLength + 3) * 4, nor[i * 3]);
-			vertices.setFloat32((i * structLength + 4) * 4, nor[i * 3 + 1]);
-			vertices.setFloat32((i * structLength + 5) * 4, nor[i * 3 + 2]);
+			vertices.setFloat32((i * structLength) * 4, pos[i * 3], true);
+			vertices.setFloat32((i * structLength + 1) * 4, pos[i * 3 + 1], true);
+			vertices.setFloat32((i * structLength + 2) * 4, pos[i * 3 + 2], true);
+			vertices.setFloat32((i * structLength + 3) * 4, nor[i * 3], true);
+			vertices.setFloat32((i * structLength + 4) * 4, nor[i * 3 + 1], true);
+			vertices.setFloat32((i * structLength + 5) * 4, nor[i * 3 + 2], true);
 		}
 		skydomeVB.unlock();
 		#end

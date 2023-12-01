@@ -14,7 +14,7 @@ class Graphics {
 	public static var fontGlyphs: Array<Int> = [for (i in 32...127) i];
 	public static var fontGlyphsLast: Array<Int> = fontGlyphs;
 	static var thrown = false;
-	static var mat = new kha.arrays.Float32Array(9);
+	static var mat = new js.lib.Float32Array(9);
 	static var initialized = false;
 
 	public var color(default, set): Color;

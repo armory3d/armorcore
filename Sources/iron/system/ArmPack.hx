@@ -24,10 +24,10 @@ import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import haxe.io.Eof;
-import kha.arrays.Float32Array;
-import kha.arrays.Uint32Array;
-import kha.arrays.Int16Array;
-import kha.arrays.Uint8Array;
+import js.lib.Float32Array;
+import js.lib.Uint32Array;
+import js.lib.Int16Array;
+import js.lib.Uint8Array;
 
 class ArmPack {
 
@@ -138,7 +138,7 @@ class ArmPack {
 						o.writeInt32(b.length);
 						o.writeFullBytes(b, 0, b.length);
 					}
-					case "Array", null: { // kha.arrays give null
+					case "Array", null: { // js.lib.arrays give null
 						o.writeByte(0xdd);
 						o.writeInt32(d.length);
 						var isUint8 = Std.isOfType(d, js.lib.Uint8Array);

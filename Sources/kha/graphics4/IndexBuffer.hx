@@ -1,6 +1,6 @@
 package kha.graphics4;
 
-import kha.arrays.Uint32Array;
+import js.lib.Uint32Array;
 import kha.graphics4.Usage;
 
 class IndexBuffer {

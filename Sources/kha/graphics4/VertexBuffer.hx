@@ -1,13 +1,13 @@
 package kha.graphics4;
 
-import kha.arrays.ByteArray;
+import js.lib.DataView;
 import kha.graphics4.Usage;
 import kha.graphics4.VertexStructure;
 import kha.graphics4.VertexData;
 
 class VertexBuffer {
 	public var buffer: Dynamic;
-	public var _data: ByteArray;
+	public var _data: DataView;
 	private var vertexCount: Int;
 	private var structure: VertexStructure;
 
@@ -24,11 +24,11 @@ class VertexBuffer {
 
 	var lastLockCount: Int = 0;
 
-	public function lock(?start: Int, ?count: Int): ByteArray {
+	public function lock(?start: Int, ?count: Int): DataView {
 		if (start == null) start = 0;
 		if (count == null) count = this.count() - start;
 		lastLockCount = count;
-		_data = new ByteArray(Krom.lockVertexBuffer(buffer, start, count));
+		_data = new DataView(Krom.lockVertexBuffer(buffer, start, count));
 		return _data;
 	}
 

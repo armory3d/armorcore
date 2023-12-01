@@ -1106,7 +1106,7 @@ class Nodes {
 		ELEMENT_H = ui.t.ELEMENT_H + 2;
 	}
 
-	public function rgbaPopup(ui: Zui, nhandle: zui.Zui.Handle, val: kha.arrays.Float32Array, x: Int, y: Int) {
+	public function rgbaPopup(ui: Zui, nhandle: zui.Zui.Handle, val: js.lib.Float32Array, x: Int, y: Int) {
 		Krom.zui_nodes_rgba_popup(nhandle.handle_, val.buffer, x, y);
 	}
 

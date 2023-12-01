@@ -2,7 +2,7 @@ package iron.object;
 
 #if arm_skin
 
-import kha.arrays.Float32Array;
+import js.lib.Float32Array;
 import iron.math.Vec4;
 import iron.math.Mat4;
 import iron.math.Quat;

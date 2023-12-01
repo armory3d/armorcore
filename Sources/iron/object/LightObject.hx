@@ -1,6 +1,6 @@
 package iron.object;
 
-import kha.arrays.Float32Array;
+import js.lib.Float32Array;
 import kha.graphics4.TextureFormat;
 import kha.graphics4.Usage;
 import iron.math.Mat4;
@@ -17,7 +17,7 @@ class LightObject extends Object {
 	public var tileNotifyOnRemove: Void -> Void;
 	public var lightInAtlas = false;
 	public var culledLight = false;
-	public static var pointLightsData: kha.arrays.Float32Array = null;
+	public static var pointLightsData: js.lib.Float32Array = null;
 	public var shadowMapScale = 0.0;
 	// Data used in uniforms
 	public var tileOffsetX: Array<Float> = [0.0];

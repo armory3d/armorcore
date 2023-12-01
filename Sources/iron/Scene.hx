@@ -885,13 +885,13 @@ class Scene {
 						else {
 							switch (ptype) {
 								case "Vec2":
-									final pVec: kha.arrays.Float32Array = cast pval;
+									final pVec: js.lib.Float32Array = cast pval;
 									Reflect.setProperty(traitInst, pname, new iron.math.Vec2(pVec[0], pVec[1]));
 								case "Vec3":
-									final pVec: kha.arrays.Float32Array = cast pval;
+									final pVec: js.lib.Float32Array = cast pval;
 									Reflect.setProperty(traitInst, pname, new iron.math.Vec3(pVec[0], pVec[1], pVec[2]));
 								case "Vec4":
-									final pVec: kha.arrays.Float32Array = cast pval;
+									final pVec: js.lib.Float32Array = cast pval;
 									Reflect.setProperty(traitInst, pname, new iron.math.Vec4(pVec[0], pVec[1], pVec[2], pVec[3]));
 								default:
 									Reflect.setProperty(traitInst, pname, pval);

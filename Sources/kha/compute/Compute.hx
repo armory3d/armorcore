@@ -1,7 +1,7 @@
 package kha.compute;
 
 import kha.Image;
-import kha.arrays.Float32Array;
+import js.lib.Float32Array;
 import kha.math.FastMatrix3;
 import kha.math.FastMatrix4;
 import kha.math.FastVector2;
@@ -54,7 +54,7 @@ class Compute {
 		Compute.setFloat4(location, value.x, value.y, value.z, value.w);
 	}
 
-	static var mat = new kha.arrays.Float32Array(16);
+	static var mat = new js.lib.Float32Array(16);
 	public static function setMatrix(location: ConstantLocation, matrix: FastMatrix4): Void {
 		mat[0] = matrix._00; mat[1] = matrix._01; mat[2] = matrix._02; mat[3] = matrix._03;
 		mat[4] = matrix._10; mat[5] = matrix._11; mat[6] = matrix._12; mat[7] = matrix._13;

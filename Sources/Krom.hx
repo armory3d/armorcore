@@ -58,7 +58,7 @@ extern class Krom {
 	static function clearTexture(target: Dynamic, x: Int, y: Int, z: Int, width: Int, height: Int, depth: Int, color: Int): Void;
 	static function createIndexBuffer(count: Int): Dynamic;
 	static function deleteIndexBuffer(buffer: Dynamic): Dynamic;
-	static function lockIndexBuffer(buffer: Dynamic): kha.arrays.Uint32Array;
+	static function lockIndexBuffer(buffer: Dynamic): js.lib.Uint32Array;
 	static function unlockIndexBuffer(buffer: Dynamic): Void;
 	static function setIndexBuffer(buffer: Dynamic): Void;
 	static function createVertexBuffer(count: Int, structure: Array<kha.graphics4.VertexElement>, usage: Int, instanceDataStepRate: Int): Dynamic;

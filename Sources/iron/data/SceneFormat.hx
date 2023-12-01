@@ -1,8 +1,8 @@
 package iron.data;
 
-import kha.arrays.Float32Array;
-import kha.arrays.Uint32Array;
-import kha.arrays.Int16Array;
+import js.lib.Float32Array;
+import js.lib.Uint32Array;
+import js.lib.Int16Array;
 
 typedef TSceneFormat = {
 	@:optional public var name: String;

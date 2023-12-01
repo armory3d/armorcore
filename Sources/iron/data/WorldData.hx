@@ -1,7 +1,7 @@
 package iron.data;
 
 import haxe.Json;
-import kha.arrays.Float32Array;
+import js.lib.Float32Array;
 import iron.math.Vec4;
 import iron.data.SceneFormat;
 import iron.system.ArmPack;
@@ -64,7 +64,7 @@ class WorldData {
 	public static function getEmptyIrradiance(): Float32Array {
 		if (emptyIrr == null) {
 			emptyIrr = new Float32Array(28);
-			for (i in 0...emptyIrr.length) emptyIrr.set(i, 0.0);
+			for (i in 0...emptyIrr.length) emptyIrr[i] = 0.0;
 		}
 		return emptyIrr;
 	}

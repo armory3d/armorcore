@@ -113,7 +113,7 @@ class Mat4 {
 				Defaults to 0.
 		@return	A new matrix.
 	**/
-	public static inline function fromFloat32Array(a: kha.arrays.Float32Array, offset = 0): Mat4 {
+	public static inline function fromFloat32Array(a: js.lib.Float32Array, offset = 0): Mat4 {
 		return new Mat4(
 			a[0 + offset], a[1 + offset], a[2 + offset], a[3 + offset],
 			a[4 + offset], a[5 + offset], a[6 + offset], a[7 + offset],
@@ -378,7 +378,7 @@ class Mat4 {
 		);
 	}
 
-	public inline function setF32(a: kha.arrays.Float32Array, offset = 0): Mat4 {
+	public inline function setF32(a: js.lib.Float32Array, offset = 0): Mat4 {
 		_00 = a[0 + offset]; _10 = a[1 + offset]; _20 = a[2 + offset]; _30 = a[3 + offset];
 		_01 = a[4 + offset]; _11 = a[5 + offset]; _21 = a[6 + offset]; _31 = a[7 + offset];
 		_02 = a[8 + offset]; _12 = a[9 + offset]; _22 = a[10 + offset]; _32 = a[11 + offset];
@@ -594,8 +594,8 @@ class Mat4 {
         return '[[$_00, $_10, $_20, $_30], [$_01, $_11, $_21, $_31], [$_02, $_12, $_22, $_32], [$_03, $_13, $_23, $_33]]';
 	}
 
-	public function toFloat32Array(): kha.arrays.Float32Array {
-		var array = new kha.arrays.Float32Array(16);
+	public function toFloat32Array(): js.lib.Float32Array {
+		var array = new js.lib.Float32Array(16);
 		array[0] = _00;
 		array[1] = _10;
 		array[2] = _20;

@@ -1,6 +1,6 @@
 package iron.object;
 
-import kha.arrays.Uint32Array;
+import js.lib.Uint32Array;
 import iron.math.Vec4;
 import iron.math.Mat4;
 import iron.math.Quat;
