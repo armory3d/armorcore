@@ -419,16 +419,6 @@ class RenderPath {
 		end();
 	}
 
-	#if (kha_krom && arm_vr)
-	public function drawStereo(drawMeshes: Int->Void) {
-		for (eye in 0...2) {
-			Krom.vrBeginRender(eye);
-			drawMeshes(eye);
-			Krom.vrEndRender(eye);
-		}
-	}
-	#end
-
 	public function loadShader(handle: String) {
 		loading++;
 		var cc: CachedShaderContext = cachedShaderContexts.get(handle);
