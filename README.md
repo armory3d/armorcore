@@ -62,14 +62,6 @@ cd Deployment
 strip Krom
 ```
 
-**Windows VR** *wip*
-```bash
-# Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
-Kinc/make -g direct3d11 --vr oculus
-# Open generated Visual Studio project at `build\Krom.sln`
-# Build for x64 & release
-```
-
 **Generating a v8 snapshot file**
 ```bash
 ./Krom . --snapshot

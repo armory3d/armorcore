@@ -9,7 +9,3 @@
 	path = Tools/haxe
 	url = https://github.com/armory3d/haxe_bin
 	shallow = true
-[submodule "Libraries/onnx"]
-	path = Libraries/onnx
-	url = https://github.com/armory3d/onnx_bin
-	shallow = true
