@@ -1,14 +1,14 @@
 package iron.object;
 
-import kha.audio1.AudioChannel;
+#if arm_audio
+
 import iron.data.Data;
 import iron.data.SceneFormat;
 import iron.math.Vec4;
 import iron.system.Audio;
+import iron.system.Audio.AudioChannel;
 
 class SpeakerObject extends Object {
-
-#if arm_audio
 
 	public var data: TSpeakerData;
 	public var paused(default, null) = false;
@@ -88,7 +88,6 @@ class SpeakerObject extends Object {
 		if (Scene.active != null) Scene.active.speakers.remove(this);
 		super.remove();
 	}
+}
 
 #end
-
-}

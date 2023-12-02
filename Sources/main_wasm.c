@@ -571,14 +571,6 @@ __attribute__((export_name("_createGeometryShader"))) void _createGeometryShader
 
 }
 
-__attribute__((export_name("_createTessellationControlShader"))) void _createTessellationControlShader() {
-
-}
-
-__attribute__((export_name("_createTessellationEvaluationShader"))) void _createTessellationEvaluationShader() {
-
-}
-
 __attribute__((export_name("_deleteShader"))) void _deleteShader(kinc_g4_shader_t *shader) {
 	kinc_g4_shader_destroy(shader);
 	free(shader);
@@ -838,10 +830,6 @@ __attribute__((export_name("_setTextureCompareMode"))) void _setTextureCompareMo
 	kinc_g4_set_texture_compare_mode(*unit, enabled);
 }
 
-__attribute__((export_name("_setCubeMapCompareMode"))) void _setCubeMapCompareMode(kinc_g4_texture_unit_t *unit, bool enabled) {
-	kinc_g4_set_cubemap_compare_mode(*unit, enabled);
-}
-
 __attribute__((export_name("_setBool"))) void _setBool(kinc_g4_constant_location_t *location, bool value) {
 	kinc_g4_set_bool(*location, value);
 }
@@ -946,14 +934,6 @@ __attribute__((export_name("_readStorage"))) void _readStorage() {
 __attribute__((export_name("_createRenderTarget"))) kinc_g4_render_target_t *_createRenderTarget(int width, int height, int format, int depthBufferBits, int stencilBufferBits) {
 	kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
 	kinc_g4_render_target_init(render_target, width, height, (kinc_g4_render_target_format_t)format, depthBufferBits, stencilBufferBits);
-	last_width = render_target->width;
-	last_height = render_target->height;
-	return render_target;
-}
-
-__attribute__((export_name("_createRenderTargetCubeMap"))) kinc_g4_render_target_t *_createRenderTargetCubeMap(int size, int format, int depthBufferBits, int stencilBufferBits) {
-	kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
-	kinc_g4_render_target_init_cube(render_target, size, (kinc_g4_render_target_format_t)format, depthBufferBits, stencilBufferBits);
 	last_width = render_target->width;
 	last_height = render_target->height;
 	return render_target;
@@ -1442,8 +1422,6 @@ int kickstart(int argc, char **argv) {
 	};\
 	Krom.createFragmentShaderFromSource = function(str) { return _exports._createFragmentShaderFromSource(string(str)); };\
 	Krom.createGeometryShader = _exports._createGeometryShader;\
-	Krom.createTessellationControlShader = _exports._createTessellationControlShader;\
-	Krom.createTessellationEvaluationShader = _exports._createTessellationEvaluationShader;\
 	Krom.deleteShader = _exports._deleteShader;\
 	Krom.createPipeline = _exports._createPipeline;\
 	Krom.deletePipeline = _exports._deletePipeline;\
@@ -1497,7 +1475,6 @@ int kickstart(int argc, char **argv) {
 	Krom.setTextureParameters = _exports._setTextureParameters;\
 	Krom.setTexture3DParameters = _exports._setTexture3DParameters;\
 	Krom.setTextureCompareMode = _exports._setTextureCompareMode;\
-	Krom.setCubeMapCompareMode = _exports._setCubeMapCompareMode;\
 	Krom.setBool = _exports._setBool;\
 	Krom.setInt = _exports._setInt;\
 	Krom.setFloat = _exports._setFloat;\
@@ -1540,12 +1517,6 @@ int kickstart(int argc, char **argv) {
 	Krom.readStorage = function(name) { return _exports._readStorage(string(name)); };\
 	Krom.createRenderTarget = function(width, height, format, depthBufferBits, stencilBufferBits) {\
 		return { self: _exports._createRenderTarget(width, height, format, depthBufferBits, stencilBufferBits),\
-				 width: _exports._get_last_width(),\
-				 height: _exports._get_last_height()\
-		};\
-	};\
-	Krom.createRenderTargetCubeMap = function(size, format, depthBufferBits, stencilBufferBits) {\
-		return { self: _exports._createRenderTargetCubeMap(size, format, depthBufferBits, stencilBufferBits),\
 				 width: _exports._get_last_width(),\
 				 height: _exports._get_last_height()\
 		};\

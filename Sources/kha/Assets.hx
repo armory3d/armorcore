@@ -26,7 +26,5 @@ class Assets {
 		});
 	}
 
-	public static function loadVideoFromPath(path: String, done: Video -> Void): Void {
-
-	}
+	public static function loadVideoFromPath(path: String, done: Video -> Void): Void {}
 }

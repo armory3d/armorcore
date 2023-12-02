@@ -11,10 +11,6 @@ class Shaders {
 	static var geometryShaders: Map<String, GeometryShader> = [];
 	static var ext = #if kha_vulkan ".spirv" #elseif (krom_android || krom_wasm) ".essl" #elseif kha_opengl ".glsl" #elseif kha_metal ".metal" #else ".d3d11" #end ;
 
-	public static function init() {
-		// When running a game, precompile shaders here
-	}
-
 	public static function getBuffer(name: String): js.lib.ArrayBuffer {
 		#if arm_shader_embed
 		var global = js.Syntax.code("globalThis");

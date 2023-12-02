@@ -2,9 +2,9 @@ package iron.data;
 
 import kha.graphics4.VertexBuffer;
 import kha.graphics4.IndexBuffer;
-import kha.graphics4.Usage;
-import kha.graphics4.VertexStructure;
-import kha.graphics4.VertexData;
+import kha.graphics4.Graphics.Usage;
+import kha.graphics4.VertexBuffer.VertexStructure;
+import kha.graphics4.VertexBuffer.VertexData;
 
 class ConstData {
 

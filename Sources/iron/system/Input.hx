@@ -1,6 +1,6 @@
 package iron.system;
 
-import kha.input.KeyCode;
+import kha.input.Keyboard.KeyCode;
 
 class Input {
 
@@ -472,8 +472,8 @@ class Keyboard extends VirtualInput {
 			keysFrame.splice(0, keysFrame.length);
 		}
 
-		if (kha.Scheduler.time() - repeatTime > 0.05) {
-			repeatTime = kha.Scheduler.time();
+		if (Time.time() - repeatTime > 0.05) {
+			repeatTime = Time.time();
 			repeatKey = true;
 		}
 		else repeatKey = false;
@@ -625,7 +625,7 @@ class Keyboard extends VirtualInput {
 		keysFrame.push(s);
 		keysStarted.set(s, true);
 		keysDown.set(s, true);
-		repeatTime = kha.Scheduler.time() + 0.4;
+		repeatTime = Time.time() + 0.4;
 
 		#if kha_android_rmb // Detect right mouse button on Android..
 		if (code == KeyCode.Back) {
@@ -792,7 +792,7 @@ class Sensor {
 	public var z = 0.0;
 
 	public function new() {
-		kha.input.Sensor.get(kha.input.SensorType.Accelerometer).notify(listener);
+		kha.input.Sensor.get(kha.input.Sensor.SensorType.Accelerometer).notify(listener);
 	}
 
 	function listener(x: Float, y: Float, z: Float) {

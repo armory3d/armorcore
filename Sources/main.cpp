@@ -1212,38 +1212,6 @@ namespace {
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_create_tessellation_control_shader(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_TESSELLATION_CONTROL);
-
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
-
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, shader));
-		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked(), args[1]);
-		args.GetReturnValue().Set(obj);
-	}
-
-	void krom_create_tessellation_evaluation_shader(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_TESSELLATION_EVALUATION);
-
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
-
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, shader));
-		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked(), args[1]);
-		args.GetReturnValue().Set(obj);
-	}
-
 	void krom_delete_shader(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
@@ -1328,17 +1296,11 @@ namespace {
 		}
 
 		if (!args[9]->IsNullOrUndefined()) {
-			Local<External> tcsfield = Local<External>::Cast(args[9]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_shader_t *tessellationControlShader = (kinc_g4_shader_t *)tcsfield->Value();
-			pipeobj->SetInternalField(6, External::New(isolate, tessellationControlShader));
-			pipeline->tessellation_control_shader = tessellationControlShader;
+			// pipeline->tessellation_control_shader
 		}
 
 		if (!args[10]->IsNullOrUndefined()) {
-			Local<External> tesfield = Local<External>::Cast(args[10]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_shader_t *tessellationEvaluationShader = (kinc_g4_shader_t *)tesfield->Value();
-			pipeobj->SetInternalField(7, External::New(isolate, tessellationEvaluationShader));
-			pipeline->tessellation_evaluation_shader = tessellationEvaluationShader;
+			// pipeline->tessellation_evaluation_shader
 		}
 
 		for (int i = 0; i < size; ++i) {
@@ -4963,8 +4925,6 @@ namespace {
 		SET_FUNCTION(krom, "createFragmentShader", krom_create_fragment_shader);
 		SET_FUNCTION(krom, "createFragmentShaderFromSource", krom_create_fragment_shader_from_source);
 		SET_FUNCTION(krom, "createGeometryShader", krom_create_geometry_shader);
-		SET_FUNCTION(krom, "createTessellationControlShader", krom_create_tessellation_control_shader);
-		SET_FUNCTION(krom, "createTessellationEvaluationShader", krom_create_tessellation_evaluation_shader);
 		SET_FUNCTION(krom, "deleteShader", krom_delete_shader);
 		SET_FUNCTION(krom, "createPipeline", krom_create_pipeline);
 		SET_FUNCTION(krom, "deletePipeline", krom_delete_pipeline);

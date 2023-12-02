@@ -8,6 +8,11 @@ import kha.Font;
 import kha.Image;
 import kha.Shaders;
 
+enum ImageScaleQuality {
+	Low; // usually point filter
+	High; // usually bilinear filter
+}
+
 class Graphics {
 
 	public static var current: Graphics;
@@ -142,7 +147,7 @@ class Graphics {
 		if (clear) this.clear(clearColor);
 	}
 
-	public function clear(color = Color.Black): Void {
+	public function clear(color = 0x00000000): Void {
 		canvas.g4.clear(color);
 	}
 
@@ -157,11 +162,15 @@ class Graphics {
 		}
 	}
 
-	public static function createTextVertexStructure(): kha.graphics4.VertexStructure {
-		return null;
+	public function fillCircle(cx: Float, cy: Float, radius: Float, segments: Int = 0): Void {
+		Krom.g2_fill_circle(cx, cy, radius, segments);
 	}
 
-	public static function createTextPipeline(structure: kha.graphics4.VertexStructure): Dynamic {
-		return { compile: function() {} };
+	public function drawCircle(cx: Float, cy: Float, radius: Float, segments: Int = 0, strength: Float = 1.0): Void {
+		Krom.g2_draw_circle(cx, cy, radius, segments, strength);
+	}
+
+	public function drawCubicBezier(x: Array<Float>, y: Array<Float>, segments: Int = 20, strength: Float = 1.0): Void {
+		Krom.g2_draw_cubic_bezier(x, y, segments, strength);
 	}
 }

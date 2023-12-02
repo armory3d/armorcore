@@ -1,7 +1,7 @@
 package kha;
 
-import kha.WindowOptions;
-import kha.graphics4.TextureFormat;
+import kha.Window.FramebufferOptions;
+import kha.Window.WindowOptions;
 import kha.input.Gamepad;
 import kha.input.Keyboard;
 import kha.input.Surface;
@@ -19,15 +19,6 @@ class SystemOptions {
 	@:optional public var window: WindowOptions = null;
 	@:optional public var framebuffer: FramebufferOptions = null;
 
-	/**
-	 * Used to provide parameters for System.start
-	 * @param title The application title is the default window title (unless the window parameter provides a title of its own)
-	 * and is used for various other purposes - for example for save data locations
-	 * @param width Just a shortcut which overwrites window.width if set
-	 * @param height Just a shortcut which overwrites window.height if set
-	 * @param window Optionally provide window options
-	 * @param framebuffer Optionally provide framebuffer options
-	 */
 	public function new(title: String = "Kha", ?width: Int = -1, ?height: Int = -1, window: WindowOptions = null, framebuffer: FramebufferOptions = null) {
 		this.title = title;
 		this.window = window == null ? {} : window;
@@ -57,7 +48,7 @@ class SystemOptions {
 }
 
 class System {
-	static var renderListeners: Array<Array<Framebuffer> -> Void> = [];
+	static var renderListeners: Array<Framebuffer -> Void> = [];
 	static var foregroundListeners: Array<Void -> Void> = [];
 	static var resumeListeners: Array<Void -> Void> = [];
 	static var pauseListeners: Array<Void -> Void> = [];
@@ -89,8 +80,6 @@ class System {
 		};
 
 		new Window(0);
-		Scheduler.init();
-		Shaders.init();
 
 		var g4 = new kha.graphics4.Graphics();
 		framebuffer = new Framebuffer(0, null, g4);
@@ -125,29 +114,11 @@ class System {
 		Krom.setGamepadAxisCallback(gamepadAxisCallback);
 		Krom.setGamepadButtonCallback(gamepadButtonCallback);
 
-		Scheduler.start();
-
 		callback(Window.get(0));
 	}
 
-	/**
-	 * The provided listener is called when new framebuffers are ready for rendering into.
-	 * Each framebuffer corresponds to the kha.Window of the same index, single-window
-	 * applications always receive an array of only one framebuffer.
-	 * @param listener
-	 * The callback to add
-	 */
-	public static function notifyOnFrames(listener: Array<Framebuffer> -> Void): Void {
+	public static function notifyOnFrames(listener: Framebuffer -> Void): Void {
 		renderListeners.push(listener);
-	}
-
-	/**
-	 * Removes a previously set frames listener.
-	 * @param listener
-	 * The callback to remove
-	 */
-	public static function removeFramesListener(listener: Array<Framebuffer> -> Void): Void {
-		renderListeners.remove(listener);
 	}
 
 	public static function notifyOnApplicationState(foregroundListener: Void -> Void, resumeListener: Void -> Void,	pauseListener: Void -> Void, backgroundListener: Void-> Void, shutdownListener: Void -> Void): Void {
@@ -172,9 +143,9 @@ class System {
 		System.pasteListener = pasteListener;
 	}
 
-	static function render(framebuffers: Array<Framebuffer>): Void {
+	static function render(framebuffer: Framebuffer): Void {
 		for (listener in renderListeners) {
-			listener(framebuffers);
+			listener(framebuffer);
 		}
 	}
 
@@ -215,7 +186,6 @@ class System {
 	}
 
 	public static var time(get, null): Float;
-
 	private static function get_time(): Float {
 		return Krom.getTime() - startTime;
 	}
@@ -225,35 +195,19 @@ class System {
 	}
 
 	public static function windowHeight(window: Int = 0): Int {
-		return Window.all[window].height;
+		return Window.get(window).height;
 	}
 
 	public static var systemId(get, null): String;
-
 	static function get_systemId(): String {
 		return Krom.systemId();
 	}
 
-	/**
-	 * Pulses the vibration hardware on the device for time in milliseconds, if such hardware exists.
-	 */
-	public static function vibrate(ms:Int): Void {
-
-	}
-
-	/**
-	 * The IS0 639 system current language identifier.
-	 */
 	public static var language(get, never): String;
-
 	private static function get_language(): String {
 		return Krom.language();
 	}
 
-	/**
-	 * Schedules the application to stop as soon as possible. This is not possible on all targets.
-	 * @return Returns true if the application can be stopped
-	 */
 	public static function stop(): Bool {
 		Krom.requestShutdown();
 		return true;
@@ -263,13 +217,8 @@ class System {
 		Krom.loadUrl(url);
 	}
 
-	public static function safeZone(): Float {
-		return 1.0;
-	}
-
 	private static function renderCallback(): Void {
-		Scheduler.executeFrame();
-		System.render([framebuffer]);
+		System.render(framebuffer);
 	}
 
 	private static function dropFilesCallback(filePath: String): Void {
@@ -333,19 +282,19 @@ class System {
 	}
 
 	private static function mouseDownCallback(button: Int, x: Int, y: Int): Void {
-		mouse.sendDownEvent(0, button, x, y);
+		mouse.sendDownEvent(button, x, y);
 	}
 
 	private static function mouseUpCallback(button: Int, x: Int, y: Int): Void {
-		mouse.sendUpEvent(0, button, x, y);
+		mouse.sendUpEvent(button, x, y);
 	}
 
 	private static function mouseMoveCallback(x: Int, y: Int, mx: Int, my: Int): Void {
-		mouse.sendMoveEvent(0, x, y, mx, my);
+		mouse.sendMoveEvent(x, y, mx, my);
 	}
 
 	private static function mouseWheelCallback(delta: Int): Void {
-		mouse.sendWheelEvent(0, delta);
+		mouse.sendWheelEvent(delta);
 	}
 
 	private static function touchDownCallback(index: Int, x: Int, y: Int): Void {
@@ -361,15 +310,15 @@ class System {
 	}
 
 	private static function penDownCallback(x: Int, y: Int, pressure: Float): Void {
-		pen.sendDownEvent(0, x, y, pressure);
+		pen.sendDownEvent(x, y, pressure);
 	}
 
 	private static function penUpCallback(x: Int, y: Int, pressure: Float): Void {
-		pen.sendUpEvent(0, x, y, pressure);
+		pen.sendUpEvent(x, y, pressure);
 	}
 
 	private static function penMoveCallback(x: Int, y: Int, pressure: Float): Void {
-		pen.sendMoveEvent(0, x, y, pressure);
+		pen.sendMoveEvent(x, y, pressure);
 	}
 
 	private static function gamepadAxisCallback(gamepad: Int, axis: Int, value: Float): Void {
@@ -380,36 +329,20 @@ class System {
 		gamepads[gamepad].sendButtonEvent(button, value);
 	}
 
-	public static function getVsync(): Bool {
-		return true;
-	}
-
-	public static function getRefreshRate(): Int {
-		return 60;
-	}
-
-	public static function getMouse(num: Int): Mouse {
+	public static function getMouse(): Mouse {
 		return mouse;
 	}
 
-	public static function getSurface(num: Int): Surface {
+	public static function getSurface(): Surface {
 		return surface;
 	}
 
-	public static function getPen(num: Int): Pen {
+	public static function getPen(): Pen {
 		return pen;
 	}
 
-	public static function getKeyboard(num: Int): Keyboard {
+	public static function getKeyboard(): Keyboard {
 		return keyboard;
-	}
-
-	public static function showKeyboard() {
-		Krom.showKeyboard(true);
-	}
-
-	public static function hideKeyboard() {
-		Krom.showKeyboard(false);
 	}
 
 	public static function lockMouse(): Void {
@@ -438,56 +371,12 @@ class System {
 		return Krom.isMouseLocked();
 	}
 
-	public static function notifyOfMouseLockChange(func: Void -> Void, error: Void -> Void): Void {
-		if (canLockMouse() && func != null) {
-			mouseLockListeners.push(func);
-		}
-	}
-
-	public static function removeFromMouseLockChange(func: Void -> Void, error: Void -> Void): Void {
-		if (canLockMouse() && func != null) {
-			mouseLockListeners.remove(func);
-		}
-	}
-
 	public static function hideSystemCursor(): Void {
 		Krom.showMouse(false);
 	}
 
 	public static function showSystemCursor(): Void {
 		Krom.showMouse(true);
-	}
-
-	public static function canSwitchFullscreen(): Bool {
-		return false;
-	}
-
-	public static function isFullscreen(): Bool {
-		return false;
-	}
-
-	public static function requestFullscreen(): Void {
-
-	}
-
-	public static function exitFullscreen(): Void {
-
-	}
-
-	public static function notifyOfFullscreenChange(func: Void -> Void, error: Void -> Void): Void {
-
-	}
-
-	public static function removeFromFullscreenChange(func: Void -> Void, error: Void -> Void): Void {
-
-	}
-
-	public static function changeResolution(width: Int, height: Int): Void {
-
-	}
-
-	public static function setKeepScreenOn(on: Bool): Void {
-
 	}
 
 	public static function getGamepadId(index: Int): String {

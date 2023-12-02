@@ -7,10 +7,6 @@ class Sound {
 		this.sound_ = sound_;
 	}
 
-	public function uncompress(done: Void->Void): Void {
-		done();
-	}
-
 	public function unload() {
 		Krom.unloadSound(sound_);
 	}

@@ -2,11 +2,9 @@ package iron;
 
 import kha.Image;
 import kha.Color;
-import kha.Scheduler;
 import kha.graphics4.Graphics;
-import kha.graphics4.CubeMap;
-import kha.graphics4.DepthStencilFormat;
-import kha.graphics4.TextureFormat;
+import kha.Image.DepthStencilFormat;
+import kha.Image.TextureFormat;
 import iron.system.Time;
 import iron.data.SceneFormat;
 import iron.data.MaterialData;
@@ -30,16 +28,12 @@ class RenderPath {
 	public var frameTime = 0.0;
 	public var frame = 0;
 	public var currentTarget: RenderTarget = null;
-	public var currentFace: Int;
 	public var light: LightObject = null;
 	public var sun: LightObject = null;
 	public var point: LightObject = null;
 	#if rp_probes
 	public var currentProbeIndex = 0;
 	#end
-	public var isProbePlanar = false;
-	public var isProbeCube = false;
-	public var isProbe = false;
 	public var currentG: Graphics = null;
 	public var frameG: Graphics;
 	public var drawOrder = DrawOrder.Distance;
@@ -96,18 +90,11 @@ class RenderPath {
 
 		// Render to screen or probe
 		var cam = Scene.active.camera;
-		isProbePlanar = cam != null && cam.renderTarget != null;
-		isProbeCube = cam != null && cam.renderTargetCube != null;
-		isProbe = isProbePlanar || isProbeCube;
-
-		if (isProbePlanar) frameG = cam.renderTarget.g4;
-		else if (isProbeCube) frameG = cam.renderTargetCube.g4;
-		else frameG = g;
+		frameG = g;
 
 		currentW = iron.App.w();
 		currentH = iron.App.h();
 		currentD = 1;
-		currentFace = -1;
 		meshesSorted = false;
 
 		for (l in Scene.active.lights) {
@@ -119,29 +106,19 @@ class RenderPath {
 
 		commands();
 
-		if (!isProbe) frame++;
+		frame++;
 	}
 
 	public function setTarget(target: String, additional: Array<String> = null, viewportScale = 1.0) {
 		if (target == "") { // Framebuffer
 			currentD = 1;
 			currentTarget = null;
-			currentFace = -1;
-			if (isProbeCube) {
-				currentW = Scene.active.camera.renderTargetCube.width;
-				currentH = Scene.active.camera.renderTargetCube.height;
-				begin(frameG, Scene.active.camera.currentFace);
-			}
-			else { // Screen, planar probe
-				currentW = iron.App.w();
-				currentH = iron.App.h();
-				if (frameScissor) setFrameScissor();
-				begin(frameG);
-				if (!isProbe) {
-					setCurrentViewport(iron.App.w(), iron.App.h());
-					setCurrentScissor(iron.App.w(), iron.App.h());
-				}
-			}
+			currentW = iron.App.w();
+			currentH = iron.App.h();
+			if (frameScissor) setFrameScissor();
+			begin(frameG);
+			setCurrentViewport(iron.App.w(), iron.App.h());
+			setCurrentScissor(iron.App.w(), iron.App.h());
 		}
 		else { // Render target
 			var rt = renderTargets.get(target);
@@ -154,11 +131,11 @@ class RenderPath {
 					additionalImages.push(t.image);
 				}
 			}
-			var targetG = rt.isCubeMap ? rt.cubeMap.g4 : rt.image.g4;
-			currentW = rt.isCubeMap ? rt.cubeMap.width : rt.image.width;
-			currentH = rt.isCubeMap ? rt.cubeMap.height : rt.image.height;
+			var targetG = rt.image.g4;
+			currentW = rt.image.width;
+			currentH = rt.image.height;
 			if (rt.is3D) currentD = rt.image.depth;
-			begin(targetG, additionalImages, currentFace);
+			begin(targetG, additionalImages);
 		}
 		if (viewportScale != 1.0) {
 			viewportScaled = true;
@@ -180,11 +157,11 @@ class RenderPath {
 		rt.image.setDepthStencilFrom(renderTargets.get(from).image);
 	}
 
-	inline function begin(g: Graphics, additionalRenderTargets: Array<kha.Canvas> = null, face = -1) {
+	inline function begin(g: Graphics, additionalRenderTargets: Array<kha.Canvas> = null) {
 		if (currentG != null) end();
 		currentG = g;
 		additionalTargets = additionalRenderTargets;
-		face >= 0 ? g.beginFace(face) : g.begin(additionalRenderTargets);
+		g.begin(additionalRenderTargets);
 	}
 
 	inline function end() {
@@ -274,8 +251,6 @@ class RenderPath {
 			// Disabled shadow casting for this light
 			if (light == null || !light.data.raw.cast_shadow || !light.visible || light.data.raw.strength == 0) return;
 		}
-		// Single face attached
-		if (currentFace >= 0 && light != null) light.setCubeFace(currentFace, Scene.active.camera);
 
 		var drawn = false;
 
@@ -539,15 +514,8 @@ class RenderPath {
 		else { // No depth buffer
 			rt.hasDepth = false;
 			if (t.depth != null && t.depth > 1) rt.is3D = true;
-			if (t.is_cubemap) {
-				rt.isCubeMap = true;
-				rt.depthStencil = DepthStencilFormat.NoDepthAndStencil;
-				rt.cubeMap = createCubeMap(t, rt.depthStencil);
-			}
-			else {
-				rt.depthStencil = DepthStencilFormat.NoDepthAndStencil;
-				rt.image = createImage(t, rt.depthStencil);
-			}
+			rt.depthStencil = DepthStencilFormat.NoDepthAndStencil;
+			rt.image = createImage(t, rt.depthStencil);
 		}
 		return rt;
 	}
@@ -591,12 +559,6 @@ class RenderPath {
 					depthStencil);
 			}
 		}
-	}
-
-	function createCubeMap(t: RenderTargetRaw, depthStencil: DepthStencilFormat): CubeMap {
-		return CubeMap.createRenderTarget(t.width,
-			t.format != null ? getTextureFormat(t.format) : TextureFormat.RGBA32,
-			depthStencil);
 	}
 
 	inline function getTextureFormat(s: String): TextureFormat {
@@ -658,9 +620,9 @@ class RenderPath {
 					additionalImages.push(t.image);
 				}
 			}
-			var targetG = rt.isCubeMap ? rt.cubeMap.g4 : rt.image.g4;
-			currentW = rt.isCubeMap ? rt.cubeMap.width : rt.image.width;
-			currentH = rt.isCubeMap ? rt.cubeMap.height : rt.image.height;
+			var targetG = rt.image.g4;
+			currentW = rt.image.width;
+			currentH = rt.image.height;
 			if (rt.is3D) {
 				currentD = rt.image.depth;
 			}
@@ -725,7 +687,6 @@ class RenderTargetRaw {
 	public var mipmaps: Null<Bool> = null;
 	public var depth: Null<Int> = null; // 3D texture
 	public var is_image: Null<Bool> = null; // Image
-	public var is_cubemap: Null<Bool> = null; // Cubemap
 	public function new() {}
 }
 
@@ -734,14 +695,11 @@ class RenderTarget {
 	public var depthStencil: DepthStencilFormat;
 	public var depthStencilFrom = "";
 	public var image: Image = null; // RT or image
-	public var cubeMap: CubeMap = null;
 	public var hasDepth = false;
 	public var is3D = false; // sampler2D / sampler3D
-	public var isCubeMap = false;
 	public function new(raw: RenderTargetRaw) { this.raw = raw; }
 	public function unload() {
 		if (image != null) image.unload();
-		if (cubeMap != null) cubeMap.unload();
 	}
 }
 

@@ -1,21 +1,20 @@
 package iron.data;
 
 import kha.graphics4.PipelineState;
-import kha.graphics4.ConstantLocation;
-import kha.graphics4.TextureUnit;
-import kha.graphics4.VertexStructure;
-import kha.graphics4.VertexData;
-import kha.graphics4.CompareMode;
-import kha.graphics4.CullMode;
-import kha.graphics4.BlendingOperation;
-import kha.graphics4.BlendingFactor;
-import kha.graphics4.TextureAddressing;
-import kha.graphics4.TextureFilter;
-import kha.graphics4.MipMapFilter;
+import kha.graphics4.Graphics;
+import kha.graphics4.VertexBuffer.VertexStructure;
+import kha.graphics4.VertexBuffer.VertexData;
+import kha.graphics4.PipelineState.CompareMode;
+import kha.graphics4.PipelineState.CullMode;
+import kha.graphics4.PipelineState.BlendingOperation;
+import kha.graphics4.PipelineState.BlendingFactor;
+import kha.graphics4.Graphics.TextureAddressing;
+import kha.graphics4.Graphics.TextureFilter;
+import kha.graphics4.Graphics.MipMapFilter;
 import kha.graphics4.VertexShader;
 import kha.graphics4.FragmentShader;
-import kha.graphics4.TextureFormat;
-import kha.graphics4.DepthStencilFormat;
+import kha.Image.TextureFormat;
+import kha.Image.DepthStencilFormat;
 import iron.data.SceneFormat;
 using StringTools;
 
@@ -169,8 +168,6 @@ class ShaderContext {
 			var shadersLoaded = 0;
 			var numShaders = 2;
 			if (raw.geometry_shader != null) numShaders++;
-			if (raw.tesscontrol_shader != null) numShaders++;
-			if (raw.tesseval_shader != null) numShaders++;
 
 			function loadShader(file: String, type: Int) {
 				var path = ShaderData.shaderPath + file + ShaderData.shaderExt;
@@ -178,8 +175,6 @@ class ShaderContext {
 					if (type == 0) pipeState.vertexShader = new VertexShader([b], [file]);
 					else if (type == 1) pipeState.fragmentShader = new FragmentShader([b], [file]);
 					else if (type == 2) pipeState.geometryShader = new kha.graphics4.GeometryShader([b], [file]);
-					else if (type == 3) pipeState.tessellationControlShader = new kha.graphics4.TessellationControlShader([b], [file]);
-					else if (type == 4) pipeState.tessellationEvaluationShader = new kha.graphics4.TessellationEvaluationShader([b], [file]);
 					shadersLoaded++;
 					if (shadersLoaded >= numShaders) finishCompile(done);
 				});
@@ -187,8 +182,6 @@ class ShaderContext {
 			loadShader(raw.vertex_shader, 0);
 			loadShader(raw.fragment_shader, 1);
 			if (raw.geometry_shader != null) loadShader(raw.geometry_shader, 2);
-			if (raw.tesscontrol_shader != null) loadShader(raw.tesscontrol_shader, 3);
-			if (raw.tesseval_shader != null) loadShader(raw.tesseval_shader, 4);
 
 			#elseif arm_shader_embed
 
@@ -206,12 +199,6 @@ class ShaderContext {
 
 			if (raw.geometry_shader != null) {
 				pipeState.geometryShader = Reflect.field(kha.Shaders, raw.geometry_shader.replace(".", "_"));
-			}
-			if (raw.tesscontrol_shader != null) {
-				pipeState.tessellationControlShader = Reflect.field(kha.Shaders, raw.tesscontrol_shader.replace(".", "_"));
-			}
-			if (raw.tesseval_shader != null) {
-				pipeState.tessellationEvaluationShader = Reflect.field(kha.Shaders, raw.tesseval_shader.replace(".", "_"));
 			}
 			finishCompile(done);
 
@@ -271,8 +258,6 @@ class ShaderContext {
 		if (pipeState.fragmentShader != null) pipeState.fragmentShader.delete();
 		if (pipeState.vertexShader != null) pipeState.vertexShader.delete();
 		if (pipeState.geometryShader != null) pipeState.geometryShader.delete();
-		if (pipeState.tessellationControlShader != null) pipeState.tessellationControlShader.delete();
-		if (pipeState.tessellationEvaluationShader != null) pipeState.tessellationEvaluationShader.delete();
 		pipeState.delete();
 	}
 

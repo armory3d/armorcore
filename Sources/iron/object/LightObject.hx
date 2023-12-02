@@ -1,8 +1,7 @@
 package iron.object;
 
 import js.lib.Float32Array;
-import kha.graphics4.TextureFormat;
-import kha.graphics4.Usage;
+import kha.graphics4.Graphics.Usage;
 import iron.math.Mat4;
 import iron.math.Vec4;
 import iron.data.LightData;
@@ -288,18 +287,6 @@ class LightObject extends Object {
 			}
 			CameraObject.buildViewFrustum(VP, frustumPlanes);
 		}
-	}
-
-	public function setCubeFace(face: Int, camera: CameraObject) {
-		// Set matrix to match cubemap face
-		eye.set(transform.worldx(), transform.worldy(), transform.worldz());
-		#if (!kha_opengl && !kha_webgl && !arm_shadowmap_atlas)
-		var flip = (face == 2 || face == 3) ? true : false; // Flip +Y, -Y
-		#else
-		var flip = false;
-		#end
-		CameraObject.setCubeFace(V, eye, face, flip);
-		updateViewFrustum(camera);
 	}
 
 	#if arm_csm

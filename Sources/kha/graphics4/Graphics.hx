@@ -1,23 +1,9 @@
 package kha.graphics4;
 
 import js.lib.Float32Array;
-import kha.Blob;
-import kha.graphics4.BlendingFactor;
-import kha.graphics4.BlendingOperation;
-import kha.graphics4.CompareMode;
-import kha.graphics4.CubeMap;
-import kha.graphics4.CullMode;
-import kha.graphics4.FragmentShader;
 import kha.graphics4.IndexBuffer;
-import kha.graphics4.MipMapFilter;
 import kha.graphics4.PipelineState;
-import kha.graphics4.TextureAddressing;
-import kha.graphics4.TextureFilter;
-import kha.graphics4.TextureFormat;
-import kha.graphics4.Usage;
 import kha.graphics4.VertexBuffer;
-import kha.graphics4.VertexStructure;
-import kha.graphics4.VertexShader;
 import kha.Image;
 import kha.math.FastMatrix3;
 import kha.math.FastMatrix4;
@@ -36,28 +22,8 @@ class Graphics {
 		Krom.begin(renderTarget, additionalRenderTargets);
 	}
 
-	public function beginFace(face: Int): Void {
-		Krom.beginFace(renderTarget, face);
-	}
-
-	public function beginEye(eye: Int): Void {
-
-	}
-
 	public function end(): Void {
 		Krom.end();
-	}
-
-	public function flush(): Void {
-
-	}
-
-	public function vsynced(): Bool {
-		return true;
-	}
-
-	public function refreshRate(): Int {
-		return 60;
 	}
 
 	public function clear(?color: Color, ?depth: Float, ?stencil: Int): Void {
@@ -84,16 +50,6 @@ class Graphics {
 		indexBuffer.set();
 	}
 
-	public function setCubeMap(unit: kha.graphics4.TextureUnit, cubeMap: kha.graphics4.CubeMap): Void {
-		if (cubeMap == null) return;
-		cubeMap.texture_ != null ? Krom.setTexture(unit, cubeMap.texture_) : Krom.setRenderTarget(unit, cubeMap.renderTarget_);
-	}
-
-	public function setCubeMapDepth(unit: kha.graphics4.TextureUnit, cubeMap: kha.graphics4.CubeMap): Void {
-		if (cubeMap == null) return;
-		Krom.setTextureDepth(unit, cubeMap.renderTarget_);
-	}
-
 	public function setTexture(unit: kha.graphics4.TextureUnit, texture: kha.Image): Void {
 		if (texture == null) return;
 		texture.texture_ != null ? Krom.setTexture(unit, texture.texture_) : Krom.setRenderTarget(unit, texture.renderTarget_);
@@ -102,14 +58,6 @@ class Graphics {
 	public function setTextureDepth(unit: kha.graphics4.TextureUnit, texture: kha.Image): Void {
 		if (texture == null) return;
 		Krom.setTextureDepth(unit, texture.renderTarget_);
-	}
-
-	public function setTextureArray(unit: kha.graphics4.TextureUnit, texture: kha.Image): Void {
-
-	}
-
-	public function setVideoTexture(unit: kha.graphics4.TextureUnit, texture: kha.Video): Void {
-
 	}
 
 	public function setImageTexture(unit: kha.graphics4.TextureUnit, texture: kha.Image): Void {
@@ -125,20 +73,8 @@ class Graphics {
 		Krom.setTexture3DParameters(texunit, uAddressing, vAddressing, wAddressing, minificationFilter, magnificationFilter, mipmapFilter);
 	}
 
-	public function setTextureCompareMode(texunit: kha.graphics4.TextureUnit, enabled: Bool): Void {
-		Krom.setTextureCompareMode(texunit, enabled);
-	}
-
-	public function setCubeMapCompareMode(texunit: kha.graphics4.TextureUnit, enabled: Bool): Void {
-		Krom.setCubeMapCompareMode(texunit, enabled);
-	}
-
 	public function setPipeline(pipeline: PipelineState): Void {
 		pipeline.set();
-	}
-
-	public function setStencilReferenceValue(value: Int): Void {
-
 	}
 
 	public function setBool(location: kha.graphics4.ConstantLocation, value: Bool): Void {
@@ -205,10 +141,6 @@ class Graphics {
 		Krom.drawIndexedVerticesInstanced(instanceCount, start, count);
 	}
 
-	public function instancedRenderingAvailable(): Bool {
-		return true;
-	}
-
 	public function scissor(x: Int, y: Int, width: Int, height: Int): Void {
 		Krom.scissor(x, y, width, height);
 	}
@@ -217,3 +149,30 @@ class Graphics {
 		Krom.disableScissor();
 	}
 }
+
+@:enum abstract TextureFilter(Int) to Int {
+	var PointFilter = 0;
+	var LinearFilter = 1;
+	var AnisotropicFilter = 2;
+}
+
+@:enum abstract MipMapFilter(Int) to Int {
+	var NoMipFilter = 0;
+	var PointMipFilter = 1;
+	var LinearMipFilter = 2; // linear texture filter + linear mip filter -> trilinear filter
+}
+
+@:enum abstract TextureAddressing(Int) to Int {
+	var Repeat = 0;
+	var Mirror = 1;
+	var Clamp = 2;
+}
+
+@:enum abstract Usage(Int) to Int {
+	var StaticUsage = 0;
+	var DynamicUsage = 1; // Just calling it Dynamic causes problems in C++
+	var ReadableUsage = 2;
+}
+
+typedef ConstantLocation = Dynamic;
+typedef TextureUnit = Dynamic;

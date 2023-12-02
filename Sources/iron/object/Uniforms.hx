@@ -1,10 +1,9 @@
 package iron.object;
 
 import kha.graphics4.Graphics;
-import kha.graphics4.ConstantLocation;
-import kha.graphics4.TextureAddressing;
-import kha.graphics4.TextureFilter;
-import kha.graphics4.MipMapFilter;
+import kha.graphics4.Graphics.TextureAddressing;
+import kha.graphics4.Graphics.TextureFilter;
+import kha.graphics4.Graphics.MipMapFilter;
 import js.lib.Float32Array;
 import iron.math.Vec4;
 import iron.math.Quat;
@@ -183,10 +182,6 @@ class Uniforms {
 						g.setTexture3DParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.PointFilter, MipMapFilter.LinearMipFilter);
 						paramsSet = true;
 					}
-					else if (rt.isCubeMap) {
-						if (attachDepth) g.setCubeMapDepth(context.textureUnits[j], rt.cubeMap); // samplerCube
-						else g.setCubeMap(context.textureUnits[j], rt.cubeMap); // samplerCube
-					}
 					else {
 						if (attachDepth) g.setTextureDepth(context.textureUnits[j], rt.image); // sampler2D
 						else g.setTexture(context.textureUnits[j], rt.image); // sampler2D
@@ -203,13 +198,7 @@ class Uniforms {
 							g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
 						}
 						if (samplerID.startsWith("shadowMap")) {
-							if (rt.isCubeMap) {
-								g.setCubeMapCompareMode(context.textureUnits[j], true);
-							}
-							else {
-								g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
-								g.setTextureCompareMode(context.textureUnits[j], true);
-							}
+							g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 							paramsSet = true;
 						}
 						else if (attachDepth) {
@@ -591,19 +580,6 @@ class Uniforms {
 						v = helpVec;
 						v.x = light.data.raw.near_plane;
 						v.y = light.data.raw.far_plane;
-					}
-				}
-				case "_lightPlaneProj": { // shadowCube
-					if (light != null) {
-						var near: Float = light.data.raw.near_plane;
-						var far: Float = light.data.raw.far_plane;
-						var a: Float = far + near;
-						var b: Float = far - near;
-						var f2: Float = 2.0;
-						var c = f2 * far * near;
-						v = helpVec;
-						v.x = a / b;
-						v.y = c / b;
 					}
 				}
 				case "_shadowMapSize": {

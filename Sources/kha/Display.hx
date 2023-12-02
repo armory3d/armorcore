@@ -1,5 +1,19 @@
 package kha;
 
+class DisplayMode {
+	public var width: Int;
+	public var height: Int;
+	public var frequency: Int;
+	public var bitsPerPixel: Int;
+
+	public function new(width: Int, height: Int, frequency: Int, bitsPerPixel: Int) {
+		this.width = width;
+		this.height = height;
+		this.frequency = frequency;
+		this.bitsPerPixel = bitsPerPixel;
+	}
+}
+
 class Display {
 	static var displays: Array<Display> = [];
 	var num: Int;
@@ -29,37 +43,6 @@ class Display {
 		return null;
 	}
 
-	public static var all(get, never): Array<Display>;
-
-	static function get_all(): Array<Display> {
-		init();
-		return displays;
-	}
-
-	public var available(get, never): Bool;
-
-	function get_available(): Bool {
-		return true;
-	}
-
-	public var name(get, never): String;
-
-	function get_name(): String {
-		return "Display";
-	}
-
-	public var x(get, never): Int;
-
-	function get_x(): Int {
-		return Krom.displayX(num);
-	}
-
-	public var y(get, never): Int;
-
-	function get_y(): Int {
-		return Krom.displayY(num);
-	}
-
 	public var width(get, never): Int;
 
 	function get_width(): Int {
@@ -76,17 +59,5 @@ class Display {
 
 	function get_frequency(): Int {
 		return Krom.displayFrequency(num);
-	}
-
-	public var pixelsPerInch(get, never): Int;
-
-	function get_pixelsPerInch(): Int {
-		return Krom.screenDpi();
-	}
-
-	public var modes(get, never): Array<DisplayMode>;
-
-	function get_modes(): Array<DisplayMode> {
-		return [];
 	}
 }

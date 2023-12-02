@@ -1,9 +1,7 @@
 package kha;
 
 import haxe.io.Bytes;
-import kha.graphics4.DepthStencilFormat;
-import kha.graphics4.TextureFormat;
-import kha.graphics4.Usage;
+import kha.graphics4.Graphics.Usage;
 
 class Image implements Canvas {
 	public var texture_: Dynamic;
@@ -131,24 +129,9 @@ class Image implements Canvas {
 		return image;
 	}
 
-	public static var maxSize(get, null): Int;
-
-	public static function get_maxSize(): Int {
-		return 4096;
-	}
-
-	public static var nonPow2Supported(get, null): Bool;
-
-	public static function get_nonPow2Supported(): Bool {
-		return true;
-	}
-
 	public static function renderTargetsInvertedY(): Bool {
 		return Krom.renderTargetsInvertedY();
 	}
-
-	public function isOpaque(x: Int, y: Int): Bool { return false; }
-	public function at(x: Int, y: Int): Color { return Color.Black; }
 
 	public function unload(): Void {
 		Krom.unloadImage(this);
@@ -165,7 +148,6 @@ class Image implements Canvas {
 	}
 
 	private var pixels: Bytes = null;
-
 	public function getPixels(): Bytes {
 		if (renderTarget_ != null) {
 			// Minimum size of 32x32 required after https://github.com/Kode/Kinc/commit/3797ebce5f6d7d360db3331eba28a17d1be87833
@@ -217,7 +199,6 @@ class Image implements Canvas {
 	private function get_depth(): Int { return texture_ != null ? texture_.depth : 1; }
 
 	public var g2(get, null): kha.graphics2.Graphics;
-
 	private function get_g2(): kha.graphics2.Graphics {
 		if (graphics2 == null) {
 			graphics2 = new kha.graphics2.Graphics(this);
@@ -226,11 +207,29 @@ class Image implements Canvas {
 	}
 
 	public var g4(get, null): kha.graphics4.Graphics;
-
 	private function get_g4(): kha.graphics4.Graphics {
 		if (graphics4 == null) {
 			graphics4 = new kha.graphics4.Graphics(this);
 		}
 		return graphics4;
 	}
+}
+
+@:enum abstract TextureFormat(Int) to Int {
+	var RGBA32 = 0;
+	var L8 = 1;
+	var RGBA128 = 2; // Floats
+	var DEPTH16 = 3;
+	var RGBA64 = 4; // Half floats
+	var A32 = 5; // Float
+	var A16 = 6; // Half float
+}
+
+@:enum abstract DepthStencilFormat(Int) to Int {
+	var NoDepthAndStencil = 0;
+	var DepthOnly = 1;
+	var DepthAutoStencilAuto = 2;
+	var Depth24Stencil8 = 3;
+	var Depth32Stencil8 = 4;
+	var Depth16 = 5;
 }

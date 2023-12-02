@@ -27,7 +27,6 @@ class App {
 	function new(done: Void->Void) {
 		done();
 		kha.System.notifyOnFrames(render);
-		kha.Scheduler.addTimeTask(update, 0, iron.system.Time.delta);
 	}
 
 	public static function reset() {
@@ -85,8 +84,8 @@ class App {
 		lasth = App.h();
 	}
 
-	static function render(frames: Array<kha.Framebuffer>) {
-		var frame = frames[0];
+	static function render(frame: kha.Framebuffer) {
+		update();
 		framebuffer = frame;
 
 		iron.system.Time.update();

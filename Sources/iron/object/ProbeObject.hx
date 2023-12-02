@@ -1,9 +1,6 @@
 package iron.object;
 
 import kha.graphics4.Graphics;
-import kha.graphics4.TextureFormat;
-import kha.graphics4.DepthStencilFormat;
-import kha.graphics4.CubeMap;
 import iron.data.ProbeData;
 import iron.data.CameraData;
 import iron.data.SceneFormat;

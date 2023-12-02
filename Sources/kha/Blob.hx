@@ -1,10 +1,8 @@
 package kha;
 
-import haxe.ds.Vector;
 import haxe.io.Bytes;
 
 class Blob {
-	static inline var bufferSize: Int = 2000;
 	public var bytes: Bytes;
 
 	public function new(bytes: Bytes) {
@@ -13,10 +11,6 @@ class Blob {
 
 	public static function fromBytes(bytes: Bytes): Blob {
 		return new Blob(bytes);
-	}
-
-	public static function alloc(size: Int): Blob {
-		return new Blob(Bytes.alloc(size));
 	}
 
 	public function sub(start: Int, length: Int): Blob {
@@ -30,56 +24,10 @@ class Blob {
 		return bytes.length;
 	}
 
-	public function writeU8(position: Int, value: Int): Void {
-		bytes.set(position, value);
-	}
-
 	public function readU8(position: Int): Int {
 		var byte = bytes.get(position);
 		++position;
 		return byte;
-	}
-
-	public function readS8(position: Int): Int {
-		var byte = bytes.get(position);
-		++position;
-		var sign = (byte & 0x80) == 0 ? 1 : -1;
-		byte = byte & 0x7F;
-		return sign * byte;
-	}
-
-	public function readU16BE(position: Int): Int {
-		var first = bytes.get(position + 0);
-		var second  = bytes.get(position + 1);
-		position += 2;
-		return first * 256 + second;
-	}
-
-	public function readU16LE(position: Int): Int {
-		var first = bytes.get(position + 0);
-		var second  = bytes.get(position + 1);
-		position += 2;
-		return second * 256 + first;
-	}
-
-	public function readU32LE(position: Int): Int {
-		var fourth = bytes.get(position + 0);
-		var third  = bytes.get(position + 1);
-		var second = bytes.get(position + 2);
-		var first  = bytes.get(position + 3);
-		position += 4;
-
-		return fourth + third * 256 + second * 256 * 256 + first * 256 * 256 * 256;
-	}
-
-	public function readU32BE(position: Int): Int {
-		var fourth = bytes.get(position + 0);
-		var third  = bytes.get(position + 1);
-		var second = bytes.get(position + 2);
-		var first  = bytes.get(position + 3);
-		position += 4;
-
-		return first + second * 256 + third * 256 * 256 + fourth * 256 * 256 * 256;
 	}
 
 	public function readS16BE(position: Int): Int {
@@ -152,30 +100,6 @@ class Blob {
 	}
 
 	public function toString(): String {
-		return bytes.toString();
-	}
-
-	private static function bit(value: Int, position: Int): Bool {
-		var b = (value >>> position) & 1 == 1;
-		if (b) {
-			var a = 3;
-			++a;
-			return true;
-		}
-		else {
-			var c = 4;
-			--c;
-			return false;
-		}
-	}
-
-	static function toText(chars: Vector<Int>, length: Int): String {
-		var value = "";
-		for (i in 0...length) value += String.fromCharCode(chars[i]);
-		return value;
-	}
-
-	public function readUtf8String(): String {
 		return bytes.toString();
 	}
 

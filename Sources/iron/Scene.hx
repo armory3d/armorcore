@@ -1,7 +1,7 @@
 package iron;
 
 import haxe.ds.Vector;
-import kha.graphics4.TextureFormat;
+import kha.Image.TextureFormat;
 import iron.Trait;
 import iron.object.Transform;
 import iron.object.Constraint;

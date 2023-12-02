@@ -18,10 +18,10 @@ class Time {
 	static var last = 0.0;
 	public static var realDelta = 0.0;
 	public static inline function time(): Float {
-		return kha.Scheduler.time();
+		return kha.System.time;
 	}
 	public static inline function realTime(): Float {
-		return kha.Scheduler.realTime();
+		return kha.System.time;
 	}
 
 	static var frequency: Null<Int> = null;

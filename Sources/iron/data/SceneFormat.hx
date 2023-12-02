@@ -88,7 +88,6 @@ typedef TLightData = {
 	@:optional public var fov: Null<Float>;
 	@:optional public var shadows_bias: Null<Float>;
 	@:optional public var shadowmap_size: Null<Int>;
-	@:optional public var shadowmap_cube: Null<Bool>; // Omni shadows for point
 	@:optional public var spot_size: Null<Float>;
 	@:optional public var spot_blend: Null<Float>;
 	@:optional public var light_size: Null<Float>; // Shadow soft size
@@ -167,8 +166,6 @@ typedef TShaderContext = {
 	public var vertex_shader: String;
 	public var fragment_shader: String;
 	@:optional public var geometry_shader: String;
-	@:optional public var tesscontrol_shader: String;
-	@:optional public var tesseval_shader: String;
 	@:optional public var constants: Array<TShaderConstant>;
 	@:optional public var texture_units: Array<TTextureUnit>;
 	@:optional public var blend_source: String;
@@ -256,7 +253,7 @@ typedef TWorldData = {
 
 typedef TProbeData = {
 	public var name: String;
-	public var type: String; // grid, planar, cubemap
+	public var type: String; // grid, planar
 	public var strength: Float;
 	@:optional public var irradiance: String; // Reference to TIrradiance blob
 	@:optional public var radiance: String;

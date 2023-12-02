@@ -2,7 +2,7 @@
 
 package zui;
 
-import kha.input.KeyCode;
+import kha.input.Keyboard.KeyCode;
 import kha.graphics2.Graphics;
 
 typedef ZuiOptions = {

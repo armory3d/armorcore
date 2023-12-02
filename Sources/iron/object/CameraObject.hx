@@ -1,7 +1,6 @@
 package iron.object;
 
 import kha.graphics4.Graphics;
-import kha.graphics4.CubeMap;
 import iron.Scene;
 import iron.RenderPath;
 import iron.math.Mat4;
@@ -22,7 +21,6 @@ class CameraObject extends Object {
 	public var VP: Mat4;
 	public var frustumPlanes: Array<FrustumPlane> = null;
 	public var renderTarget: kha.Image = null; // Render camera view to texture
-	public var renderTargetCube: CubeMap = null;
 	public var currentFace = 0;
 
 	static var temp = new Vec4();
@@ -66,7 +64,6 @@ class CameraObject extends Object {
 	override public function remove() {
 		Scene.active.cameras.remove(this);
 		// if (renderTarget != null) renderTarget.unload();
-		// if (renderTargetCube != null) renderTargetCube.unload();
 		super.remove();
 	}
 
@@ -156,33 +153,6 @@ class CameraObject extends Object {
 			}
 		}
 		return true;
-	}
-
-	public static function setCubeFace(m: Mat4, eye: Vec4, face: Int, flip = false) {
-		// Set matrix to match cubemap face
-		vcenter.setFrom(eye);
-		var f = flip ? -1.0 : 1.0;
-		switch (face) {
-			case 0: // x+
-				vcenter.addf(1.0 * f, 0.0, 0.0);
-				vup.set(0.0, -1.0 * f, 0.0);
-			case 1: // x-
-				vcenter.addf(-1.0 * f, 0.0, 0.0);
-				vup.set(0.0, -1.0 * f, 0.0);
-			case 2: // y+
-				vcenter.addf(0.0, 1.0 * f, 0.0);
-				vup.set(0.0, 0.0, 1.0 * f);
-			case 3: // y-
-				vcenter.addf(0.0, -1.0 * f, 0.0);
-				vup.set(0.0, 0.0, -1.0 * f);
-			case 4: // z+
-				vcenter.addf(0.0, 0.0, 1.0 * f);
-				vup.set(0.0, -1.0 * f, 0.0);
-			case 5: // z-
-				vcenter.addf(0.0, 0.0, -1.0 * f);
-				vup.set(0.0, -1.0 * f, 0.0);
-		}
-		m.setLookAt(eye, vcenter, vup);
 	}
 
 	public inline function right(): Vec4 {

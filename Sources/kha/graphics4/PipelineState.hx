@@ -1,20 +1,19 @@
 package kha.graphics4;
 
+import kha.graphics4.Graphics;
+import kha.graphics4.VertexBuffer.VertexStructure;
+import kha.Image.TextureFormat;
+import kha.Image.DepthStencilFormat;
+
 class PipelineState {
 	public var pipeline: Dynamic;
-
 	public var inputLayout: Array<VertexStructure>;
 	public var vertexShader: VertexShader;
 	public var fragmentShader: FragmentShader;
 	public var geometryShader: GeometryShader;
-	public var tessellationControlShader: TessellationControlShader;
-	public var tessellationEvaluationShader: TessellationEvaluationShader;
-
 	public var cullMode: CullMode;
-
 	public var depthWrite: Bool;
 	public var depthMode: CompareMode;
-
 
 	// One, Zero deactivates blending
 	public var blendSource: BlendingFactor;
@@ -29,7 +28,6 @@ class PipelineState {
 	public var colorWriteMaskGreen(get, set): Bool;
 	public var colorWriteMaskBlue(get, set): Bool;
 	public var colorWriteMaskAlpha(get, set): Bool;
-
 	public var colorWriteMasksRed: Array<Bool>;
 	public var colorWriteMasksGreen: Array<Bool>;
 	public var colorWriteMasksBlue: Array<Bool>;
@@ -37,7 +35,6 @@ class PipelineState {
 
 	public var colorAttachmentCount: Int;
 	public var colorAttachments: Array<TextureFormat>;
-
 	public var depthStencilAttachment: DepthStencilFormat;
 
 	inline function set_colorWriteMask(value: Bool): Bool {
@@ -126,11 +123,8 @@ class PipelineState {
 		vertexShader = null;
 		fragmentShader = null;
 		geometryShader = null;
-		tessellationControlShader = null;
-		tessellationEvaluationShader = null;
 
 		cullMode = CullMode.None;
-
 		depthWrite = false;
 		depthMode = CompareMode.Always;
 
@@ -153,7 +147,6 @@ class PipelineState {
 		colorAttachmentCount = 1;
 		colorAttachments = [];
 		for (i in 0...8) colorAttachments.push(TextureFormat.RGBA32);
-
 		depthStencilAttachment = DepthStencilFormat.NoDepthAndStencil;
 
 		conservativeRasterization = false;
@@ -172,13 +165,11 @@ class PipelineState {
 		var structure2 = inputLayout.length > 2 ? inputLayout[2] : null;
 		var structure3 = inputLayout.length > 3 ? inputLayout[3] : null;
 		var gs = geometryShader != null ? geometryShader.shader : null;
-		var tcs = tessellationControlShader != null ? tessellationControlShader.shader : null;
-		var tes = tessellationEvaluationShader != null ? tessellationEvaluationShader.shader : null;
 		var colorAttachments: Array<Int> = [];
 		for (i in 0...8) {
 			colorAttachments.push(getRenderTargetFormat(this.colorAttachments[i]));
 		}
-		Krom.compilePipeline(pipeline, structure0, structure1, structure2, structure3, inputLayout.length, vertexShader.shader, fragmentShader.shader, gs, tcs, tes, {
+		Krom.compilePipeline(pipeline, structure0, structure1, structure2, structure3, inputLayout.length, vertexShader.shader, fragmentShader.shader, gs, null, null, {
 			cullMode: convertCullMode(cullMode),
 			depthWrite: this.depthWrite,
 			depthMode: convertCompareMode(depthMode),
@@ -202,11 +193,11 @@ class PipelineState {
 		Krom.setPipeline(pipeline);
 	}
 
-	public function getConstantLocation(name: String): kha.graphics4.ConstantLocation {
+	public function getConstantLocation(name: String): ConstantLocation {
 		return Krom.getConstantLocation(pipeline, name);
 	}
 
-	public function getTextureUnit(name: String): kha.graphics4.TextureUnit {
+	public function getTextureUnit(name: String): TextureUnit {
 		return Krom.getTextureUnit(pipeline, name);
 	}
 
@@ -266,4 +257,43 @@ class PipelineState {
 				return 9;
 		}
 	}
+}
+
+@:enum abstract BlendingFactor(Int) to Int {
+	var Undefined = 0;
+	var BlendOne = 1;
+	var BlendZero = 2;
+	var SourceAlpha = 3;
+	var DestinationAlpha = 4;
+	var InverseSourceAlpha = 5;
+	var InverseDestinationAlpha = 6;
+	var SourceColor = 7;
+	var DestinationColor = 8;
+	var InverseSourceColor = 9;
+	var InverseDestinationColor = 10;
+}
+
+@:enum abstract BlendingOperation(Int) to Int {
+	var Add = 0;
+	var Subtract = 1;
+	var ReverseSubtract = 2;
+	var Min = 3;
+	var Max = 4;
+}
+
+@:enum abstract CompareMode(Int) to Int {
+	var Always = 0;
+	var Never = 1;
+	var Equal = 2;
+	var NotEqual = 3;
+	var Less = 4;
+	var LessEqual = 5;
+	var Greater = 6;
+	var GreaterEqual = 7;
+}
+
+@:enum abstract CullMode(Int) to Int {
+	var Clockwise = 0;
+	var CounterClockwise = 1;
+	var None = 2;
 }

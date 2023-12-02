@@ -1,14 +1,14 @@
 package kha.graphics4;
 
 import js.lib.Uint32Array;
-import kha.graphics4.Usage;
+import kha.graphics4.Graphics.Usage;
 
 class IndexBuffer {
 	private var buffer: Dynamic;
 	public var _data: Uint32Array;
 	private var indexCount: Int;
 
-	public function new(indexCount: Int, usage: Usage, canRead: Bool = false) {
+	public function new(indexCount: Int, usage: Usage) {
 		this.indexCount = indexCount;
 		buffer = Krom.createIndexBuffer(indexCount);
 	}
@@ -31,9 +31,5 @@ class IndexBuffer {
 
 	public function set(): Void {
 		Krom.setIndexBuffer(buffer);
-	}
-
-	public function count(): Int {
-		return indexCount;
 	}
 }
