@@ -1088,6 +1088,7 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 			zui_remove_node(n, canvas);
 			current->changed = true;
 		}
+		current_nodes->nodes_selected_count = 0;
 	}
 
 	zui_set_scale(current_nodes->scale_factor); // Restore non-zoomed scale
