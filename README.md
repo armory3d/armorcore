@@ -5,7 +5,7 @@ ArmorCore for Armory engine.
 Based on [Krom](https://github.com/Kode/Krom). Powered by [Kinc](https://github.com/Kode/Kinc).
 
 ```bash
-git clone --recursive https://github.com/armory3d/armorcore
+git clone --recursive https://github.com/armory3d/armorcore -b armsdk
 cd armorcore
 ```
 
