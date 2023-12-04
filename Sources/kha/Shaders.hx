@@ -9,7 +9,7 @@ class Shaders {
 	static var vertexShaders: Map<String, VertexShader> = [];
 	static var fragmentShaders: Map<String, FragmentShader> = [];
 	static var geometryShaders: Map<String, GeometryShader> = [];
-	static var ext = #if kha_vulkan ".spirv" #elseif (krom_android || krom_wasm) ".essl" #elseif kha_opengl ".glsl" #elseif kha_metal ".metal" #else ".d3d11" #end ;
+	static var ext = #if krom_vulkan ".spirv" #elseif (krom_android || krom_wasm) ".essl" #elseif krom_opengl ".glsl" #elseif krom_metal ".metal" #else ".d3d11" #end ;
 
 	public static function getBuffer(name: String): js.lib.ArrayBuffer {
 		#if arm_shader_embed

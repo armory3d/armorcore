@@ -23,7 +23,7 @@ class ShaderData {
 	public var name: String;
 	public var raw: TShaderData;
 	public var contexts: Array<ShaderContext> = [];
-	public static inline var shaderExt = #if kha_vulkan ".spirv" #elseif (krom_android || krom_wasm) ".essl" #elseif kha_opengl ".glsl" #elseif kha_metal ".metal" #else ".d3d11" #end ;
+	public static inline var shaderExt = #if krom_vulkan ".spirv" #elseif (krom_android || krom_wasm) ".essl" #elseif krom_opengl ".glsl" #elseif krom_metal ".metal" #else ".d3d11" #end ;
 
 	public function new(raw: TShaderData, done: ShaderData->Void, overrideContext: TShaderOverride = null) {
 		this.raw = raw;

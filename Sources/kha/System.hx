@@ -261,19 +261,19 @@ class System {
 	}
 
 	private static function touchDownCallback(index: Int, x: Int, y: Int): Void {
-		#if (kha_android || kha_ios)
+		#if (krom_android || krom_ios)
 		surface.onTouchDown(index, x, y);
 		#end
 	}
 
 	private static function touchUpCallback(index: Int, x: Int, y: Int): Void {
-		#if (kha_android || kha_ios)
+		#if (krom_android || krom_ios)
 		surface.onTouchUp(index, x, y);
 		#end
 	}
 
 	private static function touchMoveCallback(index: Int, x: Int, y: Int): Void {
-		#if (kha_android || kha_ios)
+		#if (krom_android || krom_ios)
 		surface.onTouchMove(index, x, y);
 		#end
 	}

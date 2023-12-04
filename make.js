@@ -686,8 +686,6 @@ class KromExporter {
 	}
 
 	haxeOptions(name, defines) {
-		defines.push('kha_' + this.options.target);
-		defines.push('kha_' + this.options.target + '_js');
 		let graphics = this.options.graphics;
 		if (graphics === 'default') {
 			if (process.platform === 'win32') {
@@ -700,32 +698,21 @@ class KromExporter {
 				graphics = 'opengl';
 			}
 		}
-		defines.push('kha_' + graphics);
-		defines.push('kha_g1');
-		defines.push('kha_g2');
-		defines.push('kha_g3');
-		defines.push('kha_g4');
-		defines.push('kha_a1');
-		defines.push('kha_a2');
+		defines.push('krom_' + graphics);
 		if (process.argv.indexOf('android') >= 0) {
 			defines.push('krom_android');
-			defines.push('kha_android');
 		}
 		else if (process.argv.indexOf('ios') >= 0) {
 			defines.push('krom_ios');
-			defines.push('kha_ios');
 		}
 		else if (process.platform === 'win32') {
 			defines.push('krom_windows');
-			defines.push('kha_windows');
 		}
 		else if (process.platform === 'linux') {
 			defines.push('krom_linux');
-			defines.push('kha_linux');
 		}
 		else if (process.platform === 'darwin') {
 			defines.push('krom_darwin');
-			defines.push('kha_darwin');
 		}
 		return {
 			from: this.options.from.toString(),
@@ -1036,9 +1023,9 @@ for (let i = 2; i < args.length; ++i) {
 	}
 }
 
-async function runKhamake() {
+async function make_run() {
 	try {
-		await main_run(parsedOptions, (name) => { });
+		await run(parsedOptions, (name) => { });
 	}
 	catch (error) {
 		console.log(error);
@@ -1062,7 +1049,6 @@ function safeName(name) {
 async function exportProjectFiles(name, resourceDir, options, exporter, kore, korehl, libraries, defines, id) {
 	if (options.haxe !== '') {
 		let haxeOptions = exporter.haxeOptions(name, defines);
-		haxeOptions.defines.push('kha');
 		haxeOptions.safeName = safeName(haxeOptions.name);
 		writeHaxeProject(options.to, !options.noproject, haxeOptions);
 
@@ -1230,7 +1216,7 @@ async function exportProject(options) {
 	}
 }
 
-async function main_run(options) {
+async function run(options) {
 	options.target = 'krom';
 	let p = __dirname;
 	if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
@@ -1272,5 +1258,3 @@ async function main_run(options) {
 	}
 	return name;
 }
-
-// runKhamake();

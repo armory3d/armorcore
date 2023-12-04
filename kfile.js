@@ -13,7 +13,7 @@ try {
 
 	let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/armorcore" : __dirname;
 	eval(fs.readFileSync(root + "/make.js") + "");
-	await runKhamake();
+	await make_run();
 
 	if (process.argv.indexOf("--run") >= 0) {
 		fs.cp(process.cwd() + "/build/krom", __dirname + "/Deployment", {recursive: true}, function (err){});

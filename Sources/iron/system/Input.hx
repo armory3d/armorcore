@@ -168,7 +168,7 @@ class Mouse {
 		buttonsStarted[index] = true;
 		this.x = x;
 		this.y = y;
-		#if (kha_android || kha_ios) // For movement delta using touch
+		#if (krom_android || krom_ios) // For movement delta using touch
 		if (index == 0) {
 			lastX = x;
 			lastY = y;
@@ -210,7 +210,7 @@ class Mouse {
 		wheelDelta = delta;
 	}
 
-	#if (kha_android || kha_ios)
+	#if (krom_android || krom_ios)
 	public function onTouchDown(index: Int, x: Int, y: Int) {
 		if (index == 1) { // Two fingers down - right mouse button
 			buttonsDown[0] = false;
@@ -321,13 +321,13 @@ class Pen {
 		this.y = y;
 		this.pressure = pressure;
 
-		#if (!kha_android && !kha_ios)
+		#if (!krom_android && !krom_ios)
 		@:privateAccess Input.getMouse().downListener(0, x, y);
 		#end
 	}
 
 	public function upListener(x: Int, y: Int, pressure: Float) {
-		#if (!kha_android && !kha_ios)
+		#if (!krom_android && !krom_ios)
 		if (buttonsStarted[0]) { buttonsStarted[0] = false; inUse = true; return; }
 		#end
 
@@ -337,14 +337,14 @@ class Pen {
 		this.y = y;
 		this.pressure = pressure;
 
-		#if (!kha_android && !kha_ios)
+		#if (!krom_android && !krom_ios)
 		@:privateAccess Input.getMouse().upListener(0, x, y);
 		inUse = true; // On pen release, additional mouse down & up events are fired at once - filter those out
 		#end
 	}
 
 	public function moveListener(x: Int, y: Int, pressure: Float) {
-		#if kha_ios
+		#if krom_ios
 		// Listen to pen hover if no other input is active
 		if (!buttonsDown[0] && pressure == 0.0) {
 			if (!Input.getMouse().downAny()) {
@@ -446,7 +446,7 @@ class Keyboard {
 			case KeyCode.Return: "enter";
 			case KeyCode.Shift: "shift";
 			case KeyCode.Control: "control";
-			#if kha_darwin
+			#if krom_darwin
 			case KeyCode.Meta: "control";
 			#end
 			case KeyCode.Alt: "alt";
@@ -536,7 +536,7 @@ class Keyboard {
 		keysDown.set(s, true);
 		repeatTime = Time.time() + 0.4;
 
-		#if kha_android_rmb // Detect right mouse button on Android..
+		#if krom_android_rmb // Detect right mouse button on Android..
 		if (code == KeyCode.Back) {
 			var m = Input.getMouse();
 			@:privateAccess if (!m.buttonsDown[1]) m.downListener(1, Std.int(m.x), Std.int(m.y));
@@ -550,7 +550,7 @@ class Keyboard {
 		keysReleased.set(s, true);
 		keysDown.set(s, false);
 
-		#if kha_android_rmb
+		#if krom_android_rmb
 		if (code == KeyCode.Back) {
 			var m = Input.getMouse();
 			@:privateAccess m.upListener(1, Std.int(m.x), Std.int(m.y));
