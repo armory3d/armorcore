@@ -1,32 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-try {
-	if (process.env.ARM_SNAPSHOT) {
-		process.argv.push("--snapshot");
-	}
-
-	if (platform === Platform.Android || platform === Platform.Wasm) {
-		process.argv.push("--shaderversion");
-		process.argv.push("300");
-	}
-
-	let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/armorcore" : __dirname;
-	eval(fs.readFileSync(root + "/make.js") + "");
-	await make_run();
-
-	if (process.argv.indexOf("--run") >= 0) {
-		fs.cp(process.cwd() + "/build/krom", __dirname + "/Deployment", {recursive: true}, function (err){});
-	}
-
-	if (process.env.ARM_HAXEONLY) {
-		process.exit(1);
-	}
-}
-catch (e) {
-}
-
-let flags = {
+globalThis.flags = {
 	name: 'Armory',
 	package: 'org.armory3d',
 	release: process.argv.indexOf("--debug") == -1,
@@ -40,11 +15,29 @@ let flags = {
 	with_g2: false,
 	with_iron: false,
 	with_zui: false,
-	on_project_created: null,
+	on_c_project_created: null,
 };
 
 try {
-	eval(fs.readFileSync("kincflags.js") + "");
+	if (process.env.ARM_SNAPSHOT) {
+		process.argv.push("--snapshot");
+	}
+
+	if (platform === Platform.Android || platform === Platform.Wasm) {
+		process.argv.push("--shaderversion");
+		process.argv.push("300");
+	}
+
+	eval(fs.readFileSync(__dirname + "/make.js") + "");
+	await make_run();
+
+	if (process.argv.indexOf("--run") >= 0) {
+		fs.cp(process.cwd() + "/build/krom", __dirname + "/Deployment", {recursive: true}, function (err){});
+	}
+
+	if (process.env.ARM_HAXEONLY) {
+		process.exit(1);
+	}
 }
 catch (e) {
 }
@@ -58,87 +51,86 @@ const system = platform === Platform.Windows ? "win32" :
 			   								   "unknown";
 
 const build = flags.release ? 'release' : 'debug';
-let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/armorcore" : __dirname;
-const libdir = root + '/v8/libraries/' + system + '/' + build + '/';
+const libdir = __dirname + '/v8/libraries/' + system + '/' + build + '/';
 
-let project = new Project(flags.name);
-await project.addProject('Kinc');
-project.cppStd = "c++17";
-project.setDebugDir('Deployment');
+let c_project = new Project(flags.name);
+await c_project.addProject('Kinc');
+c_project.cppStd = "c++17";
+c_project.setDebugDir('Deployment');
 
 if (fs.existsSync(process.cwd() + '/icon.png')) {
-	project.icon = path.relative(__dirname, process.cwd()) + '/icon.png';
+	c_project.icon = path.relative(__dirname, process.cwd()) + '/icon.png';
 	if (platform === Platform.OSX && fs.existsSync(process.cwd() + '/icon_macos.png')) {
-		project.icon = path.relative(__dirname, process.cwd()) + '/icon_macos.png';
+		c_project.icon = path.relative(__dirname, process.cwd()) + '/icon_macos.png';
 	}
 }
 
 if (flags.with_audio) {
-	project.addDefine('WITH_AUDIO');
+	c_project.addDefine('WITH_AUDIO');
 }
 
 if (platform === Platform.Wasm) {
-	project.addFile('Sources/main_wasm.c');
-	project.addFile('Shaders/**');
+	c_project.addFile('Sources/main_wasm.c');
+	c_project.addFile('Shaders/**');
 }
 else {
-	project.addFile('Sources/main.cpp');
+	c_project.addFile('Sources/main.cpp');
 }
 
 if (flags.with_g2) {
-	project.addDefine('WITH_G2');
-	project.addFile('Sources/g2/*');
+	c_project.addDefine('WITH_G2');
+	c_project.addFile('Sources/g2/*');
 }
 
 if (flags.with_iron) {
-	project.addDefine('WITH_IRON');
-	project.addFile('Sources/iron/*.c');
+	c_project.addDefine('WITH_IRON');
+	c_project.addFile('Sources/iron/*.c');
 }
 
 if (flags.with_zui) {
-	project.addDefine('WITH_ZUI');
-	project.addFile('Sources/zui/*.c');
+	c_project.addDefine('WITH_ZUI');
+	c_project.addFile('Sources/zui/*.c');
 }
 
-project.addIncludeDir('v8/include');
+c_project.addIncludeDir('v8/include');
 
 if (platform === Platform.Android) {
-	project.addFile('Sources/android/android_file_dialog.c');
-	project.addFile('Sources/android/android_http_request.c');
-	project.addDefine('IDLE_SLEEP');
+	c_project.addFile('Sources/android/android_file_dialog.c');
+	c_project.addFile('Sources/android/android_http_request.c');
+	c_project.addDefine('IDLE_SLEEP');
 
-	project.targetOptions.android.package = flags.package;
-	project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
-	project.targetOptions.android.screenOrientation = ['sensorLandscape'];
-	project.targetOptions.android.minSdkVersion = 30;
-	project.targetOptions.android.targetSdkVersion = 33;
+	c_project.targetOptions.android.package = flags.package;
+	c_project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
+	c_project.targetOptions.android.screenOrientation = ['sensorLandscape'];
+	c_project.targetOptions.android.minSdkVersion = 30;
+	c_project.targetOptions.android.targetSdkVersion = 33;
 }
 else if (platform === Platform.iOS) {
-	project.addFile('Sources/ios/ios_file_dialog.mm');
-	project.addDefine('IDLE_SLEEP');
+	c_project.addFile('Sources/ios/ios_file_dialog.mm');
+	c_project.addDefine('IDLE_SLEEP');
 }
 
 if (platform === Platform.Windows) {
-	project.addLib('Dbghelp'); // Stack walk
-	project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
-	project.addLib('winmm'); // timeGetTime for V8
-	project.addLib(libdir + 'v8_monolith');
+	c_project.addLib('Dbghelp'); // Stack walk
+	c_project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
+	c_project.addLib('winmm'); // timeGetTime for V8
+	c_project.addLib(libdir + 'v8_monolith');
 	if (flags.with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
-		project.addDefine('WITH_D3DCOMPILER');
-		project.addLib("d3d11");
-		project.addLib("d3dcompiler");
+		c_project.addDefine('WITH_D3DCOMPILER');
+		c_project.addLib("d3d11");
+		c_project.addLib("d3dcompiler");
 	}
 	if (!flags.release) {
-		project.addDefine('_HAS_ITERATOR_DEBUGGING=0');
-		project.addDefine('_ITERATOR_DEBUG_LEVEL=0');
+		c_project.addDefine('_HAS_ITERATOR_DEBUGGING=0');
+		c_project.addDefine('_ITERATOR_DEBUG_LEVEL=0');
 	}
 }
 else if (platform === Platform.Linux) {
-	project.addLib('v8_monolith -L' + libdir);
-	project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
+	c_project.addLib('v8_monolith -L' + libdir);
+	c_project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
 }
 else if (platform === Platform.Android) {
-	// project.addLib(libdir + 'libv8_monolith.a');
+	// c_project.addLib(libdir + 'libv8_monolith.a');
 
 	// Some manual tweaking is required for now:
 	// In app/CMakeLists.txt:
@@ -149,73 +141,73 @@ else if (platform === Platform.Android) {
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
 }
 else if (platform === Platform.iOS) {
-	project.addLib('v8/libraries/ios/release/libv8_monolith.a');
+	c_project.addLib('v8/libraries/ios/release/libv8_monolith.a');
 }
 else if (platform === Platform.OSX) {
-	project.addLib('v8/libraries/macos/release/libv8_monolith.a');
+	c_project.addLib('v8/libraries/macos/release/libv8_monolith.a');
 }
 
 if (flags.with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
-	project.addDefine('WITH_NFD');
-	project.addIncludeDir("Libraries/nfd/include");
-	project.addFile('Libraries/nfd/nfd_common.c');
+	c_project.addDefine('WITH_NFD');
+	c_project.addIncludeDir("Libraries/nfd/include");
+	c_project.addFile('Libraries/nfd/nfd_common.c');
 
 	if (platform === Platform.Windows) {
-		project.addFile('Libraries/nfd/nfd_win.cpp');
+		c_project.addFile('Libraries/nfd/nfd_win.cpp');
 	}
 	else if (platform === Platform.Linux) {
 		let gtk = true;
 		if (gtk) {
-			project.addFile('Libraries/nfd/nfd_gtk.c');
+			c_project.addFile('Libraries/nfd/nfd_gtk.c');
 
-			project.addIncludeDir("/usr/include/gtk-3.0");
-			project.addIncludeDir("/usr/include/glib-2.0");
-			project.addIncludeDir("/usr/lib/x86_64-linux-gnu/glib-2.0/include");
-			project.addIncludeDir("/usr/include/pango-1.0");
-			project.addIncludeDir("/usr/include/cairo");
-			project.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
-			project.addIncludeDir("/usr/include/atk-1.0");
-			project.addIncludeDir("/usr/lib64/glib-2.0/include");
-			project.addIncludeDir("/usr/lib/glib-2.0/include");
-			project.addIncludeDir("/usr/include/harfbuzz");
-			project.addLib('gtk-3');
-			project.addLib('gobject-2.0');
-			project.addLib('glib-2.0');
+			c_project.addIncludeDir("/usr/include/gtk-3.0");
+			c_project.addIncludeDir("/usr/include/glib-2.0");
+			c_project.addIncludeDir("/usr/lib/x86_64-linux-gnu/glib-2.0/include");
+			c_project.addIncludeDir("/usr/include/pango-1.0");
+			c_project.addIncludeDir("/usr/include/cairo");
+			c_project.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
+			c_project.addIncludeDir("/usr/include/atk-1.0");
+			c_project.addIncludeDir("/usr/lib64/glib-2.0/include");
+			c_project.addIncludeDir("/usr/lib/glib-2.0/include");
+			c_project.addIncludeDir("/usr/include/harfbuzz");
+			c_project.addLib('gtk-3');
+			c_project.addLib('gobject-2.0');
+			c_project.addLib('glib-2.0');
 		}
 		else {
-			project.addFile('Libraries/nfd/nfd_zenity.c');
+			c_project.addFile('Libraries/nfd/nfd_zenity.c');
 		}
 	}
 	else {
-		project.addFile('Libraries/nfd/nfd_cocoa.m');
+		c_project.addFile('Libraries/nfd/nfd_cocoa.m');
 	}
 }
 if (flags.with_tinydir) {
-	project.addDefine('WITH_TINYDIR');
-	project.addIncludeDir("Libraries/tinydir/include");
+	c_project.addDefine('WITH_TINYDIR');
+	c_project.addIncludeDir("Libraries/tinydir/include");
 }
 if (flags.with_zlib) {
-	project.addDefine('WITH_ZLIB');
-	project.addIncludeDir("Libraries/zlib");
-	project.addFile("Libraries/zlib/*.h");
-	project.addFile("Libraries/zlib/*.c");
-	project.addExclude("Libraries/zlib/gzlib.c");
-	project.addExclude("Libraries/zlib/gzclose.c");
-	project.addExclude("Libraries/zlib/gzwrite.c");
-	project.addExclude("Libraries/zlib/gzread.c");
+	c_project.addDefine('WITH_ZLIB');
+	c_project.addIncludeDir("Libraries/zlib");
+	c_project.addFile("Libraries/zlib/*.h");
+	c_project.addFile("Libraries/zlib/*.c");
+	c_project.addExclude("Libraries/zlib/gzlib.c");
+	c_project.addExclude("Libraries/zlib/gzclose.c");
+	c_project.addExclude("Libraries/zlib/gzwrite.c");
+	c_project.addExclude("Libraries/zlib/gzread.c");
 }
 if (flags.with_stb_image_write) {
-	project.addDefine('WITH_STB_IMAGE_WRITE');
-	project.addIncludeDir("Libraries/stb");
+	c_project.addDefine('WITH_STB_IMAGE_WRITE');
+	c_project.addIncludeDir("Libraries/stb");
 }
 if (flags.with_mpeg_write) {
-	project.addDefine('WITH_MPEG_WRITE');
-	project.addIncludeDir("Libraries/jo_mpeg");
+	c_project.addDefine('WITH_MPEG_WRITE');
+	c_project.addIncludeDir("Libraries/jo_mpeg");
 }
 
-if (flags.on_project_created) {
-	await flags.on_project_created(project);
+if (flags.on_c_project_created) {
+	await flags.on_c_project_created(c_project, platform, graphics);
 }
 
-project.flatten();
-resolve(project);
+c_project.flatten();
+resolve(c_project);

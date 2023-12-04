@@ -101,7 +101,7 @@ class Project {
 	}
 
 	async addProject(projectDir) {
-		let project = await loadProject(projectDir, 'khafile.js', Project.platform);
+		let project = await loadProject(projectDir, 'project.js');
 		this.assetMatchers = this.assetMatchers.concat(project.assetMatchers);
 		this.sources = this.sources.concat(project.sources);
 		this.shaderMatchers = this.shaderMatchers.concat(project.shaderMatchers);
@@ -120,7 +120,7 @@ class Project {
 	}
 
 	/**
-	 * Add all assets matching the match glob relative to the directory containing the current khafile.
+	 * Add all assets matching the match glob relative to the directory containing the current project.js.
 	 * Asset types are infered from the file suffix.
 	 * Glob syntax is very simple, the most important patterns are * for anything and ** for anything across directories.
 	 */
@@ -173,13 +173,7 @@ class Project {
 			if (fs.existsSync(path.resolve(name))) {
 				return { libpath: name, libroot: name };
 			}
-			// Tries to load the default library from inside the kha project.
-			let libpath = path.join(self.scriptdir, 'Libraries', name);
-			if (fs.existsSync(libpath) && fs.statSync(libpath).isDirectory()) {
-				return { libpath: path.resolve(libpath), libroot: 'Libraries' + '/' + name };
-			}
 			console.error('Error: Library ' + name + ' not found.');
-			console.error('Add it to the \'Libraries\' subdirectory of your project.');
 			throw 'Library ' + name + ' not found.';
 		}
 		let libInfo = findLibraryDirectory(library);
@@ -194,7 +188,7 @@ class Project {
 	}
 }
 
-async function loadProject(from, projectfile, platform) {
+async function loadProject(from, projectfile) {
 	return new Promise((resolve, reject) => {
 		fs.readFile(path.join(from, projectfile), 'utf8', (err, data) => {
 			if (err) {
@@ -207,10 +201,9 @@ async function loadProject(from, projectfile, platform) {
 			};
 			process.on('exit', (code) => {
 				if (!resolved) {
-					console.error('Error: khafile.js did not call resolve, no project created.');
+					console.error('Error: project.js did not call resolve, no project created.');
 				}
 			});
-			Project.platform = platform;
 			Project.scriptdir = from;
 			try {
 				let AsyncFunction = Object.getPrototypeOf(async () => { }).constructor;
@@ -227,7 +220,6 @@ class AssetConverter {
 	constructor(exporter, options, assetMatchers) {
 		this.exporter = exporter;
 		this.options = options;
-		this.platform = options.target;
 		this.assetMatchers = assetMatchers;
 	}
 
@@ -292,10 +284,10 @@ class AssetConverter {
 							let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
 							let images;
 							if (options.noprocessing) {
-								images = await self.exporter.copyBlob(self.platform, file, exportInfo.destination, options);
+								images = await self.exporter.copyBlob(file, exportInfo.destination, options);
 							}
 							else {
-								images = await self.exporter.copyImage(self.platform, file, exportInfo.destination, options);
+								images = await self.exporter.copyImage(file, exportInfo.destination, options);
 							}
 							parsedFiles.push({ name: exportInfo.name, from: file, type: 'image', files: images, original_width: options.original_width, original_height: options.original_height, readable: options.readable, embed: options.embed });
 							break;
@@ -307,10 +299,10 @@ class AssetConverter {
 							let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
 							let sounds;
 							if (options.noprocessing) {
-								sounds = await self.exporter.copyBlob(self.platform, file, exportInfo.destination, options);
+								sounds = await self.exporter.copyBlob(file, exportInfo.destination, options);
 							}
 							else {
-								sounds = await self.exporter.copySound(self.platform, file, exportInfo.destination, options);
+								sounds = await self.exporter.copySound(file, exportInfo.destination, options);
 							}
 							if (sounds.length === 0) {
 								throw 'Audio file ' + file + ' could not be exported, you have to specify a path to ffmpeg.';
@@ -324,10 +316,10 @@ class AssetConverter {
 							let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
 							let fonts;
 							if (options.noprocessing) {
-								fonts = await self.exporter.copyBlob(self.platform, file, exportInfo.destination, options);
+								fonts = await self.exporter.copyBlob(file, exportInfo.destination, options);
 							}
 							else {
-								fonts = await self.exporter.copyFont(self.platform, file, exportInfo.destination + fileinfo.ext, options);
+								fonts = await self.exporter.copyFont(file, exportInfo.destination + fileinfo.ext, options);
 							}
 							parsedFiles.push({ name: exportInfo.name, from: file, type: 'font', files: fonts, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
 							break;
@@ -340,10 +332,10 @@ class AssetConverter {
 							let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
 							let videos;
 							if (options.noprocessing) {
-								videos = await self.exporter.copyBlob(self.platform, file, exportInfo.destination, options);
+								videos = await self.exporter.copyBlob(file, exportInfo.destination, options);
 							}
 							else {
-								videos = await self.exporter.copyVideo(self.platform, file, exportInfo.destination, options);
+								videos = await self.exporter.copyVideo(file, exportInfo.destination, options);
 							}
 							if (videos.length === 0) {
 								console.error('Video file ' + file + ' could not be exported, you have to specify a path to ffmpeg.');
@@ -353,7 +345,7 @@ class AssetConverter {
 						}
 						default: {
 							let exportInfo = AssetConverter.createExportInfo(fileinfo, true, options, self.exporter.options.from);
-							let blobs = await self.exporter.copyBlob(self.platform, file, exportInfo.destination, options);
+							let blobs = await self.exporter.copyBlob(file, exportInfo.destination, options);
 							parsedFiles.push({ name: exportInfo.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
 							break;
 						}
@@ -388,11 +380,10 @@ class CompiledShader {
 }
 
 class ShaderCompiler {
-	constructor(exporter, platform, compiler, to, temp, builddir, options, shaderMatchers) {
+	constructor(exporter, compiler, to, temp, builddir, options, shaderMatchers) {
 		this.exporter = exporter;
-		this.platform = platform;
 		this.compiler = compiler;
-		this.type = ShaderCompiler.findType(platform, options);
+		this.type = ShaderCompiler.findType(options);
 		this.options = options;
 		this.to = to;
 		this.temp = temp;
@@ -402,7 +393,7 @@ class ShaderCompiler {
 
 	close() {}
 
-	static findType(platform, options) {
+	static findType(options) {
 		if (options.graphics === 'default') {
 			if (process.platform === 'win32') {
 				return 'd3d11';
@@ -463,7 +454,6 @@ class ShaderCompiler {
 						compiledShader.files = null;
 					}
 					if (compiledShader.files != null && compiledShader.files.length === 0) {
-						// TODO: Remove when krafix has been recompiled everywhere
 						compiledShader.files.push('data/' + parsed.name + '.' + self.type);
 					}
 					compiledShader.name = AssetConverter.createExportInfo(parsed, false, options, self.exporter.options.from).name;
@@ -527,7 +517,7 @@ class ShaderCompiler {
 							resolve(null);
 						}
 						else {
-							let parameters = [this.type === 'hlsl' ? 'd3d9' : this.type, from, temp, this.temp, this.platform];
+							let parameters = [this.type === 'hlsl' ? 'd3d9' : this.type, from, temp, this.temp, 'krom'];
 							if (this.options.shaderversion) {
 								parameters.push('--version');
 								parameters.push(this.options.shaderversion);
@@ -600,9 +590,9 @@ class ShaderCompiler {
 	}
 }
 
-function convertImage(from, temp, to, kha, exe, params) {
+function convertImage(from, temp, to, root, exe, params) {
 	return new Promise((resolve, reject) => {
-		let process = child_process.spawn(path.join(kha, 'Kinc', 'Tools', sysdir(), exe), params);
+		let process = child_process.spawn(path.join(root, 'Kinc', 'Tools', sysdir(), exe), params);
 		process.stdout.on('data', (data) => {});
 		process.stderr.on('data', (data) => {});
 		process.on('close', (code) => {
@@ -617,7 +607,7 @@ function convertImage(from, temp, to, kha, exe, params) {
 	});
 }
 
-async function exportImage(kha, from, to) {
+async function exportImage(root, from, to) {
 	to += '.k';
 	let temp = to + '.temp';
 	let outputformat = 'k';
@@ -628,7 +618,7 @@ async function exportImage(kha, from, to) {
 	const exe = 'kraffiti' + sys();
 	let params = ['from=' + from, 'to=' + temp, 'format=lz4'];
 	params.push('filter=nearest');
-	await convertImage(from, temp, to, kha, exe, params);
+	await convertImage(from, temp, to, root, exe, params);
 	return outputformat;
 }
 
@@ -675,12 +665,12 @@ function convertEncoder(inFilename, outFilename, encoder, args = null) {
 	});
 }
 
-class KromExporter {
+class ArmorCoreExporter {
 	constructor(options) {
 		this.options = options;
 		this.sources = [];
 		this.libraries = [];
-		this.addSourceDirectory(path.join(options.kha, 'Sources'));
+		this.addSourceDirectory(path.join(options.root, 'Sources'));
 		this.projectFiles = !options.noproject;
 		this.parameters = [];
 	}
@@ -735,7 +725,7 @@ class KromExporter {
 		fs.ensureDirSync(path.join(this.options.to, this.sysdir()));
 	}
 
-	async copySound(platform, from, to, options) {
+	async copySound(from, to, options) {
 		fs.ensureDirSync(path.join(this.options.to, this.sysdir(), path.dirname(to)));
 		if (options.quality < 1) {
 			let ogg = await convertEncoder(from, path.join(this.options.to, this.sysdir(), to + '.ogg'), this.options.ogg);
@@ -747,18 +737,18 @@ class KromExporter {
 		}
 	}
 
-	async copyImage(platform, from, to, options) {
-		let format = await exportImage(this.options.kha, from, path.join(this.options.to, this.sysdir(), to));
+	async copyImage(from, to, options) {
+		let format = await exportImage(this.options.root, from, path.join(this.options.to, this.sysdir(), to));
 		return [to + '.' + format];
 	}
 
-	async copyBlob(platform, from, to) {
+	async copyBlob(from, to) {
 		fs.ensureDirSync(path.join(this.options.to, this.sysdir(), path.dirname(to)));
 		fs.copyFileSync(from.toString(), path.join(this.options.to, this.sysdir(), to));
 		return [to];
 	}
 
-	async copyVideo(platform, from, to) {
+	async copyVideo(from, to) {
 		fs.ensureDirSync(path.join(this.options.to, this.sysdir(), path.dirname(to)));
 		let webm = await convertEncoder(from, path.join(this.options.to, this.sysdir(), to + '.webm'), this.options.webm);
 		let files = [];
@@ -788,8 +778,8 @@ class KromExporter {
 		this.libraries.push(library);
 	}
 
-	async copyFont(platform, from, to, options) {
-		return await this.copyBlob(platform, from, to, options);
+	async copyFont(from, to, options) {
+		return await this.copyBlob(from, to, options);
 	}
 }
 
@@ -950,7 +940,7 @@ let options = [
 let parsedOptions = {};
 
 function printHelp() {
-	console.log('khamake options:\n');
+	console.log('make options:\n');
 	for (let option of options) {
 		if (option.hidden)
 			continue;
@@ -961,12 +951,6 @@ function printHelp() {
 		console.log(option.description);
 		console.log();
 	}
-}
-
-function isTarget(target) {
-	if (target.trim().length < 1)
-		return false;
-	return true;
 }
 
 for (let option of options) {
@@ -1017,20 +1001,6 @@ for (let i = 2; i < args.length; ++i) {
 			}
 		}
 	}
-	else {
-		if (isTarget(arg))
-			parsedOptions.target = arg.toLowerCase();
-	}
-}
-
-async function make_run() {
-	try {
-		await run(parsedOptions, (name) => { });
-	}
-	catch (error) {
-		console.log(error);
-		process.exit(1);
-	}
 }
 
 function fixName(name) {
@@ -1066,37 +1036,36 @@ async function exportProjectFiles(name, resourceDir, options, exporter, kore, ko
 	return name;
 }
 
-async function exportKhaProject(options) {
-	console.log('Creating Kha project.');
+async function exportArmorCoreProject(options) {
+	console.log('Creating ArmorCore project files.');
 	let project = null;
 	let foundProjectFile = false;
-	// get the khafile.js and load the config code,
+	// get the project.js and load the config code,
 	// then create the project config object, which contains stuff
 	// like project name, assets paths, sources path, library path...
-	if (fs.existsSync(path.join(options.from, 'khafile.js'))) {
+	if (fs.existsSync(path.join(options.from, 'project.js'))) {
 		try {
-			project = await loadProject(options.from, 'khafile.js', options.target);
+			project = await loadProject(options.from, 'project.js');
 		}
 		catch (x) {
 			console.error(x);
-			throw 'Loading the projectfile failed.';
+			throw 'Loading the project.js file failed.';
 		}
 		foundProjectFile = true;
 	}
 	if (!foundProjectFile) {
-		throw 'No khafile found.';
+		throw 'No project.js found.';
 	}
 	let temp = path.join(options.to, 'temp');
 	fs.ensureDirSync(temp);
 	let exporter = null;
 	let kore = false;
 	let korehl = false;
-	let target = options.target.toLowerCase();
-	exporter = new KromExporter(options);
-	exporter.setSystemDirectory(target);
+	exporter = new ArmorCoreExporter(options);
+	exporter.setSystemDirectory('krom');
 	let buildDir = path.join(options.to, exporter.sysdir() + '-build');
 	// Create the target build folder
-	// e.g. 'build/android-native'
+	// e.g. 'build/krom'
 	fs.ensureDirSync(path.join(options.to, exporter.sysdir()));
 	exporter.setName(project.name);
 	for (let source of project.sources) {
@@ -1106,7 +1075,7 @@ async function exportKhaProject(options) {
 		exporter.addLibrary(library);
 	}
 	exporter.parameters = exporter.parameters.concat(project.parameters);
-	project.scriptdir = options.kha;
+	project.scriptdir = options.root;
 
 	let assetConverter = new AssetConverter(exporter, options, project.assetMatchers);
 	let assets = await assetConverter.run(temp);
@@ -1129,7 +1098,7 @@ async function exportKhaProject(options) {
 	catch (error) {
 	}
 	let exportedShaders = [];
-	let shaderCompiler = new ShaderCompiler(exporter, options.target, options.krafix, shaderDir, temp, buildDir, options, project.shaderMatchers);
+	let shaderCompiler = new ShaderCompiler(exporter, options.krafix, shaderDir, temp, buildDir, options, project.shaderMatchers);
 	try {
 		exportedShaders = await shaderCompiler.run(recompileAllShaders);
 	}
@@ -1202,31 +1171,30 @@ async function exportKhaProject(options) {
 	return await exportProjectFiles(project.name, path.join(options.to, exporter.sysdir() + '-resources'), options, exporter, kore, korehl, project.libraries, project.defines, project.id);
 }
 
-function isKhaProject(directory, projectfile) {
-	return fs.existsSync(path.join(directory, 'Kha')) || fs.existsSync(path.join(directory, projectfile));
+function isProject(directory, projectfile) {
+	return fs.existsSync(path.join(directory, projectfile));
 }
 
 async function exportProject(options) {
-	if (isKhaProject(options.from, 'khafile.js')) {
-		return await exportKhaProject(options);
+	if (isProject(options.from, 'project.js')) {
+		return await exportArmorCoreProject(options);
 	}
 	else {
-		console.error('Neither Kha directory nor project file (' + 'khafile.js' + ') found.');
+		console.error('project.js file not found.');
 		return 'Unknown';
 	}
 }
 
 async function run(options) {
-	options.target = 'krom';
 	let p = __dirname;
 	if (fs.existsSync(p) && fs.statSync(p).isDirectory()) {
-		options.kha = p;
+		options.root = p;
 	}
-	console.log('Using Kha from ' + options.kha);
-	let haxepath = path.join(options.kha, 'Tools', 'haxe');
+	console.log('Using ArmorCore from ' + options.root + ".");
+	let haxepath = path.join(options.root, 'Tools', 'haxe');
 	if (fs.existsSync(haxepath) && fs.statSync(haxepath).isDirectory())
 		options.haxe = haxepath;
-	let krafixpath = path.join(options.kha, 'Kinc', 'Tools', sysdir(), 'krafix' + sys());
+	let krafixpath = path.join(options.root, 'Kinc', 'Tools', sysdir(), 'krafix' + sys());
 	if (fs.existsSync(krafixpath))
 		options.krafix = krafixpath;
 
@@ -1240,12 +1208,12 @@ async function run(options) {
 		options.theora = options.ffmpeg + ' -nostdin -i {in} {out}';
 	}
 	if (!options.ogg) {
-		let oggpath = path.join(options.kha, 'Tools', sysdir(), 'oggenc' + sys());
+		let oggpath = path.join(options.root, 'Tools', sysdir(), 'oggenc' + sys());
 		if (fs.existsSync(oggpath))
 			options.ogg = oggpath + ' {in} -o {out} --quiet';
 	}
 	if (!options.mp3) {
-		let lamepath = path.join(options.kha, 'Tools', sysdir(), 'lame' + sys());
+		let lamepath = path.join(options.root, 'Tools', sysdir(), 'lame' + sys());
 		if (fs.existsSync(lamepath))
 			options.mp3 = lamepath + ' {in} {out}';
 	}
@@ -1257,4 +1225,14 @@ async function run(options) {
 		process.exit(1);
 	}
 	return name;
+}
+
+async function make_run() {
+	try {
+		await run(parsedOptions, (name) => { });
+	}
+	catch (error) {
+		console.log(error);
+		process.exit(1);
+	}
 }
