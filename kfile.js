@@ -4,6 +4,7 @@ const path = require('path');
 globalThis.flags = {
 	name: 'Armory',
 	package: 'org.armory3d',
+	dirname: __dirname,
 	release: process.argv.indexOf("--debug") == -1,
 	with_d3dcompiler: false,
 	with_nfd: false,
