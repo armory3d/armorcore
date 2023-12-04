@@ -140,86 +140,6 @@ void mouse_wheel(int window, int delta, void *data) {
 	#endif
 }
 
-kinc_g4_vertex_data_t convert_vertex_data(int num) {
-	switch (num) {
-	case 0: // Float32_1X
-		return KINC_G4_VERTEX_DATA_F32_1X;
-	case 1: // Float32_2X
-		return KINC_G4_VERTEX_DATA_F32_2X;
-	case 2: // Float32_3X
-		return KINC_G4_VERTEX_DATA_F32_3X;
-	case 3: // Float32_4X
-		return KINC_G4_VERTEX_DATA_F32_4X;
-	case 4: // Float32_4X4
-		return KINC_G4_VERTEX_DATA_F32_4X4;
-	case 5: // Int8_1X
-		return KINC_G4_VERTEX_DATA_I8_1X;
-	case 6: // UInt8_1X
-		return KINC_G4_VERTEX_DATA_U8_1X;
-	case 7: // Int8_1X_Normalized
-		return KINC_G4_VERTEX_DATA_I8_1X_NORMALIZED;
-	case 8: // UInt8_1X_Normalized
-		return KINC_G4_VERTEX_DATA_U8_1X_NORMALIZED;
-	case 9: // Int8_2X
-		return KINC_G4_VERTEX_DATA_I8_2X;
-	case 10: // UInt8_2X
-		return KINC_G4_VERTEX_DATA_U8_2X;
-	case 11: // Int8_2X_Normalized
-		return KINC_G4_VERTEX_DATA_I8_2X_NORMALIZED;
-	case 12: // UInt8_2X_Normalized
-		return KINC_G4_VERTEX_DATA_U8_2X_NORMALIZED;
-	case 13: // Int8_4X
-		return KINC_G4_VERTEX_DATA_I8_4X;
-	case 14: // UInt8_4X
-		return KINC_G4_VERTEX_DATA_U8_4X;
-	case 15: // Int8_4X_Normalized
-		return KINC_G4_VERTEX_DATA_I8_4X_NORMALIZED;
-	case 16: // UInt8_4X_Normalized
-		return KINC_G4_VERTEX_DATA_U8_4X_NORMALIZED;
-	case 17: // Int16_1X
-		return KINC_G4_VERTEX_DATA_I16_1X;
-	case 18: // UInt16_1X
-		return KINC_G4_VERTEX_DATA_U16_1X;
-	case 19: // Int16_1X_Normalized
-		return KINC_G4_VERTEX_DATA_I16_1X_NORMALIZED;
-	case 20: // UInt16_1X_Normalized
-		return KINC_G4_VERTEX_DATA_U16_1X_NORMALIZED;
-	case 21: // Int16_2X
-		return KINC_G4_VERTEX_DATA_I16_2X;
-	case 22: // UInt16_2X
-		return KINC_G4_VERTEX_DATA_U16_2X;
-	case 23: // Int16_2X_Normalized
-		return KINC_G4_VERTEX_DATA_I16_2X_NORMALIZED;
-	case 24: // UInt16_2X_Normalized
-		return KINC_G4_VERTEX_DATA_U16_2X_NORMALIZED;
-	case 25: // Int16_4X
-		return KINC_G4_VERTEX_DATA_I16_4X;
-	case 26: // UInt16_4X
-		return KINC_G4_VERTEX_DATA_U16_4X;
-	case 27: // Int16_4X_Normalized
-		return KINC_G4_VERTEX_DATA_I16_4X_NORMALIZED;
-	case 28: // UInt16_4X_Normalized
-		return KINC_G4_VERTEX_DATA_U16_4X_NORMALIZED;
-	case 29: // Int32_1X
-		return KINC_G4_VERTEX_DATA_I32_1X;
-	case 30: // UInt32_1X
-		return KINC_G4_VERTEX_DATA_U32_1X;
-	case 31: // Int32_2X
-		return KINC_G4_VERTEX_DATA_I32_2X;
-	case 32: // UInt32_2X
-		return KINC_G4_VERTEX_DATA_U32_2X;
-	case 33: // Int32_3X
-		return KINC_G4_VERTEX_DATA_I32_3X;
-	case 34: // UInt32_3X
-		return KINC_G4_VERTEX_DATA_U32_3X;
-	case 35: // Int32_4X
-		return KINC_G4_VERTEX_DATA_I32_4X;
-	case 36: // UInt32_4X
-		return KINC_G4_VERTEX_DATA_U32_4X;
-	}
-	return KINC_G4_VERTEX_DATA_NONE;
-}
-
 int format_byte_size(kinc_image_format_t format) {
 	switch (format) {
 	case KINC_IMAGE_FORMAT_RGBA128:
@@ -495,14 +415,14 @@ __attribute__((export_name("_createVertexBuffer"))) kinc_g4_vertex_buffer_t *_cr
 
 	kinc_g4_vertex_structure_t structure;
 	kinc_g4_vertex_structure_init(&structure);
-	if (name0 != NULL) kinc_g4_vertex_structure_add(&structure, name0, convert_vertex_data(data0));
-	if (name1 != NULL) kinc_g4_vertex_structure_add(&structure, name1, convert_vertex_data(data1));
-	if (name2 != NULL) kinc_g4_vertex_structure_add(&structure, name2, convert_vertex_data(data2));
-	if (name3 != NULL) kinc_g4_vertex_structure_add(&structure, name3, convert_vertex_data(data3));
-	if (name4 != NULL) kinc_g4_vertex_structure_add(&structure, name4, convert_vertex_data(data4));
-	if (name5 != NULL) kinc_g4_vertex_structure_add(&structure, name5, convert_vertex_data(data5));
-	if (name6 != NULL) kinc_g4_vertex_structure_add(&structure, name6, convert_vertex_data(data6));
-	if (name7 != NULL) kinc_g4_vertex_structure_add(&structure, name7, convert_vertex_data(data7));
+	if (name0 != NULL) kinc_g4_vertex_structure_add(&structure, name0, (kinc_g4_vertex_data_t)data0);
+	if (name1 != NULL) kinc_g4_vertex_structure_add(&structure, name1, (kinc_g4_vertex_data_t)data1);
+	if (name2 != NULL) kinc_g4_vertex_structure_add(&structure, name2, (kinc_g4_vertex_data_t)data2);
+	if (name3 != NULL) kinc_g4_vertex_structure_add(&structure, name3, (kinc_g4_vertex_data_t)data3);
+	if (name4 != NULL) kinc_g4_vertex_structure_add(&structure, name4, (kinc_g4_vertex_data_t)data4);
+	if (name5 != NULL) kinc_g4_vertex_structure_add(&structure, name5, (kinc_g4_vertex_data_t)data5);
+	if (name6 != NULL) kinc_g4_vertex_structure_add(&structure, name6, (kinc_g4_vertex_data_t)data6);
+	if (name7 != NULL) kinc_g4_vertex_structure_add(&structure, name7, (kinc_g4_vertex_data_t)data7);
 
 	kinc_g4_vertex_buffer_init(buffer, count, &structure, (kinc_g4_usage_t)usage, instanceDataStepRate);
 	return buffer;
@@ -590,14 +510,14 @@ __attribute__((export_name("_deletePipeline"))) void _deletePipeline(kinc_g4_pip
 __attribute__((export_name("_compilePipeline"))) void _compilePipeline(kinc_g4_pipeline_t *pipeline, char *name0, int data0, char *name1, int data1, char *name2, int data2, char *name3, int data3, char *name4, int data4, char *name5, int data5, char *name6, int data6, char *name7, int data7, kinc_g4_cull_mode_t cull_mode, bool depth_write, kinc_g4_compare_mode_t depth_mode, int blend_source, int blend_destination, int alpha_blend_source, int alpha_blend_destination, bool color_write_mask_red, bool color_write_mask_green, bool color_write_mask_blue, bool color_write_mask_alpha, int color_attachment_count, int depth_attachment_bits, int stencil_attachment_bits, bool conservative_rasterization, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader) {
 	kinc_g4_vertex_structure_t structure;
 	kinc_g4_vertex_structure_init(&structure);
-	if (name0 != NULL) kinc_g4_vertex_structure_add(&structure, name0, convert_vertex_data(data0));
-	if (name1 != NULL) kinc_g4_vertex_structure_add(&structure, name1, convert_vertex_data(data1));
-	if (name2 != NULL) kinc_g4_vertex_structure_add(&structure, name2, convert_vertex_data(data2));
-	if (name3 != NULL) kinc_g4_vertex_structure_add(&structure, name3, convert_vertex_data(data3));
-	if (name4 != NULL) kinc_g4_vertex_structure_add(&structure, name4, convert_vertex_data(data4));
-	if (name5 != NULL) kinc_g4_vertex_structure_add(&structure, name5, convert_vertex_data(data5));
-	if (name6 != NULL) kinc_g4_vertex_structure_add(&structure, name6, convert_vertex_data(data6));
-	if (name7 != NULL) kinc_g4_vertex_structure_add(&structure, name7, convert_vertex_data(data7));
+	if (name0 != NULL) kinc_g4_vertex_structure_add(&structure, name0, (kinc_g4_vertex_data_t)data0);
+	if (name1 != NULL) kinc_g4_vertex_structure_add(&structure, name1, (kinc_g4_vertex_data_t)data1);
+	if (name2 != NULL) kinc_g4_vertex_structure_add(&structure, name2, (kinc_g4_vertex_data_t)data2);
+	if (name3 != NULL) kinc_g4_vertex_structure_add(&structure, name3, (kinc_g4_vertex_data_t)data3);
+	if (name4 != NULL) kinc_g4_vertex_structure_add(&structure, name4, (kinc_g4_vertex_data_t)data4);
+	if (name5 != NULL) kinc_g4_vertex_structure_add(&structure, name5, (kinc_g4_vertex_data_t)data5);
+	if (name6 != NULL) kinc_g4_vertex_structure_add(&structure, name6, (kinc_g4_vertex_data_t)data6);
+	if (name7 != NULL) kinc_g4_vertex_structure_add(&structure, name7, (kinc_g4_vertex_data_t)data7);
 
 	pipeline->vertex_shader = vertex_shader;
 	pipeline->fragment_shader = fragment_shader;
