@@ -2,30 +2,21 @@ package iron;
 
 import haxe.ds.Vector;
 import kha.Image.TextureFormat;
-import iron.Trait;
 import iron.object.Transform;
-import iron.object.Constraint;
 import iron.object.Animation;
 import iron.object.Object;
 import iron.object.CameraObject;
 import iron.object.MeshObject;
 import iron.object.LightObject;
 import iron.object.SpeakerObject;
-import iron.object.DecalObject;
-import iron.object.ProbeObject;
-import iron.object.Tilesheet;
 import iron.data.CameraData;
 import iron.data.MeshData;
 import iron.data.LightData;
-import iron.data.ProbeData;
 import iron.data.WorldData;
 import iron.data.MaterialData;
 import iron.data.Armature;
 import iron.data.Data;
 import iron.data.SceneFormat;
-import iron.data.TerrainStream;
-import iron.data.SceneStream;
-import iron.data.MeshBatch;
 import iron.system.Time;
 using StringTools;
 
@@ -41,21 +32,6 @@ class Scene {
 	public var camera: CameraObject;
 	public var world: WorldData;
 
-	#if arm_batch
-	public var meshBatch: MeshBatch = null;
-	#end
-	#if arm_stream
-	public var sceneStream: SceneStream = null;
-	#end
-	#if arm_terrain
-	public var terrainStream: TerrainStream = null;
-	#end
-	#if rp_decals
-	public var decals: Array<DecalObject>;
-	#end
-	#if rp_probes
-	public var probes: Array<ProbeObject>;
-	#end
 	public var meshes: Array<MeshObject>;
 	public var lights: Array<LightObject>;
 	public var cameras: Array<CameraObject>;
@@ -64,7 +40,6 @@ class Scene {
 	#end
 	public var empties: Array<Object>;
 	public var animations: Array<Animation>;
-	public var tilesheets: Array<Tilesheet>;
 	#if arm_skin
 	public var armatures: Array<Armature>;
 	#end
@@ -81,18 +56,6 @@ class Scene {
 
 	public function new() {
 		uid = uidCounter++;
-		#if arm_batch
-		meshBatch = new MeshBatch();
-		#end
-		#if arm_stream
-		sceneStream = new SceneStream();
-		#end
-		#if rp_decals
-		decals = [];
-		#end
-		#if rp_probes
-		probes = [];
-		#end
 		meshes = [];
 		lights = [];
 		cameras = [];
@@ -101,7 +64,6 @@ class Scene {
 		#end
 		empties = [];
 		animations = [];
-		tilesheets = [];
 		#if arm_skin
 		armatures = [];
 		#end
@@ -124,16 +86,6 @@ class Scene {
 
 			// Startup scene
 			active.addScene(format.name, null, function(sceneObject: Object) {
-				for (object in sceneObject.getChildren(true)) {
-					createTraits(object.raw.traits, object);
-				}
-
-				#if arm_terrain
-				if (format.terrain_ref != null) {
-					active.terrainStream = new TerrainStream(format.terrain_datas[0]);
-				}
-				#end
-
 				if (active.cameras.length == 0) {
 					trace('No camera found for scene "' + format.name + '"');
 				}
@@ -152,35 +104,8 @@ class Scene {
 		});
 	}
 
-	#if arm_patch
-	public static var getRenderPath: Void->RenderPath;
-	public static function patch() {
-		Data.deleteAll();
-		var cameraTransform = Scene.active.camera.transform;
-		Scene.setActive(Scene.active.raw.name, function(o: Object) {
-			RenderPath.setActive(getRenderPath());
-			Scene.active.camera.transform = cameraTransform;
-		});
-	}
-	#end
-
 	public function remove() {
 		for (f in traitRemoves) f();
-		#if arm_batch
-		if (meshBatch != null) meshBatch.remove();
-		#end
-		#if arm_stream
-		if (sceneStream != null) sceneStream.remove();
-		#end
-		#if arm_terrain
-		if (terrainStream != null) terrainStream.remove();
-		#end
-		#if rp_decals
-		for (o in decals) o.remove();
-		#end
-		#if rp_probes
-		for (o in probes) o.remove();
-		#end
 		for (o in meshes) o.remove();
 		for (o in lights) o.remove();
 		for (o in cameras) o.remove();
@@ -213,7 +138,7 @@ class Scene {
 		Data.getSceneRaw(sceneName, function(format: TSceneFormat) {
 			Scene.create(format, function(o: Object) {
 				if (done != null) done(o);
-				#if rp_voxels // Revoxelize
+				#if arm_voxels // Revoxelize
 				RenderPath.active.voxelized = 0;
 				#end
 
@@ -231,33 +156,13 @@ class Scene {
 
 	public function updateFrame() {
 		if (!ready) return;
-		#if arm_stream
-		sceneStream.update(active.camera);
-		#end
-		#if arm_terrain
-		if (terrainStream != null) terrainStream.update(active.camera);
-		#end
 		for (anim in animations) anim.update(Time.delta);
 		for (e in empties) if (e != null && e.parent != null) e.transform.update();
 	}
 
-	public function renderFrame(g: kha.graphics4.Graphics) {
+	public function renderFrame(g: kha.Graphics4) {
 		if (!ready || RenderPath.active == null) return;
 		framePassed = true;
-
-		for (tilesheet in tilesheets) {
-			tilesheet.update();
-		}
-
-		// Render probes
-		#if rp_probes
-		var activeCamera = camera;
-		for (probe in probes) {
-			camera = probe.camera;
-			probe.render(g, activeCamera);
-		}
-		camera = activeCamera;
-		#end
 
 		// Render active camera
 		camera != null ? camera.renderFrame(g) : RenderPath.active.renderFrame(g);
@@ -270,16 +175,6 @@ class Scene {
 		return object;
 	}
 
-	/**
-	 * Returns the children of the scene.
-	 *
-	 * If 'recursive' is set to `false`, only direct children will be included
-	 * in the returned array. If `recursive` is `true`, children of children and
-	 * so on will be included too.
-	 *
-	 * @param recursive = `false` Include children of children
-	 * @return `Array<Object>`
-	 */
 	public function getChildren(?recursive = false): Array<Object> {
 		return root.getChildren(recursive);
 	}
@@ -288,9 +183,9 @@ class Scene {
 		return root.getChild(name);
 	}
 
-	public function getTrait(c: Class<Trait>): Dynamic {
-		return root.children.length > 0 ? root.children[0].getTrait(c) : null;
-	}
+	// public function getTrait(c: Class<Trait>): Dynamic {
+	// 	return root.children.length > 0 ? root.children[0].getTrait(c) : null;
+	// }
 
 	public function getMesh(name: String): MeshObject {
 		for (m in meshes) if (m.name == name) return m;
@@ -319,22 +214,6 @@ class Scene {
 		return null;
 	}
 
-	public function getGroup(name: String): Array<Object> {
-		if (groups == null) groups = new Map();
-		var g = groups.get(name);
-		if (g == null) {
-			g = [];
-			groups.set(name, g);
-			var refs = getGroupObjectRefs(name);
-			if (refs == null) return g;
-			for (ref in refs) {
-				var c = getChild(ref);
-				if (c != null) g.push(c);
-			}
-		}
-		return g;
-	}
-
 	public function addMeshObject(data: MeshData, materials: Vector<MaterialData>, parent: Object = null): MeshObject {
 		var object = new MeshObject(data, materials);
 		parent != null ? object.setParent(parent) : object.setParent(root);
@@ -346,14 +225,6 @@ class Scene {
 		parent != null ? object.setParent(parent) : object.setParent(root);
 		return object;
 	}
-
-	#if rp_probes
-	public function addProbeObject(data: ProbeData, parent: Object = null): ProbeObject {
-		var object = new ProbeObject(data);
-		parent != null ? object.setParent(parent) : object.setParent(root);
-		return object;
-	}
-	#end
 
 	public function addCameraObject(data: CameraData, parent: Object = null): CameraObject {
 		var object = new CameraObject(data);
@@ -369,17 +240,6 @@ class Scene {
 	}
 	#end
 
-	#if rp_decals
-	public function addDecalObject(material: MaterialData, parent: Object = null): DecalObject {
-		var object = new DecalObject(material);
-		parent != null ? object.setParent(parent) : object.setParent(root);
-		return object;
-	}
-	#end
-
-	#if arm_stream
-	var objectsTraversed = 0;
-	#end
 	public function addScene(sceneName: String, parent: Object, done: Object->Void) {
 		if (parent == null) {
 			parent = addObject();
@@ -387,11 +247,7 @@ class Scene {
 		}
 		Data.getSceneRaw(sceneName, function(format: TSceneFormat) {
 			loadEmbeddedData(format.embedded_datas, function() { // Additional scene assets
-				#if arm_stream
-				objectsTraversed = 0;
-				#else
 				var objectsTraversed = 0;
-				#end
 
 				var objectsCount = getObjectsCount(format.objects);
 				function traverseObjects(parent: Object, objects: Array<TObj>, parentObject: TObj, done: Void->Void) {
@@ -411,12 +267,10 @@ class Scene {
 				}
 
 				if (format.objects == null || format.objects.length == 0) {
-					createTraits(format.traits, parent); // Scene traits
 					done(parent);
 				}
 				else {
 					traverseObjects(parent, format.objects, null, function() { // Scene objects
-						createTraits(format.traits, parent); // Scene traits
 						done(parent);
 					});
 				}
@@ -434,14 +288,6 @@ class Scene {
 		return result;
 	}
 
-	/**
-		Spawn a new object instance in the scene.
-		@param	name The name of the object as defined in Blender.
-		@param	parent The parent object this new object should be attached to (optional, use `null` to add to the scene without a parent).
-		@param	done Function to run after the spawn is completed (optional). Useful to change properties of the object after spawning.
-		@param	spawnChildren Also spawn the children of the newly spawned object (optional, default is `true`).
-		@param	srcRaw If not `null`, spawn the object from the given scene data instead of using the scene this function is called on. Useful to spawn objects from other scenes.
-	**/
 	public function spawnObject(name: String, parent: Null<Object>, done: Null<Object->Void>, spawnChildren = true, srcRaw: Null<TSceneFormat> = null) {
 		if (srcRaw == null) srcRaw = raw;
 		var objectsTraversed = 0;
@@ -478,23 +324,10 @@ class Scene {
 		});
 	}
 
-	/**
-		Returns an object in scene data format ('TObj') based on its name.
-		Returns 'null' if the object does not exist.
-		@param format The raw scene data
-		@param name The name of the object
-		@return TObj
-	**/
 	public static function getRawObjectByName(format: TSceneFormat, name: String): TObj {
 		return traverseObjs(format.objects, name);
 	}
 
-	/**
-		Searches the given 'TObj' array for an object with the given name and returns that object.
-		@param children The array in which to search
-		@param name The name of the object
-		@return TObj
-	**/
 	static function traverseObjs(children: Array<TObj>, name: String): TObj {
 		for (o in children) {
 			if (o.name == name) return o;
@@ -521,14 +354,6 @@ class Scene {
 				returnObject(object, o, done);
 			});
 		}
-		#if rp_probes
-		else if (o.type == "probe_object") {
-			Data.getProbe(sceneName, o.data_ref, function(b: ProbeData) {
-				var object = addProbeObject(b, parent);
-				returnObject(object, o, done);
-			});
-		}
-		#end
 		else if (o.type == "mesh_object") {
 			if (o.material_refs == null || o.material_refs.length == 0) {
 				createMeshObject(o, format, parent, parentObject, null, done);
@@ -555,110 +380,15 @@ class Scene {
 			returnObject(object, o, done);
 		}
 		#end
-		#if rp_decals
-		else if (o.type == "decal_object") {
-			if (o.material_refs != null && o.material_refs.length > 0) {
-				Data.getMaterial(sceneName, o.material_refs[0], function(material: MaterialData) {
-					var object = addDecalObject(material, parent);
-					returnObject(object, o, done);
-				});
-			}
-			else {
-				var object = addDecalObject(null, parent);
-				returnObject(object, o, done);
-			}
-		}
-		#end
 		else if (o.type == "object") {
 			var object = addObject(parent);
 			returnObject(object, o, function(ro: Object) {
-				if (o.group_ref != null) { // Instantiate group objects
-					spawnGroup(format, o.group_ref, ro, function() { done(ro); });
-				}
-				else done(ro);
+				done(ro);
 			});
 		}
 		else done(null);
 	}
 
-	function spawnGroup(format: TSceneFormat, groupRef: String, groupOwner: Object, done: Void->Void, ?failed: Void->Void) {
-		var spawned = 0;
-		var object_refs = getGroupObjectRefs(groupRef);
-
-		if (object_refs == null) { // Group doesn't exist
-			if (failed != null) failed();
-		}
-		else if (object_refs.length == 0) {
-			done();
-		}
-		else {
-			for (object_ref in object_refs) {
-				// Spawn top-level collection objects and their children
-				spawnObject(object_ref, groupOwner, function(spawnedObject: Object) {
-					// Apply collection/group instance offset to all
-					// top-level parents of that group
-					if (!isObjectInGroup(groupRef, spawnedObject.parent)) {
-						for (group in format.groups) {
-							if (group.name == groupRef) {
-								spawnedObject.transform.applyParent();
-								spawnedObject.transform.translate(
-									-group.instance_offset[0],
-									-group.instance_offset[1],
-									-group.instance_offset[2]
-								);
-								break;
-							}
-						}
-					}
-					if (++spawned == object_refs.length) {
-						groupOwner.transform.reset();
-						done();
-					}
-				});
-			}
-		}
-	}
-
-	/**
-		Returns all object names of the given group.
-		Returns `null` if the group does not exist.
-		@param group_ref The name of the group
-		@return `Array<String>`
-	**/
-	function getGroupObjectRefs(group_ref: String): Array<String> {
-		for (g in active.raw.groups) if (g.name == group_ref) return g.object_refs;
-		return null;
-	}
-
-	/**
-		Returns all objects in scene data format (`TObj`) of the given group.
-		If the group does not exist or is empty, an empty array is returned.
-		@param groupRef The name of the group
-		@return `Array<TObj>`
-	**/
-	function getGroupObjectsRaw(groupRef: String): Array<TObj> {
-		var objectRefs = getGroupObjectRefs(groupRef);
-		var objects: Array<TObj> = new Array<TObj>();
-
-		if (objectRefs == null) return objects;
-
-		for (objRef in objectRefs) {
-			var rawObj = getRawObjectByName(raw, objRef);
-			objects.push(rawObj);
-
-			var childRefs = getChildObjectsRaw(rawObj);
-			objects = objects.concat(childRefs);
-		}
-		return objects;
-	}
-
-	/**
-		Returns all child objects of the given raw object in scene data format ('TObj').
-		If the object has no children, an empty array is returned.
-		@param rawObj The object
-		@param recursive (Optional) If 'true', return also children of children and so on...
-		@return `Array<TObj>`
-	**/
 	function getChildObjectsRaw(rawObj: TObj, ?recursive:Bool = true): Array<TObj> {
 		var children = rawObj.children;
 		if (children == null) return new Array<TObj>();
@@ -671,38 +401,6 @@ class Scene {
 			}
 		}
 		return children;
-	}
-
-	/**
-		Checks if an object is an element of the given group.
-		@param groupRef The name of the group
-		@param object The object
-		@return Bool
-	**/
-	function isObjectInGroup(groupRef: String, object: Object): Bool {
-		for (obj in getGroupObjectsRaw(groupRef)) {
-			if (obj.name == object.name) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-#if arm_stream
-	function childCount(o: TObj): Int {
-		var i = o.children.length;
-		if (o.children != null) for (c in o.children) i += childCount(c);
-		return i;
-	}
-
-	function streamMeshObject(object_file: String, data_ref: String, sceneName: String, armature: Armature, materials: Vector<MaterialData>, parent: Object, parentObj: TObj, o: TObj, done: Object->Void) {
-		sceneStream.add(object_file, data_ref, sceneName, armature, materials, parent, parentObj, o);
-		returnObject(null, null, done);
-	}
-#end
-
-	function isLod(raw: TObj): Bool {
-		return raw != null && raw.lods != null && raw.lods.length > 0;
 	}
 
 	function createMeshObject(o: TObj, format: TSceneFormat, parent: Object, parentObject: TObj, materials: Vector<MaterialData>, done: Object->Void) {
@@ -748,22 +446,14 @@ class Scene {
 							armature = new Armature(parent.uid, parent.name, bactions);
 							armatures.push(armature);
 						}
-						#if arm_stream
-						streamMeshObject(
-						#else
 						returnMeshObject(
-						#end
 							object_file, data_ref, sceneName, armature, materials, parent, parentObject, o, done);
 					}
 				});
 			}
 		}
 		else { #end // arm_skin
-			#if arm_stream
-			streamMeshObject(
-			#else
 			returnMeshObject(
-			#end
 				object_file, data_ref, sceneName, null, materials, parent, parentObject, o, done);
 		#if arm_skin
 		}
@@ -779,10 +469,6 @@ class Scene {
 			}
 			#end
 			var object = addMeshObject(mesh, materials, parent);
-			#if arm_batch
-			var lod = isLod(o) || (parent != null && isLod(parent.raw));
-			object.batch(lod);
-			#end
 
 			// Attach particle systems
 			#if arm_particles
@@ -790,10 +476,6 @@ class Scene {
 				for (ref in o.particle_refs) cast(object, MeshObject).setupParticleSystem(sceneName, ref);
 			}
 			#end
-			// Attach tilesheet
-			if (o.tilesheet_ref != null) {
-				cast(object, MeshObject).setupTilesheet(sceneName, o.tilesheet_ref, o.tilesheet_action_ref);
-			}
 			returnObject(object, o, done);
 		});
 	}
@@ -828,21 +510,8 @@ class Scene {
 			object.name = o.name;
 			if (o.visible != null) object.visible = o.visible;
 			if (o.visible_mesh != null) object.visibleMesh = o.visible_mesh;
-			if (o.visible_shadow != null) object.visibleShadow = o.visible_shadow;
-			createConstraints(o.constraints, object);
 			generateTransform(o, object.transform);
 			object.setupAnimation(oactions);
-			#if arm_morph_target
-			object.setupMorphTargets();
-			#end
-			if (o.properties != null) {
-				object.properties = new Map();
-				for (p in o.properties) object.properties.set(p.name, p.value);
-			}
-
-			// If the scene is still initializing, traits will be created later
-			// to ensure that object references for trait properties are valid
-			if (!active.initializing) createTraits(o.traits, object);
 		}
 		done(object);
 	}
@@ -853,55 +522,6 @@ class Scene {
 		// Whether to apply parent matrix
 		if (object.local_only != null) transform.localOnly = object.local_only;
 		if (transform.object.parent != null) transform.update();
-	}
-
-	static function createTraits(traits: Array<TTrait>, object: Object) {
-		if (traits == null) return;
-		for (t in traits) {
-			if (t.type == "Script") {
-				// Assign arguments if any
-				var args: Array<Dynamic> = [];
-				if (t.parameters != null) {
-					for (param in t.parameters) {
-						args.push(parseArg(param));
-					}
-				}
-				var traitInst = createTraitClassInstance(t.class_name, args);
-				if (traitInst == null) {
-					trace("Error: Trait '" + t.class_name + "' referenced in object '" + object.name + "' not found");
-					continue;
-				}
-
-				// Set trait properties
-				if (t.props != null) {
-					for (i in 0...Std.int(t.props.length / 3)) {
-						var pname: String = t.props[i * 3];
-						var ptype: String = t.props[i * 3 + 1];
-						var pval: Dynamic = t.props[i * 3 + 2];
-
-						if (StringTools.endsWith(ptype, "Object") && pval != "") {
-							Reflect.setProperty(traitInst, pname, Scene.active.getChild(pval));
-						}
-						else {
-							switch (ptype) {
-								case "Vec2":
-									final pVec: js.lib.Float32Array = cast pval;
-									Reflect.setProperty(traitInst, pname, new iron.math.Vec2(pVec[0], pVec[1]));
-								case "Vec3":
-									final pVec: js.lib.Float32Array = cast pval;
-									Reflect.setProperty(traitInst, pname, new iron.math.Vec3(pVec[0], pVec[1], pVec[2]));
-								case "Vec4":
-									final pVec: js.lib.Float32Array = cast pval;
-									Reflect.setProperty(traitInst, pname, new iron.math.Vec4(pVec[0], pVec[1], pVec[2], pVec[3]));
-								default:
-									Reflect.setProperty(traitInst, pname, pval);
-							}
-						}
-					}
-				}
-				object.addTrait(traitInst);
-			}
-		}
 	}
 
  	static function parseArg(str: String): Dynamic {
@@ -927,15 +547,6 @@ class Scene {
 			var f = Std.parseFloat(str);
 			var i = Std.parseInt(str);
 			return f == i ? i : f;
-		}
-	}
-
-	static function createConstraints(constraints: Array<TConstraint>, object: Object) {
-		if (constraints == null) return;
-		object.constraints = [];
-		for (c in constraints) {
-			var constr = new Constraint(c);
-			object.constraints.push(constr);
 		}
 	}
 

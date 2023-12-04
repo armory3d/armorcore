@@ -1,7 +1,7 @@
 package iron.data;
 
-import kha.graphics4.Graphics.Usage;
-import kha.graphics4.VertexBuffer.VertexData;
+import kha.Graphics4.Usage;
+import kha.VertexBuffer.VertexData;
 import js.lib.Int16Array;
 import js.lib.Uint32Array;
 import iron.data.SceneFormat;
@@ -48,11 +48,6 @@ class MeshData {
 			vertexArrays[i].size = getVertexSize(vertexArrays[i].data, getPadding(vertexArrays[i].padding));
 		}
 
-		// Usage, also used for instanced data
-		var parsedUsage = Usage.StaticUsage;
-		if (raw.dynamic_usage != null && raw.dynamic_usage == true) parsedUsage = Usage.DynamicUsage;
-		var usage = parsedUsage;
-
 		if (isSkinned) {
 			var bonea = null;
 			var weighta = null;
@@ -83,7 +78,7 @@ class MeshData {
 		}
 
 		// Make vertex buffers
-		geom = new Geometry(this, indices, materialIndices, usage);
+		geom = new Geometry(this, indices, materialIndices);
 		geom.name = name;
 
 		done(this);
@@ -103,7 +98,6 @@ class MeshData {
 
 			new MeshData(raw, function(dat: MeshData) {
 				dat.format = format;
-				// Skinned
 				#if arm_skin
 				if (raw.skin != null) {
 					dat.geom.skinBoneCounts = raw.skin.bone_count_array;

@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-let armorcore = false;
 
 try {
 	if (process.env.ARM_SNAPSHOT) {
@@ -15,7 +14,6 @@ try {
 	let root = process.env.ARM_SDKPATH != undefined ? process.env.ARM_SDKPATH + "/armorcore" : __dirname;
 	eval(fs.readFileSync(root + "/make.js") + "");
 	await runKhamake();
-	armorcore = true;
 
 	if (process.argv.indexOf("--run") >= 0) {
 		fs.cp(process.cwd() + "/build/krom", __dirname + "/Deployment", {recursive: true}, function (err){});
@@ -39,7 +37,6 @@ let flags = {
 	with_stb_image_write: false,
 	with_mpeg_write: false,
 	with_audio: false,
-	with_worker: false,
 	with_g2: false,
 	with_iron: false,
 	with_zui: false,
@@ -86,11 +83,6 @@ if (platform === Platform.Wasm) {
 }
 else {
 	project.addFile('Sources/main.cpp');
-	if (flags.with_worker) {
-		project.addDefine('WITH_WORKER');
-		project.addFile('Sources/worker.h');
-		project.addFile('Sources/worker.cpp');
-	}
 }
 
 if (flags.with_g2) {
@@ -127,7 +119,6 @@ else if (platform === Platform.iOS) {
 }
 
 if (platform === Platform.Windows) {
-	project.cmdArgs = [process.cwd() + '\\build\\krom'];
 	project.addLib('Dbghelp'); // Stack walk
 	project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
 	project.addLib('winmm'); // timeGetTime for V8

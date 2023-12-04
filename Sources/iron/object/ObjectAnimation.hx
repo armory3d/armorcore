@@ -53,8 +53,6 @@ class ObjectAnimation extends Animation {
 		return (1.0 - s) * v1 + s * v2;
 	}
 
-	// inline function interpolateTcb(): Float { return 0.0; }
-
 	override function isTrackEnd(track: TTrack): Bool {
 		return speed > 0 ?
 			frameIndex >= track.frames.length - 2 :

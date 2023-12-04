@@ -2,49 +2,18 @@ package kha;
 
 import kha.Window.FramebufferOptions;
 import kha.Window.WindowOptions;
-import kha.input.Gamepad;
-import kha.input.Keyboard;
-import kha.input.Surface;
-import kha.input.Mouse;
-import kha.input.Pen;
-import kha.input.Surface;
+import iron.system.Input.Gamepad;
+import iron.system.Input.Keyboard;
+import iron.system.Input.Surface;
+import iron.system.Input.Mouse;
+import iron.system.Input.Pen;
 import kha.System;
-import haxe.ds.Vector;
 
 @:structInit
 class SystemOptions {
 	@:optional public var title: String = "Kha";
-	@:optional public var width: Int = -1;
-	@:optional public var height: Int = -1;
 	@:optional public var window: WindowOptions = null;
 	@:optional public var framebuffer: FramebufferOptions = null;
-
-	public function new(title: String = "Kha", ?width: Int = -1, ?height: Int = -1, window: WindowOptions = null, framebuffer: FramebufferOptions = null) {
-		this.title = title;
-		this.window = window == null ? {} : window;
-
-		if (width > 0) {
-			this.window.width = width;
-			this.width = width;
-		}
-		else {
-			this.width = this.window.width;
-		}
-
-		if (height > 0) {
-			this.window.height = height;
-			this.height = height;
-		}
-		else {
-			this.height = this.window.height;
-		}
-
-		if (this.window.title == null) {
-			this.window.title = title;
-		}
-
-		this.framebuffer = framebuffer == null ? {} : framebuffer;
-	}
 }
 
 class System {
@@ -67,10 +36,9 @@ class System {
 	private static var pen: Pen;
 	private static var maxGamepads: Int = 4;
 	private static var gamepads: Array<Gamepad>;
-	private static var mouseLockListeners: Array<Void->Void> = [];
 
 	public static function start(options: SystemOptions, callback: Window -> Void): Void {
-		Krom.init(options.title, options.width, options.height, options.framebuffer.samplesPerPixel, options.framebuffer.verticalSync, cast options.window.mode, options.window.windowFeatures, 0, options.window.x, options.window.y, options.framebuffer.frequency);
+		Krom.init(options.title, options.window.width, options.window.height, options.framebuffer.samplesPerPixel, options.framebuffer.verticalSync, cast options.window.mode, options.window.windowFeatures, 0, options.window.x, options.window.y, options.framebuffer.frequency);
 
 		startTime = Krom.getTime();
 
@@ -79,23 +47,23 @@ class System {
 			Krom.log(message);
 		};
 
-		new Window(0);
+		new Window();
 
-		var g4 = new kha.graphics4.Graphics();
-		framebuffer = new Framebuffer(0, null, g4);
-		framebuffer.init(new kha.graphics2.Graphics(framebuffer), g4);
+		var g4 = new kha.Graphics4();
+		framebuffer = new Framebuffer(null, g4);
+		framebuffer.init(new kha.Graphics2(framebuffer), g4);
 		Krom.setCallback(renderCallback);
 		Krom.setDropFilesCallback(dropFilesCallback);
 		Krom.setCutCopyPasteCallback(cutCallback, copyCallback, pasteCallback);
 		Krom.setApplicationStateCallback(foregroundCallback, resumeCallback, pauseCallback, backgroundCallback, shutdownCallback);
 
-		keyboard = new Keyboard();
-		mouse = new Mouse();
-		surface = new Surface();
-		pen = new Pen();
+		keyboard = iron.system.Input.getKeyboard();
+		mouse = iron.system.Input.getMouse();
+		surface = iron.system.Input.getSurface();
+		pen = iron.system.Input.getPen();
 		gamepads = new Array<Gamepad>();
 		for (i in 0...maxGamepads) {
-			gamepads[i] = new Gamepad(i);
+			gamepads[i] = iron.system.Input.getGamepad(i);
 		}
 
 		Krom.setKeyboardDownCallback(keyboardDownCallback);
@@ -114,7 +82,7 @@ class System {
 		Krom.setGamepadAxisCallback(gamepadAxisCallback);
 		Krom.setGamepadButtonCallback(gamepadButtonCallback);
 
-		callback(Window.get(0));
+		callback(Window.get());
 	}
 
 	public static function notifyOnFrames(listener: Framebuffer -> Void): Void {
@@ -190,12 +158,12 @@ class System {
 		return Krom.getTime() - startTime;
 	}
 
-	public static function windowWidth(window: Int = 0): Int {
-		return Window.get(window).width;
+	public static function windowWidth(): Int {
+		return Window.get().width;
 	}
 
-	public static function windowHeight(window: Int = 0): Int {
-		return Window.get(window).height;
+	public static function windowHeight(): Int {
+		return Window.get().height;
 	}
 
 	public static var systemId(get, null): String;
@@ -208,9 +176,8 @@ class System {
 		return Krom.language();
 	}
 
-	public static function stop(): Bool {
+	public static function stop(): Void {
 		Krom.requestShutdown();
-		return true;
 	}
 
 	public static function loadUrl(url: String): Void {
@@ -229,18 +196,14 @@ class System {
 		if (System.copyListener != null) {
 			return System.copyListener();
 		}
-		else {
-			return null;
-		}
+		return null;
 	}
 
 	private static function cutCallback(): String {
 		if (System.cutListener != null) {
 			return System.cutListener();
 		}
-		else {
-			return null;
-		}
+		return null;
 	}
 
 	private static function pasteCallback(data: String): Void {
@@ -270,96 +233,80 @@ class System {
 	}
 
 	private static function keyboardDownCallback(code: Int): Void {
-		keyboard.sendDownEvent(cast code);
+		keyboard.downListener(code);
 	}
 
 	private static function keyboardUpCallback(code: Int): Void {
-		keyboard.sendUpEvent(cast code);
+		keyboard.upListener(code);
 	}
 
 	private static function keyboardPressCallback(charCode: Int): Void {
-		keyboard.sendPressEvent(String.fromCharCode(charCode));
+		keyboard.pressListener(String.fromCharCode(charCode));
 	}
 
 	private static function mouseDownCallback(button: Int, x: Int, y: Int): Void {
-		mouse.sendDownEvent(button, x, y);
+		mouse.downListener(button, x, y);
 	}
 
 	private static function mouseUpCallback(button: Int, x: Int, y: Int): Void {
-		mouse.sendUpEvent(button, x, y);
+		mouse.upListener(button, x, y);
 	}
 
 	private static function mouseMoveCallback(x: Int, y: Int, mx: Int, my: Int): Void {
-		mouse.sendMoveEvent(x, y, mx, my);
+		mouse.moveListener(x, y, mx, my);
 	}
 
 	private static function mouseWheelCallback(delta: Int): Void {
-		mouse.sendWheelEvent(delta);
+		mouse.wheelListener(delta);
 	}
 
 	private static function touchDownCallback(index: Int, x: Int, y: Int): Void {
-		surface.sendTouchStartEvent(index, x, y);
+		#if (kha_android || kha_ios)
+		surface.onTouchDown(index, x, y);
+		#end
 	}
 
 	private static function touchUpCallback(index: Int, x: Int, y: Int): Void {
-		surface.sendTouchEndEvent(index, x, y);
+		#if (kha_android || kha_ios)
+		surface.onTouchUp(index, x, y);
+		#end
 	}
 
 	private static function touchMoveCallback(index: Int, x: Int, y: Int): Void {
-		surface.sendMoveEvent(index, x, y);
+		#if (kha_android || kha_ios)
+		surface.onTouchMove(index, x, y);
+		#end
 	}
 
 	private static function penDownCallback(x: Int, y: Int, pressure: Float): Void {
-		pen.sendDownEvent(x, y, pressure);
+		pen.downListener(x, y, pressure);
 	}
 
 	private static function penUpCallback(x: Int, y: Int, pressure: Float): Void {
-		pen.sendUpEvent(x, y, pressure);
+		pen.upListener(x, y, pressure);
 	}
 
 	private static function penMoveCallback(x: Int, y: Int, pressure: Float): Void {
-		pen.sendMoveEvent(x, y, pressure);
+		pen.moveListener(x, y, pressure);
 	}
 
 	private static function gamepadAxisCallback(gamepad: Int, axis: Int, value: Float): Void {
-		gamepads[gamepad].sendAxisEvent(axis, value);
+		gamepads[gamepad].axisListener(axis, value);
 	}
 
 	private static function gamepadButtonCallback(gamepad: Int, button: Int, value: Float): Void {
-		gamepads[gamepad].sendButtonEvent(button, value);
-	}
-
-	public static function getMouse(): Mouse {
-		return mouse;
-	}
-
-	public static function getSurface(): Surface {
-		return surface;
-	}
-
-	public static function getPen(): Pen {
-		return pen;
-	}
-
-	public static function getKeyboard(): Keyboard {
-		return keyboard;
+		gamepads[gamepad].buttonListener(button, value);
 	}
 
 	public static function lockMouse(): Void {
 		if(!isMouseLocked()){
 			Krom.lockMouse();
-			for (listener in mouseLockListeners) {
-				listener();
-			}
 		}
 	}
 
 	public static function unlockMouse(): Void {
 		if(isMouseLocked()){
 			Krom.unlockMouse();
-			for (listener in mouseLockListeners) {
-				listener();
-			}
 		}
 	}
 
@@ -377,9 +324,5 @@ class System {
 
 	public static function showSystemCursor(): Void {
 		Krom.showMouse(true);
-	}
-
-	public static function getGamepadId(index: Int): String {
-		return "unkown";
 	}
 }

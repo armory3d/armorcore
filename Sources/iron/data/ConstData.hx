@@ -1,24 +1,16 @@
 package iron.data;
 
-import kha.graphics4.VertexBuffer;
-import kha.graphics4.IndexBuffer;
-import kha.graphics4.Graphics.Usage;
-import kha.graphics4.VertexBuffer.VertexStructure;
-import kha.graphics4.VertexBuffer.VertexData;
+import kha.VertexBuffer;
+import kha.IndexBuffer;
+import kha.Graphics4.Usage;
+import kha.VertexBuffer.VertexStructure;
+import kha.VertexBuffer.VertexData;
 
 class ConstData {
 
 	public static var screenAlignedVB: VertexBuffer = null;
 	public static var screenAlignedIB: IndexBuffer = null;
-	#if (rp_decals || rp_probes)
-	public static var boxVB: VertexBuffer = null;
-	public static var boxIB: IndexBuffer = null;
-	#end
-	#if arm_deinterleaved
-	public static var skydomeVB: Array<VertexBuffer> = null;
-	#else
 	public static var skydomeVB: VertexBuffer = null;
-	#end
 	public static var skydomeIB: IndexBuffer = null;
 
 	public static function createScreenAlignedData() {
@@ -40,65 +32,10 @@ class ConstData {
 		screenAlignedIB.unlock();
 	}
 
-	#if (rp_decals || rp_probes)
-	public static function createBoxData() {
-		var data = [
-			-1.0,1.0,-1.0,-1.0,-1.0,-1.0,-1.0,-1.0,1.0,-1.0,1.0,1.0,-1.0,
-			1.0,1.0,1.0,1.0,1.0,1.0,1.0,-1.0,-1.0,1.0,-1.0,1.0,1.0,1.0,1.0,-1.0,
-			1.0,1.0,-1.0,-1.0,1.0,1.0,-1.0,-1.0,-1.0,-1.0,1.0,-1.0,-1.0,1.0,-1.0,
-			1.0,-1.0,-1.0,1.0,-1.0,-1.0,-1.0,-1.0,1.0,-1.0,1.0,1.0,-1.0,1.0,-1.0,
-			-1.0,1.0,-1.0,1.0,1.0,1.0,1.0,-1.0,1.0,1.0,-1.0,-1.0,1.0
-		];
-		var indices = [
-			0,1,2,0,2,3,4,5,6,4,6,7,8,9,10,8,10,11,12,13,14,12,14,15,16,17,18,16,
-			18,19,20,21,22,20,22,23
-		];
-
-		var structure = new VertexStructure();
-		structure.add("pos", VertexData.Float3);
-		boxVB = new VertexBuffer(Std.int(data.length / Std.int(structure.byteSize() / 4)), structure, Usage.StaticUsage);
-		var vertices = boxVB.lock();
-		for (i in 0...Std.int(vertices.byteLength / 4)) vertices.setFloat32(i * 4, data[i], true);
-		boxVB.unlock();
-
-		boxIB = new IndexBuffer(indices.length, Usage.StaticUsage);
-		var id = boxIB.lock();
-		for (i in 0...id.length) id[i] = indices[i];
-		boxIB.unlock();
-	}
-	#end
-
 	public static function createSkydomeData() {
 		var pos = skydomePos;
 		var nor = skydomeNor;
 
-		#if arm_deinterleaved
-		skydomeVB = [];
-
-		var structure = new VertexStructure();
-		structure.add("pos", VertexData.Float3);
-		var structLength = Std.int(structure.byteSize() / 4);
-		skydomeVB[0] = new VertexBuffer(Std.int(pos.length / 3), structure, Usage.StaticUsage);
-		var vertices = skydomeVB[0].lock();
-		for (i in 0...Std.int(vertices.byteLength / 4 / structLength)) {
-			vertices.setFloat32((i * structLength) * 4, pos[i * 3], true);
-			vertices.setFloat32((i * structLength + 1) * 4, pos[i * 3 + 1], true);
-			vertices.setFloat32((i * structLength + 2) * 4, pos[i * 3 + 2], true);
-		}
-		skydomeVB[0].unlock();
-
-		structure = new VertexStructure();
-		structure.add("nor", VertexData.Float3);
-		structLength = Std.int(structure.byteSize() / 4);
-		skydomeVB[1] = new VertexBuffer(Std.int(nor.length / 3), structure, Usage.StaticUsage);
-		vertices = skydomeVB[1].lock();
-		for (i in 0...Std.int(vertices.byteLength / 4 / structLength)) {
-			vertices.setFloat32((i * structLength) * 4, nor[i * 3], true);
-			vertices.setFloat32((i * structLength + 1) * 4, nor[i * 3 + 1], true);
-			vertices.setFloat32((i * structLength + 2) * 4, nor[i * 3 + 2], true);
-		}
-		skydomeVB[1].unlock();
-		#else
 		var structure = new VertexStructure();
 		structure.add("pos", VertexData.Float3);
 		structure.add("nor", VertexData.Float3);
@@ -114,7 +51,6 @@ class ConstData {
 			vertices.setFloat32((i * structLength + 5) * 4, nor[i * 3 + 2], true);
 		}
 		skydomeVB.unlock();
-		#end
 
 		var indices = skydomeIndices;
 		skydomeIB = new IndexBuffer(indices.length, Usage.StaticUsage);

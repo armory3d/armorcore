@@ -56,12 +56,12 @@ extern class Krom {
 	static function lockIndexBuffer(buffer: Dynamic): js.lib.Uint32Array;
 	static function unlockIndexBuffer(buffer: Dynamic): Void;
 	static function setIndexBuffer(buffer: Dynamic): Void;
-	static function createVertexBuffer(count: Int, structure: Array<kha.graphics4.VertexBuffer.VertexElement>, usage: Int, instanceDataStepRate: Int): Dynamic;
+	static function createVertexBuffer(count: Int, structure: Array<kha.VertexBuffer.VertexElement>, usage: Int, instanceDataStepRate: Int): Dynamic;
 	static function deleteVertexBuffer(buffer: Dynamic): Dynamic;
 	static function lockVertexBuffer(buffer: Dynamic, start: Int, count: Int): js.lib.ArrayBuffer;
 	static function unlockVertexBuffer(buffer: Dynamic, count: Int): Void;
 	static function setVertexBuffer(buffer: Dynamic): Void;
-	static function setVertexBuffers(vertexBuffers: Array<kha.graphics4.VertexBuffer>): Void;
+	static function setVertexBuffers(vertexBuffers: Array<kha.VertexBuffer>): Void;
 	static function drawIndexedVertices(start: Int, count: Int): Void;
 	static function drawIndexedVerticesInstanced(instanceCount: Int, start: Int, count: Int): Void;
 

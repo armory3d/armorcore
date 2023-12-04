@@ -2,7 +2,7 @@ package iron.object;
 
 #if arm_particles
 
-import kha.graphics4.Graphics.Usage;
+import kha.Graphics4.Usage;
 import js.lib.Float32Array;
 import iron.data.Data;
 import iron.data.ParticleData;
@@ -34,9 +34,6 @@ class ParticleSystem {
 	var alignz: Float;
 	var dimx: Float;
 	var dimy: Float;
-	var tilesx: Int;
-	var tilesy: Int;
-	var tilesFramerate: Int;
 
 	var count = 0;
 	var lap = 0;
@@ -54,16 +51,9 @@ class ParticleSystem {
 		Data.getParticle(sceneName, pref.particle, function(b: ParticleData) {
 			data = b;
 			r = data.raw;
-			if (Scene.active.raw.gravity != null) {
-				gx = Scene.active.raw.gravity[0] * r.weight_gravity;
-				gy = Scene.active.raw.gravity[1] * r.weight_gravity;
-				gz = Scene.active.raw.gravity[2] * r.weight_gravity;
-			}
-			else {
-				gx = 0;
-				gy = 0;
-				gz = -9.81 * r.weight_gravity;
-			}
+			gx = 0;
+			gy = 0;
+			gz = -9.81 * r.weight_gravity;
 			alignx = r.object_align_factor[0] / 2;
 			aligny = r.object_align_factor[1] / 2;
 			alignz = r.object_align_factor[2] / 2;
@@ -101,12 +91,6 @@ class ParticleSystem {
 		dimx = object.transform.dim.x;
 		dimy = object.transform.dim.y;
 
-		if (object.tilesheet != null) {
-			tilesx = object.tilesheet.raw.tilesx;
-			tilesy = object.tilesheet.raw.tilesy;
-			tilesFramerate = object.tilesheet.raw.framerate;
-		}
-
 		// Animate
 		time += Time.realDelta * speed;
 		lap = Std.int(time / animtime);
@@ -130,9 +114,9 @@ class ParticleSystem {
 		m._21 = hair ? 0 : gy * r.mass;
 		m._22 = hair ? 0 : gz * r.mass;
 		m._23 = hair ? 0 : r.lifetime_random;
-		m._30 = tilesx;
-		m._31 = tilesy;
-		m._32 = 1 / tilesFramerate;
+		m._30 = 1; // tilesx
+		m._31 = 1; // tilesy
+		m._32 = 1; // tilesframerate
 		m._33 = hair ? 1 : lapTime;
 		return m;
 	}
@@ -209,13 +193,6 @@ class ParticleSystem {
 
 	public function remove() {}
 
-	/**
-		Generates a random point in the triangle with vertex positions abc.
-
-		Please note that the given position vectors are changed in-place by this
-		function and can be considered garbage afterwards, so make sure to clone
-		them first if needed.
-	**/
 	public static inline function randomPointInTriangle(a: Vec3, b: Vec3, c: Vec3): Vec3 {
 		// Generate a random point in a square where (0, 0) <= (x, y) < (1, 1)
 		var x = Math.random();

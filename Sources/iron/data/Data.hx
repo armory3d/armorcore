@@ -9,45 +9,39 @@ using StringTools;
 // Global data list and asynchronous data loading
 class Data {
 
-	public static var cachedSceneRaws: Map<String, TSceneFormat> = new Map();
-	public static var cachedMeshes: Map<String, MeshData> = new Map();
-	public static var cachedLights: Map<String, LightData> = new Map();
-	public static var cachedCameras: Map<String, CameraData> = new Map();
-	public static var cachedMaterials: Map<String, MaterialData> = new Map();
-	public static var cachedParticles: Map<String, ParticleData> = new Map();
-	public static var cachedWorlds: Map<String, WorldData> = new Map();
-	public static var cachedShaders: Map<String, ShaderData> = new Map();
-	#if rp_probes
-	public static var cachedProbes: Map<String, ProbeData> = new Map();
-	#end
+	public static var cachedSceneRaws: Map<String, TSceneFormat> = [];
+	public static var cachedMeshes: Map<String, MeshData> = [];
+	public static var cachedLights: Map<String, LightData> = [];
+	public static var cachedCameras: Map<String, CameraData> = [];
+	public static var cachedMaterials: Map<String, MaterialData> = [];
+	public static var cachedParticles: Map<String, ParticleData> = [];
+	public static var cachedWorlds: Map<String, WorldData> = [];
+	public static var cachedShaders: Map<String, ShaderData> = [];
 
-	public static var cachedBlobs: Map<String, kha.Blob> = new Map();
-	public static var cachedImages: Map<String, kha.Image> = new Map();
+	public static var cachedBlobs: Map<String, kha.Blob> = [];
+	public static var cachedImages: Map<String, kha.Image> = [];
+	public static var cachedVideos: Map<String, kha.Video> = [];
+	public static var cachedFonts: Map<String, kha.Font> = [];
 	#if arm_audio
-	public static var cachedSounds: Map<String, kha.Sound> = new Map();
+	public static var cachedSounds: Map<String, kha.Sound> = [];
 	#end
-	public static var cachedVideos: Map<String, kha.Video> = new Map();
-	public static var cachedFonts: Map<String, kha.Font> = new Map();
 
 	public static var assetsLoaded = 0;
-	static var loadingMeshes: Map<String, Array<MeshData->Void>> = new Map();
-	static var loadingLights: Map<String, Array<LightData->Void>> = new Map();
-	static var loadingCameras: Map<String, Array<CameraData->Void>> = new Map();
-	static var loadingMaterials: Map<String, Array<MaterialData->Void>> = new Map();
-	static var loadingParticles: Map<String, Array<ParticleData->Void>> = new Map();
-	static var loadingWorlds: Map<String, Array<WorldData->Void>> = new Map();
-	static var loadingShaders: Map<String, Array<ShaderData->Void>> = new Map();
-	static var loadingSceneRaws: Map<String, Array<TSceneFormat->Void>> = new Map();
-	#if rp_probes
-	static var loadingProbes: Map<String, Array<ProbeData->Void>> = new Map();
-	#end
-	static var loadingBlobs: Map<String, Array<kha.Blob->Void>> = new Map();
-	static var loadingImages: Map<String, Array<kha.Image->Void>> = new Map();
+	static var loadingMeshes: Map<String, Array<MeshData->Void>> = [];
+	static var loadingLights: Map<String, Array<LightData->Void>> = [];
+	static var loadingCameras: Map<String, Array<CameraData->Void>> = [];
+	static var loadingMaterials: Map<String, Array<MaterialData->Void>> = [];
+	static var loadingParticles: Map<String, Array<ParticleData->Void>> = [];
+	static var loadingWorlds: Map<String, Array<WorldData->Void>> = [];
+	static var loadingShaders: Map<String, Array<ShaderData->Void>> = [];
+	static var loadingSceneRaws: Map<String, Array<TSceneFormat->Void>> = [];
+	static var loadingBlobs: Map<String, Array<kha.Blob->Void>> = [];
+	static var loadingImages: Map<String, Array<kha.Image->Void>> = [];
+	static var loadingVideos: Map<String, Array<kha.Video->Void>> = [];
+	static var loadingFonts: Map<String, Array<kha.Font->Void>> = [];
 	#if arm_audio
-	static var loadingSounds: Map<String, Array<kha.Sound->Void>> = new Map();
+	static var loadingSounds: Map<String, Array<kha.Sound->Void>> = [];
 	#end
-	static var loadingVideos: Map<String, Array<kha.Video->Void>> = new Map();
-	static var loadingFonts: Map<String, Array<kha.Font->Void>> = new Map();
 
 	#if krom_windows
 	public static inline var sep = "\\";
@@ -55,43 +49,39 @@ class Data {
 	public static inline var sep = "/";
 	#end
 
-	#if arm_data_dir
 	#if krom_android
 	public static var dataPath = "data" + sep;
 	#else
 	public static var dataPath = "." + sep + "data" + sep;
-	#end
-	#else
-	public static var dataPath = "";
 	#end
 
 	public function new() {}
 
 	public static function deleteAll() {
 		for (c in cachedMeshes) c.delete();
-		cachedMeshes = new Map();
+		cachedMeshes = [];
 		for (c in cachedShaders) c.delete();
-		cachedShaders = new Map();
-		cachedSceneRaws = new Map();
-		cachedLights = new Map();
-		cachedCameras = new Map();
-		cachedMaterials = new Map();
-		cachedParticles = new Map();
-		cachedWorlds = new Map();
+		cachedShaders = [];
+		cachedSceneRaws = [];
+		cachedLights = [];
+		cachedCameras = [];
+		cachedMaterials = [];
+		cachedParticles = [];
+		cachedWorlds = [];
 		if (RenderPath.active != null) RenderPath.active.unload();
 
 		for (c in cachedBlobs) c.unload();
-		cachedBlobs = new Map();
+		cachedBlobs = [];
 		for (c in cachedImages) c.unload();
-		cachedImages = new Map();
+		cachedImages = [];
 		#if arm_audio
 		for (c in cachedSounds) c.unload();
-		cachedSounds = new Map();
+		cachedSounds = [];
 		#end
 		for (c in cachedVideos) c.unload();
-		cachedVideos = new Map();
+		cachedVideos = [];
 		for (c in cachedFonts) c.unload();
-		cachedFonts = new Map();
+		cachedFonts = [];
 	}
 
 	public static function getMesh(file: String, name: String, done: MeshData->Void) {
@@ -148,31 +138,6 @@ class Data {
 			loadingLights.remove(handle);
 		});
 	}
-
-	#if rp_probes
-	public static function getProbe(file: String, name: String, done: ProbeData->Void) {
-		var handle = file + name;
-		var cached = cachedProbes.get(handle);
-		if (cached != null) {
-			done(cached);
-			return;
-		}
-
-		var loading = loadingProbes.get(handle);
-		if (loading != null) {
-			loading.push(done);
-			return;
-		}
-
-		loadingProbes.set(handle, [done]);
-
-		ProbeData.parse(file, name, function(b: ProbeData) {
-			cachedProbes.set(handle, b);
-			for (f in loadingProbes.get(handle)) f(b);
-			loadingProbes.remove(handle);
-		});
-	}
-	#end
 
 	public static function getCamera(file: String, name: String, done: CameraData->Void) {
 		var handle = file + name;
@@ -312,31 +277,11 @@ class Data {
 		loadingSceneRaws.set(file, [done]);
 
 		// If no extension specified, set to .arm
-		var compressed = file.endsWith(".lz4");
-		var isJson = file.endsWith(".json");
-		var ext = (compressed || isJson || file.endsWith(".arm")) ? "" : ".arm";
+		var ext = file.endsWith(".arm") ? "" : ".arm";
 
 		getBlob(file + ext, function(b: kha.Blob) {
 			var parsed: TSceneFormat = null;
-
-			#if arm_compress
-			if (compressed) {
-				var bytes = b.toBytes();
-
-				// First 8 bytes contain data size for decoding
-				var packedSize = haxe.Int64.toInt(bytes.getInt64(0));
-
-				parsed = ArmPack.decode(Lz4.decode(bytes.sub(8, bytes.length - 8), packedSize));
-			}
-
-			else #end if (isJson) {
-				var s = b.toString();
-				parsed = s.charAt(0) == "{" ? Json.parse(s) : ArmPack.decode(b.toBytes());
-			}
-			else {
-				parsed = ArmPack.decode(b.toBytes());
-			}
-
+			parsed = ArmPack.decode(b.toBytes());
 			returnSceneRaw(file, parsed);
 		});
 	}
@@ -358,14 +303,6 @@ class Data {
 		for (dat in datas) if (dat.name == name) return dat;
 		return null;
 	}
-
-	#if rp_probes
-	public static function getProbeRawByName(datas: Array<TProbeData>, name: String): TProbeData {
-		if (name == "") return datas[0];
-		for (dat in datas) if (dat.name == name) return dat;
-		return null;
-	}
-	#end
 
 	public static function getCameraRawByName(datas: Array<TCameraData>, name: String): TCameraData {
 		if (name == "") return datas[0];
@@ -437,12 +374,6 @@ class Data {
 	}
 
 	public static function getImage(file: String, done: kha.Image->Void, readable = false, format = "RGBA32") {
-		#if arm_use_k_images
-		if (!file.endsWith(".k")) {
-			file = file.substring(0, file.length - 4) + ".k";
-		}
-		#end
-
 		var cached = cachedImages.get(file);
 		if (cached != null) {
 			done(cached);
@@ -485,17 +416,8 @@ class Data {
 		cachedImages.remove(handle);
 	}
 
-	/**
-	  Load sound file from disk into ram.
-	  @param	file A String matching the file name of the sound file on disk.
-	  @param	done Completion handler function to do something after the sound is loaded.
-	 */
 	#if arm_audio
 	public static function getSound(file: String, done: kha.Sound->Void) {
-		#if arm_soundcompress
-		if (file.endsWith(".wav")) file = file.substring(0, file.length - 4) + ".ogg";
-		#end
-
 		var cached = cachedSounds.get(file);
 		if (cached != null) {
 			done(cached);
@@ -511,16 +433,10 @@ class Data {
 		loadingSounds.set(file, [done]);
 
 		kha.Assets.loadSoundFromPath(resolvePath(file), function(b: kha.Sound) {
-			#if arm_soundcompress
-			b.uncompress(function () {
-			#end
-				cachedSounds.set(file, b);
-				for (f in loadingSounds.get(file)) f(b);
-				loadingSounds.remove(file);
-				assetsLoaded++;
-			#if arm_soundcompress
-			});
-			#end
+			cachedSounds.set(file, b);
+			for (f in loadingSounds.get(file)) f(b);
+			loadingSounds.remove(file);
+			assetsLoaded++;
 		});
 	}
 
@@ -530,7 +446,7 @@ class Data {
 		sound.unload();
 		cachedSounds.remove(handle);
 	}
-	#end // arm_audio
+	#end
 
 	public static function getVideo(file: String, done: kha.Video->Void) {
 		file = file.substring(0, file.length - 4) + ".webm";
@@ -601,9 +517,6 @@ class Data {
 		return file.charAt(0) == "." && file.charAt(1) == ".";
 	}
 
-	/**
-	  Extract filename from path.
-	*/
 	static inline function baseName(path: String): String {
 		var slash = path.lastIndexOf(sep);
 		return slash >= 0 ? path.substr(slash + 1) : path;
@@ -611,10 +524,6 @@ class Data {
 
 	static inline function resolvePath(file: String): String {
 		if (isAbsolute(file) || isUp(file)) return file;
-		#if arm_data_dir
 		return dataPath + file;
-		#else
-		return baseName(file);
-		#end
 	}
 }

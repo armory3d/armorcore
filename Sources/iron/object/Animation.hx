@@ -46,9 +46,6 @@ class Animation {
 
 	function new() {
 		Scene.active.animations.push(this);
-		if (Scene.active.raw.frame_time != null) {
-			frameTime = Scene.active.raw.frame_time;
-		}
 		play();
 	}
 
@@ -181,7 +178,7 @@ class Animation {
 	public function setFrame(frame: Int) {
 		time = 0;
 		frameIndex = frame;
-		update(frame * Scene.active.raw.frame_time);
+		update(frame * frameTime);
 	}
 
 	public function notifyOnMarker(name: String, onMarker: Void->Void) {

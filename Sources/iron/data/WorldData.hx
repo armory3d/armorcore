@@ -24,19 +24,11 @@ class WorldData {
 		if (raw.probe != null) {
 			new Probe(raw.probe, function(self: Probe) {
 				probe = self;
-				#if arm_skip_envmap
 				done(this);
-				#else
-				loadEnvmap(done);
-				#end
 			});
 		}
 		else {
-			#if arm_skip_envmap
 			done(this);
-			#else
-			loadEnvmap(done);
-			#end
 		}
 	}
 

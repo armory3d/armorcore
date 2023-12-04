@@ -1,7 +1,7 @@
-package kha.graphics2;
+package kha;
 
-import kha.graphics4.PipelineState;
-import kha.math.FastMatrix3;
+import kha.PipelineState;
+import iron.math.Mat3;
 import kha.Canvas;
 import kha.Color;
 import kha.Font;
@@ -13,9 +13,9 @@ enum ImageScaleQuality {
 	High; // usually bilinear filter
 }
 
-class Graphics {
+class Graphics2 {
 
-	public static var current: Graphics;
+	public static var current: Graphics2;
 	public static var fontGlyphs: Array<Int> = [for (i in 32...127) i];
 	public static var fontGlyphsLast: Array<Int> = fontGlyphs;
 	static var thrown = false;
@@ -27,7 +27,7 @@ class Graphics {
 	public var fontSize(default, set): Int = 0;
 	public var pipeline(default, set): PipelineState;
 	public var imageScaleQuality(default, set): ImageScaleQuality;
-	public var transformation(default, set): FastMatrix3 = null;
+	public var transformation(default, set): Mat3 = null;
 	var canvas: Canvas;
 
 	public function new(canvas: Canvas) {
@@ -68,7 +68,7 @@ class Graphics {
 		return imageScaleQuality = q;
 	}
 
-	function set_transformation(m: FastMatrix3): FastMatrix3 {
+	function set_transformation(m: Mat3): Mat3 {
 		if (m == null) {
 			Krom.g2_set_transform(null);
 		}

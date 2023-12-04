@@ -2,8 +2,8 @@
 
 package zui;
 
-import kha.input.Keyboard.KeyCode;
-import kha.graphics2.Graphics;
+import iron.system.Input.KeyCode;
+import kha.Graphics2;
 
 typedef ZuiOptions = {
 	font: kha.Font,
@@ -236,12 +236,20 @@ class Zui {
 		return t = theme;
 	}
 
-	public var g: Graphics;
+	public var g: Graphics2;
 	public var font: kha.Font;
 	public var zui_: Dynamic;
 
 	public function new(ops: ZuiOptions) {
-		zui_ = Krom.zui_init({ font: ops.font.font_, theme: ops.theme.theme_, scale_factor: ops.scaleFactor, color_wheel: ops.color_wheel.texture_, black_white_gradient: ops.black_white_gradient.texture_ });
+		zui_ = Krom.zui_init(
+			{
+				font: ops.font.font_,
+				theme: ops.theme.theme_,
+				scale_factor: ops.scaleFactor,
+				color_wheel: ops.color_wheel != null ? ops.color_wheel.texture_ : null,
+				black_white_gradient: ops.black_white_gradient != null ? ops.black_white_gradient.texture_ : null
+			}
+		);
 		current = this;
 		t = ops.theme;
 		font = ops.font;
@@ -261,18 +269,18 @@ class Zui {
 		Krom.zui_set_scale(zui_, factor);
 	}
 
-	public function begin(g: Graphics) {
+	public function begin(g: Graphics2) {
 		current = this;
 		Krom.zui_begin(zui_);
-		Graphics.current = g;
+		Graphics2.current = g;
 	}
 
 	public function end(last = true) {
 		Krom.zui_end(last);
-		Graphics.current = null;
+		Graphics2.current = null;
 	}
 
-	public function beginRegion(g: Graphics, x: Int, y: Int, w: Int) {
+	public function beginRegion(g: Graphics2, x: Int, y: Int, w: Int) {
 		current = this;
 		this.g = g;
 		Krom.zui_begin_region(zui_, x, y, w);
@@ -297,7 +305,7 @@ class Zui {
 	public function window(handle: Handle, x: Int, y: Int, w: Int, h: Int, drag = false): Bool {
 		var img = @:privateAccess new kha.Image(null);
 		img.renderTarget_ = handle.texture;
-		Graphics.current = g = img.g2;
+		Graphics2.current = g = img.g2;
 		return Krom.zui_window(handle.handle_, x, y, w, h, drag);
 	}
 
@@ -369,7 +377,7 @@ class Zui {
 		Krom.zui_rect(x, y, w, h, color, strength);
 	}
 
-	public function drawRect(g: Graphics, fill: Bool, x: Float, y: Float, w: Float, h: Float, strength = 0.0) {
+	public function drawRect(g: Graphics2, fill: Bool, x: Float, y: Float, w: Float, h: Float, strength = 0.0) {
 		Krom.zui_draw_rect(fill, x, y, w, h, strength);
 	}
 
@@ -385,7 +393,7 @@ class Zui {
 		return Krom.zui_input_in_rect(x, y, w, h);
 	}
 
-	public function drawString(g: Graphics, text: String, xOffset: Null<Float> = null, yOffset: Float = 0, align = Align.Left, truncation = true) {
+	public function drawString(g: Graphics2, text: String, xOffset: Null<Float> = null, yOffset: Float = 0, align = Align.Left, truncation = true) {
 		Krom.zui_draw_string(text, xOffset == null ? -1 : xOffset, yOffset, align, truncation);
 	}
 

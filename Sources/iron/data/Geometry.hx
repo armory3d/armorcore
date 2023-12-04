@@ -1,11 +1,11 @@
 package iron.data;
 
 import haxe.ds.Vector;
-import kha.graphics4.VertexBuffer;
-import kha.graphics4.IndexBuffer;
-import kha.graphics4.Graphics.Usage;
-import kha.graphics4.VertexBuffer.VertexStructure;
-import kha.graphics4.VertexBuffer.VertexData;
+import kha.VertexBuffer;
+import kha.IndexBuffer;
+import kha.Graphics4.Usage;
+import kha.VertexBuffer.VertexStructure;
+import kha.VertexBuffer.VertexData;
 import js.lib.DataView;
 import js.lib.Float32Array;
 import js.lib.Uint32Array;
@@ -16,12 +16,9 @@ import iron.data.SceneFormat;
 import iron.data.MeshData;
 
 class Geometry {
-#if arm_deinterleaved
-	public var vertexBuffers: Vector<InterleavedVertexBuffer>;
-#else
 	public var vertexBuffer: VertexBuffer;
 	public var vertexBufferMap: Map<String, VertexBuffer> = new Map();
-#end
+
 	public var indexBuffers: Array<IndexBuffer>;
 	public var start = 0; // For drawIndexedVertices
 	public var count = -1;
@@ -52,7 +49,6 @@ class Geometry {
 	public var aabbMin: Vec4 = null;
 	public var aabbMax: Vec4 = null;
 
-	// Skinned
 #if arm_skin
 	public var skinBoneCounts: Int16Array = null;
 	public var skinBoneIndices: Int16Array = null;
@@ -66,12 +62,10 @@ class Geometry {
 	public var mats: Map<String, Array<Mat4>> = null;
 #end
 
-	public function new(data: MeshData, indices: Array<Uint32Array>, materialIndices: Array<Int>, usage: Usage = null) {
-		if (usage == null) usage = Usage.StaticUsage;
-
+	public function new(data: MeshData, indices: Array<Uint32Array>, materialIndices: Array<Int>) {
 		this.indices = indices;
 		this.materialIndices = materialIndices;
-		this.usage = usage;
+		this.usage = Usage.StaticUsage;
 
 		this.vertexArrays = data.raw.vertex_arrays;
 		this.positions = getVArray('pos');
@@ -87,11 +81,7 @@ class Geometry {
 	}
 
 	public function delete() {
-#if arm_deinterleaved
-		for (buf in vertexBuffers) if (buf.buffer != null) buf.buffer.delete();
-#else
 		for (buf in vertexBufferMap) if (buf != null) buf.delete();
-#end
 		for (buf in indexBuffers) buf.delete();
 	}
 
@@ -111,10 +101,6 @@ class Geometry {
 		}
 	}
 
-	public function applyScale(sx: Float, sy: Float, sz: Float) {
-		data.scalePos *= sx;
-	}
-
 	public function getVArray(name: String): TVertexArray {
 		for (i in 0...vertexArrays.length) {
 			if (vertexArrays[i].attrib == name) {
@@ -129,12 +115,12 @@ class Geometry {
 		structure.instanced = true;
 		instanced = true;
 		// pos, pos+rot, pos+scale, pos+rot+scale
-		structure.add("ipos", kha.graphics4.VertexData.Float3);
+		structure.add("ipos", kha.VertexData.Float3);
 		if (instancedType == 2 || instancedType == 4) {
-			structure.add("irot", kha.graphics4.VertexData.Float3);
+			structure.add("irot", kha.VertexData.Float3);
 		}
 		if (instancedType == 3 || instancedType == 4) {
-			structure.add("iscl", kha.graphics4.VertexData.Float3);
+			structure.add("iscl", kha.VertexData.Float3);
 		}
 
 		instanceCount = Std.int(data.length / Std.int(structure.byteSize() / 4));
@@ -142,10 +128,6 @@ class Geometry {
 		var vertices = instancedVB.lock();
 		for (i in 0...Std.int(vertices.byteLength / 4)) vertices.setFloat32(i * 4, data[i], true);
 		instancedVB.unlock();
-	}
-
-	public function copyVertices(vertices: DataView, offset = 0, fakeUVs = false) {
-		buildVertices(vertices, vertexArrays, offset, fakeUVs);
 	}
 
 	static function buildVertices(vertices: DataView, vertexArrays: Array<TVertexArray>, offset = 0, fakeUVs = false, uvsIndex = -1) {
@@ -169,31 +151,6 @@ class Geometry {
 			}
 		}
 	}
-
-	public function getVerticesLength(): Int {
-		var res = 0;
-		for (i in 0...vertexArrays.length) {
-			res += vertexArrays[i].values.length;
-		}
-		return res;
-	}
-
-#if arm_deinterleaved
-	public function get(vs: Array<TVertexElement>): Array<VertexBuffer> {
-		var vbs = [];
-		for (e in vs) {
-			for (v in 0...vertexBuffers.length)
-				if (vertexBuffers[v].name == e.name) {
-					vbs.push(vertexBuffers[v].buffer);
-					continue;
-				}
-			if (e.name == "ipos" && instancedVB != null) {
-				vbs.push(instancedVB);
-			}
-		}
-		return vbs;
-	}
-#else
 
 	public function get(vs: Array<TVertexElement>): VertexBuffer {
 		var key = "";
@@ -230,27 +187,15 @@ class Geometry {
 		}
 		return vb;
 	}
-#end
 
 	public function build() {
 		if (ready) return;
-
-#if arm_deinterleaved
-		var vaLength = vertexArrays.length;
-		vertexBuffers = new Vector(vaLength);
-		for (i in 0...vaLength)
-			vertexBuffers[i] = {
-				name: vertexArrays[i].attrib,
-				buffer: makeDeinterleavedVB(vertexArrays[i].values, vertexArrays[i].attrib, vertexArrays[i].size)
-			};
-#else
 
 		vertexBuffer = new VertexBuffer(Std.int(positions.values.length / positions.size), struct, usage);
 		vertices = vertexBuffer.lock();
 		buildVertices(vertices, vertexArrays);
 		vertexBuffer.unlock();
 		vertexBufferMap.set(structStr, vertexBuffer);
-#end
 
 		indexBuffers = [];
 		for (id in indices) {
@@ -271,30 +216,10 @@ class Geometry {
 		ready = true;
 	}
 
-#if arm_deinterleaved
-	function makeDeinterleavedVB(data: DataView, name: String, structLength: Int): VertexBuffer {
-		var struct = new VertexStructure();
-		struct.add(name, structLength == 2 ? VertexData.Short2Norm : VertexData.Short4Norm);
-
-		var vertexBuffer = new VertexBuffer(Std.int(data.byteLength / 2 / structLength), struct, usage);
-
-		var vertices = vertexBuffer.lock();
-		for (i in 0...Std.int(vertices.byteLength / 2)) vertices.setInt16(i * 2, data.getInt16(i * 2), true);
-		vertexBuffer.unlock();
-
-		return vertexBuffer;
-	}
-#end
-
-	public function getVerticesCount(): Int {
-		return Std.int(positions.values.length / positions.size);
-	}
-
 	inline static function verticesCount(arr: TVertexArray): Int {
 		return Std.int(arr.values.length / arr.size);
 	}
 
-	// Skinned
 #if arm_skin
 	public function addArmature(armature: Armature) {
 		for (a in armature.actions) {
@@ -355,73 +280,4 @@ class Geometry {
 		aabb.y = (Math.abs(aabbMin.y) + Math.abs(aabbMax.y)) / 32767 * data.scalePos;
 		aabb.z = (Math.abs(aabbMin.z) + Math.abs(aabbMax.z)) / 32767 * data.scalePos;
 	}
-
-	public function calculateTangents() {
-		// var num_verts = Std.int(positions.length / 4);
-		// var tangents = new Float32Array(num_verts * 3);
-		// var bitangents = new Float32Array(num_verts * 3);
-		// for (ia in indices) {
-		// 	var num_tris = Std.int(ia.length / 3);
-		// 	for (i in 0...num_tris) {
-		// 		var i0 = ia[i * 3    ];
-		// 		var i1 = ia[i * 3 + 1];
-		// 		var i2 = ia[i * 3 + 2];
-		// 		var v0 = Vector((positions[i0 * 4], positions[i0 * 4 + 1], positions[i0 * 4 + 2]));
-		// 		var v1 = Vector((positions[i1 * 4], positions[i1 * 4 + 1], positions[i1 * 4 + 2]));
-		// 		var v2 = Vector((positions[i2 * 4], positions[i2 * 4 + 1], positions[i2 * 4 + 2]));
-		// 		var uv0 = Vector((uvs[i0 * 2], uvs[i0 * 2 + 1]));
-		// 		var uv1 = Vector((uvs[i1 * 2], uvs[i1 * 2 + 1]));
-		// 		var uv2 = Vector((uvs[i2 * 2], uvs[i2 * 2 + 1]));
-
-		// 		var deltaPos1 = v1 - v0;
-		// 		var deltaPos2 = v2 - v0;
-		// 		var deltaUV1 = uv1 - uv0;
-		// 		var deltaUV2 = uv2 - uv0;
-		// 		var d = (deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x);
-		// 		var r = d != 0 ? 1.0 / d : 1.0;
-		// 		var tangent = (deltaPos1 * deltaUV2.y - deltaPos2 * deltaUV1.y) * r;
-		// 		var bitangent = (deltaPos2 * deltaUV1.x - deltaPos1 * deltaUV2.x) * r;
-
-		// 		var tangents[i0 * 3    ] += tangent.x;
-		// 		var tangents[i0 * 3 + 1] += tangent.y;
-		// 		var tangents[i0 * 3 + 2] += tangent.z;
-		// 		var tangents[i1 * 3    ] += tangent.x;
-		// 		var tangents[i1 * 3 + 1] += tangent.y;
-		// 		var tangents[i1 * 3 + 2] += tangent.z;
-		// 		var tangents[i2 * 3    ] += tangent.x;
-		// 		var tangents[i2 * 3 + 1] += tangent.y;
-		// 		var tangents[i2 * 3 + 2] += tangent.z;
-		// 		var bitangents[i0 * 3    ] += bitangent.x;
-		// 		var bitangents[i0 * 3 + 1] += bitangent.y;
-		// 		var bitangents[i0 * 3 + 2] += bitangent.z;
-		// 		var bitangents[i1 * 3    ] += bitangent.x;
-		// 		var bitangents[i1 * 3 + 1] += bitangent.y;
-		// 		var bitangents[i1 * 3 + 2] += bitangent.z;
-		// 		var bitangents[i2 * 3    ] += bitangent.x;
-		// 		var bitangents[i2 * 3 + 1] += bitangent.y;
-		// 		var bitangents[i2 * 3 + 2] += bitangent.z;
-		// 	}
-		// }
-
-		// // Orthogonalize
-		// for (i in 0...num_verts) {
-		// 	var t = Vector((tangents[i * 3], tangents[i * 3 + 1], tangents[i * 3 + 2]));
-		// 	var b = Vector((bitangents[i * 3], bitangents[i * 3 + 1], bitangents[i * 3 + 2]));
-		// 	var n = Vector((normals[i * 2], normals[i * 2 + 1], positions[i * 4 + 3] / scale_pos));
-		// 	var v = t - n * n.dot(t);
-		// 	v.normalize();
-		// 	// Calculate handedness
-		// 	var cnv = n.cross(v);
-		// 	if (cnv.dot(b) < 0.0)
-		// 		v = v * -1.0;
-		// 	tangents[i * 3    ] = v.x;
-		// 	tangents[i * 3 + 1] = v.y;
-		// 	tangents[i * 3 + 2] = v.z;
-		// }
-	}
-}
-
-typedef InterleavedVertexBuffer = {
-	public var name: String;
-	public var buffer: VertexBuffer;
 }

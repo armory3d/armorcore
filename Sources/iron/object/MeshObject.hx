@@ -1,8 +1,8 @@
 package iron.object;
 
 import haxe.ds.Vector;
-import kha.graphics4.Graphics;
-import kha.graphics4.PipelineState;
+import kha.Graphics4;
+import kha.PipelineState;
 import iron.math.Vec4;
 import iron.math.Mat4;
 import iron.data.MeshData;
@@ -15,7 +15,6 @@ class MeshObject extends Object {
 	public var data: MeshData = null;
 	public var materials: Vector<MaterialData>;
 	public var materialIndex = 0;
-	public var depthRead(default, null) = false;
 	#if arm_particles
 	public var particleSystems: Array<ParticleSystem> = null; // Particle owner
 	public var particleChildren: Array<MeshObject> = null;
@@ -25,17 +24,10 @@ class MeshObject extends Object {
 	public var cameraDistance: Float;
 	public var screenSize = 0.0;
 	public var frustumCulling = true;
-	public var tilesheet: Tilesheet = null;
 	public var skip_context: String = null; // Do not draw this context
 	public var force_context: String = null; // Draw only this context
 	static var lastPipeline: PipelineState = null;
-	#if arm_morph_target
-	public var morphTarget: MorphTarget = null;
-	#end
-
-	#if arm_veloc
 	public var prevMatrix = Mat4.identity();
-	#end
 
 	public function new(data: MeshData, materials: Vector<MaterialData>) {
 		super();
@@ -48,27 +40,13 @@ class MeshObject extends Object {
 	public function setData(data: MeshData) {
 		this.data = data;
 		data.refcount++;
-
-		#if (!arm_batch)
 		data.geom.build();
-		#end
 
 		// Scale-up packed (-1,1) mesh coords
 		transform.scaleWorld = data.scalePos;
 	}
 
-	#if arm_batch
-	@:allow(iron.Scene)
-	function batch(isLod: Bool) {
-		var batched = Scene.active.meshBatch.addMesh(this, isLod);
-		if (!batched) data.geom.build();
-	}
-	#end
-
 	override public function remove() {
-		#if arm_batch
-		Scene.active.meshBatch.removeMesh(this);
-		#end
 		#if arm_particles
 		if (particleChildren != null) {
 			for (c in particleChildren) c.remove();
@@ -79,7 +57,6 @@ class MeshObject extends Object {
 			particleSystems = null;
 		}
 		#end
-		if (tilesheet != null) tilesheet.remove();
 		if (Scene.active != null) Scene.active.meshes.remove(this);
 		data.refcount--;
 		super.remove();
@@ -98,14 +75,6 @@ class MeshObject extends Object {
 		super.setupAnimation(oactions);
 	}
 
-	#if arm_morph_target
-	override public function setupMorphTargets() {
-		if (data.raw.morph_target != null) {
-			morphTarget = new MorphTarget(data.raw.morph_target);
-		}
-	}
-	#end
-
 	#if arm_particles
 	public function setupParticleSystem(sceneName: String, pref: TParticleReference) {
 		if (particleSystems == null) particleSystems = [];
@@ -114,37 +83,22 @@ class MeshObject extends Object {
 	}
 	#end
 
-	public function setupTilesheet(sceneName: String, tilesheet_ref: String, tilesheet_action_ref: String) {
-		tilesheet = new Tilesheet(sceneName, tilesheet_ref, tilesheet_action_ref);
-	}
-
-	inline function isLodMaterial(): Bool {
-		return (raw != null && raw.lod_material != null && raw.lod_material == true);
-	}
-
-	function setCulled(isShadow: Bool, b: Bool): Bool {
-		isShadow ? culledShadow = b : culledMesh = b;
-		culled = culledMesh && culledShadow;
+	function setCulled(b: Bool): Bool {
+		culled = b;
 		return b;
 	}
 
 	public function cullMaterial(context: String): Bool {
 		// Skip render if material does not contain current context
 		var mats = materials;
-		if (!isLodMaterial() && !validContext(mats, context)) return true;
+		if (!validContext(mats, context)) return true;
 
-		var isShadow = context == "shadowmap";
-		if (!visibleMesh && !isShadow) return setCulled(isShadow, true);
-		if (!visibleShadow && isShadow) return setCulled(isShadow, true);
+		if (!visibleMesh) return setCulled(true);
 
-		if (skip_context == context) return setCulled(isShadow, true);
-		if (force_context != null && force_context != context) return setCulled(isShadow, true);
+		if (skip_context == context) return setCulled(true);
+		if (force_context != null && force_context != context) return setCulled(true);
 
-		#if (!arm_voxelgi_revox) // No revox - do not voxelize moving objects
-		if (context == "voxel" && raw != null && raw.mobile == true) return setCulled(isShadow, true);
-		#end
-
-		return setCulled(isShadow, false);
+		return setCulled(false);
 	}
 
 	function cullMesh(context: String, camera: CameraObject, light: LightObject): Bool {
@@ -160,18 +114,10 @@ class MeshObject extends Object {
 			#end
 			if (context == "voxel") radiusScale *= 100;
 			if (data.geom.instanced) radiusScale *= 100;
-			var isShadow = context == "shadowmap";
-			var frustumPlanes = isShadow ? light.frustumPlanes : camera.frustumPlanes;
-
-			if (isShadow && light.data.raw.type != "sun") { // Non-sun light bounds intersect camera frustum
-				light.transform.radius = light.data.raw.far_plane;
-				if (!CameraObject.sphereInFrustum(camera.frustumPlanes, light.transform)) {
-					return setCulled(isShadow, true);
-				}
-			}
+			var frustumPlanes = camera.frustumPlanes;
 
 			if (!CameraObject.sphereInFrustum(frustumPlanes, transform, radiusScale)) {
-				return setCulled(isShadow, true);
+				return setCulled(true);
 			}
 		}
 
@@ -205,7 +151,7 @@ class MeshObject extends Object {
 		}
 	}
 
-	public function render(g: Graphics, context: String, bindParams: Array<String>) {
+	public function render(g: Graphics4, context: String, bindParams: Array<String>) {
 		if (data == null || !data.geom.ready) return; // Data not yet streamed
 		if (!visible) return; // Skip render if object is hidden
 		if (cullMesh(context, Scene.active.camera, RenderPath.active.light)) return;
@@ -237,43 +183,19 @@ class MeshObject extends Object {
 
 		if (cullMaterial(context)) return;
 
-		// Get lod
-		var mats = materials;
-		var lod = this;
-		if (raw != null && raw.lods != null && raw.lods.length > 0) {
-			computeScreenSize(Scene.active.camera);
-			initLods();
-			if (context == "voxel") {
-				// Voxelize using the lowest lod
-				lod = cast lods[lods.length - 1];
-			}
-			else {
-				// Select lod
-				for (i in 0...raw.lods.length) {
-					// Lod found
-					if (screenSize > raw.lods[i].screen_size) break;
-					lod = cast lods[i];
-					if (isLodMaterial()) mats = lod.materials;
-				}
-			}
-			if (lod == null) return; // Empty object
-		}
-		if (isLodMaterial() && !validContext(mats, context)) return;
-
 		// Get context
 		var materialContexts: Array<MaterialContext> = [];
 		var shaderContexts: Array<ShaderContext> = [];
-		getContexts(context, mats, materialContexts, shaderContexts);
+		getContexts(context, materials, materialContexts, shaderContexts);
 
 		Uniforms.posUnpack = data.scalePos;
 		Uniforms.texUnpack = data.scaleTex;
 		transform.update();
 
 		// Render mesh
-		var ldata = lod.data;
-		for (i in 0...ldata.geom.indexBuffers.length) {
+		for (i in 0...data.geom.indexBuffers.length) {
 
-			var mi = ldata.geom.materialIndices[i];
+			var mi = data.geom.materialIndices[i];
 			if (shaderContexts.length <= mi || shaderContexts[mi] == null) continue;
 			materialIndex = mi;
 
@@ -297,31 +219,25 @@ class MeshObject extends Object {
 			}
 
 			// VB / IB
-			#if arm_deinterleaved
-			g.setVertexBuffers(ldata.geom.get(elems));
-			#else
-			if (ldata.geom.instancedVB != null) {
-				g.setVertexBuffers([ldata.geom.get(elems), ldata.geom.instancedVB]);
+			if (data.geom.instancedVB != null) {
+				g.setVertexBuffers([data.geom.get(elems), data.geom.instancedVB]);
 			}
 			else {
-				g.setVertexBuffer(ldata.geom.get(elems));
+				g.setVertexBuffer(data.geom.get(elems));
 			}
-			#end
 
-			g.setIndexBuffer(ldata.geom.indexBuffers[i]);
+			g.setIndexBuffer(data.geom.indexBuffers[i]);
 
 			// Draw
-			if (ldata.geom.instanced) {
-				g.drawIndexedVerticesInstanced(ldata.geom.instanceCount, ldata.geom.start, ldata.geom.count);
+			if (data.geom.instanced) {
+				g.drawIndexedVerticesInstanced(data.geom.instanceCount, data.geom.start, data.geom.count);
 			}
 			else {
-				g.drawIndexedVertices(ldata.geom.start, ldata.geom.count);
+				g.drawIndexedVertices(data.geom.start, data.geom.count);
 			}
 		}
 
-		#if arm_veloc
 		prevMatrix.setFrom(transform.worldUnpack);
-		#end
 	}
 
 	function validContext(mats: Vector<MaterialData>, context: String): Bool {
@@ -334,20 +250,6 @@ class MeshObject extends Object {
 		cameraDistance = Vec4.distancef(camX, camY, camZ, transform.worldx(), transform.worldy(), transform.worldz());
 	}
 
-	public inline function computeDepthRead() {
-		#if rp_depth_texture
-		depthRead = false;
-		for (material in materials) {
-			for (context in material.contexts) {
-				if (context.raw.depth_read == true) {
-					depthRead = true;
-					break;
-				}
-			}
-		}
-		#end
-	}
-
 	public inline function computeScreenSize(camera: CameraObject) {
 		// Approx..
 		// var rp = camera.renderPath;
@@ -356,15 +258,5 @@ class MeshObject extends Object {
 		var volume = tr.dim.x * tr.dim.y * tr.dim.z;
 		screenSize = volume * (1.0 / cameraDistance);
 		screenSize = screenSize > 1.0 ? 1.0 : screenSize;
-	}
-
-	inline function initLods() {
-		if (lods == null) {
-			lods = [];
-			for (l in raw.lods) {
-				if (l.object_ref == "") lods.push(null); // Empty
-				else lods.push(Scene.active.getChild(l.object_ref));
-			}
-		}
 	}
 }

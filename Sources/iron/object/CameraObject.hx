@@ -1,6 +1,6 @@
 package iron.object;
 
-import kha.graphics4.Graphics;
+import kha.Graphics4;
 import iron.Scene;
 import iron.RenderPath;
 import iron.math.Mat4;
@@ -12,10 +12,8 @@ class CameraObject extends Object {
 
 	public var data: CameraData;
 	public var P: Mat4;
-	#if arm_taa
 	public var noJitterP = Mat4.identity();
 	var frame = 0;
-	#end
 	public var V: Mat4;
 	public var prevV: Mat4 = null;
 	public var VP: Mat4;
@@ -56,9 +54,7 @@ class CameraObject extends Object {
 			var aspect = data.raw.aspect != null ? data.raw.aspect : screenAspect;
 			P = Mat4.persp(data.raw.fov, aspect, data.raw.near_plane, data.raw.far_plane);
 		}
-		#if arm_taa
 		noJitterP.setFrom(P);
-		#end
 	}
 
 	override public function remove() {
@@ -67,10 +63,8 @@ class CameraObject extends Object {
 		super.remove();
 	}
 
-	public function renderFrame(g: Graphics) {
-		#if arm_taa
+	public function renderFrame(g: Graphics4) {
 		projectionJitter();
-		#end
 
 		buildMatrix();
 
@@ -79,7 +73,6 @@ class CameraObject extends Object {
 		prevV.setFrom(V);
 	}
 
-	#if arm_taa
 	function projectionJitter() {
 		var w = RenderPath.active.currentW;
 		var h = RenderPath.active.currentH;
@@ -98,7 +91,6 @@ class CameraObject extends Object {
 		P._21 += y / h;
 		frame++;
 	}
-	#end
 
 	public function buildMatrix() {
 		transform.buildMatrix();

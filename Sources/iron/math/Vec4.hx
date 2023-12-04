@@ -135,12 +135,6 @@ class Vec4 {
 		return this;
 	}
 
-	public inline function applyAxisAngle(axis: Vec4, angle: Float): Vec4 {
-		var quat = new Quat();
-		quat.fromAxisAngle(axis, angle);
-		return applyQuat(quat);
-	}
-
 	public inline function applyQuat(q: Quat): Vec4 {
 		var ix = q.w * x + q.y * z - q.z * y;
 		var iy = q.w * y + q.z * x - q.x * z;
@@ -152,27 +146,12 @@ class Vec4 {
 		return this;
 	}
 
-	public inline function equals(v: Vec4): Bool {
-		return x == v.x && y == v.y && z == v.z;
-	}
-
-	public inline function almostEquals(v: Vec4, prec: Float): Bool {
-		return Math.abs(x - v.x) < prec && Math.abs(y - v.y) < prec && Math.abs(z - v.z) < prec;
-	}
-
 	public inline function length(): Float {
 		return Math.sqrt(x * x + y * y + z * z);
 	}
 
 	public inline function sub(v: Vec4): Vec4 {
 		x -= v.x; y -= v.y; z -= v.z;
-		return this;
-	}
-
-	public inline function exp(v: Vec4): Vec4 {
-		x = Math.exp(v.x);
-		y = Math.exp(v.y);
-		z = Math.exp(v.z);
 		return this;
 	}
 
@@ -199,13 +178,6 @@ class Vec4 {
 		return this;
 	}
 
-	public inline function clamp(min: Float, max: Float): Vec4 {
-		var l = length();
-		if (l < min) normalize().mult(min);
-		else if (l > max) normalize().mult(max);
-		return this;
-	}
-
 	public static inline function xAxis(): Vec4 {
 		return new Vec4(1.0, 0.0, 0.0);
 	}
@@ -216,9 +188,5 @@ class Vec4 {
 
 	public static inline function zAxis(): Vec4 {
 		return new Vec4(0.0, 0.0, 1.0);
-	}
-
-	public function toString(): String {
-		return "(" + this.x + ", " + this.y + ", " + this.z + ", " + this.w + ")";
 	}
 }

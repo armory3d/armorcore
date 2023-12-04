@@ -12,8 +12,8 @@ int iron_app_y() { return 0; }
 // static var trait_inits: Array<Void->Void> = [];
 // static var trait_updates: Array<Void->Void> = [];
 // static var trait_late_updates: Array<Void->Void> = [];
-// static var trait_renders: Array<kha.graphics4.Graphics->Void> = [];
-// static var trait_renders2d: Array<kha.graphics2.Graphics->Void> = [];
+// static var trait_renders: Array<kha.Graphics4->Void> = [];
+// static var trait_renders2d: Array<kha.Graphics2->Void> = [];
 // kinc_framebuffer *framebuffer;
 bool iron_pause_updates = false;
 

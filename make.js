@@ -37,16 +37,12 @@ function sys() {
 
 function sysdir() {
 	if (os.platform() === 'linux') {
-		if (os.arch() === 'arm') return 'linux_arm';
 		if (os.arch() === 'arm64') return 'linux_arm64';
 		else if (os.arch() === 'x64') return 'linux_x64';
 		else throw 'Unsupported CPU';
 	}
 	else if (os.platform() === 'win32') {
 		return 'windows_x64';
-	}
-	else if (os.platform() === 'freebsd') {
-		return 'freebsd_x64';
 	}
 	else {
 		return 'macos';
@@ -292,7 +288,6 @@ class AssetConverter {
 					switch (ext) {
 						case '.png':
 						case '.jpg':
-						case '.jpeg':
 						case '.hdr': {
 							let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
 							let images;
@@ -416,7 +411,7 @@ class ShaderCompiler {
 				return 'metal';
 			}
 			else {
-				return options.shaderversion == 300 ? 'essl' : 'glsl'; // TODO: pass gles flag
+				return options.shaderversion == 300 ? 'essl' : 'glsl';
 			}
 		}
 		else if (options.graphics === 'vulkan') {
@@ -426,7 +421,7 @@ class ShaderCompiler {
 			return 'metal';
 		}
 		else if (options.graphics === 'opengl') {
-			return options.shaderversion == 300 ? 'essl' : 'glsl'; // TODO: pass gles flag
+			return options.shaderversion == 300 ? 'essl' : 'glsl';
 		}
 		else if (options.graphics === 'direct3d11' || options.graphics === 'direct3d12') {
 			return 'd3d11';
@@ -691,15 +686,6 @@ class KromExporter {
 	}
 
 	haxeOptions(name, defines) {
-		defines.push('armorcore');
-		defines.push('sys_' + this.options.target);
-		defines.push('sys_g1');
-		defines.push('sys_g2');
-		defines.push('sys_g3');
-		defines.push('sys_g4');
-		defines.push('sys_a1');
-		defines.push('sys_a2');
-		defines.push('kha_js');
 		defines.push('kha_' + this.options.target);
 		defines.push('kha_' + this.options.target + '_js');
 		let graphics = this.options.graphics;

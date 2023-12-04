@@ -1,7 +1,7 @@
 package kha;
 
 import haxe.io.Bytes;
-import kha.graphics4.Graphics.Usage;
+import kha.Graphics4.Usage;
 
 class Image implements Canvas {
 	public var texture_: Dynamic;
@@ -10,8 +10,8 @@ class Image implements Canvas {
 	public var format: TextureFormat;
 	private var readable: Bool;
 
-	private var graphics2: kha.graphics2.Graphics;
-	private var graphics4: kha.graphics4.Graphics;
+	private var graphics2: kha.Graphics2;
+	private var graphics4: kha.Graphics4;
 
 	private function new(texture: Dynamic) {
 		texture_ = texture;
@@ -198,18 +198,18 @@ class Image implements Canvas {
 	public var depth(get, null): Int;
 	private function get_depth(): Int { return texture_ != null ? texture_.depth : 1; }
 
-	public var g2(get, null): kha.graphics2.Graphics;
-	private function get_g2(): kha.graphics2.Graphics {
+	public var g2(get, null): kha.Graphics2;
+	private function get_g2(): kha.Graphics2 {
 		if (graphics2 == null) {
-			graphics2 = new kha.graphics2.Graphics(this);
+			graphics2 = new kha.Graphics2(this);
 		}
 		return graphics2;
 	}
 
-	public var g4(get, null): kha.graphics4.Graphics;
-	private function get_g4(): kha.graphics4.Graphics {
+	public var g4(get, null): kha.Graphics4;
+	private function get_g4(): kha.Graphics4 {
 		if (graphics4 == null) {
-			graphics4 = new kha.graphics4.Graphics(this);
+			graphics4 = new kha.Graphics4(this);
 		}
 		return graphics4;
 	}

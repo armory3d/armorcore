@@ -1,17 +1,17 @@
-package kha.graphics4;
+package kha;
 
 import js.lib.Float32Array;
-import kha.graphics4.IndexBuffer;
-import kha.graphics4.PipelineState;
-import kha.graphics4.VertexBuffer;
+import kha.IndexBuffer;
+import kha.PipelineState;
+import kha.VertexBuffer;
 import kha.Image;
-import kha.math.FastMatrix3;
-import kha.math.FastMatrix4;
-import kha.math.FastVector2;
-import kha.math.FastVector3;
-import kha.math.FastVector4;
+import iron.math.Mat3;
+import iron.math.Mat4;
+import iron.math.Vec2;
+import iron.math.Vec3;
+import iron.math.Vec4;
 
-class Graphics {
+class Graphics4 {
 	private var renderTarget: kha.Canvas;
 
 	public function new(renderTarget: kha.Canvas = null) {
@@ -38,38 +38,38 @@ class Graphics {
 		Krom.viewport(x, y, width, height);
 	}
 
-	public function setVertexBuffer(vertexBuffer: kha.graphics4.VertexBuffer): Void {
+	public function setVertexBuffer(vertexBuffer: kha.VertexBuffer): Void {
 		vertexBuffer.set(0);
 	}
 
-	public function setVertexBuffers(vertexBuffers: Array<kha.graphics4.VertexBuffer>): Void {
+	public function setVertexBuffers(vertexBuffers: Array<kha.VertexBuffer>): Void {
 		Krom.setVertexBuffers(vertexBuffers);
 	}
 
-	public function setIndexBuffer(indexBuffer: kha.graphics4.IndexBuffer): Void {
+	public function setIndexBuffer(indexBuffer: kha.IndexBuffer): Void {
 		indexBuffer.set();
 	}
 
-	public function setTexture(unit: kha.graphics4.TextureUnit, texture: kha.Image): Void {
+	public function setTexture(unit: TextureUnit, texture: kha.Image): Void {
 		if (texture == null) return;
 		texture.texture_ != null ? Krom.setTexture(unit, texture.texture_) : Krom.setRenderTarget(unit, texture.renderTarget_);
 	}
 
-	public function setTextureDepth(unit: kha.graphics4.TextureUnit, texture: kha.Image): Void {
+	public function setTextureDepth(unit: TextureUnit, texture: kha.Image): Void {
 		if (texture == null) return;
 		Krom.setTextureDepth(unit, texture.renderTarget_);
 	}
 
-	public function setImageTexture(unit: kha.graphics4.TextureUnit, texture: kha.Image): Void {
+	public function setImageTexture(unit: TextureUnit, texture: kha.Image): Void {
 		if (texture == null) return;
 		Krom.setImageTexture(unit, texture.texture_);
 	}
 
-	public function setTextureParameters(texunit: kha.graphics4.TextureUnit, uAddressing: TextureAddressing, vAddressing: TextureAddressing, minificationFilter: TextureFilter, magnificationFilter: TextureFilter, mipmapFilter: MipMapFilter): Void {
+	public function setTextureParameters(texunit: TextureUnit, uAddressing: TextureAddressing, vAddressing: TextureAddressing, minificationFilter: TextureFilter, magnificationFilter: TextureFilter, mipmapFilter: MipMapFilter): Void {
 		Krom.setTextureParameters(texunit, uAddressing, vAddressing, minificationFilter, magnificationFilter, mipmapFilter);
 	}
 
-	public function setTexture3DParameters(texunit: kha.graphics4.TextureUnit, uAddressing: TextureAddressing, vAddressing: TextureAddressing, wAddressing: TextureAddressing, minificationFilter: TextureFilter, magnificationFilter: TextureFilter, mipmapFilter: MipMapFilter): Void {
+	public function setTexture3DParameters(texunit: TextureUnit, uAddressing: TextureAddressing, vAddressing: TextureAddressing, wAddressing: TextureAddressing, minificationFilter: TextureFilter, magnificationFilter: TextureFilter, mipmapFilter: MipMapFilter): Void {
 		Krom.setTexture3DParameters(texunit, uAddressing, vAddressing, wAddressing, minificationFilter, magnificationFilter, mipmapFilter);
 	}
 
@@ -77,48 +77,48 @@ class Graphics {
 		pipeline.set();
 	}
 
-	public function setBool(location: kha.graphics4.ConstantLocation, value: Bool): Void {
+	public function setBool(location: ConstantLocation, value: Bool): Void {
 		Krom.setBool(location, value);
 	}
 
-	public function setInt(location: kha.graphics4.ConstantLocation, value: Int): Void {
+	public function setInt(location: ConstantLocation, value: Int): Void {
 		Krom.setInt(location, value);
 	}
 
-	public function setFloat(location: kha.graphics4.ConstantLocation, value: Float): Void {
+	public function setFloat(location: ConstantLocation, value: Float): Void {
 		Krom.setFloat(location, value);
 	}
 
-	public function setFloat2(location: kha.graphics4.ConstantLocation, value1: Float, value2: Float): Void {
+	public function setFloat2(location: ConstantLocation, value1: Float, value2: Float): Void {
 		Krom.setFloat2(location, value1, value2);
 	}
 
-	public function setFloat3(location: kha.graphics4.ConstantLocation, value1: Float, value2: Float, value3: Float): Void {
+	public function setFloat3(location: ConstantLocation, value1: Float, value2: Float, value3: Float): Void {
 		Krom.setFloat3(location, value1, value2, value3);
 	}
 
-	public function setFloat4(location: kha.graphics4.ConstantLocation, value1: Float, value2: Float, value3: Float, value4: Float): Void {
+	public function setFloat4(location: ConstantLocation, value1: Float, value2: Float, value3: Float, value4: Float): Void {
 		Krom.setFloat4(location, value1, value2, value3, value4);
 	}
 
-	public function setFloats(location: kha.graphics4.ConstantLocation, values: Float32Array): Void {
+	public function setFloats(location: ConstantLocation, values: Float32Array): Void {
 		Krom.setFloats(location, values.buffer);
 	}
 
-	public function setVector2(location: kha.graphics4.ConstantLocation, value: FastVector2): Void {
+	public function setVector2(location: ConstantLocation, value: Vec2): Void {
 		Krom.setFloat2(location, value.x, value.y);
 	}
 
-	public function setVector3(location: kha.graphics4.ConstantLocation, value: FastVector3): Void {
+	public function setVector3(location: ConstantLocation, value: Vec3): Void {
 		Krom.setFloat3(location, value.x, value.y, value.z);
 	}
 
-	public function setVector4(location: kha.graphics4.ConstantLocation, value: FastVector4): Void {
+	public function setVector4(location: ConstantLocation, value: Vec4): Void {
 		Krom.setFloat4(location, value.x, value.y, value.z, value.w);
 	}
 
 	static var mat = new js.lib.Float32Array(16);
-	public inline function setMatrix(location: kha.graphics4.ConstantLocation, matrix: FastMatrix4): Void {
+	public inline function setMatrix(location: ConstantLocation, matrix: Mat4): Void {
 		mat[0] = matrix._00; mat[1] = matrix._01; mat[2] = matrix._02; mat[3] = matrix._03;
 		mat[4] = matrix._10; mat[5] = matrix._11; mat[6] = matrix._12; mat[7] = matrix._13;
 		mat[8] = matrix._20; mat[9] = matrix._21; mat[10] = matrix._22; mat[11] = matrix._23;
@@ -126,7 +126,7 @@ class Graphics {
 		Krom.setMatrix(location, mat.buffer);
 	}
 
-	public inline function setMatrix3(location: kha.graphics4.ConstantLocation, matrix: FastMatrix3): Void {
+	public inline function setMatrix3(location: ConstantLocation, matrix: Mat3): Void {
 		mat[0] = matrix._00; mat[1] = matrix._01; mat[2] = matrix._02;
 		mat[3] = matrix._10; mat[4] = matrix._11; mat[5] = matrix._12;
 		mat[6] = matrix._20; mat[7] = matrix._21; mat[8] = matrix._22;

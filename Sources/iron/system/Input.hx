@@ -1,6 +1,6 @@
 package iron.system;
 
-import kha.input.Keyboard.KeyCode;
+import iron.system.Input.KeyCode;
 
 class Input {
 
@@ -11,7 +11,6 @@ class Input {
 	static var gamepads: Array<Gamepad> = [];
 	static var sensor: Sensor = null;
 	static var registered = false;
-	public static var virtualButtons: Map<String, VirtualButton> = null; // Button name
 
 	public static function reset() {
 		occupied = false;
@@ -26,10 +25,6 @@ class Input {
 		if (pen != null) pen.endFrame();
 		if (keyboard != null) keyboard.endFrame();
 		for (gamepad in gamepads) gamepad.endFrame();
-
-		if (virtualButtons != null) {
-			for (vb in virtualButtons) vb.started = vb.released = false;
-		}
 	}
 
 	public static function getMouse(): Mouse {
@@ -50,9 +45,6 @@ class Input {
 		return getMouse();
 	}
 
-	/**
-	  Get the Keyboard object. If it is not registered yet then register a new Keyboard.
-	**/
 	public static function getKeyboard(): Keyboard {
 		if (!registered) register();
 		if (keyboard == null) keyboard = new Keyboard();
@@ -63,19 +55,13 @@ class Input {
 		if (i >= 4) return null;
 		if (!registered) register();
 		while (gamepads.length <= i) gamepads.push(new Gamepad(gamepads.length));
-		return gamepads[i].connected ? gamepads[i] : null;
+		return gamepads[i];
 	}
 
 	public static function getSensor(): Sensor {
 		if (!registered) register();
 		if (sensor == null) sensor = new Sensor();
 		return sensor;
-	}
-
-	public static function getVirtualButton(virtual: String): VirtualButton {
-		if (!registered) register();
-		if (virtualButtons == null) return null;
-		return virtualButtons.get(virtual);
 	}
 
 	static inline function register() {
@@ -87,53 +73,9 @@ class Input {
 	}
 }
 
-class VirtualButton {
-	public var started = false;
-	public var released = false;
-	public var down = false;
-	public function new() {}
-}
-
-class VirtualInput {
-	var virtualButtons: Map<String, VirtualButton> = null; // Button id
-
-	public function setVirtual(virtual: String, button: String) {
-		if (Input.virtualButtons == null) Input.virtualButtons = new Map<String, VirtualButton>();
-
-		var vb = Input.virtualButtons.get(virtual);
-		if (vb == null) {
-			vb = new VirtualButton();
-			Input.virtualButtons.set(virtual, vb);
-		}
-
-		if (virtualButtons == null) virtualButtons = new Map<String, VirtualButton>();
-		virtualButtons.set(button, vb);
-	}
-
-	function downVirtual(button: String) {
-		if (virtualButtons != null) {
-			var vb = virtualButtons.get(button);
-			if (vb != null) {
-				vb.down = true;
-				vb.started = true;
-			}
-		}
-	}
-
-	function upVirtual(button: String) {
-		if (virtualButtons != null) {
-			var vb = virtualButtons.get(button);
-			if (vb != null) {
-				vb.down = false;
-				vb.released = true;
-			}
-		}
-	}
-}
-
 typedef Surface = Mouse;
 
-class Mouse extends VirtualInput {
+class Mouse {
 
 	public static var buttons = ["left", "right", "middle", "side1", "side2"];
 	var buttonsDown = [false, false, false, false, false];
@@ -153,12 +95,7 @@ class Mouse extends VirtualInput {
 	public var lastX = -1.0;
 	public var lastY = -1.0;
 
-	public function new() {
-		kha.input.Mouse.get().notify(downListener, upListener, moveListener, wheelListener);
-		#if (kha_android || kha_ios)
-		if (kha.input.Surface.get() != null) kha.input.Surface.get().notify(onTouchDown, onTouchUp, onTouchMove);
-		#end
-	}
+	public function new() {}
 
 	public function endFrame() {
 		buttonsStarted[0] = buttonsStarted[1] = buttonsStarted[2] = buttonsStarted[3] = buttonsStarted[4] = false;
@@ -200,31 +137,31 @@ class Mouse extends VirtualInput {
 	}
 
 	public function lock() {
-		if (kha.input.Mouse.get().canLock()) {
-			kha.input.Mouse.get().lock();
+		if (kha.System.canLockMouse()) {
+			kha.System.lockMouse();
 			locked = true;
 			hidden = true;
 		}
 	}
 	public function unlock() {
-		if (kha.input.Mouse.get().canLock()) {
-			kha.input.Mouse.get().unlock();
+		if (kha.System.canLockMouse()) {
+			kha.System.unlockMouse();
 			locked = false;
 			hidden = false;
 		}
 	}
 
 	public function hide() {
-		kha.input.Mouse.get().hideSystemCursor();
+		kha.System.hideSystemCursor();
 		hidden = true;
 	}
 
 	public function show() {
-		kha.input.Mouse.get().showSystemCursor();
+		kha.System.showSystemCursor();
 		hidden = false;
 	}
 
-	function downListener(index: Int, x: Int, y: Int) {
+	public function downListener(index: Int, x: Int, y: Int) {
 		if (Input.getPen().inUse) return;
 
 		buttonsDown[index] = true;
@@ -237,22 +174,18 @@ class Mouse extends VirtualInput {
 			lastY = y;
 		}
 		#end
-
-		downVirtual(buttons[index]);
 	}
 
-	function upListener(index: Int, x: Int, y: Int) {
+	public function upListener(index: Int, x: Int, y: Int) {
 		if (Input.getPen().inUse) return;
 
 		buttonsDown[index] = false;
 		buttonsReleased[index] = true;
 		this.x = x;
 		this.y = y;
-
-		upVirtual(buttons[index]);
 	}
 
-	function moveListener(x: Int, y: Int, movementX: Int, movementY: Int) {
+	public function moveListener(x: Int, y: Int, movementX: Int, movementY: Int) {
 		if (lastX == -1.0 && lastY == -1.0) { // First frame init
 			lastX = x;
 			lastY = y;
@@ -273,7 +206,7 @@ class Mouse extends VirtualInput {
 		moved = true;
 	}
 
-	function wheelListener(delta: Int) {
+	public function wheelListener(delta: Int) {
 		wheelDelta = delta;
 	}
 
@@ -329,7 +262,7 @@ class Mouse extends VirtualInput {
 	}
 }
 
-class Pen extends VirtualInput {
+class Pen {
 
 	static var buttons = ["tip"];
 	var buttonsDown = [false];
@@ -349,10 +282,7 @@ class Pen extends VirtualInput {
 	var lastX = -1.0;
 	var lastY = -1.0;
 
-	public function new() {
-		var pen = kha.input.Pen.get();
-		if (pen != null) pen.notify(downListener, upListener, moveListener);
-	}
+	public function new() {}
 
 	public function endFrame() {
 		buttonsStarted[0] = false;
@@ -384,7 +314,7 @@ class Pen extends VirtualInput {
 		return buttonsReleased[buttonIndex(button)];
 	}
 
-	function downListener(x: Int, y: Int, pressure: Float) {
+	public function downListener(x: Int, y: Int, pressure: Float) {
 		buttonsDown[0] = true;
 		buttonsStarted[0] = true;
 		this.x = x;
@@ -396,7 +326,7 @@ class Pen extends VirtualInput {
 		#end
 	}
 
-	function upListener(x: Int, y: Int, pressure: Float) {
+	public function upListener(x: Int, y: Int, pressure: Float) {
 		#if (!kha_android && !kha_ios)
 		if (buttonsStarted[0]) { buttonsStarted[0] = false; inUse = true; return; }
 		#end
@@ -413,7 +343,7 @@ class Pen extends VirtualInput {
 		#end
 	}
 
-	function moveListener(x: Int, y: Int, pressure: Float) {
+	public function moveListener(x: Int, y: Int, pressure: Float) {
 		#if kha_ios
 		// Listen to pen hover if no other input is active
 		if (!buttonsDown[0] && pressure == 0.0) {
@@ -448,7 +378,7 @@ class Pen extends VirtualInput {
 	}
 }
 
-class Keyboard extends VirtualInput {
+class Keyboard {
 
 	public static var keys = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "space", "backspace", "tab", "enter", "shift", "control", "alt", "win", "escape", "delete", "up", "down", "left", "right", "back", ",", ".", ":", ";", "<", "=", ">", "?", "!", '"', "#", "$", "%", "&", "_", "(", ")", "*", "|", "{", "}", "[", "]", "~", "`", "/", "\\", "@", "+", "-", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"];
 	var keysDown = new Map<String, Bool>();
@@ -460,7 +390,6 @@ class Keyboard extends VirtualInput {
 
 	public function new() {
 		reset();
-		kha.input.Keyboard.get().notify(downListener, upListener, pressListener);
 	}
 
 	public function endFrame() {
@@ -489,20 +418,10 @@ class Keyboard extends VirtualInput {
 		endFrame();
 	}
 
-	/**
-		Check if a key is currently pressed.
-		@param	key A String representing the physical keyboard key to check.
-		@return	Bool. Returns true or false depending on the keyboard state.
-	**/
 	public function down(key: String): Bool {
 		return keysDown.get(key);
 	}
 
-	/**
-		Check if a key has started being pressed down. Will only be run once until the key is released and pressed again.
-		@param	key A String representing the physical keyboard key to check.
-		@return	Bool. Returns true or false depending on the keyboard state.
-	**/
 	public function started(key: String): Bool {
 		return keysStarted.get(key);
 	}
@@ -511,20 +430,10 @@ class Keyboard extends VirtualInput {
 		return keysFrame.length > 0;
 	}
 
-	/**
-		Check if a key has been released from being pressed down. Will only be run once until the key is pressed again and release again.
-		@param	key A String representing the physical keyboard key to check.
-		@return	Bool. Returns true or false depending on the keyboard state.
-	**/
 	public function released(key: String): Bool {
 		return keysReleased.get(key);
 	}
 
-	/**
-		Check every repeat period if a key is currently pressed.
-		@param	key A String representing the physical keyboard key to check.
-		@return	Bool. Returns true or false depending on the keyboard state.
-	**/
 	public function repeat(key: String): Bool {
 		return keysStarted.get(key) || (repeatKey && keysDown.get(key));
 	}
@@ -620,7 +529,7 @@ class Keyboard extends VirtualInput {
 		}
 	}
 
-	function downListener(code: KeyCode) {
+	public function downListener(code: KeyCode) {
 		var s = keyCode(code);
 		keysFrame.push(s);
 		keysStarted.set(s, true);
@@ -633,11 +542,9 @@ class Keyboard extends VirtualInput {
 			@:privateAccess if (!m.buttonsDown[1]) m.downListener(1, Std.int(m.x), Std.int(m.y));
 		}
 		#end
-
-		downVirtual(s);
 	}
 
-	function upListener(code: KeyCode) {
+	public function upListener(code: KeyCode) {
 		var s = keyCode(code);
 		keysFrame.push(s);
 		keysReleased.set(s, true);
@@ -649,11 +556,9 @@ class Keyboard extends VirtualInput {
 			@:privateAccess m.upListener(1, Std.int(m.x), Std.int(m.y));
 		}
 		#end
-
-		upVirtual(s);
 	}
 
-	function pressListener(char: String) {}
+	public function pressListener(char: String) {}
 }
 
 class GamepadStick {
@@ -667,14 +572,11 @@ class GamepadStick {
 	public function new() {}
 }
 
-class Gamepad extends VirtualInput {
+class Gamepad {
 
 	public static var buttonsPS = ["cross", "circle", "square", "triangle", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
 	public static var buttonsXBOX = ["a", "b", "x", "y", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
 	public static var buttons = buttonsPS;
-
-	public var id(get, never): String;
-	inline function get_id() return kha.input.Gamepad.get(num).id;
 
 	var buttonsDown: Array<Float> = []; // Intensity 0 - 1
 	var buttonsStarted: Array<Bool> = [];
@@ -685,10 +587,9 @@ class Gamepad extends VirtualInput {
 	public var leftStick = new GamepadStick();
 	public var rightStick = new GamepadStick();
 
-	public var connected = false;
 	var num = 0;
 
-	public function new(i: Int, virtual = false) {
+	public function new(i: Int) {
 		for (s in buttons) {
 			buttonsDown.push(0.0);
 			buttonsStarted.push(false);
@@ -696,19 +597,6 @@ class Gamepad extends VirtualInput {
 		}
 		num = i;
 		reset();
-		virtual ? connected = true : connect();
-	}
-
-	var connects = 0;
-	function connect() {
-		var gamepad = kha.input.Gamepad.get(num);
-		if (gamepad == null) {
-			// if (connects < 10) armory.system.Tween.timer(1, connect);
-			// connects++;
-			return;
-		}
-		connected = true;
-		gamepad.notify(axisListener, buttonListener);
 	}
 
 	public function endFrame() {
@@ -757,7 +645,7 @@ class Gamepad extends VirtualInput {
 		return buttonsReleased[buttonIndex(button)];
 	}
 
-	function axisListener(axis: Int, value: Float) {
+	public function axisListener(axis: Int, value: Float) {
 		var stick = axis <= 1 ? leftStick : rightStick;
 
 		if (axis == 0 || axis == 2) { // X
@@ -773,26 +661,22 @@ class Gamepad extends VirtualInput {
 		stick.moved = true;
 	}
 
-	function buttonListener(button: Int, value: Float) {
+	public function buttonListener(button: Int, value: Float) {
 		buttonsFrame.push(button);
 
 		buttonsDown[button] = value;
 		if (value > 0) buttonsStarted[button] = true; // Will trigger L2/R2 multiple times..
 		else buttonsReleased[button] = true;
-
-		if (value == 0.0) upVirtual(buttons[button]);
-		else if (value == 1.0) downVirtual(buttons[button]);
 	}
 }
 
 class Sensor {
-
 	public var x = 0.0;
 	public var y = 0.0;
 	public var z = 0.0;
 
 	public function new() {
-		kha.input.Sensor.get(kha.input.Sensor.SensorType.Accelerometer).notify(listener);
+		// kha.System.getSensor(Accelerometer).notify(listener);
 	}
 
 	function listener(x: Float, y: Float, z: Float) {
@@ -800,4 +684,199 @@ class Sensor {
 		this.y = y;
 		this.z = z;
 	}
+}
+
+@:enum abstract SensorType(Int) from Int to Int {
+	var Accelerometer = 0;
+	var Gyroscope = 1;
+}
+
+@:enum abstract KeyCode(Int) from Int to Int {
+	var Unknown = 0;
+	var Back = 1; // Android
+	var Cancel = 3;
+	var Help = 6;
+	var Backspace = 8;
+	var Tab = 9;
+	var Clear = 12;
+	var Return = 13;
+	var Shift = 16;
+	var Control = 17;
+	var Alt = 18;
+	var Pause = 19;
+	var CapsLock = 20;
+	var Kana = 21;
+	var Hangul = 21;
+	var Eisu = 22;
+	var Junja = 23;
+	var Final = 24;
+	var Hanja = 25;
+	var Kanji = 25;
+	var Escape = 27;
+	var Convert = 28;
+	var NonConvert = 29;
+	var Accept = 30;
+	var ModeChange = 31;
+	var Space = 32;
+	var PageUp = 33;
+	var PageDown = 34;
+	var End = 35;
+	var Home = 36;
+	var Left = 37;
+	var Up = 38;
+	var Right = 39;
+	var Down = 40;
+	var Select = 41;
+	var Print = 42;
+	var Execute = 43;
+	var PrintScreen = 44;
+	var Insert = 45;
+	var Delete = 46;
+	var Zero = 48;
+	var One = 49;
+	var Two = 50;
+	var Three = 51;
+	var Four = 52;
+	var Five = 53;
+	var Six = 54;
+	var Seven = 55;
+	var Eight = 56;
+	var Nine = 57;
+	var Colon = 58;
+	var Semicolon = 59;
+	var LessThan = 60;
+	var Equals = 61;
+	var GreaterThan = 62;
+	var QuestionMark = 63;
+	var At = 64;
+	var A = 65;
+	var B = 66;
+	var C = 67;
+	var D = 68;
+	var E = 69;
+	var F = 70;
+	var G = 71;
+	var H = 72;
+	var I = 73;
+	var J = 74;
+	var K = 75;
+	var L = 76;
+	var M = 77;
+	var N = 78;
+	var O = 79;
+	var P = 80;
+	var Q = 81;
+	var R = 82;
+	var S = 83;
+	var T = 84;
+	var U = 85;
+	var V = 86;
+	var W = 87;
+	var X = 88;
+	var Y = 89;
+	var Z = 90;
+	var Win = 91;
+	var ContextMenu = 93;
+	var Sleep = 95;
+	var Numpad0 = 96;
+	var Numpad1 = 97;
+	var Numpad2 = 98;
+	var Numpad3 = 99;
+	var Numpad4 = 100;
+	var Numpad5 = 101;
+	var Numpad6 = 102;
+	var Numpad7 = 103;
+	var Numpad8 = 104;
+	var Numpad9 = 105;
+	var Multiply = 106;
+	var Add = 107;
+	var Separator = 108;
+	var Subtract = 109;
+	var Decimal = 110;
+	var Divide = 111;
+	var F1 = 112;
+	var F2 = 113;
+	var F3 = 114;
+	var F4 = 115;
+	var F5 = 116;
+	var F6 = 117;
+	var F7 = 118;
+	var F8 = 119;
+	var F9 = 120;
+	var F10 = 121;
+	var F11 = 122;
+	var F12 = 123;
+	var F13 = 124;
+	var F14 = 125;
+	var F15 = 126;
+	var F16 = 127;
+	var F17 = 128;
+	var F18 = 129;
+	var F19 = 130;
+	var F20 = 131;
+	var F21 = 132;
+	var F22 = 133;
+	var F23 = 134;
+	var F24 = 135;
+	var NumLock = 144;
+	var ScrollLock = 145;
+	var WinOemFjJisho = 146;
+	var WinOemFjMasshou = 147;
+	var WinOemFjTouroku = 148;
+	var WinOemFjLoya = 149;
+	var WinOemFjRoya = 150;
+	var Circumflex = 160;
+	var Exclamation = 161;
+	var DoubleQuote = 162;
+	var Hash = 163;
+	var Dollar = 164;
+	var Percent = 165;
+	var Ampersand = 166;
+	var Underscore = 167;
+	var OpenParen = 168;
+	var CloseParen = 169;
+	var Asterisk = 170;
+	var Plus = 171;
+	var Pipe = 172;
+	var HyphenMinus = 173;
+	var OpenCurlyBracket = 174;
+	var CloseCurlyBracket = 175;
+	var Tilde = 176;
+	var VolumeMute = 181;
+	var VolumeDown = 182;
+	var VolumeUp = 183;
+	var Comma = 188;
+	var Period = 190;
+	var Slash = 191;
+	var BackQuote = 192;
+	var OpenBracket = 219;
+	var BackSlash = 220;
+	var CloseBracket = 221;
+	var Quote = 222;
+	var Meta = 224;
+	var AltGr = 225;
+	var WinIcoHelp = 227;
+	var WinIco00 = 228;
+	var WinIcoClear = 230;
+	var WinOemReset = 233;
+	var WinOemJump = 234;
+	var WinOemPA1 = 235;
+	var WinOemPA2 = 236;
+	var WinOemPA3 = 237;
+	var WinOemWSCTRL = 238;
+	var WinOemCUSEL = 239;
+	var WinOemATTN = 240;
+	var WinOemFinish = 241;
+	var WinOemCopy = 242;
+	var WinOemAuto = 243;
+	var WinOemENLW = 244;
+	var WinOemBackTab = 245;
+	var ATTN = 246;
+	var CRSEL = 247;
+	var EXSEL = 248;
+	var EREOF = 249;
+	var Play = 250;
+	var Zoom = 251;
+	var PA1 = 253;
+	var WinOemClear = 254;
 }

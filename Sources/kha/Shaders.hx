@@ -1,8 +1,8 @@
 package kha;
 
-import kha.graphics4.FragmentShader;
-import kha.graphics4.VertexShader;
-import kha.graphics4.GeometryShader;
+import kha.FragmentShader;
+import kha.VertexShader;
+import kha.GeometryShader;
 
 class Shaders {
 

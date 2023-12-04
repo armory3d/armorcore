@@ -1,6 +1,5 @@
 package iron.object;
 
-import iron.Trait;
 import iron.data.SceneFormat;
 
 class Object {
@@ -11,45 +10,25 @@ class Object {
 
 	public var name: String = "";
 	public var transform: Transform;
-	public var constraints: Array<Constraint> = null;
-	public var traits: Array<Trait> = [];
+	public var traits: Array<Dynamic> = [];
 
 	public var parent: Object = null;
 	public var children: Array<Object> = [];
-	public var lods: Array<Object> = null;
 
 	public var animation: Animation = null;
 	public var visible = true; // Skip render, keep updating
 	public var visibleMesh = true;
-	public var visibleShadow = true;
 	public var culled = false; // Object was culled last frame
 	public var culledMesh = false;
-	public var culledShadow = false;
-	public var properties: Map<String, Dynamic> = null;
 	var isEmpty = false;
 
 	public function new() {
 		uid = uidCounter++;
-		urandom = seededRandom(); // Math.random();
 		transform = new Transform(this);
 		isEmpty = Type.getClass(this) == Object;
 		if (isEmpty && Scene.active != null) Scene.active.empties.push(this);
 	}
 
-	/**
-		Set the given `parentObject` as the parent of this object.
-
-		If `parentObject` is `null`, the object is parented to the scene's
-		`sceneParent`, which is the topmost object of the scene tree.
-		If you want to remove it from the scene, use `Object.remove()` instead.
-
-		If `parentObject` is the object on which this function is called,
-		nothing happens.
-
-		@param parentObject The new parent object.
-		@param parentInverse (Optional) Change the scale of the child object to be relative to the new parents 3D space or use the original scale.
-		@param keepTransform (Optional) When unparenting from the old parent, keep the transform given by the old parent or revert to the object's default.
-	**/
 	public function setParent(parentObject: Object, parentInverse = false, keepTransform = false) {
 		if (parentObject == this || parentObject == parent) return;
 
@@ -68,9 +47,6 @@ class Object {
 		if (parentInverse) this.transform.applyParentInverse();
 	}
 
-	/**
-		Removes the game object from the scene.
-	**/
 	public function remove() {
 		if (isEmpty && Scene.active != null) Scene.active.empties.remove(this);
 		if (animation != null) animation.remove();
@@ -82,11 +58,6 @@ class Object {
 		}
 	}
 
-	/**
-		Get a child game Object of this game Object. Using the childs name property as a lookup.
-		@param	name A string matching the name property of the game Object to fetch.
-		@return	Object or null
-	**/
 	public function getChild(name: String): Object {
 		if (this.name == name) return this;
 		else {
@@ -98,16 +69,6 @@ class Object {
 		return null;
 	}
 
-	/**
-		Returns the children of the object.
-
-		If 'recursive' is set to `false`, only direct children will be included
-		in the returned array. If `recursive` is `true`, children of children and
-		so on will be included too.
-
-		@param recursive = false Include children of children
-		@return `Array<Object>`
-	**/
 	public function getChildren(?recursive = false): Array<Object> {
 		if (!recursive) return children;
 
@@ -129,56 +90,22 @@ class Object {
 		return null;
 	}
 
-	@:access(iron.Trait)
-	public function addTrait(t: Trait) {
+	public function addTrait(t: Dynamic) {
 		traits.push(t);
 		t.object = this;
 
-		if (t._add != null) {
-			for (f in t._add) f();
-			t._add = null;
-		}
+		// if (t._add != null) {
+		// 	for (f in t._add) f();
+		// 	t._add = null;
+		// }
 	}
 
-	/**
-		Remove the Trait from the Object.
-		@param	t The Trait to be removed from the game Object.
-	**/
-	@:access(iron.Trait)
-	public function removeTrait(t: Trait) {
-		if (t._init != null) {
-			for (f in t._init) App.removeInit(f);
-			t._init = null;
-		}
-		if (t._update != null) {
-			for (f in t._update) App.removeUpdate(f);
-			t._update = null;
-		}
-		if (t._lateUpdate != null) {
-			for (f in t._lateUpdate) App.removeLateUpdate(f);
-			t._lateUpdate = null;
-		}
-		if (t._render != null) {
-			for (f in t._render) App.removeRender(f);
-			t._render = null;
-		}
-		if (t._render2D != null) {
-			for (f in t._render2D) App.removeRender2D(f);
-			t._render2D = null;
-		}
-		if (t._remove != null) {
-			for (f in t._remove) f();
-			t._remove = null;
-		}
+	public function removeTrait(t: Dynamic) {
+		t.remove();
 		traits.remove(t);
 	}
 
-	/**
-		Get the Trait instance that is attached to this game Object.
-		@param	c The class of type Trait to attempt to retrieve.
-		@return	Trait or null
-	**/
-	public function getTrait<T: Trait>(c: Class<T>): T {
+	public function getTrait(c: Class<Dynamic>): Dynamic {
 		for (t in traits) if (Type.getClass(t) == cast c) return cast t;
 		return null;
 	}
@@ -186,10 +113,6 @@ class Object {
 	#if arm_skin
 	public function getParentArmature(name: String): BoneAnimation {
 		for (a in Scene.active.animations) if (a.armature != null && a.armature.name == name) return cast a;
-		return null;
-	}
-	#else
-	public function getParentArmature(name: String): Animation {
 		return null;
 	}
 	#end
@@ -207,15 +130,5 @@ class Object {
 		// Object actions
 		if (oactions == null) return;
 		animation = new ObjectAnimation(this, oactions);
-	}
-
-	#if arm_morph_target
-	public function setupMorphTargets() {}
-	#end
-
-	static var seed = 1; // cpp / js not consistent
-	static function seededRandom(): Float {
-		seed = (seed * 9301 + 49297) % 233280;
-		return seed / 233280.0;
 	}
 }

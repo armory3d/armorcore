@@ -28,7 +28,7 @@ class Font {
 
 	public function setFontIndex(fontIndex: Int) {
 		this.fontIndex = fontIndex;
-		kha.graphics2.Graphics.fontGlyphs = kha.graphics2.Graphics.fontGlyphs.copy(); // Trigger atlas update
+		kha.Graphics2.fontGlyphs = kha.Graphics2.fontGlyphs.copy(); // Trigger atlas update
 	}
 
 	public function clone(): Font {
@@ -36,12 +36,12 @@ class Font {
 	}
 
 	public function init() {
-		if (kha.graphics2.Graphics.fontGlyphsLast != kha.graphics2.Graphics.fontGlyphs) {
-			kha.graphics2.Graphics.fontGlyphsLast = kha.graphics2.Graphics.fontGlyphs;
-			Krom.g2_font_set_glyphs(kha.graphics2.Graphics.fontGlyphs);
+		if (kha.Graphics2.fontGlyphsLast != kha.Graphics2.fontGlyphs) {
+			kha.Graphics2.fontGlyphsLast = kha.Graphics2.fontGlyphs;
+			Krom.g2_font_set_glyphs(kha.Graphics2.fontGlyphs);
 		}
-		if (fontGlyphs != kha.graphics2.Graphics.fontGlyphs) {
-			fontGlyphs = kha.graphics2.Graphics.fontGlyphs;
+		if (fontGlyphs != kha.Graphics2.fontGlyphs) {
+			fontGlyphs = kha.Graphics2.fontGlyphs;
 			font_ = Krom.g2_font_init(blob.bytes.getData(), fontIndex);
 		}
 	}

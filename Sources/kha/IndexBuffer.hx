@@ -1,7 +1,7 @@
-package kha.graphics4;
+package kha;
 
 import js.lib.Uint32Array;
-import kha.graphics4.Graphics.Usage;
+import kha.Graphics4.Usage;
 
 class IndexBuffer {
 	private var buffer: Dynamic;

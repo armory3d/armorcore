@@ -1,9 +1,9 @@
 package iron.object;
 
-import kha.graphics4.Graphics;
-import kha.graphics4.Graphics.TextureAddressing;
-import kha.graphics4.Graphics.TextureFilter;
-import kha.graphics4.Graphics.MipMapFilter;
+import kha.Graphics4;
+import kha.Graphics4.TextureAddressing;
+import kha.Graphics4.TextureFilter;
+import kha.Graphics4.MipMapFilter;
 import js.lib.Float32Array;
 import iron.math.Vec4;
 import iron.math.Quat;
@@ -21,19 +21,6 @@ using StringTools;
 // Structure for setting shader uniforms
 class Uniforms {
 
-	#if kha_opengl
-	public static var biasMat = new Mat4(
-		0.5, 0.0, 0.0, 0.5,
-		0.0, 0.5, 0.0, 0.5,
-		0.0, 0.0, 0.5, 0.5,
-		0.0, 0.0, 0.0, 1.0);
-	#else // d3d
-	public static var biasMat = new Mat4(
-		0.5, 0.0, 0.0, 0.5,
-		0.0, -0.5, 0.0, 0.5,
-		0.0, 0.0, 0.5, 0.5,
-		0.0, 0.0, 0.0, 1.0);
-	#end
 	public static var helpMat = Mat4.identity();
 	public static var helpMat2 = Mat4.identity();
 	public static var helpMat3 = Mat3.identity();
@@ -52,13 +39,7 @@ class Uniforms {
 	public static var posUnpack: Null<Float> = null;
 	public static var texUnpack: Null<Float> = null;
 
-	#if (rp_resolution_filter == "Point")
-	public static var defaultFilter = TextureFilter.PointFilter;
-	#else
-	public static var defaultFilter = TextureFilter.LinearFilter;
-	#end
-
-	public static function setContextConstants(g: Graphics, context: ShaderContext, bindParams: Array<String>) {
+	public static function setContextConstants(g: Graphics4, context: ShaderContext, bindParams: Array<String>) {
 		if (context.raw.constants != null) {
 			for (i in 0...context.raw.constants.length) {
 				var c = context.raw.constants[i];
@@ -114,19 +95,13 @@ class Uniforms {
 								g.setTextureParameters(context.textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 							}
 						}
-						#if arm_clusters
-						case "_clustersData": {
-							g.setTexture(context.textureUnits[j], LightObject.clustersData);
-							g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.PointFilter, TextureFilter.PointFilter, MipMapFilter.NoMipFilter);
-						}
-						#end
 					}
 				}
 			}
 		}
 	}
 
-	public static function setObjectConstants(g: Graphics, context: ShaderContext, object: Object) {
+	public static function setObjectConstants(g: Graphics4, context: ShaderContext, object: Object) {
 		if (context.raw.constants != null) {
 			for (i in 0...context.raw.constants.length) {
 				var c = context.raw.constants[i];
@@ -162,7 +137,7 @@ class Uniforms {
 		}
 	}
 
-	static function bindRenderTarget(g: Graphics, rt: RenderTarget, context: ShaderContext, samplerID: String, attachDepth: Bool) {
+	static function bindRenderTarget(g: Graphics4, rt: RenderTarget, context: ShaderContext, samplerID: String, attachDepth: Bool) {
 		if (rt != null) {
 			var tus = context.raw.texture_units;
 
@@ -196,12 +171,9 @@ class Uniforms {
 						if (rt.raw.name.startsWith("bloom")) {
 							// Use bilinear filter for bloom mips to get correct blur
 							g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
-						}
-						if (samplerID.startsWith("shadowMap")) {
-							g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 							paramsSet = true;
 						}
-						else if (attachDepth) {
+						if (attachDepth) {
 							g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.PointFilter, TextureFilter.PointFilter, MipMapFilter.NoMipFilter);
 							paramsSet = true;
 						}
@@ -213,7 +185,7 @@ class Uniforms {
 						var allowParams = oc == null || oc.shared_sampler == null || oc.shared_sampler == samplerID;
 						if (allowParams) {
 							var addressing = (oc != null && oc.addressing == "repeat") ? TextureAddressing.Repeat : TextureAddressing.Clamp;
-							var filter = (oc != null && oc.filter == "point") ? TextureFilter.PointFilter : defaultFilter;
+							var filter = (oc != null && oc.filter == "point") ? TextureFilter.PointFilter : TextureFilter.LinearFilter;
 							g.setTextureParameters(context.textureUnits[j], addressing, addressing, filter, filter, MipMapFilter.NoMipFilter);
 						}
 						paramsSet = true;
@@ -223,7 +195,7 @@ class Uniforms {
 		}
 	}
 
-	static function setContextConstant(g: Graphics, location: ConstantLocation, c: TShaderConstant): Bool {
+	static function setContextConstant(g: Graphics4, location: ConstantLocation, c: TShaderConstant): Bool {
 		if (c.link == null) return true;
 
 		var camera = Scene.active.camera;
@@ -233,16 +205,7 @@ class Uniforms {
 			var m: Mat4 = null;
 			switch (c.link) {
 				case "_viewMatrix": {
-					#if arm_centerworld
-					m = vmat(camera.V);
-					#else
 					m = camera.V;
-					#end
-				}
-				case "_transposeViewMatrix": {
-					helpMat.setFrom(camera.V);
-					helpMat.transpose3x3();
-					m = helpMat;
 				}
 				case "_projectionMatrix": {
 					m = camera.P;
@@ -251,40 +214,14 @@ class Uniforms {
 					helpMat.getInverse(camera.P);
 					m = helpMat;
 				}
+				case "_viewProjectionMatrix": {
+					m = camera.VP;
+				}
 				case "_inverseViewProjectionMatrix": {
-					#if arm_centerworld
-					helpMat.setFrom(vmat(camera.V));
-					#else
 					helpMat.setFrom(camera.V);
-					#end
 					helpMat.multmat(camera.P);
 					helpMat.getInverse(helpMat);
 					m = helpMat;
-				}
-				case "_viewProjectionMatrix": {
-					#if arm_centerworld
-					m = vmat(camera.V);
-					m.multmat(camera.P);
-					#else
-					m = camera.VP;
-					#end
-				}
-				case "_prevViewProjectionMatrix": {
-					helpMat.setFrom(camera.prevV);
-					helpMat.multmat(camera.P);
-					m = helpMat;
-				}
-				case "_lightViewProjectionMatrix": {
-					if (light != null) {
-						m = light.VP;
-					}
-				}
-				case "_biasLightViewProjectionMatrix": {
-					if (light != null) {
-						helpMat.setFrom(light.VP);
-						helpMat.multmat(biasMat);
-						m = helpMat;
-					}
 				}
 				case "_skydomeMatrix": {
 					var tr = camera.transform;
@@ -300,7 +237,7 @@ class Uniforms {
 					return false;
 			}
 
-			g.setMatrix(location, m != null ? m.self : kha.math.FastMatrix4.identity());
+			g.setMatrix(location, m != null ? m : iron.math.Mat4.identity());
 			return true;
 		}
 		else if (c.type == "vec4") {
@@ -323,66 +260,19 @@ class Uniforms {
 			var v: Vec4 = null;
 			helpVec.set(0, 0, 0);
 			switch (c.link) {
-				case "_lightPosition": {
-					if (light != null) {
-						#if arm_centerworld
-						var t = camera.transform;
-						helpVec.set(light.transform.worldx() - t.worldx(), light.transform.worldy() - t.worldy(), light.transform.worldz() - t.worldz());
-						#else
-						helpVec.set(light.transform.worldx(), light.transform.worldy(), light.transform.worldz());
-						#end
-						v = helpVec;
-					}
-				}
 				case "_lightDirection": {
 					if (light != null) {
 						helpVec = light.look().normalize();
 						v = helpVec;
 					}
 				}
-				case "_sunDirection": {
-					var sun = RenderPath.active.sun;
-					if (sun != null) {
-						helpVec = sun.look().normalize();
-						v = helpVec;
-					}
-				}
-				case "_sunColor": {
-					var sun = RenderPath.active.sun;
-					if (sun != null) {
-						var str = sun.visible ? sun.data.raw.strength : 0.0;
-						helpVec.set(sun.data.raw.color[0] * str, sun.data.raw.color[1] * str, sun.data.raw.color[2] * str);
-						v = helpVec;
-					}
-				}
 				case "_pointPosition": {
 					var point = RenderPath.active.point;
 					if (point != null) {
-						#if arm_centerworld
-						var t = camera.transform;
-						helpVec.set(point.transform.worldx() - t.worldx(), point.transform.worldy() - t.worldy(), point.transform.worldz() - t.worldz());
-						#else
 						helpVec.set(point.transform.worldx(), point.transform.worldy(), point.transform.worldz());
-						#end
 						v = helpVec;
 					}
 				}
-				#if arm_spot
-				case "_spotDirection": {
-					var point = RenderPath.active.point;
-					if (point != null) {
-						helpVec = point.look().normalize();
-						v = helpVec;
-					}
-				}
-				case "_spotRight": {
-					var point = RenderPath.active.point;
-					if (point != null) {
-						helpVec = point.right().normalize();
-						v = helpVec;
-					}
-				}
-				#end
 				case "_pointColor": {
 					var point = RenderPath.active.point;
 					if (point != null) {
@@ -391,7 +281,6 @@ class Uniforms {
 						v = helpVec;
 					}
 				}
-				#if arm_ltc
 				case "_lightArea0": {
 					if (light != null && light.data.raw.size != null) {
 						var f2: Float = 0.5;
@@ -432,49 +321,14 @@ class Uniforms {
 						v = helpVec;
 					}
 				}
-				#end
 				case "_cameraPosition": {
-					// #if arm_centerworld
-					// helpVec.set(0, 0, 0);
-					// #else
 					helpVec.set(camera.transform.worldx(), camera.transform.worldy(), camera.transform.worldz());
-					// #end
 					v = helpVec;
 				}
 				case "_cameraLook": {
 					helpVec = camera.lookWorld().normalize();
 					v = helpVec;
 				}
-				case "_cameraUp": {
-					helpVec = camera.upWorld().normalize();
-					v = helpVec;
-				}
-				case "_cameraRight": {
-					helpVec = camera.rightWorld().normalize();
-					v = helpVec;
-				}
-				case "_backgroundCol": {
-					if (camera.data.raw.clear_color != null) helpVec.set(camera.data.raw.clear_color[0], camera.data.raw.clear_color[1], camera.data.raw.clear_color[2]);
-					v = helpVec;
-				}
-				case "_hosekSunDirection": {
-					var w = Scene.active.world;
-					if (w != null) {
-						// Clamp Z for night cycle
-						helpVec.set(w.raw.sun_direction[0],
-									w.raw.sun_direction[1],
-									w.raw.sun_direction[2] > 0 ? w.raw.sun_direction[2] : 0);
-						v = helpVec;
-					}
-				}
-				#if rp_probes
-				case "_probeNormal": {
-					v = Scene.active.probes[RenderPath.active.currentProbeIndex].transform.up().normalize();
-				}
-				case "_probePosition": {
-					v = Scene.active.probes[RenderPath.active.currentProbeIndex].transform.world.getLoc();
-				}
-				#end
 				default:
 					return false;
 			}
@@ -541,11 +395,6 @@ class Uniforms {
 					v.x = 0.0;
 					v.y = 3.0 / RenderPath.active.currentH;
 				}
-				case "_windowSize": {
-					v = helpVec;
-					v.x = App.w();
-					v.y = App.h();
-				}
 				case "_screenSize": {
 					v = helpVec;
 					v.x = RenderPath.active.currentW;
@@ -556,37 +405,12 @@ class Uniforms {
 					v.x = 1.0 / RenderPath.active.currentW;
 					v.y = 1.0 / RenderPath.active.currentH;
 				}
-				case "_aspectRatio": {
-					v = helpVec;
-					v.x = RenderPath.active.currentH / RenderPath.active.currentW;
-					v.y = RenderPath.active.currentW / RenderPath.active.currentH;
-					v.x = v.x > 1.0 ? 1.0 : v.x;
-					v.y = v.y > 1.0 ? 1.0 : v.y;
-				}
-				case "_cameraPlane": {
-					v = helpVec;
-					v.x = camera.data.raw.near_plane;
-					v.y = camera.data.raw.far_plane;
-				}
 				case "_cameraPlaneProj": {
 					var near = camera.data.raw.near_plane;
 					var far = camera.data.raw.far_plane;
 					v = helpVec;
 					v.x = far / (far - near);
 					v.y = (-far * near) / (far - near);
-				}
-				case "_lightPlane": {
-					if (light != null) {
-						v = helpVec;
-						v.x = light.data.raw.near_plane;
-						v.y = light.data.raw.far_plane;
-					}
-				}
-				case "_shadowMapSize": {
-					if (light != null && light.data.raw.cast_shadow) {
-						v = helpVec;
-						v.x = v.y = light.data.raw.shadowmap_size;
-					}
 				}
 				default:
 					return false;
@@ -606,28 +430,8 @@ class Uniforms {
 				case "_time": {
 					f = Time.time();
 				}
-				case "_sunShadowsBias": {
-					var sun = RenderPath.active.sun;
-					f = sun == null ? 0.0 : sun.data.raw.shadows_bias;
-				}
-				case "_pointShadowsBias": {
-					var point = RenderPath.active.point;
-					f = point == null ? 0.0 : point.data.raw.shadows_bias;
-				}
-				case "_envmapStrength": {
-					f = Scene.active.world == null ? 0.0 : Scene.active.world.probe.raw.strength;
-				}
-				case "_aspectRatioF": {
-					f = RenderPath.active.currentW / RenderPath.active.currentH;
-				}
 				case "_aspectRatioWindowF": {
 					f = iron.App.w() / iron.App.h();
-				}
-				case "_frameScale": {
-					f = RenderPath.active.frameTime / Time.delta;
-				}
-				case "_fieldOfView": {
-					f = camera.data.raw.fov;
 				}
 				default:
 					return false;
@@ -642,31 +446,6 @@ class Uniforms {
 				case "_envmapIrradiance": {
 					fa = Scene.active.world == null ? WorldData.getEmptyIrradiance() : Scene.active.world.probe.irradiance;
 				}
-				#if arm_clusters
-				case "_lightsArray": {
-					fa = LightObject.lightsArray;
-				}
-				#if arm_spot
-				case "_lightsArraySpot": {
-					fa = LightObject.lightsArraySpot;
-				}
-				#end
-				#if arm_shadowmap_atlas
-				case "_pointLightsAtlasArray": {
-					fa = LightObject.pointLightsData;
-				}
-				#end
-				#end // arm_clusters
-				#if arm_csm
-				case "_cascadeData": {
-					for (l in Scene.active.lights) {
-						if (l.data.raw.type == "sun") {
-							fa = l.getCascadeData();
-							break;
-						}
-					}
-				}
-				#end
 			}
 
 			if (fa != null) {
@@ -691,7 +470,7 @@ class Uniforms {
 		return false;
 	}
 
-	static function setObjectConstant(g: Graphics, object: Object, location: ConstantLocation, c: TShaderConstant) {
+	static function setObjectConstant(g: Graphics4, object: Object, location: ConstantLocation, c: TShaderConstant) {
 		if (c.link == null) return;
 
 		var camera = Scene.active.camera;
@@ -701,18 +480,10 @@ class Uniforms {
 			var m: Mat4 = null;
 			switch (c.link) {
 				case "_worldMatrix": {
-					#if arm_centerworld
-					m = wmat(object.transform.worldUnpack, camera);
-					#else
 					m = object.transform.worldUnpack;
-					#end
 				}
 				case "_inverseWorldMatrix": {
-					#if arm_centerworld
-					helpMat.getInverse(wmat(object.transform.worldUnpack, camera));
-					#else
 					helpMat.getInverse(object.transform.worldUnpack);
-					#end
 					m = helpMat;
 				}
 				case "_worldViewProjectionMatrix": {
@@ -721,36 +492,11 @@ class Uniforms {
 					helpMat.multmat(camera.P);
 					m = helpMat;
 				}
-				case "_worldViewProjectionMatrixSphere": { // Billboard
-					var t = object.transform;
-					helpMat.setFrom(t.worldUnpack);
-					helpMat.multmat(camera.V);
-					var scl = new Vec4(t.scale.x, t.scale.y, t.scale.z);
-					scl.mult(t.scaleWorld);
-					helpMat._00 = scl.x; helpMat._10 = 0.0;   helpMat._20 = 0.0;
-					helpMat._01 = 0.0;   helpMat._11 = scl.y; helpMat._21 = 0.0;
-					helpMat._02 = 0.0;   helpMat._12 = 0.0;   helpMat._22 = scl.z;
-					helpMat.multmat(camera.P);
-					m = helpMat;
-				}
-				case "_worldViewProjectionMatrixCylinder": { // Billboard - x rot 90deg
-					var t = object.transform;
-					helpMat.setFrom(t.worldUnpack);
-					helpMat.multmat(camera.V);
-					var scl = new Vec4(t.scale.x, t.scale.y, t.scale.z);
-					scl.mult(t.scaleWorld);
-					helpMat._00 = scl.x; helpMat._20 = 0.0;
-					helpMat._01 = 0.0;   helpMat._21 = 0.0;
-					helpMat._02 = 0.0;   helpMat._22 = scl.y;
-					helpMat.multmat(camera.P);
-					m = helpMat;
-				}
 				case "_worldViewMatrix": {
 					helpMat.setFrom(object.transform.worldUnpack);
 					helpMat.multmat(camera.V);
 					m = helpMat;
 				}
-				#if arm_veloc
 				case "_prevWorldViewProjectionMatrix": {
 					helpMat.setFrom(cast(object, MeshObject).prevMatrix);
 					helpMat.multmat(camera.prevV);
@@ -758,129 +504,11 @@ class Uniforms {
 					helpMat.multmat(camera.P);
 					m = helpMat;
 				}
-				case "_prevWorldMatrix": {
-					m = cast(object, MeshObject).prevMatrix;
-				}
-				#end
-				case "_sunWorldMatrix": {
-					var sun = RenderPath.active.sun;
-					if (sun != null) {
-						helpMat.setFrom(sun.transform.worldUnpack);
-						m = helpMat;
-					}
-				}
-				case "_lightWorldViewProjectionMatrix": {
-					if (light != null) {
-						// object is null for DrawQuad
-						object == null ? helpMat.setIdentity() : helpMat.setFrom(object.transform.worldUnpack);
-						helpMat.multmat(light.VP);
-						m = helpMat;
-					}
-				}
-				case "_lightWorldViewProjectionMatrixSphere": {
-					if (light != null) {
-						helpMat.setFrom(object.transform.worldUnpack);
-
-						// Align to camera..
-						helpMat.multmat(camera.V);
-						helpMat._00 = 1.0; helpMat._10 = 0.0; helpMat._20 = 0.0;
-						helpMat._01 = 0.0; helpMat._11 = 1.0; helpMat._21 = 0.0;
-						helpMat._02 = 0.0; helpMat._12 = 0.0; helpMat._22 = 1.0;
-						helpMat2.getInverse(camera.V);
-						helpMat.multmat(helpMat2);
-
-						helpMat.multmat(light.VP);
-						m = helpMat;
-					}
-				}
-				case "_lightWorldViewProjectionMatrixCylinder": {
-					if (light != null) {
-						helpMat.setFrom(object.transform.worldUnpack);
-
-						// Align to camera..
-						helpMat.multmat(camera.V);
-						helpMat._00 = 1.0; helpMat._20 = 0.0;
-						helpMat._01 = 0.0; helpMat._21 = 0.0;
-						helpMat._02 = 0.0; helpMat._22 = 1.0;
-						helpMat2.getInverse(camera.V);
-						helpMat.multmat(helpMat2);
-
-						helpMat.multmat(light.VP);
-						m = helpMat;
-					}
-				}
-				case "_biasLightWorldViewProjectionMatrix": {
-					if (light != null)  {
-						// object is null for DrawQuad
-						object == null ? helpMat.setIdentity() : helpMat.setFrom(object.transform.worldUnpack);
-						helpMat.multmat(light.VP);
-						helpMat.multmat(biasMat);
-						m = helpMat;
-					}
-				}
-				case "_biasLightWorldViewProjectionMatrixSun": {
-					for (l in iron.Scene.active.lights) {
-						if (l.data.raw.type == "sun") {
-							// object is null for DrawQuad
-							object == null ? helpMat.setIdentity() : helpMat.setFrom(object.transform.worldUnpack);
-							helpMat.multmat(l.VP);
-							helpMat.multmat(biasMat);
-							#if arm_shadowmap_atlas
-							// tile matrix
-							helpMat2.setIdentity();
-							// scale [0-1] coords to [0-tilescale]
-							helpMat2._00 = l.tileScale[0];
-							helpMat2._11 = l.tileScale[0];
-							// offset coordinate start from [0, 0] to [tile-start-x, tile-start-y]
-							helpMat2._30 = l.tileOffsetX[0];
-							helpMat2._31 = l.tileOffsetY[0];
-							helpMat.multmat(helpMat2);
-							#if (!kha_opengl)
-							helpMat2.setIdentity();
-							helpMat2._11 = -1.0;
-							helpMat2._31 = 1.0;
-							helpMat.multmat(helpMat2);
-							#end
-							#end
-							m = helpMat;
-							break;
-						}
-					}
-				}
-				#if rp_probes
-				case "_probeViewProjectionMatrix": {
-					helpMat.setFrom(Scene.active.probes[RenderPath.active.currentProbeIndex].camera.V);
-					helpMat.multmat(Scene.active.probes[RenderPath.active.currentProbeIndex].camera.P);
-					m = helpMat;
-				}
-				#end
 				#if arm_particles
 				case "_particleData": {
 					var mo = cast(object, MeshObject);
 					if (mo.particleOwner != null && mo.particleOwner.particleSystems != null) {
 						m = mo.particleOwner.particleSystems[mo.particleIndex].getData();
-					}
-				}
-				#end
-			}
-
-			if (m == null) {
-				#if arm_spot
-				if (c.link.startsWith("_biasLightWorldViewProjectionMatrixSpot")) {
-					var light = getSpot(c.link.charCodeAt(c.link.length - 1) - "0".code);
-					if (light != null) {
-						object == null ? helpMat.setIdentity() : helpMat.setFrom(object.transform.worldUnpack);
-						helpMat.multmat(light.VP);
-						helpMat.multmat(biasMat);
-						m = helpMat;
-					}
-				}
-				if (c.link.startsWith("_biasLightViewProjectionMatrixSpot")) {
-					var light = getSpot(c.link.charCodeAt(c.link.length - 1) - "0".code);
-					if (light != null) {
-						helpMat.setFrom(light.VP);
-						helpMat.multmat(biasMat);
-						m = helpMat;
 					}
 				}
 				#end
@@ -894,7 +522,7 @@ class Uniforms {
 			}
 
 			if (m == null) return;
-			g.setMatrix(location, m.self);
+			g.setMatrix(location, m);
 		}
 		else if (c.type == "mat3") {
 			var m: Mat3 = null;
@@ -906,38 +534,17 @@ class Uniforms {
 					m = helpMat3;
 				}
 				case "_viewMatrix3": {
-					#if arm_centerworld
-					helpMat3.setFrom4(vmat(camera.V));
-					#else
 					helpMat3.setFrom4(camera.V);
-					#end
 					m = helpMat3;
 				}
 			}
 
 			if (m == null) return;
-			g.setMatrix3(location, m.self);
+			g.setMatrix3(location, m);
 		}
 		else if (c.type == "vec4") {
 			var v: Vec4 = null;
 			helpVec.set(0, 0, 0);
-
-			switch (c.link) {
-				#if arm_spot
-				case "_spotData": {
-					// spot size (cutoff), spot blend (exponent)
-					var point = RenderPath.active.point;
-					if (point != null) {
-						v = helpVec;
-						v.x = point.data.raw.spot_size;
-						v.y = point.data.raw.spot_blend;
-						var scale = point.transform.scale;
-						v.z = scale.z == 0.0 ? 0.0 : scale.x / scale.z;
-						v.w = scale.z == 0.0 ? 0.0 : scale.y / scale.z;
-					}
-				}
-				#end
-			}
 
 			if (v == null && externalVec4Links != null) {
 				for (fn in externalVec4Links) {
@@ -980,25 +587,6 @@ class Uniforms {
 		else if (c.type == "vec2") {
 			var vx: Null<Float> = null;
 			var vy: Null<Float> = null;
-			switch (c.link) {
-				case "_tilesheetOffset": {
-					var ts = cast(object, MeshObject).tilesheet;
-					vx = ts.tileX;
-					vy = ts.tileY;
-				}
-				#if arm_morph_target
-				case "_morphScaleOffset": {
-					var mt = cast(object, MeshObject).morphTarget;
-					vx = mt.scaling;
-					vy = mt.offset;
-				}
-				case "_morphDataDim": {
-					var mt = cast(object, MeshObject).morphTarget;
-					vx = mt.numMorphTargets;
-					vy = mt.morphBlockSize / mt.morphImageSize;
-				}
-				#end
-			}
 
 			if (vx == null && externalVec2Links != null) {
 				for (fn in externalVec2Links) {
@@ -1057,16 +645,6 @@ class Uniforms {
 					}
 				}
 				#end
-				#if (arm_clusters && arm_spot)
-				case "_biasLightWorldViewProjectionMatrixSpotArray": {
-					fa = LightObject.updateLWVPMatrixArray(object, "spot");
-				}
-				#end // arm_clusters
-				#if arm_morph_target
-				case "_morphWeights": {
-					fa = cast(object, MeshObject).morphTarget.morphWeights;
-				}
-				#end
 			}
 
 			if (fa == null && externalFloatsLinks != null) {
@@ -1102,7 +680,7 @@ class Uniforms {
 		}
 	}
 
-	public static function setMaterialConstants(g: Graphics, context: ShaderContext, materialContext: MaterialContext) {
+	public static function setMaterialConstants(g: Graphics4, context: ShaderContext, materialContext: MaterialContext) {
 		if (materialContext.raw.bind_constants != null) {
 			for (i in 0...materialContext.raw.bind_constants.length) {
 				var matc = materialContext.raw.bind_constants[i];
@@ -1137,33 +715,15 @@ class Uniforms {
 		}
 	}
 
-	#if arm_spot
-	static function getSpot(index: Int): LightObject {
-		var i = 0;
-		for (l in Scene.active.lights) {
-			if (l.data.raw.type != "spot" && l.data.raw.type != "area") continue;
-			if (i == index) return l;
-			i++;
-		}
-		return null;
-	}
-	#end
-
 	static function currentMat(object: Object): MaterialData {
 		if (object != null && Std.isOfType(object, iron.object.MeshObject)) {
 			var mo = cast(object, MeshObject);
 			return mo.materials[mo.materialIndex];
 		}
-		#if rp_decals
-		if (object != null && Std.isOfType(object, iron.object.DecalObject)) {
-			var mo = cast(object, DecalObject);
-			return mo.material;
-		}
-		#end
 		return null;
 	}
 
-	static function setMaterialConstant(g: Graphics, location: ConstantLocation, c: TShaderConstant, matc: TBindConstant) {
+	static function setMaterialConstant(g: Graphics4, location: ConstantLocation, c: TShaderConstant, matc: TBindConstant) {
 		switch (c.type) {
 			case "vec4": g.setFloat4(location, matc.vec4[0], matc.vec4[1], matc.vec4[2], matc.vec4[3]);
 			case "vec3": g.setFloat3(location, matc.vec3[0], matc.vec3[1], matc.vec3[2]);
@@ -1173,26 +733,6 @@ class Uniforms {
 			case "int": g.setInt(location, matc.int);
 		}
 	}
-
-	#if arm_centerworld
-	static var mm1: Mat4 = Mat4.identity();
-	static var mm2: Mat4 = Mat4.identity();
-	static function wmat(m: Mat4, cam: CameraObject): Mat4 {
-		var t = cam.transform;
-		mm1.setFrom(m);
-		mm1._30 -= t.worldx();
-		mm1._31 -= t.worldy();
-		mm1._32 -= t.worldz();
-		return mm1;
-	}
-	static function vmat(m: Mat4): Mat4 {
-		mm2.setFrom(m);
-		mm2._30 = 0;
-		mm2._31 = 0;
-		mm2._32 = 0;
-		return mm2;
-	}
-	#end
 
 	static inline function getTextureAddressing(s: String): TextureAddressing {
 		return switch (s) {

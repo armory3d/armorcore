@@ -1,4 +1,4 @@
-package kha.graphics4;
+package kha;
 
 class FragmentShader {
 	public var shader: Dynamic;

@@ -69,10 +69,6 @@ class Ray {
 		return this.at(t);
 	}
 
-	public function intersectsBox(center: Vec4, dim: Vec4): Bool {
-		return this.intersectBox(center, dim) != null;
-	}
-
 	public function intersectBox(center: Vec4, dim: Vec4): Vec4 {
 		// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-7-intersecting-simple-shapes/ray-box-intersection/
 		var tmin, tmax, tymin, tymax, tzmin, tzmax;
@@ -149,11 +145,6 @@ class Ray {
 		edge2.subvecs(c, a);
 		normal.crossvecs(edge1, edge2);
 
-		// Solve Q + t*D = b1*E1 + b2*E2 (Q = kDiff, D = ray direction,
-		// E1 = kEdge1, E2 = kEdge2, N = Cross(E1,E2)) by
-		//   |Dot(D,N)|*b1 = sign(Dot(D,N))*Dot(D,Cross(Q,E2))
-		//   |Dot(D,N)|*b2 = sign(Dot(D,N))*Dot(D,Cross(E1,Q))
-		//   |Dot(D,N)|*t = -sign(Dot(D,N))*Dot(Q,N)
 		var DdN = this.direction.dot(normal);
 		var sign;
 

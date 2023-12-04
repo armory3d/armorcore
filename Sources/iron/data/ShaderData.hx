@@ -1,18 +1,18 @@
 package iron.data;
 
-import kha.graphics4.PipelineState;
-import kha.graphics4.Graphics;
-import kha.graphics4.VertexBuffer.VertexStructure;
-import kha.graphics4.VertexBuffer.VertexData;
-import kha.graphics4.PipelineState.CompareMode;
-import kha.graphics4.PipelineState.CullMode;
-import kha.graphics4.PipelineState.BlendingOperation;
-import kha.graphics4.PipelineState.BlendingFactor;
-import kha.graphics4.Graphics.TextureAddressing;
-import kha.graphics4.Graphics.TextureFilter;
-import kha.graphics4.Graphics.MipMapFilter;
-import kha.graphics4.VertexShader;
-import kha.graphics4.FragmentShader;
+import kha.PipelineState;
+import kha.Graphics4;
+import kha.VertexBuffer.VertexStructure;
+import kha.VertexBuffer.VertexData;
+import kha.PipelineState.CompareMode;
+import kha.PipelineState.CullMode;
+import kha.PipelineState.BlendingOperation;
+import kha.PipelineState.BlendingFactor;
+import kha.Graphics4.TextureAddressing;
+import kha.Graphics4.TextureFilter;
+import kha.Graphics4.MipMapFilter;
+import kha.VertexShader;
+import kha.FragmentShader;
 import kha.Image.TextureFormat;
 import kha.Image.DepthStencilFormat;
 import iron.data.SceneFormat;
@@ -23,11 +23,7 @@ class ShaderData {
 	public var name: String;
 	public var raw: TShaderData;
 	public var contexts: Array<ShaderContext> = [];
-
-	#if arm_noembed
-	public static var shaderPath = "../krom-resources/";
 	public static inline var shaderExt = #if kha_vulkan ".spirv" #elseif (krom_android || krom_wasm) ".essl" #elseif kha_opengl ".glsl" #elseif kha_metal ".metal" #else ".d3d11" #end ;
-	#end
 
 	public function new(raw: TShaderData, done: ShaderData->Void, overrideContext: TShaderOverride = null) {
 		this.raw = raw;
@@ -79,7 +75,7 @@ class ShaderContext {
 
 	public function new(raw: TShaderContext, done: ShaderContext->Void, overrideContext: TShaderOverride = null) {
 		this.raw = raw;
-		#if (!rp_voxels)
+		#if (!arm_voxels)
 		if (raw.name == "voxel") {
 			done(this);
 			return;
@@ -170,11 +166,11 @@ class ShaderContext {
 			if (raw.geometry_shader != null) numShaders++;
 
 			function loadShader(file: String, type: Int) {
-				var path = ShaderData.shaderPath + file + ShaderData.shaderExt;
+				var path = file + ShaderData.shaderExt;
 				Data.getBlob(path, function(b: kha.Blob) {
 					if (type == 0) pipeState.vertexShader = new VertexShader([b], [file]);
 					else if (type == 1) pipeState.fragmentShader = new FragmentShader([b], [file]);
-					else if (type == 2) pipeState.geometryShader = new kha.graphics4.GeometryShader([b], [file]);
+					else if (type == 2) pipeState.geometryShader = new kha.GeometryShader([b], [file]);
 					shadersLoaded++;
 					if (shadersLoaded >= numShaders) finishCompile(done);
 				});
@@ -183,22 +179,12 @@ class ShaderContext {
 			loadShader(raw.fragment_shader, 1);
 			if (raw.geometry_shader != null) loadShader(raw.geometry_shader, 2);
 
-			#elseif arm_shader_embed
+			#else
 
 			pipeState.fragmentShader = kha.Shaders.getFragment(raw.fragment_shader);
 			pipeState.vertexShader = kha.Shaders.getVertex(raw.vertex_shader);
 			if (raw.geometry_shader != null) {
 				pipeState.geometryShader = kha.Shaders.getGeometry(raw.geometry_shader);
-			}
-			finishCompile(done);
-
-			#else
-
-			pipeState.fragmentShader = Reflect.field(kha.Shaders, raw.fragment_shader.replace(".", "_"));
-			pipeState.vertexShader = Reflect.field(kha.Shaders, raw.vertex_shader.replace(".", "_"));
-
-			if (raw.geometry_shader != null) {
-				pipeState.geometryShader = Reflect.field(kha.Shaders, raw.geometry_shader.replace(".", "_"));
 			}
 			finishCompile(done);
 
@@ -364,7 +350,7 @@ class ShaderContext {
 		textureUnits.push(unit);
 	}
 
-	public function setTextureParameters(g: kha.graphics4.Graphics, unitIndex: Int, tex: TBindTexture) {
+	public function setTextureParameters(g: kha.Graphics4, unitIndex: Int, tex: TBindTexture) {
 		// This function is called for samplers set using material context
 		var unit = textureUnits[unitIndex];
 		g.setTextureParameters(unit,

@@ -1,7 +1,7 @@
-package kha.graphics4;
+package kha;
 
-import kha.graphics4.Graphics;
-import kha.graphics4.VertexBuffer.VertexStructure;
+import kha.Graphics4;
+import kha.VertexBuffer.VertexStructure;
 import kha.Image.TextureFormat;
 import kha.Image.DepthStencilFormat;
 

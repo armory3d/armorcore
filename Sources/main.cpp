@@ -113,9 +113,6 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #if defined(IDLE_SLEEP) && !defined(KORE_WINDOWS)
 #include <unistd.h>
 #endif
-#ifdef WITH_WORKER
-#include "worker.h"
-#endif
 #ifdef WITH_G2
 extern "C" {
 	#include "g2/g2.h"
@@ -177,7 +174,6 @@ namespace {
 	bool stderr_created = false;
 	bool in_background = false;
 	int paused_frames = 0;
-	bool armorcore = false;
 	#ifdef IDLE_SLEEP
 	bool input_down = false;
 	int last_window_width = 0;
@@ -213,8 +209,8 @@ namespace {
 	Global<Function> gamepad_axis_func;
 	Global<Function> gamepad_button_func;
 	Global<Function> save_and_quit_func;
-	Global<Function> picker_func;
 	#ifdef WITH_ZUI
+	Global<Function> picker_func;
 	Global<Function> on_border_hover_func;
 	Global<Function> on_text_hover_func;
 	Global<Function> on_deselect_text_func;
@@ -262,9 +258,6 @@ namespace {
 	#ifdef KORE_WINDOWS
 	wchar_t temp_wstring[1024];
 	wchar_t temp_wstring1[1024];
-	#endif
-	#ifdef ARM_PROFILE
-	double startup_time = 0.0;
 	#endif
 	#ifdef WITH_ONNX
 	const OrtApi *ort = NULL;
@@ -324,12 +317,9 @@ namespace {
 		int x = -1;
 		int y = -1;
 		int frequency = 60;
-		if (args.Length() > 8) {
-			armorcore = true;
-			x = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			y = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			frequency = args[10]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		}
+		x = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		y = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		frequency = args[10]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 
 		kinc_window_options_t win;
 		win.title = *title;
@@ -1331,16 +1321,14 @@ namespace {
 			pipeline->color_write_mask_alpha[i] = maskAlphaArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->BooleanValue(isolate);
 		}
 
-		if (armorcore) {
-			pipeline->color_attachment_count = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachmentCount").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-			Local<Object> colorAttachmentArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachments").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-			for (int i = 0; i < 8; ++i) {
-				pipeline->color_attachment[i] = (kinc_g4_render_target_format_t)colorAttachmentArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-			}
-
-			pipeline->depth_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-			pipeline->stencil_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->color_attachment_count = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachmentCount").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		Local<Object> colorAttachmentArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachments").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		for (int i = 0; i < 8; ++i) {
+			pipeline->color_attachment[i] = (kinc_g4_render_target_format_t)colorAttachmentArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 		}
+
+		pipeline->depth_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		pipeline->stencil_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
 
 		pipeline->conservative_rasterization = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "conservativeRasterization").ToLocalChecked()).ToLocalChecked()->BooleanValue(isolate);
 
@@ -1437,7 +1425,7 @@ namespace {
 
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
-		if (armorcore) {
+		// if (armorcore) {
 			kinc_file_reader_t reader;
 			if (kinc_file_reader_open(&reader, *utf8_value, KINC_FILE_TYPE_ASSET)) {
 				unsigned char *image_data;
@@ -1452,18 +1440,18 @@ namespace {
 			else {
 				success = false;
 			}
-		}
-		else {
-			// TODO: make kinc_image load faster
-			size_t byte_size = kinc_image_size_from_file(*utf8_value);
-			if (byte_size == 0) {
-				success = false;
-			}
-			else {
-				void *memory = malloc(byte_size);
-				kinc_image_init_from_file(image, memory, *utf8_value);
-			}
-		}
+		// }
+		// else {
+		// 	// TODO: make kinc_image load faster
+		// 	size_t byte_size = kinc_image_size_from_file(*utf8_value);
+		// 	if (byte_size == 0) {
+		// 		success = false;
+		// 	}
+		// 	else {
+		// 		void *memory = malloc(byte_size);
+		// 		kinc_image_init_from_file(image, memory, *utf8_value);
+		// 	}
+		// }
 
 		if (!success) {
 			free(image);
@@ -1486,10 +1474,6 @@ namespace {
 		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		if (!armorcore) {
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		}
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -1974,10 +1958,6 @@ namespace {
 		obj->SetInternalField(0, External::New(isolate, texture));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		if (!armorcore) {
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		}
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -2029,10 +2009,6 @@ namespace {
 		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		if (!armorcore) {
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		}
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -3223,10 +3199,6 @@ namespace {
 	void krom_ml_inference(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 
-		#ifdef ARM_PROFILE
-		double inference_time = kinc_time();
-		#endif
-
 		OrtStatus *onnx_status = NULL;
 
 		static bool use_gpu_last = false;
@@ -3845,12 +3817,16 @@ namespace {
 		ops.font = (g2_font_t *)fontfield->Value();
 
 		Local<Value> colorwheel = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "color_wheel").ToLocalChecked()).ToLocalChecked();
-		Local<External> colorwheelfield = Local<External>::Cast(colorwheel->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		ops.color_wheel = (kinc_g4_texture_t *)colorwheelfield->Value();
+		if (!colorwheel->IsNullOrUndefined()) {
+			Local<External> colorwheelfield = Local<External>::Cast(colorwheel->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			ops.color_wheel = (kinc_g4_texture_t *)colorwheelfield->Value();
+		}
 
 		Local<Value> blackwhitegradient = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "black_white_gradient").ToLocalChecked()).ToLocalChecked();
-		Local<External> blackwhitegradientfield = Local<External>::Cast(blackwhitegradient->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		ops.black_white_gradient = (kinc_g4_texture_t *)blackwhitegradientfield->Value();
+		if (!blackwhitegradient->IsNullOrUndefined()) {
+			Local<External> blackwhitegradientfield = Local<External>::Cast(blackwhitegradient->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+			ops.black_white_gradient = (kinc_g4_texture_t *)blackwhitegradientfield->Value();
+		}
 
 		zui_t *ui = (zui_t *)malloc(sizeof(zui_t));
 		zui_init(ui, ops);
@@ -5220,7 +5196,7 @@ namespace {
 			kinc_window_show(0);
 		}
 
-		if (in_background && ++paused_frames > 3 && armorcore) {
+		if (in_background && ++paused_frames > 3) {
 			Sleep(1);
 			return;
 		}
@@ -5253,21 +5229,10 @@ namespace {
 		}
 		#endif
 
-		#ifdef WITH_WORKER
-		handle_worker_messages(isolate, global_context);
-		#endif
-
 		kinc_g4_begin(0);
 		run_v8();
 		kinc_g4_end(0);
 		kinc_g4_swap_buffers();
-
-		#ifdef ARM_PROFILE
-		if (startup_time > 0) {
-			kinc_log(KINC_LOG_LEVEL_INFO, "Startup time: %f", kinc_time() - startup_time);
-			startup_time = 0.0;
-		}
-		#endif
 	}
 
 	void drop_files(wchar_t *file_path, void *data) {
@@ -5934,10 +5899,6 @@ int kickstart(int argc, char **argv) {
 	}
 #endif
 
-#ifdef ARM_PROFILE
-	startup_time = kinc_time();
-#endif
-
 	bool snapshot_found = true;
 	kinc_file_reader_t reader;
 	if (snapshot || !kinc_file_reader_open(&reader, "krom.bin", KINC_FILE_TYPE_ASSET)) {
@@ -6059,14 +6020,7 @@ int kickstart(int argc, char **argv) {
 	kinc_display_init();
 
 	start_v8(snapshot_found ? code : NULL, snapshot_found ? reader_size : 0);
-	#ifdef WITH_WORKER
-	bind_worker_class(isolate, global_context);
-	#endif
 	start_krom(snapshot_found ? NULL : code);
-
-	#ifdef ARM_PROFILE
-	kinc_log(KINC_LOG_LEVEL_INFO, "Parse time: %f", kinc_time() - startup_time);
-	#endif
 
 	kinc_start();
 

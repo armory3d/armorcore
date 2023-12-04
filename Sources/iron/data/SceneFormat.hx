@@ -8,7 +8,6 @@ typedef TSceneFormat = {
 	@:optional public var name: String;
 	@:optional public var mesh_datas: Array<TMeshData>;
 	@:optional public var light_datas: Array<TLightData>;
-	@:optional public var probe_datas: Array<TProbeData>;
 	@:optional public var camera_datas: Array<TCameraData>;
 	@:optional public var camera_ref: String; // Active camera
 	@:optional public var material_datas: Array<TMaterialData>;
@@ -17,40 +16,20 @@ typedef TSceneFormat = {
 	@:optional public var speaker_datas: Array<TSpeakerData>;
 	@:optional public var world_datas: Array<TWorldData>;
 	@:optional public var world_ref: String;
-	@:optional public var tilesheet_datas: Array<TTilesheetData>;
 	@:optional public var objects: Array<TObj>;
-	@:optional public var groups: Array<TGroup>;
-	@:optional public var gravity: Float32Array;
-	@:optional public var traits: Array<TTrait>; // Scene root traits
 	@:optional public var embedded_datas: Array<String>; // Preload for this scene, images only for now
-	@:optional public var frame_time: Null<Float>;
 	@:optional public var irradiance: Float32Array; // Blob with spherical harmonics, bands 0,1,2
-	@:optional public var terrain_datas: Array<TTerrainData>;
-	@:optional public var terrain_ref: String;
 }
 
 typedef TMeshData = {
 	public var name: String;
 	public var vertex_arrays: Array<TVertexArray>;
 	public var index_arrays: Array<TIndexArray>;
-	@:optional public var dynamic_usage: Null<Bool>;
 	@:optional public var skin: TSkin;
 	@:optional public var instanced_data: Float32Array;
 	@:optional public var instanced_type: Null<Int>; // off, loc, loc+rot, loc+scale, loc+rot+scale
 	@:optional public var scale_pos: Null<Float>; // Unpack pos from (-1,1) coords
 	@:optional public var scale_tex: Null<Float>; // Unpack tex from (-1,1) coords
-	@:optional public var morph_target: TMorphTarget;
-}
-
-typedef TMorphTarget = {
-	public var morph_target_data_file: String;
-	public var morph_scale: Float;
-	public var morph_offset: Float;
-	public var num_morph_targets: Int;
-	public var morph_img_size: Int;
-	public var morph_block_size: Int;
-	public var morph_target_ref: Array<String>;
-	public var morph_target_defaults: Float32Array;
 }
 
 typedef TSkin = {
@@ -82,15 +61,9 @@ typedef TLightData = {
 	public var type: String; // sun, point, spot
 	public var color: Float32Array;
 	public var strength: Float;
-	@:optional public var cast_shadow: Null<Bool>;
 	@:optional public var near_plane: Null<Float>;
 	@:optional public var far_plane: Null<Float>;
 	@:optional public var fov: Null<Float>;
-	@:optional public var shadows_bias: Null<Float>;
-	@:optional public var shadowmap_size: Null<Int>;
-	@:optional public var spot_size: Null<Float>;
-	@:optional public var spot_blend: Null<Float>;
-	@:optional public var light_size: Null<Float>; // Shadow soft size
 	@:optional public var size: Null<Float>; // Area light
 	@:optional public var size_y: Null<Float>;
 }
@@ -123,7 +96,6 @@ typedef TShaderOverride = {
 
 typedef TMaterialContext = {
 	public var name: String;
-	@:optional public var depth_read: Null<Bool>;
 	@:optional public var bind_constants: Array<TBindConstant>;
 	@:optional public var bind_textures: Array<TBindTexture>;
 }
@@ -186,7 +158,7 @@ typedef TShaderContext = {
 
 typedef TVertexElement = {
 	public var name: String;
-	public var data: String; // "float4", "short2norm"
+	public var data: String; // "short4norm", "short2norm"
 }
 
 typedef TShaderConstant = {
@@ -199,7 +171,6 @@ typedef TShaderConstant = {
 	@:optional public var float: Null<Float>;
 	@:optional public var bool: Null<Bool>;
 	@:optional public var int: Null<Int>;
-	@:optional public var is_arm_parameter: Null<Bool>;
 }
 
 typedef TTextureUnit = {
@@ -211,8 +182,6 @@ typedef TTextureUnit = {
 	@:optional public var filter_min: String;
 	@:optional public var filter_mag: String;
 	@:optional public var mipmap_filter: String;
-	@:optional public var default_image_file: String;
-	@:optional public var is_arm_parameter: Null<Bool>;
 }
 
 typedef TSpeakerData = {
@@ -231,48 +200,11 @@ typedef TSpeakerData = {
 	public var play_on_start: Bool;
 }
 
-typedef TTerrainData = {
-	public var name: String;
-	public var sectors_x: Int;
-	public var sectors_y: Int;
-	public var sector_size: Float;
-	public var height_scale: Float;
-	public var material_ref: String;
-}
-
 typedef TWorldData = {
 	public var name: String;
 	public var background_color: Int;
 	public var probe: TProbeData;
-	@:optional public var sun_direction: Float32Array; // Sky data
-	@:optional public var turbidity: Null<Float>;
-	@:optional public var ground_albedo: Null<Float>;
 	@:optional public var envmap: String;
-	@:optional public var nishita_density: Float32Array; // Rayleigh, Mie, ozone
-}
-
-typedef TProbeData = {
-	public var name: String;
-	public var type: String; // grid, planar
-	public var strength: Float;
-	@:optional public var irradiance: String; // Reference to TIrradiance blob
-	@:optional public var radiance: String;
-	@:optional public var radiance_mipmaps: Null<Int>;
-}
-
-typedef TTilesheetData = {
-	public var name: String;
-	public var tilesx: Int;
-	public var tilesy: Int;
-	public var framerate: Int;
-	public var actions: Array<TTilesheetAction>;
-}
-
-typedef TTilesheetAction = {
-	public var name: String;
-	public var start: Int;
-	public var end: Int;
-	public var loop: Bool;
 }
 
 typedef TParticleData = {
@@ -311,12 +243,6 @@ typedef TObj = {
 	@:optional public var render_emitter: Bool;
 	@:optional public var is_particle: Null<Bool>; // This object is used as a particle object
 	@:optional public var children: Array<TObj>;
-	@:optional public var group_ref: String; // instance_type
-	@:optional public var lods: Array<TLod>;
-	@:optional public var lod_material: Null<Bool>;
-	@:optional public var traits: Array<TTrait>;
-	@:optional public var properties: Array<TProperty>;
-	@:optional public var constraints: Array<TConstraint>;
 	@:optional public var dimensions: Float32Array; // Geometry objects
 	@:optional public var object_actions: Array<String>;
 	@:optional public var bone_actions: Array<String>;
@@ -328,31 +254,12 @@ typedef TObj = {
 	@:optional public var parent_bone_connected: Null<Bool>;
 	@:optional public var visible: Null<Bool>;
 	@:optional public var visible_mesh: Null<Bool>;
-	@:optional public var visible_shadow: Null<Bool>;
 	@:optional public var mobile: Null<Bool>;
 	@:optional public var spawn: Null<Bool>; // Auto add object when creating scene
 	@:optional public var local_only: Null<Bool>; // Apply parent matrix
-	@:optional public var tilesheet_ref: String;
-	@:optional public var tilesheet_action_ref: String;
 	@:optional public var sampled: Null<Bool>; // Object action
 	@:optional public var is_ik_fk_only: Null<Bool>; // Bone IK or FK only
 	@:optional public var relative_bone_constraints: Null<Bool>; // Use parent relative bone constraints
-}
-
-typedef TProperty = {
-	public var name: String;
-	public var value: Dynamic;
-}
-
-typedef TGroup = {
-	public var name: String;
-	public var instance_offset: Float32Array;
-	public var object_refs: Array<String>;
-}
-
-typedef TLod = {
-	public var object_ref: String; // Empty when limiting draw distance
-	public var screen_size: Float; // (0-1) size compared to lod0
 }
 
 typedef TConstraint = {
@@ -368,13 +275,6 @@ typedef TConstraint = {
 	@:optional public var invert_z: Null<Bool>;
 	@:optional public var use_offset: Null<Bool>;
 	@:optional public var influence: Null<Float>;
-}
-
-typedef TTrait = {
-	public var type: String;
-	public var class_name: String;
-	@:optional public var parameters: Array<String>; // constructor params
-	@:optional public var props: Array<Dynamic>; // name - type - value list
 }
 
 typedef TTransform = {
@@ -403,4 +303,13 @@ typedef TTrack = {
 	public var frames: Uint32Array;
 	public var values: Float32Array; // sampled - full matrix transforms, non-sampled - values
 	@:optional public var ref_values: Array<Array<String>>; // ref values
+}
+
+typedef TProbeData = {
+	public var name: String;
+	public var type: String; // grid, planar
+	public var strength: Float;
+	@:optional public var irradiance: String; // Reference to TIrradiance blob
+	@:optional public var radiance: String;
+	@:optional public var radiance_mipmaps: Null<Int>;
 }

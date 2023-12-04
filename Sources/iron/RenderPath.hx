@@ -2,7 +2,7 @@ package iron;
 
 import kha.Image;
 import kha.Color;
-import kha.graphics4.Graphics;
+import kha.Graphics4;
 import kha.Image.DepthStencilFormat;
 import kha.Image.TextureFormat;
 import iron.system.Time;
@@ -31,11 +31,8 @@ class RenderPath {
 	public var light: LightObject = null;
 	public var sun: LightObject = null;
 	public var point: LightObject = null;
-	#if rp_probes
-	public var currentProbeIndex = 0;
-	#end
-	public var currentG: Graphics = null;
-	public var frameG: Graphics;
+	public var currentG: Graphics4 = null;
+	public var frameG: Graphics4;
 	public var drawOrder = DrawOrder.Distance;
 	public var paused = false;
 	public var ready(get, null): Bool;
@@ -59,16 +56,10 @@ class RenderPath {
 	var depthBuffers: Array<{name: String, format: String}> = [];
 	var additionalTargets: Array<kha.Canvas>;
 
-	#if rp_voxels
+	#if arm_voxels
 	public var voxelized = 0;
-	public var onVoxelize: Void->Bool = null;
 	public function voxelize() { // Returns true if scene should be voxelized
-		if (onVoxelize != null) return onVoxelize();
-		#if arm_voxelgi_revox
-		return true;
-		#else
 		return ++voxelized > 2 ? false : true;
-		#end
 	}
 	#end
 
@@ -78,7 +69,7 @@ class RenderPath {
 
 	public function new() {}
 
-	public function renderFrame(g: Graphics) {
+	public function renderFrame(g: Graphics4) {
 		if (!ready || paused || iron.App.w() == 0 || iron.App.h() == 0) return;
 
 		if (lastW > 0 && (lastW != iron.App.w() || lastH != iron.App.h())) resize();
@@ -157,7 +148,7 @@ class RenderPath {
 		rt.image.setDepthStencilFrom(renderTargets.get(from).image);
 	}
 
-	inline function begin(g: Graphics, additionalRenderTargets: Array<kha.Canvas> = null) {
+	inline function begin(g: Graphics4, additionalRenderTargets: Array<kha.Canvas> = null) {
 		if (currentG != null) end();
 		currentG = g;
 		additionalTargets = additionalRenderTargets;
@@ -246,32 +237,7 @@ class RenderPath {
 	}
 
 	public function drawMeshes(context: String) {
-		var isShadows = context == "shadowmap";
-		if (isShadows) {
-			// Disabled shadow casting for this light
-			if (light == null || !light.data.raw.cast_shadow || !light.visible || light.data.raw.strength == 0) return;
-		}
-
-		var drawn = false;
-
-		#if arm_csm
-		if (isShadows && light.data.raw.type == "sun") {
-			var step = currentH; // Atlas with tiles on x axis
-			for (i in 0...LightObject.cascadeCount) {
-				light.setCascade(Scene.active.camera, i);
-				currentG.viewport(i * step, 0, step, step);
-				submitDraw(context);
-			}
-			drawn = true;
-		}
-		#end
-
-		#if arm_clusters
-		if (context == "mesh") LightObject.updateClusters(Scene.active.camera);
-		#end
-
-		if (!drawn) submitDraw(context);
-
+		submitDraw(context);
 		end();
 	}
 
@@ -287,58 +253,21 @@ class RenderPath {
 			var camZ = camera.transform.worldz();
 			for (mesh in meshes) {
 				mesh.computeCameraDistance(camX, camY, camZ);
-				mesh.computeDepthRead();
 			}
-			#if arm_batch
-			sortMeshesDistance(Scene.active.meshBatch.nonBatched);
-			#else
 			drawOrder == DrawOrder.Shader ? sortMeshesShader(meshes) : sortMeshesDistance(meshes);
-			#end
 			meshesSorted = true;
 		}
 
-		#if arm_batch
-		Scene.active.meshBatch.render(currentG, context, bindParams);
-		#else
-		inline meshRenderLoop(currentG, context, bindParams, meshes);
-		#end
+		meshRenderLoop(currentG, context, bindParams, meshes);
 	}
 
-	static inline function meshRenderLoop(g: Graphics, context: String, _bindParams: Array<String>, _meshes: Array<MeshObject>) {
+	static inline function meshRenderLoop(g: Graphics4, context: String, _bindParams: Array<String>, _meshes: Array<MeshObject>) {
 		var isReadingDepth = false;
 
 		for (m in _meshes) {
-			#if rp_depth_texture
-				// First mesh that reads depth
-				if (!isReadingDepth && m.depthRead) {
-					if (context == "mesh") {
-						// Copy the depth buffer so that we can read from it while writing
-						active.setupDepthTexture();
-					}
-					#if rp_depthprepass
-					else if (context == "depth") {
-						// Don't render in depth prepass
-						break;
-					}
-					#end
-
-					isReadingDepth = true;
-				}
-			#end
-
 			m.render(g, context, _bindParams);
 		}
 	}
-
-	#if rp_decals
-	public function drawDecals(context: String) {
-		if (ConstData.boxVB == null) ConstData.createBoxData();
-		for (decal in Scene.active.decals) {
-			decal.render(currentG, context, bindParams);
-		}
-		end();
-	}
-	#end
 
 	public function drawSkydome(handle: String) {
 		if (ConstData.skydomeVB == null) ConstData.createSkydomeData();
@@ -347,29 +276,11 @@ class RenderPath {
 		currentG.setPipeline(cc.context.pipeState);
 		Uniforms.setContextConstants(currentG, cc.context, bindParams);
 		Uniforms.setObjectConstants(currentG, cc.context, null); // External hosek
-		#if arm_deinterleaved
-		currentG.setVertexBuffers(ConstData.skydomeVB);
-		#else
 		currentG.setVertexBuffer(ConstData.skydomeVB);
-		#end
 		currentG.setIndexBuffer(ConstData.skydomeIB);
 		currentG.drawIndexedVertices();
 		end();
 	}
-
-	#if rp_probes
-	public function drawVolume(object: Object, handle: String) {
-		if (ConstData.boxVB == null) ConstData.createBoxData();
-		var cc: CachedShaderContext = cachedShaderContexts.get(handle);
-		currentG.setPipeline(cc.context.pipeState);
-		Uniforms.setContextConstants(currentG, cc.context, bindParams);
-		Uniforms.setObjectConstants(currentG, cc.context, object);
-		currentG.setVertexBuffer(ConstData.boxVB);
-		currentG.setIndexBuffer(ConstData.boxIB);
-		currentG.drawIndexedVertices();
-		end();
-	}
-	#end
 
 	public function bindTarget(target: String, uniform: String) {
 		if (bindParams != null) {
@@ -407,10 +318,6 @@ class RenderPath {
 
 		// file/data_name/context
 		var shaderPath = handle.split("/");
-
-		#if arm_json
-		shaderPath[0] += ".json";
-		#end
 
 		Data.getShader(shaderPath[0], shaderPath[1], function(res: ShaderData) {
 			cc.context = res.getContext(shaderPath[2]);
@@ -582,98 +489,6 @@ class RenderPath {
 			default: return DepthStencilFormat.DepthOnly;
 		}
 	}
-
-	#if arm_shadowmap_atlas
-	// Allow setting a target with manual end() calling, this is to render multiple times to the same image (atlas)
-	// TODO: allow manual end() calling in existing functions to prevent duplicated code
-	public function setTargetStream(target:String, additional:Array<String> = null, viewportScale = 1.0) {
-		if (target == "") { // Framebuffer
-			currentD = 1;
-			currentTarget = null;
-			currentFace = -1;
-			if (isProbeCube) {
-				currentW = Scene.active.camera.renderTargetCube.width;
-				currentH = Scene.active.camera.renderTargetCube.height;
-				beginStream(frameG, Scene.active.camera.currentFace);
-			}
-			else { // Screen, planar probe
-				currentW = iron.App.w();
-				currentH = iron.App.h();
-				if (frameScissor) {
-					setFrameScissor();
-				}
-				beginStream(frameG);
-				if (!isProbe) {
-					setCurrentViewport(iron.App.w(), iron.App.h());
-					setCurrentScissor(iron.App.w(), iron.App.h());
-				}
-			}
-		}
-		else { // Render target
-			var rt = renderTargets.get(target);
-			currentTarget = rt;
-			var additionalImages:Array<kha.Canvas> = null;
-			if (additional != null) {
-				additionalImages = [];
-				for (s in additional) {
-					var t = renderTargets.get(s);
-					additionalImages.push(t.image);
-				}
-			}
-			var targetG = rt.image.g4;
-			currentW = rt.image.width;
-			currentH = rt.image.height;
-			if (rt.is3D) {
-				currentD = rt.image.depth;
-			}
-			beginStream(targetG, additionalImages, currentFace);
-		}
-		if (viewportScale != 1.0) {
-			viewportScaled = true;
-			var viewW = Std.int(currentW * viewportScale);
-			var viewH = Std.int(currentH * viewportScale);
-			currentG.viewport(0, viewH, viewW, viewH);
-			currentG.scissor(0, viewH, viewW, viewH);
-		}
-		else if (viewportScaled) { // Reset viewport
-			viewportScaled = false;
-			setCurrentViewport(currentW, currentH);
-			setCurrentScissor(currentW, currentH);
-		}
-		bindParams = null;
-	}
-
-	inline function beginStream(g:Graphics, additionalRenderTargets:Array<kha.Canvas> = null, face = -1) {
-		currentG = g;
-		additionalTargets = additionalRenderTargets;
-		face >= 0 ? g.beginFace(face) : g.begin(additionalRenderTargets);
-	}
-
-	public function endStream() {
-		if (scissorSet) {
-			currentG.disableScissor();
-			scissorSet = false;
-		}
-		currentG.end();
-		currentG = null;
-		bindParams = null;
-	}
-
-	public function drawMeshesStream(context:String) {
-		// Single face attached
-		if (currentFace >= 0 && light != null) {
-			light.setCubeFace(currentFace, Scene.active.camera);
-		}
-
-		#if arm_clusters
-		if (context == "mesh") {
-			LightObject.updateClusters(Scene.active.camera);
-		}
-		#end
-
-		submitDraw(context);
-	}
-	#end // arm_shadowmap_atlas
 }
 
 class RenderTargetRaw {
@@ -711,5 +526,4 @@ class CachedShaderContext {
 @:enum abstract DrawOrder(Int) from Int {
 	var Distance = 0; // Early-z
 	var Shader = 1; // Less state changes
-	// var Mix = 2; // Distance buckets sorted by shader
 }

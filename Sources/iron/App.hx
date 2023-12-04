@@ -12,8 +12,8 @@ class App {
 	static var traitInits: Array<Void->Void> = [];
 	static var traitUpdates: Array<Void->Void> = [];
 	static var traitLateUpdates: Array<Void->Void> = [];
-	static var traitRenders: Array<kha.graphics4.Graphics->Void> = [];
-	static var traitRenders2D: Array<kha.graphics2.Graphics->Void> = [];
+	static var traitRenders: Array<kha.Graphics4->Void> = [];
+	static var traitRenders2D: Array<kha.Graphics2->Void> = [];
 	public static var framebuffer: kha.Framebuffer;
 	public static var pauseUpdates = false;
 	static var lastw = -1;
@@ -146,19 +146,19 @@ class App {
 		traitLateUpdates.remove(f);
 	}
 
-	public static function notifyOnRender(f: kha.graphics4.Graphics->Void) {
+	public static function notifyOnRender(f: kha.Graphics4->Void) {
 		traitRenders.push(f);
 	}
 
-	public static function removeRender(f: kha.graphics4.Graphics->Void) {
+	public static function removeRender(f: kha.Graphics4->Void) {
 		traitRenders.remove(f);
 	}
 
-	public static function notifyOnRender2D(f: kha.graphics2.Graphics->Void) {
+	public static function notifyOnRender2D(f: kha.Graphics2->Void) {
 		traitRenders2D.push(f);
 	}
 
-	public static function removeRender2D(f: kha.graphics2.Graphics->Void) {
+	public static function removeRender2D(f: kha.Graphics2->Void) {
 		traitRenders2D.remove(f);
 	}
 
