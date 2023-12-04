@@ -27,7 +27,7 @@ class Shaders {
 	public static function getVertex(name: String): VertexShader {
 		var shader = vertexShaders.get(name);
 		if (shader == null) {
-			shader = new VertexShader([getBlob(name)], [name]);
+			shader = new VertexShader(getBlob(name));
 			vertexShaders.set(name, shader);
 		}
 		return shader;
@@ -36,7 +36,7 @@ class Shaders {
 	public static function getFragment(name: String): FragmentShader {
 		var shader = fragmentShaders.get(name);
 		if (shader == null) {
-			shader = new FragmentShader([getBlob(name)], [name]);
+			shader = new FragmentShader(getBlob(name));
 			fragmentShaders.set(name, shader);
 		}
 		return shader;
@@ -45,7 +45,7 @@ class Shaders {
 	public static function getGeometry(name: String): GeometryShader {
 		var shader = geometryShaders.get(name);
 		if (shader == null) {
-			shader = new GeometryShader([getBlob(name)], [name]);
+			shader = new GeometryShader(getBlob(name));
 			geometryShaders.set(name, shader);
 		}
 		return shader;

@@ -95,9 +95,9 @@ class Geometry {
 
 	static function getVertexData(data: String): VertexData {
 		switch (data) {
-			case "short4norm": return VertexData.Short4Norm;
-			case "short2norm": return VertexData.Short2Norm;
-			default: return VertexData.Short4Norm;
+			case "short4norm": return VertexData.I16_4X_Normalized;
+			case "short2norm": return VertexData.I16_2X_Normalized;
+			default: return VertexData.I16_4X_Normalized;
 		}
 	}
 
@@ -115,12 +115,12 @@ class Geometry {
 		structure.instanced = true;
 		instanced = true;
 		// pos, pos+rot, pos+scale, pos+rot+scale
-		structure.add("ipos", kha.VertexData.Float3);
+		structure.add("ipos", VertexData.F32_3X);
 		if (instancedType == 2 || instancedType == 4) {
-			structure.add("irot", kha.VertexData.Float3);
+			structure.add("irot", VertexData.F32_3X);
 		}
 		if (instancedType == 3 || instancedType == 4) {
-			structure.add("iscl", kha.VertexData.Float3);
+			structure.add("iscl", VertexData.F32_3X);
 		}
 
 		instanceCount = Std.int(data.length / Std.int(structure.byteSize() / 4));

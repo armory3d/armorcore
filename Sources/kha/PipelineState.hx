@@ -169,7 +169,7 @@ class PipelineState {
 		for (i in 0...8) {
 			colorAttachments.push(getRenderTargetFormat(this.colorAttachments[i]));
 		}
-		Krom.compilePipeline(pipeline, structure0, structure1, structure2, structure3, inputLayout.length, vertexShader.shader, fragmentShader.shader, gs, null, null, {
+		Krom.compilePipeline(pipeline, structure0, structure1, structure2, structure3, inputLayout.length, vertexShader.shader, fragmentShader.shader, gs, {
 			cullMode: convertCullMode(cullMode),
 			depthWrite: this.depthWrite,
 			depthMode: convertCompareMode(depthMode),

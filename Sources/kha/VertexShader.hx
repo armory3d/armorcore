@@ -3,14 +3,14 @@ package kha;
 class VertexShader {
 	public var shader: Dynamic;
 
-	public function new(sources: Array<Blob>, names: Array<String>) {
-		if (sources != null) {
-			shader = Krom.createVertexShader(sources[0].bytes.getData(), names[0]);
+	public function new(blob: Blob) {
+		if (blob != null) {
+			shader = Krom.createVertexShader(blob.bytes.getData());
 		}
 	}
 
 	public static function fromSource(source: String): VertexShader {
-		var shader = new VertexShader(null, null);
+		var shader = new VertexShader(null);
 		shader.shader = Krom.createVertexShaderFromSource(source);
 		return shader;
 	}

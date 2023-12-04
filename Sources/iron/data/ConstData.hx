@@ -20,7 +20,7 @@ class ConstData {
 
 		// Mandatory vertex data names and sizes
 		var structure = new VertexStructure();
-		structure.add("pos", VertexData.Float2);
+		structure.add("pos", VertexData.F32_2X);
 		screenAlignedVB = new VertexBuffer(Std.int(data.length / Std.int(structure.byteSize() / 4)), structure, Usage.StaticUsage);
 		var vertices = screenAlignedVB.lock();
 		for (i in 0...Std.int(vertices.byteLength / 4)) vertices.setFloat32(i * 4, data[i], true);
@@ -37,8 +37,8 @@ class ConstData {
 		var nor = skydomeNor;
 
 		var structure = new VertexStructure();
-		structure.add("pos", VertexData.Float3);
-		structure.add("nor", VertexData.Float3);
+		structure.add("pos", VertexData.F32_3X);
+		structure.add("nor", VertexData.F32_3X);
 		var structLength = Std.int(structure.byteSize() / 4);
 		skydomeVB = new VertexBuffer(Std.int(pos.length / 3), structure, Usage.StaticUsage);
 		var vertices = skydomeVB.lock();

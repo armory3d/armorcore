@@ -94,12 +94,12 @@ class ShaderContext {
 
 		if (instancingType > 0) { // Instancing
 			var instStruct = new VertexStructure();
-			instStruct.add("ipos", VertexData.Float3);
+			instStruct.add("ipos", VertexData.F32_3X);
 			if (instancingType == 2 || instancingType == 4) {
-				instStruct.add("irot", VertexData.Float3);
+				instStruct.add("irot", VertexData.F32_3X);
 			}
 			if (instancingType == 3 || instancingType == 4) {
-				instStruct.add("iscl", VertexData.Float3);
+				instStruct.add("iscl", VertexData.F32_3X);
 			}
 			instStruct.instanced = true;
 			pipeState.inputLayout = [structure, instStruct];
@@ -168,9 +168,9 @@ class ShaderContext {
 			function loadShader(file: String, type: Int) {
 				var path = file + ShaderData.shaderExt;
 				Data.getBlob(path, function(b: kha.Blob) {
-					if (type == 0) pipeState.vertexShader = new VertexShader([b], [file]);
-					else if (type == 1) pipeState.fragmentShader = new FragmentShader([b], [file]);
-					else if (type == 2) pipeState.geometryShader = new kha.GeometryShader([b], [file]);
+					if (type == 0) pipeState.vertexShader = new VertexShader(b);
+					else if (type == 1) pipeState.fragmentShader = new FragmentShader(b);
+					else if (type == 2) pipeState.geometryShader = new kha.GeometryShader(b);
 					shadersLoaded++;
 					if (shadersLoaded >= numShaders) finishCompile(done);
 				});
@@ -214,13 +214,13 @@ class ShaderContext {
 	}
 
 	public static function parseData(data: String): VertexData {
-		if (data == "float1") return VertexData.Float1;
-		else if (data == "float2") return VertexData.Float2;
-		else if (data == "float3") return VertexData.Float3;
-		else if (data == "float4") return VertexData.Float4;
-		else if (data == "short2norm") return VertexData.Short2Norm;
-		else if (data == "short4norm") return VertexData.Short4Norm;
-		return VertexData.Float1;
+		if (data == "float1") return VertexData.F32_1X;
+		else if (data == "float2") return VertexData.F32_2X;
+		else if (data == "float3") return VertexData.F32_3X;
+		else if (data == "float4") return VertexData.F32_4X;
+		else if (data == "short2norm") return VertexData.I16_2X_Normalized;
+		else if (data == "short4norm") return VertexData.I16_4X_Normalized;
+		return VertexData.F32_1X;
 	}
 
 	function parseVertexStructure() {

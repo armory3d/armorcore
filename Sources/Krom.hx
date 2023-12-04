@@ -1,15 +1,15 @@
 extern class Krom {
 
 	static function clear(flags: Int, color: Int, depth: Float, stencil: Int): Void;
-	static function createVertexShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
+	static function createVertexShader(data: js.lib.ArrayBuffer): Dynamic;
 	static function createVertexShaderFromSource(source: String): Dynamic;
-	static function createFragmentShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
+	static function createFragmentShader(data: js.lib.ArrayBuffer): Dynamic;
 	static function createFragmentShaderFromSource(source: String): Dynamic;
-	static function createGeometryShader(data: js.lib.ArrayBuffer, name: String): Dynamic;
+	static function createGeometryShader(data: js.lib.ArrayBuffer): Dynamic;
 	static function deleteShader(shader: Dynamic): Dynamic;
 	static function createPipeline(): Dynamic;
 	static function deletePipeline(pipeline: Dynamic): Dynamic;
-	static function compilePipeline(pipeline: Dynamic, structure0: Dynamic, structure1: Dynamic, structure2: Dynamic, structure3: Dynamic, length: Int, vertexShader: Dynamic, fragmentShader: Dynamic, geometryShader: Dynamic, tessellationControlShader: Dynamic, tessellationEvaluationShader: Dynamic, state: Dynamic): Void;
+	static function compilePipeline(pipeline: Dynamic, structure0: Dynamic, structure1: Dynamic, structure2: Dynamic, structure3: Dynamic, length: Int, vertexShader: Dynamic, fragmentShader: Dynamic, geometryShader: Dynamic, state: Dynamic): Void;
 	static function setPipeline(pipeline: Dynamic): Void;
 	static function getConstantLocation(pipeline: Dynamic, name: String): Dynamic;
 	static function getTextureUnit(pipeline: Dynamic, name: String): Dynamic;
@@ -76,7 +76,7 @@ extern class Krom {
 	static function playSound(sound: Dynamic, loop: Bool): Void;
 	static function stopSound(sound: Dynamic): Void;
 
-	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, windowMode: Int, windowFeatures: Int, kromApi: Int, x: Int, y: Int, frequency: Int): Void;
+	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, windowMode: Int, windowFeatures: Int, x: Int, y: Int, frequency: Int): Void;
 	static function setApplicationName(name: String): Void;
 	static function log(v: Dynamic): Void;
 	static function setCallback(callback: Void->Void): Void;
