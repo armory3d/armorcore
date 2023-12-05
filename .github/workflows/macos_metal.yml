@@ -18,6 +18,6 @@ jobs:
     - name: Get Submodules
       run: git submodule update --init --recursive
     - name: Apply patch
-      run: git apply patch/metal_raytrace.diff --directory=Kinc
+      run: git apply Patches/metal_raytrace.diff --directory=Kinc
     - name: Compile
       run: Kinc/make -g metal --compile
