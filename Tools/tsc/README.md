@@ -1,3 +1,3 @@
 # tsc_kmake
 
-TypeScript and AssemblyScript compilers made to run with kmake.
+TypeScript compiler made to run with kmake.

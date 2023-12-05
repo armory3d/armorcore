@@ -132,7 +132,6 @@ else if (platform === Platform.Linux) {
 }
 else if (platform === Platform.Android) {
 	// c_project.addLib(libdir + 'libv8_monolith.a');
-
 	// Some manual tweaking is required for now:
 	// In app/CMakeLists.txt:
 	//   add_library(v8_monolith STATIC IMPORTED)
@@ -157,27 +156,20 @@ if (flags.with_nfd && (platform === Platform.Windows || platform === Platform.Li
 		c_project.addFile('Libraries/nfd/nfd_win.cpp');
 	}
 	else if (platform === Platform.Linux) {
-		let gtk = true;
-		if (gtk) {
-			c_project.addFile('Libraries/nfd/nfd_gtk.c');
-
-			c_project.addIncludeDir("/usr/include/gtk-3.0");
-			c_project.addIncludeDir("/usr/include/glib-2.0");
-			c_project.addIncludeDir("/usr/lib/x86_64-linux-gnu/glib-2.0/include");
-			c_project.addIncludeDir("/usr/include/pango-1.0");
-			c_project.addIncludeDir("/usr/include/cairo");
-			c_project.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
-			c_project.addIncludeDir("/usr/include/atk-1.0");
-			c_project.addIncludeDir("/usr/lib64/glib-2.0/include");
-			c_project.addIncludeDir("/usr/lib/glib-2.0/include");
-			c_project.addIncludeDir("/usr/include/harfbuzz");
-			c_project.addLib('gtk-3');
-			c_project.addLib('gobject-2.0');
-			c_project.addLib('glib-2.0');
-		}
-		else {
-			c_project.addFile('Libraries/nfd/nfd_zenity.c');
-		}
+		c_project.addFile('Libraries/nfd/nfd_gtk.c');
+		c_project.addIncludeDir("/usr/include/gtk-3.0");
+		c_project.addIncludeDir("/usr/include/glib-2.0");
+		c_project.addIncludeDir("/usr/lib/x86_64-linux-gnu/glib-2.0/include");
+		c_project.addIncludeDir("/usr/include/pango-1.0");
+		c_project.addIncludeDir("/usr/include/cairo");
+		c_project.addIncludeDir("/usr/include/gdk-pixbuf-2.0");
+		c_project.addIncludeDir("/usr/include/atk-1.0");
+		c_project.addIncludeDir("/usr/lib64/glib-2.0/include");
+		c_project.addIncludeDir("/usr/lib/glib-2.0/include");
+		c_project.addIncludeDir("/usr/include/harfbuzz");
+		c_project.addLib('gtk-3');
+		c_project.addLib('gobject-2.0');
+		c_project.addLib('glib-2.0');
 	}
 	else {
 		c_project.addFile('Libraries/nfd/nfd_cocoa.m');
