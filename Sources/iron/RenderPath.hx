@@ -54,7 +54,6 @@ class RenderPath {
 	var loading = 0;
 	var cachedShaderContexts: Map<String, CachedShaderContext> = new Map();
 	var depthBuffers: Array<{name: String, format: String}> = [];
-	var additionalTargets: Array<kha.Canvas>;
 
 	#if arm_voxels
 	public var voxelized = 0;
@@ -114,7 +113,7 @@ class RenderPath {
 		else { // Render target
 			var rt = renderTargets.get(target);
 			currentTarget = rt;
-			var additionalImages: Array<kha.Canvas> = null;
+			var additionalImages: Array<kha.Image> = null;
 			if (additional != null) {
 				additionalImages = [];
 				for (s in additional) {
@@ -148,10 +147,9 @@ class RenderPath {
 		rt.image.setDepthStencilFrom(renderTargets.get(from).image);
 	}
 
-	inline function begin(g: Graphics4, additionalRenderTargets: Array<kha.Canvas> = null) {
+	inline function begin(g: Graphics4, additionalRenderTargets: Array<kha.Image> = null) {
 		if (currentG != null) end();
 		currentG = g;
-		additionalTargets = additionalRenderTargets;
 		g.begin(additionalRenderTargets);
 	}
 
@@ -339,7 +337,7 @@ class RenderPath {
 	}
 
 	public function resize() {
-		if (kha.System.windowWidth() == 0 || kha.System.windowHeight() == 0) return;
+		if (kha.System.width == 0 || kha.System.height == 0) return;
 
 		// Make sure depth buffer is attached to single target only and gets released once
 		for (rt in renderTargets) {
@@ -474,9 +472,9 @@ class RenderPath {
 			case "RGBA64": return TextureFormat.RGBA64;
 			case "RGBA128": return TextureFormat.RGBA128;
 			case "DEPTH16": return TextureFormat.DEPTH16;
-			case "R32": return TextureFormat.A32;
-			case "R16": return TextureFormat.A16;
-			case "R8": return TextureFormat.L8;
+			case "R32": return TextureFormat.R32;
+			case "R16": return TextureFormat.R16;
+			case "R8": return TextureFormat.R8;
 			default: return TextureFormat.RGBA32;
 		}
 	}

@@ -3,11 +3,11 @@ package kha;
 class Font {
 
 	public var font_: Dynamic = null;
-	public var blob: Blob;
+	public var blob: js.lib.ArrayBuffer;
 	public var fontGlyphs: Array<Int> = null;
 	public var fontIndex = 0;
 
-	public function new(blob: Blob, fontIndex = 0) {
+	public function new(blob: js.lib.ArrayBuffer, fontIndex = 0) {
 		this.blob = blob;
 		this.fontIndex = fontIndex;
 	}
@@ -42,7 +42,7 @@ class Font {
 		}
 		if (fontGlyphs != kha.Graphics2.fontGlyphs) {
 			fontGlyphs = kha.Graphics2.fontGlyphs;
-			font_ = Krom.g2_font_init(blob.bytes.getData(), fontIndex);
+			font_ = Krom.g2_font_init(blob, fontIndex);
 		}
 	}
 }

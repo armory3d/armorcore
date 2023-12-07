@@ -6,7 +6,6 @@ import kha.VertexBuffer.VertexStructure;
 import kha.VertexBuffer.VertexData;
 import kha.PipelineState.CompareMode;
 import kha.PipelineState.CullMode;
-import kha.PipelineState.BlendingOperation;
 import kha.PipelineState.BlendingFactor;
 import kha.Graphics4.TextureAddressing;
 import kha.Graphics4.TextureFilter;
@@ -118,10 +117,8 @@ class ShaderContext {
 		// Blending
 		if (raw.blend_source != null) pipeState.blendSource = getBlendingFactor(raw.blend_source);
 		if (raw.blend_destination != null) pipeState.blendDestination = getBlendingFactor(raw.blend_destination);
-		if (raw.blend_operation != null) pipeState.blendOperation = getBlendingOperation(raw.blend_operation);
 		if (raw.alpha_blend_source != null) pipeState.alphaBlendSource = getBlendingFactor(raw.alpha_blend_source);
 		if (raw.alpha_blend_destination != null) pipeState.alphaBlendDestination = getBlendingFactor(raw.alpha_blend_destination);
-		if (raw.alpha_blend_operation != null) pipeState.alphaBlendOperation = getBlendingOperation(raw.alpha_blend_operation);
 
 		// Per-target color write mask
 		if (raw.color_writes_red != null) for (i in 0...raw.color_writes_red.length) pipeState.colorWriteMasksRed[i] = raw.color_writes_red[i];
@@ -142,16 +139,13 @@ class ShaderContext {
 			#end
 		}
 
-		// Conservative raster for voxelization
-		if (raw.conservative_raster != null) pipeState.conservativeRasterization = raw.conservative_raster;
-
 		// Shaders
 		if (raw.shader_from_source) {
 			pipeState.vertexShader = VertexShader.fromSource(raw.vertex_shader);
 			pipeState.fragmentShader = FragmentShader.fromSource(raw.fragment_shader);
 
 			// Shader compile error
-			if (pipeState.vertexShader.shader == null || pipeState.fragmentShader.shader == null) {
+			if (pipeState.vertexShader.shader_ == null || pipeState.fragmentShader.shader_ == null) {
 				done(null);
 				return;
 			}
@@ -167,7 +161,7 @@ class ShaderContext {
 
 			function loadShader(file: String, type: Int) {
 				var path = file + ShaderData.shaderExt;
-				Data.getBlob(path, function(b: kha.Blob) {
+				Data.getBlob(path, function(b: js.lib.ArrayBuffer) {
 					if (type == 0) pipeState.vertexShader = new VertexShader(b);
 					else if (type == 1) pipeState.fragmentShader = new FragmentShader(b);
 					else if (type == 2) pipeState.geometryShader = new kha.GeometryShader(b);
@@ -269,17 +263,6 @@ class ShaderContext {
 		}
 	}
 
-	function getBlendingOperation(s: String): BlendingOperation {
-		switch (s) {
-			case "add": return BlendingOperation.Add;
-			case "subtract": return BlendingOperation.Subtract;
-			case "reverse_subtract": return BlendingOperation.ReverseSubtract;
-			case "min": return BlendingOperation.Min;
-			case "max": return BlendingOperation.Max;
-			default: return BlendingOperation.Add;
-		}
-	}
-
 	function getBlendingFactor(s: String): BlendingFactor {
 		switch (s) {
 			case "blend_one": return BlendingFactor.BlendOne;
@@ -292,7 +275,7 @@ class ShaderContext {
 			case "destination_color": return BlendingFactor.DestinationColor;
 			case "inverse_source_color": return BlendingFactor.InverseSourceColor;
 			case "inverse_destination_color": return BlendingFactor.InverseDestinationColor;
-			default: return BlendingFactor.Undefined;
+			default: return BlendingFactor.BlendOne;
 		}
 	}
 
@@ -326,9 +309,9 @@ class ShaderContext {
 			case "RGBA64": return TextureFormat.RGBA64;
 			case "RGBA128": return TextureFormat.RGBA128;
 			case "DEPTH16": return TextureFormat.DEPTH16;
-			case "R32": return TextureFormat.A32;
-			case "R16": return TextureFormat.A16;
-			case "R8": return TextureFormat.L8;
+			case "R32": return TextureFormat.R32;
+			case "R16": return TextureFormat.R16;
+			case "R8": return TextureFormat.R8;
 			default: return TextureFormat.RGBA32;
 		}
 	}

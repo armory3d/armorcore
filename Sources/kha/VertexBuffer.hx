@@ -4,53 +4,39 @@ import js.lib.DataView;
 import kha.Graphics4.Usage;
 
 class VertexBuffer {
-	public var buffer: Dynamic;
-	public var _data: DataView;
-	private var vertexCount: Int;
-	private var structure: VertexStructure;
+	public var buffer_: Dynamic;
+	var vertexCount: Int;
 
 	public function new(vertexCount: Int, structure: VertexStructure, usage: Usage, instanceDataStepRate: Int = 0) {
 		this.vertexCount = vertexCount;
-		this.structure = structure;
-		buffer = Krom.createVertexBuffer(vertexCount, structure.elements, usage, instanceDataStepRate);
+		buffer_ = Krom.createVertexBuffer(vertexCount, structure.elements, usage, instanceDataStepRate);
 	}
 
 	public function delete() {
-		Krom.deleteVertexBuffer(buffer);
-		buffer = null;
+		Krom.deleteVertexBuffer(buffer_);
 	}
 
-	var lastLockCount: Int = 0;
-
-	public function lock(?start: Int, ?count: Int): DataView {
-		if (start == null) start = 0;
-		if (count == null) count = vertexCount - start;
-		lastLockCount = count;
-		_data = new DataView(Krom.lockVertexBuffer(buffer, start, count));
-		return _data;
+	public function lock(): DataView {
+		return new DataView(Krom.lockVertexBuffer(buffer_, 0, vertexCount));
 	}
 
-	public function unlock(?count: Int): Void {
-		Krom.unlockVertexBuffer(buffer, count == null ? lastLockCount : count);
+	public function unlock(): Void {
+		Krom.unlockVertexBuffer(buffer_, vertexCount);
 	}
 
-	public function set(offset: Int): Int {
-		Krom.setVertexBuffer(buffer);
-		return 0;
+	public function set(): Void {
+		Krom.setVertexBuffer(buffer_);
 	}
 }
 
 class VertexStructure {
-	public var elements: Array<VertexElement>;
-	public var instanced: Bool;
+	public var elements: Array<VertexElement> = [];
+	public var instanced: Bool = false;
 
-	public function new() {
-		elements = new Array<VertexElement>();
-		instanced = false;
-	}
+	public function new() {}
 
 	public function add(name: String, data: VertexData) {
-		elements.push(new VertexElement(name, data));
+		elements.push({name: name, data: data});
 	}
 
 	public function byteSize(): Int {
@@ -81,14 +67,9 @@ class VertexStructure {
 	}
 }
 
-class VertexElement {
+typedef VertexElement = {
 	public var name: String;
 	public var data: VertexData;
-
-	public function new(name: String, data: VertexData) {
-		this.name = name;
-		this.data = data;
-	}
 }
 
 @:enum abstract VertexData(Int) {

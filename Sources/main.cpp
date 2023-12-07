@@ -364,13 +364,12 @@ namespace {
 		win.title = *title;
 		win.width = TO_I32(args[1]);
 		win.height = TO_I32(args[2]);
-		frame.samples_per_pixel = TO_I32(args[3]);
-		frame.vertical_sync = TO_I32(args[4]);
-		win.mode = (kinc_window_mode_t)TO_I32(args[5]);
-		win.window_features = TO_I32(args[6]);
-		win.x = TO_I32(args[7]);
-		win.y = TO_I32(args[8]);
-		frame.frequency = TO_I32(args[9]);
+		frame.vertical_sync = TO_I32(args[3]);
+		win.mode = (kinc_window_mode_t)TO_I32(args[4]);
+		win.window_features = TO_I32(args[5]);
+		win.x = TO_I32(args[6]);
+		win.y = TO_I32(args[7]);
+		frame.frequency = TO_I32(args[8]);
 
 		win.display_index = -1;
 		#ifdef KORE_WINDOWS
@@ -611,16 +610,15 @@ namespace {
 		RETURN_I32(krom_is_mouse_locked_fast(args.This()));
 	}
 
-	void krom_set_mouse_position_fast(Local<Object> receiver, int windowId, int x, int y) {
-		kinc_mouse_set_position(windowId, x, y);
+	void krom_set_mouse_position_fast(Local<Object> receiver, int x, int y) {
+		kinc_mouse_set_position(0, x, y);
 	}
 
 	void krom_set_mouse_position(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		int x = TO_I32(args[1]);
-		int y = TO_I32(args[2]);
-		krom_set_mouse_position_fast(args.This(), windowId, x, y);
+		int x = TO_I32(args[0]);
+		int y = TO_I32(args[1]);
+		krom_set_mouse_position_fast(args.This(), x, y);
 	}
 
 	void krom_show_mouse_fast(Local<Object> receiver, int show) {
@@ -1140,7 +1138,6 @@ namespace {
 		}
 		pipeline->depth_attachment_bits = TO_I32(OBJ_GET(state, "depthAttachmentBits"));
 		pipeline->stencil_attachment_bits = TO_I32(OBJ_GET(state, "stencilAttachmentBits"));
-		pipeline->conservative_rasterization = OBJ_GET(state, "conservativeRasterization")->BooleanValue(isolate);
 
 		kinc_g4_pipeline_compile(pipeline);
 	}
@@ -1483,31 +1480,28 @@ namespace {
 		RETURN_F64(krom_get_time_fast(args.This()));
 	}
 
-	int krom_window_width_fast(Local<Object> receiver, int windowId) {
-		return kinc_window_width(windowId);
+	int krom_window_width_fast(Local<Object> receiver) {
+		return kinc_window_width(0);
 	}
 
 	void krom_window_width(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		RETURN_I32(krom_window_width_fast(args.This(), windowId));
+		RETURN_I32(krom_window_width_fast(args.This()));
 	}
 
-	int krom_window_height_fast(Local<Object> receiver, int windowId) {
-		return kinc_window_height(windowId);
+	int krom_window_height_fast(Local<Object> receiver) {
+		return kinc_window_height(0);
 	}
 
 	void krom_window_height(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		RETURN_I32(krom_window_height_fast(args.This(), windowId));
+		RETURN_I32(krom_window_height_fast(args.This()));
 	}
 
 	void krom_set_window_title(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		String::Utf8Value title(isolate, args[1]);
-		kinc_window_set_title(windowId, *title);
+		String::Utf8Value title(isolate, args[0]);
+		kinc_window_set_title(0, *title);
 		#if defined(KORE_IOS) || defined(KORE_ANDROID)
 		strcpy(mobile_title, *title);
 		#endif
@@ -1515,31 +1509,27 @@ namespace {
 
 	void krom_get_window_mode(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		RETURN_I32(kinc_window_get_mode(windowId));
+		RETURN_I32(kinc_window_get_mode(0));
 	}
 
 	void krom_set_window_mode(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		kinc_window_mode_t windowMode = (kinc_window_mode_t)TO_I32(args[1]);
-		kinc_window_change_mode(windowId, windowMode);
+		kinc_window_mode_t windowMode = (kinc_window_mode_t)TO_I32(args[0]);
+		kinc_window_change_mode(0, windowMode);
 	}
 
 	void krom_resize_window(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		int width = TO_I32(args[1]);
-		int height = TO_I32(args[2]);
-		kinc_window_resize(windowId, width, height);
+		int width = TO_I32(args[0]);
+		int height = TO_I32(args[1]);
+		kinc_window_resize(0, width, height);
 	}
 
 	void krom_move_window(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		int x = TO_I32(args[1]);
-		int y = TO_I32(args[2]);
-		kinc_window_move(windowId, x, y);
+		int x = TO_I32(args[0]);
+		int y = TO_I32(args[1]);
+		kinc_window_move(0, x, y);
 	}
 
 	void krom_screen_dpi(ARGS) {
@@ -3049,14 +3039,12 @@ namespace {
 
 	void krom_window_x(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		RETURN_I32(kinc_window_x(windowId));
+		RETURN_I32(kinc_window_x(0));
 	}
 
 	void krom_window_y(ARGS) {
 		SCOPE();
-		int windowId = TO_I32(args[0]);
-		RETURN_I32(kinc_window_y(windowId));
+		RETURN_I32(kinc_window_y(0));
 	}
 
 	void krom_language(ARGS) {

@@ -18,7 +18,7 @@ class Data {
 	public static var cachedWorlds: Map<String, WorldData> = [];
 	public static var cachedShaders: Map<String, ShaderData> = [];
 
-	public static var cachedBlobs: Map<String, kha.Blob> = [];
+	public static var cachedBlobs: Map<String, js.lib.ArrayBuffer> = [];
 	public static var cachedImages: Map<String, kha.Image> = [];
 	public static var cachedVideos: Map<String, kha.Video> = [];
 	public static var cachedFonts: Map<String, kha.Font> = [];
@@ -35,7 +35,7 @@ class Data {
 	static var loadingWorlds: Map<String, Array<WorldData->Void>> = [];
 	static var loadingShaders: Map<String, Array<ShaderData->Void>> = [];
 	static var loadingSceneRaws: Map<String, Array<TSceneFormat->Void>> = [];
-	static var loadingBlobs: Map<String, Array<kha.Blob->Void>> = [];
+	static var loadingBlobs: Map<String, Array<js.lib.ArrayBuffer->Void>> = [];
 	static var loadingImages: Map<String, Array<kha.Image->Void>> = [];
 	static var loadingVideos: Map<String, Array<kha.Video->Void>> = [];
 	static var loadingFonts: Map<String, Array<kha.Font->Void>> = [];
@@ -70,7 +70,6 @@ class Data {
 		cachedWorlds = [];
 		if (RenderPath.active != null) RenderPath.active.unload();
 
-		for (c in cachedBlobs) c.unload();
 		cachedBlobs = [];
 		for (c in cachedImages) c.unload();
 		cachedImages = [];
@@ -279,9 +278,9 @@ class Data {
 		// If no extension specified, set to .arm
 		var ext = file.endsWith(".arm") ? "" : ".arm";
 
-		getBlob(file + ext, function(b: kha.Blob) {
+		getBlob(file + ext, function(b: js.lib.ArrayBuffer) {
 			var parsed: TSceneFormat = null;
-			parsed = ArmPack.decode(b.toBytes());
+			parsed = ArmPack.decode(b);
 			returnSceneRaw(file, parsed);
 		});
 	}
@@ -343,7 +342,7 @@ class Data {
 	#end
 
 	// Raw assets
-	public static function getBlob(file: String, done: kha.Blob->Void) {
+	public static function getBlob(file: String, done: js.lib.ArrayBuffer->Void) {
 		var cached = cachedBlobs.get(file); // Is already cached
 		if (cached != null) {
 			done(cached);
@@ -358,18 +357,18 @@ class Data {
 
 		loadingBlobs.set(file, [done]); // Start loading
 
-		kha.Assets.loadBlobFromPath(resolvePath(file), function(b: kha.Blob) {
+		// Krom.load_blob(resolvePath(file), function(b: js.lib.ArrayBuffer) {
+			var b = Krom.loadBlob(resolvePath(file));
 			cachedBlobs.set(file, b);
 			for (f in loadingBlobs.get(file)) f(b);
 			loadingBlobs.remove(file);
 			assetsLoaded++;
-		});
+		// });
 	}
 
 	public static function deleteBlob(handle: String) {
 		var blob = cachedBlobs.get(handle);
 		if (blob == null) return;
-		blob.unload();
 		cachedBlobs.remove(handle);
 	}
 
@@ -391,7 +390,7 @@ class Data {
 		#if arm_image_embed
 		var imageBlob = cachedBlobs.get(file);
 		if (imageBlob != null) {
-			kha.Image.fromEncodedBytes(imageBlob.bytes, ".k", function(b: kha.Image) {
+			kha.Image.fromEncodedBytes(imageBlob, ".k", function(b: kha.Image) {
 				cachedImages.set(file, b);
 				for (f in loadingImages.get(file)) f(b);
 				loadingImages.remove(file);
@@ -401,12 +400,16 @@ class Data {
 		}
 		#end
 
-		kha.Assets.loadImageFromPath(resolvePath(file), readable, function(b: kha.Image) {
-			cachedImages.set(file, b);
-			for (f in loadingImages.get(file)) f(b);
-			loadingImages.remove(file);
-			assetsLoaded++;
-		});
+		// Krom.load_image(resolvePath(file), readable, function(b: kha.Image) {
+			var image_ = Krom.loadImage(resolvePath(file), readable);
+			if (image_ != null) {
+				var b = kha.Image._fromTexture(image_);
+				cachedImages.set(file, b);
+				for (f in loadingImages.get(file)) f(b);
+				loadingImages.remove(file);
+				assetsLoaded++;
+			}
+		// });
 	}
 
 	public static function deleteImage(handle: String) {
@@ -432,12 +435,14 @@ class Data {
 
 		loadingSounds.set(file, [done]);
 
-		kha.Assets.loadSoundFromPath(resolvePath(file), function(b: kha.Sound) {
+
+		// Krom.load_sound(resolvePath(file), function(b: kha.Sound) {
+			var b = new kha.Sound(Krom.loadSound(resolvePath(file)));
 			cachedSounds.set(file, b);
 			for (f in loadingSounds.get(file)) f(b);
 			loadingSounds.remove(file);
 			assetsLoaded++;
-		});
+		// });
 	}
 
 	public static function deleteSound(handle: String) {
@@ -464,12 +469,12 @@ class Data {
 
 		loadingVideos.set(file, [done]);
 
-		kha.Assets.loadVideoFromPath(resolvePath(file), function(b: kha.Video) {
-			cachedVideos.set(file, b);
-			for (f in loadingVideos.get(file)) f(b);
-			loadingVideos.remove(file);
-			assetsLoaded++;
-		});
+		// Krom.load_video(resolvePath(file), function(b: kha.Video) {
+		// 	cachedVideos.set(file, b);
+		// 	for (f in loadingVideos.get(file)) f(b);
+		// 	loadingVideos.remove(file);
+		// 	assetsLoaded++;
+		// });
 	}
 
 	public static function deleteVideo(handle: String) {
@@ -494,12 +499,14 @@ class Data {
 
 		loadingFonts.set(file, [done]);
 
-		kha.Assets.loadFontFromPath(resolvePath(file), function(b: kha.Font) {
+		// Krom.load_blob(resolvePath(file), function(blob: js.lib.ArrayBuffer) {
+			var blob = Krom.loadBlob(resolvePath(file));
+			var b = new kha.Font(blob);
 			cachedFonts.set(file, b);
 			for (f in loadingFonts.get(file)) f(b);
 			loadingFonts.remove(file);
 			assetsLoaded++;
-		});
+		// });
 	}
 
 	public static function deleteFont(handle: String) {

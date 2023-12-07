@@ -2,7 +2,6 @@ package kha;
 
 import kha.PipelineState;
 import iron.math.Mat3;
-import kha.Canvas;
 import kha.Color;
 import kha.Font;
 import kha.Image;
@@ -28,14 +27,16 @@ class Graphics2 {
 	public var pipeline(default, set): PipelineState;
 	public var imageScaleQuality(default, set): ImageScaleQuality;
 	public var transformation(default, set): Mat3 = null;
-	var canvas: Canvas;
+	var g4: kha.Graphics4;
+	var renderTarget: Image;
 
-	public function new(canvas: Canvas) {
+	public function new(g4: kha.Graphics4, renderTarget: Image) {
 		if (!initialized) {
 			Krom.g2_init(Shaders.getBuffer("painter-image.vert"), Shaders.getBuffer("painter-image.frag"), Shaders.getBuffer("painter-colored.vert"), Shaders.getBuffer("painter-colored.frag"), Shaders.getBuffer("painter-text.vert"), Shaders.getBuffer("painter-text.frag"));
 			initialized = true;
 		}
-		this.canvas = canvas;
+		this.g4 = g4;
+		this.renderTarget = renderTarget;
 	}
 
 	function set_color(c: Color): Color {
@@ -59,7 +60,7 @@ class Graphics2 {
 	}
 
 	function set_pipeline(p: PipelineState): PipelineState {
-		Krom.g2_set_pipeline(p == null ? null : p.pipeline);
+		Krom.g2_set_pipeline(p == null ? null : p.pipeline_);
 		return pipeline = p;
 	}
 
@@ -119,12 +120,12 @@ class Graphics2 {
 
 	public function scissor(x: Int, y: Int, width: Int, height: Int): Void {
 		Krom.g2_end(); // flush
-		canvas.g4.scissor(x, y, width, height);
+		g4.scissor(x, y, width, height);
 	}
 
 	public function disableScissor(): Void {
 		Krom.g2_end(); // flush
-		canvas.g4.disableScissor();
+		g4.disableScissor();
 	}
 
 	public function begin(clear = true, clearColor: Color = null): Void {
@@ -137,8 +138,8 @@ class Graphics2 {
 
 		Krom.g2_begin();
 
-		if (Std.isOfType(canvas, Image)) {
-			Krom.g2_set_render_target(untyped canvas.renderTarget_);
+		if (renderTarget != null) {
+			Krom.g2_set_render_target(renderTarget.renderTarget_);
 		}
 		else {
 			Krom.g2_restore_render_target();
@@ -148,7 +149,7 @@ class Graphics2 {
 	}
 
 	public function clear(color = 0x00000000): Void {
-		canvas.g4.clear(color);
+		g4.clear(color);
 	}
 
 	public function end(): Void {

@@ -1,41 +1,18 @@
 package kha;
 
-import haxe.io.Bytes;
+import js.lib.ArrayBuffer;
 import kha.Graphics4.Usage;
 
-class Image implements Canvas {
+class Image {
 	public var texture_: Dynamic;
 	public var renderTarget_: Dynamic;
-
 	public var format: TextureFormat;
 	private var readable: Bool;
-
 	private var graphics2: kha.Graphics2;
 	private var graphics4: kha.Graphics4;
 
 	private function new(texture: Dynamic) {
 		texture_ = texture;
-	}
-
-	private static function getRenderTargetFormat(format: TextureFormat): Int {
-		switch (format) {
-		case RGBA32:	// Target32Bit
-			return 0;
-		case RGBA64:	// Target64BitFloat
-			return 1;
-		case A32:		// Target32BitRedFloat
-			return 2;
-		case RGBA128:	// Target128BitFloat
-			return 3;
-		case DEPTH16:	// Target16BitDepth
-			return 4;
-		case L8:
-			return 5;	// Target8BitRed
-		case A16:
-			return 6;	// Target16BitRedFloat
-		default:
-			return 0;
-		}
 	}
 
 	private static function getDepthBufferBits(depthAndStencil: DepthStencilFormat): Int {
@@ -68,12 +45,12 @@ class Image implements Canvas {
 			return 3;
 		case RGBA64:
 			return 4;
-		case A32:
+		case R32:
 			return 5;
-		case A16:
+		case R16:
 			return 7;
 		default:
-			return 1; // Grey8
+			return 1; // R8
 		}
 	}
 
@@ -81,27 +58,27 @@ class Image implements Canvas {
 		return new Image(texture);
 	}
 
-	public static function fromBytes(bytes: Bytes, width: Int, height: Int, format: TextureFormat = null, usage: Usage = null): Image {
+	public static function fromBytes(buffer: ArrayBuffer, width: Int, height: Int, format: TextureFormat = null, usage: Usage = null): Image {
 		if (format == null) format = TextureFormat.RGBA32;
 		var readable = true;
 		var image = new Image(null);
 		image.format = format;
-		image.texture_ = Krom.createTextureFromBytes(bytes.getData(), width, height, getTextureFormat(format), readable);
+		image.texture_ = Krom.createTextureFromBytes(buffer, width, height, getTextureFormat(format), readable);
 		return image;
 	}
 
-	public static function fromBytes3D(bytes: Bytes, width: Int, height: Int, depth: Int, format: TextureFormat = null, usage: Usage = null): Image {
+	public static function fromBytes3D(buffer: ArrayBuffer, width: Int, height: Int, depth: Int, format: TextureFormat = null, usage: Usage = null): Image {
 		if (format == null) format = TextureFormat.RGBA32;
 		var readable = true;
 		var image = new Image(null);
 		image.format = format;
-		image.texture_ = Krom.createTextureFromBytes3D(bytes.getData(), width, height, depth, getTextureFormat(format), readable);
+		image.texture_ = Krom.createTextureFromBytes3D(buffer, width, height, depth, getTextureFormat(format), readable);
 		return image;
 	}
 
-	public static function fromEncodedBytes(bytes: Bytes, format: String, doneCallback: Image->Void, errorCallback: String->Void, readable: Bool = false): Void {
+	public static function fromEncodedBytes(buffer: ArrayBuffer, format: String, doneCallback: Image->Void, errorCallback: String->Void, readable: Bool = false): Void {
 		var image = new Image(null);
-		image.texture_ = Krom.createTextureFromEncodedBytes(bytes.getData(), format, readable);
+		image.texture_ = Krom.createTextureFromEncodedBytes(buffer, format, readable);
 		doneCallback(image);
 	}
 
@@ -125,7 +102,7 @@ class Image implements Canvas {
 		if (format == null) format = TextureFormat.RGBA32;
 		var image = new Image(null);
 		image.format = format;
-		image.renderTarget_ = Krom.createRenderTarget(width, height, getRenderTargetFormat(format), getDepthBufferBits(depthStencil), getStencilBufferBits(depthStencil));
+		image.renderTarget_ = Krom.createRenderTarget(width, height, format, getDepthBufferBits(depthStencil), getStencilBufferBits(depthStencil));
 		return image;
 	}
 
@@ -139,38 +116,38 @@ class Image implements Canvas {
 		renderTarget_ = null;
 	}
 
-	public function lock(level: Int = 0): Bytes {
-		return Bytes.ofData(Krom.lockTexture(texture_, level));
+	public function lock(level: Int = 0): ArrayBuffer {
+		return Krom.lockTexture(texture_, level);
 	}
 
 	public function unlock(): Void {
 		Krom.unlockTexture(texture_);
 	}
 
-	private var pixels: Bytes = null;
-	public function getPixels(): Bytes {
+	private var pixels: ArrayBuffer = null;
+	public function getPixels(): ArrayBuffer {
 		if (renderTarget_ != null) {
 			// Minimum size of 32x32 required after https://github.com/Kode/Kinc/commit/3797ebce5f6d7d360db3331eba28a17d1be87833
 			var pixelsWidth = width < 32 ? 32 : width;
 			var pixelsHeight = height < 32 ? 32 : height;
-			if (pixels == null) pixels = Bytes.alloc(formatByteSize(format) * pixelsWidth * pixelsHeight);
-			Krom.getRenderTargetPixels(renderTarget_, pixels.getData());
+			if (pixels == null) pixels = new ArrayBuffer(formatByteSize(format) * pixelsWidth * pixelsHeight);
+			Krom.getRenderTargetPixels(renderTarget_, pixels);
 			return pixels;
 		}
 		else {
-			return Bytes.ofData(Krom.getTexturePixels(texture_));
+			return Krom.getTexturePixels(texture_);
 		}
 	}
 
 	private static function formatByteSize(format: TextureFormat): Int {
 		return switch(format) {
 			case RGBA32: 4;
-			case L8: 1;
+			case R8: 1;
 			case RGBA128: 16;
 			case DEPTH16: 2;
 			case RGBA64: 8;
-			case A32: 4;
-			case A16: 2;
+			case R32: 4;
+			case R16: 2;
 			default: 4;
 		}
 	}
@@ -201,7 +178,7 @@ class Image implements Canvas {
 	public var g2(get, null): kha.Graphics2;
 	private function get_g2(): kha.Graphics2 {
 		if (graphics2 == null) {
-			graphics2 = new kha.Graphics2(this);
+			graphics2 = new kha.Graphics2(g4, this);
 		}
 		return graphics2;
 	}
@@ -217,12 +194,12 @@ class Image implements Canvas {
 
 @:enum abstract TextureFormat(Int) to Int {
 	var RGBA32 = 0;
-	var L8 = 1;
-	var RGBA128 = 2; // Floats
-	var DEPTH16 = 3;
-	var RGBA64 = 4; // Half floats
-	var A32 = 5; // Float
-	var A16 = 6; // Half float
+	var RGBA64 = 1;
+	var R32 = 2;
+	var RGBA128 = 3;
+	var DEPTH16 = 4;
+	var R8 = 5;
+	var R16 = 6;
 }
 
 @:enum abstract DepthStencilFormat(Int) to Int {

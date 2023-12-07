@@ -2,8 +2,8 @@ package iron;
 
 class App {
 
-	public static dynamic function w(): Int { return kha.System.windowWidth(); }
-	public static dynamic function h(): Int { return kha.System.windowHeight(); }
+	public static dynamic function w(): Int { return kha.System.width; }
+	public static dynamic function h(): Int { return kha.System.height; }
 	public static dynamic function x(): Int { return 0; }
 	public static dynamic function y(): Int { return 0; }
 
@@ -14,7 +14,6 @@ class App {
 	static var traitLateUpdates: Array<Void->Void> = [];
 	static var traitRenders: Array<kha.Graphics4->Void> = [];
 	static var traitRenders2D: Array<kha.Graphics2->Void> = [];
-	public static var framebuffer: kha.Framebuffer;
 	public static var pauseUpdates = false;
 	static var lastw = -1;
 	static var lasth = -1;
@@ -84,14 +83,13 @@ class App {
 		lasth = App.h();
 	}
 
-	static function render(frame: kha.Framebuffer) {
+	static function render(g2: kha.Graphics2, g4: kha.Graphics4) {
 		update();
-		framebuffer = frame;
 
 		iron.system.Time.update();
 
 		if (Scene.active == null || !Scene.active.ready) {
-			render2D(frame);
+			render2D(g2);
 			return;
 		}
 
@@ -102,22 +100,22 @@ class App {
 			traitInits.splice(0, traitInits.length);
 		}
 
-		Scene.active.renderFrame(frame.g4);
+		Scene.active.renderFrame(g4);
 
 		for (f in traitRenders) {
-			traitRenders.length > 0 ? f(frame.g4) : break;
+			traitRenders.length > 0 ? f(g4) : break;
 		}
 
-		render2D(frame);
+		render2D(g2);
 	}
 
-	static function render2D(frame: kha.Framebuffer) {
+	static function render2D(g2: kha.Graphics2) {
 		if (traitRenders2D.length > 0) {
-			frame.g2.begin(false);
+			g2.begin(false);
 			for (f in traitRenders2D) {
-				traitRenders2D.length > 0 ? f(frame.g2) : break;
+				traitRenders2D.length > 0 ? f(g2) : break;
 			}
-			frame.g2.end();
+			g2.end();
 		}
 	}
 

@@ -30,7 +30,7 @@ extern class Krom {
 	static function setMatrix(location: Dynamic, matrix: js.lib.ArrayBuffer): Void;
 	static function setMatrix3(location: Dynamic, matrix: js.lib.ArrayBuffer): Void;
 
-	static function begin(renderTarget: kha.Canvas, additionalRenderTargets: Array<kha.Canvas>): Void;
+	static function begin(renderTarget: kha.Image, additionalRenderTargets: Array<kha.Image>): Void;
 	static function end(): Void;
 	static function renderTargetsInvertedY(): Bool;
 	static function viewport(x: Int, y: Int, width: Int, height: Int): Void;
@@ -76,7 +76,7 @@ extern class Krom {
 	static function playSound(sound: Dynamic, loop: Bool): Void;
 	static function stopSound(sound: Dynamic): Void;
 
-	static function init(title: String, width: Int, height: Int, samplesPerPixel: Int, vSync: Bool, windowMode: Int, windowFeatures: Int, x: Int, y: Int, frequency: Int): Void;
+	static function init(title: String, width: Int, height: Int, vSync: Bool, windowMode: Int, windowFeatures: Int, x: Int, y: Int, frequency: Int): Void;
 	static function setApplicationName(name: String): Void;
 	static function log(v: Dynamic): Void;
 	static function setCallback(callback: Void->Void): Void;
@@ -102,17 +102,17 @@ extern class Krom {
 	static function unlockMouse(): Void;
 	static function canLockMouse(): Bool;
 	static function isMouseLocked(): Bool;
-	static function setMousePosition(windowId: Int, x: Int, y: Int): Void;
+	static function setMousePosition(x: Int, y: Int): Void;
 	static function showMouse(show: Bool): Void;
 	static function showKeyboard(show: Bool): Void;
 	static function getTime(): Float;
-	static function windowWidth(id: Int): Int;
-	static function windowHeight(id: Int): Int;
-	static function setWindowTitle(id: Int, title: String): Void;
-	static function getWindowMode(id: Int): Int;
-	static function setWindowMode(id: Int, mode: Int): Void;
-	static function resizeWindow(id: Int, width: Int, height: Int): Void;
-	static function moveWindow(id: Int, x: Int, y: Int): Void;
+	static function windowWidth(): Int;
+	static function windowHeight(): Int;
+	static function setWindowTitle(title: String): Void;
+	static function getWindowMode(): Int;
+	static function setWindowMode(mode: Int): Void;
+	static function resizeWindow(width: Int, height: Int): Void;
+	static function moveWindow(x: Int, y: Int): Void;
 	static function screenDpi(): Int;
 	static function systemId(): String;
 	static function requestShutdown(): Void;
@@ -179,8 +179,8 @@ extern class Krom {
 	static function writePng(path: String, bytes: js.lib.ArrayBuffer, w: Int, h: Int, format: Int): Void;
 	static function encodeJpg(bytes: js.lib.ArrayBuffer, w: Int, h: Int, format: Int, quality: Int): js.lib.ArrayBuffer;
 	static function encodePng(bytes: js.lib.ArrayBuffer, w: Int, h: Int, format: Int): js.lib.ArrayBuffer;
-	static function windowX(id: Int): Int;
-	static function windowY(id: Int): Int;
+	static function windowX(): Int;
+	static function windowY(): Int;
 	static function language(): String;
 	static function mlInference(model: js.lib.ArrayBuffer, tensors: Array<js.lib.ArrayBuffer>, ?inputShape: Array<Array<Int>>, ?outputShape: Array<Int>, ?useGpu: Bool): js.lib.ArrayBuffer;
 	static function mlUnload(): Void;

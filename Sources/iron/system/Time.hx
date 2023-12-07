@@ -18,7 +18,7 @@ class Time {
 	static var frequency: Null<Int> = null;
 
 	static function initFrequency() {
-		frequency = kha.Display.primary != null ? kha.Display.primary.frequency : 60;
+		frequency = kha.System.displayFrequency();
 	}
 
 	public static function update() {

@@ -12,13 +12,13 @@ import iron.math.Vec3;
 import iron.math.Vec4;
 
 class Graphics4 {
-	private var renderTarget: kha.Canvas;
+	private var renderTarget: kha.Image;
 
-	public function new(renderTarget: kha.Canvas = null) {
+	public function new(renderTarget: kha.Image = null) {
 		this.renderTarget = renderTarget;
 	}
 
-	public function begin(additionalRenderTargets: Array<kha.Canvas> = null): Void {
+	public function begin(additionalRenderTargets: Array<kha.Image> = null): Void {
 		Krom.begin(renderTarget, additionalRenderTargets);
 	}
 
@@ -39,7 +39,7 @@ class Graphics4 {
 	}
 
 	public function setVertexBuffer(vertexBuffer: kha.VertexBuffer): Void {
-		vertexBuffer.set(0);
+		vertexBuffer.set();
 	}
 
 	public function setVertexBuffers(vertexBuffers: Array<kha.VertexBuffer>): Void {

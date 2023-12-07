@@ -21,9 +21,9 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package iron.system;
 
-import haxe.io.Bytes;
 import js.lib.Int32Array;
 import js.lib.Uint8Array;
+import js.lib.ArrayBuffer;
 
 class Lz4 {
 
@@ -33,8 +33,8 @@ class Lz4 {
 		return untyped size > 0x7e000000 ? 0 : size + (size / 255 | 0) + 16;
 	}
 
-	public static function encode(b: Bytes): Bytes {
-		var iBuf = new Uint8Array(cast b.getData());
+	public static function encode(b: ArrayBuffer): ArrayBuffer {
+		var iBuf = new Uint8Array(b);
 		var iLen = iBuf.length;
 		if (iLen >= 0x7e000000) {
 			trace("LZ4 range error");
@@ -152,11 +152,11 @@ class Lz4 {
 			oBuf[oPos++] = iBuf[anchorPos++];
 		}
 
-		return Bytes.ofData(untyped oBuf.buffer.slice(0, oPos));
+		return oBuf.buffer.slice(0, oPos);
 	}
 
-	public static function decode(b: Bytes, oLen: Int): Bytes {
-		var iBuf = new Uint8Array(cast b.getData());
+	public static function decode(b: ArrayBuffer, oLen: Int): ArrayBuffer {
+		var iBuf = new Uint8Array(b);
 		var iLen = iBuf.length;
 		var oBuf = new Uint8Array(oLen);
 		var iPos = 0;
@@ -213,6 +213,6 @@ class Lz4 {
 			}
 		}
 
-		return Bytes.ofData(untyped oBuf.buffer);
+		return oBuf.buffer;
 	}
 }

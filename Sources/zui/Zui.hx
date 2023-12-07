@@ -36,7 +36,7 @@ class Zui {
 
 	public static var textAreaColoring(never, set): TTextColoring;
 	static function set_textAreaColoring(coloring: TTextColoring): TTextColoring {
-		Krom.zui_text_area_coloring(coloring == null ? null : iron.system.ArmPack.encode(coloring).getData());
+		Krom.zui_text_area_coloring(coloring == null ? null : iron.system.ArmPack.encode(coloring));
 		return coloring;
 	}
 
@@ -1077,8 +1077,8 @@ class Nodes {
 			canvas_.links.push({ id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
 		}
 
-		var packed = Krom.zui_node_canvas(nodes_, iron.system.ArmPack.encode(canvas_).getData());
-		var canvas_: TNodeCanvas = iron.system.ArmPack.decode(haxe.io.Bytes.ofData(packed));
+		var packed = Krom.zui_node_canvas(nodes_, iron.system.ArmPack.encode(canvas_));
+		var canvas_: TNodeCanvas = iron.system.ArmPack.decode(packed);
 		if (canvas_.nodes == null) canvas_.nodes = [];
 		if (canvas_.links == null) canvas_.links = [];
 

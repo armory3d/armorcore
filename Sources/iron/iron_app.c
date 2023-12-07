@@ -14,7 +14,6 @@ int iron_app_y() { return 0; }
 // static var trait_late_updates: Array<Void->Void> = [];
 // static var trait_renders: Array<kha.Graphics4->Void> = [];
 // static var trait_renders2d: Array<kha.Graphics2->Void> = [];
-// kinc_framebuffer *framebuffer;
 bool iron_pause_updates = false;
 
 int iron_last_w = -1;
@@ -88,7 +87,6 @@ void iron_app_update() {
 
 // void iron_app_render(kinc_framebuffer_t **frames) {
 	/*kinc_framebuffer frame = frames[0];
-	framebuffer = frame;
 
 	iron_time_update();
 

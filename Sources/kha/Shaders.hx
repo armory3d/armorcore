@@ -5,7 +5,6 @@ import kha.VertexShader;
 import kha.GeometryShader;
 
 class Shaders {
-
 	static var vertexShaders: Map<String, VertexShader> = [];
 	static var fragmentShaders: Map<String, FragmentShader> = [];
 	static var geometryShaders: Map<String, GeometryShader> = [];
@@ -20,14 +19,10 @@ class Shaders {
 		#end
 	}
 
-	static function getBlob(name: String): kha.Blob {
-		return kha.Blob.fromBytes(haxe.io.Bytes.ofData(getBuffer(name)));
-	}
-
 	public static function getVertex(name: String): VertexShader {
 		var shader = vertexShaders.get(name);
 		if (shader == null) {
-			shader = new VertexShader(getBlob(name));
+			shader = new VertexShader(getBuffer(name));
 			vertexShaders.set(name, shader);
 		}
 		return shader;
@@ -36,7 +31,7 @@ class Shaders {
 	public static function getFragment(name: String): FragmentShader {
 		var shader = fragmentShaders.get(name);
 		if (shader == null) {
-			shader = new FragmentShader(getBlob(name));
+			shader = new FragmentShader(getBuffer(name));
 			fragmentShaders.set(name, shader);
 		}
 		return shader;
@@ -45,7 +40,7 @@ class Shaders {
 	public static function getGeometry(name: String): GeometryShader {
 		var shader = geometryShaders.get(name);
 		if (shader == null) {
-			shader = new GeometryShader(getBlob(name));
+			shader = new GeometryShader(getBuffer(name));
 			geometryShaders.set(name, shader);
 		}
 		return shader;

@@ -107,10 +107,10 @@ class Probe {
 		}
 		else {
 			var ext = raw.irradiance.endsWith(".json") ? "" : ".arm";
-			Data.getBlob(raw.irradiance + ext, function(b: kha.Blob) {
+			Data.getBlob(raw.irradiance + ext, function(b: js.lib.ArrayBuffer) {
 				var irradianceParsed: TSceneFormat = ext == "" ?
-					Json.parse(b.toString()) :
-					ArmPack.decode(b.toBytes());
+					Json.parse(kha.System.bufferToString(b)) :
+					ArmPack.decode(b);
 				var irr = new Float32Array(28); // Align to mult of 4 - 27->28
 				for (i in 0...27) irr[i] = irradianceParsed.irradiance[i];
 				done(irr);

@@ -572,11 +572,10 @@ class Scene {
 
 	public function embedData(file: String, done: Void->Void) {
 		if (file.endsWith(".raw")) {
-			Data.getBlob(file, function(blob: kha.Blob) {
+			Data.getBlob(file, function(b: js.lib.ArrayBuffer) {
 				// Raw 3D texture bytes
-				var b = blob.toBytes();
-				var w = Std.int(Math.pow(b.length, 1 / 3)) + 1;
-				var image = kha.Image.fromBytes3D(b, w, w, w, TextureFormat.L8);
+				var w = Std.int(Math.pow(b.byteLength, 1 / 3)) + 1;
+				var image = kha.Image.fromBytes3D(b, w, w, w, TextureFormat.R8);
 				embedded.set(file, image);
 				done();
 			});

@@ -507,7 +507,7 @@ __attribute__((export_name("_deletePipeline"))) void _deletePipeline(kinc_g4_pip
 	free(pipeline);
 }
 
-__attribute__((export_name("_compilePipeline"))) void _compilePipeline(kinc_g4_pipeline_t *pipeline, char *name0, int data0, char *name1, int data1, char *name2, int data2, char *name3, int data3, char *name4, int data4, char *name5, int data5, char *name6, int data6, char *name7, int data7, kinc_g4_cull_mode_t cull_mode, bool depth_write, kinc_g4_compare_mode_t depth_mode, int blend_source, int blend_destination, int alpha_blend_source, int alpha_blend_destination, bool color_write_mask_red, bool color_write_mask_green, bool color_write_mask_blue, bool color_write_mask_alpha, int color_attachment_count, int depth_attachment_bits, int stencil_attachment_bits, bool conservative_rasterization, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader) {
+__attribute__((export_name("_compilePipeline"))) void _compilePipeline(kinc_g4_pipeline_t *pipeline, char *name0, int data0, char *name1, int data1, char *name2, int data2, char *name3, int data3, char *name4, int data4, char *name5, int data5, char *name6, int data6, char *name7, int data7, kinc_g4_cull_mode_t cull_mode, bool depth_write, kinc_g4_compare_mode_t depth_mode, int blend_source, int blend_destination, int alpha_blend_source, int alpha_blend_destination, bool color_write_mask_red, bool color_write_mask_green, bool color_write_mask_blue, bool color_write_mask_alpha, int color_attachment_count, int depth_attachment_bits, int stencil_attachment_bits, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader) {
 	kinc_g4_vertex_structure_t structure;
 	kinc_g4_vertex_structure_init(&structure);
 	if (name0 != NULL) kinc_g4_vertex_structure_add(&structure, name0, (kinc_g4_vertex_data_t)data0);
@@ -539,7 +539,6 @@ __attribute__((export_name("_compilePipeline"))) void _compilePipeline(kinc_g4_p
 	pipeline->color_attachment_count = color_attachment_count;
 	pipeline->depth_attachment_bits = depth_attachment_bits;
 	pipeline->stencil_attachment_bits = stencil_attachment_bits;
-	pipeline->conservative_rasterization = conservative_rasterization;
 
 	kinc_g4_pipeline_compile(pipeline);
 }
@@ -1362,7 +1361,7 @@ int kickstart(int argc, char **argv) {
 		let data6 = structure0.elements.length > 6 ? structure0.elements[6].data : null;\
 		let name7 = structure0.elements.length > 7 ? structure0.elements[7].name : null;\
 		let data7 = structure0.elements.length > 7 ? structure0.elements[7].data : null;\
-		_exports._compilePipeline(pipeline, string(name0, 0), data0, string(name1, 64 * 1), data1, string(name2, 64 * 2), data2, string(name3, 64 * 3), data3, string(name4, 64 * 4), data4, string(name5, 64 * 5), data5, string(name6, 64 * 6), data6, string(name7, 64 * 7), data7, state.cullMode, state.depthWrite, state.depthMode, state.blendSource, state.blendDestination, state.alphaBlendSource, state.alphaBlendDestination, state.colorWriteMaskRed[0], state.colorWriteMaskGreen[0], state.colorWriteMaskBlue[0], state.colorWriteMaskAlpha[0], state.colorAttachmentCount, state.depthAttachmentBits, state.stencilAttachmentBits, state.conservativeRasterization, vertexShader, fragmentShader);\
+		_exports._compilePipeline(pipeline, string(name0, 0), data0, string(name1, 64 * 1), data1, string(name2, 64 * 2), data2, string(name3, 64 * 3), data3, string(name4, 64 * 4), data4, string(name5, 64 * 5), data5, string(name6, 64 * 6), data6, string(name7, 64 * 7), data7, state.cullMode, state.depthWrite, state.depthMode, state.blendSource, state.blendDestination, state.alphaBlendSource, state.alphaBlendDestination, state.colorWriteMaskRed[0], state.colorWriteMaskGreen[0], state.colorWriteMaskBlue[0], state.colorWriteMaskAlpha[0], state.colorAttachmentCount, state.depthAttachmentBits, state.stencilAttachmentBits, vertexShader, fragmentShader);\
 	};\
 	Krom.setPipeline = _exports._setPipeline;\
 	Krom.loadImage = function (file, readable) {\
