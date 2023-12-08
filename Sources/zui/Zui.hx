@@ -2,15 +2,15 @@
 
 package zui;
 
+import iron.System;
 import iron.system.Input.KeyCode;
-import kha.Graphics2;
 
 typedef ZuiOptions = {
-	font: kha.Font,
+	font: iron.System.Font,
 	theme: zui.Theme,
 	scaleFactor: Float,
-	color_wheel: kha.Image,
-	black_white_gradient: kha.Image,
+	color_wheel: iron.System.Image,
+	black_white_gradient: iron.System.Image,
 }
 
 class Zui {
@@ -237,7 +237,7 @@ class Zui {
 	}
 
 	public var g: Graphics2;
-	public var font: kha.Font;
+	public var font: Font;
 	public var zui_: Dynamic;
 
 	public function new(ops: ZuiOptions) {
@@ -255,7 +255,7 @@ class Zui {
 		font = ops.font;
 	}
 
-	public function setFont(font: kha.Font) {
+	public function setFont(font: Font) {
 		font.init(); // Make sure font_ is ready
 		this.font = font;
 		Krom.zui_set_font(zui_, font.font_);
@@ -303,7 +303,7 @@ class Zui {
 	}
 
 	public function window(handle: Handle, x: Int, y: Int, w: Int, h: Int, drag = false): Bool {
-		var img = @:privateAccess new kha.Image(null);
+		var img = @:privateAccess new Image(null);
 		img.renderTarget_ = handle.texture;
 		Graphics2.current = g = img.g2;
 		return Krom.zui_window(handle.handle_, x, y, w, h, drag);
@@ -321,7 +321,7 @@ class Zui {
 		return Krom.zui_panel(handle.handle_, text, isTree, filled, pack);
 	}
 
-	public function image(image: kha.Image, tint = 0xffffffff, h: Null<Float> = null, sx = 0, sy = 0, sw = 0, sh = 0): State {
+	public function image(image: Image, tint = 0xffffffff, h: Null<Float> = null, sx = 0, sy = 0, sw = 0, sh = 0): State {
 		return Krom.zui_image(image, tint, h == null ? -1 : Std.int(h), sx, sy, sw, sh);
 	}
 
@@ -333,7 +333,7 @@ class Zui {
 		return Krom.zui_text_input(handle.handle_, label, align, editable, liveUpdate);
 	}
 
-	public function button(text: String, align = Align.Center, label = "", icon: kha.Image = null, sx = 0, sy = 0, sw = 0, sh = 0): Bool {
+	public function button(text: String, align = Align.Center, label = "", icon: Image = null, sx = 0, sy = 0, sw = 0, sh = 0): Bool {
 		return Krom.zui_button(text, align, label);
 	}
 
@@ -361,7 +361,7 @@ class Zui {
 		Krom.zui_tooltip(text);
 	}
 
-	public function tooltipImage(image: kha.Image, maxWidth: Null<Int> = null) {
+	public function tooltipImage(image: Image, maxWidth: Null<Int> = null) {
 		Krom.zui_tooltip_image(image, maxWidth == null ? 0 : maxWidth);
 	}
 
@@ -369,11 +369,11 @@ class Zui {
 		Krom.zui_row(ratios);
 	}
 
-	public function fill(x: Float, y: Float, w: Float, h: Float, color: kha.Color) {
+	public function fill(x: Float, y: Float, w: Float, h: Float, color: iron.System.Color) {
 		Krom.zui_fill(x, y, w, h, color);
 	}
 
-	public function rect(x: Float, y: Float, w: Float, h: Float, color: kha.Color, strength = 1.0) {
+	public function rect(x: Float, y: Float, w: Float, h: Float, color: iron.System.Color, strength = 1.0) {
 		Krom.zui_rect(x, y, w, h, color, strength);
 	}
 
@@ -425,7 +425,7 @@ class Zui {
 		return Krom.zui_inline_radio(handle.handle_, texts, align);
 	}
 
-	public function colorWheel(handle: Handle, alpha = false, w: Null<Float> = null, h: Null<Float> = null, colorPreview = true, picker: Void->Void = null): kha.Color {
+	public function colorWheel(handle: Handle, alpha = false, w: Null<Float> = null, h: Null<Float> = null, colorPreview = true, picker: Void->Void = null): iron.System.Color {
 		return Krom.zui_color_wheel(handle.handle_, alpha, w != null ? w : -1, h != null ? h : -1, colorPreview, picker);
 	}
 
@@ -467,7 +467,7 @@ typedef HandleOptions = {
 	?position: Int,
 	?value: Float,
 	?text: String,
-	?color: kha.Color,
+	?color: iron.System.Color,
 	?layout: Layout
 }
 
@@ -480,7 +480,7 @@ class Handle {
 	function get_position(): Int { return Krom.zui_handle_get(handle_, "position"); }
 	function set_position(a: Int) { Krom.zui_handle_set(handle_, "position", a); return a; }
 
-	public var color(get, set): kha.Color;
+	public var color(get, set): iron.System.Color;
 	function get_color(): Int { return Krom.zui_handle_get(handle_, "color"); }
 	function set_color(a: Int) { Krom.zui_handle_set(handle_, "color", a); return a; }
 
@@ -747,7 +747,7 @@ class Nodes {
 	public static var enumTexts(never, set): String->Array<String>;
 	static function set_enumTexts(f: String->Array<String>) { enumTextsHaxe = f; Krom.zui_nodes_set_enum_texts(f); return f; }
 
-	public var colorPickerCallback: kha.Color->Void = null;
+	public var colorPickerCallback: iron.System.Color->Void = null;
 
 	public var nodesSelectedId(get ,set): Array<Int>;
 	function get_nodesSelectedId(): Array<Int> { return Krom.zui_nodes_get(nodes_, "nodes_selected_id"); }

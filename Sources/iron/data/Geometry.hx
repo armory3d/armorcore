@@ -1,15 +1,10 @@
 package iron.data;
 
-import haxe.ds.Vector;
-import kha.VertexBuffer;
-import kha.IndexBuffer;
-import kha.Graphics4.Usage;
-import kha.VertexBuffer.VertexStructure;
-import kha.VertexBuffer.VertexData;
 import js.lib.DataView;
 import js.lib.Float32Array;
 import js.lib.Uint32Array;
 import js.lib.Int16Array;
+import iron.System;
 import iron.math.Vec4;
 import iron.math.Mat4;
 import iron.data.SceneFormat;

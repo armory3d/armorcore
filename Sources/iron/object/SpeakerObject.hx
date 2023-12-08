@@ -12,7 +12,7 @@ class SpeakerObject extends Object {
 
 	public var data: TSpeakerData;
 	public var paused(default, null) = false;
-	public var sound(default, null): kha.Sound = null;
+	public var sound(default, null): kha.System.Sound = null;
 	public var channels(default, null): Array<AudioChannel> = [];
 	public var volume(default, null) : Float;
 
@@ -25,7 +25,7 @@ class SpeakerObject extends Object {
 
 		if (data.sound == "") return;
 
-		Data.getSound(data.sound, function(sound: kha.Sound) {
+		Data.getSound(data.sound, function(sound: kha.System.Sound) {
 			this.sound = sound;
 			App.notifyOnInit(init);
 		});

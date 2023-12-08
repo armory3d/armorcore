@@ -1,7 +1,6 @@
 package iron.data;
 
-import kha.Graphics4.Usage;
-import kha.VertexBuffer.VertexData;
+import iron.System;
 import js.lib.Int16Array;
 import js.lib.Uint32Array;
 import iron.data.SceneFormat;

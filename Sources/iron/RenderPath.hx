@@ -1,10 +1,6 @@
 package iron;
 
-import kha.Image;
-import kha.Color;
-import kha.Graphics4;
-import kha.Image.DepthStencilFormat;
-import kha.Image.TextureFormat;
+import iron.System;
 import iron.system.Time;
 import iron.data.SceneFormat;
 import iron.data.MaterialData;
@@ -113,7 +109,7 @@ class RenderPath {
 		else { // Render target
 			var rt = renderTargets.get(target);
 			currentTarget = rt;
-			var additionalImages: Array<kha.Image> = null;
+			var additionalImages: Array<Image> = null;
 			if (additional != null) {
 				additionalImages = [];
 				for (s in additional) {
@@ -147,7 +143,7 @@ class RenderPath {
 		rt.image.setDepthStencilFrom(renderTargets.get(from).image);
 	}
 
-	inline function begin(g: Graphics4, additionalRenderTargets: Array<kha.Image> = null) {
+	inline function begin(g: Graphics4, additionalRenderTargets: Array<Image> = null) {
 		if (currentG != null) end();
 		currentG = g;
 		g.begin(additionalRenderTargets);
@@ -192,7 +188,7 @@ class RenderPath {
 			}
 			else if (Scene.active.camera != null) {
 				var cc = Scene.active.camera.data.raw.clear_color;
-				if (cc != null) colorFlag = kha.Color.fromFloats(cc[0], cc[1], cc[2]);
+				if (cc != null) colorFlag = Color.fromFloats(cc[0], cc[1], cc[2]);
 			}
 		}
 		currentG.clear(colorFlag, depthFlag, null);
@@ -337,7 +333,7 @@ class RenderPath {
 	}
 
 	public function resize() {
-		if (kha.System.width == 0 || kha.System.height == 0) return;
+		if (System.width == 0 || System.height == 0) return;
 
 		// Make sure depth buffer is attached to single target only and gets released once
 		for (rt in renderTargets) {

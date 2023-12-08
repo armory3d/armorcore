@@ -1,6 +1,6 @@
 package iron.object;
 
-import kha.Graphics4;
+import iron.System;
 import iron.Scene;
 import iron.RenderPath;
 import iron.math.Mat4;
@@ -18,7 +18,7 @@ class CameraObject extends Object {
 	public var prevV: Mat4 = null;
 	public var VP: Mat4;
 	public var frustumPlanes: Array<FrustumPlane> = null;
-	public var renderTarget: kha.Image = null; // Render camera view to texture
+	public var renderTarget: Image = null; // Render camera view to texture
 	public var currentFace = 0;
 
 	static var temp = new Vec4();

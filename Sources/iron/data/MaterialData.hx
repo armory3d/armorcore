@@ -1,6 +1,7 @@
 package iron.data;
 
 import haxe.ds.Vector;
+import iron.System;
 import iron.data.SceneFormat;
 import iron.data.ShaderData;
 import iron.object.MeshObject;
@@ -73,7 +74,7 @@ class MaterialData {
 
 class MaterialContext {
 	public var raw: TMaterialContext;
-	public var textures: Vector<kha.Image> = null;
+	public var textures: Vector<Image> = null;
 	public var id = 0;
 	static var num = 0;
 
@@ -95,20 +96,20 @@ class MaterialContext {
 					continue;
 				}
 
-				Data.getImage(tex.file, function(image: kha.Image) {
+				Data.getImage(tex.file, function(image: Image) {
 					textures[i] = image;
 					texturesLoaded++;
 
 					// Set mipmaps
 					if (tex.mipmaps != null) {
-						var mipmaps: Array<kha.Image> = [];
+						var mipmaps: Array<Image> = [];
 						while (mipmaps.length < tex.mipmaps.length) mipmaps.push(null);
 						var mipmapsLoaded = 0;
 
 						for (j in 0...tex.mipmaps.length) {
 							var name = tex.mipmaps[j];
 
-							Data.getImage(name, function(mipimg: kha.Image) {
+							Data.getImage(name, function(mipimg: Image) {
 								mipmaps[j] = mipimg;
 								mipmapsLoaded++;
 
@@ -137,7 +138,7 @@ class MaterialContext {
 		else done(this);
 	}
 
-	public function setTextureParameters(g: kha.Graphics4, textureIndex: Int, context: ShaderContext, unitIndex: Int) {
+	public function setTextureParameters(g: Graphics4, textureIndex: Int, context: ShaderContext, unitIndex: Int) {
 		// This function is called by MeshObject for samplers set using material context
 		context.setTextureParameters(g, unitIndex, raw.bind_textures[textureIndex]);
 	}

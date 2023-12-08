@@ -1,19 +1,6 @@
 package iron.data;
 
-import kha.PipelineState;
-import kha.Graphics4;
-import kha.VertexBuffer.VertexStructure;
-import kha.VertexBuffer.VertexData;
-import kha.PipelineState.CompareMode;
-import kha.PipelineState.CullMode;
-import kha.PipelineState.BlendingFactor;
-import kha.Graphics4.TextureAddressing;
-import kha.Graphics4.TextureFilter;
-import kha.Graphics4.MipMapFilter;
-import kha.VertexShader;
-import kha.FragmentShader;
-import kha.Image.TextureFormat;
-import kha.Image.DepthStencilFormat;
+import iron.System;
 import iron.data.SceneFormat;
 using StringTools;
 
@@ -141,8 +128,8 @@ class ShaderContext {
 
 		// Shaders
 		if (raw.shader_from_source) {
-			pipeState.vertexShader = VertexShader.fromSource(raw.vertex_shader);
-			pipeState.fragmentShader = FragmentShader.fromSource(raw.fragment_shader);
+			pipeState.vertexShader = Shader.fromSource(raw.vertex_shader, Vertex);
+			pipeState.fragmentShader = Shader.fromSource(raw.fragment_shader, Fragment);
 
 			// Shader compile error
 			if (pipeState.vertexShader.shader_ == null || pipeState.fragmentShader.shader_ == null) {
@@ -162,9 +149,9 @@ class ShaderContext {
 			function loadShader(file: String, type: Int) {
 				var path = file + ShaderData.shaderExt;
 				Data.getBlob(path, function(b: js.lib.ArrayBuffer) {
-					if (type == 0) pipeState.vertexShader = new VertexShader(b);
-					else if (type == 1) pipeState.fragmentShader = new FragmentShader(b);
-					else if (type == 2) pipeState.geometryShader = new kha.GeometryShader(b);
+					if (type == 0) pipeState.vertexShader = new Shader(b, Vertex);
+					else if (type == 1) pipeState.fragmentShader = new Shader(b, Fragment);
+					else if (type == 2) pipeState.geometryShader = new Shader(b, Geometry);
 					shadersLoaded++;
 					if (shadersLoaded >= numShaders) finishCompile(done);
 				});
@@ -333,7 +320,7 @@ class ShaderContext {
 		textureUnits.push(unit);
 	}
 
-	public function setTextureParameters(g: kha.Graphics4, unitIndex: Int, tex: TBindTexture) {
+	public function setTextureParameters(g: Graphics4, unitIndex: Int, tex: TBindTexture) {
 		// This function is called for samplers set using material context
 		var unit = textureUnits[unitIndex];
 		g.setTextureParameters(unit,

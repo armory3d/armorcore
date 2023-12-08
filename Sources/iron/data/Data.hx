@@ -4,6 +4,7 @@ import haxe.Json;
 import iron.data.SceneFormat;
 import iron.system.ArmPack;
 import iron.system.Lz4;
+import iron.System;
 using StringTools;
 
 // Global data list and asynchronous data loading
@@ -19,11 +20,11 @@ class Data {
 	public static var cachedShaders: Map<String, ShaderData> = [];
 
 	public static var cachedBlobs: Map<String, js.lib.ArrayBuffer> = [];
-	public static var cachedImages: Map<String, kha.Image> = [];
-	public static var cachedVideos: Map<String, kha.Video> = [];
-	public static var cachedFonts: Map<String, kha.Font> = [];
+	public static var cachedImages: Map<String, Image> = [];
+	public static var cachedVideos: Map<String, Video> = [];
+	public static var cachedFonts: Map<String, Font> = [];
 	#if arm_audio
-	public static var cachedSounds: Map<String, kha.Sound> = [];
+	public static var cachedSounds: Map<String, Sound> = [];
 	#end
 
 	public static var assetsLoaded = 0;
@@ -36,11 +37,11 @@ class Data {
 	static var loadingShaders: Map<String, Array<ShaderData->Void>> = [];
 	static var loadingSceneRaws: Map<String, Array<TSceneFormat->Void>> = [];
 	static var loadingBlobs: Map<String, Array<js.lib.ArrayBuffer->Void>> = [];
-	static var loadingImages: Map<String, Array<kha.Image->Void>> = [];
-	static var loadingVideos: Map<String, Array<kha.Video->Void>> = [];
-	static var loadingFonts: Map<String, Array<kha.Font->Void>> = [];
+	static var loadingImages: Map<String, Array<Image->Void>> = [];
+	static var loadingVideos: Map<String, Array<Video->Void>> = [];
+	static var loadingFonts: Map<String, Array<Font->Void>> = [];
 	#if arm_audio
-	static var loadingSounds: Map<String, Array<kha.Sound->Void>> = [];
+	static var loadingSounds: Map<String, Array<Sound->Void>> = [];
 	#end
 
 	#if krom_windows
@@ -372,7 +373,7 @@ class Data {
 		cachedBlobs.remove(handle);
 	}
 
-	public static function getImage(file: String, done: kha.Image->Void, readable = false, format = "RGBA32") {
+	public static function getImage(file: String, done: Image->Void, readable = false, format = "RGBA32") {
 		var cached = cachedImages.get(file);
 		if (cached != null) {
 			done(cached);
@@ -390,7 +391,7 @@ class Data {
 		#if arm_image_embed
 		var imageBlob = cachedBlobs.get(file);
 		if (imageBlob != null) {
-			kha.Image.fromEncodedBytes(imageBlob, ".k", function(b: kha.Image) {
+			Image.fromEncodedBytes(imageBlob, ".k", function(b: Image) {
 				cachedImages.set(file, b);
 				for (f in loadingImages.get(file)) f(b);
 				loadingImages.remove(file);
@@ -400,10 +401,10 @@ class Data {
 		}
 		#end
 
-		// Krom.load_image(resolvePath(file), readable, function(b: kha.Image) {
+		// Krom.load_image(resolvePath(file), readable, function(b: Image) {
 			var image_ = Krom.loadImage(resolvePath(file), readable);
 			if (image_ != null) {
-				var b = kha.Image._fromTexture(image_);
+				var b = Image._fromTexture(image_);
 				cachedImages.set(file, b);
 				for (f in loadingImages.get(file)) f(b);
 				loadingImages.remove(file);
@@ -420,7 +421,7 @@ class Data {
 	}
 
 	#if arm_audio
-	public static function getSound(file: String, done: kha.Sound->Void) {
+	public static function getSound(file: String, done: Sound->Void) {
 		var cached = cachedSounds.get(file);
 		if (cached != null) {
 			done(cached);
@@ -436,8 +437,8 @@ class Data {
 		loadingSounds.set(file, [done]);
 
 
-		// Krom.load_sound(resolvePath(file), function(b: kha.Sound) {
-			var b = new kha.Sound(Krom.loadSound(resolvePath(file)));
+		// Krom.load_sound(resolvePath(file), function(b: Sound) {
+			var b = new Sound(Krom.loadSound(resolvePath(file)));
 			cachedSounds.set(file, b);
 			for (f in loadingSounds.get(file)) f(b);
 			loadingSounds.remove(file);
@@ -453,7 +454,7 @@ class Data {
 	}
 	#end
 
-	public static function getVideo(file: String, done: kha.Video->Void) {
+	public static function getVideo(file: String, done: Video->Void) {
 		file = file.substring(0, file.length - 4) + ".webm";
 		var cached = cachedVideos.get(file);
 		if (cached != null) {
@@ -469,7 +470,7 @@ class Data {
 
 		loadingVideos.set(file, [done]);
 
-		// Krom.load_video(resolvePath(file), function(b: kha.Video) {
+		// Krom.load_video(resolvePath(file), function(b: Video) {
 		// 	cachedVideos.set(file, b);
 		// 	for (f in loadingVideos.get(file)) f(b);
 		// 	loadingVideos.remove(file);
@@ -484,7 +485,7 @@ class Data {
 		cachedVideos.remove(handle);
 	}
 
-	public static function getFont(file: String, done: kha.Font->Void) {
+	public static function getFont(file: String, done: Font->Void) {
 		var cached = cachedFonts.get(file);
 		if (cached != null) {
 			done(cached);
@@ -501,7 +502,7 @@ class Data {
 
 		// Krom.load_blob(resolvePath(file), function(blob: js.lib.ArrayBuffer) {
 			var blob = Krom.loadBlob(resolvePath(file));
-			var b = new kha.Font(blob);
+			var b = new Font(blob);
 			cachedFonts.set(file, b);
 			for (f in loadingFonts.get(file)) f(b);
 			loadingFonts.remove(file);

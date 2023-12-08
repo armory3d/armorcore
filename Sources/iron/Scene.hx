@@ -1,7 +1,7 @@
 package iron;
 
 import haxe.ds.Vector;
-import kha.Image.TextureFormat;
+import iron.System;
 import iron.object.Transform;
 import iron.object.Animation;
 import iron.object.Object;
@@ -45,7 +45,7 @@ class Scene {
 	#end
 	var groups: Map<String, Array<Object>> = null;
 
-	public var embedded: Map<String, kha.Image>;
+	public var embedded: Map<String, Image>;
 
 	public var ready: Bool; // Async in progress
 
@@ -160,7 +160,7 @@ class Scene {
 		for (e in empties) if (e != null && e.parent != null) e.transform.update();
 	}
 
-	public function renderFrame(g: kha.Graphics4) {
+	public function renderFrame(g: Graphics4) {
 		if (!ready || RenderPath.active == null) return;
 		framePassed = true;
 
@@ -575,13 +575,13 @@ class Scene {
 			Data.getBlob(file, function(b: js.lib.ArrayBuffer) {
 				// Raw 3D texture bytes
 				var w = Std.int(Math.pow(b.byteLength, 1 / 3)) + 1;
-				var image = kha.Image.fromBytes3D(b, w, w, w, TextureFormat.R8);
+				var image = Image.fromBytes3D(b, w, w, w, TextureFormat.R8);
 				embedded.set(file, image);
 				done();
 			});
 		}
 		else {
-			Data.getImage(file, function(image: kha.Image) {
+			Data.getImage(file, function(image: Image) {
 				embedded.set(file, image);
 				done();
 			});

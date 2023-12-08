@@ -1,9 +1,11 @@
 package iron;
 
+import iron.System;
+
 class App {
 
-	public static dynamic function w(): Int { return kha.System.width; }
-	public static dynamic function h(): Int { return kha.System.height; }
+	public static dynamic function w(): Int { return System.width; }
+	public static dynamic function h(): Int { return System.height; }
 	public static dynamic function x(): Int { return 0; }
 	public static dynamic function y(): Int { return 0; }
 
@@ -12,8 +14,8 @@ class App {
 	static var traitInits: Array<Void->Void> = [];
 	static var traitUpdates: Array<Void->Void> = [];
 	static var traitLateUpdates: Array<Void->Void> = [];
-	static var traitRenders: Array<kha.Graphics4->Void> = [];
-	static var traitRenders2D: Array<kha.Graphics2->Void> = [];
+	static var traitRenders: Array<Graphics4->Void> = [];
+	static var traitRenders2D: Array<Graphics2->Void> = [];
 	public static var pauseUpdates = false;
 	static var lastw = -1;
 	static var lasth = -1;
@@ -25,7 +27,7 @@ class App {
 
 	function new(done: Void->Void) {
 		done();
-		kha.System.notifyOnFrames(render);
+		System.notifyOnFrames(render);
 	}
 
 	public static function reset() {
@@ -83,7 +85,7 @@ class App {
 		lasth = App.h();
 	}
 
-	static function render(g2: kha.Graphics2, g4: kha.Graphics4) {
+	static function render(g2: Graphics2, g4: Graphics4) {
 		update();
 
 		iron.system.Time.update();
@@ -109,7 +111,7 @@ class App {
 		render2D(g2);
 	}
 
-	static function render2D(g2: kha.Graphics2) {
+	static function render2D(g2: Graphics2) {
 		if (traitRenders2D.length > 0) {
 			g2.begin(false);
 			for (f in traitRenders2D) {
@@ -144,19 +146,19 @@ class App {
 		traitLateUpdates.remove(f);
 	}
 
-	public static function notifyOnRender(f: kha.Graphics4->Void) {
+	public static function notifyOnRender(f: Graphics4->Void) {
 		traitRenders.push(f);
 	}
 
-	public static function removeRender(f: kha.Graphics4->Void) {
+	public static function removeRender(f: Graphics4->Void) {
 		traitRenders.remove(f);
 	}
 
-	public static function notifyOnRender2D(f: kha.Graphics2->Void) {
+	public static function notifyOnRender2D(f: Graphics2->Void) {
 		traitRenders2D.push(f);
 	}
 
-	public static function removeRender2D(f: kha.Graphics2->Void) {
+	public static function removeRender2D(f: Graphics2->Void) {
 		traitRenders2D.remove(f);
 	}
 

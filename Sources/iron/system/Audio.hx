@@ -3,7 +3,7 @@ package iron.system;
 #if arm_audio
 
 class Audio {
-	public static function play(sound: kha.Sound, loop = false, stream = false): AudioChannel {
+	public static function play(sound: kha.System.Sound, loop = false, stream = false): AudioChannel {
 		var channel = new AudioChannel(sound, loop);
 		channel.play();
 		return channel;
@@ -11,10 +11,10 @@ class Audio {
 }
 
 class AudioChannel {
-	var sound: kha.Sound;
+	var sound: kha.System.Sound;
 	var loop: Bool;
 
-	public function new(sound: kha.Sound, loop: Bool) {
+	public function new(sound: kha.System.Sound, loop: Bool) {
 		this.sound = sound;
 		this.loop = loop;
 	}

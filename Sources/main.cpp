@@ -769,11 +769,12 @@ namespace {
 		krom_draw_indexed_vertices_instanced_fast(args.This(), instance_count, start, count);
 	}
 
-	void krom_create_vertex_shader(ARGS) {
+	void krom_create_shader(ARGS) {
 		SCOPE();
 		MAKE_CONTENT(args[0]);
+		int shader_type = TO_I32(args[1]);
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_VERTEX);
+		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), (kinc_g4_shader_type_t)shader_type);
 		RETURN_OBJ(shader);
 	}
 
@@ -917,14 +918,6 @@ namespace {
 		RETURN_OBJ(shader);
 	}
 
-	void krom_create_fragment_shader(ARGS) {
-		SCOPE();
-		MAKE_CONTENT(args[0]);
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_FRAGMENT);
-		RETURN_OBJ(shader);
-	}
-
 	void krom_create_fragment_shader_from_source(ARGS) {
 		SCOPE();
 		String::Utf8Value utf8_value(isolate, args[0]);
@@ -1041,14 +1034,6 @@ namespace {
 
 		#endif
 
-		RETURN_OBJ(shader);
-	}
-
-	void krom_create_geometry_shader(ARGS) {
-		SCOPE();
-		MAKE_CONTENT(args[0]);
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, content->Data(), (int)content->ByteLength(), KINC_G4_SHADER_TYPE_GEOMETRY);
 		RETURN_OBJ(shader);
 	}
 
@@ -4200,11 +4185,9 @@ namespace {
 		BIND_FUNCTION(krom, "setVertexBuffers", krom_set_vertexbuffers);
 		BIND_FUNCTION_FAST(krom, "drawIndexedVertices", krom_draw_indexed_vertices);
 		BIND_FUNCTION_FAST(krom, "drawIndexedVerticesInstanced", krom_draw_indexed_vertices_instanced);
-		BIND_FUNCTION(krom, "createVertexShader", krom_create_vertex_shader);
+		BIND_FUNCTION(krom, "createShader", krom_create_shader);
 		BIND_FUNCTION(krom, "createVertexShaderFromSource", krom_create_vertex_shader_from_source);
-		BIND_FUNCTION(krom, "createFragmentShader", krom_create_fragment_shader);
 		BIND_FUNCTION(krom, "createFragmentShaderFromSource", krom_create_fragment_shader_from_source);
-		BIND_FUNCTION(krom, "createGeometryShader", krom_create_geometry_shader);
 		BIND_FUNCTION(krom, "deleteShader", krom_delete_shader);
 		BIND_FUNCTION(krom, "createPipeline", krom_create_pipeline);
 		BIND_FUNCTION(krom, "deletePipeline", krom_delete_pipeline);

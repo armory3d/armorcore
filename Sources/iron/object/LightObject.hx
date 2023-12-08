@@ -1,7 +1,7 @@
 package iron.object;
 
 import js.lib.Float32Array;
-import kha.Graphics4.Usage;
+import iron.System;
 import iron.math.Mat4;
 import iron.math.Vec4;
 import iron.data.LightData;

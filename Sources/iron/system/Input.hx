@@ -1,5 +1,6 @@
 package iron.system;
 
+import iron.System;
 import iron.system.Input.KeyCode;
 
 class Input {
@@ -69,7 +70,7 @@ class Input {
 		App.notifyOnEndFrame(endFrame);
 		App.notifyOnReset(reset);
 		// Reset mouse delta on foreground
-		kha.System.notifyOnApplicationState(function() { getMouse().reset(); }, null, null, null, null);
+		System.notifyOnApplicationState(function() { getMouse().reset(); }, null, null, null, null);
 	}
 }
 
@@ -137,27 +138,27 @@ class Mouse {
 	}
 
 	public function lock() {
-		if (kha.System.canLockMouse()) {
-			kha.System.lockMouse();
+		if (System.canLockMouse()) {
+			System.lockMouse();
 			locked = true;
 			hidden = true;
 		}
 	}
 	public function unlock() {
-		if (kha.System.canLockMouse()) {
-			kha.System.unlockMouse();
+		if (System.canLockMouse()) {
+			System.unlockMouse();
 			locked = false;
 			hidden = false;
 		}
 	}
 
 	public function hide() {
-		kha.System.hideSystemCursor();
+		System.hideSystemCursor();
 		hidden = true;
 	}
 
 	public function show() {
-		kha.System.showSystemCursor();
+		System.showSystemCursor();
 		hidden = false;
 	}
 
@@ -676,7 +677,7 @@ class Sensor {
 	public var z = 0.0;
 
 	public function new() {
-		// kha.System.getSensor(Accelerometer).notify(listener);
+		// System.getSensor(Accelerometer).notify(listener);
 	}
 
 	function listener(x: Float, y: Float, z: Float) {

@@ -1,11 +1,11 @@
-extern class Krom {
 
+import iron.System;
+
+extern class Krom {
 	static function clear(flags: Int, color: Int, depth: Float, stencil: Int): Void;
-	static function createVertexShader(data: js.lib.ArrayBuffer): Dynamic;
+	static function createShader(data: js.lib.ArrayBuffer, type: Int): Dynamic;
 	static function createVertexShaderFromSource(source: String): Dynamic;
-	static function createFragmentShader(data: js.lib.ArrayBuffer): Dynamic;
 	static function createFragmentShaderFromSource(source: String): Dynamic;
-	static function createGeometryShader(data: js.lib.ArrayBuffer): Dynamic;
 	static function deleteShader(shader: Dynamic): Dynamic;
 	static function createPipeline(): Dynamic;
 	static function deletePipeline(pipeline: Dynamic): Dynamic;
@@ -30,7 +30,7 @@ extern class Krom {
 	static function setMatrix(location: Dynamic, matrix: js.lib.ArrayBuffer): Void;
 	static function setMatrix3(location: Dynamic, matrix: js.lib.ArrayBuffer): Void;
 
-	static function begin(renderTarget: kha.Image, additionalRenderTargets: Array<kha.Image>): Void;
+	static function begin(renderTarget: Image, additionalRenderTargets: Array<Image>): Void;
 	static function end(): Void;
 	static function renderTargetsInvertedY(): Bool;
 	static function viewport(x: Int, y: Int, width: Int, height: Int): Void;
@@ -48,7 +48,7 @@ extern class Krom {
 	static function unlockTexture(texture: Dynamic): Void;
 	static function generateTextureMipmaps(texture: Dynamic, levels: Int): Void;
 	static function generateRenderTargetMipmaps(renderTarget: Dynamic, levels: Int): Void;
-	static function setMipmaps(texture: Dynamic, mipmaps: Array<kha.Image>): Void;
+	static function setMipmaps(texture: Dynamic, mipmaps: Array<Image>): Void;
 	static function setDepthStencilFrom(target: Dynamic, source: Dynamic): Void;
 	static function clearTexture(target: Dynamic, x: Int, y: Int, z: Int, width: Int, height: Int, depth: Int, color: Int): Void;
 	static function createIndexBuffer(count: Int): Dynamic;
@@ -56,17 +56,17 @@ extern class Krom {
 	static function lockIndexBuffer(buffer: Dynamic): js.lib.Uint32Array;
 	static function unlockIndexBuffer(buffer: Dynamic): Void;
 	static function setIndexBuffer(buffer: Dynamic): Void;
-	static function createVertexBuffer(count: Int, structure: Array<kha.VertexBuffer.VertexElement>, usage: Int, instanceDataStepRate: Int): Dynamic;
+	static function createVertexBuffer(count: Int, structure: Array<VertexElement>, usage: Int, instanceDataStepRate: Int): Dynamic;
 	static function deleteVertexBuffer(buffer: Dynamic): Dynamic;
 	static function lockVertexBuffer(buffer: Dynamic, start: Int, count: Int): js.lib.ArrayBuffer;
 	static function unlockVertexBuffer(buffer: Dynamic, count: Int): Void;
 	static function setVertexBuffer(buffer: Dynamic): Void;
-	static function setVertexBuffers(vertexBuffers: Array<kha.VertexBuffer>): Void;
+	static function setVertexBuffers(vertexBuffers: Array<VertexBuffer>): Void;
 	static function drawIndexedVertices(start: Int, count: Int): Void;
 	static function drawIndexedVerticesInstanced(instanceCount: Int, start: Int, count: Int): Void;
 
 	static function loadImage(file: String, readable: Bool): Dynamic;
-	static function unloadImage(image: kha.Image): Void;
+	static function unloadImage(image: Image): Void;
 	static function loadBlob(file: String): js.lib.ArrayBuffer;
 	static function loadUrl(url: String): Void;
 	static function copyToClipboard(text: String): Void;
@@ -138,7 +138,7 @@ extern class Krom {
 	static function g2_init(image_vert: js.lib.ArrayBuffer, image_frag: js.lib.ArrayBuffer, colored_vert: js.lib.ArrayBuffer, colored_frag: js.lib.ArrayBuffer, text_vert: js.lib.ArrayBuffer, text_frag: js.lib.ArrayBuffer): Void;
 	static function g2_begin(): Void;
 	static function g2_end(): Void;
-	static function g2_draw_scaled_sub_image(image: kha.Image, sx: Float, sy: Float, sw: Float, sh: Float, dx: Float, dy: Float, dw: Float, dh: Float): Void;
+	static function g2_draw_scaled_sub_image(image: Image, sx: Float, sy: Float, sw: Float, sh: Float, dx: Float, dy: Float, dw: Float, dh: Float): Void;
 	static function g2_fill_triangle(x0: Float, y0: Float, x1: Float, y1: Float, x2: Float, y2: Float): Void;
 	static function g2_fill_rect(x: Float, y: Float, width: Float, height: Float): Void;
 	static function g2_draw_rect(x: Float, y: Float, width: Float, height: Float, strength: Float): Void;
@@ -166,7 +166,7 @@ extern class Krom {
 	static function delayIdleSleep(): Void;
 	static function raytraceSupported(): Bool;
 	static function raytraceInit(shader: js.lib.ArrayBuffer, vb: Dynamic, ib: Dynamic, scale: Float): Void;
-	static function raytraceSetTextures(tex0: kha.Image, tex1: kha.Image, tex2: kha.Image, texenv: Dynamic, tex_sobol: Dynamic, tex_scramble: Dynamic, tex_rank: Dynamic): Void;
+	static function raytraceSetTextures(tex0: Image, tex1: Image, tex2: Image, texenv: Dynamic, tex_sobol: Dynamic, tex_scramble: Dynamic, tex_rank: Dynamic): Void;
 	static function raytraceDispatchRays(target: Dynamic, cb: js.lib.ArrayBuffer): Void;
 	static function saveDialog(filterList: String, defaultPath: String): String;
 	static function openDialog(filterList: String, defaultPath: String, openMultiple: Bool): Array<String>;
@@ -208,7 +208,7 @@ extern class Krom {
 	static function zui_radio(handle: Dynamic, position: Int, text: String, label: String): Bool;
 	static function zui_combo(handle: Dynamic, texts: Array<String>, label: String, show_label: Bool, align: Int, search_bar: Bool): Int;
 	static function zui_slider(handle: Dynamic, text: String, from: Float, to: Float, filled: Bool, precision: Float, display_value: Bool, align: Int, text_edit: Bool): Float;
-	static function zui_image(image: kha.Image, tint: Int, h: Int, sx: Int, sy: Int, sw: Int, sh: Int): Int;
+	static function zui_image(image: Image, tint: Int, h: Int, sx: Int, sy: Int, sw: Int, sh: Int): Int;
 	static function zui_text(text: String, align: Int, bg: Int): Int;
 	static function zui_text_input(handle: Dynamic, label: String, align: Int, editable: Bool, live_update: Bool): String;
 	static function zui_tab(handle: Dynamic, text: String, vertical: Bool, color: Int): Bool;
@@ -216,7 +216,7 @@ extern class Krom {
 	static function zui_handle(ops: Dynamic): Dynamic;
 	static function zui_separator(h: Int, fill: Bool): Void;
 	static function zui_tooltip(text: String): Void;
-	static function zui_tooltip_image(image: kha.Image, max_width: Int): Void;
+	static function zui_tooltip_image(image: Image, max_width: Int): Void;
 	static function zui_row(ratios: Array<Float>): Void;
 	static function zui_fill(x: Float, y: Float, w: Float, h: Float, color: Int): Void;
 	static function zui_rect(x: Float, y: Float, w: Float, h: Float, color: Int, strength: Float): Void;

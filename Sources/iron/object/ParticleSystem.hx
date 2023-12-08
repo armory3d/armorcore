@@ -2,8 +2,8 @@ package iron.object;
 
 #if arm_particles
 
-import kha.Graphics4.Usage;
 import js.lib.Float32Array;
+import iron.System;
 import iron.data.Data;
 import iron.data.ParticleData;
 import iron.data.SceneFormat;

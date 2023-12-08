@@ -2,6 +2,7 @@ package iron.data;
 
 import haxe.Json;
 import js.lib.Float32Array;
+import iron.System;
 import iron.math.Vec4;
 import iron.data.SceneFormat;
 import iron.system.ArmPack;
@@ -11,7 +12,7 @@ class WorldData {
 
 	public var name: String;
 	public var raw: TWorldData;
-	public var envmap: kha.Image;
+	public var envmap: Image;
 	public var probe: Probe;
 
 	static var emptyIrr: Float32Array = null;
@@ -34,7 +35,7 @@ class WorldData {
 
 	public function loadEnvmap(done: WorldData->Void) {
 		if (raw.envmap != null) {
-			Data.getImage(raw.envmap, function(image: kha.Image) {
+			Data.getImage(raw.envmap, function(image: Image) {
 				envmap = image;
 				done(this);
 			});
@@ -65,8 +66,8 @@ class WorldData {
 class Probe {
 
 	public var raw: TProbeData;
-	public var radiance: kha.Image;
-	public var radianceMipmaps: Array<kha.Image> = [];
+	public var radiance: Image;
+	public var radianceMipmaps: Array<Image> = [];
 	public var irradiance: Float32Array;
 
 	public function new(raw: TProbeData, done: Probe->Void) {
@@ -75,7 +76,7 @@ class Probe {
 		setIrradiance(function(irr: Float32Array) {
 			irradiance = irr;
 			if (raw.radiance != null) {
-				Data.getImage(raw.radiance, function(rad: kha.Image) {
+				Data.getImage(raw.radiance, function(rad: Image) {
 					radiance = rad;
 					while (radianceMipmaps.length < raw.radiance_mipmaps) radianceMipmaps.push(null);
 					var dot = raw.radiance.lastIndexOf(".");
@@ -84,7 +85,7 @@ class Probe {
 
 					var mipsLoaded = 0;
 					for (i in 0...raw.radiance_mipmaps) {
-						Data.getImage(base + "_" + i + ext, function(mipimg: kha.Image) {
+						Data.getImage(base + "_" + i + ext, function(mipimg: Image) {
 							radianceMipmaps[i] = mipimg;
 							mipsLoaded++;
 
@@ -109,7 +110,7 @@ class Probe {
 			var ext = raw.irradiance.endsWith(".json") ? "" : ".arm";
 			Data.getBlob(raw.irradiance + ext, function(b: js.lib.ArrayBuffer) {
 				var irradianceParsed: TSceneFormat = ext == "" ?
-					Json.parse(kha.System.bufferToString(b)) :
+					Json.parse(System.bufferToString(b)) :
 					ArmPack.decode(b);
 				var irr = new Float32Array(28); // Align to mult of 4 - 27->28
 				for (i in 0...27) irr[i] = irradianceParsed.irradiance[i];

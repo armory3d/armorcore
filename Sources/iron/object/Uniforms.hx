@@ -1,10 +1,7 @@
 package iron.object;
 
-import kha.Graphics4;
-import kha.Graphics4.TextureAddressing;
-import kha.Graphics4.TextureFilter;
-import kha.Graphics4.MipMapFilter;
 import js.lib.Float32Array;
+import iron.System;
 import iron.math.Vec4;
 import iron.math.Quat;
 import iron.math.Mat3;
@@ -28,7 +25,7 @@ class Uniforms {
 	public static var helpVec2 = new Vec4();
 	public static var helpQuat = new Quat(); // Keep at identity
 
-	public static var externalTextureLinks: Array<Object->MaterialData->String->kha.Image> = null;
+	public static var externalTextureLinks: Array<Object->MaterialData->String->Image> = null;
 	public static var externalMat4Links: Array<Object->MaterialData->String->Mat4> = null;
 	public static var externalVec4Links: Array<Object->MaterialData->String->Vec4> = null;
 	public static var externalVec3Links: Array<Object->MaterialData->String->Vec4> = null;

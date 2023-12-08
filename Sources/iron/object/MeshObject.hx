@@ -1,8 +1,7 @@
 package iron.object;
 
 import haxe.ds.Vector;
-import kha.Graphics4;
-import kha.PipelineState;
+import iron.System;
 import iron.math.Vec4;
 import iron.math.Mat4;
 import iron.data.MeshData;

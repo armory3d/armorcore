@@ -1,5 +1,7 @@
 package iron.system;
 
+import iron.System;
+
 class Time {
 
 	public static var delta(get, never): Float;
@@ -12,13 +14,13 @@ class Time {
 	public static var realDelta = 0.0;
 
 	public static inline function time(): Float {
-		return kha.System.time;
+		return System.time;
 	}
 
 	static var frequency: Null<Int> = null;
 
 	static function initFrequency() {
-		frequency = kha.System.displayFrequency();
+		frequency = System.displayFrequency();
 	}
 
 	public static function update() {
