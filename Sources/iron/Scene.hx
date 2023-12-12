@@ -1,23 +1,8 @@
 package iron;
 
-import haxe.ds.Vector;
+import haxe.Json;
 import iron.System;
-import iron.object.Transform;
-import iron.object.Animation;
-import iron.object.Object;
-import iron.object.CameraObject;
-import iron.object.MeshObject;
-import iron.object.LightObject;
-import iron.object.SpeakerObject;
-import iron.data.CameraData;
-import iron.data.MeshData;
-import iron.data.LightData;
-import iron.data.WorldData;
-import iron.data.MaterialData;
-import iron.data.Armature;
-import iron.data.Data;
-import iron.data.SceneFormat;
-import iron.system.Time;
+import iron.SceneFormat;
 using StringTools;
 
 class Scene {
@@ -87,7 +72,7 @@ class Scene {
 			// Startup scene
 			active.addScene(format.name, null, function(sceneObject: Object) {
 				if (active.cameras.length == 0) {
-					trace('No camera found for scene "' + format.name + '"');
+					Krom.log('No camera found for scene "' + format.name + '"');
 				}
 
 				active.camera = active.getCamera(format.camera_ref);
@@ -183,10 +168,6 @@ class Scene {
 		return root.getChild(name);
 	}
 
-	// public function getTrait(c: Class<Trait>): Dynamic {
-	// 	return root.children.length > 0 ? root.children[0].getTrait(c) : null;
-	// }
-
 	public function getMesh(name: String): MeshObject {
 		for (m in meshes) if (m.name == name) return m;
 		return null;
@@ -214,7 +195,7 @@ class Scene {
 		return null;
 	}
 
-	public function addMeshObject(data: MeshData, materials: Vector<MaterialData>, parent: Object = null): MeshObject {
+	public function addMeshObject(data: MeshData, materials: Array<MaterialData>, parent: Object = null): MeshObject {
 		var object = new MeshObject(data, materials);
 		parent != null ? object.setParent(parent) : object.setParent(root);
 		return object;
@@ -360,7 +341,7 @@ class Scene {
 			}
 			else {
 				// Materials
-				var materials = new Vector<MaterialData>(o.material_refs.length);
+				var materials: Array<MaterialData> = [];
 				var materialsLoaded = 0;
 				for (i in 0...o.material_refs.length) {
 					var ref = o.material_refs[i];
@@ -403,7 +384,7 @@ class Scene {
 		return children;
 	}
 
-	function createMeshObject(o: TObj, format: TSceneFormat, parent: Object, parentObject: TObj, materials: Vector<MaterialData>, done: Object->Void) {
+	function createMeshObject(o: TObj, format: TSceneFormat, parent: Object, parentObject: TObj, materials: Array<MaterialData>, done: Object->Void) {
 		// Mesh reference
 		var ref = o.data_ref.split("/");
 		var object_file = "";
@@ -460,7 +441,7 @@ class Scene {
 		#end
 	}
 
-	public function returnMeshObject(object_file: String, data_ref: String, sceneName: String, armature: #if arm_skin Armature #else Null<Int> #end, materials: Vector<MaterialData>, parent: Object, parentObject: TObj, o: TObj, done: Object->Void) {
+	public function returnMeshObject(object_file: String, data_ref: String, sceneName: String, armature: #if arm_skin Armature #else Null<Int> #end, materials: Array<MaterialData>, parent: Object, parentObject: TObj, o: TObj, done: Object->Void) {
 		Data.getMesh(object_file, data_ref, function(mesh: MeshData) {
 			#if arm_skin
 			if (mesh.isSkinned) {
@@ -517,7 +498,7 @@ class Scene {
 	}
 
 	static function generateTransform(object: TObj, transform: Transform) {
-		transform.world = object.transform != null ? iron.math.Mat4.fromFloat32Array(object.transform.values) : iron.math.Mat4.identity();
+		transform.world = object.transform != null ? Mat4.fromFloat32Array(object.transform.values) : Mat4.identity();
 		transform.world.decompose(transform.loc, transform.rot, transform.scale);
 		// Whether to apply parent matrix
 		if (object.local_only != null) transform.localOnly = object.local_only;
@@ -541,7 +522,7 @@ class Scene {
 			return ar;
 		}
 		else if (str.charAt(0) == '{') { // Typedef or anonymous structure
-			return haxe.Json.parse(str);
+			return Json.parse(str);
 		}
 		else {
 			var f = Std.parseFloat(str);

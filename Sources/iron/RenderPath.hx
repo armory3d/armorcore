@@ -1,16 +1,8 @@
 package iron;
 
 import iron.System;
-import iron.system.Time;
-import iron.data.SceneFormat;
-import iron.data.MaterialData;
-import iron.data.ShaderData;
-import iron.data.ConstData;
-import iron.data.Data;
-import iron.object.Object;
-import iron.object.LightObject;
-import iron.object.MeshObject;
-import iron.object.Uniforms;
+import iron.SceneFormat;
+import iron.ShaderData;
 
 class RenderPath {
 
@@ -40,15 +32,15 @@ class RenderPath {
 	public var currentW: Int;
 	public var currentH: Int;
 	public var currentD: Int;
-	var lastW = 0;
-	var lastH = 0;
-	var bindParams: Array<String>;
+	public var lastW = 0;
+	public var lastH = 0;
+	public var bindParams: Array<String>;
 	var meshesSorted: Bool;
 	var scissorSet = false;
 	var viewportScaled = false;
 	var lastFrameTime = 0.0;
 	var loading = 0;
-	var cachedShaderContexts: Map<String, CachedShaderContext> = new Map();
+	public var cachedShaderContexts: Map<String, CachedShaderContext> = new Map();
 	var depthBuffers: Array<{name: String, format: String}> = [];
 
 	#if arm_voxels
@@ -65,11 +57,11 @@ class RenderPath {
 	public function new() {}
 
 	public function renderFrame(g: Graphics4) {
-		if (!ready || paused || iron.App.w() == 0 || iron.App.h() == 0) return;
+		if (!ready || paused || App.w() == 0 || App.h() == 0) return;
 
-		if (lastW > 0 && (lastW != iron.App.w() || lastH != iron.App.h())) resize();
-		lastW = iron.App.w();
-		lastH = iron.App.h();
+		if (lastW > 0 && (lastW != App.w() || lastH != App.h())) resize();
+		lastW = App.w();
+		lastH = App.h();
 
 		frameTime = Time.time() - lastFrameTime;
 		lastFrameTime = Time.time();
@@ -78,8 +70,8 @@ class RenderPath {
 		var cam = Scene.active.camera;
 		frameG = g;
 
-		currentW = iron.App.w();
-		currentH = iron.App.h();
+		currentW = App.w();
+		currentH = App.h();
 		currentD = 1;
 		meshesSorted = false;
 
@@ -99,12 +91,12 @@ class RenderPath {
 		if (target == "") { // Framebuffer
 			currentD = 1;
 			currentTarget = null;
-			currentW = iron.App.w();
-			currentH = iron.App.h();
+			currentW = App.w();
+			currentH = App.h();
 			if (frameScissor) setFrameScissor();
 			begin(frameG);
-			setCurrentViewport(iron.App.w(), iron.App.h());
-			setCurrentScissor(iron.App.w(), iron.App.h());
+			setCurrentViewport(App.w(), App.h());
+			setCurrentScissor(App.w(), App.h());
 		}
 		else { // Render target
 			var rt = renderTargets.get(target);
@@ -143,13 +135,13 @@ class RenderPath {
 		rt.image.setDepthStencilFrom(renderTargets.get(from).image);
 	}
 
-	inline function begin(g: Graphics4, additionalRenderTargets: Array<Image> = null) {
+	public function begin(g: Graphics4, additionalRenderTargets: Array<Image> = null) {
 		if (currentG != null) end();
 		currentG = g;
 		g.begin(additionalRenderTargets);
 	}
 
-	inline function end() {
+	public function end() {
 		if (scissorSet) {
 			currentG.disableScissor();
 			scissorSet = false;
@@ -160,15 +152,15 @@ class RenderPath {
 	}
 
 	public function setCurrentViewportWithOffset(viewW:Int, viewH:Int, offsetX: Int, offsetY: Int) {
-		currentG.viewport(iron.App.x() + offsetX, currentH - viewH + iron.App.y() - offsetY, viewW, viewH);
+		currentG.viewport(App.x() + offsetX, currentH - viewH + App.y() - offsetY, viewW, viewH);
 	}
 
 	public function setCurrentViewport(viewW: Int, viewH: Int) {
-		currentG.viewport(iron.App.x(), currentH - (viewH - iron.App.y()), viewW, viewH);
+		currentG.viewport(App.x(), currentH - (viewH - App.y()), viewW, viewH);
 	}
 
 	public function setCurrentScissor(viewW: Int, viewH: Int) {
-		currentG.scissor(iron.App.x(), currentH - (viewH - iron.App.y()), viewW, viewH);
+		currentG.scissor(App.x(), currentH - (viewH - App.y()), viewW, viewH);
 		scissorSet = true;
 	}
 
@@ -235,7 +227,6 @@ class RenderPath {
 		end();
 	}
 
-	@:access(iron.object.MeshObject)
 	function submitDraw(context: String) {
 		var camera = Scene.active.camera;
 		var meshes = Scene.active.meshes;
@@ -422,8 +413,8 @@ class RenderPath {
 	}
 
 	function createImage(t: RenderTargetRaw, depthStencil: DepthStencilFormat): Image {
-		var width = t.width == 0 ? iron.App.w() : t.width;
-		var height = t.height == 0 ? iron.App.h() : t.height;
+		var width = t.width == 0 ? App.w() : t.width;
+		var height = t.height == 0 ? App.h() : t.height;
 		var depth = t.depth != null ? t.depth : 0;
 		if (t.displayp != null) { // 1080p/..
 			if (width > height) {

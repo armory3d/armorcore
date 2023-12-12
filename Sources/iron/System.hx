@@ -4,12 +4,7 @@ import js.lib.ArrayBuffer;
 import js.lib.DataView;
 import js.lib.Float32Array;
 import js.lib.Uint32Array;
-import iron.system.Input;
-import iron.math.Vec2;
-import iron.math.Vec3;
-import iron.math.Vec4;
-import iron.math.Mat3;
-import iron.math.Mat4;
+import iron.Input;
 using StringTools;
 
 class System {
@@ -39,10 +34,6 @@ class System {
 		Krom.init(options.title, options.width, options.height, options.vsync, options.mode, options.features, options.x, options.y, options.frequency);
 
 		startTime = Krom.getTime();
-		haxe.Log.trace = function(v: Dynamic, ?infos: haxe.PosInfos) {
-			Krom.log(haxe.Log.formatOutput(v, infos));
-		};
-
 		g4 = new Graphics4();
 		g2 = new Graphics2(g4, null);
 		Krom.setCallback(renderCallback);
@@ -65,13 +56,13 @@ class System {
 		Krom.setGamepadAxisCallback(gamepadAxisCallback);
 		Krom.setGamepadButtonCallback(gamepadButtonCallback);
 
-		keyboard = iron.system.Input.getKeyboard();
-		mouse = iron.system.Input.getMouse();
-		surface = iron.system.Input.getSurface();
-		pen = iron.system.Input.getPen();
+		keyboard = Input.getKeyboard();
+		mouse = Input.getMouse();
+		surface = Input.getSurface();
+		pen = Input.getPen();
 		gamepads = new Array<Gamepad>();
 		for (i in 0...maxGamepads) {
-			gamepads[i] = iron.system.Input.getGamepad(i);
+			gamepads[i] = Input.getGamepad(i);
 		}
 
 		callback();
@@ -823,7 +814,7 @@ class Image {
 	private var graphics2: Graphics2;
 	private var graphics4: Graphics4;
 
-	private function new(texture: Dynamic) {
+	public function new(texture: Dynamic) {
 		texture_ = texture;
 	}
 
@@ -936,7 +927,7 @@ class Image {
 		Krom.unlockTexture(texture_);
 	}
 
-	private var pixels: ArrayBuffer = null;
+	public var pixels: ArrayBuffer = null;
 	public function getPixels(): ArrayBuffer {
 		if (renderTarget_ != null) {
 			// Minimum size of 32x32 required after https://github.com/Kode/Kinc/commit/3797ebce5f6d7d360db3331eba28a17d1be87833
@@ -1273,20 +1264,12 @@ class Graphics4 {
 		Krom.setFloat4(location, value.x, value.y, value.z, value.w);
 	}
 
-	static var mat = new js.lib.Float32Array(16);
 	public inline function setMatrix(location: ConstantLocation, matrix: Mat4): Void {
-		mat[0] = matrix._00; mat[1] = matrix._01; mat[2] = matrix._02; mat[3] = matrix._03;
-		mat[4] = matrix._10; mat[5] = matrix._11; mat[6] = matrix._12; mat[7] = matrix._13;
-		mat[8] = matrix._20; mat[9] = matrix._21; mat[10] = matrix._22; mat[11] = matrix._23;
-		mat[12] = matrix._30; mat[13] = matrix._31; mat[14] = matrix._32; mat[15] = matrix._33;
-		Krom.setMatrix(location, mat.buffer);
+		Krom.setMatrix(location, matrix.buffer.buffer);
 	}
 
 	public inline function setMatrix3(location: ConstantLocation, matrix: Mat3): Void {
-		mat[0] = matrix._00; mat[1] = matrix._01; mat[2] = matrix._02;
-		mat[3] = matrix._10; mat[4] = matrix._11; mat[5] = matrix._12;
-		mat[6] = matrix._20; mat[7] = matrix._21; mat[8] = matrix._22;
-		Krom.setMatrix3(location, mat.buffer);
+		Krom.setMatrix3(location, matrix.buffer.buffer);
 	}
 
 	public function drawIndexedVertices(start: Int = 0, count: Int = -1): Void {

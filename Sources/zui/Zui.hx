@@ -3,14 +3,15 @@
 package zui;
 
 import iron.System;
-import iron.system.Input.KeyCode;
+import iron.Input;
+import iron.ArmPack;
 
 typedef ZuiOptions = {
-	font: iron.System.Font,
+	font: Font,
 	theme: zui.Theme,
 	scaleFactor: Float,
-	color_wheel: iron.System.Image,
-	black_white_gradient: iron.System.Image,
+	color_wheel: Image,
+	black_white_gradient: Image,
 }
 
 class Zui {
@@ -36,7 +37,7 @@ class Zui {
 
 	public static var textAreaColoring(never, set): TTextColoring;
 	static function set_textAreaColoring(coloring: TTextColoring): TTextColoring {
-		Krom.zui_text_area_coloring(coloring == null ? null : iron.system.ArmPack.encode(coloring));
+		Krom.zui_text_area_coloring(coloring == null ? null : ArmPack.encode(coloring));
 		return coloring;
 	}
 
@@ -303,7 +304,7 @@ class Zui {
 	}
 
 	public function window(handle: Handle, x: Int, y: Int, w: Int, h: Int, drag = false): Bool {
-		var img = @:privateAccess new Image(null);
+		var img = new Image(null);
 		img.renderTarget_ = handle.texture;
 		Graphics2.current = g = img.g2;
 		return Krom.zui_window(handle.handle_, x, y, w, h, drag);
@@ -369,11 +370,11 @@ class Zui {
 		Krom.zui_row(ratios);
 	}
 
-	public function fill(x: Float, y: Float, w: Float, h: Float, color: iron.System.Color) {
+	public function fill(x: Float, y: Float, w: Float, h: Float, color: Color) {
 		Krom.zui_fill(x, y, w, h, color);
 	}
 
-	public function rect(x: Float, y: Float, w: Float, h: Float, color: iron.System.Color, strength = 1.0) {
+	public function rect(x: Float, y: Float, w: Float, h: Float, color: Color, strength = 1.0) {
 		Krom.zui_rect(x, y, w, h, color, strength);
 	}
 
@@ -425,7 +426,7 @@ class Zui {
 		return Krom.zui_inline_radio(handle.handle_, texts, align);
 	}
 
-	public function colorWheel(handle: Handle, alpha = false, w: Null<Float> = null, h: Null<Float> = null, colorPreview = true, picker: Void->Void = null): iron.System.Color {
+	public function colorWheel(handle: Handle, alpha = false, w: Null<Float> = null, h: Null<Float> = null, colorPreview = true, picker: Void->Void = null): Color {
 		return Krom.zui_color_wheel(handle.handle_, alpha, w != null ? w : -1, h != null ? h : -1, colorPreview, picker);
 	}
 
@@ -467,7 +468,7 @@ typedef HandleOptions = {
 	?position: Int,
 	?value: Float,
 	?text: String,
-	?color: iron.System.Color,
+	?color: Color,
 	?layout: Layout
 }
 
@@ -480,7 +481,7 @@ class Handle {
 	function get_position(): Int { return Krom.zui_handle_get(handle_, "position"); }
 	function set_position(a: Int) { Krom.zui_handle_set(handle_, "position", a); return a; }
 
-	public var color(get, set): iron.System.Color;
+	public var color(get, set): Color;
 	function get_color(): Int { return Krom.zui_handle_get(handle_, "color"); }
 	function set_color(a: Int) { Krom.zui_handle_set(handle_, "color", a); return a; }
 
@@ -747,7 +748,7 @@ class Nodes {
 	public static var enumTexts(never, set): String->Array<String>;
 	static function set_enumTexts(f: String->Array<String>) { enumTextsHaxe = f; Krom.zui_nodes_set_enum_texts(f); return f; }
 
-	public var colorPickerCallback: iron.System.Color->Void = null;
+	public var colorPickerCallback: Color->Void = null;
 
 	public var nodesSelectedId(get ,set): Array<Int>;
 	function get_nodesSelectedId(): Array<Int> { return Krom.zui_nodes_get(nodes_, "nodes_selected_id"); }
@@ -1077,8 +1078,8 @@ class Nodes {
 			canvas_.links.push({ id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
 		}
 
-		var packed = Krom.zui_node_canvas(nodes_, iron.system.ArmPack.encode(canvas_));
-		var canvas_: TNodeCanvas = iron.system.ArmPack.decode(packed);
+		var packed = Krom.zui_node_canvas(nodes_, ArmPack.encode(canvas_));
+		var canvas_: TNodeCanvas = ArmPack.decode(packed);
 		if (canvas_.nodes == null) canvas_.nodes = [];
 		if (canvas_.links == null) canvas_.links = [];
 

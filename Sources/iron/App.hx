@@ -88,7 +88,7 @@ class App {
 	static function render(g2: Graphics2, g4: Graphics4) {
 		update();
 
-		iron.system.Time.update();
+		Time.update();
 
 		if (Scene.active == null || !Scene.active.ready) {
 			render2D(g2);
