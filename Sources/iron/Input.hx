@@ -78,9 +78,9 @@ typedef Surface = Mouse;
 class Mouse {
 
 	public static var buttons = ["left", "right", "middle", "side1", "side2"];
-	var buttonsDown = [false, false, false, false, false];
-	var buttonsStarted = [false, false, false, false, false];
-	var buttonsReleased = [false, false, false, false, false];
+	public var buttonsDown = [false, false, false, false, false];
+	public var buttonsStarted = [false, false, false, false, false];
+	public var buttonsReleased = [false, false, false, false, false];
 
 	public var x = 0.0;
 	public var y = 0.0;
@@ -265,9 +265,9 @@ class Mouse {
 class Pen {
 
 	static var buttons = ["tip"];
-	var buttonsDown = [false];
-	var buttonsStarted = [false];
-	var buttonsReleased = [false];
+	public var buttonsDown = [false];
+	public var buttonsStarted = [false];
+	public var buttonsReleased = [false];
 
 	public var x = 0.0;
 	public var y = 0.0;
@@ -381,9 +381,9 @@ class Pen {
 class Keyboard {
 
 	public static var keys = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "space", "backspace", "tab", "enter", "shift", "control", "alt", "win", "escape", "delete", "up", "down", "left", "right", "back", ",", ".", ":", ";", "<", "=", ">", "?", "!", '"', "#", "$", "%", "&", "_", "(", ")", "*", "|", "{", "}", "[", "]", "~", "`", "/", "\\", "@", "+", "-", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"];
-	var keysDown = new Map<String, Bool>();
-	var keysStarted = new Map<String, Bool>();
-	var keysReleased = new Map<String, Bool>();
+	public var keysDown = new Map<String, Bool>();
+	public var keysStarted = new Map<String, Bool>();
+	public var keysReleased = new Map<String, Bool>();
 	var keysFrame: Array<String> = [];
 	var repeatKey = false;
 	var repeatTime = 0.0;
@@ -578,9 +578,9 @@ class Gamepad {
 	public static var buttonsXBOX = ["a", "b", "x", "y", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
 	public static var buttons = buttonsPS;
 
-	var buttonsDown: Array<Float> = []; // Intensity 0 - 1
-	var buttonsStarted: Array<Bool> = [];
-	var buttonsReleased: Array<Bool> = [];
+	public var buttonsDown: Array<Float> = []; // Intensity 0 - 1
+	public var buttonsStarted: Array<Bool> = [];
+	public var buttonsReleased: Array<Bool> = [];
 
 	var buttonsFrame: Array<Int> = [];
 
