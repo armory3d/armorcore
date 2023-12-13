@@ -162,10 +162,10 @@ class ShaderContext {
 
 			#else
 
-			pipeState.fragmentShader = kha.Shaders.getFragment(raw.fragment_shader);
-			pipeState.vertexShader = kha.Shaders.getVertex(raw.vertex_shader);
+			pipeState.fragmentShader = System.getShader(raw.fragment_shader);
+			pipeState.vertexShader = System.getShader(raw.vertex_shader);
 			if (raw.geometry_shader != null) {
-				pipeState.geometryShader = kha.Shaders.getGeometry(raw.geometry_shader);
+				pipeState.geometryShader = System.getShader(raw.geometry_shader);
 			}
 			finishCompile(done);
 
