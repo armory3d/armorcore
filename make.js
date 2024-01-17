@@ -671,11 +671,13 @@ class ArmorCoreExporter {
 		this.sources = [];
 		this.libraries = [];
 		this.addSourceDirectory(path.join(options.root, 'Sources'));
+		this.addSourceDirectory(path.join(options.root, 'Sources/iron'));
+		this.addSourceDirectory(path.join(options.root, 'Sources/zui'));
 		this.projectFiles = !options.noproject;
 		this.parameters = [];
 	}
 
-	haxeOptions(name, defines) {
+	tsOptions(name, defines) {
 		let graphics = this.options.graphics;
 		if (graphics === 'default') {
 			if (process.platform === 'win32') {
@@ -712,7 +714,7 @@ class ArmorCoreExporter {
 			libraries: this.libraries,
 			defines: defines,
 			parameters: this.parameters,
-			haxeDirectory: this.options.haxe,
+			tsDirectory: this.options.haxe,
 			system: this.sysdir(),
 			language: 'js',
 			width: this.width,
@@ -721,7 +723,7 @@ class ArmorCoreExporter {
 		};
 	}
 
-	async export(name, haxeOptions) {
+	async export(name, tsOptions) {
 		fs.ensureDirSync(path.join(this.options.to, this.sysdir()));
 	}
 
@@ -783,14 +785,14 @@ class ArmorCoreExporter {
 	}
 }
 
-class HaxeCompiler {
-	constructor(from, temp, to, resourceDir, haxeDirectory, hxml, sourceDirectories, sysdir) {
+class TSCompiler {
+	constructor(from, temp, to, resourceDir, tsDirectory, hxml, sourceDirectories, sysdir) {
 		this.ready = true;
 		this.from = from;
 		this.temp = temp;
 		this.to = to;
 		this.resourceDir = resourceDir;
-		this.haxeDirectory = haxeDirectory;
+		this.tsDirectory = tsDirectory;
 		this.hxml = hxml;
 		this.sysdir = sysdir;
 		this.sourceMatchers = [];
@@ -811,10 +813,10 @@ class HaxeCompiler {
 		return Promise.resolve();
 	}
 
-	runHaxeAgain(parameters, onClose) {
-		let exe = path.resolve(this.haxeDirectory, 'haxe' + exec_sys());
+	runTSAgain(parameters, onClose) {
+		let exe = path.resolve(this.tsDirectory, 'haxe' + exec_sys());
 		let env = process.env;
-		const stddir = path.resolve(this.haxeDirectory, 'std');
+		const stddir = path.resolve(this.tsDirectory, 'std');
 		env.HAXE_STD_PATH = stddir;
 		let haxe = child_process.spawn(exe, parameters, { env: env, cwd: path.normalize(this.from) });
 		haxe.stdout.on('data', (data) => {
@@ -827,16 +829,16 @@ class HaxeCompiler {
 		return haxe;
 	}
 
-	runHaxe(parameters, onClose) {
-		let haxe = this.runHaxeAgain(parameters, async (code, signal) => {
+	runTS(parameters, onClose) {
+		let ts = this.runTSAgain(parameters, async (code, signal) => {
 			onClose(code, signal);
 		});
-		return haxe;
+		return ts;
 	}
 
 	compile() {
 		return new Promise((resolve, reject) => {
-			this.runHaxe([this.hxml], (code) => {
+			this.runTS([this.hxml], (code) => {
 				if (code === 0) {
 					if (this.to && fs.existsSync(path.join(this.from, this.temp))) {
 						fs.renameSync(path.join(this.from, this.temp), path.join(this.from, this.to));
@@ -845,7 +847,7 @@ class HaxeCompiler {
 				}
 				else {
 					process.exitCode = 1;
-					console.error('Haxe compiler error.');
+					console.error('TypeScript compiler error.');
 					reject();
 				}
 			});
@@ -853,7 +855,7 @@ class HaxeCompiler {
 	}
 }
 
-function writeHaxeProject(projectdir, projectFiles, options) {
+function writeTSProject(projectdir, projectFiles, options) {
 	let data = '';
 	let lines = [];
 	// returns only unique lines and '' otherwise
@@ -895,6 +897,91 @@ function writeHaxeProject(projectdir, projectFiles, options) {
 	}
 	fs.ensureDirSync(projectdir);
 	fs.writeFileSync(path.join(projectdir, 'project-' + options.system + '.hxml'), data);
+
+	let tsdata = {
+		include: [],
+		compilerOptions: {
+			lib: ["es2015"],
+			target: "es2015",
+			removeComments: true,
+			alwaysStrict: true,
+			noImplicitAny: true,
+			noImplicitReturns: true,
+			noUncheckedIndexedAccess: true,
+			strictPropertyInitialization: false,
+			incremental: true,
+			tsBuildInfoFile: "./krom.tsbuildinfo"
+			// noFallthroughCasesInSwitch
+			// noUnusedLocals
+			// noUnusedParameters
+			// strictNullChecks
+			// allowUnreachableCode
+		}
+	};
+
+	for (let i = 0; i < options.sources.length; ++i) {
+		tsdata.include.push(options.sources[i] + '/*');
+	}
+
+	fs.writeFileSync(path.join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
+
+	let tsc = path.resolve(projectdir + '/../../armorcore/Tools/tsc/tsc.js');
+	globalThis.require = require;
+	globalThis.module = {};
+	globalThis.__filename = tsc;
+
+	let containsDefine = (define) => {
+		let b = false;
+		for (let s of options.defines) if (define.includes(s)) { b = true; break; };
+		if (define.includes("!")) b = !b;
+		return b;
+	}
+
+	globalThis.ts_preprocessor = (file) => {
+		let stack = [];
+		let lines = file.split("\n");
+		for (let i = 0; i < lines.length; ++i) {
+			let line = lines[i].trimStart();
+			if (line.startsWith("///if")) {
+				let define = line.substr(6);
+				stack.push(containsDefine(define) ? true : false)
+			}
+			else if (line.startsWith("///elseif")) {
+				if (!stack[stack.length - 1]) {
+					let define = line.substr(10);
+					if (containsDefine(define)) {
+						stack[stack.length - 1] = true;
+					}
+				}
+			}
+			else if (line.startsWith("///else")) {
+				stack[stack.length - 1] = !stack[stack.length - 1];
+			}
+			else if (line.startsWith("///end")) {
+				stack.pop();
+			}
+			else if (stack.length > 0) {
+				let comment = false;
+				for (b of stack) if (!b) { comment = true; break; }
+				if (comment) {
+					lines[i] = "///" + lines[i];
+				}
+			}
+		}
+		return lines.join("\n");
+	};
+
+	let _cwd = process.cwd();
+	process.chdir(projectdir + '/krom')
+	let _argv = process.argv;
+	process.argv = [];
+	process.argv.push('tsc.js');
+	process.argv.push('.');
+	process.argv.push('--outFile');
+	process.argv.push('krom.js');
+	(1, eval)(fs.readFileSync(tsc) + '');
+	process.argv = _argv;
+	process.chdir(_cwd)
 }
 
 let options = [
@@ -1018,18 +1105,18 @@ function safeName(name) {
 
 async function exportProjectFiles(name, resourceDir, options, exporter, kore, korehl, libraries, defines, id) {
 	if (options.haxe !== '') {
-		let haxeOptions = exporter.haxeOptions(name, defines);
-		haxeOptions.safeName = safeName(haxeOptions.name);
-		writeHaxeProject(options.to, !options.noproject, haxeOptions);
+		let tsOptions = exporter.tsOptions(name, defines);
+		tsOptions.safeName = safeName(tsOptions.name);
+		writeTSProject(options.to, !options.noproject, tsOptions);
 
-		let compiler = new HaxeCompiler(options.to, haxeOptions.to, haxeOptions.realto, resourceDir, options.haxe, 'project-' + exporter.sysdir() + '.hxml', haxeOptions.sources, exporter.sysdir());
-		try {
-			await compiler.run();
-		}
-		catch (error) {
-			return Promise.reject(error);
-		}
-		await exporter.export(name, haxeOptions);
+		// let compiler = new TSCompiler(options.to, tsOptions.to, tsOptions.realto, resourceDir, options.haxe, 'project-' + exporter.sysdir() + '.hxml', tsOptions.sources, exporter.sysdir());
+		// try {
+			// await compiler.run();
+		// }
+		// catch (error) {
+			// return Promise.reject(error);
+		// }
+		await exporter.export(name, tsOptions);
 	}
 
 	console.log('Done.');
@@ -1221,7 +1308,8 @@ async function run(options) {
 	try {
 		name = await exportProject(options);
 	}
-	catch (err) {
+	catch (error) {
+		console.log(error);
 		process.exit(1);
 	}
 	return name;
