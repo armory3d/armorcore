@@ -1,14 +1,7 @@
-declare type i8 = number;
-declare type i16 = number;
-declare type i32 = number;
-declare type u8 = number;
-declare type u16 = number;
-declare type u32 = number;
-declare type f32 = number;
-declare type f64 = number;
-declare type Image = any;
-declare type VertexElement = any;
-declare type VertexBuffer = any;
+
+// declare type Image = any;
+// declare type VertexElement = any;
+// declare type VertexBuffer = any;
 
 declare namespace Krom {
 
@@ -29,8 +22,8 @@ declare namespace Krom {
 	function setImageTexture(stage: any, texture: any): void;
 	function setTextureParameters(texunit: any, uAddressing: i32, vAddressing: i32, minificationFilter: i32, magnificationFilter: i32, mipmapFilter: i32): void;
 	function setTexture3DParameters(texunit: any, uAddressing: i32, vAddressing: i32, wAddressing: i32, minificationFilter: i32, magnificationFilter: i32, mipmapFilter: i32): void;
-	function setTextureCompareMode(texunit: any, enabled: boolean): void;
-	function setBool(location: any, value: boolean): void;
+	function setTextureCompareMode(texunit: any, enabled: bool): void;
+	function setBool(location: any, value: bool): void;
 	function setInt(location: any, value: i32): void;
 	function setFloat(location: any, value: f32): void;
 	function setFloat2(location: any, value1: f32, value2: f32): void;
@@ -42,16 +35,16 @@ declare namespace Krom {
 
 	function begin(renderTarget: Image, additionalRenderTargets: Image[]): void;
 	function end(): void;
-	function renderTargetsInvertedY(): boolean;
+	function renderTargetsInvertedY(): bool;
 	function viewport(x: i32, y: i32, width: i32, height: i32): void;
 	function scissor(x: i32, y: i32, width: i32, height: i32): void;
 	function disableScissor(): void;
 	function createRenderTarget(width: i32, height: i32, format: i32, depthBufferBits: i32, stencilBufferBits: i32): any;
 	function createTexture(width: i32, height: i32, format: i32): any;
 	function createTexture3D(width: i32, height: i32, depth: i32, format: i32): any;
-	function createTextureFromBytes(data: ArrayBuffer, width: i32, height: i32, format: i32, readable: boolean): any;
-	function createTextureFromBytes3D(data: ArrayBuffer, width: i32, height: i32, depth: i32, format: i32, readable: boolean): any;
-	function createTextureFromEncodedBytes(data: ArrayBuffer, format: string, readable: boolean): any;
+	function createTextureFromBytes(data: ArrayBuffer, width: i32, height: i32, format: i32, readable: bool): any;
+	function createTextureFromBytes3D(data: ArrayBuffer, width: i32, height: i32, depth: i32, format: i32, readable: bool): any;
+	function createTextureFromEncodedBytes(data: ArrayBuffer, format: string, readable: bool): any;
 	function getTexturePixels(texture: any): ArrayBuffer;
 	function getRenderTargetPixels(renderTarget: any, data: ArrayBuffer): void;
 	function lockTexture(texture: any, level: i32): ArrayBuffer;
@@ -75,7 +68,7 @@ declare namespace Krom {
 	function drawIndexedVertices(start: i32, count: i32): void;
 	function drawIndexedVerticesInstanced(instanceCount: i32, start: i32, count: i32): void;
 
-	function loadImage(file: string, readable: boolean): any;
+	function loadImage(file: string, readable: bool): any;
 	function unloadImage(image: Image): void;
 	function loadBlob(file: string): ArrayBuffer;
 	function loadUrl(url: string): void;
@@ -83,10 +76,10 @@ declare namespace Krom {
 
 	function loadSound(file: string): any;
 	function unloadSound(sound: any): void;
-	function playSound(sound: any, loop: boolean): void;
+	function playSound(sound: any, loop: bool): void;
 	function stopSound(sound: any): void;
 
-	function init(title: string, width: i32, height: i32, vSync: boolean, windowMode: i32, windowFeatures: i32, x: i32, y: i32, frequency: i32): void;
+	function init(title: string, width: i32, height: i32, vSync: bool, windowMode: i32, windowFeatures: i32, x: i32, y: i32, frequency: i32): void;
 	function setApplicationName(name: string): void;
 	function log(v: any): void;
 	function setCallback(callback: ()=>void): void;
@@ -110,11 +103,11 @@ declare namespace Krom {
 	function setGamepadButtonCallback(callback: (gamepad: i32, button: i32, value: f32)=>void): void;
 	function lockMouse(): void;
 	function unlockMouse(): void;
-	function canLockMouse(): boolean;
-	function isMouseLocked(): boolean;
+	function canLockMouse(): bool;
+	function isMouseLocked(): bool;
 	function setMousePosition(x: i32, y: i32): void;
-	function showMouse(show: boolean): void;
-	function showKeyboard(show: boolean): void;
+	function showMouse(show: bool): void;
+	function showKeyboard(show: bool): void;
 	function getTime(): f32;
 	function windowWidth(): i32;
 	function windowHeight(): i32;
@@ -132,7 +125,7 @@ declare namespace Krom {
 	function displayX(index: i32): i32;
 	function displayY(index: i32): i32;
 	function displayFrequency(index: i32): i32;
-	function displayIsPrimary(index: i32): boolean;
+	function displayIsPrimary(index: i32): bool;
 	function writeStorage(name: string, data: ArrayBuffer): void;
 	function readStorage(name: string): ArrayBuffer;
 
@@ -160,7 +153,7 @@ declare namespace Krom {
 	function g2_font_count(font: any): i32;
 	function g2_font_height(font: any, size: i32): i32;
 	function g2_string_width(font: any, size: i32, text: string): i32;
-	function g2_set_bilinear_filter(bilinear: boolean): void;
+	function g2_set_bilinear_filter(bilinear: bool): void;
 	function g2_restore_render_target(): void;
 	function g2_set_render_target(renderTarget: any): void;
 	function g2_set_color(color: i32): void;
@@ -170,20 +163,20 @@ declare namespace Krom {
 	function g2_draw_circle(cx: f32, cy: f32, radius: f32, segments: i32, strength: f32): void;
 	function g2_draw_cubic_bezier(x: f32[], y: f32[], segments: i32, strength: f32): void;
 
-	function setSaveAndQuitCallback(callback: (save: boolean)=>void): void;
+	function setSaveAndQuitCallback(callback: (save: bool)=>void): void;
 	function setMouseCursor(id: i32): void;
 	function delayIdleSleep(): void;
-	function raytraceSupported(): boolean;
+	function raytraceSupported(): bool;
 	function raytraceInit(shader: ArrayBuffer, vb: any, ib: any, scale: f32): void;
 	function raytraceSetTextures(tex0: Image, tex1: Image, tex2: Image, texenv: any, tex_sobol: any, tex_scramble: any, tex_rank: any): void;
 	function raytraceDispatchRays(target: any, cb: ArrayBuffer): void;
 	function saveDialog(filterList: string, defaultPath: string): string;
-	function openDialog(filterList: string, defaultPath: string, openMultiple: boolean): string[];
-	function readDirectory(path: string, foldersOnly: boolean): string;
-	function fileExists(path: string): boolean;
+	function openDialog(filterList: string, defaultPath: string, openMultiple: bool): string[];
+	function readDirectory(path: string, foldersOnly: bool): string;
+	function fileExists(path: string): bool;
 	function deleteFile(path: string): void;
-	function inflate(bytes: ArrayBuffer, raw: boolean): ArrayBuffer;
-	function deflate(bytes: ArrayBuffer, raw: boolean): ArrayBuffer;
+	function inflate(bytes: ArrayBuffer, raw: bool): ArrayBuffer;
+	function deflate(bytes: ArrayBuffer, raw: bool): ArrayBuffer;
 	function writeJpg(path: string, bytes: ArrayBuffer, w: i32, h: i32, format: i32, quality: i32): void; // RGBA, R, RGB1, RRR1, GGG1, BBB1, AAA1
 	function writePng(path: string, bytes: ArrayBuffer, w: i32, h: i32, format: i32): void;
 	function encodeJpg(bytes: ArrayBuffer, w: i32, h: i32, format: i32, quality: i32): ArrayBuffer;
@@ -191,55 +184,55 @@ declare namespace Krom {
 	function windowX(): i32;
 	function windowY(): i32;
 	function language(): string;
-	function mlInference(model: ArrayBuffer, tensors: ArrayBuffer[], inputShape?: i32[][], outputShape?: i32[], useGpu?: boolean): ArrayBuffer;
+	function mlInference(model: ArrayBuffer, tensors: ArrayBuffer[], inputShape?: i32[][], outputShape?: i32[], useGpu?: bool): ArrayBuffer;
 	function mlUnload(): void;
 
-	function io_obj_parse(file_bytes: ArrayBuffer, split_code: i32, start_pos: i32, udim: boolean): any;
+	function io_obj_parse(file_bytes: ArrayBuffer, split_code: i32, start_pos: i32, udim: bool): any;
 
 	function zui_init(ops: any): any;
 	function zui_get_scale(ui: any): f32;
 	function zui_set_scale(ui: any, factor: f32): void;
 	function zui_set_font(ui: any, font: any): void;
 	function zui_begin(ui: any): void;
-	function zui_end(last: boolean): void;
+	function zui_end(last: bool): void;
 	function zui_begin_region(ui: any, x: i32, y: i32, w: i32): void;
-	function zui_end_region(last: boolean): void;
+	function zui_end_region(last: bool): void;
 	function zui_begin_sticky(): void;
 	function zui_end_sticky(): void;
 	function zui_end_input(): void;
-	function zui_end_window(bind_global_g: boolean): void;
+	function zui_end_window(bind_global_g: bool): void;
 	function zui_end_element(element_size: f32): void;
 	function zui_start_text_edit(handle: any, align: i32): void;
-	function zui_input_in_rect(x: f32, y: f32, w: f32, h: f32): boolean;
-	function zui_window(handle: any, x: i32, y: i32, w: i32, h: i32, drag: boolean): boolean;
-	function zui_button(text: string, align: i32, label: string): boolean;
-	function zui_check(handle: any, text: string, label: string): boolean;
-	function zui_radio(handle: any, position: i32, text: string, label: string): boolean;
-	function zui_combo(handle: any, texts: string[], label: string, show_label: boolean, align: i32, search_bar: boolean): i32;
-	function zui_slider(handle: any, text: string, from: f32, to: f32, filled: boolean, precision: f32, display_value: boolean, align: i32, text_edit: boolean): f32;
+	function zui_input_in_rect(x: f32, y: f32, w: f32, h: f32): bool;
+	function zui_window(handle: any, x: i32, y: i32, w: i32, h: i32, drag: bool): bool;
+	function zui_button(text: string, align: i32, label: string): bool;
+	function zui_check(handle: any, text: string, label: string): bool;
+	function zui_radio(handle: any, position: i32, text: string, label: string): bool;
+	function zui_combo(handle: any, texts: string[], label: string, show_label: bool, align: i32, search_bar: bool): i32;
+	function zui_slider(handle: any, text: string, from: f32, to: f32, filled: bool, precision: f32, display_value: bool, align: i32, text_edit: bool): f32;
 	function zui_image(image: Image, tint: i32, h: i32, sx: i32, sy: i32, sw: i32, sh: i32): i32;
 	function zui_text(text: string, align: i32, bg: i32): i32;
-	function zui_text_input(handle: any, label: string, align: i32, editable: boolean, live_update: boolean): string;
-	function zui_tab(handle: any, text: string, vertical: boolean, color: i32): boolean;
-	function zui_panel(handle: any, text: string, isTree: boolean, filled: boolean, pack: boolean): boolean;
+	function zui_text_input(handle: any, label: string, align: i32, editable: bool, live_update: bool): string;
+	function zui_tab(handle: any, text: string, vertical: bool, color: i32): bool;
+	function zui_panel(handle: any, text: string, isTree: bool, filled: bool, pack: bool): bool;
 	function zui_handle(ops: any): any;
-	function zui_separator(h: i32, fill: boolean): void;
+	function zui_separator(h: i32, fill: bool): void;
 	function zui_tooltip(text: string): void;
 	function zui_tooltip_image(image: Image, max_width: i32): void;
 	function zui_row(ratios: f32[]): void;
 	function zui_fill(x: f32, y: f32, w: f32, h: f32, color: i32): void;
 	function zui_rect(x: f32, y: f32, w: f32, h: f32, color: i32, strength: f32): void;
-	function zui_draw_rect(fill: boolean, x: f32, y: f32, w: f32, h: f32, strength: f32): void;
-	function zui_draw_string(text: string, x_offset: f32, y_offset: f32, align: i32, truncation: boolean): void;
+	function zui_draw_rect(fill: bool, x: f32, y: f32, w: f32, h: f32, strength: f32): void;
+	function zui_draw_string(text: string, x_offset: f32, y_offset: f32, align: i32, truncation: bool): void;
 	function zui_get_hovered_tab_name(): string;
 	function zui_set_hovered_tab_name(name: string): void;
 	function zui_begin_menu(): void;
 	function zui_end_menu(): void;
-	function zui_menu_button(text: string): boolean;
+	function zui_menu_button(text: string): bool;
 	function zui_float_input(handle: any, label: string, align: i32, precision: f32): f32;
 	function zui_inline_radio(handle: any, texts: string[], align: i32): i32;
-	function zui_color_wheel(handle: any, alpha: boolean, w: f32, h: f32, color_preview: boolean, picker: ()=>void): i32;
-	function zui_text_area(handle: any, align: i32, editable: boolean, label: string, word_wrap: boolean): string;
+	function zui_color_wheel(handle: any, alpha: bool, w: f32, h: f32, color_preview: bool, picker: ()=>void): i32;
+	function zui_text_area(handle: any, align: i32, editable: bool, label: string, word_wrap: bool): string;
 	function zui_text_area_coloring(packed: ArrayBuffer): void;
 	function zui_nodes_init(): any;
 	function zui_node_canvas(nodes: any, packed: ArrayBuffer): ArrayBuffer;
@@ -266,5 +259,5 @@ declare namespace Krom {
 	function zui_nodes_set_on_canvas_control(f: ()=>any): void;
 	function zui_nodes_set_on_canvas_released(f: ()=>void): void;
 	function zui_nodes_set_on_socket_released(f: (socket_id: i32)=>void): void;
-	function zui_nodes_set_on_link_drag(f: (link_drag_id: i32, is_new_link: boolean)=>void): void;
+	function zui_nodes_set_on_link_drag(f: (link_drag_id: i32, is_new_link: bool)=>void): void;
 }
