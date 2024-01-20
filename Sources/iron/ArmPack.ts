@@ -197,7 +197,7 @@ class ArmPack {
 	}
 
 	static write = (v: DataView, d: any) => {
-		if (typeof d == null) {
+		if (d == null) {
 			ArmPack.writeU8(v, 0xc0);
 		}
 		else if (typeof d == "boolean") {
