@@ -1,8 +1,4 @@
 
-// declare type Image = any;
-// declare type VertexElement = any;
-// declare type VertexBuffer = any;
-
 declare namespace Krom {
 
 	function clear(flags: i32, color: i32, depth: f32, stencil: i32): void;

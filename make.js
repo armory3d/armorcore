@@ -981,7 +981,7 @@ function writeTSProject(projectdir, projectFiles, options) {
 	process.argv.push('krom.js');
 	(1, eval)(fs.readFileSync(tsc) + '');
 	process.argv = _argv;
-	process.chdir(_cwd)
+	process.chdir(_cwd);
 }
 
 let options = [
