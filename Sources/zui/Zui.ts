@@ -709,7 +709,7 @@ class Nodes {
 	static jsToC(type: string, d: any): Uint8Array {
 		if (type == "RGBA") {
 			if (d == null) return new Uint8Array(16);
-			if (Array.isArray(d)) {
+			else {
 				let f32a = new Float32Array(4);
 				f32a[0] = d[0];
 				f32a[1] = d[1];
@@ -721,7 +721,7 @@ class Nodes {
 		}
 		if (type == "VECTOR") {
 			if (d == null) return new Uint8Array(12);
-			if (Array.isArray(d)) {
+			else {
 				let f32a = new Float32Array(4);
 				f32a[0] = d[0];
 				f32a[1] = d[1];
