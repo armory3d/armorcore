@@ -36,7 +36,7 @@ try {
 		fs.cp(process.cwd() + "/build/krom", __dirname + "/Deployment", {recursive: true}, function (err){});
 	}
 
-	if (process.env.ARM_HAXEONLY) {
+	if (process.env.ARM_TSONLY) {
 		process.exit(1);
 	}
 }
