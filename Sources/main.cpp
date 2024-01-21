@@ -732,9 +732,8 @@ namespace {
 		Local<Object> js_array = TO_OBJ(args[0]);
 		int32_t length = TO_I32(OBJ_GET(js_array, "length"));
 		for (int32_t i = 0; i < length; ++i) {
-			Local<Object> bufferobj = TO_OBJ(OBJ_GET(TO_OBJ(ARRAY_GET(js_array, i)), "buffer"));
-			Local<External> bufferfield = Local<External>::Cast(bufferobj->GetInternalField(0));
-			kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)bufferfield->Value();
+			Local<Object> bufferobj = TO_OBJ(OBJ_GET(TO_OBJ(ARRAY_GET(js_array, i)), "buffer_"));
+			kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)TO_EXTERNAL(GET_INTERNAL(bufferobj));
 			vertex_buffers[i] = buffer;
 		}
 		kinc_g4_set_vertex_buffers(vertex_buffers, length);
