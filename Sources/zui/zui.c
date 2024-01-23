@@ -37,7 +37,9 @@ void (*zui_on_border_hover)(zui_handle_t *, int) = NULL; // Mouse over window bo
 void (*zui_on_text_hover)(void) = NULL; // Mouse over text input, use to set I-cursor
 void (*zui_on_deselect_text)(void) = NULL; // Text editing finished
 void (*zui_on_tab_drop)(zui_handle_t *, int, zui_handle_t *, int) = NULL; // Tab reorder via drag and drop
+#ifdef WITH_EVAL
 float krom_js_eval(char *str);
+#endif
 
 float ZUI_SCALE() {
 	return current->ops.scale_factor;
@@ -2015,8 +2017,11 @@ float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool fi
 	}
 	if (current->submit_text_handle == handle) {
 		zui_submit_text_edit();
+		#ifdef WITH_EVAL
 		handle->value = krom_js_eval(handle->text);
-		// handle->value = atof(handle->text);
+		#else
+		handle->value = atof(handle->text);
+		#endif
 		handle->changed = current->changed = true;
 	}
 
