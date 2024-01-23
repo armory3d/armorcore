@@ -9,3 +9,4 @@
 [submodule "hermes"]
 	path = hermes
 	url = https://github.com/armory3d/hermes_bin
+	shallow = true
