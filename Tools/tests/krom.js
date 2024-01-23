@@ -79,11 +79,10 @@ let vertices = [
 
 let indices = [0, 1, 2];
 
-let api = 6;
 const resizable = 1;
 const minimizable = 2;
 const maximizable = 4;
-Krom.init("KromApp", 640, 480, 1, true, 0, resizable | minimizable | maximizable, api, -1, -1, 60);
+Krom.init("KromApp", 640, 480, true, 0, resizable | minimizable | maximizable, -1, -1, 60);
 Krom.setCallback(renderCallback);
 Krom.setDropFilesCallback(dropFilesCallback);
 Krom.setCutCopyPasteCallback(cutCallback, copyCallback, pasteCallback);
@@ -145,7 +144,7 @@ Krom.unlockIndexBuffer(ib);
 
 function renderCallback() {
 	Krom.begin(null, null);
-	
+
 	let flags = 0;
 	flags |= 1; // Color
 	flags |= 2; // Depth
