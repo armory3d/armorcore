@@ -16,6 +16,8 @@ globalThis.flags = {
 	with_g2: false,
 	with_iron: false,
 	with_zui: false,
+	with_hermes: false,
+	with_eval: true,
 	on_c_project_created: null,
 };
 
@@ -70,7 +72,18 @@ if (flags.with_audio) {
 	c_project.addDefine('WITH_AUDIO');
 }
 
-if (platform === Platform.Wasm) {
+if (flags.with_eval) {
+	c_project.addDefine('WITH_EVAL');
+}
+
+if (flags.with_hermes) {
+	c_project.addFile('Sources/main_hermes.c');
+	c_project.addIncludeDir('hermes/include');
+	c_project.addLib('main -L' + __dirname + '/../build');
+	c_project.addLib('hermesvm_a -L' + __dirname + '/hermes/linux');
+	c_project.addLib('jsi');
+}
+else if (platform === Platform.Wasm) {
 	c_project.addFile('Sources/main_wasm.c');
 	c_project.addFile('Shaders/**');
 }
@@ -127,7 +140,9 @@ if (platform === Platform.Windows) {
 	}
 }
 else if (platform === Platform.Linux) {
-	c_project.addLib('v8_monolith -L' + libdir);
+	if (!flags.with_hermes) {
+		c_project.addLib('v8_monolith -L' + libdir);
+	}
 	c_project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
 }
 else if (platform === Platform.Android) {

@@ -925,63 +925,80 @@ function writeTSProject(projectdir, projectFiles, options) {
 
 	fs.writeFileSync(path.join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
 
-	let tsc = path.resolve(projectdir + '/../../armorcore/Tools/tsc/tsc.js');
-	globalThis.require = require;
-	globalThis.module = {};
-	globalThis.__filename = tsc;
+	// Hermes compiler
+	if (globalThis.flags.with_hermes) {
+		let shermes = projectdir + '/../armorcore/hermes/linux/shermes';
+		let include = __dirname + '/hermes/include';
 
-	let containsDefine = (define) => {
-		let b = false;
-		for (let s of options.defines) if (define.includes(s)) { b = true; break; };
-		if (define.includes("!")) b = !b;
-		return b;
+		// '-parse-ts' '-emit-c'
+		let result = child_process.spawnSync(shermes, ['-c', '-typed', '-Wc,-I' + include, '-o', 'build/main.o', 'armorcore/Sources/hermes/Krom.ts', 'Sources/main.ts']);
+		if (result.status !== 0) {
+			console.log(result.stderr.toString());
+			process.exit();
+		}
+		child_process.spawnSync('ar', ['-rcs', 'build/libmain.a', 'build/main.o']);
+		child_process.spawnSync('objcopy', ['--redefine-sym', 'main=sh_main', 'build/libmain.a', 'build/libmain.a']);
 	}
+	// TS compiler
+	else {
+		let tsc = path.resolve(projectdir + '/../../armorcore/Tools/tsc/tsc.js');
+		globalThis.require = require;
+		globalThis.module = {};
+		globalThis.__filename = tsc;
 
-	globalThis.ts_preprocessor = (file) => {
-		let stack = [];
-		let lines = file.split("\n");
-		for (let i = 0; i < lines.length; ++i) {
-			let line = lines[i].trimStart();
-			if (line.startsWith("///if")) {
-				let define = line.substr(6);
-				stack.push(containsDefine(define) ? true : false)
-			}
-			else if (line.startsWith("///elseif")) {
-				if (!stack[stack.length - 1]) {
-					let define = line.substr(10);
-					if (containsDefine(define)) {
-						stack[stack.length - 1] = true;
+		let containsDefine = (define) => {
+			let b = false;
+			for (let s of options.defines) if (define.includes(s)) { b = true; break; };
+			if (define.includes("!")) b = !b;
+			return b;
+		}
+
+		globalThis.ts_preprocessor = (file) => {
+			let stack = [];
+			let lines = file.split("\n");
+			for (let i = 0; i < lines.length; ++i) {
+				let line = lines[i].trimStart();
+				if (line.startsWith("///if")) {
+					let define = line.substr(6);
+					stack.push(containsDefine(define) ? true : false)
+				}
+				else if (line.startsWith("///elseif")) {
+					if (!stack[stack.length - 1]) {
+						let define = line.substr(10);
+						if (containsDefine(define)) {
+							stack[stack.length - 1] = true;
+						}
+					}
+				}
+				else if (line.startsWith("///else")) {
+					stack[stack.length - 1] = !stack[stack.length - 1];
+				}
+				else if (line.startsWith("///end")) {
+					stack.pop();
+				}
+				else if (stack.length > 0) {
+					let comment = false;
+					for (b of stack) if (!b) { comment = true; break; }
+					if (comment) {
+						lines[i] = "///" + lines[i];
 					}
 				}
 			}
-			else if (line.startsWith("///else")) {
-				stack[stack.length - 1] = !stack[stack.length - 1];
-			}
-			else if (line.startsWith("///end")) {
-				stack.pop();
-			}
-			else if (stack.length > 0) {
-				let comment = false;
-				for (b of stack) if (!b) { comment = true; break; }
-				if (comment) {
-					lines[i] = "///" + lines[i];
-				}
-			}
-		}
-		return lines.join("\n");
-	};
+			return lines.join("\n");
+		};
 
-	let _cwd = process.cwd();
-	process.chdir(projectdir + '/krom')
-	let _argv = process.argv;
-	process.argv = [];
-	process.argv.push('tsc.js');
-	process.argv.push('.');
-	process.argv.push('--outFile');
-	process.argv.push('krom.js');
-	(1, eval)(fs.readFileSync(tsc) + '');
-	process.argv = _argv;
-	process.chdir(_cwd);
+		let _cwd = process.cwd();
+		process.chdir(projectdir + '/krom')
+		let _argv = process.argv;
+		process.argv = [];
+		process.argv.push('tsc.js');
+		process.argv.push('.');
+		process.argv.push('--outFile');
+		process.argv.push('krom.js');
+		(1, eval)(fs.readFileSync(tsc) + '');
+		process.argv = _argv;
+		process.chdir(_cwd);
+	}
 }
 
 let options = [
