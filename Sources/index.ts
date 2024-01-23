@@ -4,7 +4,9 @@ let array_remove = (ar: any[], e: any) => {
 }
 
 let trim_end = (str: string): string => {
-    while (str.length > 0 && str[str.length - 1] == " ") str = str.substring(0, str.length - 1);
+    while (str.length > 0 && (str[str.length - 1] == " " || str[str.length - 1] == "\n")) {
+        str = str.substring(0, str.length - 1);
+    }
     return str;
 }
 
