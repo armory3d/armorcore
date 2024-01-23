@@ -381,7 +381,7 @@ class System {
 		return global["data/" + name + System.ext];
 		///else
 		return Krom.loadBlob("data/" + name + System.ext);
-		///
+		///end
 	}
 
 	static getShader = (name: string): Shader => {
