@@ -78,6 +78,7 @@ if (flags.with_eval) {
 
 if (flags.with_hermes) {
 	c_project.addFile('Sources/main_hermes.c');
+	c_project.addFile('Sources/main_hermes.cpp');
 	c_project.addIncludeDir('hermes/include');
 	c_project.addLib('main -L' + __dirname + '/../build');
 	c_project.addLib('hermesvm_a -L' + __dirname + '/hermes/linux');
