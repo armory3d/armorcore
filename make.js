@@ -785,119 +785,7 @@ class ArmorCoreExporter {
 	}
 }
 
-class TSCompiler {
-	constructor(from, temp, to, resourceDir, tsDirectory, hxml, sourceDirectories, sysdir) {
-		this.ready = true;
-		this.from = from;
-		this.temp = temp;
-		this.to = to;
-		this.resourceDir = resourceDir;
-		this.tsDirectory = tsDirectory;
-		this.hxml = hxml;
-		this.sysdir = sysdir;
-		this.sourceMatchers = [];
-		for (let dir of sourceDirectories) {
-			this.sourceMatchers.push(path.join(dir, '**').replace(/\\/g, '/'));
-		}
-	}
-
-	close() {}
-
-	async run() {
-		try {
-			await this.compile();
-		}
-		catch (error) {
-			return Promise.reject(error);
-		}
-		return Promise.resolve();
-	}
-
-	runTSAgain(parameters, onClose) {
-		let exe = path.resolve(this.tsDirectory, 'haxe' + exec_sys());
-		let env = process.env;
-		const stddir = path.resolve(this.tsDirectory, 'std');
-		env.HAXE_STD_PATH = stddir;
-		let haxe = child_process.spawn(exe, parameters, { env: env, cwd: path.normalize(this.from) });
-		haxe.stdout.on('data', (data) => {
-			console.log(data.toString());
-		});
-		haxe.stderr.on('data', (data) => {
-			console.error(data.toString());
-		});
-		haxe.on('close', onClose);
-		return haxe;
-	}
-
-	runTS(parameters, onClose) {
-		let ts = this.runTSAgain(parameters, async (code, signal) => {
-			onClose(code, signal);
-		});
-		return ts;
-	}
-
-	compile() {
-		return new Promise((resolve, reject) => {
-			this.runTS([this.hxml], (code) => {
-				if (code === 0) {
-					if (this.to && fs.existsSync(path.join(this.from, this.temp))) {
-						fs.renameSync(path.join(this.from, this.temp), path.join(this.from, this.to));
-					}
-					resolve();
-				}
-				else {
-					process.exitCode = 1;
-					console.error('TypeScript compiler error.');
-					reject();
-				}
-			});
-		});
-	}
-}
-
 function writeTSProject(projectdir, projectFiles, options) {
-	let data = '';
-	let lines = [];
-	// returns only unique lines and '' otherwise
-	function unique(line) {
-		if (lines.indexOf(line) === -1) {
-			lines.push(line);
-			return line;
-		}
-		return '';
-	}
-	for (let i = 0; i < options.sources.length; ++i) {
-		if (path.isAbsolute(options.sources[i])) {
-			data += unique('-cp ' + options.sources[i] + '\n');
-		}
-		else {
-			data += unique('-cp ' + path.relative(projectdir, path.resolve(options.from, options.sources[i])) + '\n'); // from.resolve('build').relativize(from.resolve(this.sources[i])).toString());
-		}
-	}
-	for (let i = 0; i < options.libraries.length; ++i) {
-		if (path.isAbsolute(options.libraries[i].libpath)) {
-			data += unique('-cp ' + options.libraries[i].libpath + '\n');
-		}
-		else {
-			data += unique('-cp ' + path.relative(projectdir, path.resolve(options.from, options.libraries[i].libpath)) + '\n'); // from.resolve('build').relativize(from.resolve(this.sources[i])).toString());
-		}
-	}
-	for (let d in options.defines) {
-		let define = options.defines[d];
-		data += unique('-D ' + define + '\n');
-	}
-	if (options.language === 'js') {
-		data += unique('-js ' + path.normalize(options.to) + '\n');
-	}
-	for (let param of options.parameters) {
-		data += unique(param + '\n');
-	}
-	if (!options.parameters.some((param) => param.includes('-main '))) {
-		data += unique('-main Main\n');
-	}
-	fs.ensureDirSync(projectdir);
-	fs.writeFileSync(path.join(projectdir, 'project-' + options.system + '.hxml'), data);
-
 	let tsdata = {
 		include: [],
 		compilerOptions: {
@@ -920,7 +808,21 @@ function writeTSProject(projectdir, projectFiles, options) {
 	};
 
 	for (let i = 0; i < options.sources.length; ++i) {
-		tsdata.include.push(options.sources[i] + '/*');
+		if (fs.existsSync(options.sources[i])) {
+			let files = fs.readdirSync(options.sources[i]);
+			for (let file of files) {
+				if (file.endsWith(".ts")) {
+					// Prevent duplicates, keep the newly added file
+					for (let included of tsdata.include){
+						if (path.basename(included) == file) {
+							tsdata.include.splice(tsdata.include.indexOf(included), 1);
+							break;
+						}
+					}
+					tsdata.include.push(options.sources[i] + "/" + file);
+				}
+			}
+		}
 	}
 
 	fs.writeFileSync(path.join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
@@ -955,30 +857,40 @@ function writeTSProject(projectdir, projectFiles, options) {
 
 		globalThis.ts_preprocessor = (file) => {
 			let stack = [];
+			let found = [];
 			let lines = file.split("\n");
 			for (let i = 0; i < lines.length; ++i) {
 				let line = lines[i].trimStart();
 				if (line.startsWith("///if")) {
 					let define = line.substr(6);
-					stack.push(containsDefine(define) ? true : false)
+					stack.push(containsDefine(define));
+					found.push(stack[stack.length - 1]);
 				}
 				else if (line.startsWith("///elseif")) {
-					if (!stack[stack.length - 1]) {
-						let define = line.substr(10);
-						if (containsDefine(define)) {
-							stack[stack.length - 1] = true;
-						}
+					let define = line.substr(10);
+					if (!found[found.length - 1] && containsDefine(define)) {
+						stack[stack.length - 1] = true;
+						found[found.length - 1] = true;
+					}
+					else {
+						stack[stack.length - 1] = false;
 					}
 				}
 				else if (line.startsWith("///else")) {
-					stack[stack.length - 1] = !stack[stack.length - 1];
+					stack[stack.length - 1] = !found[found.length - 1];
 				}
 				else if (line.startsWith("///end")) {
 					stack.pop();
+					found.pop();
 				}
 				else if (stack.length > 0) {
 					let comment = false;
-					for (b of stack) if (!b) { comment = true; break; }
+					for (b of stack) {
+						if (!b) {
+							comment = true;
+							break;
+						}
+					}
 					if (comment) {
 						lines[i] = "///" + lines[i];
 					}
@@ -1125,14 +1037,6 @@ async function exportProjectFiles(name, resourceDir, options, exporter, kore, ko
 		let tsOptions = exporter.tsOptions(name, defines);
 		tsOptions.safeName = safeName(tsOptions.name);
 		writeTSProject(options.to, !options.noproject, tsOptions);
-
-		// let compiler = new TSCompiler(options.to, tsOptions.to, tsOptions.realto, resourceDir, options.haxe, 'project-' + exporter.sysdir() + '.hxml', tsOptions.sources, exporter.sysdir());
-		// try {
-			// await compiler.run();
-		// }
-		// catch (error) {
-			// return Promise.reject(error);
-		// }
 		await exporter.export(name, tsOptions);
 	}
 
