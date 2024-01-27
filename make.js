@@ -807,6 +807,8 @@ function writeTSProject(projectdir, projectFiles, options) {
 		}
 	};
 
+	let main_ts = null;
+
 	for (let i = 0; i < options.sources.length; ++i) {
 		if (fs.existsSync(options.sources[i])) {
 			let files = fs.readdirSync(options.sources[i]);
@@ -820,9 +822,17 @@ function writeTSProject(projectdir, projectFiles, options) {
 						}
 					}
 					tsdata.include.push(options.sources[i] + "/" + file);
+
+					if (file == "main.ts") main_ts = options.sources[i] + "/" + file;
 				}
 			}
 		}
+	}
+
+	// Include main.ts last
+	if (main_ts != null) {
+		tsdata.include.splice(tsdata.include.indexOf(main_ts), 1);
+		tsdata.include.push(main_ts);
 	}
 
 	fs.writeFileSync(path.join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
