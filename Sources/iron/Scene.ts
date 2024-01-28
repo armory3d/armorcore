@@ -506,13 +506,13 @@ class Scene {
 		if (str == "true") return true;
 		else if (str == "false") return false;
 		else if (str == "null") return null;
-		else if (str.charAt(0) == "'") return str.replace("'", "");
-		else if (str.charAt(0) == '"') return str.replace('"', "");
+		else if (str.charAt(0) == "'") return str.replaceAll("'", "");
+		else if (str.charAt(0) == '"') return str.replaceAll('"', "");
 		else if (str.charAt(0) == "[") { // Array
 			// Remove [] and recursively parse into array, then append into parent
-			str = str.replace("[", "");
-			str = str.replace("]", "");
-			str = str.replace(" ", "");
+			str = str.replaceAll("[", "");
+			str = str.replaceAll("]", "");
+			str = str.replaceAll(" ", "");
 			let ar: any = [];
 			let vals = str.split(",");
 			for (let v of vals) ar.push(Scene.parseArg(v));
