@@ -403,33 +403,6 @@ namespace {
 		kinc_a2_init();
 		#endif
 
-		kinc_set_update_callback(update, NULL);
-		kinc_set_drop_files_callback(drop_files, NULL);
-		kinc_set_copy_callback(copy, NULL);
-		kinc_set_cut_callback(cut, NULL);
-		kinc_set_paste_callback(paste, NULL);
-		kinc_set_foreground_callback(foreground, NULL);
-		kinc_set_resume_callback(resume, NULL);
-		kinc_set_pause_callback(pause, NULL);
-		kinc_set_background_callback(background, NULL);
-		kinc_set_shutdown_callback(shutdown, NULL);
-
-		kinc_keyboard_set_key_down_callback(key_down, NULL);
-		kinc_keyboard_set_key_up_callback(key_up, NULL);
-		kinc_keyboard_set_key_press_callback(key_press, NULL);
-		kinc_mouse_set_move_callback(mouse_move, NULL);
-		kinc_mouse_set_press_callback(mouse_down, NULL);
-		kinc_mouse_set_release_callback(mouse_up, NULL);
-		kinc_mouse_set_scroll_callback(mouse_wheel, NULL);
-		kinc_surface_set_move_callback(touch_move);
-		kinc_surface_set_touch_start_callback(touch_down);
-		kinc_surface_set_touch_end_callback(touch_up);
-		kinc_pen_set_press_callback(pen_down);
-		kinc_pen_set_move_callback(pen_move);
-		kinc_pen_set_release_callback(pen_up);
-		kinc_gamepad_set_axis_callback(gamepad_axis);
-		kinc_gamepad_set_button_callback(gamepad_button);
-
 		#ifdef KORE_ANDROID
 		android_check_permissions();
 		#endif
@@ -473,18 +446,23 @@ namespace {
 		krom_clear_fast(args.This(), flags, color, depth, stencil);
 	}
 
-	void krom_set_callback(ARGS) {
+	void krom_set_update_callback(ARGS) {
+		kinc_set_update_callback(update, NULL);
 		SCOPE();
 		SET_FUNC(update_func, args[0]);
 	}
 
 	void krom_set_drop_files_callback(ARGS) {
+		kinc_set_drop_files_callback(drop_files, NULL);
 		SCOPE();
 		SET_FUNC(drop_files_func, args[0]);
 	}
 
 	void krom_set_cut_copy_paste_callback(ARGS) {
 		// SCOPE();
+		// kinc_set_cut_callback(cut, NULL);
+		// kinc_set_copy_callback(copy, NULL);
+		// kinc_set_paste_callback(paste, NULL);
 		// SET_FUNC(cut_func, args[0]);
 		// SET_FUNC(copy_func, args[1]);
 		// SET_FUNC(paste_func, args[2]);
@@ -492,6 +470,11 @@ namespace {
 
 	void krom_set_application_state_callback(ARGS) {
 		SCOPE();
+		kinc_set_foreground_callback(foreground, NULL);
+		kinc_set_resume_callback(resume, NULL);
+		kinc_set_pause_callback(pause, NULL);
+		kinc_set_background_callback(background, NULL);
+		kinc_set_shutdown_callback(shutdown, NULL);
 		SET_FUNC(foreground_func, args[0]);
 		SET_FUNC(resume_func, args[1]);
 		SET_FUNC(pause_func, args[2]);
@@ -501,76 +484,91 @@ namespace {
 
 	void krom_set_keyboard_down_callback(ARGS) {
 		SCOPE();
+		kinc_keyboard_set_key_down_callback(key_down, NULL);
 		SET_FUNC(keyboard_down_func, args[0]);
 	}
 
 	void krom_set_keyboard_up_callback(ARGS) {
 		SCOPE();
+		kinc_keyboard_set_key_up_callback(key_up, NULL);
 		SET_FUNC(keyboard_up_func, args[0]);
 	}
 
 	void krom_set_keyboard_press_callback(ARGS) {
 		SCOPE();
+		kinc_keyboard_set_key_press_callback(key_press, NULL);
 		SET_FUNC(keyboard_press_func, args[0]);
 	}
 
 	void krom_set_mouse_down_callback(ARGS) {
 		SCOPE();
+		kinc_mouse_set_press_callback(mouse_down, NULL);
 		SET_FUNC(mouse_down_func, args[0]);
 	}
 
 	void krom_set_mouse_up_callback(ARGS) {
 		SCOPE();
+		kinc_mouse_set_release_callback(mouse_up, NULL);
 		SET_FUNC(mouse_up_func, args[0]);
 	}
 
 	void krom_set_mouse_move_callback(ARGS) {
 		SCOPE();
+		kinc_mouse_set_move_callback(mouse_move, NULL);
 		SET_FUNC(mouse_move_func, args[0]);
+	}
+
+	void krom_set_mouse_wheel_callback(ARGS) {
+		SCOPE();
+		kinc_mouse_set_scroll_callback(mouse_wheel, NULL);
+		SET_FUNC(mouse_wheel_func, args[0]);
 	}
 
 	void krom_set_touch_down_callback(ARGS) {
 		SCOPE();
+		kinc_surface_set_touch_start_callback(touch_down);
 		SET_FUNC(touch_down_func, args[0]);
 	}
 
 	void krom_set_touch_up_callback(ARGS) {
 		SCOPE();
+		kinc_surface_set_touch_end_callback(touch_up);
 		SET_FUNC(touch_up_func, args[0]);
 	}
 
 	void krom_set_touch_move_callback(ARGS) {
 		SCOPE();
+		kinc_surface_set_move_callback(touch_move);
 		SET_FUNC(touch_move_func, args[0]);
-	}
-
-	void krom_set_mouse_wheel_callback(ARGS) {
-		SCOPE();
-		SET_FUNC(mouse_wheel_func, args[0]);
 	}
 
 	void krom_set_pen_down_callback(ARGS) {
 		SCOPE();
+		kinc_pen_set_press_callback(pen_down);
 		SET_FUNC(pen_down_func, args[0]);
 	}
 
 	void krom_set_pen_up_callback(ARGS) {
 		SCOPE();
+		kinc_pen_set_release_callback(pen_up);
 		SET_FUNC(pen_up_func, args[0]);
 	}
 
 	void krom_set_pen_move_callback(ARGS) {
 		SCOPE();
+		kinc_pen_set_move_callback(pen_move);
 		SET_FUNC(pen_move_func, args[0]);
 	}
 
 	void krom_set_gamepad_axis_callback(ARGS) {
 		SCOPE();
+		kinc_gamepad_set_axis_callback(gamepad_axis);
 		SET_FUNC(gamepad_axis_func, args[0]);
 	}
 
 	void krom_set_gamepad_button_callback(ARGS) {
 		SCOPE();
+		kinc_gamepad_set_button_callback(gamepad_button);
 		SET_FUNC(gamepad_button_func, args[0]);
 	}
 
@@ -4145,7 +4143,7 @@ namespace {
 		BIND_FUNCTION(krom, "setApplicationName", krom_set_application_name);
 		BIND_FUNCTION(krom, "log", krom_log);
 		BIND_FUNCTION_FAST(krom, "clear", krom_clear);
-		BIND_FUNCTION(krom, "setCallback", krom_set_callback);
+		BIND_FUNCTION(krom, "setCallback", krom_set_update_callback);
 		BIND_FUNCTION(krom, "setDropFilesCallback", krom_set_drop_files_callback);
 		BIND_FUNCTION(krom, "setCutCopyPasteCallback", krom_set_cut_copy_paste_callback); ////
 		BIND_FUNCTION(krom, "setApplicationStateCallback", krom_set_application_state_callback);
