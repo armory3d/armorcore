@@ -839,7 +839,7 @@ function writeTSProject(projectdir, projectFiles, options) {
 
 	// Hermes compiler
 	if (globalThis.flags.with_hermes) {
-		let shermes = projectdir + '/../armorcore/hermes/linux/shermes';
+		let shermes = __dirname + '/hermes/linux/shermes';
 		let include = __dirname + '/hermes/include';
 
 		// '-parse-ts' '-emit-c'
@@ -853,7 +853,7 @@ function writeTSProject(projectdir, projectFiles, options) {
 	}
 	// TS compiler
 	else {
-		let tsc = path.resolve(projectdir + '/../../armorcore/Tools/tsc/tsc.js');
+		let tsc = path.resolve(__dirname + '/Tools/tsc/tsc.js');
 		globalThis.require = require;
 		globalThis.module = {};
 		globalThis.__filename = tsc;
