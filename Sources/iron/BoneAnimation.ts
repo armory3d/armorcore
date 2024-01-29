@@ -42,7 +42,7 @@ class BoneAnimation extends Animation {
 	constructor(armatureName = "") {
 		super();
 		this.isSampled = false;
-		for (let a of Scene.active.armatures) {
+		for (let a of Scene.armatures) {
 			if (a.name == armatureName) {
 				this.armature = a;
 				break;

@@ -31,15 +31,14 @@ class LightObject extends BaseObject {
 			this.P = Mat4.persp(fov, 1, data.near_plane, data.far_plane);
 		}
 
-		Scene.active.lights.push(this);
+		Scene.lights.push(this);
 	}
 
 	override remove = () => {
-		if (Scene.active != null) array_remove(Scene.active.lights, this);
-		let rp = RenderPath.active;
-		if (rp.light == this) { rp.light = null; }
-		if (rp.point == this) { rp.point = null; }
-		else if (rp.sun == this) { rp.sun = null; }
+		array_remove(Scene.lights, this);
+		if (RenderPath.light == this) { RenderPath.light = null; }
+		if (RenderPath.point == this) { RenderPath.point = null; }
+		else if (RenderPath.sun == this) { RenderPath.sun = null; }
 		this.removeSuper();
 	}
 

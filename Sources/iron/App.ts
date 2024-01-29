@@ -37,10 +37,10 @@ class App {
 	}
 
 	static update = () => {
-		if (Scene.active == null || !Scene.active.ready) return;
+		if (!Scene.ready) return;
 		if (App.pauseUpdates) return;
 
-		Scene.active.updateFrame();
+		Scene.updateFrame();
 
 		let i = 0;
 		let l = App.traitUpdates.length;
@@ -74,8 +74,8 @@ class App {
 		if (App.lastw != App.w() || App.lasth != App.h()) {
 			if (App.onResize != null) App.onResize();
 			else {
-				if (Scene.active != null && Scene.active.camera != null) {
-					Scene.active.camera.buildProjection();
+				if (Scene.camera != null) {
+					Scene.camera.buildProjection();
 				}
 			}
 		}
@@ -88,7 +88,7 @@ class App {
 
 		Time.update();
 
-		if (Scene.active == null || !Scene.active.ready) {
+		if (!Scene.ready) {
 			App.render2D(g2);
 			return;
 		}
@@ -101,7 +101,7 @@ class App {
 			App.traitInits.splice(0, App.traitInits.length);
 		}
 
-		Scene.active.renderFrame(g4);
+		Scene.renderFrame(g4);
 
 		for (let f of App.traitRenders) {
 			if (App.traitRenders.length > 0) f(g4);

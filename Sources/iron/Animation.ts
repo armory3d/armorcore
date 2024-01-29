@@ -40,7 +40,7 @@ class Animation {
 	static vs = new Vec4();
 
 	constructor() {
-		Scene.active.animations.push(this);
+		Scene.animations.push(this);
 	}
 
 	playSuper = (action = "", onComplete: ()=>void = null, blendTime = 0.0, speed = 1.0, loop = true) => {
@@ -77,7 +77,7 @@ class Animation {
 	}
 
 	remove = () => {
-		array_remove(Scene.active.animations, this);
+		array_remove(Scene.animations, this);
 	}
 
 	updateSuper = (delta: f32) => {

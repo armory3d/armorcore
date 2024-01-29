@@ -21,7 +21,7 @@ class BaseObject {
 		this.uid = BaseObject.uidCounter++;
 		this.transform = new Transform(this);
 		this.isEmpty = this.constructor == BaseObject;
-		if (this.isEmpty && Scene.active != null) Scene.active.empties.push(this);
+		if (this.isEmpty && Scene.ready) Scene.empties.push(this);
 	}
 
 	setParent = (parentObject: BaseObject, parentInverse = false, keepTransform = false) => {
@@ -35,7 +35,7 @@ class BaseObject {
 		}
 
 		if (parentObject == null) {
-			parentObject = Scene.active.sceneParent;
+			parentObject = Scene.sceneParent;
 		}
 		this.parent = parentObject;
 		this.parent.children.push(this);
@@ -43,7 +43,7 @@ class BaseObject {
 	}
 
 	removeSuper = () => {
-		if (this.isEmpty && Scene.active != null) array_remove(Scene.active.empties, this);
+		if (this.isEmpty && Scene.ready) array_remove(Scene.empties, this);
 		if (this.animation != null) this.animation.remove();
 		while (this.children.length > 0) this.children[0].remove();
 		if (this.parent != null) {
@@ -77,7 +77,7 @@ class BaseObject {
 
 	///if arm_skin
 	getParentArmature = (name: string): BoneAnimation => {
-		for (let a of Scene.active.animations) if (a.armature != null && a.armature.name == name) return a as BoneAnimation;
+		for (let a of Scene.animations) if (a.armature != null && a.armature.name == name) return a as BoneAnimation;
 		return null;
 	}
 	///end
@@ -86,7 +86,7 @@ class BaseObject {
 		// Parented to bone
 		///if arm_skin
 		if (this.raw.parent_bone != null) {
-			Scene.active.notifyOnInit(() => {
+			Scene.notifyOnInit(() => {
 				let banim = this.getParentArmature(this.parent.name);
 				if (banim != null) banim.addBoneChild(this.raw.parent_bone, this);
 			});

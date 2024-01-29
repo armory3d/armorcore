@@ -41,7 +41,7 @@ class Uniforms {
 					attachDepth = true;
 					rtID = rtID.substr(1);
 				}
-				let rt = attachDepth ? RenderPath.active.depthToRenderTarget.get(rtID) : RenderPath.active.renderTargets.get(rtID);
+				let rt = attachDepth ? RenderPath.depthToRenderTarget.get(rtID) : RenderPath.renderTargets.get(rtID);
 				Uniforms.bindRenderTarget(g, rt, context, samplerID, attachDepth);
 			}
 		}
@@ -53,7 +53,7 @@ class Uniforms {
 				if (tulink == null) continue;
 
 				if (tulink.charAt(0) == "$") { // Link to embedded data
-					g.setTexture(context.textureUnits[j], Scene.active.embedded.get(tulink.substr(1)));
+					g.setTexture(context.textureUnits[j], Scene.embedded.get(tulink.substr(1)));
 					if (tulink.endsWith(".raw")) { // Raw 3D texture
 						g.setTexture3DParameters(context.textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 					}
@@ -64,7 +64,7 @@ class Uniforms {
 				else {
 					switch (tulink) {
 						case "_envmapRadiance": {
-							let w = Scene.active.world;
+							let w = Scene.world;
 							if (w != null) {
 								g.setTexture(context.textureUnits[j], w.radiance);
 								g.setTextureParameters(context.textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
@@ -72,7 +72,7 @@ class Uniforms {
 							break;
 						}
 						case "_envmap": {
-							let w = Scene.active.world;
+							let w = Scene.world;
 							if (w != null) {
 								g.setTexture(context.textureUnits[j], w.envmap);
 								g.setTextureParameters(context.textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
@@ -182,8 +182,8 @@ class Uniforms {
 	static setContextConstant = (g: Graphics4, location: ConstantLocation, c: TShaderConstant): bool => {
 		if (c.link == null) return true;
 
-		let camera = Scene.active.camera;
-		let light = RenderPath.active.light;
+		let camera = Scene.camera;
+		let light = RenderPath.light;
 
 		if (c.type == "mat4") {
 			let m: Mat4 = null;
@@ -258,7 +258,7 @@ class Uniforms {
 					}
 				}
 				case "_pointPosition": {
-					let point = RenderPath.active.point;
+					let point = RenderPath.point;
 					if (point != null) {
 						Uniforms.helpVec.set(point.transform.worldx(), point.transform.worldy(), point.transform.worldz());
 						v = Uniforms.helpVec;
@@ -266,7 +266,7 @@ class Uniforms {
 					}
 				}
 				case "_pointColor": {
-					let point = RenderPath.active.point;
+					let point = RenderPath.point;
 					if (point != null) {
 						let str = point.visible ? point.data.strength : 0.0;
 						Uniforms.helpVec.set(point.data.color[0] * str, point.data.color[1] * str, point.data.color[2] * str);
@@ -352,7 +352,7 @@ class Uniforms {
 				}
 				case "_vec2xInv": {
 					v = Uniforms.helpVec;
-					v.x = 1.0 / RenderPath.active.currentW;
+					v.x = 1.0 / RenderPath.currentW;
 					v.y = 0.0;
 					break;
 				}
@@ -364,7 +364,7 @@ class Uniforms {
 				}
 				case "_vec2x2Inv": {
 					v = Uniforms.helpVec;
-					v.x = 2.0 / RenderPath.active.currentW;
+					v.x = 2.0 / RenderPath.currentW;
 					v.y = 0.0;
 					break;
 				}
@@ -377,7 +377,7 @@ class Uniforms {
 				case "_vec2yInv": {
 					v = Uniforms.helpVec;
 					v.x = 0.0;
-					v.y = 1.0 / RenderPath.active.currentH;
+					v.y = 1.0 / RenderPath.currentH;
 					break;
 				}
 				case "_vec2y2": {
@@ -389,7 +389,7 @@ class Uniforms {
 				case "_vec2y2Inv": {
 					v = Uniforms.helpVec;
 					v.x = 0.0;
-					v.y = 2.0 / RenderPath.active.currentH;
+					v.y = 2.0 / RenderPath.currentH;
 					break;
 				}
 				case "_vec2y3": {
@@ -401,19 +401,19 @@ class Uniforms {
 				case "_vec2y3Inv": {
 					v = Uniforms.helpVec;
 					v.x = 0.0;
-					v.y = 3.0 / RenderPath.active.currentH;
+					v.y = 3.0 / RenderPath.currentH;
 					break;
 				}
 				case "_screenSize": {
 					v = Uniforms.helpVec;
-					v.x = RenderPath.active.currentW;
-					v.y = RenderPath.active.currentH;
+					v.x = RenderPath.currentW;
+					v.y = RenderPath.currentH;
 					break;
 				}
 				case "_screenSizeInv": {
 					v = Uniforms.helpVec;
-					v.x = 1.0 / RenderPath.active.currentW;
-					v.y = 1.0 / RenderPath.active.currentH;
+					v.x = 1.0 / RenderPath.currentW;
+					v.y = 1.0 / RenderPath.currentH;
 					break;
 				}
 				case "_cameraPlaneProj": {
@@ -458,7 +458,7 @@ class Uniforms {
 			let fa: Float32Array = null;
 			switch (c.link) {
 				case "_envmapIrradiance": {
-					fa = Scene.active.world == null ? WorldData.getEmptyIrradiance() : Scene.active.world.irradiance;
+					fa = Scene.world == null ? WorldData.getEmptyIrradiance() : Scene.world.irradiance;
 					break;
 				}
 			}
@@ -472,7 +472,7 @@ class Uniforms {
 			let i: Null<i32> = null;
 			switch (c.link) {
 				case "_envmapNumMipmaps": {
-					let w = Scene.active.world;
+					let w = Scene.world;
 					i = w != null ? w.raw.radiance_mipmaps + 1 - 2 : 1; // Include basecolor and exclude 2 scaled mips
 					break;
 				}
@@ -489,8 +489,8 @@ class Uniforms {
 	static setObjectConstant = (g: Graphics4, object: BaseObject, location: ConstantLocation, c: TShaderConstant) => {
 		if (c.link == null) return;
 
-		let camera = Scene.active.camera;
-		let light = RenderPath.active.light;
+		let camera = Scene.camera;
+		let light = RenderPath.light;
 
 		if (c.type == "mat4") {
 			let m: Mat4 = null;

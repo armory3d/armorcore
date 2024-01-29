@@ -23,7 +23,7 @@ class MeshObject extends BaseObject {
 
 		this.materials = materials;
 		this.setData(data);
-		Scene.active.meshes.push(this);
+		Scene.meshes.push(this);
 	}
 
 	setData = (data: MeshData) => {
@@ -46,7 +46,7 @@ class MeshObject extends BaseObject {
 			this.particleSystems = null;
 		}
 		///end
-		if (Scene.active != null) array_remove(Scene.active.meshes, this);
+		array_remove(Scene.meshes, this);
 		this.data.refcount--;
 		this.removeSuper();
 	}
@@ -143,7 +143,7 @@ class MeshObject extends BaseObject {
 	render = (g: Graphics4, context: string, bindParams: string[]) => {
 		if (this.data == null || !this.data.ready) return; // Data not yet streamed
 		if (!this.visible) return; // Skip render if object is hidden
-		if (this.cullMesh(context, Scene.active.camera, RenderPath.active.light)) return;
+		if (this.cullMesh(context, Scene.camera, RenderPath.light)) return;
 		let meshContext = this.raw != null ? context == "mesh" : false;
 
 		///if arm_particles
@@ -152,8 +152,8 @@ class MeshObject extends BaseObject {
 			if (this.particleChildren == null) {
 				this.particleChildren = [];
 				for (let psys of this.particleSystems) {
-					// let c: MeshObject = Scene.active.getChild(psys.data.raw.instance_object);
-					Scene.active.spawnObject(psys.data.instance_object, null, (o: BaseObject) => {
+					// let c: MeshObject = Scene.getChild(psys.data.raw.instance_object);
+					Scene.spawnObject(psys.data.instance_object, null, (o: BaseObject) => {
 						if (o != null) {
 							let c: MeshObject = o as MeshObject;
 							this.particleChildren.push(c);

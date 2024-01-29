@@ -21,13 +21,11 @@
 	}
 
 	function app_ready() {
-		let path = new RenderPath();
-		path.commands = function() {
-			path.setTarget("");
-			path.clearTarget(0xff6495ed, 1.0);
-			path.drawMeshes("mesh");
+		RenderPath.commands = function() {
+			RenderPath.setTarget("");
+			RenderPath.clearTarget(0xff6495ed, 1.0);
+			RenderPath.drawMeshes("mesh");
 		};
-		RenderPath.setActive(path);
 
 		raw = {
 			name: "Scene",
@@ -120,13 +118,13 @@
 
 	function scene_ready() {
 		// Set camera
-		let t = Scene.active.camera.transform;
+		let t = Scene.camera.transform;
 		t.loc.set(0, -6, 0);
 		t.rot.fromTo(new Vec4(0, 0, 1), new Vec4(0, -1, 0));
 		t.buildMatrix();
 
 		// Rotate cube
-		let cube = Scene.active.getChild("Cube");
+		let cube = Scene.getChild("Cube");
 		App.notifyOnUpdate(function() {
 			// cube.transform.rotate(new Vec4(0, 0, 1), 0.02);
 		});

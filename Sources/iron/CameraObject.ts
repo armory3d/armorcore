@@ -35,7 +35,7 @@ class CameraObject extends BaseObject {
 			for (let i = 0; i < 6; ++i) this.frustumPlanes.push(new FrustumPlane());
 		}
 
-		Scene.active.cameras.push(this);
+		Scene.cameras.push(this);
 	}
 
 	buildProjection = (screenAspect: Null<f32> = null) => {
@@ -51,24 +51,21 @@ class CameraObject extends BaseObject {
 	}
 
 	override remove = () => {
-		array_remove(Scene.active.cameras, this);
+		array_remove(Scene.cameras, this);
 		// if (renderTarget != null) renderTarget.unload();
 		this.removeSuper();
 	}
 
 	renderFrame = (g: Graphics4) => {
 		this.projectionJitter();
-
 		this.buildMatrix();
-
-		RenderPath.active.renderFrame(g);
-
+		RenderPath.renderFrame(g);
 		this.prevV.setFrom(this.V);
 	}
 
 	projectionJitter = () => {
-		let w = RenderPath.active.currentW;
-		let h = RenderPath.active.currentH;
+		let w = RenderPath.currentW;
+		let h = RenderPath.currentH;
 		this.P.setFrom(this.noJitterP);
 		let x = 0.0;
 		let y = 0.0;

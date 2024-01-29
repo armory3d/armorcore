@@ -65,7 +65,7 @@ class Data {
 		Data.cachedMaterials = new Map();
 		Data.cachedParticles = new Map();
 		Data.cachedWorlds = new Map();
-		if (RenderPath.active != null) RenderPath.active.unload();
+		RenderPath.unload();
 
 		Data.cachedBlobs = new Map();
 		for (let c of Data.cachedImages.values()) c.unload();
