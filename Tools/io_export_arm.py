@@ -1,6 +1,6 @@
 """Armory Mesh Exporter"""
 #
-#  https://armory3d.org/
+#  https://github.com/armory3d/armorcore/blob/main/Tools/io_export_arm.py
 #
 #  Based on Open Game Engine Exchange
 #  https://opengex.org/
@@ -26,16 +26,15 @@ bl_info = {
     "location": "File -> Export",
     "description": "Armory mesh data",
     "author": "Armory3D.org",
-    "version": (2022, 12, 0),
-    "blender": (3, 3, 0),
-    "doc_url": "https://github.com/armory3d/iron/wiki",
-    "tracker_url": "https://github.com/armory3d/iron/issues",
+    "version": (2024, 1, 0),
+    "blender": (3, 6, 0),
+    "doc_url": "",
+    "tracker_url": "",
 }
 
 NodeTypeBone = 1
 NodeTypeMesh = 2
 structIdentifier = ["object", "bone_object", "mesh_object"]
-
 
 class ArmoryExporter(bpy.types.Operator, ExportHelper):
     """Export to Armory format"""
@@ -670,20 +669,16 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
         self.output["mesh_datas"].append(o)
         bobject_eval.to_mesh_clear()
 
-
 def menu_func(self, context):
     self.layout.operator(ArmoryExporter.bl_idname, text="Armory (.arm)")
-
 
 def register():
     bpy.utils.register_class(ArmoryExporter)
     bpy.types.TOPBAR_MT_file_export.append(menu_func)
 
-
 def unregister():
     bpy.types.TOPBAR_MT_file_export.remove(menu_func)
     bpy.utils.unregister_class(ArmoryExporter)
-
 
 if __name__ == "__main__":
     register()
@@ -709,8 +704,6 @@ if __name__ == "__main__":
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-#
-
 
 def _pack_integer(obj, fp):
     if obj < 0:
@@ -740,20 +733,16 @@ def _pack_integer(obj, fp):
         else:
             raise Exception("huge unsigned int")
 
-
 def _pack_nil(fp):
     fp.write(b"\xc0")
 
-
 def _pack_boolean(obj, fp):
     fp.write(b"\xc3" if obj else b"\xc2")
-
 
 def _pack_float(obj, fp):
     # NOTE: forced 32-bit floats for Armory
     # fp.write(b"\xcb" + struct.pack("<d", obj)) # Double
     fp.write(b"\xca" + struct.pack("<f", obj))
-
 
 def _pack_string(obj, fp):
     obj = obj.encode("utf-8")
@@ -768,7 +757,6 @@ def _pack_string(obj, fp):
     else:
         raise Exception("huge string")
 
-
 def _pack_binary(obj, fp):
     if len(obj) <= 2**8 - 1:
         fp.write(b"\xc4" + struct.pack("B", len(obj)) + obj)
@@ -778,7 +766,6 @@ def _pack_binary(obj, fp):
         fp.write(b"\xc6" + struct.pack("<I", len(obj)) + obj)
     else:
         raise Exception("huge binary string")
-
 
 def _pack_array(obj, fp):
     if len(obj) <= 15:
@@ -818,7 +805,6 @@ def _pack_array(obj, fp):
         for e in obj:
             pack(e, fp)
 
-
 def _pack_map(obj, fp):
     if len(obj) <= 15:
         fp.write(struct.pack("B", 0x80 | len(obj)))
@@ -832,7 +818,6 @@ def _pack_map(obj, fp):
     for k, v in obj.items():
         pack(k, fp)
         pack(v, fp)
-
 
 def pack(obj, fp):
     if obj is None:
@@ -853,7 +838,6 @@ def pack(obj, fp):
         _pack_map(obj, fp)
     else:
         raise Exception(f"unsupported type: {str(type(obj))}")
-
 
 def packb(obj):
     fp = io.BytesIO()
