@@ -1217,6 +1217,21 @@ namespace {
 
 		// kinc_mutex_unlock(&mutex);
 	}
+
+	#else
+
+	void krom_set_audio_callback(const FunctionCallbackInfo<Value> &args) {
+	}
+
+	void krom_audio_thread(const FunctionCallbackInfo<Value> &args) {
+	}
+
+	void krom_load_sound(const FunctionCallbackInfo<Value> &args) {
+	}
+
+	void krom_write_audio_buffer(const FunctionCallbackInfo<Value> &args) {
+	}
+
 	#endif
 
 	void krom_load_blob(const FunctionCallbackInfo<Value> &args) {
@@ -2303,12 +2318,12 @@ namespace {
 		SET_FUNCTION(krom, "setPipeline", krom_set_pipeline);
 		SET_FUNCTION(krom, "loadImage", krom_load_image);
 		SET_FUNCTION(krom, "unloadImage", krom_unload_image);
-		#ifdef WITH_AUDIO
+		// #ifdef WITH_AUDIO
 		SET_FUNCTION(krom, "loadSound", krom_load_sound);
 		SET_FUNCTION(krom, "setAudioCallback", krom_set_audio_callback);
 		SET_FUNCTION(krom, "audioThread", krom_audio_thread);
 		SET_FUNCTION(krom, "writeAudioBuffer", krom_write_audio_buffer);
-		#endif
+		// #endif
 		SET_FUNCTION(krom, "loadBlob", krom_load_blob);
 		SET_FUNCTION(krom, "loadUrl", krom_load_url);
 		SET_FUNCTION(krom, "copyToClipboard", krom_copy_to_clipboard);
