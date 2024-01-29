@@ -1,11 +1,6 @@
 #include "iron_string.h"
 
-#if defined __APPLE__
-    #import <stdlib.h>
-#else
-    #include <malloc.h>
-#endif
-
+#include <stdlib.h>
 #include <string.h>
 
 void string_init(string_t *s, const char *str) {
