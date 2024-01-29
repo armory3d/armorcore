@@ -197,13 +197,13 @@ class Scene {
 		return object;
 	}
 
-	addLightObject = (data: LightData, parent: BaseObject = null): LightObject => {
+	addLightObject = (data: TLightData, parent: BaseObject = null): LightObject => {
 		let object = new LightObject(data);
 		parent != null ? object.setParent(parent) : object.setParent(this.root);
 		return object;
 	}
 
-	addCameraObject = (data: CameraData, parent: BaseObject = null): CameraObject => {
+	addCameraObject = (data: TCameraData, parent: BaseObject = null): CameraObject => {
 		let object = new CameraObject(data);
 		parent != null ? object.setParent(parent) : object.setParent(this.root);
 		return object;
@@ -320,13 +320,13 @@ class Scene {
 		let sceneName = format.name;
 
 		if (o.type == "camera_object") {
-			Data.getCamera(sceneName, o.data_ref, (b: CameraData) => {
+			Data.getCamera(sceneName, o.data_ref, (b: TCameraData) => {
 				let object = this.addCameraObject(b, parent);
 				this.returnObject(object, o, done);
 			});
 		}
 		else if (o.type == "light_object") {
-			Data.getLight(sceneName, o.data_ref, (b: LightData) => {
+			Data.getLight(sceneName, o.data_ref, (b: TLightData) => {
 				let object = this.addLightObject(b, parent);
 				this.returnObject(object, o, done);
 			});
@@ -487,7 +487,6 @@ class Scene {
 			object.raw = o;
 			object.name = o.name;
 			if (o.visible != null) object.visible = o.visible;
-			if (o.visible_mesh != null) object.visibleMesh = o.visible_mesh;
 			Scene.generateTransform(o, object.transform);
 			object.setupAnimation(oactions);
 		}

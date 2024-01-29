@@ -82,7 +82,7 @@ class MeshObject extends BaseObject {
 		let mats = this.materials;
 		if (!this.validContext(mats, context)) return true;
 
-		if (!this.visibleMesh) return this.setCulled(true);
+		if (!this.visible) return this.setCulled(true);
 
 		if (this.skip_context == context) return this.setCulled(true);
 		if (this.force_context != null && this.force_context != context) return this.setCulled(true);
@@ -93,7 +93,7 @@ class MeshObject extends BaseObject {
 	cullMesh = (context: string, camera: CameraObject, light: LightObject): bool => {
 		if (camera == null) return false;
 
-		if (camera.data.raw.frustum_culling && this.frustumCulling) {
+		if (camera.data.frustum_culling && this.frustumCulling) {
 			// Scale radius for skinned mesh and particle system
 			// TODO: define skin & particle bounds
 			let radiusScale = this.data.isSkinned ? 2.0 : 1.0;
@@ -153,7 +153,7 @@ class MeshObject extends BaseObject {
 				this.particleChildren = [];
 				for (let psys of this.particleSystems) {
 					// let c: MeshObject = Scene.active.getChild(psys.data.raw.instance_object);
-					Scene.active.spawnObject(psys.data.raw.instance_object, null, (o: BaseObject) => {
+					Scene.active.spawnObject(psys.data.instance_object, null, (o: BaseObject) => {
 						if (o != null) {
 							let c: MeshObject = o as MeshObject;
 							this.particleChildren.push(c);

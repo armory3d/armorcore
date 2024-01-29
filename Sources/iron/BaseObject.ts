@@ -14,9 +14,7 @@ class BaseObject {
 
 	animation: Animation = null;
 	visible = true; // Skip render, keep updating
-	visibleMesh = true;
 	culled = false; // BaseObject was culled last frame
-	culledMesh = false;
 	isEmpty = false;
 
 	constructor() {
@@ -48,7 +46,6 @@ class BaseObject {
 		if (this.isEmpty && Scene.active != null) array_remove(Scene.active.empties, this);
 		if (this.animation != null) this.animation.remove();
 		while (this.children.length > 0) this.children[0].remove();
-		while (this.traits.length > 0) this.traits[0].remove();
 		if (this.parent != null) {
 			array_remove(this.parent.children, this);
 			this.parent = null;
@@ -76,37 +73,6 @@ class BaseObject {
 			retChildren = retChildren.concat(child.getChildren(recursive));
 		}
 		return retChildren;
-	}
-
-	// getChildOfType<T: BaseObject> = (type: Class<T>): T => {
-	// 	if (this.constructor == type) return this;
-	// 	else {
-	// 		for (let c of children) {
-	// 			let r = c.getChildOfType(type);
-	// 			if (r != null) return r;
-	// 		}
-	// 	}
-	// 	return null;
-	// }
-
-	addTrait = (t: any) => {
-		this.traits.push(t);
-		t.object = this;
-
-		// if (t._add != null) {
-		// 	for (let f of t._add) f();
-		// 	t._add = null;
-		// }
-	}
-
-	removeTrait = (t: any) => {
-		t.remove();
-		array_remove(this.traits, t);
-	}
-
-	getTrait = (c: any): any => {
-		for (let t of this.traits) if (t.constructor == c) return t;
-		return null;
 	}
 
 	///if arm_skin

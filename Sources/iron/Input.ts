@@ -2,433 +2,387 @@
 class Input {
 
 	static occupied = false;
-	static mouse: Mouse = null;
-	static pen: Pen = null;
-	static keyboard: Keyboard = null;
-	static gamepads: Gamepad[] = [];
-	static sensor: Sensor = null;
 	static registered = false;
 
 	static reset = () => {
 		Input.occupied = false;
-		if (Input.mouse != null) Input.mouse.reset();
-		if (Input.pen != null) Input.pen.reset();
-		if (Input.keyboard != null) Input.keyboard.reset();
-		for (let gamepad of Input.gamepads) gamepad.reset();
+		Mouse.reset();
+		Pen.reset();
+		Keyboard.reset();
+		Gamepad.reset();
 	}
 
 	static endFrame = () => {
-		if (Input.mouse != null) Input.mouse.endFrame();
-		if (Input.pen != null) Input.pen.endFrame();
-		if (Input.keyboard != null) Input.keyboard.endFrame();
-		for (let gamepad of Input.gamepads) gamepad.endFrame();
-	}
-
-	static getMouse = (): Mouse => {
-		if (!Input.registered) Input.register();
-		if (Input.mouse == null) Input.mouse = new Mouse();
-		return Input.mouse;
-	}
-
-	static getPen = (): Pen => {
-		if (!Input.registered) Input.register();
-		if (Input.pen == null) Input.pen = new Pen();
-		return Input.pen;
-	}
-
-	static getSurface = (): Surface => {
-		if (!Input.registered) Input.register();
-		// Map to mouse for now..
-		return Input.getMouse();
-	}
-
-	static getKeyboard = (): Keyboard => {
-		if (!Input.registered) Input.register();
-		if (Input.keyboard == null) Input.keyboard = new Keyboard();
-		return Input.keyboard;
-	}
-
-	static getGamepad = (i = 0): Gamepad => {
-		if (i >= 4) return null;
-		if (!Input.registered) Input.register();
-		while (Input.gamepads.length <= i) Input.gamepads.push(new Gamepad(Input.gamepads.length));
-		return Input.gamepads[i];
-	}
-
-	static getSensor = (): Sensor => {
-		if (!Input.registered) Input.register();
-		if (Input.sensor == null) Input.sensor = new Sensor();
-		return Input.sensor;
+		Mouse.endFrame();
+		Pen.endFrame();
+		Keyboard.endFrame();
+		Gamepad.endFrame();
 	}
 
 	static register = () => {
+		if (Input.registered) return;
 		Input.registered = true;
 		App.notifyOnEndFrame(Input.endFrame);
 		App.notifyOnReset(Input.reset);
 		// Reset mouse delta on foreground
-		System.notifyOnApplicationState(() => { Input.getMouse().reset(); }, null, null, null, null);
+		System.notifyOnApplicationState(() => { Mouse.reset(); }, null, null, null, null);
+		Keyboard.reset();
+		Gamepad.reset();
 	}
 }
-
-type Surface = Mouse;
 
 class Mouse {
 
 	static buttons = ["left", "right", "middle", "side1", "side2"];
-	buttonsDown = [false, false, false, false, false];
-	buttonsStarted = [false, false, false, false, false];
-	buttonsReleased = [false, false, false, false, false];
+	static buttonsDown = [false, false, false, false, false];
+	static buttonsStarted = [false, false, false, false, false];
+	static buttonsReleased = [false, false, false, false, false];
 
-	x = 0.0;
-	y = 0.0;
-	moved = false;
-	movementX = 0.0;
-	movementY = 0.0;
-	wheelDelta = 0.0;
-	locked = false;
-	hidden = false;
-	lastX = -1.0;
-	lastY = -1.0;
+	static x = 0.0;
+	static y = 0.0;
+	static moved = false;
+	static movementX = 0.0;
+	static movementY = 0.0;
+	static wheelDelta = 0.0;
+	static locked = false;
+	static hidden = false;
+	static lastX = -1.0;
+	static lastY = -1.0;
 
-	constructor() {}
-
-	endFrame = () => {
-		this.buttonsStarted[0] = this.buttonsStarted[1] = this.buttonsStarted[2] = this.buttonsStarted[3] = this.buttonsStarted[4] = false;
-		this.buttonsReleased[0] = this.buttonsReleased[1] = this.buttonsReleased[2] = this.buttonsReleased[3] = this.buttonsReleased[4] = false;
-		this.moved = false;
-		this.movementX = 0;
-		this.movementY = 0;
-		this.wheelDelta = 0;
+	static endFrame = () => {
+		Mouse.buttonsStarted[0] = Mouse.buttonsStarted[1] = Mouse.buttonsStarted[2] = Mouse.buttonsStarted[3] = Mouse.buttonsStarted[4] = false;
+		Mouse.buttonsReleased[0] = Mouse.buttonsReleased[1] = Mouse.buttonsReleased[2] = Mouse.buttonsReleased[3] = Mouse.buttonsReleased[4] = false;
+		Mouse.moved = false;
+		Mouse.movementX = 0;
+		Mouse.movementY = 0;
+		Mouse.wheelDelta = 0;
 	}
 
-	reset = () => {
-		this.buttonsDown[0] = this.buttonsDown[1] = this.buttonsDown[2] = this.buttonsDown[3] = this.buttonsDown[4] = false;
-		this.endFrame();
+	static reset = () => {
+		Mouse.buttonsDown[0] = Mouse.buttonsDown[1] = Mouse.buttonsDown[2] = Mouse.buttonsDown[3] = Mouse.buttonsDown[4] = false;
+		Mouse.endFrame();
 	}
 
-	buttonIndex = (button: string): i32 => {
+	static buttonIndex = (button: string): i32 => {
 		for (let i = 0; i < Mouse.buttons.length; ++i) if (Mouse.buttons[i] == button) return i;
 		return 0;
 	}
 
-	down = (button = "left"): bool => {
-		return this.buttonsDown[this.buttonIndex(button)];
+	static down = (button = "left"): bool => {
+		return Mouse.buttonsDown[Mouse.buttonIndex(button)];
 	}
 
-	downAny = (): bool => {
-		return this.buttonsDown[0] || this.buttonsDown[1] || this.buttonsDown[2] || this.buttonsDown[3] || this.buttonsDown[4];
+	static downAny = (): bool => {
+		return Mouse.buttonsDown[0] || Mouse.buttonsDown[1] || Mouse.buttonsDown[2] || Mouse.buttonsDown[3] || Mouse.buttonsDown[4];
 	}
 
-	started = (button = "left"): bool => {
-		return this.buttonsStarted[this.buttonIndex(button)];
+	static started = (button = "left"): bool => {
+		return Mouse.buttonsStarted[Mouse.buttonIndex(button)];
 	}
 
-	startedAny = (): bool => {
-		return this.buttonsStarted[0] || this.buttonsStarted[1] || this.buttonsStarted[2] || this.buttonsStarted[3] || this.buttonsStarted[4];
+	static startedAny = (): bool => {
+		return Mouse.buttonsStarted[0] || Mouse.buttonsStarted[1] || Mouse.buttonsStarted[2] || Mouse.buttonsStarted[3] || Mouse.buttonsStarted[4];
 	}
 
-	released = (button = "left"): bool => {
-		return this.buttonsReleased[this.buttonIndex(button)];
+	static released = (button = "left"): bool => {
+		return Mouse.buttonsReleased[Mouse.buttonIndex(button)];
 	}
 
-	lock = () => {
+	static lock = () => {
 		if (System.canLockMouse()) {
 			System.lockMouse();
-			this.locked = true;
-			this.hidden = true;
+			Mouse.locked = true;
+			Mouse.hidden = true;
 		}
 	}
-	unlock = () => {
+
+	static unlock = () => {
 		if (System.canLockMouse()) {
 			System.unlockMouse();
-			this.locked = false;
-			this.hidden = false;
+			Mouse.locked = false;
+			Mouse.hidden = false;
 		}
 	}
 
-	hide = () => {
+	static hide = () => {
 		System.hideSystemCursor();
-		this.hidden = true;
+		Mouse.hidden = true;
 	}
 
-	show = () => {
+	static show = () => {
 		System.showSystemCursor();
-		this.hidden = false;
+		Mouse.hidden = false;
 	}
 
-	downListener = (index: i32, x: i32, y: i32) => {
-		if (Input.getPen().inUse) return;
+	static downListener = (index: i32, x: i32, y: i32) => {
+		if (Pen.inUse) return;
 
-		this.buttonsDown[index] = true;
-		this.buttonsStarted[index] = true;
-		this.x = x;
-		this.y = y;
+		Mouse.buttonsDown[index] = true;
+		Mouse.buttonsStarted[index] = true;
+		Mouse.x = x;
+		Mouse.y = y;
 		///if (krom_android || krom_ios) // For movement delta using touch
 		if (index == 0) {
-			this.lastX = x;
-			this.lastY = y;
+			Mouse.lastX = x;
+			Mouse.lastY = y;
 		}
 		///end
 	}
 
-	upListener = (index: i32, x: i32, y: i32) => {
-		if (Input.getPen().inUse) return;
+	static upListener = (index: i32, x: i32, y: i32) => {
+		if (Pen.inUse) return;
 
-		this.buttonsDown[index] = false;
-		this.buttonsReleased[index] = true;
-		this.x = x;
-		this.y = y;
+		Mouse.buttonsDown[index] = false;
+		Mouse.buttonsReleased[index] = true;
+		Mouse.x = x;
+		Mouse.y = y;
 	}
 
-	moveListener = (x: i32, y: i32, movementX: i32, movementY: i32) => {
-		if (this.lastX == -1.0 && this.lastY == -1.0) { // First frame init
-			this.lastX = x;
-			this.lastY = y;
+	static moveListener = (x: i32, y: i32, movementX: i32, movementY: i32) => {
+		if (Mouse.lastX == -1.0 && Mouse.lastY == -1.0) { // First frame init
+			Mouse.lastX = x;
+			Mouse.lastY = y;
 		}
-		if (this.locked) {
+		if (Mouse.locked) {
 			// Can be called multiple times per frame
-			this.movementX += movementX;
-			this.movementY += movementY;
+			Mouse.movementX += movementX;
+			Mouse.movementY += movementY;
 		}
 		else {
-			this.movementX += x - this.lastX;
-			this.movementY += y - this.lastY;
+			Mouse.movementX += x - Mouse.lastX;
+			Mouse.movementY += y - Mouse.lastY;
 		}
-		this.lastX = x;
-		this.lastY = y;
-		this.x = x;
-		this.y = y;
-		this.moved = true;
+		Mouse.lastX = x;
+		Mouse.lastY = y;
+		Mouse.x = x;
+		Mouse.y = y;
+		Mouse.moved = true;
 	}
 
-	wheelListener = (delta: i32) => {
-		this.wheelDelta = delta;
+	static wheelListener = (delta: i32) => {
+		Mouse.wheelDelta = delta;
 	}
 
 	///if (krom_android || krom_ios)
-	onTouchDown = (index: i32, x: i32, y: i32) => {
+	static onTouchDown = (index: i32, x: i32, y: i32) => {
 		if (index == 1) { // Two fingers down - right mouse button
-			this.buttonsDown[0] = false;
-			this.downListener(1, Math.floor(this.x), Math.floor(this.y));
-			this.pinchStarted = true;
-			this.pinchTotal = 0.0;
-			this.pinchDistance = 0.0;
+			Mouse.buttonsDown[0] = false;
+			Mouse.downListener(1, Math.floor(Mouse.x), Math.floor(Mouse.y));
+			Mouse.pinchStarted = true;
+			Mouse.pinchTotal = 0.0;
+			Mouse.pinchDistance = 0.0;
 		}
 		else if (index == 2) { // Three fingers down - middle mouse button
-			this.buttonsDown[1] = false;
-			this.downListener(2, Math.floor(this.x), Math.floor(this.y));
+			Mouse.buttonsDown[1] = false;
+			Mouse.downListener(2, Math.floor(Mouse.x), Math.floor(Mouse.y));
 		}
 	}
 
-	onTouchUp = (index: i32, x: i32, y: i32) => {
-		if (index == 1) this.upListener(1, Math.floor(this.x), Math.floor(this.y));
-		else if (index == 2) this.upListener(2, Math.floor(this.x), Math.floor(this.y));
+	static onTouchUp = (index: i32, x: i32, y: i32) => {
+		if (index == 1) Mouse.upListener(1, Math.floor(Mouse.x), Math.floor(Mouse.y));
+		else if (index == 2) Mouse.upListener(2, Math.floor(Mouse.x), Math.floor(Mouse.y));
 	}
 
-	pinchDistance = 0.0;
-	pinchTotal = 0.0;
-	pinchStarted = false;
+	static pinchDistance = 0.0;
+	static pinchTotal = 0.0;
+	static pinchStarted = false;
 
-	onTouchMove = (index: i32, x: i32, y: i32) => {
+	static onTouchMove = (index: i32, x: i32, y: i32) => {
 		// Pinch to zoom - mouse wheel
 		if (index == 1) {
-			let lastDistance = this.pinchDistance;
-			let dx = this.x - x;
-			let dy = this.y - y;
-			this.pinchDistance = Math.sqrt(dx * dx + dy * dy);
-			this.pinchTotal += lastDistance != 0 ? lastDistance - this.pinchDistance : 0;
-			if (!this.pinchStarted) {
-				this.wheelDelta = this.pinchTotal / 10;
-				if (this.wheelDelta != 0) {
-					this.pinchTotal = 0.0;
+			let lastDistance = Mouse.pinchDistance;
+			let dx = Mouse.x - x;
+			let dy = Mouse.y - y;
+			Mouse.pinchDistance = Math.sqrt(dx * dx + dy * dy);
+			Mouse.pinchTotal += lastDistance != 0 ? lastDistance - Mouse.pinchDistance : 0;
+			if (!Mouse.pinchStarted) {
+				Mouse.wheelDelta = Mouse.pinchTotal / 10;
+				if (Mouse.wheelDelta != 0) {
+					Mouse.pinchTotal = 0.0;
 				}
 			}
-			this.pinchStarted = false;
+			Mouse.pinchStarted = false;
 		}
 	}
 	///end
 
-	get viewX(): f32 {
-		return this.x - App.x();
+	static get viewX(): f32 {
+		return Mouse.x - App.x();
 	}
 
-	get viewY(): f32 {
-		return this.y - App.y();
+	static get viewY(): f32 {
+		return Mouse.y - App.y();
 	}
 }
+
+let Surface = Mouse;
 
 class Pen {
 
 	static buttons = ["tip"];
-	buttonsDown = [false];
-	buttonsStarted = [false];
-	buttonsReleased = [false];
+	static buttonsDown = [false];
+	static buttonsStarted = [false];
+	static buttonsReleased = [false];
 
-	x = 0.0;
-	y = 0.0;
-	moved = false;
-	movementX = 0.0;
-	movementY = 0.0;
-	pressure = 0.0;
-	connected = false;
-	inUse = false;
-	lastX = -1.0;
-	lastY = -1.0;
+	static x = 0.0;
+	static y = 0.0;
+	static moved = false;
+	static movementX = 0.0;
+	static movementY = 0.0;
+	static pressure = 0.0;
+	static connected = false;
+	static inUse = false;
+	static lastX = -1.0;
+	static lastY = -1.0;
 
-	constructor() {}
-
-	endFrame = () => {
-		this.buttonsStarted[0] = false;
-		this.buttonsReleased[0] = false;
-		this.moved = false;
-		this.movementX = 0;
-		this.movementY = 0;
-		this.inUse = false;
+	static endFrame = () => {
+		Pen.buttonsStarted[0] = false;
+		Pen.buttonsReleased[0] = false;
+		Pen.moved = false;
+		Pen.movementX = 0;
+		Pen.movementY = 0;
+		Pen.inUse = false;
 	}
 
-	reset = () => {
-		this.buttonsDown[0] = false;
-		this.endFrame();
+	static reset = () => {
+		Pen.buttonsDown[0] = false;
+		Pen.endFrame();
 	}
 
-	buttonIndex = (button: string): i32 => {
+	static buttonIndex = (button: string): i32 => {
 		return 0;
 	}
 
-	down = (button = "tip"): bool => {
-		return this.buttonsDown[this.buttonIndex(button)];
+	static down = (button = "tip"): bool => {
+		return Pen.buttonsDown[Pen.buttonIndex(button)];
 	}
 
-	started = (button = "tip"): bool => {
-		return this.buttonsStarted[this.buttonIndex(button)];
+	static started = (button = "tip"): bool => {
+		return Pen.buttonsStarted[Pen.buttonIndex(button)];
 	}
 
-	released = (button = "tip"): bool => {
-		return this.buttonsReleased[this.buttonIndex(button)];
+	static released = (button = "tip"): bool => {
+		return Pen.buttonsReleased[Pen.buttonIndex(button)];
 	}
 
-	downListener = (x: i32, y: i32, pressure: f32) => {
-		this.buttonsDown[0] = true;
-		this.buttonsStarted[0] = true;
-		this.x = x;
-		this.y = y;
-		this.pressure = pressure;
+	static downListener = (x: i32, y: i32, pressure: f32) => {
+		Pen.buttonsDown[0] = true;
+		Pen.buttonsStarted[0] = true;
+		Pen.x = x;
+		Pen.y = y;
+		Pen.pressure = pressure;
 
 		///if (!krom_android && !krom_ios)
-		Input.getMouse().downListener(0, x, y);
+		Mouse.downListener(0, x, y);
 		///end
 	}
 
-	upListener = (x: i32, y: i32, pressure: f32) => {
+	static upListener = (x: i32, y: i32, pressure: f32) => {
 		///if (!krom_android && !krom_ios)
-		if (this.buttonsStarted[0]) { this.buttonsStarted[0] = false; this.inUse = true; return; }
+		if (Pen.buttonsStarted[0]) { Pen.buttonsStarted[0] = false; Pen.inUse = true; return; }
 		///end
 
-		this.buttonsDown[0] = false;
-		this.buttonsReleased[0] = true;
-		this.x = x;
-		this.y = y;
-		this.pressure = pressure;
+		Pen.buttonsDown[0] = false;
+		Pen.buttonsReleased[0] = true;
+		Pen.x = x;
+		Pen.y = y;
+		Pen.pressure = pressure;
 
 		///if (!krom_android && !krom_ios)
-		Input.getMouse().upListener(0, x, y);
-		this.inUse = true; // On pen release, additional mouse down & up events are fired at once - filter those out
+		Mouse.upListener(0, x, y);
+		Pen.inUse = true; // On pen release, additional mouse down & up events are fired at once - filter those out
 		///end
 	}
 
-	moveListener = (x: i32, y: i32, pressure: f32) => {
+	static moveListener = (x: i32, y: i32, pressure: f32) => {
 		///if krom_ios
 		// Listen to pen hover if no other input is active
-		if (!this.buttonsDown[0] && pressure == 0.0) {
-			if (!Input.getMouse().downAny()) {
-				Input.getMouse().moveListener(x, y, 0, 0);
+		if (!Pen.buttonsDown[0] && pressure == 0.0) {
+			if (!Mouse.downAny()) {
+				Mouse.moveListener(x, y, 0, 0);
 			}
 			return;
 		}
 		///end
 
-		if (this.lastX == -1.0 && this.lastY == -1.0) { // First frame init
-			this.lastX = x;
-			this.lastY = y;
+		if (Pen.lastX == -1.0 && Pen.lastY == -1.0) { // First frame init
+			Pen.lastX = x;
+			Pen.lastY = y;
 		}
-		this.movementX = x - this.lastX;
-		this.movementY = y - this.lastY;
-		this.lastX = x;
-		this.lastY = y;
-		this.x = x;
-		this.y = y;
-		this.moved = true;
-		this.pressure = pressure;
-		this.connected = true;
+		Pen.movementX = x - Pen.lastX;
+		Pen.movementY = y - Pen.lastY;
+		Pen.lastX = x;
+		Pen.lastY = y;
+		Pen.x = x;
+		Pen.y = y;
+		Pen.moved = true;
+		Pen.pressure = pressure;
+		Pen.connected = true;
 	}
 
-	get viewX(): f32 {
-		return this.x - App.x();
+	static get viewX(): f32 {
+		return Pen.x - App.x();
 	}
 
-	get viewY(): f32 {
-		return this.y - App.y();
+	static get viewY(): f32 {
+		return Pen.y - App.y();
 	}
 }
 
 class Keyboard {
 
 	static keys = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "space", "backspace", "tab", "enter", "shift", "control", "alt", "win", "escape", "delete", "up", "down", "left", "right", "back", ",", ".", ":", ";", "<", "=", ">", "?", "!", '"', "#", "$", "%", "&", "_", "(", ")", "*", "|", "{", "}", "[", "]", "~", "`", "/", "\\", "@", "+", "-", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"];
-	keysDown = new Map<string, bool>();
-	keysStarted = new Map<string, bool>();
-	keysReleased = new Map<string, bool>();
-	keysFrame: string[] = [];
-	repeatKey = false;
-	repeatTime = 0.0;
+	static keysDown = new Map<string, bool>();
+	static keysStarted = new Map<string, bool>();
+	static keysReleased = new Map<string, bool>();
+	static keysFrame: string[] = [];
+	static repeatKey = false;
+	static repeatTime = 0.0;
 
-	constructor() {
-		this.reset();
-	}
-
-	endFrame = () => {
-		if (this.keysFrame.length > 0) {
-			for (let s of this.keysFrame) {
-				this.keysStarted.set(s, false);
-				this.keysReleased.set(s, false);
+	static endFrame = () => {
+		if (Keyboard.keysFrame.length > 0) {
+			for (let s of Keyboard.keysFrame) {
+				Keyboard.keysStarted.set(s, false);
+				Keyboard.keysReleased.set(s, false);
 			}
-			this.keysFrame.splice(0, this.keysFrame.length);
+			Keyboard.keysFrame.splice(0, Keyboard.keysFrame.length);
 		}
 
-		if (Time.time() - this.repeatTime > 0.05) {
-			this.repeatTime = Time.time();
-			this.repeatKey = true;
+		if (Time.time() - Keyboard.repeatTime > 0.05) {
+			Keyboard.repeatTime = Time.time();
+			Keyboard.repeatKey = true;
 		}
-		else this.repeatKey = false;
+		else Keyboard.repeatKey = false;
 	}
 
-	reset = () => {
+	static reset = () => {
 		// Use Map for now..
 		for (let s of Keyboard.keys) {
-			this.keysDown.set(s, false);
-			this.keysStarted.set(s, false);
-			this.keysReleased.set(s, false);
+			Keyboard.keysDown.set(s, false);
+			Keyboard.keysStarted.set(s, false);
+			Keyboard.keysReleased.set(s, false);
 		}
-		this.endFrame();
+		Keyboard.endFrame();
 	}
 
-	down = (key: string): bool => {
-		return this.keysDown.get(key);
+	static down = (key: string): bool => {
+		return Keyboard.keysDown.get(key);
 	}
 
-	started = (key: string): bool => {
-		return this.keysStarted.get(key);
+	static started = (key: string): bool => {
+		return Keyboard.keysStarted.get(key);
 	}
 
-	startedAny = (): bool => {
-		return this.keysFrame.length > 0;
+	static startedAny = (): bool => {
+		return Keyboard.keysFrame.length > 0;
 	}
 
-	released = (key: string): bool => {
-		return this.keysReleased.get(key);
+	static released = (key: string): bool => {
+		return Keyboard.keysReleased.get(key);
 	}
 
-	repeat = (key: string): bool => {
-		return this.keysStarted.get(key) || (this.repeatKey && this.keysDown.get(key));
+	static repeat = (key: string): bool => {
+		return Keyboard.keysStarted.get(key) || (Keyboard.repeatKey && Keyboard.keysDown.get(key));
 	}
 
 	static keyCode = (key: KeyCode): string => {
@@ -522,36 +476,34 @@ class Keyboard {
 		}
 	}
 
-	downListener = (code: KeyCode) => {
+	static downListener = (code: KeyCode) => {
 		let s = Keyboard.keyCode(code);
-		this.keysFrame.push(s);
-		this.keysStarted.set(s, true);
-		this.keysDown.set(s, true);
-		this.repeatTime = Time.time() + 0.4;
+		Keyboard.keysFrame.push(s);
+		Keyboard.keysStarted.set(s, true);
+		Keyboard.keysDown.set(s, true);
+		Keyboard.repeatTime = Time.time() + 0.4;
 
 		///if krom_android_rmb // Detect right mouse button on Android..
 		if (code == KeyCode.Back) {
-			let m = Input.getMouse();
-			if (!m.buttonsDown[1]) m.downListener(1, Math.floor(m.x), Math.floor(m.y));
+			if (!Mouse.buttonsDown[1]) Mouse.downListener(1, Math.floor(Mouse.x), Math.floor(Mouse.y));
 		}
 		///end
 	}
 
-	upListener = (code: KeyCode) => {
+	static upListener = (code: KeyCode) => {
 		let s = Keyboard.keyCode(code);
-		this.keysFrame.push(s);
-		this.keysReleased.set(s, true);
-		this.keysDown.set(s, false);
+		Keyboard.keysFrame.push(s);
+		Keyboard.keysReleased.set(s, true);
+		Keyboard.keysDown.set(s, false);
 
 		///if krom_android_rmb
 		if (code == KeyCode.Back) {
-			let m = Input.getMouse();
-			m.upListener(1, Math.floor(m.x), Math.floor(m.y));
+			Mouse.upListener(1, Math.floor(Mouse.x), Math.floor(Mouse.y));
 		}
 		///end
 	}
 
-	pressListener(char: string) {}
+	static pressListener(char: string) {}
 }
 
 class GamepadStick {
@@ -562,7 +514,15 @@ class GamepadStick {
 	moved = false;
 	movementX = 0.0;
 	movementY = 0.0;
-	constructor() {}
+}
+
+class TGamepad {
+	buttonsDown: f32[] = []; // Intensity 0 - 1
+	buttonsStarted: bool[] = [];
+	buttonsReleased: bool[] = [];
+	buttonsFrame: i32[] = [];
+	leftStick = new GamepadStick();
+	rightStick = new GamepadStick();
 }
 
 class Gamepad {
@@ -570,76 +530,64 @@ class Gamepad {
 	static buttonsPS = ["cross", "circle", "square", "triangle", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
 	static buttonsXBOX = ["a", "b", "x", "y", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
 	static buttons = Gamepad.buttonsPS;
+	static raws: TGamepad[];
 
-	buttonsDown: f32[] = []; // Intensity 0 - 1
-	buttonsStarted: bool[] = [];
-	buttonsReleased: bool[] = [];
-
-	buttonsFrame: i32[] = [];
-
-	leftStick = new GamepadStick();
-	rightStick = new GamepadStick();
-
-	num = 0;
-
-	constructor(i: i32) {
-		for (let s of Gamepad.buttons) {
-			this.buttonsDown.push(0.0);
-			this.buttonsStarted.push(false);
-			this.buttonsReleased.push(false);
-		}
-		this.num = i;
-		this.reset();
-	}
-
-	endFrame = () => {
-		if (this.buttonsFrame.length > 0) {
-			for (let i of this.buttonsFrame) {
-				this.buttonsStarted[i] = false;
-				this.buttonsReleased[i] = false;
+	static endFrame = () => {
+		for (let g of Gamepad.raws) {
+			if (g.buttonsFrame.length > 0) {
+				for (let i of g.buttonsFrame) {
+					g.buttonsStarted[i] = false;
+					g.buttonsReleased[i] = false;
+				}
+				g.buttonsFrame.splice(0, g.buttonsFrame.length);
 			}
-			this.buttonsFrame.splice(0, this.buttonsFrame.length);
+			g.leftStick.moved = false;
+			g.leftStick.movementX = 0;
+			g.leftStick.movementY = 0;
+			g.rightStick.moved = false;
+			g.rightStick.movementX = 0;
+			g.rightStick.movementY = 0;
 		}
-		this.leftStick.moved = false;
-		this.leftStick.movementX = 0;
-		this.leftStick.movementY = 0;
-		this.rightStick.moved = false;
-		this.rightStick.movementX = 0;
-		this.rightStick.movementY = 0;
 	}
 
-	reset = () => {
-		for (let i = 0; i < this.buttonsDown.length; ++i) {
-			this.buttonsDown[i] = 0.0;
-			this.buttonsStarted[i] = false;
-			this.buttonsReleased[i] = false;
+	static reset = () => {
+		Gamepad.raws = [];
+		for (let i = 0; i < 4; ++i) {
+			let g = new TGamepad();
+			Gamepad.raws.push(g);
+			for (let s of Gamepad.buttons) {
+				g.buttonsDown.push(0.0);
+				g.buttonsStarted.push(false);
+				g.buttonsReleased.push(false);
+			}
 		}
-		this.endFrame();
+
+		Gamepad.endFrame();
 	}
 
 	static keyCode = (button: i32): string => {
 		return Gamepad.buttons[button];
 	}
 
-	buttonIndex = (button: string): i32 => {
+	static buttonIndex = (button: string): i32 => {
 		for (let i = 0; i < Gamepad.buttons.length; ++i) if (Gamepad.buttons[i] == button) return i;
 		return 0;
 	}
 
-	down = (button: string): f32 => {
-		return this.buttonsDown[this.buttonIndex(button)];
+	static down = (i: i32, button: string): f32 => {
+		return Gamepad.raws[i].buttonsDown[Gamepad.buttonIndex(button)];
 	}
 
-	started = (button: string): bool => {
-		return this.buttonsStarted[this.buttonIndex(button)];
+	static started = (i: i32, button: string): bool => {
+		return Gamepad.raws[i].buttonsStarted[Gamepad.buttonIndex(button)];
 	}
 
-	released = (button: string): bool => {
-		return this.buttonsReleased[this.buttonIndex(button)];
+	static released = (i: i32, button: string): bool => {
+		return Gamepad.raws[i].buttonsReleased[Gamepad.buttonIndex(button)];
 	}
 
-	axisListener = (axis: i32, value: f32) => {
-		let stick = axis <= 1 ? this.leftStick : this.rightStick;
+	static axisListener = (i: i32, axis: i32, value: f32) => {
+		let stick = axis <= 1 ? Gamepad.raws[i].leftStick : Gamepad.raws[i].rightStick;
 
 		if (axis == 0 || axis == 2) { // X
 			stick.lastX = stick.x;
@@ -654,35 +602,35 @@ class Gamepad {
 		stick.moved = true;
 	}
 
-	buttonListener = (button: i32, value: f32) => {
-		this.buttonsFrame.push(button);
+	static buttonListener = (i: i32, button: i32, value: f32) => {
+		Gamepad.raws[i].buttonsFrame.push(button);
 
-		this.buttonsDown[button] = value;
-		if (value > 0) this.buttonsStarted[button] = true; // Will trigger L2/R2 multiple times..
-		else this.buttonsReleased[button] = true;
+		Gamepad.raws[i].buttonsDown[button] = value;
+		if (value > 0) Gamepad.raws[i].buttonsStarted[button] = true; // Will trigger L2/R2 multiple times..
+		else Gamepad.raws[i].buttonsReleased[button] = true;
 	}
 }
 
-class Sensor {
-	x = 0.0;
-	y = 0.0;
-	z = 0.0;
+// class Sensor {
+// 	static x = 0.0;
+// 	static y = 0.0;
+// 	static z = 0.0;
 
-	constructor() {
-		// System.getSensor(Accelerometer).notify(listener);
-	}
+// 	constructor() {
+// 		// System.getSensor(Accelerometer).notify(listener);
+// 	}
 
-	listener = (x: f32, y: f32, z: f32) => {
-		this.x = x;
-		this.y = y;
-		this.z = z;
-	}
-}
+// 	static listener = (x: f32, y: f32, z: f32) => {
+// 		Sensor.x = x;
+// 		Sensor.y = y;
+// 		Sensor.z = z;
+// 	}
+// }
 
-enum SensorType {
-	Accelerometer,
-	Gyroscope,
-}
+// enum SensorType {
+// 	Accelerometer,
+// 	Gyroscope,
+// }
 
 enum KeyCode {
 	Unknown = 0,

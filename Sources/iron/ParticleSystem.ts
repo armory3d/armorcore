@@ -2,7 +2,7 @@
 ///if arm_particles
 
 class ParticleSystem {
-	data: ParticleData;
+	data: TParticleData;
 	speed = 1.0;
 	particles: Particle[];
 	ready: bool;
@@ -36,9 +36,9 @@ class ParticleSystem {
 		this.seed = pref.seed;
 		this.particles = [];
 		this.ready = false;
-		Data.getParticle(sceneName, pref.particle, (b: ParticleData) => {
+		Data.getParticle(sceneName, pref.particle, (b: TParticleData) => {
 			this.data = b;
-			this.r = this.data.raw;
+			this.r = this.data;
 			this.gx = 0;
 			this.gy = 0;
 			this.gz = -9.81 * this.r.weight_gravity;

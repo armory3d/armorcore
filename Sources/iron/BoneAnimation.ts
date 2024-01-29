@@ -3,9 +3,6 @@
 
 class BoneAnimation extends Animation {
 
-	static skinMaxBones = 128;
-
-	// Skinning
 	object: MeshObject;
 	data: MeshData;
 	skinBuffer: Float32Array;
@@ -23,11 +20,10 @@ class BoneAnimation extends Animation {
 
 	boneChildren: Map<string, BaseObject[]> = null; // Parented to bone
 
-	constraintTargets: BaseObject[] = null;
-	constraintTargetsI: Mat4[] = null;
-	constraintMats: Map<TObj, Mat4> = null;
-	relativeBoneConstraints: bool = false;
+	// Do inverse kinematics here
+	onUpdates: (()=>void)[] = null;
 
+	static skinMaxBones = 128;
 	static m = Mat4.identity(); // Skinning matrix
 	static m1 = Mat4.identity();
 	static m2 = Mat4.identity();
@@ -76,8 +72,6 @@ class BoneAnimation extends Animation {
 				Data.getSceneRaw(refs[0], (action: TSceneFormat) => { this.play(action.name); });
 			}
 		}
-		if (this.object.parent.raw.relative_bone_constraints) this.relativeBoneConstraints = true;
-
 	}
 
 	addBoneChild = (bone: string, o: BaseObject) => {
@@ -187,84 +181,6 @@ class BoneAnimation extends Animation {
 		this.setMats();
 	}
 
-	override play = (action = "", onComplete: ()=>void = null, blendTime = 0.2, speed = 1.0, loop = true) => {
-		super.play(action, onComplete, blendTime, speed, loop);
-		if (action != "") {
-			blendTime > 0 ? this.setActionBlend(action) : this.setAction(action);
-		}
-		this.blendFactor = 0.0;
-	}
-
-	override blend = (action1: string, action2: string, factor: f32) => {
-		if (factor == 0.0) {
-			this.setAction(action1);
-			return;
-		}
-		this.setAction(action2);
-		this.setActionBlend(action1);
-		super.blend(action1, action2, factor);
-	}
-
-	override update = (delta: f32) => {
-		if (!this.isSkinned && this.skeletonBones == null) this.setAction(this.armature.actions[0].name);
-		if (this.object != null && (!this.object.visible || this.object.culled)) return;
-		if (this.skeletonBones == null || this.skeletonBones.length == 0) return;
-
-		super.update(delta);
-		if (this.paused || this.speed == 0.0) return;
-
-		let lastBones = this.skeletonBones;
-		for (let b of this.skeletonBones) {
-			if (b.anim != null) {
-				this.updateTrack(b.anim);
-				break;
-			}
-		}
-		// Action has been changed by onComplete
-		if (lastBones != this.skeletonBones) return;
-
-		for (let i = 0; i < this.skeletonBones.length; ++i) {
-			if (!this.skeletonBones[i].is_ik_fk_only) this.updateAnimSampled(this.skeletonBones[i].anim, this.skeletonMats[i]);
-		}
-		if (this.blendTime > 0 && this.skeletonBonesBlend != null) {
-			for (let b of this.skeletonBonesBlend) {
-				if (b.anim != null) {
-					this.updateTrack(b.anim);
-					break;
-				}
-			}
-			for (let i = 0; i < this.skeletonBonesBlend.length; ++i) {
-				this.updateAnimSampled(this.skeletonBonesBlend[i].anim, this.skeletonMatsBlend[i]);
-			}
-		}
-
-		this.updateConstraints();
-
-		// Do forward kinematics and inverse kinematics here
-		if (this.onUpdates != null) {
-			let i = 0;
-			let l = this.onUpdates.length;
-			while (i < l) {
-				this.onUpdates[i]();
-				l <= this.onUpdates.length ? i++ : l = this.onUpdates.length;
-			}
-		}
-
-		// Calc absolute bones
-		for (let i = 0; i < this.skeletonBones.length; ++i) {
-			// Take bones with 0 parents first
-			this.multParent(this.matsFastSort[i], this.matsFast, this.skeletonBones, this.skeletonMats);
-		}
-		if (this.skeletonBonesBlend != null) {
-			for (let i = 0; i < this.skeletonBonesBlend.length; ++i) {
-				this.multParent(this.matsFastBlendSort[i], this.matsFastBlend, this.skeletonBonesBlend, this.skeletonMatsBlend);
-			}
-		}
-
-		if (this.isSkinned) this.updateSkinGpu();
-		else this.updateBonesOnly();
-	}
-
 	multParent = (i: i32, fasts: Mat4[], bones: TObj[], mats: Mat4[]) => {
 		let f = fasts[i];
 		if (this.applyParent != null && !this.applyParent[i]) {
@@ -286,82 +202,6 @@ class BoneAnimation extends Animation {
 			p = p.parent;
 		}
 	}
-
-	getConstraintsFromScene = (cs: TConstraint[]) => {
-		// Init constraints
-		if (this.constraintTargets == null) {
-			this.constraintTargets = [];
-			this.constraintTargetsI = [];
-			for (let c of cs) {
-				let o = Scene.active.getChild(c.target);
-				this.constraintTargets.push(o);
-				let m: Mat4 = null;
-				if (o != null) {
-					m = Mat4.identity().setFrom(o.transform.world);
-					m.getInverse(m);
-				}
-				this.constraintTargetsI.push(m);
-			}
-			this.constraintMats = new Map();
-		}
-	}
-
-	getConstraintsFromParentRelative = (cs: TConstraint[]) => {
-		// Init constraints
-		if (this.constraintTargets == null) {
-			this.constraintTargets = [];
-			this.constraintTargetsI = [];
-			// MeshObject -> ArmatureObject -> Collection/Empty
-			let conParent = this.object.parent.parent;
-			if (conParent == null) return;
-			for (let c of cs) {
-				let o = conParent.getChild(c.target);
-				this.constraintTargets.push(o);
-				let m: Mat4 = null;
-				if (o != null) {
-					m = Mat4.identity().setFrom(o.transform.world);
-					m.getInverse(m);
-				}
-				this.constraintTargetsI.push(m);
-			}
-			this.constraintMats = new Map();
-		}
-	}
-
-	updateConstraints = () => {
-		if (this.data == null) return;
-		let cs = this.data.raw.skin.constraints;
-		if (cs == null) return;
-		if (this.relativeBoneConstraints) {
-			this.getConstraintsFromParentRelative(cs);
-		}
-		else {
-			this.getConstraintsFromScene(cs);
-		}
-		// Update matrices
-		for (let i = 0; i < cs.length; ++i) {
-			let c = cs[i];
-			let bone = this.getBone(c.bone);
-			if (bone == null) continue;
-			let o = this.constraintTargets[i];
-			if (o == null) continue;
-			if (c.type == "CHILD_OF") {
-				let m = this.constraintMats.get(bone);
-				if (m == null) {
-					m = Mat4.identity();
-					this.constraintMats.set(bone, m);
-				}
-				m.setFrom(this.object.parent.transform.world); // Armature transform
-				m.multmat(this.constraintTargetsI[i]); // Roll back initial hitbox transform
-				m.multmat(o.transform.world); // Current hitbox transform
-				BoneAnimation.m1.getInverse(this.object.parent.transform.world); // Roll back armature transform
-				m.multmat(BoneAnimation.m1);
-			}
-		}
-	}
-
-	// Do inverse kinematics here
-	onUpdates: (()=>void)[] = null;
 
 	notifyOnUpdate = (f: ()=>void) => {
 		if (this.onUpdates == null) this.onUpdates = [];
@@ -391,14 +231,6 @@ class BoneAnimation extends Animation {
 
 		// Update skin buffer
 		for (let i = 0; i < bones.length; ++i) {
-			if (this.constraintMats != null) {
-				let m = this.constraintMats.get(bones[i]);
-				if (m != null) {
-					this.updateSkinBuffer(m, i);
-					continue;
-				}
-			}
-
 			BoneAnimation.m.setFrom(this.matsFast[i]);
 
 			if (this.blendTime > 0 && this.skeletonBonesBlend != null) {
@@ -442,12 +274,6 @@ class BoneAnimation extends Animation {
 		this.skinBuffer[i * 8 + 5] = BoneAnimation.q2.y * 0.5;
 		this.skinBuffer[i * 8 + 6] = BoneAnimation.q2.z * 0.5;
 		this.skinBuffer[i * 8 + 7] = BoneAnimation.q2.w * 0.5;
-	}
-
-	override totalFrames = (): i32 => {
-		if (this.skeletonBones == null) return 0;
-		let track = this.skeletonBones[0].anim.tracks[0];
-		return Math.floor(track.frames[track.frames.length - 1] - track.frames[0]);
 	}
 
 	getBone = (name: string): TObj => {
@@ -785,6 +611,88 @@ class BoneAnimation extends Animation {
 		}
 
 		this.getBoneMat(bone).setFrom(tempMat);
+	}
+
+	override play = (action = "", onComplete: ()=>void = null, blendTime = 0.2, speed = 1.0, loop = true) => {
+		this.playSuper(action, onComplete, blendTime, speed, loop);
+		if (action != "") {
+			blendTime > 0 ? this.setActionBlend(action) : this.setAction(action);
+		}
+		this.blendFactor = 0.0;
+	}
+
+	override blend = (action1: string, action2: string, factor: f32) => {
+		if (factor == 0.0) {
+			this.setAction(action1);
+			return;
+		}
+		this.setAction(action2);
+		this.setActionBlend(action1);
+		this.blendSuper(action1, action2, factor);
+	}
+
+	override update = (delta: f32) => {
+		if (!this.isSkinned && this.skeletonBones == null) this.setAction(this.armature.actions[0].name);
+		if (this.object != null && (!this.object.visible || this.object.culled)) return;
+		if (this.skeletonBones == null || this.skeletonBones.length == 0) return;
+
+		this.updateSuper(delta);
+		if (this.paused || this.speed == 0.0) return;
+
+		let lastBones = this.skeletonBones;
+		for (let b of this.skeletonBones) {
+			if (b.anim != null) {
+				this.updateTrack(b.anim);
+				break;
+			}
+		}
+		// Action has been changed by onComplete
+		if (lastBones != this.skeletonBones) return;
+
+		for (let i = 0; i < this.skeletonBones.length; ++i) {
+			if (!this.skeletonBones[i].is_ik_fk_only) this.updateAnimSampled(this.skeletonBones[i].anim, this.skeletonMats[i]);
+		}
+		if (this.blendTime > 0 && this.skeletonBonesBlend != null) {
+			for (let b of this.skeletonBonesBlend) {
+				if (b.anim != null) {
+					this.updateTrack(b.anim);
+					break;
+				}
+			}
+			for (let i = 0; i < this.skeletonBonesBlend.length; ++i) {
+				this.updateAnimSampled(this.skeletonBonesBlend[i].anim, this.skeletonMatsBlend[i]);
+			}
+		}
+
+		// Do forward kinematics and inverse kinematics here
+		if (this.onUpdates != null) {
+			let i = 0;
+			let l = this.onUpdates.length;
+			while (i < l) {
+				this.onUpdates[i]();
+				l <= this.onUpdates.length ? i++ : l = this.onUpdates.length;
+			}
+		}
+
+		// Calc absolute bones
+		for (let i = 0; i < this.skeletonBones.length; ++i) {
+			// Take bones with 0 parents first
+			this.multParent(this.matsFastSort[i], this.matsFast, this.skeletonBones, this.skeletonMats);
+		}
+		if (this.skeletonBonesBlend != null) {
+			for (let i = 0; i < this.skeletonBonesBlend.length; ++i) {
+				this.multParent(this.matsFastBlendSort[i], this.matsFastBlend, this.skeletonBonesBlend, this.skeletonMatsBlend);
+			}
+		}
+
+		if (this.isSkinned) this.updateSkinGpu();
+		else this.updateBonesOnly();
+	}
+
+	override totalFrames = (): i32 => {
+		if (this.skeletonBones == null) return 0;
+		let track = this.skeletonBones[0].anim.tracks[0];
+		return Math.floor(track.frames[track.frames.length - 1] - track.frames[0]);
 	}
 }
 

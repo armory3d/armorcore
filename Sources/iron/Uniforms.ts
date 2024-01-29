@@ -66,7 +66,7 @@ class Uniforms {
 						case "_envmapRadiance": {
 							let w = Scene.active.world;
 							if (w != null) {
-								g.setTexture(context.textureUnits[j], w.probe.radiance);
+								g.setTexture(context.textureUnits[j], w.radiance);
 								g.setTextureParameters(context.textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
 							}
 							break;
@@ -215,7 +215,7 @@ class Uniforms {
 				case "_skydomeMatrix": {
 					let tr = camera.transform;
 					Uniforms.helpVec.set(tr.worldx(), tr.worldy(), tr.worldz() - 3.5); // Sky
-					let bounds = camera.data.raw.far_plane * 0.95;
+					let bounds = camera.data.far_plane * 0.95;
 					Uniforms.helpVec2.set(bounds, bounds, bounds);
 					Uniforms.helpMat.compose(Uniforms.helpVec, Uniforms.helpQuat, Uniforms.helpVec2);
 					Uniforms.helpMat.multmat(camera.V);
@@ -268,17 +268,17 @@ class Uniforms {
 				case "_pointColor": {
 					let point = RenderPath.active.point;
 					if (point != null) {
-						let str = point.visible ? point.data.raw.strength : 0.0;
-						Uniforms.helpVec.set(point.data.raw.color[0] * str, point.data.raw.color[1] * str, point.data.raw.color[2] * str);
+						let str = point.visible ? point.data.strength : 0.0;
+						Uniforms.helpVec.set(point.data.color[0] * str, point.data.color[1] * str, point.data.color[2] * str);
 						v = Uniforms.helpVec;
 						break;
 					}
 				}
 				case "_lightArea0": {
-					if (light != null && light.data.raw.size != null) {
+					if (light != null && light.data.size != null) {
 						let f2: f32 = 0.5;
-						let sx: f32 = light.data.raw.size * f2;
-						let sy: f32 = light.data.raw.size_y * f2;
+						let sx: f32 = light.data.size * f2;
+						let sy: f32 = light.data.size_y * f2;
 						Uniforms.helpVec.set(-sx, sy, 0.0);
 						Uniforms.helpVec.applymat(light.transform.world);
 						v = Uniforms.helpVec;
@@ -286,10 +286,10 @@ class Uniforms {
 					}
 				}
 				case "_lightArea1": {
-					if (light != null && light.data.raw.size != null) {
+					if (light != null && light.data.size != null) {
 						let f2: f32 = 0.5;
-						let sx: f32 = light.data.raw.size * f2;
-						let sy: f32 = light.data.raw.size_y * f2;
+						let sx: f32 = light.data.size * f2;
+						let sy: f32 = light.data.size_y * f2;
 						Uniforms.helpVec.set(sx, sy, 0.0);
 						Uniforms.helpVec.applymat(light.transform.world);
 						v = Uniforms.helpVec;
@@ -297,10 +297,10 @@ class Uniforms {
 					}
 				}
 				case "_lightArea2": {
-					if (light != null && light.data.raw.size != null) {
+					if (light != null && light.data.size != null) {
 						let f2: f32 = 0.5;
-						let sx: f32 = light.data.raw.size * f2;
-						let sy: f32 = light.data.raw.size_y * f2;
+						let sx: f32 = light.data.size * f2;
+						let sy: f32 = light.data.size_y * f2;
 						Uniforms.helpVec.set(sx, -sy, 0.0);
 						Uniforms.helpVec.applymat(light.transform.world);
 						v = Uniforms.helpVec;
@@ -308,10 +308,10 @@ class Uniforms {
 					}
 				}
 				case "_lightArea3": {
-					if (light != null && light.data.raw.size != null) {
+					if (light != null && light.data.size != null) {
 						let f2: f32 = 0.5;
-						let sx: f32 = light.data.raw.size * f2;
-						let sy: f32 = light.data.raw.size_y * f2;
+						let sx: f32 = light.data.size * f2;
+						let sy: f32 = light.data.size_y * f2;
 						Uniforms.helpVec.set(-sx, -sy, 0.0);
 						Uniforms.helpVec.applymat(light.transform.world);
 						v = Uniforms.helpVec;
@@ -417,8 +417,8 @@ class Uniforms {
 					break;
 				}
 				case "_cameraPlaneProj": {
-					let near = camera.data.raw.near_plane;
-					let far = camera.data.raw.far_plane;
+					let near = camera.data.near_plane;
+					let far = camera.data.far_plane;
 					v = Uniforms.helpVec;
 					v.x = far / (far - near);
 					v.y = (-far * near) / (far - near);
@@ -458,7 +458,7 @@ class Uniforms {
 			let fa: Float32Array = null;
 			switch (c.link) {
 				case "_envmapIrradiance": {
-					fa = Scene.active.world == null ? WorldData.getEmptyIrradiance() : Scene.active.world.probe.irradiance;
+					fa = Scene.active.world == null ? WorldData.getEmptyIrradiance() : Scene.active.world.irradiance;
 					break;
 				}
 			}
@@ -473,7 +473,7 @@ class Uniforms {
 			switch (c.link) {
 				case "_envmapNumMipmaps": {
 					let w = Scene.active.world;
-					i = w != null ? w.probe.raw.radiance_mipmaps + 1 - 2 : 1; // Include basecolor and exclude 2 scaled mips
+					i = w != null ? w.raw.radiance_mipmaps + 1 - 2 : 1; // Include basecolor and exclude 2 scaled mips
 					break;
 				}
 				default:

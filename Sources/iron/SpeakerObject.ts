@@ -62,16 +62,12 @@ class SpeakerObject extends BaseObject {
 
 		if (this.data.attenuation > 0) {
 			let distance = Vec4.distance(Scene.active.camera.transform.world.getLoc(), this.transform.world.getLoc());
-			distance = Math.max(Math.min(this.data.distance_max, distance), this.data.distance_reference);
-			this.volume = this.data.distance_reference / (this.data.distance_reference + this.data.attenuation * (distance - this.data.distance_reference));
+			this.volume = 1.0 / (1.0 + this.data.attenuation * (distance - 1.0));
 			this.volume *= this.data.volume;
 		}
 		else {
 			this.volume = this.data.volume;
 		}
-
-		if (this.volume > this.data.volume_max) this.volume = this.data.volume_max;
-		else if (this.volume < this.data.volume_min) this.volume = this.data.volume_min;
 
 		for (let c of this.channels) c.volume = this.volume;
 	}
@@ -79,7 +75,7 @@ class SpeakerObject extends BaseObject {
 	override remove = () => {
 		this.stop();
 		if (Scene.active != null) array_remove(Scene.active.speakers, this);
-		super.remove();
+		this.removeSuper();
 	}
 }
 

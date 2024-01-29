@@ -14,12 +14,6 @@ class System {
 	static startTime: f32;
 	static g2: Graphics2;
 	static g4: Graphics4;
-	static keyboard: Keyboard;
-	static mouse: Mouse;
-	static surface: Surface;
-	static pen: Pen;
-	static maxGamepads: i32 = 4;
-	static gamepads: Gamepad[];
 	static windowTitle: string;
 
 	static start = (options: SystemOptions, callback: ()=>void) => {
@@ -47,15 +41,7 @@ class System {
 		Krom.setPenMoveCallback(System.penMoveCallback);
 		Krom.setGamepadAxisCallback(System.gamepadAxisCallback);
 		Krom.setGamepadButtonCallback(System.gamepadButtonCallback);
-
-		System.keyboard = Input.getKeyboard();
-		System.mouse = Input.getMouse();
-		System.surface = Input.getSurface();
-		System.pen = Input.getPen();
-		System.gamepads = [];
-		for (let i = 0; i < System.maxGamepads; ++i) {
-			System.gamepads.push(Input.getGamepad(i));
-		}
+		Input.register();
 
 		callback();
 	}
@@ -189,69 +175,69 @@ class System {
 	}
 
 	static keyboardDownCallback = (code: i32) => {
-		System.keyboard.downListener(code);
+		Keyboard.downListener(code);
 	}
 
 	static keyboardUpCallback = (code: i32) => {
-		System.keyboard.upListener(code);
+		Keyboard.upListener(code);
 	}
 
 	static keyboardPressCallback = (charCode: i32) => {
-		System.keyboard.pressListener(String.fromCharCode(charCode));
+		Keyboard.pressListener(String.fromCharCode(charCode));
 	}
 
 	static mouseDownCallback = (button: i32, x: i32, y: i32) => {
-		System.mouse.downListener(button, x, y);
+		Mouse.downListener(button, x, y);
 	}
 
 	static mouseUpCallback = (button: i32, x: i32, y: i32) => {
-		System.mouse.upListener(button, x, y);
+		Mouse.upListener(button, x, y);
 	}
 
 	static mouseMoveCallback = (x: i32, y: i32, mx: i32, my: i32) => {
-		System.mouse.moveListener(x, y, mx, my);
+		Mouse.moveListener(x, y, mx, my);
 	}
 
 	static mouseWheelCallback = (delta: i32) => {
-		System.mouse.wheelListener(delta);
+		Mouse.wheelListener(delta);
 	}
 
 	static touchDownCallback = (index: i32, x: i32, y: i32) => {
 		///if (krom_android || krom_ios)
-		System.surface.onTouchDown(index, x, y);
+		Surface.onTouchDown(index, x, y);
 		///end
 	}
 
 	static touchUpCallback = (index: i32, x: i32, y: i32) => {
 		///if (krom_android || krom_ios)
-		System.surface.onTouchUp(index, x, y);
+		Surface.onTouchUp(index, x, y);
 		///end
 	}
 
 	static touchMoveCallback = (index: i32, x: i32, y: i32) => {
 		///if (krom_android || krom_ios)
-		System.surface.onTouchMove(index, x, y);
+		Surface.onTouchMove(index, x, y);
 		///end
 	}
 
 	static penDownCallback = (x: i32, y: i32, pressure: f32) => {
-		System.pen.downListener(x, y, pressure);
+		Pen.downListener(x, y, pressure);
 	}
 
 	static penUpCallback = (x: i32, y: i32, pressure: f32) => {
-		System.pen.upListener(x, y, pressure);
+		Pen.upListener(x, y, pressure);
 	}
 
 	static penMoveCallback = (x: i32, y: i32, pressure: f32) => {
-		System.pen.moveListener(x, y, pressure);
+		Pen.moveListener(x, y, pressure);
 	}
 
 	static gamepadAxisCallback = (gamepad: i32, axis: i32, value: f32) => {
-		System.gamepads[gamepad].axisListener(axis, value);
+		Gamepad.axisListener(gamepad, axis, value);
 	}
 
 	static gamepadButtonCallback = (gamepad: i32, button: i32, value: f32) => {
-		System.gamepads[gamepad].buttonListener(button, value);
+		Gamepad.buttonListener(gamepad, button, value);
 	}
 
 	static lockMouse = () => {
@@ -698,6 +684,7 @@ class Image {
 	readable: bool;
 	graphics2: Graphics2;
 	graphics4: Graphics4;
+	pixels: ArrayBuffer = null;
 
 	constructor(texture: any) {
 		this.texture_ = texture;
@@ -800,6 +787,19 @@ class Image {
 		return Krom.renderTargetsInvertedY();
 	}
 
+	static formatByteSize = (format: TextureFormat): i32 => {
+		switch(format) {
+			case TextureFormat.RGBA32: return 4;
+			case TextureFormat.R8: return 1;
+			case TextureFormat.RGBA128: return 16;
+			case TextureFormat.DEPTH16: return 2;
+			case TextureFormat.RGBA64: return 8;
+			case TextureFormat.R32: return 4;
+			case TextureFormat.R16: return 2;
+			default: return 4;
+		}
+	}
+
 	unload = () => {
 		Krom.unloadImage(this);
 		this.texture_ = null;
@@ -814,8 +814,6 @@ class Image {
 		Krom.unlockTexture(this.texture_);
 	}
 
-	pixels: ArrayBuffer = null;
-
 	getPixels = (): ArrayBuffer => {
 		if (this.renderTarget_ != null) {
 			// Minimum size of 32x32 required after https://github.com/Kode/Kinc/commit/3797ebce5f6d7d360db3331eba28a17d1be87833
@@ -827,19 +825,6 @@ class Image {
 		}
 		else {
 			return Krom.getTexturePixels(this.texture_);
-		}
-	}
-
-	static formatByteSize = (format: TextureFormat): i32 => {
-		switch(format) {
-			case TextureFormat.RGBA32: return 4;
-			case TextureFormat.R8: return 1;
-			case TextureFormat.RGBA128: return 16;
-			case TextureFormat.DEPTH16: return 2;
-			case TextureFormat.RGBA64: return 8;
-			case TextureFormat.R32: return 4;
-			case TextureFormat.R16: return 2;
-			default: return 4;
 		}
 	}
 

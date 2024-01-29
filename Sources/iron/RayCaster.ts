@@ -13,9 +13,9 @@ class RayCaster {
 		// Find direction from start to end
 		end.sub(start);
 		end.normalize();
-		end.x *= camera.data.raw.far_plane;
-		end.y *= camera.data.raw.far_plane;
-		end.z *= camera.data.raw.far_plane;
+		end.x *= camera.data.far_plane;
+		end.y *= camera.data.far_plane;
+		end.z *= camera.data.far_plane;
 
 		return new Ray(start, end);
 	}

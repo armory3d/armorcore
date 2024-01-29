@@ -13,7 +13,6 @@ type TSceneFormat = {
 	world_ref?: string;
 	objects?: TObj[];
 	embedded_datas?: string[]; // Preload for this scene, images only for now
-	irradiance?: Float32Array; // Blob with spherical harmonics, bands 0,1,2
 }
 
 type TMeshData = {
@@ -35,7 +34,6 @@ type TSkin = {
 	bone_count_array: Int16Array;
 	bone_index_array: Int16Array;
 	bone_weight_array: Int16Array;
-	constraints: TConstraint[];
 }
 
 type TVertexArray = {
@@ -43,6 +41,7 @@ type TVertexArray = {
 	values: Int16Array;
 	data: string; // short4norm, short2norm
 	padding?: Null<i32>;
+	// Runtime:
 	size?: Null<i32>;
 }
 
@@ -185,20 +184,22 @@ type TSpeakerData = {
 	loop: bool;
 	stream: bool;
 	volume: f32;
-	pitch: f32;
-	volume_min: f32;
-	volume_max: f32;
 	attenuation: f32;
-	distance_max: f32;
-	distance_reference: f32;
 	play_on_start: bool;
 }
 
 type TWorldData = {
 	name: string;
 	background_color: i32;
-	probe: TProbeData;
+	strength: f32;
+	irradiance?: string; // Reference to TIrradiance blob
+	radiance?: string;
+	radiance_mipmaps?: Null<i32>;
 	envmap?: string;
+}
+
+type TIrradiance = {
+	irradiance: Float32Array; // Blob with spherical harmonics, bands 0,1,2
 }
 
 type TParticleData = {
@@ -247,28 +248,10 @@ type TObj = {
 	parent_bone_tail_pose?: Float32Array;
 	parent_bone_connected?: Null<bool>;
 	visible?: Null<bool>;
-	visible_mesh?: Null<bool>;
-	mobile?: Null<bool>;
 	spawn?: Null<bool>; // Auto add object when creating scene
 	local_only?: Null<bool>; // Apply parent matrix
 	sampled?: Null<bool>; // Object action
 	is_ik_fk_only?: Null<bool>; // Bone IK or FK only
-	relative_bone_constraints?: Null<bool>; // Use parent relative bone constraints
-}
-
-type TConstraint = {
-	name: string;
-	type: string;
-	bone?: string; // Bone constraint
-	target?: string;
-	use_x?: Null<bool>;
-	use_y?: Null<bool>;
-	use_z?: Null<bool>;
-	invert_x?: Null<bool>;
-	invert_y?: Null<bool>;
-	invert_z?: Null<bool>;
-	use_offset?: Null<bool>;
-	influence?: Null<f32>;
 }
 
 type TTransform = {
@@ -285,25 +268,8 @@ type TAnimation = {
 	marker_names?: string[];
 }
 
-type TAnimationTransform = {
-	type: string; // translation, translation_x, ...
-	name?: string;
-	values?: Float32Array; // translation
-	value?: Null<f32>; // translation_x
-}
-
 type TTrack = {
 	target: string;
 	frames: Uint32Array;
 	values: Float32Array; // sampled - full matrix transforms, non-sampled - values
-	ref_values?: string[][]; // ref values
-}
-
-type TProbeData = {
-	name: string;
-	type: string; // grid, planar
-	strength: f32;
-	irradiance?: string; // Reference to TIrradiance blob
-	radiance?: string;
-	radiance_mipmaps?: Null<i32>;
 }

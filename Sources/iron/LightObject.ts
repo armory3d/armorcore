@@ -3,7 +3,7 @@
 
 class LightObject extends BaseObject {
 
-	data: LightData;
+	data: TLightData;
 
 	V: Mat4 = Mat4.identity();
 	P: Mat4 = null;
@@ -13,22 +13,22 @@ class LightObject extends BaseObject {
 	static m = Mat4.identity();
 	static eye = new Vec4();
 
-	constructor(data: LightData) {
+	constructor(data: TLightData) {
 		super();
 
 		this.data = data;
 
-		let type = data.raw.type;
-		let fov = data.raw.fov;
+		let type = data.type;
+		let fov = data.fov;
 
 		if (type == "sun") {
-			this.P = Mat4.ortho(-1, 1, -1, 1, data.raw.near_plane, data.raw.far_plane);
+			this.P = Mat4.ortho(-1, 1, -1, 1, data.near_plane, data.far_plane);
 		}
 		else if (type == "point" || type == "area") {
-			this.P = Mat4.persp(fov, 1, data.raw.near_plane, data.raw.far_plane);
+			this.P = Mat4.persp(fov, 1, data.near_plane, data.far_plane);
 		}
 		else if (type == "spot") {
-			this.P = Mat4.persp(fov, 1, data.raw.near_plane, data.raw.far_plane);
+			this.P = Mat4.persp(fov, 1, data.near_plane, data.far_plane);
 		}
 
 		Scene.active.lights.push(this);
@@ -45,7 +45,7 @@ class LightObject extends BaseObject {
 
 	buildMatrix = (camera: CameraObject) => {
 		this.transform.buildMatrix();
-		if (this.data.raw.type == "sun") { // Cover camera frustum
+		if (this.data.type == "sun") { // Cover camera frustum
 			this.V.getInverse(this.transform.world);
 			this.updateViewFrustum(camera);
 		}
@@ -59,7 +59,7 @@ class LightObject extends BaseObject {
 		this.VP.multmats(this.P, this.V);
 
 		// Frustum culling enabled
-		if (camera.data.raw.frustum_culling) {
+		if (camera.data.frustum_culling) {
 			if (this.frustumPlanes == null) {
 				this.frustumPlanes = [];
 				for (let i = 0; i < 6; ++i) this.frustumPlanes.push(new FrustumPlane());

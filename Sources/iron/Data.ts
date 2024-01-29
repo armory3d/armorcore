@@ -4,10 +4,10 @@ class Data {
 
 	static cachedSceneRaws: Map<string, TSceneFormat> = new Map();
 	static cachedMeshes: Map<string, MeshData> = new Map();
-	static cachedLights: Map<string, LightData> = new Map();
-	static cachedCameras: Map<string, CameraData> = new Map();
+	static cachedLights: Map<string, TLightData> = new Map();
+	static cachedCameras: Map<string, TCameraData> = new Map();
 	static cachedMaterials: Map<string, MaterialData> = new Map();
-	static cachedParticles: Map<string, ParticleData> = new Map();
+	static cachedParticles: Map<string, TParticleData> = new Map();
 	static cachedWorlds: Map<string, WorldData> = new Map();
 	static cachedShaders: Map<string, ShaderData> = new Map();
 
@@ -21,10 +21,10 @@ class Data {
 
 	static assetsLoaded = 0;
 	static loadingMeshes: Map<string, ((d: MeshData)=>void)[]> = new Map();
-	static loadingLights: Map<string, ((d: LightData)=>void)[]> = new Map();
-	static loadingCameras: Map<string, ((d: CameraData)=>void)[]> = new Map();
+	static loadingLights: Map<string, ((d: TLightData)=>void)[]> = new Map();
+	static loadingCameras: Map<string, ((d: TCameraData)=>void)[]> = new Map();
 	static loadingMaterials: Map<string, ((d: MaterialData)=>void)[]> = new Map();
-	static loadingParticles: Map<string, ((d: ParticleData)=>void)[]> = new Map();
+	static loadingParticles: Map<string, ((d: TParticleData)=>void)[]> = new Map();
 	static loadingWorlds: Map<string, ((d: WorldData)=>void)[]> = new Map();
 	static loadingShaders: Map<string, ((d: ShaderData)=>void)[]> = new Map();
 	static loadingSceneRaws: Map<string, ((fmt: TSceneFormat)=>void)[]> = new Map();
@@ -112,7 +112,7 @@ class Data {
 		Data.cachedMeshes.delete(handle);
 	}
 
-	static getLight = (file: string, name: string, done: (ld: LightData)=>void) => {
+	static getLight = (file: string, name: string, done: (ld: TLightData)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedLights.get(handle);
 		if (cached != null) {
@@ -128,14 +128,14 @@ class Data {
 
 		Data.loadingLights.set(handle, [done]);
 
-		LightData.parse(file, name, (b: LightData) => {
+		light_data_parse(file, name, (b: TLightData) => {
 			Data.cachedLights.set(handle, b);
 			for (let f of Data.loadingLights.get(handle)) f(b);
 			Data.loadingLights.delete(handle);
 		});
 	}
 
-	static getCamera = (file: string, name: string, done: (cd: CameraData)=>void) => {
+	static getCamera = (file: string, name: string, done: (cd: TCameraData)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedCameras.get(handle);
 		if (cached != null) {
@@ -151,7 +151,7 @@ class Data {
 
 		Data.loadingCameras.set(handle, [done]);
 
-		CameraData.parse(file, name, (b: CameraData) => {
+		camera_data_parse(file, name, (b: TCameraData) => {
 			Data.cachedCameras.set(handle, b);
 			for (let f of Data.loadingCameras.get(handle)) f(b);
 			Data.loadingCameras.delete(handle);
@@ -181,7 +181,7 @@ class Data {
 		});
 	}
 
-	static getParticle = (file: string, name: string, done: (pd: ParticleData)=>void) => {
+	static getParticle = (file: string, name: string, done: (pd: TParticleData)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedParticles.get(handle);
 		if (cached != null) {
@@ -197,7 +197,7 @@ class Data {
 
 		Data.loadingParticles.set(handle, [done]);
 
-		ParticleData.parse(file, name, (b: ParticleData) => {
+		particle_data_parse(file, name, (b: TParticleData) => {
 			Data.cachedParticles.set(handle, b);
 			for (let f of Data.loadingParticles.get(handle)) f(b);
 			Data.loadingParticles.delete(handle);

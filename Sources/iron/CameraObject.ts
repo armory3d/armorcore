@@ -3,7 +3,7 @@
 
 class CameraObject extends BaseObject {
 
-	data: CameraData;
+	data: TCameraData;
 	P: Mat4;
 	noJitterP = Mat4.identity();
 	frame = 0;
@@ -20,7 +20,7 @@ class CameraObject extends BaseObject {
 	static vcenter = new Vec4();
 	static vup = new Vec4();
 
-	constructor(data: CameraData) {
+	constructor(data: TCameraData) {
 		super();
 
 		this.data = data;
@@ -30,7 +30,7 @@ class CameraObject extends BaseObject {
 		this.V = Mat4.identity();
 		this.VP = Mat4.identity();
 
-		if (data.raw.frustum_culling) {
+		if (data.frustum_culling) {
 			this.frustumPlanes = [];
 			for (let i = 0; i < 6; ++i) this.frustumPlanes.push(new FrustumPlane());
 		}
@@ -39,13 +39,13 @@ class CameraObject extends BaseObject {
 	}
 
 	buildProjection = (screenAspect: Null<f32> = null) => {
-		if (this.data.raw.ortho != null) {
-			this.P = Mat4.ortho(this.data.raw.ortho[0], this.data.raw.ortho[1], this.data.raw.ortho[2], this.data.raw.ortho[3], this.data.raw.near_plane, this.data.raw.far_plane);
+		if (this.data.ortho != null) {
+			this.P = Mat4.ortho(this.data.ortho[0], this.data.ortho[1], this.data.ortho[2], this.data.ortho[3], this.data.near_plane, this.data.far_plane);
 		}
 		else {
 			if (screenAspect == null) screenAspect = App.w() / App.h();
-			let aspect = this.data.raw.aspect != null ? this.data.raw.aspect : screenAspect;
-			this.P = Mat4.persp(this.data.raw.fov, aspect, this.data.raw.near_plane, this.data.raw.far_plane);
+			let aspect = this.data.aspect != null ? this.data.aspect : screenAspect;
+			this.P = Mat4.persp(this.data.fov, aspect, this.data.near_plane, this.data.far_plane);
 		}
 		this.noJitterP.setFrom(this.P);
 	}
@@ -99,7 +99,7 @@ class CameraObject extends BaseObject {
 		this.V.getInverse(this.transform.world);
 		this.VP.multmats(this.P, this.V);
 
-		if (this.data.raw.frustum_culling) {
+		if (this.data.frustum_culling) {
 			CameraObject.buildViewFrustum(this.VP, this.frustumPlanes);
 		}
 

@@ -72,7 +72,7 @@ class RenderPath {
 
 		for (let l of Scene.active.lights) {
 			if (l.visible) l.buildMatrix(Scene.active.camera);
-			if (l.data.raw.type == "sun") this.sun = l;
+			if (l.data.type == "sun") this.sun = l;
 			else this.point = l;
 		}
 		this.light = Scene.active.lights[0];
@@ -174,7 +174,7 @@ class RenderPath {
 				colorFlag = Scene.active.world.raw.background_color;
 			}
 			else if (Scene.active.camera != null) {
-				let cc = Scene.active.camera.data.raw.clear_color;
+				let cc = Scene.active.camera.data.clear_color;
 				if (cc != null) colorFlag = color_from_floats(cc[0], cc[1], cc[2]);
 			}
 		}

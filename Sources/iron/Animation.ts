@@ -10,19 +10,6 @@ class Animation {
 	armature: Armature; // Bone
 	///end
 
-	// Lerp
-	static m1 = Mat4.identity();
-	static m2 = Mat4.identity();
-	static vpos = new Vec4();
-	static vpos2 = new Vec4();
-	static vscl = new Vec4();
-	static vscl2 = new Vec4();
-	static q1 = new Quat();
-	static q2 = new Quat();
-	static q3 = new Quat();
-	static vp = new Vec4();
-	static vs = new Vec4();
-
 	time: f32 = 0.0;
 	speed: f32 = 1.0;
 	loop = true;
@@ -38,6 +25,19 @@ class Animation {
 
 	lastFrameIndex = -1;
 	markerEvents: Map<string, (()=>void)[]> = null;
+
+	// Lerp
+	static m1 = Mat4.identity();
+	static m2 = Mat4.identity();
+	static vpos = new Vec4();
+	static vpos2 = new Vec4();
+	static vscl = new Vec4();
+	static vscl2 = new Vec4();
+	static q1 = new Quat();
+	static q2 = new Quat();
+	static q3 = new Quat();
+	static vp = new Vec4();
+	static vs = new Vec4();
 
 	constructor() {
 		Scene.active.animations.push(this);
@@ -61,10 +61,12 @@ class Animation {
 
 	play = this.playSuper;
 
-	blend = (action1: string, action2: string, factor: f32) => {
+	blendSuper = (action1: string, action2: string, factor: f32) => {
 		this.blendTime = 1.0; // Enable blending
 		this.blendFactor = factor;
 	}
+
+	blend = this.blendSuper;
 
 	pause = () => {
 		this.paused = true;

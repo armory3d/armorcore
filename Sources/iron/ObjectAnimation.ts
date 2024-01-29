@@ -20,23 +20,6 @@ class ObjectAnimation extends Animation {
 		return null;
 	}
 
-	override play = (action = "", onComplete: ()=>void = null, blendTime = 0.0, speed = 1.0, loop = true) => {
-		this.playSuper(action, onComplete, blendTime, speed, loop);
-		if (this.action == "" && this.oactions[0] != null) this.action = this.oactions[0].objects[0].name;
-		this.oaction = this.getAction(this.action);
-		if (this.oaction != null) {
-			this.isSampled = this.oaction.sampled != null && this.oaction.sampled;
-		}
-	}
-
-	override update = (delta: f32) => {
-		if (!this.object.visible || this.object.culled || this.oaction == null) return;
-
-		this.updateSuper(delta);
-		if (this.paused) return;
-		if (!this.isSkinned) this.updateObjectAnim();
-	}
-
 	updateObjectAnim = () => {
 		this.updateTransformAnim(this.oaction.anim, this.object.transform);
 		this.object.transform.buildMatrix();
@@ -45,12 +28,6 @@ class ObjectAnimation extends Animation {
 	interpolateLinear = (t: f32, t1: f32, t2: f32, v1: f32, v2: f32): f32 => {
 		let s = (t - t1) / (t2 - t1);
 		return (1.0 - s) * v1 + s * v2;
-	}
-
-	override isTrackEnd = (track: TTrack): bool => {
-		return this.speed > 0 ?
-			this.frameIndex >= track.frames.length - 2 :
-			this.frameIndex <= 0;
 	}
 
 	checkFrameIndexT = (frameValues: Uint32Array, t: f32): bool => {
@@ -137,6 +114,29 @@ class ObjectAnimation extends Animation {
 				case "dzscl": transform.dscale.z = value;
 			}
 		}
+	}
+
+	override play = (action = "", onComplete: ()=>void = null, blendTime = 0.0, speed = 1.0, loop = true) => {
+		this.playSuper(action, onComplete, blendTime, speed, loop);
+		if (this.action == "" && this.oactions[0] != null) this.action = this.oactions[0].objects[0].name;
+		this.oaction = this.getAction(this.action);
+		if (this.oaction != null) {
+			this.isSampled = this.oaction.sampled != null && this.oaction.sampled;
+		}
+	}
+
+	override update = (delta: f32) => {
+		if (!this.object.visible || this.object.culled || this.oaction == null) return;
+
+		this.updateSuper(delta);
+		if (this.paused) return;
+		if (!this.isSkinned) this.updateObjectAnim();
+	}
+
+	override isTrackEnd = (track: TTrack): bool => {
+		return this.speed > 0 ?
+			this.frameIndex >= track.frames.length - 2 :
+			this.frameIndex <= 0;
 	}
 
 	override totalFrames = (): i32 => {
