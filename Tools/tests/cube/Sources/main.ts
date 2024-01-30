@@ -85,7 +85,7 @@
 		};
 		raw.material_datas.push(md);
 
-		MaterialData.parse(raw.name, md.name, function(res: MaterialData) {
+		MaterialData.parse(raw.name, md.name, function(res: TMaterialData) {
 			data_ready();
 		});
 	}
