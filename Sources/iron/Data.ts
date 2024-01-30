@@ -3,13 +3,13 @@
 class Data {
 
 	static cachedSceneRaws: Map<string, TSceneFormat> = new Map();
-	static cachedMeshes: Map<string, MeshData> = new Map();
+	static cachedMeshes: Map<string, TMeshData> = new Map();
 	static cachedLights: Map<string, TLightData> = new Map();
 	static cachedCameras: Map<string, TCameraData> = new Map();
-	static cachedMaterials: Map<string, MaterialData> = new Map();
+	static cachedMaterials: Map<string, TMaterialData> = new Map();
 	static cachedParticles: Map<string, TParticleData> = new Map();
-	static cachedWorlds: Map<string, WorldData> = new Map();
-	static cachedShaders: Map<string, ShaderData> = new Map();
+	static cachedWorlds: Map<string, TWorldData> = new Map();
+	static cachedShaders: Map<string, TShaderData> = new Map();
 
 	static cachedBlobs: Map<string, ArrayBuffer> = new Map();
 	static cachedImages: Map<string, Image> = new Map();
@@ -20,13 +20,13 @@ class Data {
 	///end
 
 	static assetsLoaded = 0;
-	static loadingMeshes: Map<string, ((d: MeshData)=>void)[]> = new Map();
+	static loadingMeshes: Map<string, ((d: TMeshData)=>void)[]> = new Map();
 	static loadingLights: Map<string, ((d: TLightData)=>void)[]> = new Map();
 	static loadingCameras: Map<string, ((d: TCameraData)=>void)[]> = new Map();
-	static loadingMaterials: Map<string, ((d: MaterialData)=>void)[]> = new Map();
+	static loadingMaterials: Map<string, ((d: TMaterialData)=>void)[]> = new Map();
 	static loadingParticles: Map<string, ((d: TParticleData)=>void)[]> = new Map();
-	static loadingWorlds: Map<string, ((d: WorldData)=>void)[]> = new Map();
-	static loadingShaders: Map<string, ((d: ShaderData)=>void)[]> = new Map();
+	static loadingWorlds: Map<string, ((d: TWorldData)=>void)[]> = new Map();
+	static loadingShaders: Map<string, ((d: TShaderData)=>void)[]> = new Map();
 	static loadingSceneRaws: Map<string, ((fmt: TSceneFormat)=>void)[]> = new Map();
 	static loadingBlobs: Map<string, ((ab: ArrayBuffer)=>void)[]> = new Map();
 	static loadingImages: Map<string, ((img: Image)=>void)[]> = new Map();
@@ -52,12 +52,10 @@ class Data {
 		///end
 	}
 
-	constructor() {}
-
 	static deleteAll = () => {
-		for (let c of Data.cachedMeshes.values()) c.delete();
+		for (let c of Data.cachedMeshes.values()) MeshData.delete(c);
 		Data.cachedMeshes = new Map();
-		for (let c of Data.cachedShaders.values()) c.delete();
+		for (let c of Data.cachedShaders.values()) ShaderData.delete(c);
 		Data.cachedShaders = new Map();
 		Data.cachedSceneRaws = new Map();
 		Data.cachedLights = new Map();
@@ -80,7 +78,7 @@ class Data {
 		Data.cachedFonts = new Map();
 	}
 
-	static getMesh = (file: string, name: string, done: (md: MeshData)=>void) => {
+	static getMesh = (file: string, name: string, done: (md: TMeshData)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedMeshes.get(handle);
 		if (cached != null) {
@@ -96,9 +94,9 @@ class Data {
 
 		Data.loadingMeshes.set(handle, [done]);
 
-		MeshData.parse(file, name, (b: MeshData) => {
+		MeshData.parse(file, name, (b: TMeshData) => {
 			Data.cachedMeshes.set(handle, b);
-			b.handle = handle;
+			b._handle = handle;
 			for (let f of Data.loadingMeshes.get(handle)) f(b);
 			Data.loadingMeshes.delete(handle);
 		});
@@ -108,7 +106,7 @@ class Data {
 		// Remove cached mesh
 		let mesh = Data.cachedMeshes.get(handle);
 		if (mesh == null) return;
-		mesh.delete();
+		MeshData.delete(mesh);
 		Data.cachedMeshes.delete(handle);
 	}
 
@@ -158,7 +156,7 @@ class Data {
 		});
 	}
 
-	static getMaterial = (file: string, name: string, done: (md: MaterialData)=>void) => {
+	static getMaterial = (file: string, name: string, done: (md: TMaterialData)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedMaterials.get(handle);
 		if (cached != null) {
@@ -174,7 +172,7 @@ class Data {
 
 		Data.loadingMaterials.set(handle, [done]);
 
-		MaterialData.parse(file, name, (b: MaterialData) => {
+		MaterialData.parse(file, name, (b: TMaterialData) => {
 			Data.cachedMaterials.set(handle, b);
 			for (let f of Data.loadingMaterials.get(handle)) f(b);
 			Data.loadingMaterials.delete(handle);
@@ -204,7 +202,7 @@ class Data {
 		});
 	}
 
-	static getWorld = (file: string, name: string, done: (wd: WorldData)=>void) => {
+	static getWorld = (file: string, name: string, done: (wd: TWorldData)=>void) => {
 		if (name == null) { // No world defined in scene
 			done(null);
 			return;
@@ -225,14 +223,14 @@ class Data {
 
 		Data.loadingWorlds.set(handle, [done]);
 
-		WorldData.parse(file, name, (b: WorldData) => {
+		WorldData.parse(file, name, (b: TWorldData) => {
 			Data.cachedWorlds.set(handle, b);
 			for (let f of Data.loadingWorlds.get(handle)) f(b);
 			Data.loadingWorlds.delete(handle);
 		});
 	}
 
-	static getShader = (file: string, name: string, done: (sd: ShaderData)=>void, overrideContext: TShaderOverride = null) => {
+	static getShader = (file: string, name: string, done: (sd: TShaderData)=>void, overrideContext: TShaderOverride = null) => {
 		// Only one context override per shader data for now
 		let cacheName = name;
 		if (overrideContext != null) cacheName += "2";
@@ -250,7 +248,7 @@ class Data {
 
 		Data.loadingShaders.set(cacheName, [done]);
 
-		ShaderData.parse(file, name, (b: ShaderData) => {
+		ShaderData.parse(file, name, (b: TShaderData) => {
 			Data.cachedShaders.set(cacheName, b);
 			for (let f of Data.loadingShaders.get(cacheName)) f(b);
 			Data.loadingShaders.delete(cacheName);

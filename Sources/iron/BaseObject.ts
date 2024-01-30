@@ -86,7 +86,7 @@ class BaseObject {
 		// Parented to bone
 		///if arm_skin
 		if (this.raw.parent_bone != null) {
-			Scene.notifyOnInit(() => {
+			App.notifyOnInit(() => {
 				let banim = this.getParentArmature(this.parent.name);
 				if (banim != null) banim.addBoneChild(this.raw.parent_bone, this);
 			});

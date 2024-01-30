@@ -19,10 +19,6 @@ class App {
 	static onResize: ()=>void = null;
 
 	static init = (done: ()=>void) => {
-		new App(done);
-	}
-
-	constructor(done: ()=>void) {
 		done();
 		System.notifyOnFrames(App.render);
 	}

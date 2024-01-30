@@ -4,7 +4,7 @@
 class BoneAnimation extends Animation {
 
 	object: MeshObject;
-	data: MeshData;
+	data: TMeshData;
 	skinBuffer: Float32Array;
 
 	skeletonBones: TObj[] = null;
@@ -58,7 +58,7 @@ class BoneAnimation extends Animation {
 	setSkin = (mo: MeshObject) => {
 		this.object = mo;
 		this.data = mo != null ? mo.data : null;
-		this.isSkinned = this.data != null ? this.data.isSkinned : false;
+		this.isSkinned = this.data != null ? this.data.skin != null : false;
 		if (this.isSkinned) {
 			let boneSize = 8; // Dual-quat skinning
 			this.skinBuffer = new Float32Array(BoneAnimation.skinMaxBones * boneSize);
@@ -151,8 +151,8 @@ class BoneAnimation extends Animation {
 
 	setAction = (action: string) => {
 		if (this.isSkinned) {
-			this.skeletonBones = this.data.actions.get(action);
-			this.skeletonMats = this.data.mats.get(action);
+			this.skeletonBones = this.data._actions.get(action);
+			this.skeletonMats = this.data._mats.get(action);
 			this.skeletonBonesBlend = null;
 			this.skeletonMatsBlend = null;
 		}
@@ -169,8 +169,8 @@ class BoneAnimation extends Animation {
 		if (this.isSkinned) {
 			this.skeletonBonesBlend = this.skeletonBones;
 			this.skeletonMatsBlend = this.skeletonMats;
-			this.skeletonBones = this.data.actions.get(action);
-			this.skeletonMats = this.data.mats.get(action);
+			this.skeletonBones = this.data._actions.get(action);
+			this.skeletonMats = this.data._mats.get(action);
 		}
 		else {
 			this.armature.initMats();
@@ -255,7 +255,7 @@ class BoneAnimation extends Animation {
 			if (this.absMats != null && i < this.absMats.length) this.absMats[i].setFrom(BoneAnimation.m);
 			if (this.boneChildren != null) this.updateBoneChildren(bones[i], BoneAnimation.m);
 
-			BoneAnimation.m.multmats(BoneAnimation.m, this.data.skeletonTransformsI[i]);
+			BoneAnimation.m.multmats(BoneAnimation.m, this.data._skeletonTransformsI[i]);
 			this.updateSkinBuffer(BoneAnimation.m, i);
 		}
 	}
@@ -320,16 +320,16 @@ class BoneAnimation extends Animation {
 	}
 
 	getBoneLen = (bone: TObj): f32 => {
-		let refs = this.data.skeletonBoneRefs;
-		let lens = this.data.skeletonBoneLens;
+		let refs = this.data.skin.bone_ref_array;
+		let lens = this.data.skin.bone_len_array;
 		for (let i = 0; i < refs.length; ++i) if (refs[i] == bone.name) return lens[i];
 		return 0.0;
 	}
 
 	// Returns bone length with scale applied
 	getBoneAbsLen = (bone: TObj): f32 => {
-		let refs = this.data.skeletonBoneRefs;
-		let lens = this.data.skeletonBoneLens;
+		let refs = this.data.skin.bone_ref_array;
+		let lens = this.data.skin.bone_len_array;
 		let scale = this.object.parent.transform.world.getScale().z;
 		for (let i = 0; i < refs.length; ++i) if (refs[i] == bone.name) return lens[i] * scale;
 		return 0.0;
@@ -342,7 +342,7 @@ class BoneAnimation extends Animation {
 		return wm;
 	}
 
-	solveIK = (effector: TObj, goal: Vec4, precision = 0.01, maxIterations = 100, chainLenght = 100, pole: Vec4 = null, rollAngle = 0.0) => {
+	solveIK = (effector: TObj, goal: Vec4, precision = 0.01, maxIterations = 100, chainLenght = 100, rollAngle = 0.0) => {
 		// Array of bones to solve IK for, effector at 0
 		let bones: TObj[] = [];
 
@@ -457,13 +457,6 @@ class BoneAnimation extends Animation {
 			if (Vec4.distance(boneWorldLocs[l - 1], goal) - lengths[0] <= precision) break;
 		}
 
-		// Pole rotation implementation
-		if (pole != null) {
-			for (let i = 1; i < boneWorldLocs.length - 1; ++i) {
-				boneWorldLocs[i] = this.moveTowardPole(boneWorldLocs[i - 1].clone(), boneWorldLocs[i].clone(), boneWorldLocs[i + 1].clone(), pole.clone());
-			}
-		}
-
 		// Correct rotations
 		// Applying locations and rotations
 		let tempLook = new Vec4();
@@ -508,70 +501,6 @@ class BoneAnimation extends Animation {
 
 		// Set bone matrix in local space from world space
 		this.setBoneMatFromWorldMat(boneWorldMats[l - 1], bones[0]);
-	}
-
-	moveTowardPole = (bone0Pos: Vec4, bone1Pos: Vec4, bone2Pos: Vec4, polePos: Vec4): Vec4 => {
-		// Setup projection plane at current bone's parent
-		let plane = new Plane();
-
-		// Plane normal from parent of current bone to child of current bone
-		let planeNormal = new Vec4().setFrom(bone2Pos);
-		planeNormal.sub(bone0Pos);
-		planeNormal.normalize();
-		plane.set(planeNormal, bone0Pos);
-
-		// Create and project ray from current bone to plane
-		let rayPos = new Vec4();
-		rayPos.setFrom(bone1Pos);
-		let rayDir = new Vec4();
-		rayDir.sub(planeNormal);
-		rayDir.normalize();
-		let rayBone = new Ray(rayPos, rayDir);
-
-		// Projection point of current bone on plane
-		// If pole does not project on the plane
-		if (!rayBone.intersectsPlane(plane)) {
-			rayBone.direction = planeNormal;
-		}
-
-		let bone1Proj = rayBone.intersectPlane(plane);
-
-		// Create and project ray from pole to plane
-		rayPos.setFrom(polePos);
-		let rayPole = new Ray(rayPos, rayDir);
-
-		// If pole does not project on the plane
-		if (!rayPole.intersectsPlane(plane)) {
-			rayPole.direction = planeNormal;
-		}
-
-		// Projection point of pole on plane
-		let poleProj = rayPole.intersectPlane(plane);
-
-		// Caclulate unit vectors from pole projection to parent bone
-		let poleProjNormal = new Vec4();
-		poleProjNormal.setFrom(bone0Pos);
-		poleProjNormal.sub(poleProj);
-		poleProjNormal.normalize();
-
-		// Calculate unit vector from current bone projection to parent bone
-		let bone1ProjNormal = new Vec4();
-		bone1ProjNormal.setFrom(bone0Pos);
-		bone1ProjNormal.sub(bone1Proj);
-		bone1ProjNormal.normalize();
-
-		// Calculate rotation quaternion
-		let rotQuat = new Quat();
-		rotQuat.fromTo(bone1ProjNormal, poleProjNormal);
-
-		// Apply quaternion to current bone location
-		let bone1Res = new Vec4().setFrom(bone1Pos);
-		bone1Res.sub(bone0Pos);
-		bone1Res.applyQuat(rotQuat);
-		bone1Res.add(bone0Pos);
-
-		// Return new location of current bone
-		return bone1Res;
 	}
 
 	// Returns an array of bone matrices in world space

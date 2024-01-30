@@ -8,7 +8,7 @@ class Scene {
 	static root: BaseObject;
 	static sceneParent: BaseObject;
 	static camera: CameraObject;
-	static world: WorldData;
+	static world: TWorldData;
 
 	static meshes: MeshObject[];
 	static lights: LightObject[];
@@ -43,7 +43,7 @@ class Scene {
 		Scene.ready = false;
 		Scene.raw = format;
 
-		Data.getWorld(format.name, format.world_ref, (world: WorldData) => {
+		Data.getWorld(format.name, format.world_ref, (world: TWorldData) => {
 			Scene.world = world;
 
 			// Startup scene
@@ -137,7 +137,7 @@ class Scene {
 		return null;
 	}
 
-	static addMeshObject = (data: MeshData, materials: MaterialData[], parent: BaseObject = null): MeshObject => {
+	static addMeshObject = (data: TMeshData, materials: TMaterialData[], parent: BaseObject = null): MeshObject => {
 		let object = new MeshObject(data, materials);
 		parent != null ? object.setParent(parent) : object.setParent(Scene.root);
 		return object;
@@ -275,11 +275,11 @@ class Scene {
 			}
 			else {
 				// Materials
-				let materials: MaterialData[] = [];
+				let materials: TMaterialData[] = [];
 				let materialsLoaded = 0;
 				for (let i = 0; i < o.material_refs.length; ++i) {
 					let ref = o.material_refs[i];
-					Data.getMaterial(sceneName, ref, (mat: MaterialData) => {
+					Data.getMaterial(sceneName, ref, (mat: TMaterialData) => {
 						materials[i] = mat;
 						materialsLoaded++;
 						if (materialsLoaded == o.material_refs.length) {
@@ -304,7 +304,7 @@ class Scene {
 		else done(null);
 	}
 
-	static createMeshObject = (o: TObj, format: TSceneFormat, parent: BaseObject, parentObject: TObj, materials: MaterialData[], done: (o: BaseObject)=>void) => {
+	static createMeshObject = (o: TObj, format: TSceneFormat, parent: BaseObject, parentObject: TObj, materials: TMaterialData[], done: (o: BaseObject)=>void) => {
 		// Mesh reference
 		let ref = o.data_ref.split("/");
 		let object_file = "";
@@ -359,15 +359,13 @@ class Scene {
 		Scene.returnMeshObject(object_file, data_ref, sceneName, null, materials, parent, parentObject, o, done);
 	}
 
-	static returnMeshObject = (object_file: string, data_ref: string, sceneName: string,
-		armature: any, // Armature
-		materials: MaterialData[], parent: BaseObject, parentObject: TObj, o: TObj, done: (o: BaseObject)=>void) => {
+	static returnMeshObject = (object_file: string, data_ref: string, sceneName: string, armature: any, // Armature
+		materials: TMaterialData[], parent: BaseObject, parentObject: TObj, o: TObj, done: (o: BaseObject)=>void) => {
 
-			Data.getMesh(object_file, data_ref, (mesh: MeshData) => {
+			Data.getMesh(object_file, data_ref, (mesh: TMeshData) => {
 			///if arm_skin
-			if (mesh.isSkinned) {
-				let g = mesh;
-				armature != null ? g.addArmature(armature) : g.addAction(mesh.format.objects, "none");
+			if (mesh.skin != null) {
+				armature != null ? MeshData.addArmature(mesh, armature) : MeshData.addAction(mesh, Scene.raw.objects, "none");
 			}
 			///end
 			let object = Scene.addMeshObject(mesh, materials, parent);

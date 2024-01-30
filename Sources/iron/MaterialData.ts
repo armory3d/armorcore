@@ -2,16 +2,9 @@
 class MaterialData {
 
 	static uidCounter = 0;
-	uid: f32;
-	name: string;
-	raw: TMaterialData;
-	shader: ShaderData;
-	contexts: MaterialContext[] = null;
 
-	constructor(raw: TMaterialData, done: (data: MaterialData)=>void, file = "") {
-		this.uid = ++MaterialData.uidCounter; // Start from 1
-		this.raw = raw;
-		this.name = raw.name;
+	static create(raw: TMaterialData, done: (data: TMaterialData)=>void, file = "") {
+		raw._uid = ++MaterialData.uidCounter; // Start from 1
 
 		let ref = raw.shader.split("/");
 		let object_file = "";
@@ -25,58 +18,52 @@ class MaterialData {
 			data_ref = raw.shader;
 		}
 
-		Data.getShader(object_file, data_ref, (b: ShaderData) => {
-			this.shader = b;
+		Data.getShader(object_file, data_ref, (b: TShaderData) => {
+			raw._shader = b;
 
 			// Contexts have to be in the same order as in raw data for now
-			this.contexts = [];
-			while (this.contexts.length < raw.contexts.length) this.contexts.push(null);
+			raw._contexts = [];
+			while (raw._contexts.length < raw.contexts.length) raw._contexts.push(null);
 			let contextsLoaded = 0;
 
 			for (let i = 0; i < raw.contexts.length; ++i) {
 				let c = raw.contexts[i];
-				new MaterialContext(c, (self: MaterialContext) => {
-					this.contexts[i] = self;
+				MaterialContext.create(c, (self: TMaterialContext) => {
+					raw._contexts[i] = self;
 					contextsLoaded++;
-					if (contextsLoaded == raw.contexts.length) done(this);
+					if (contextsLoaded == raw.contexts.length) done(raw);
 				});
 			}
 		}, raw.override_context);
 	}
 
-	static parse = (file: string, name: string, done: (data: MaterialData)=>void) => {
+	static parse = (file: string, name: string, done: (data: TMaterialData)=>void) => {
 		Data.getSceneRaw(file, (format: TSceneFormat) => {
 			let raw: TMaterialData = Data.getMaterialRawByName(format.material_datas, name);
 			if (raw == null) {
 				Krom.log(`Material data "${name}" not found!`);
 				done(null);
 			}
-			new MaterialData(raw, done, file);
+			MaterialData.create(raw, done, file);
 		});
 	}
 
-	getContext = (name: string): MaterialContext => {
-		for (let c of this.contexts) {
+	static getContext = (raw: TMaterialData, name: string): TMaterialContext => {
+		for (let c of raw._contexts) {
 			// 'mesh' will fetch both 'mesh' and 'meshheight' contexts
-			if (c.raw.name.substr(0, name.length) == name) return c;
+			if (c.name.substr(0, name.length) == name) return c;
 		}
 		return null;
 	}
 }
 
 class MaterialContext {
-	raw: TMaterialContext;
-	textures: Image[] = null;
-	id = 0;
-	static num = 0;
 
-	constructor(raw: TMaterialContext, done: (context: MaterialContext)=>void) {
-		this.raw = raw;
-		this.id = MaterialContext.num++;
+	static create(raw: TMaterialContext, done: (context: TMaterialContext)=>void) {
 
 		if (raw.bind_textures != null && raw.bind_textures.length > 0) {
 
-			this.textures = [];
+			raw._textures = [];
 			let texturesLoaded = 0;
 
 			for (let i = 0; i < raw.bind_textures.length; ++i) {
@@ -84,12 +71,12 @@ class MaterialContext {
 
 				if (tex.file == "" || tex.source == "movie") { // Empty texture
 					texturesLoaded++;
-					if (texturesLoaded == raw.bind_textures.length) done(this);
+					if (texturesLoaded == raw.bind_textures.length) done(raw);
 					continue;
 				}
 
 				Data.getImage(tex.file, (image: Image) => {
-					this.textures[i] = image;
+					raw._textures[i] = image;
 					texturesLoaded++;
 
 					// Set mipmaps
@@ -110,7 +97,7 @@ class MaterialContext {
 									tex.mipmaps = null;
 									tex.generate_mipmaps = false;
 
-									if (texturesLoaded == raw.bind_textures.length) done(this);
+									if (texturesLoaded == raw.bind_textures.length) done(raw);
 								}
 							});
 						}
@@ -120,18 +107,18 @@ class MaterialContext {
 						tex.mipmaps = null;
 						tex.generate_mipmaps = false;
 
-						if (texturesLoaded == raw.bind_textures.length) done(this);
+						if (texturesLoaded == raw.bind_textures.length) done(raw);
 					}
-					else if (texturesLoaded == raw.bind_textures.length) done(this);
+					else if (texturesLoaded == raw.bind_textures.length) done(raw);
 
 				}, false, tex.format != null ? tex.format : "RGBA32");
 			}
 		}
-		else done(this);
+		else done(raw);
 	}
 
-	setTextureParameters = (g: Graphics4, textureIndex: i32, context: ShaderContext, unitIndex: i32) => {
+	static setTextureParameters = (raw: TMaterialContext, g: Graphics4, textureIndex: i32, context: TShaderContext, unitIndex: i32) => {
 		// This function is called by MeshObject for samplers set using material context
-		context.setTextureParameters(g, unitIndex, this.raw.bind_textures[textureIndex]);
+		ShaderContext.setTextureParameters(context, g, unitIndex, raw.bind_textures[textureIndex]);
 	}
 }

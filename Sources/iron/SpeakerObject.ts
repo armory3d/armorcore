@@ -6,7 +6,7 @@ class SpeakerObject extends BaseObject {
 	data: TSpeakerData;
 	paused = false;
 	sound: Sound = null;
-	channels: AudioChannel[] = [];
+	channels: TAudioChannel[] = [];
 	volume: f32;
 
 	constructor(data: TSpeakerData) {
@@ -31,11 +31,11 @@ class SpeakerObject extends BaseObject {
 	play = () => {
 		if (this.sound == null || this.data.muted) return;
 		if (this.paused) {
-			for (let c of this.channels) c.play();
+			for (let c of this.channels) Audio.play(c);
 			this.paused = false;
 			return;
 		}
-		let channel = Audio.play(this.sound, this.data.loop, this.data.stream);
+		let channel = Audio.channel(this.sound, this.data.loop, this.data.stream);
 		if (channel != null) {
 			this.channels.push(channel);
 			if (this.data.attenuation > 0 && this.channels.length == 1) App.notifyOnUpdate(this.update);
@@ -43,12 +43,12 @@ class SpeakerObject extends BaseObject {
 	}
 
 	pause = () => {
-		for (let c of this.channels) c.pause();
+		for (let c of this.channels) Audio.pause(c);
 		this.paused = true;
 	}
 
 	stop = () => {
-		for (let c of this.channels) c.stop();
+		for (let c of this.channels) Audio.stop(c);
 		this.channels.splice(0, this.channels.length);
 	}
 

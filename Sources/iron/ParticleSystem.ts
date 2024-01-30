@@ -110,7 +110,7 @@ class ParticleSystem {
 	}
 
 	updateGpu = (object: MeshObject, owner: MeshObject) => {
-		if (!object.data.instanced) this.setupGeomGpu(object, owner);
+		if (!object.data._instanced) this.setupGeomGpu(object, owner);
 		// GPU particles transform is attached to owner object
 	}
 
@@ -123,29 +123,29 @@ class ParticleSystem {
 		let i = 0;
 
 		let normFactor = 1 / 32767; // pa.values are not normalized
-		let scalePosOwner = owner.data.scalePos;
-		let scalePosParticle = object.data.scalePos;
+		let scalePosOwner = owner.data.scale_pos;
+		let scalePosParticle = object.data.scale_pos;
 		let particleSize = this.r.particle_size;
 		let scaleFactor = new Vec4().setFrom(owner.transform.scale);
 		scaleFactor.mult(scalePosOwner / (particleSize * scalePosParticle));
 
 		switch (this.r.emit_from) {
 			case 0: // Vert
-				let pa = owner.data.positions;
+				let pa = MeshData.getVArray(owner.data, 'pos');
 
 				for (let p of this.particles) {
-					let j = Math.floor(this.fhash(i) * (pa.values.length / pa.size));
-					instancedData[i] = pa.values[j * pa.size    ] * normFactor * scaleFactor.x; i++;
-					instancedData[i] = pa.values[j * pa.size + 1] * normFactor * scaleFactor.y; i++;
-					instancedData[i] = pa.values[j * pa.size + 2] * normFactor * scaleFactor.z; i++;
+					let j = Math.floor(this.fhash(i) * (pa.values.length / pa._size));
+					instancedData[i] = pa.values[j * pa._size    ] * normFactor * scaleFactor.x; i++;
+					instancedData[i] = pa.values[j * pa._size + 1] * normFactor * scaleFactor.y; i++;
+					instancedData[i] = pa.values[j * pa._size + 2] * normFactor * scaleFactor.z; i++;
 				}
 
 			case 1: // Face
-				let positions = owner.data.positions.values;
+				let positions = MeshData.getVArray(owner.data, 'pos').values;
 
 				for (let p of this.particles) {
 					// Choose random index array (there is one per material) and random face
-					let ia = owner.data.indices[this.rand(owner.data.indices.length)];
+					let ia = owner.data._indices[this.rand(owner.data._indices.length)];
 					let faceIndex = this.rand(Math.floor(ia.length / 3));
 
 					let i0 = ia[faceIndex * 3 + 0];
@@ -173,7 +173,7 @@ class ParticleSystem {
 					instancedData[i] = (Math.random() * 2.0 - 1.0) * scaleFactorVolume.z; i++;
 				}
 		}
-		object.data.setupInstanced(instancedData, 1, Usage.StaticUsage);
+		MeshData.setupInstanced(object.data, instancedData, 1);
 	}
 
 	fhash = (n: i32): f32 => {

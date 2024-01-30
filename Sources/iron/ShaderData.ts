@@ -1,10 +1,6 @@
 
 class ShaderData {
 
-	name: string;
-	raw: TShaderData;
-	contexts: ShaderContext[] = [];
-
 	static get ext(): string {
 		///if krom_vulkan
 		return ".spirv";
@@ -19,132 +15,119 @@ class ShaderData {
 		///end
 	}
 
-	constructor(raw: TShaderData, done: (sd: ShaderData)=>void, overrideContext: TShaderOverride = null) {
-		this.raw = raw;
-		this.name = raw.name;
-
-		for (let c of raw.contexts) this.contexts.push(null);
+	static create(raw: TShaderData, done: (sd: TShaderData)=>void, overrideContext: TShaderOverride = null) {
+		raw._contexts = [];
+		for (let c of raw.contexts) raw._contexts.push(null);
 		let contextsLoaded = 0;
 
 		for (let i = 0; i < raw.contexts.length; ++i) {
 			let c = raw.contexts[i];
-			new ShaderContext(c, (con: ShaderContext) => {
-				this.contexts[i] = con;
+			ShaderContext.create(c, (con: TShaderContext) => {
+				raw._contexts[i] = con;
 				contextsLoaded++;
-				if (contextsLoaded == raw.contexts.length) done(this);
+				if (contextsLoaded == raw.contexts.length) done(raw);
 			}, overrideContext);
 		}
 	}
 
-	static parse = (file: string, name: string, done: (sd: ShaderData)=>void, overrideContext: TShaderOverride = null) => {
+	static parse = (file: string, name: string, done: (sd: TShaderData)=>void, overrideContext: TShaderOverride = null) => {
 		Data.getSceneRaw(file, (format: TSceneFormat) => {
 			let raw: TShaderData = Data.getShaderRawByName(format.shader_datas, name);
 			if (raw == null) {
 				Krom.log(`Shader data "${name}" not found!`);
 				done(null);
 			}
-			new ShaderData(raw, done, overrideContext);
+			ShaderData.create(raw, done, overrideContext);
 		});
 	}
 
-	delete = () => {
-		for (let c of this.contexts) c.delete();
+	static delete = (raw: TShaderData) => {
+		for (let c of raw._contexts) ShaderContext.delete(c);
 	}
 
-	getContext = (name: string): ShaderContext => {
-		for (let c of this.contexts) if (c.raw.name == name) return c;
+	static getContext = (raw: TShaderData, name: string): TShaderContext => {
+		for (let c of raw._contexts) if (c.name == name) return c;
 		return null;
 	}
 }
 
 class ShaderContext {
-	raw: TShaderContext;
-	pipeState: PipelineState;
-	constants: ConstantLocation[];
-	textureUnits: TextureUnit[];
-	overrideContext: TShaderOverride;
 
-	structure: VertexStructure;
-	instancingType = 0;
-
-	constructor(raw: TShaderContext, done: (sc: ShaderContext)=>void, overrideContext: TShaderOverride = null) {
-		this.raw = raw;
+	static create(raw: TShaderContext, done: (sc: TShaderContext)=>void, overrideContext: TShaderOverride = null) {
 		///if (!arm_voxels)
 		if (raw.name == "voxel") {
-			done(this);
+			done(raw);
 			return;
 		}
 		///end
-		this.overrideContext = overrideContext;
-		this.parseVertexStructure();
-		this.compile(done);
+		raw._overrideContext = overrideContext;
+		ShaderContext.parseVertexStructure(raw);
+		ShaderContext.compile(raw, done);
 	}
 
-	compile = (done: (sc: ShaderContext)=>void) => {
-		if (this.pipeState != null) this.pipeState.delete();
-		this.pipeState = new PipelineState();
-		this.constants = [];
-		this.textureUnits = [];
+	static compile = (raw: TShaderContext, done: (sc: TShaderContext)=>void) => {
+		if (raw._pipeState != null) raw._pipeState.delete();
+		raw._pipeState = new PipelineState();
+		raw._constants = [];
+		raw._textureUnits = [];
 
-		if (this.instancingType > 0) { // Instancing
+		if (raw._instancingType > 0) { // Instancing
 			let instStruct = new VertexStructure();
 			instStruct.add("ipos", VertexData.F32_3X);
-			if (this.instancingType == 2 || this.instancingType == 4) {
+			if (raw._instancingType == 2 || raw._instancingType == 4) {
 				instStruct.add("irot", VertexData.F32_3X);
 			}
-			if (this.instancingType == 3 || this.instancingType == 4) {
+			if (raw._instancingType == 3 || raw._instancingType == 4) {
 				instStruct.add("iscl", VertexData.F32_3X);
 			}
 			instStruct.instanced = true;
-			this.pipeState.inputLayout = [this.structure, instStruct];
+			raw._pipeState.inputLayout = [raw._structure, instStruct];
 		}
 		else { // Regular
-			this.pipeState.inputLayout = [this.structure];
+			raw._pipeState.inputLayout = [raw._structure];
 		}
 
 		// Depth
-		this.pipeState.depthWrite = this.raw.depth_write;
-		this.pipeState.depthMode = this.getCompareMode(this.raw.compare_mode);
+		raw._pipeState.depthWrite = raw.depth_write;
+		raw._pipeState.depthMode = ShaderContext.getCompareMode(raw.compare_mode);
 
 		// Cull
-		this.pipeState.cullMode = this.getCullMode(this.raw.cull_mode);
+		raw._pipeState.cullMode = ShaderContext.getCullMode(raw.cull_mode);
 
 		// Blending
-		if (this.raw.blend_source != null) this.pipeState.blendSource = this.getBlendingFactor(this.raw.blend_source);
-		if (this.raw.blend_destination != null) this.pipeState.blendDestination = this.getBlendingFactor(this.raw.blend_destination);
-		if (this.raw.alpha_blend_source != null) this.pipeState.alphaBlendSource = this.getBlendingFactor(this.raw.alpha_blend_source);
-		if (this.raw.alpha_blend_destination != null) this.pipeState.alphaBlendDestination = this.getBlendingFactor(this.raw.alpha_blend_destination);
+		if (raw.blend_source != null) raw._pipeState.blendSource = ShaderContext.getBlendingFactor(raw.blend_source);
+		if (raw.blend_destination != null) raw._pipeState.blendDestination = ShaderContext.getBlendingFactor(raw.blend_destination);
+		if (raw.alpha_blend_source != null) raw._pipeState.alphaBlendSource = ShaderContext.getBlendingFactor(raw.alpha_blend_source);
+		if (raw.alpha_blend_destination != null) raw._pipeState.alphaBlendDestination = ShaderContext.getBlendingFactor(raw.alpha_blend_destination);
 
 		// Per-target color write mask
-		if (this.raw.color_writes_red != null) for (let i = 0; i < this.raw.color_writes_red.length; ++i) this.pipeState.colorWriteMasksRed[i] = this.raw.color_writes_red[i];
-		if (this.raw.color_writes_green != null) for (let i = 0; i < this.raw.color_writes_green.length; ++i) this.pipeState.colorWriteMasksGreen[i] = this.raw.color_writes_green[i];
-		if (this.raw.color_writes_blue != null) for (let i = 0; i < this.raw.color_writes_blue.length; ++i) this.pipeState.colorWriteMasksBlue[i] = this.raw.color_writes_blue[i];
-		if (this.raw.color_writes_alpha != null) for (let i = 0; i < this.raw.color_writes_alpha.length; ++i) this.pipeState.colorWriteMasksAlpha[i] = this.raw.color_writes_alpha[i];
+		if (raw.color_writes_red != null) for (let i = 0; i < raw.color_writes_red.length; ++i) raw._pipeState.colorWriteMasksRed[i] = raw.color_writes_red[i];
+		if (raw.color_writes_green != null) for (let i = 0; i < raw.color_writes_green.length; ++i) raw._pipeState.colorWriteMasksGreen[i] = raw.color_writes_green[i];
+		if (raw.color_writes_blue != null) for (let i = 0; i < raw.color_writes_blue.length; ++i) raw._pipeState.colorWriteMasksBlue[i] = raw.color_writes_blue[i];
+		if (raw.color_writes_alpha != null) for (let i = 0; i < raw.color_writes_alpha.length; ++i) raw._pipeState.colorWriteMasksAlpha[i] = raw.color_writes_alpha[i];
 
 		// Color attachment format
-		if (this.raw.color_attachments != null) {
-			this.pipeState.colorAttachmentCount = this.raw.color_attachments.length;
-			for (let i = 0; i < this.raw.color_attachments.length; ++i) this.pipeState.colorAttachments[i] = this.getTextureFormat(this.raw.color_attachments[i]);
+		if (raw.color_attachments != null) {
+			raw._pipeState.colorAttachmentCount = raw.color_attachments.length;
+			for (let i = 0; i < raw.color_attachments.length; ++i) raw._pipeState.colorAttachments[i] = ShaderContext.getTextureFormat(raw.color_attachments[i]);
 		}
 
 		// Depth attachment format
-		if (this.raw.depth_attachment != null) {
-			///if (krom_windows || krom_linux || krom_darwin || krom_android || krom_ios)
-			this.pipeState.depthStencilAttachment = this.getDepthStencilFormat(this.raw.depth_attachment);
-			///end
+		if (raw.depth_attachment != null) {
+			raw._pipeState.depthStencilAttachment = ShaderContext.getDepthStencilFormat(raw.depth_attachment);
 		}
 
 		// Shaders
-		if (this.raw.shader_from_source) {
-			this.pipeState.vertexShader = Shader.fromSource(this.raw.vertex_shader, ShaderType.Vertex);
-			this.pipeState.fragmentShader = Shader.fromSource(this.raw.fragment_shader, ShaderType.Fragment);
+		if (raw.shader_from_source) {
+			raw._pipeState.vertexShader = Shader.fromSource(raw.vertex_shader, ShaderType.Vertex);
+			raw._pipeState.fragmentShader = Shader.fromSource(raw.fragment_shader, ShaderType.Fragment);
 
 			// Shader compile error
-			if (this.pipeState.vertexShader.shader_ == null || this.pipeState.fragmentShader.shader_ == null) {
+			if (raw._pipeState.vertexShader.shader_ == null || raw._pipeState.fragmentShader.shader_ == null) {
 				done(null);
 				return;
 			}
-			this.finishCompile(done);
+			ShaderContext.finishCompile(raw, done);
 		}
 		else {
 
@@ -152,54 +135,54 @@ class ShaderContext {
 
 			let shadersLoaded = 0;
 			let numShaders = 2;
-			if (this.raw.geometry_shader != null) numShaders++;
+			if (raw.geometry_shader != null) numShaders++;
 
 			let loadShader = (file: string, type: i32) => {
 				let path = file + ShaderData.ext;
 				Data.getBlob(path, (b: ArrayBuffer) => {
-					if (type == 0) this.pipeState.vertexShader = new Shader(b, ShaderType.Vertex);
-					else if (type == 1) this.pipeState.fragmentShader = new Shader(b, ShaderType.Fragment);
-					else if (type == 2) this.pipeState.geometryShader = new Shader(b, ShaderType.Geometry);
+					if (type == 0) raw._pipeState.vertexShader = new Shader(b, ShaderType.Vertex);
+					else if (type == 1) raw._pipeState.fragmentShader = new Shader(b, ShaderType.Fragment);
+					else if (type == 2) raw._pipeState.geometryShader = new Shader(b, ShaderType.Geometry);
 					shadersLoaded++;
-					if (shadersLoaded >= numShaders) this.finishCompile(done);
+					if (shadersLoaded >= numShaders) ShaderContext.finishCompile(raw, done);
 				});
 			}
-			loadShader(this.raw.vertex_shader, 0);
-			loadShader(this.raw.fragment_shader, 1);
-			if (this.raw.geometry_shader != null) loadShader(this.raw.geometry_shader, 2);
+			loadShader(raw.vertex_shader, 0);
+			loadShader(raw.fragment_shader, 1);
+			if (raw.geometry_shader != null) loadShader(raw.geometry_shader, 2);
 
 			///else
 
-			this.pipeState.fragmentShader = System.getShader(this.raw.fragment_shader);
-			this.pipeState.vertexShader = System.getShader(this.raw.vertex_shader);
-			if (this.raw.geometry_shader != null) {
-				this.pipeState.geometryShader = System.getShader(this.raw.geometry_shader);
+			raw._pipeState.fragmentShader = System.getShader(raw.fragment_shader);
+			raw._pipeState.vertexShader = System.getShader(raw.vertex_shader);
+			if (raw.geometry_shader != null) {
+				raw._pipeState.geometryShader = System.getShader(raw.geometry_shader);
 			}
-			this.finishCompile(done);
+			ShaderContext.finishCompile(raw, done);
 
 			///end
 		}
 	}
 
-	finishCompile = (done: (sc: ShaderContext)=>void) => {
+	static finishCompile = (raw: TShaderContext, done: (sc: TShaderContext)=>void) => {
 		// Override specified values
-		if (this.overrideContext != null) {
-			if (this.overrideContext.cull_mode != null) {
-				this.pipeState.cullMode = this.getCullMode(this.overrideContext.cull_mode);
+		if (raw._overrideContext != null) {
+			if (raw._overrideContext.cull_mode != null) {
+				raw._pipeState.cullMode = ShaderContext.getCullMode(raw._overrideContext.cull_mode);
 			}
 		}
 
-		this.pipeState.compile();
+		raw._pipeState.compile();
 
-		if (this.raw.constants != null) {
-			for (let c of this.raw.constants) this.addConstant(c);
+		if (raw.constants != null) {
+			for (let c of raw.constants) ShaderContext.addConstant(raw, c);
 		}
 
-		if (this.raw.texture_units != null) {
-			for (let tu of this.raw.texture_units) this.addTexture(tu);
+		if (raw.texture_units != null) {
+			for (let tu of raw.texture_units) ShaderContext.addTexture(raw, tu);
 		}
 
-		done(this);
+		done(raw);
 	}
 
 	static parseData = (data: string): VertexData => {
@@ -212,31 +195,31 @@ class ShaderContext {
 		return VertexData.F32_1X;
 	}
 
-	parseVertexStructure = () => {
-		this.structure = new VertexStructure();
+	static parseVertexStructure = (raw: TShaderContext) => {
+		raw._structure = new VertexStructure();
 		let ipos = false;
 		let irot = false;
 		let iscl = false;
-		for (let elem of this.raw.vertex_elements) {
+		for (let elem of raw.vertex_elements) {
 			if (elem.name == "ipos") { ipos = true; continue; }
 			if (elem.name == "irot") { irot = true; continue; }
 			if (elem.name == "iscl") { iscl = true; continue; }
-			this.structure.add(elem.name, ShaderContext.parseData(elem.data));
+			raw._structure.add(elem.name, ShaderContext.parseData(elem.data));
 		}
-		if (ipos && !irot && !iscl) this.instancingType = 1;
-		else if (ipos && irot && !iscl) this.instancingType = 2;
-		else if (ipos && !irot && iscl) this.instancingType = 3;
-		else if (ipos && irot && iscl) this.instancingType = 4;
+		if (ipos && !irot && !iscl) raw._instancingType = 1;
+		else if (ipos && irot && !iscl) raw._instancingType = 2;
+		else if (ipos && !irot && iscl) raw._instancingType = 3;
+		else if (ipos && irot && iscl) raw._instancingType = 4;
 	}
 
-	delete = () => {
-		if (this.pipeState.fragmentShader != null) this.pipeState.fragmentShader.delete();
-		if (this.pipeState.vertexShader != null) this.pipeState.vertexShader.delete();
-		if (this.pipeState.geometryShader != null) this.pipeState.geometryShader.delete();
-		this.pipeState.delete();
+	static delete = (raw: TShaderContext) => {
+		if (raw._pipeState.fragmentShader != null) raw._pipeState.fragmentShader.delete();
+		if (raw._pipeState.vertexShader != null) raw._pipeState.vertexShader.delete();
+		if (raw._pipeState.geometryShader != null) raw._pipeState.geometryShader.delete();
+		raw._pipeState.delete();
 	}
 
-	getCompareMode = (s: string): CompareMode => {
+	static getCompareMode = (s: string): CompareMode => {
 		switch (s) {
 			case "always": return CompareMode.Always;
 			case "never": return CompareMode.Never;
@@ -250,7 +233,7 @@ class ShaderContext {
 		}
 	}
 
-	getCullMode = (s: string): CullMode => {
+	static getCullMode = (s: string): CullMode => {
 		switch (s) {
 			case "none": return CullMode.None;
 			case "clockwise": return CullMode.Clockwise;
@@ -258,7 +241,7 @@ class ShaderContext {
 		}
 	}
 
-	getBlendingFactor = (s: string): BlendingFactor => {
+	static getBlendingFactor = (s: string): BlendingFactor => {
 		switch (s) {
 			case "blend_one": return BlendingFactor.BlendOne;
 			case "blend_zero": return BlendingFactor.BlendZero;
@@ -274,7 +257,7 @@ class ShaderContext {
 		}
 	}
 
-	getTextureAddresing = (s: string): TextureAddressing => {
+	static getTextureAddresing = (s: string): TextureAddressing => {
 		switch (s) {
 			case "repeat": return TextureAddressing.Repeat;
 			case "mirror": return TextureAddressing.Mirror;
@@ -282,7 +265,7 @@ class ShaderContext {
 		}
 	}
 
-	getTextureFilter = (s: string): TextureFilter => {
+	static getTextureFilter = (s: string): TextureFilter => {
 		switch (s) {
 			case "point": return TextureFilter.PointFilter;
 			case "linear": return TextureFilter.LinearFilter;
@@ -290,7 +273,7 @@ class ShaderContext {
 		}
 	}
 
-	getMipmapFilter = (s: string): MipMapFilter => {
+	static getMipmapFilter = (s: string): MipMapFilter => {
 		switch (s) {
 			case "no": return MipMapFilter.NoMipFilter;
 			case "point": return MipMapFilter.PointMipFilter;
@@ -298,7 +281,7 @@ class ShaderContext {
 		}
 	}
 
-	getTextureFormat = (s: string): TextureFormat => {
+	static getTextureFormat = (s: string): TextureFormat => {
 		switch (s) {
 			case "RGBA32": return TextureFormat.RGBA32;
 			case "RGBA64": return TextureFormat.RGBA64;
@@ -311,7 +294,7 @@ class ShaderContext {
 		}
 	}
 
-	getDepthStencilFormat = (s: string): DepthStencilFormat => {
+	static getDepthStencilFormat = (s: string): DepthStencilFormat => {
 		switch (s) {
 			case "DEPTH32": return DepthStencilFormat.DepthOnly;
 			case "NONE": return DepthStencilFormat.NoDepthAndStencil;
@@ -319,23 +302,23 @@ class ShaderContext {
 		}
 	}
 
-	addConstant = (c: TShaderConstant) => {
-		this.constants.push(this.pipeState.getConstantLocation(c.name));
+	static addConstant = (raw: TShaderContext, c: TShaderConstant) => {
+		raw._constants.push(raw._pipeState.getConstantLocation(c.name));
 	}
 
-	addTexture = (tu: TTextureUnit) => {
-		let unit = this.pipeState.getTextureUnit(tu.name);
-		this.textureUnits.push(unit);
+	static addTexture = (raw: TShaderContext, tu: TTextureUnit) => {
+		let unit = raw._pipeState.getTextureUnit(tu.name);
+		raw._textureUnits.push(unit);
 	}
 
-	setTextureParameters = (g: Graphics4, unitIndex: i32, tex: TBindTexture) => {
+	static setTextureParameters = (raw: TShaderContext, g: Graphics4, unitIndex: i32, tex: TBindTexture) => {
 		// This function is called for samplers set using material context
-		let unit = this.textureUnits[unitIndex];
+		let unit = raw._textureUnits[unitIndex];
 		g.setTextureParameters(unit,
-			tex.u_addressing == null ? TextureAddressing.Repeat : this.getTextureAddresing(tex.u_addressing),
-			tex.v_addressing == null ? TextureAddressing.Repeat : this.getTextureAddresing(tex.v_addressing),
-			tex.min_filter == null ? TextureFilter.LinearFilter : this.getTextureFilter(tex.min_filter),
-			tex.mag_filter == null ? TextureFilter.LinearFilter : this.getTextureFilter(tex.mag_filter),
-			tex.mipmap_filter == null ? MipMapFilter.NoMipFilter : this.getMipmapFilter(tex.mipmap_filter));
+			tex.u_addressing == null ? TextureAddressing.Repeat : ShaderContext.getTextureAddresing(tex.u_addressing),
+			tex.v_addressing == null ? TextureAddressing.Repeat : ShaderContext.getTextureAddresing(tex.v_addressing),
+			tex.min_filter == null ? TextureFilter.LinearFilter : ShaderContext.getTextureFilter(tex.min_filter),
+			tex.mag_filter == null ? TextureFilter.LinearFilter : ShaderContext.getTextureFilter(tex.mag_filter),
+			tex.mipmap_filter == null ? MipMapFilter.NoMipFilter : ShaderContext.getMipmapFilter(tex.mipmap_filter));
 	}
 }

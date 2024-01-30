@@ -141,7 +141,7 @@ class RenderPath {
 	static clearTarget = (colorFlag: Null<i32> = null, depthFlag: Null<f32> = null) => {
 		if (colorFlag == -1) { // -1 == 0xffffffff
 			if (Scene.world != null) {
-				colorFlag = Scene.world.raw.background_color;
+				colorFlag = Scene.world.background_color;
 			}
 			else if (Scene.camera != null) {
 				let cc = Scene.camera.data.clear_color;
@@ -203,7 +203,7 @@ class RenderPath {
 		if (ConstData.skydomeVB == null) ConstData.createSkydomeData();
 		let cc: CachedShaderContext = RenderPath.cachedShaderContexts.get(handle);
 		if (cc.context == null) return; // World data not specified
-		RenderPath.currentG.setPipeline(cc.context.pipeState);
+		RenderPath.currentG.setPipeline(cc.context._pipeState);
 		Uniforms.setContextConstants(RenderPath.currentG, cc.context, RenderPath.bindParams);
 		Uniforms.setObjectConstants(RenderPath.currentG, cc.context, null); // External hosek
 		RenderPath.currentG.setVertexBuffer(ConstData.skydomeVB);
@@ -225,7 +225,7 @@ class RenderPath {
 		// file/data_name/context
 		let cc: CachedShaderContext = RenderPath.cachedShaderContexts.get(handle);
 		if (ConstData.screenAlignedVB == null) ConstData.createScreenAlignedData();
-		RenderPath.currentG.setPipeline(cc.context.pipeState);
+		RenderPath.currentG.setPipeline(cc.context._pipeState);
 		Uniforms.setContextConstants(RenderPath.currentG, cc.context, RenderPath.bindParams);
 		Uniforms.setObjectConstants(RenderPath.currentG, cc.context, null);
 		RenderPath.currentG.setVertexBuffer(ConstData.screenAlignedVB);
@@ -249,8 +249,8 @@ class RenderPath {
 		// file/data_name/context
 		let shaderPath = handle.split("/");
 
-		Data.getShader(shaderPath[0], shaderPath[1], (res: ShaderData) => {
-			cc.context = res.getContext(shaderPath[2]);
+		Data.getShader(shaderPath[0], shaderPath[1], (res: TShaderData) => {
+			cc.context = ShaderData.getContext(res, shaderPath[2]);
 			RenderPath.loading--;
 		});
 	}
@@ -421,7 +421,6 @@ class RenderTargetRaw {
 	mipmaps: Null<bool> = null;
 	depth: Null<i32> = null; // 3D texture
 	is_image: Null<bool> = null; // Image
-	constructor() {}
 }
 
 class RenderTarget {
@@ -438,6 +437,5 @@ class RenderTarget {
 }
 
 class CachedShaderContext {
-	context: ShaderContext;
-	constructor() {}
+	context: TShaderContext;
 }

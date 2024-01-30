@@ -24,6 +24,25 @@ type TMeshData = {
 	instanced_type?: Null<i32>; // off, loc, loc+rot, loc+scale, loc+rot+scale
 	scale_pos?: Null<f32>; // Unpack pos from (-1,1) coords
 	scale_tex?: Null<f32>; // Unpack tex from (-1,1) coords
+	// Runtime:
+	_refcount?: i32; // Number of users
+	_handle?: string; // Handle used to retrieve this object in Data
+	_vertexBuffer?: VertexBuffer;
+	_vertexBufferMap?: Map<string, VertexBuffer>;
+	_indexBuffers?: IndexBuffer[];
+	_ready?: bool;
+	_vertices?: DataView;
+	_indices?: Uint32Array[];
+	_materialIndices?: i32[];
+	_struct?: VertexStructure;
+	_instancedVB?: VertexBuffer;
+	_instanced?: bool;
+	_instanceCount?: i32;
+	///if arm_skin
+	_skeletonTransformsI?: Mat4[];
+	_actions?: Map<string, TObj[]>;
+	_mats?: Map<string, Mat4[]>;
+	///end
 }
 
 type TSkin = {
@@ -42,7 +61,7 @@ type TVertexArray = {
 	data: string; // short4norm, short2norm
 	padding?: Null<i32>;
 	// Runtime:
-	size?: Null<i32>;
+	_size?: Null<i32>;
 }
 
 type TIndexArray = {
@@ -79,6 +98,10 @@ type TMaterialData = {
 	contexts: TMaterialContext[];
 	skip_context?: string;
 	override_context?: TShaderOverride;
+	// Runtime:
+	_uid: f32;
+	_shader: TShaderData;
+	_contexts: TMaterialContext[];
 }
 
 type TShaderOverride = {
@@ -92,6 +115,8 @@ type TMaterialContext = {
 	name: string;
 	bind_constants?: TBindConstant[];
 	bind_textures?: TBindTexture[];
+	// Runtime:
+	_textures?: Image[];
 }
 
 type TBindConstant = {
@@ -121,6 +146,8 @@ type TBindTexture = {
 type TShaderData = {
 	name: string;
 	contexts: TShaderContext[];
+	// Runtime:
+	_contexts: TShaderContext[];
 }
 
 type TShaderContext = {
@@ -147,6 +174,13 @@ type TShaderContext = {
 	color_attachments?: string[]; // RGBA32, RGBA64, R8
 	depth_attachment?: string; // DEPTH32
 	shader_from_source?: Null<bool>; // Build shader at runtime using fromSource()
+	// Runtime:
+	_pipeState?: PipelineState;
+	_constants?: ConstantLocation[];
+	_textureUnits?: TextureUnit[];
+	_overrideContext?: TShaderOverride;
+	_structure?: VertexStructure;
+	_instancingType?: i32;
 }
 
 type TVertexElement = {
@@ -196,6 +230,11 @@ type TWorldData = {
 	radiance?: string;
 	radiance_mipmaps?: Null<i32>;
 	envmap?: string;
+	// Runtime:
+	_envmap?: Image;
+	_radiance?: Image;
+	_radianceMipmaps?: Image[];
+	_irradiance?: Float32Array;
 }
 
 type TIrradiance = {

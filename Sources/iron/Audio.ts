@@ -2,32 +2,30 @@
 ///if arm_audio
 
 class Audio {
-	static play = (sound: Sound, loop = false, stream = false): AudioChannel => {
-		let channel = new AudioChannel(sound, loop);
-		channel.play();
+
+	static channel = (sound: Sound, loop = false, stream = false): TAudioChannel => {
+		let channel = new TAudioChannel();
+		channel.sound = sound;
+		channel.loop = loop;
 		return channel;
+	}
+
+	static play = (channel: TAudioChannel) => {
+		Krom.playSound(channel.sound.sound_, channel.loop);
+	}
+
+	static pause = (channel: TAudioChannel) => {
+
+	}
+
+	static stop = (channel: TAudioChannel) => {
+		Krom.stopSound(channel.sound.sound_);
 	}
 }
 
-class AudioChannel {
+class TAudioChannel {
 	sound: Sound;
 	loop: bool;
-
-	constructor(sound: Sound, loop: bool) {
-		this.sound = sound;
-		this.loop = loop;
-	}
-
-	play = () => {
-		Krom.playSound(this.sound.sound_, this.loop);
-	}
-
-	pause = () => {}
-
-	stop = () => {
-		Krom.stopSound(this.sound.sound_);
-	}
-
 	length: f32;
 	volume: f32;
 	finished: bool;

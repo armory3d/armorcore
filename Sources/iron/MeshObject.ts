@@ -1,8 +1,8 @@
 
 class MeshObject extends BaseObject {
 
-	data: MeshData = null;
-	materials: MaterialData[];
+	data: TMeshData = null;
+	materials: TMaterialData[];
 	materialIndex = 0;
 	///if arm_particles
 	particleSystems: ParticleSystem[] = null; // Particle owner
@@ -18,7 +18,7 @@ class MeshObject extends BaseObject {
 	static lastPipeline: PipelineState = null;
 	prevMatrix = Mat4.identity();
 
-	constructor(data: MeshData, materials: MaterialData[]) {
+	constructor(data: TMeshData, materials: TMaterialData[]) {
 		super();
 
 		this.materials = materials;
@@ -26,13 +26,13 @@ class MeshObject extends BaseObject {
 		Scene.meshes.push(this);
 	}
 
-	setData = (data: MeshData) => {
+	setData = (data: TMeshData) => {
 		this.data = data;
-		data.refcount++;
-		data.build();
+		data._refcount++;
+		MeshData.build(data);
 
 		// Scale-up packed (-1,1) mesh coords
-		this.transform.scaleWorld = data.scalePos;
+		this.transform.scaleWorld = data.scale_pos;
 	}
 
 	override remove = () => {
@@ -47,7 +47,7 @@ class MeshObject extends BaseObject {
 		}
 		///end
 		array_remove(Scene.meshes, this);
-		this.data.refcount--;
+		this.data._refcount--;
 		this.removeSuper();
 	}
 
@@ -58,7 +58,7 @@ class MeshObject extends BaseObject {
 			let armatureName = this.parent.name;
 			this.animation = this.getParentArmature(armatureName);
 			if (this.animation == null) this.animation = new BoneAnimation(armatureName);
-			if (this.data.isSkinned) (this.animation as BoneAnimation).setSkin(this);
+			if (this.data.skin != null) (this.animation as BoneAnimation).setSkin(this);
 		}
 		///end
 		this.setupAnimationSuper(oactions);
@@ -96,13 +96,13 @@ class MeshObject extends BaseObject {
 		if (camera.data.frustum_culling && this.frustumCulling) {
 			// Scale radius for skinned mesh and particle system
 			// TODO: define skin & particle bounds
-			let radiusScale = this.data.isSkinned ? 2.0 : 1.0;
+			let radiusScale = this.data.skin != null ? 2.0 : 1.0;
 			///if arm_particles
 			// particleSystems for update, particleOwner for render
 			if (this.particleSystems != null || this.particleOwner != null) radiusScale *= 1000;
 			///end
 			if (context == "voxel") radiusScale *= 100;
-			if (this.data.instanced) radiusScale *= 100;
+			if (this.data._instanced) radiusScale *= 100;
 			let frustumPlanes = camera.frustumPlanes;
 
 			if (!CameraObject.sphereInFrustum(frustumPlanes, this.transform, radiusScale)) {
@@ -114,21 +114,21 @@ class MeshObject extends BaseObject {
 		return this.culled;
 	}
 
-	skipContext = (context: string, mat: MaterialData): bool => {
-		if (mat.raw.skip_context != null &&
-			mat.raw.skip_context == context) {
+	skipContext = (context: string, mat: TMaterialData): bool => {
+		if (mat.skip_context != null &&
+			mat.skip_context == context) {
 			return true;
 		}
 		return false;
 	}
 
-	getContexts = (context: string, materials: MaterialData[], materialContexts: MaterialContext[], shaderContexts: ShaderContext[]) => {
+	getContexts = (context: string, materials: TMaterialData[], materialContexts: TMaterialContext[], shaderContexts: TShaderContext[]) => {
 		for (let mat of materials) {
 			let found = false;
-			for (let i = 0; i < mat.raw.contexts.length; ++i) {
-				if (mat.raw.contexts[i].name.substr(0, context.length) == context) {
-					materialContexts.push(mat.contexts[i]);
-					shaderContexts.push(mat.shader.getContext(context));
+			for (let i = 0; i < mat.contexts.length; ++i) {
+				if (mat.contexts[i].name.substr(0, context.length) == context) {
+					materialContexts.push(mat._contexts[i]);
+					shaderContexts.push(ShaderData.getContext(mat._shader, context));
 					found = true;
 					break;
 				}
@@ -141,7 +141,7 @@ class MeshObject extends BaseObject {
 	}
 
 	render = (g: Graphics4, context: string, bindParams: string[]) => {
-		if (this.data == null || !this.data.ready) return; // Data not yet streamed
+		if (this.data == null || !this.data._ready) return; // Data not yet streamed
 		if (!this.visible) return; // Skip render if object is hidden
 		if (this.cullMesh(context, Scene.camera, RenderPath.light)) return;
 		let meshContext = this.raw != null ? context == "mesh" : false;
@@ -173,18 +173,18 @@ class MeshObject extends BaseObject {
 		if (this.cullMaterial(context)) return;
 
 		// Get context
-		let materialContexts: MaterialContext[] = [];
-		let shaderContexts: ShaderContext[] = [];
+		let materialContexts: TMaterialContext[] = [];
+		let shaderContexts: TShaderContext[] = [];
 		this.getContexts(context, this.materials, materialContexts, shaderContexts);
 
-		Uniforms.posUnpack = this.data.scalePos;
-		Uniforms.texUnpack = this.data.scaleTex;
+		Uniforms.posUnpack = this.data.scale_pos;
+		Uniforms.texUnpack = this.data.scale_tex;
 		this.transform.update();
 
 		// Render mesh
-		for (let i = 0; i < this.data.indexBuffers.length; ++i) {
+		for (let i = 0; i < this.data._indexBuffers.length; ++i) {
 
-			let mi = this.data.materialIndices[i];
+			let mi = this.data._materialIndices[i];
 			if (shaderContexts.length <= mi || shaderContexts[mi] == null) continue;
 			this.materialIndex = mi;
 
@@ -193,12 +193,12 @@ class MeshObject extends BaseObject {
 
 			let scontext = shaderContexts[mi];
 			if (scontext == null) continue;
-			let elems = scontext.raw.vertex_elements;
+			let elems = scontext.vertex_elements;
 
 			// Uniforms
-			if (scontext.pipeState != MeshObject.lastPipeline) {
-				g.setPipeline(scontext.pipeState);
-				MeshObject.lastPipeline = scontext.pipeState;
+			if (scontext._pipeState != MeshObject.lastPipeline) {
+				g.setPipeline(scontext._pipeState);
+				MeshObject.lastPipeline = scontext._pipeState;
 				// Uniforms.setContextConstants(g, scontext, bindParams);
 			}
 			Uniforms.setContextConstants(g, scontext, bindParams); //
@@ -208,18 +208,18 @@ class MeshObject extends BaseObject {
 			}
 
 			// VB / IB
-			if (this.data.instancedVB != null) {
-				g.setVertexBuffers([this.data.get(elems), this.data.instancedVB]);
+			if (this.data._instancedVB != null) {
+				g.setVertexBuffers([MeshData.get(this.data, elems), this.data._instancedVB]);
 			}
 			else {
-				g.setVertexBuffer(this.data.get(elems));
+				g.setVertexBuffer(MeshData.get(this.data, elems));
 			}
 
-			g.setIndexBuffer(this.data.indexBuffers[i]);
+			g.setIndexBuffer(this.data._indexBuffers[i]);
 
 			// Draw
-			if (this.data.instanced) {
-				g.drawIndexedVerticesInstanced(this.data.instanceCount, 0, -1);
+			if (this.data._instanced) {
+				g.drawIndexedVerticesInstanced(this.data._instanceCount, 0, -1);
 			}
 			else {
 				g.drawIndexedVertices(0, -1);
@@ -229,8 +229,8 @@ class MeshObject extends BaseObject {
 		this.prevMatrix.setFrom(this.transform.worldUnpack);
 	}
 
-	validContext = (mats: MaterialData[], context: string): bool => {
-		for (let mat of mats) if (mat.getContext(context) != null) return true;
+	validContext = (mats: TMaterialData[], context: string): bool => {
+		for (let mat of mats) if (MaterialData.getContext(mat, context) != null) return true;
 		return false;
 	}
 

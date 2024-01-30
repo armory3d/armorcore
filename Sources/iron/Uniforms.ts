@@ -10,22 +10,22 @@ class Uniforms {
 	static helpVec2 = new Vec4();
 	static helpQuat = new Quat(); // Keep at identity
 
-	static externalTextureLinks: ((o: BaseObject, md: MaterialData, s: string)=>Image)[] = null;
-	static externalMat4Links: ((o: BaseObject, md: MaterialData, s: string)=>Mat4)[] = null;
-	static externalVec4Links: ((o: BaseObject, md: MaterialData, s: string)=>Vec4)[] = null;
-	static externalVec3Links: ((o: BaseObject, md: MaterialData, s: string)=>Vec4)[] = null;
-	static externalVec2Links: ((o: BaseObject, md: MaterialData, s: string)=>Vec4)[] = null;
-	static externalFloatLinks: ((o: BaseObject, md: MaterialData, s: string)=>Null<f32>)[] = null;
-	static externalFloatsLinks: ((o: BaseObject, md: MaterialData, s: string)=>Float32Array)[] = null;
-	static externalIntLinks: ((o: BaseObject, md: MaterialData, s: string)=>Null<i32>)[] = null;
+	static externalTextureLinks: ((o: BaseObject, md: TMaterialData, s: string)=>Image)[] = null;
+	static externalMat4Links: ((o: BaseObject, md: TMaterialData, s: string)=>Mat4)[] = null;
+	static externalVec4Links: ((o: BaseObject, md: TMaterialData, s: string)=>Vec4)[] = null;
+	static externalVec3Links: ((o: BaseObject, md: TMaterialData, s: string)=>Vec4)[] = null;
+	static externalVec2Links: ((o: BaseObject, md: TMaterialData, s: string)=>Vec4)[] = null;
+	static externalFloatLinks: ((o: BaseObject, md: TMaterialData, s: string)=>Null<f32>)[] = null;
+	static externalFloatsLinks: ((o: BaseObject, md: TMaterialData, s: string)=>Float32Array)[] = null;
+	static externalIntLinks: ((o: BaseObject, md: TMaterialData, s: string)=>Null<i32>)[] = null;
 	static posUnpack: Null<f32> = null;
 	static texUnpack: Null<f32> = null;
 
-	static setContextConstants = (g: Graphics4, context: ShaderContext, bindParams: string[]) => {
-		if (context.raw.constants != null) {
-			for (let i = 0; i < context.raw.constants.length; ++i) {
-				let c = context.raw.constants[i];
-				Uniforms.setContextConstant(g, context.constants[i], c);
+	static setContextConstants = (g: Graphics4, context: TShaderContext, bindParams: string[]) => {
+		if (context.constants != null) {
+			for (let i = 0; i < context.constants.length; ++i) {
+				let c = context.constants[i];
+				Uniforms.setContextConstant(g, context._constants[i], c);
 			}
 		}
 
@@ -47,18 +47,18 @@ class Uniforms {
 		}
 
 		// Texture links
-		if (context.raw.texture_units != null) {
-			for (let j = 0; j < context.raw.texture_units.length; ++j) {
-				let tulink = context.raw.texture_units[j].link;
+		if (context.texture_units != null) {
+			for (let j = 0; j < context.texture_units.length; ++j) {
+				let tulink = context.texture_units[j].link;
 				if (tulink == null) continue;
 
 				if (tulink.charAt(0) == "$") { // Link to embedded data
-					g.setTexture(context.textureUnits[j], Scene.embedded.get(tulink.substr(1)));
+					g.setTexture(context._textureUnits[j], Scene.embedded.get(tulink.substr(1)));
 					if (tulink.endsWith(".raw")) { // Raw 3D texture
-						g.setTexture3DParameters(context.textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
+						g.setTexture3DParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 					}
 					else { // 2D texture
-						g.setTextureParameters(context.textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
+						g.setTextureParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 					}
 				}
 				else {
@@ -66,16 +66,16 @@ class Uniforms {
 						case "_envmapRadiance": {
 							let w = Scene.world;
 							if (w != null) {
-								g.setTexture(context.textureUnits[j], w.radiance);
-								g.setTextureParameters(context.textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
+								g.setTexture(context._textureUnits[j], w._radiance);
+								g.setTextureParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
 							}
 							break;
 						}
 						case "_envmap": {
 							let w = Scene.world;
 							if (w != null) {
-								g.setTexture(context.textureUnits[j], w.envmap);
-								g.setTextureParameters(context.textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
+								g.setTexture(context._textureUnits[j], w._envmap);
+								g.setTextureParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 							}
 							break;
 						}
@@ -85,20 +85,20 @@ class Uniforms {
 		}
 	}
 
-	static setObjectConstants = (g: Graphics4, context: ShaderContext, object: BaseObject) => {
-		if (context.raw.constants != null) {
-			for (let i = 0; i < context.raw.constants.length; ++i) {
-				let c = context.raw.constants[i];
-				Uniforms.setObjectConstant(g, object, context.constants[i], c);
+	static setObjectConstants = (g: Graphics4, context: TShaderContext, object: BaseObject) => {
+		if (context.constants != null) {
+			for (let i = 0; i < context.constants.length; ++i) {
+				let c = context.constants[i];
+				Uniforms.setObjectConstant(g, object, context._constants[i], c);
 			}
 		}
 
 		// Texture object constants
 		// External
 		if (Uniforms.externalTextureLinks != null) {
-			if (context.raw.texture_units != null) {
-				for (let j = 0; j < context.raw.texture_units.length; ++j) {
-					let tu = context.raw.texture_units[j];
+			if (context.texture_units != null) {
+				for (let j = 0; j < context.texture_units.length; ++j) {
+					let tu = context.texture_units[j];
 					if (tu.link == null) continue;
 					let tuAddrU = Uniforms.getTextureAddressing(tu.addressing_u);
 					let tuAddrV = Uniforms.getTextureAddressing(tu.addressing_v);
@@ -110,9 +110,9 @@ class Uniforms {
 						let image = f(object, Uniforms.currentMat(object), tu.link);
 						if (image != null) {
 							tu.link.endsWith("_depth") ?
-								g.setTextureDepth(context.textureUnits[j], image) :
-								g.setTexture(context.textureUnits[j], image);
-							g.setTextureParameters(context.textureUnits[j], tuAddrU, tuAddrV, tuFilterMin, tuFilterMag, tuMipMapFilter);
+								g.setTextureDepth(context._textureUnits[j], image) :
+								g.setTexture(context._textureUnits[j], image);
+							g.setTextureParameters(context._textureUnits[j], tuAddrU, tuAddrV, tuFilterMin, tuFilterMag, tuMipMapFilter);
 							break;
 						}
 					}
@@ -121,9 +121,9 @@ class Uniforms {
 		}
 	}
 
-	static bindRenderTarget = (g: Graphics4, rt: RenderTarget, context: ShaderContext, samplerID: string, attachDepth: bool) => {
+	static bindRenderTarget = (g: Graphics4, rt: RenderTarget, context: TShaderContext, samplerID: string, attachDepth: bool) => {
 		if (rt != null) {
-			let tus = context.raw.texture_units;
+			let tus = context.texture_units;
 
 			for (let j = 0; j < tus.length; ++j) { // Set texture
 				if (samplerID == tus[j].name) {
@@ -131,46 +131,46 @@ class Uniforms {
 					let paramsSet = false;
 
 					if (rt.raw.depth > 1) { // sampler3D
-						g.setTexture3DParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.AnisotropicFilter, MipMapFilter.LinearMipFilter);
+						g.setTexture3DParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.AnisotropicFilter, MipMapFilter.LinearMipFilter);
 						paramsSet = true;
 					}
 
 					if (isImage) {
-						g.setImageTexture(context.textureUnits[j], rt.image); // image2D/3D
+						g.setImageTexture(context._textureUnits[j], rt.image); // image2D/3D
 						// Multiple voxel volumes, always set params
-						g.setTexture3DParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.PointFilter, MipMapFilter.LinearMipFilter);
+						g.setTexture3DParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.PointFilter, MipMapFilter.LinearMipFilter);
 						paramsSet = true;
 					}
 					else {
-						if (attachDepth) g.setTextureDepth(context.textureUnits[j], rt.image); // sampler2D
-						else g.setTexture(context.textureUnits[j], rt.image); // sampler2D
+						if (attachDepth) g.setTextureDepth(context._textureUnits[j], rt.image); // sampler2D
+						else g.setTexture(context._textureUnits[j], rt.image); // sampler2D
 					}
 
 					if (!paramsSet && rt.raw.mipmaps != null && rt.raw.mipmaps == true && !isImage) {
-						g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
+						g.setTextureParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
 						paramsSet = true;
 					}
 
 					if (!paramsSet) {
 						if (rt.raw.name.startsWith("bloom")) {
 							// Use bilinear filter for bloom mips to get correct blur
-							g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
+							g.setTextureParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
 							paramsSet = true;
 						}
 						if (attachDepth) {
-							g.setTextureParameters(context.textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.PointFilter, TextureFilter.PointFilter, MipMapFilter.NoMipFilter);
+							g.setTextureParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.PointFilter, TextureFilter.PointFilter, MipMapFilter.NoMipFilter);
 							paramsSet = true;
 						}
 					}
 
 					if (!paramsSet) {
 						// No filtering when sampling render targets
-						let oc = context.overrideContext;
+						let oc = context._overrideContext;
 						let allowParams = oc == null || oc.shared_sampler == null || oc.shared_sampler == samplerID;
 						if (allowParams) {
 							let addressing = (oc != null && oc.addressing == "repeat") ? TextureAddressing.Repeat : TextureAddressing.Clamp;
 							let filter = (oc != null && oc.filter == "point") ? TextureFilter.PointFilter : TextureFilter.LinearFilter;
-							g.setTextureParameters(context.textureUnits[j], addressing, addressing, filter, filter, MipMapFilter.NoMipFilter);
+							g.setTextureParameters(context._textureUnits[j], addressing, addressing, filter, filter, MipMapFilter.NoMipFilter);
 						}
 						paramsSet = true;
 					}
@@ -458,7 +458,7 @@ class Uniforms {
 			let fa: Float32Array = null;
 			switch (c.link) {
 				case "_envmapIrradiance": {
-					fa = Scene.world == null ? WorldData.getEmptyIrradiance() : Scene.world.irradiance;
+					fa = Scene.world == null ? WorldData.getEmptyIrradiance() : Scene.world._irradiance;
 					break;
 				}
 			}
@@ -473,7 +473,7 @@ class Uniforms {
 			switch (c.link) {
 				case "_envmapNumMipmaps": {
 					let w = Scene.world;
-					i = w != null ? w.raw.radiance_mipmaps + 1 - 2 : 1; // Include basecolor and exclude 2 scaled mips
+					i = w != null ? w.radiance_mipmaps + 1 - 2 : 1; // Include basecolor and exclude 2 scaled mips
 					break;
 				}
 				default:
@@ -636,7 +636,7 @@ class Uniforms {
 					break;
 				}
 				case "_objectInfoMaterialIndex": {
-					f = Uniforms.currentMat(object).uid;
+					f = Uniforms.currentMat(object)._uid;
 					break;
 				}
 				case "_objectInfoRandom": {
@@ -713,34 +713,34 @@ class Uniforms {
 		}
 	}
 
-	static setMaterialConstants = (g: Graphics4, context: ShaderContext, materialContext: MaterialContext) => {
-		if (materialContext.raw.bind_constants != null) {
-			for (let i = 0; i < materialContext.raw.bind_constants.length; ++i) {
-				let matc = materialContext.raw.bind_constants[i];
+	static setMaterialConstants = (g: Graphics4, context: TShaderContext, materialContext: TMaterialContext) => {
+		if (materialContext.bind_constants != null) {
+			for (let i = 0; i < materialContext.bind_constants.length; ++i) {
+				let matc = materialContext.bind_constants[i];
 				let pos = -1;
-				for (let i = 0; i < context.raw.constants.length; ++i) {
-					if (context.raw.constants[i].name == matc.name) {
+				for (let i = 0; i < context.constants.length; ++i) {
+					if (context.constants[i].name == matc.name) {
 						pos = i;
 						break;
 					}
 				}
 				if (pos == -1) continue;
-				let c = context.raw.constants[pos];
+				let c = context.constants[pos];
 
-				Uniforms.setMaterialConstant(g, context.constants[pos], c, matc);
+				Uniforms.setMaterialConstant(g, context._constants[pos], c, matc);
 			}
 		}
 
-		if (materialContext.textures != null) {
-			for (let i = 0; i < materialContext.textures.length; ++i) {
-				let mname = materialContext.raw.bind_textures[i].name;
+		if (materialContext._textures != null) {
+			for (let i = 0; i < materialContext._textures.length; ++i) {
+				let mname = materialContext.bind_textures[i].name;
 
-				for (let j = 0; j < context.textureUnits.length; ++j) {
-					let sname = context.raw.texture_units[j].name;
+				for (let j = 0; j < context._textureUnits.length; ++j) {
+					let sname = context.texture_units[j].name;
 					if (mname == sname) {
-						g.setTexture(context.textureUnits[j], materialContext.textures[i]);
+						g.setTexture(context._textureUnits[j], materialContext._textures[i]);
 						// After texture sampler have been assigned, set texture parameters
-						materialContext.setTextureParameters(g, i, context, j);
+						MaterialContext.setTextureParameters(materialContext, g, i, context, j);
 						break;
 					}
 				}
@@ -748,7 +748,7 @@ class Uniforms {
 		}
 	}
 
-	static currentMat = (object: BaseObject): MaterialData => {
+	static currentMat = (object: BaseObject): TMaterialData => {
 		if (object != null && object.constructor == MeshObject) {
 			let mo = object as MeshObject;
 			return mo.materials[mo.materialIndex];
