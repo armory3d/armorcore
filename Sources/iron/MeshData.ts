@@ -233,7 +233,7 @@ class MeshData {
 	}
 
 	///if arm_skin
-	static addArmature = (raw: TMeshData, armature: Armature) => {
+	static addArmature = (raw: TMeshData, armature: TArmature) => {
 		for (let a of armature.actions) {
 			MeshData.addAction(raw, a.bones, a.name);
 		}

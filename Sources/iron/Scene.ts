@@ -17,9 +17,9 @@ class Scene {
 	static speakers: SpeakerObject[];
 	///end
 	static empties: BaseObject[];
-	static animations: Animation[];
+	static animations: AnimationRaw[];
 	///if arm_skin
-	static armatures: Armature[];
+	static armatures: TArmature[];
 	///end
 	static embedded: Map<string, Image>;
 
@@ -88,7 +88,7 @@ class Scene {
 
 	static updateFrame = () => {
 		if (!Scene.ready) return;
-		for (let anim of Scene.animations) anim.update(Time.delta);
+		for (let anim of Scene.animations) Animation.update(anim, Time.delta);
 		for (let e of Scene.empties) if (e != null && e.parent != null) e.transform.update();
 	}
 
@@ -111,23 +111,23 @@ class Scene {
 	}
 
 	static getMesh = (name: string): MeshObject => {
-		for (let m of Scene.meshes) if (m.name == name) return m;
+		for (let m of Scene.meshes) if (m.base.name == name) return m;
 		return null;
 	}
 
 	static getLight = (name: string): LightObject => {
-		for (let l of Scene.lights) if (l.name == name) return l;
+		for (let l of Scene.lights) if (l.base.name == name) return l;
 		return null;
 	}
 
 	static getCamera = (name: string): CameraObject => {
-		for (let c of Scene.cameras) if (c.name == name) return c;
+		for (let c of Scene.cameras) if (c.base.name == name) return c;
 		return null;
 	}
 
 	///if arm_audio
 	static getSpeaker = (name: string): SpeakerObject => {
-		for (let s of Scene.speakers) if (s.name == name) return s;
+		for (let s of Scene.speakers) if (s.base.name == name) return s;
 		return null;
 	}
 	///end
@@ -139,26 +139,26 @@ class Scene {
 
 	static addMeshObject = (data: TMeshData, materials: TMaterialData[], parent: BaseObject = null): MeshObject => {
 		let object = new MeshObject(data, materials);
-		parent != null ? object.setParent(parent) : object.setParent(Scene.root);
+		parent != null ? object.base.setParent(parent) : object.base.setParent(Scene.root);
 		return object;
 	}
 
 	static addLightObject = (data: TLightData, parent: BaseObject = null): LightObject => {
 		let object = new LightObject(data);
-		parent != null ? object.setParent(parent) : object.setParent(Scene.root);
+		parent != null ? object.base.setParent(parent) : object.base.setParent(Scene.root);
 		return object;
 	}
 
 	static addCameraObject = (data: TCameraData, parent: BaseObject = null): CameraObject => {
 		let object = new CameraObject(data);
-		parent != null ? object.setParent(parent) : object.setParent(Scene.root);
+		parent != null ? object.base.setParent(parent) : object.base.setParent(Scene.root);
 		return object;
 	}
 
 	///if arm_audio
 	static addSpeakerObject = (data: TSpeakerData, parent: BaseObject = null): SpeakerObject => {
 		let object = new SpeakerObject(data);
-		parent != null ? object.setParent(parent) : object.setParent(Scene.root);
+		parent != null ? object.base.setParent(parent) : object.base.setParent(Scene.root);
 		return object;
 	}
 	///end
@@ -260,13 +260,13 @@ class Scene {
 		if (o.type == "camera_object") {
 			Data.getCamera(sceneName, o.data_ref, (b: TCameraData) => {
 				let object = Scene.addCameraObject(b, parent);
-				Scene.returnObject(object, o, done);
+				Scene.returnObject(object.base, o, done);
 			});
 		}
 		else if (o.type == "light_object") {
 			Data.getLight(sceneName, o.data_ref, (b: TLightData) => {
 				let object = Scene.addLightObject(b, parent);
-				Scene.returnObject(object, o, done);
+				Scene.returnObject(object.base, o, done);
 			});
 		}
 		else if (o.type == "mesh_object") {
@@ -292,7 +292,7 @@ class Scene {
 		///if arm_audio
 		else if (o.type == "speaker_object") {
 			let object = Scene.addSpeakerObject(Data.getSpeakerRawByName(format.speaker_datas, o.data_ref), parent);
-			Scene.returnObject(object, o, done);
+			Scene.returnObject(object.base, o, done);
 		}
 		///end
 		else if (o.type == "object") {
@@ -327,7 +327,7 @@ class Scene {
 				Data.getSceneRaw(ref, (action: TSceneFormat) => {
 					bactions.push(action);
 					if (bactions.length == parentObject.bone_actions.length) {
-						let armature: Armature = null;
+						let armature: TArmature = null;
 						// Check if armature exists
 						for (let a of Scene.armatures) {
 							if (a.uid == parent.uid) {
@@ -344,7 +344,7 @@ class Scene {
 									break;
 								}
 							}
-							armature = new Armature(parent.uid, parent.name, bactions);
+							armature = Armature.create(parent.uid, parent.name, bactions);
 							Scene.armatures.push(armature);
 						}
 						Scene.returnMeshObject(
@@ -359,7 +359,7 @@ class Scene {
 		Scene.returnMeshObject(object_file, data_ref, sceneName, null, materials, parent, parentObject, o, done);
 	}
 
-	static returnMeshObject = (object_file: string, data_ref: string, sceneName: string, armature: any, // Armature
+	static returnMeshObject = (object_file: string, data_ref: string, sceneName: string, armature: any, // TArmature
 		materials: TMaterialData[], parent: BaseObject, parentObject: TObj, o: TObj, done: (o: BaseObject)=>void) => {
 
 			Data.getMesh(object_file, data_ref, (mesh: TMeshData) => {
@@ -373,10 +373,12 @@ class Scene {
 			// Attach particle systems
 			///if arm_particles
 			if (o.particle_refs != null) {
-				for (let ref of o.particle_refs) (object as MeshObject).setupParticleSystem(sceneName, ref);
+				for (let ref of o.particle_refs) {
+					object.setupParticleSystem(sceneName, ref);
+				}
 			}
 			///end
-			Scene.returnObject(object, o, done);
+			Scene.returnObject(object.base, o, done);
 		});
 	}
 

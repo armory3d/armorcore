@@ -1,8 +1,9 @@
 /// <reference path='./Vec4.ts'/>
 /// <reference path='./Quat.ts'/>
 
-class CameraObject extends BaseObject {
+class CameraObject {
 
+	base: BaseObject;
 	data: TCameraData;
 	P: Mat4;
 	noJitterP = Mat4.identity();
@@ -10,7 +11,7 @@ class CameraObject extends BaseObject {
 	V: Mat4;
 	prevV: Mat4 = null;
 	VP: Mat4;
-	frustumPlanes: FrustumPlane[] = null;
+	frustumPlanes: TFrustumPlane[] = null;
 	renderTarget: Image = null; // Render camera view to texture
 	currentFace = 0;
 
@@ -21,8 +22,9 @@ class CameraObject extends BaseObject {
 	static vup = new Vec4();
 
 	constructor(data: TCameraData) {
-		super();
-
+		this.base = new BaseObject();
+		this.base.ext = this;
+		this.base.remove = this.remove;
 		this.data = data;
 
 		this.buildProjection();
@@ -32,7 +34,7 @@ class CameraObject extends BaseObject {
 
 		if (data.frustum_culling) {
 			this.frustumPlanes = [];
-			for (let i = 0; i < 6; ++i) this.frustumPlanes.push(new FrustumPlane());
+			for (let i = 0; i < 6; ++i) this.frustumPlanes.push(new TFrustumPlane());
 		}
 
 		Scene.cameras.push(this);
@@ -50,10 +52,10 @@ class CameraObject extends BaseObject {
 		this.noJitterP.setFrom(this.P);
 	}
 
-	override remove = () => {
+	remove = () => {
 		array_remove(Scene.cameras, this);
 		// if (renderTarget != null) renderTarget.unload();
-		this.removeSuper();
+		this.base.removeSuper();
 	}
 
 	renderFrame = (g: Graphics4) => {
@@ -83,17 +85,17 @@ class CameraObject extends BaseObject {
 	}
 
 	buildMatrix = () => {
-		this.transform.buildMatrix();
+		this.base.transform.buildMatrix();
 
 		// Prevent camera matrix scaling
 		// TODO: discards position affected by scaled camera parent
-		let sc = this.transform.world.getScale();
+		let sc = this.base.transform.world.getScale();
 		if (sc.x != 1.0 || sc.y != 1.0 || sc.z != 1.0) {
 			CameraObject.temp.set(1.0 / sc.x, 1.0 / sc.y, 1.0 / sc.z);
-			this.transform.world.scale(CameraObject.temp);
+			this.base.transform.world.scale(CameraObject.temp);
 		}
 
-		this.V.getInverse(this.transform.world);
+		this.V.getInverse(this.base.transform.world);
 		this.VP.multmats(this.P, this.V);
 
 		if (this.data.frustum_culling) {
@@ -107,79 +109,79 @@ class CameraObject extends BaseObject {
 		}
 	}
 
-	static buildViewFrustum = (VP: Mat4, frustumPlanes: FrustumPlane[]) => {
-		// Left plane
-		frustumPlanes[0].setComponents(VP._03 + VP._00, VP._13 + VP._10, VP._23 + VP._20, VP._33 + VP._30);
-		// Right plane
-		frustumPlanes[1].setComponents(VP._03 - VP._00, VP._13 - VP._10, VP._23 - VP._20, VP._33 - VP._30);
-		// Top plane
-		frustumPlanes[2].setComponents(VP._03 - VP._01, VP._13 - VP._11, VP._23 - VP._21, VP._33 - VP._31);
-		// Bottom plane
-		frustumPlanes[3].setComponents(VP._03 + VP._01, VP._13 + VP._11, VP._23 + VP._21, VP._33 + VP._31);
-		// Near plane
-		frustumPlanes[4].setComponents(VP._02, VP._12, VP._22, VP._32);
-		// Far plane
-		frustumPlanes[5].setComponents(VP._03 - VP._02, VP._13 - VP._12, VP._23 - VP._22, VP._33 - VP._32);
-		// Normalize planes
-		for (let plane of frustumPlanes) plane.normalize();
+	right = (): Vec4 => {
+		return new Vec4(this.base.transform.local._00, this.base.transform.local._01, this.base.transform.local._02);
 	}
 
-	static sphereInFrustum = (frustumPlanes: FrustumPlane[], t: Transform, radiusScale = 1.0, offsetX = 0.0, offsetY = 0.0, offsetZ = 0.0): bool => {
+	up = (): Vec4 => {
+		return new Vec4(this.base.transform.local._10, this.base.transform.local._11, this.base.transform.local._12);
+	}
+
+	look = (): Vec4 => {
+		return new Vec4(-this.base.transform.local._20, -this.base.transform.local._21, -this.base.transform.local._22);
+	}
+
+	rightWorld = (): Vec4 => {
+		return new Vec4(this.base.transform.world._00, this.base.transform.world._01, this.base.transform.world._02);
+	}
+
+	upWorld = (): Vec4 => {
+		return new Vec4(this.base.transform.world._10, this.base.transform.world._11, this.base.transform.world._12);
+	}
+
+	lookWorld = (): Vec4 => {
+		return new Vec4(-this.base.transform.world._20, -this.base.transform.world._21, -this.base.transform.world._22);
+	}
+
+	static buildViewFrustum = (VP: Mat4, frustumPlanes: TFrustumPlane[]) => {
+		// Left plane
+		FrustumPlane.setComponents(frustumPlanes[0], VP._03 + VP._00, VP._13 + VP._10, VP._23 + VP._20, VP._33 + VP._30);
+		// Right plane
+		FrustumPlane.setComponents(frustumPlanes[1], VP._03 - VP._00, VP._13 - VP._10, VP._23 - VP._20, VP._33 - VP._30);
+		// Top plane
+		FrustumPlane.setComponents(frustumPlanes[2], VP._03 - VP._01, VP._13 - VP._11, VP._23 - VP._21, VP._33 - VP._31);
+		// Bottom plane
+		FrustumPlane.setComponents(frustumPlanes[3], VP._03 + VP._01, VP._13 + VP._11, VP._23 + VP._21, VP._33 + VP._31);
+		// Near plane
+		FrustumPlane.setComponents(frustumPlanes[4], VP._02, VP._12, VP._22, VP._32);
+		// Far plane
+		FrustumPlane.setComponents(frustumPlanes[5], VP._03 - VP._02, VP._13 - VP._12, VP._23 - VP._22, VP._33 - VP._32);
+		// Normalize planes
+		for (let plane of frustumPlanes) FrustumPlane.normalize(plane);
+	}
+
+	static sphereInFrustum = (frustumPlanes: TFrustumPlane[], t: Transform, radiusScale = 1.0, offsetX = 0.0, offsetY = 0.0, offsetZ = 0.0): bool => {
 		// Use scale when radius is changing
 		let radius = t.radius * radiusScale;
 		for (let plane of frustumPlanes) {
 			CameraObject.sphereCenter.set(t.worldx() + offsetX, t.worldy() + offsetY, t.worldz() + offsetZ);
 			// Outside the frustum
-			if (plane.distanceToSphere(CameraObject.sphereCenter, radius) + radius * 2 < 0) {
+			if (FrustumPlane.distanceToSphere(plane, CameraObject.sphereCenter, radius) + radius * 2 < 0) {
 				return false;
 			}
 		}
 		return true;
 	}
+}
 
-	right = (): Vec4 => {
-		return new Vec4(this.transform.local._00, this.transform.local._01, this.transform.local._02);
-	}
-
-	up = (): Vec4 => {
-		return new Vec4(this.transform.local._10, this.transform.local._11, this.transform.local._12);
-	}
-
-	look = (): Vec4 => {
-		return new Vec4(-this.transform.local._20, -this.transform.local._21, -this.transform.local._22);
-	}
-
-	rightWorld = (): Vec4 => {
-		return new Vec4(this.transform.world._00, this.transform.world._01, this.transform.world._02);
-	}
-
-	upWorld = (): Vec4 => {
-		return new Vec4(this.transform.world._10, this.transform.world._11, this.transform.world._12);
-	}
-
-	lookWorld = (): Vec4 => {
-		return new Vec4(-this.transform.world._20, -this.transform.world._21, -this.transform.world._22);
-	}
+class TFrustumPlane {
+	normal = new Vec4(1.0, 0.0, 0.0);
+	constant = 0.0;
 }
 
 class FrustumPlane {
-	normal = new Vec4(1.0, 0.0, 0.0);
-	constant = 0.0;
-
-	constructor() {}
-
-	normalize = () => {
-		let inverseNormalLength = 1.0 / this.normal.length();
-		this.normal.mult(inverseNormalLength);
-		this.constant *= inverseNormalLength;
+	static normalize = (raw: TFrustumPlane) => {
+		let inverseNormalLength = 1.0 / raw.normal.length();
+		raw.normal.mult(inverseNormalLength);
+		raw.constant *= inverseNormalLength;
 	}
 
-	distanceToSphere = (sphereCenter: Vec4, sphereRadius: f32): f32 => {
-		return (this.normal.dot(sphereCenter) + this.constant) - sphereRadius;
+	static distanceToSphere = (raw: TFrustumPlane, sphereCenter: Vec4, sphereRadius: f32): f32 => {
+		return (raw.normal.dot(sphereCenter) + raw.constant) - sphereRadius;
 	}
 
-	setComponents = (x: f32, y: f32, z: f32, w: f32) => {
-		this.normal.set(x, y, z);
-		this.constant = w;
+	static setComponents = (raw: TFrustumPlane, x: f32, y: f32, z: f32, w: f32) => {
+		raw.normal.set(x, y, z);
+		raw.constant = w;
 	}
 }

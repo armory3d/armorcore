@@ -1,45 +1,51 @@
 
-class ObjectAnimation extends Animation {
-
+class ObjectAnimationRaw {
+	base: AnimationRaw;
 	object: BaseObject;
 	oactions: TSceneFormat[];
 	oaction: TObj;
 	s0: f32 = 0.0;
 	bezierFrameIndex = -1;
+}
 
-	constructor(object: BaseObject, oactions: TSceneFormat[]) {
-		super();
-		this.object = object;
-		this.oactions = oactions;
-		this.isSkinned = false;
-		this.play();
+class ObjectAnimation {
+
+	static create(object: BaseObject, oactions: TSceneFormat[]): ObjectAnimationRaw {
+		let raw = new ObjectAnimationRaw();
+		raw.base = Animation.create();
+		raw.base.ext = raw;
+		raw.object = object;
+		raw.oactions = oactions;
+		raw.base.isSkinned = false;
+		ObjectAnimation.play(raw);
+		return raw;
 	}
 
-	getAction = (action: string): TObj => {
-		for (let a of this.oactions) if (a != null && a.objects[0].name == action) return a.objects[0];
+	static getAction = (raw: ObjectAnimationRaw, action: string): TObj => {
+		for (let a of raw.oactions) if (a != null && a.objects[0].name == action) return a.objects[0];
 		return null;
 	}
 
-	updateObjectAnim = () => {
-		this.updateTransformAnim(this.oaction.anim, this.object.transform);
-		this.object.transform.buildMatrix();
+	static updateObjectAnim = (raw: ObjectAnimationRaw) => {
+		ObjectAnimation.updateTransformAnim(raw, raw.oaction.anim, raw.object.transform);
+		raw.object.transform.buildMatrix();
 	}
 
-	interpolateLinear = (t: f32, t1: f32, t2: f32, v1: f32, v2: f32): f32 => {
+	static interpolateLinear = (t: f32, t1: f32, t2: f32, v1: f32, v2: f32): f32 => {
 		let s = (t - t1) / (t2 - t1);
 		return (1.0 - s) * v1 + s * v2;
 	}
 
-	checkFrameIndexT = (frameValues: Uint32Array, t: f32): bool => {
-		return this.speed > 0 ?
-			this.frameIndex < frameValues.length - 2 && t > frameValues[this.frameIndex + 1] * this.frameTime :
-			this.frameIndex > 1 && t > frameValues[this.frameIndex - 1] * this.frameTime;
+	static checkFrameIndexT = (raw: ObjectAnimationRaw, frameValues: Uint32Array, t: f32): bool => {
+		return raw.base.speed > 0 ?
+			raw.base.frameIndex < frameValues.length - 2 && t > frameValues[raw.base.frameIndex + 1] * raw.base.frameTime :
+			raw.base.frameIndex > 1 && t > frameValues[raw.base.frameIndex - 1] * raw.base.frameTime;
 	}
 
-	updateTransformAnim = (anim: TAnimation, transform: Transform) => {
+	static updateTransformAnim = (raw: ObjectAnimationRaw, anim: TAnimation, transform: Transform) => {
 		if (anim == null) return;
 
-		let total = anim.end * this.frameTime - anim.begin * this.frameTime;
+		let total = anim.end * raw.base.frameTime - anim.begin * raw.base.frameTime;
 
 		if (anim.has_delta) {
 			let t = transform;
@@ -55,34 +61,34 @@ class ObjectAnimation extends Animation {
 
 		for (let track of anim.tracks) {
 
-			if (this.frameIndex == -1) this.rewind(track);
-			let sign = this.speed > 0 ? 1 : -1;
+			if (raw.base.frameIndex == -1) Animation.rewind(raw.base, track);
+			let sign = raw.base.speed > 0 ? 1 : -1;
 
 			// End of current time range
-			let t = this.time + anim.begin * this.frameTime;
-			while (this.checkFrameIndexT(track.frames, t)) this.frameIndex += sign;
+			let t = raw.base.time + anim.begin * raw.base.frameTime;
+			while (ObjectAnimation.checkFrameIndexT(raw, track.frames, t)) raw.base.frameIndex += sign;
 
-			// No data for this track at current time
-			if (this.frameIndex >= track.frames.length) continue;
+			// No data for raw track at current time
+			if (raw.base.frameIndex >= track.frames.length) continue;
 
 			// End of track
-			if (this.time > total) {
-				if (this.onComplete != null) this.onComplete();
-				if (this.loop) this.rewind(track);
+			if (raw.base.time > total) {
+				if (raw.base.onComplete != null) raw.base.onComplete();
+				if (raw.base.loop) Animation.rewind(raw.base, track);
 				else {
-					this.frameIndex -= sign;
-					this.paused = true;
+					raw.base.frameIndex -= sign;
+					raw.base.paused = true;
 				}
 				return;
 			}
 
-			let ti = this.frameIndex;
-			let t1 = track.frames[ti] * this.frameTime;
-			let t2 = track.frames[ti + sign] * this.frameTime;
+			let ti = raw.base.frameIndex;
+			let t1 = track.frames[ti] * raw.base.frameTime;
+			let t2 = track.frames[ti + sign] * raw.base.frameTime;
 			let v1 = track.values[ti];
 			let v2 = track.values[ti + sign];
 
-			let value = this.interpolateLinear(t, t1, t2, v1, v2);
+			let value = ObjectAnimation.interpolateLinear(t, t1, t2, v1, v2);
 
 			switch (track.target) {
 				case "xloc": transform.loc.x = value;
@@ -116,31 +122,33 @@ class ObjectAnimation extends Animation {
 		}
 	}
 
-	override play = (action = "", onComplete: ()=>void = null, blendTime = 0.0, speed = 1.0, loop = true) => {
-		this.playSuper(action, onComplete, blendTime, speed, loop);
-		if (this.action == "" && this.oactions[0] != null) this.action = this.oactions[0].objects[0].name;
-		this.oaction = this.getAction(this.action);
-		if (this.oaction != null) {
-			this.isSampled = this.oaction.sampled != null && this.oaction.sampled;
+	static play = (raw: ObjectAnimationRaw, action = "", onComplete: ()=>void = null, blendTime = 0.0, speed = 1.0, loop = true) => {
+		if (raw.base.action == "" && raw.oactions[0] != null) {
+			raw.base.action = raw.oactions[0].objects[0].name;
+		}
+		raw.oaction = ObjectAnimation.getAction(raw, raw.base.action);
+		if (raw.oaction != null) {
+			raw.base.isSampled = raw.oaction.sampled != null && raw.oaction.sampled;
 		}
 	}
 
-	override update = (delta: f32) => {
-		if (!this.object.visible || this.object.culled || this.oaction == null) return;
+	static update = (raw: ObjectAnimationRaw, delta: f32) => {
+		if (!raw.object.visible || raw.object.culled || raw.oaction == null) return;
 
-		this.updateSuper(delta);
-		if (this.paused) return;
-		if (!this.isSkinned) this.updateObjectAnim();
+		Animation.updateSuper(raw.base, delta);
+
+		if (raw.base.paused) return;
+		if (!raw.base.isSkinned) ObjectAnimation.updateObjectAnim(raw);
 	}
 
-	override isTrackEnd = (track: TTrack): bool => {
-		return this.speed > 0 ?
-			this.frameIndex >= track.frames.length - 2 :
-			this.frameIndex <= 0;
+	static isTrackEnd = (raw: ObjectAnimationRaw, track: TTrack): bool => {
+		return raw.base.speed > 0 ?
+			raw.base.frameIndex >= track.frames.length - 2 :
+			raw.base.frameIndex <= 0;
 	}
 
-	override totalFrames = (): i32 => {
-		if (this.oaction == null || this.oaction.anim == null) return 0;
-		return this.oaction.anim.end - this.oaction.anim.begin;
+	static totalFrames = (raw: ObjectAnimationRaw): i32 => {
+		if (raw.oaction == null || raw.oaction.anim == null) return 0;
+		return raw.oaction.anim.end - raw.oaction.anim.begin;
 	}
 }

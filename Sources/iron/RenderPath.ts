@@ -62,7 +62,7 @@ class RenderPath {
 		RenderPath.meshesSorted = false;
 
 		for (let l of Scene.lights) {
-			if (l.visible) l.buildMatrix(Scene.camera);
+			if (l.base.visible) l.buildMatrix(Scene.camera);
 			if (l.data.type == "sun") RenderPath.sun = l;
 			else RenderPath.point = l;
 		}
@@ -184,9 +184,9 @@ class RenderPath {
 		MeshObject.lastPipeline = null;
 
 		if (!RenderPath.meshesSorted && camera != null) { // Order max once per frame for now
-			let camX = camera.transform.worldx();
-			let camY = camera.transform.worldy();
-			let camZ = camera.transform.worldz();
+			let camX = camera.base.transform.worldx();
+			let camY = camera.base.transform.worldy();
+			let camZ = camera.base.transform.worldz();
 			for (let mesh of meshes) {
 				mesh.computeCameraDistance(camX, camY, camZ);
 			}

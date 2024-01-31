@@ -1,8 +1,9 @@
 
 ///if arm_audio
 
-class SpeakerObject extends BaseObject {
+class SpeakerObject {
 
+	base: BaseObject;
 	data: TSpeakerData;
 	paused = false;
 	sound: Sound = null;
@@ -10,8 +11,9 @@ class SpeakerObject extends BaseObject {
 	volume: f32;
 
 	constructor(data: TSpeakerData) {
-		super();
-
+		this.base = new BaseObject();
+		this.base.ext = this;
+		this.base.remove = this.remove;
 		this.data = data;
 
 		Scene.speakers.push(this);
@@ -25,7 +27,7 @@ class SpeakerObject extends BaseObject {
 	}
 
 	init = () => {
-		if (this.visible && this.data.play_on_start) this.play();
+		if (this.base.visible && this.data.play_on_start) this.play();
 	}
 
 	play = () => {
@@ -61,7 +63,7 @@ class SpeakerObject extends BaseObject {
 		}
 
 		if (this.data.attenuation > 0) {
-			let distance = Vec4.distance(Scene.camera.transform.world.getLoc(), this.transform.world.getLoc());
+			let distance = Vec4.distance(Scene.camera.base.transform.world.getLoc(), this.base.transform.world.getLoc());
 			this.volume = 1.0 / (1.0 + this.data.attenuation * (distance - 1.0));
 			this.volume *= this.data.volume;
 		}
@@ -72,10 +74,10 @@ class SpeakerObject extends BaseObject {
 		for (let c of this.channels) c.volume = this.volume;
 	}
 
-	override remove = () => {
+	remove = () => {
 		this.stop();
 		array_remove(Scene.speakers, this);
-		this.removeSuper();
+		this.base.removeSuper();
 	}
 }
 

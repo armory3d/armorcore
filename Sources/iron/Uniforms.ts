@@ -213,7 +213,7 @@ class Uniforms {
 					break;
 				}
 				case "_skydomeMatrix": {
-					let tr = camera.transform;
+					let tr = camera.base.transform;
 					Uniforms.helpVec.set(tr.worldx(), tr.worldy(), tr.worldz() - 3.5); // Sky
 					let bounds = camera.data.far_plane * 0.95;
 					Uniforms.helpVec2.set(bounds, bounds, bounds);
@@ -260,7 +260,7 @@ class Uniforms {
 				case "_pointPosition": {
 					let point = RenderPath.point;
 					if (point != null) {
-						Uniforms.helpVec.set(point.transform.worldx(), point.transform.worldy(), point.transform.worldz());
+						Uniforms.helpVec.set(point.base.transform.worldx(), point.base.transform.worldy(), point.base.transform.worldz());
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -268,7 +268,7 @@ class Uniforms {
 				case "_pointColor": {
 					let point = RenderPath.point;
 					if (point != null) {
-						let str = point.visible ? point.data.strength : 0.0;
+						let str = point.base.visible ? point.data.strength : 0.0;
 						Uniforms.helpVec.set(point.data.color[0] * str, point.data.color[1] * str, point.data.color[2] * str);
 						v = Uniforms.helpVec;
 						break;
@@ -280,7 +280,7 @@ class Uniforms {
 						let sx: f32 = light.data.size * f2;
 						let sy: f32 = light.data.size_y * f2;
 						Uniforms.helpVec.set(-sx, sy, 0.0);
-						Uniforms.helpVec.applymat(light.transform.world);
+						Uniforms.helpVec.applymat(light.base.transform.world);
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -291,7 +291,7 @@ class Uniforms {
 						let sx: f32 = light.data.size * f2;
 						let sy: f32 = light.data.size_y * f2;
 						Uniforms.helpVec.set(sx, sy, 0.0);
-						Uniforms.helpVec.applymat(light.transform.world);
+						Uniforms.helpVec.applymat(light.base.transform.world);
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -302,7 +302,7 @@ class Uniforms {
 						let sx: f32 = light.data.size * f2;
 						let sy: f32 = light.data.size_y * f2;
 						Uniforms.helpVec.set(sx, -sy, 0.0);
-						Uniforms.helpVec.applymat(light.transform.world);
+						Uniforms.helpVec.applymat(light.base.transform.world);
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -313,13 +313,13 @@ class Uniforms {
 						let sx: f32 = light.data.size * f2;
 						let sy: f32 = light.data.size_y * f2;
 						Uniforms.helpVec.set(-sx, -sy, 0.0);
-						Uniforms.helpVec.applymat(light.transform.world);
+						Uniforms.helpVec.applymat(light.base.transform.world);
 						v = Uniforms.helpVec;
 						break;
 					}
 				}
 				case "_cameraPosition": {
-					Uniforms.helpVec.set(camera.transform.worldx(), camera.transform.worldy(), camera.transform.worldz());
+					Uniforms.helpVec.set(camera.base.transform.worldx(), camera.base.transform.worldy(), camera.base.transform.worldz());
 					v = Uniforms.helpVec;
 					break;
 				}
@@ -518,7 +518,7 @@ class Uniforms {
 					break;
 				}
 				case "_prevWorldViewProjectionMatrix": {
-					Uniforms.helpMat.setFrom((object as MeshObject).prevMatrix);
+					Uniforms.helpMat.setFrom(object.ext.prevMatrix);
 					Uniforms.helpMat.multmat(camera.prevV);
 					// helpMat.multmat(camera.prevP);
 					Uniforms.helpMat.multmat(camera.P);
@@ -527,9 +527,9 @@ class Uniforms {
 				}
 				///if arm_particles
 				case "_particleData": {
-					let mo = object as MeshObject;
+					let mo = object.ext;
 					if (mo.particleOwner != null && mo.particleOwner.particleSystems != null) {
-						m = mo.particleOwner.particleSystems[mo.particleIndex].getData();
+						m = ParticleSystem.getData(mo.particleOwner.particleSystems[mo.particleIndex]);
 					}
 					break;
 				}
@@ -672,7 +672,7 @@ class Uniforms {
 				///if arm_skin
 				case "_skinBones": {
 					if (object.animation != null) {
-						fa = (object.animation as BoneAnimation).skinBuffer;
+						fa = object.animation.ext.skinBuffer;
 					}
 					break;
 				}
@@ -749,8 +749,8 @@ class Uniforms {
 	}
 
 	static currentMat = (object: BaseObject): TMaterialData => {
-		if (object != null && object.constructor == MeshObject) {
-			let mo = object as MeshObject;
+		if (object != null && object.ext != null && object.ext.materials != null) {
+			let mo = object.ext;
 			return mo.materials[mo.materialIndex];
 		}
 		return null;

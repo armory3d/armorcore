@@ -1,11 +1,12 @@
 
-class MeshObject extends BaseObject {
+class MeshObject {
 
+	base: BaseObject;
 	data: TMeshData = null;
 	materials: TMaterialData[];
 	materialIndex = 0;
 	///if arm_particles
-	particleSystems: ParticleSystem[] = null; // Particle owner
+	particleSystems: TParticleSystem[] = null; // Particle owner
 	particleChildren: MeshObject[] = null;
 	particleOwner: MeshObject = null; // Particle object
 	particleIndex = -1;
@@ -15,11 +16,15 @@ class MeshObject extends BaseObject {
 	frustumCulling = true;
 	skip_context: string = null; // Do not draw this context
 	force_context: string = null; // Draw only this context
-	static lastPipeline: PipelineState = null;
 	prevMatrix = Mat4.identity();
 
+	static lastPipeline: PipelineState = null;
+
 	constructor(data: TMeshData, materials: TMaterialData[]) {
-		super();
+		this.base = new BaseObject();
+		this.base.ext = this;
+		this.base.remove = this.remove;
+		this.base.setupAnimation = this.setupAnimation;
 
 		this.materials = materials;
 		this.setData(data);
@@ -32,48 +37,48 @@ class MeshObject extends BaseObject {
 		MeshData.build(data);
 
 		// Scale-up packed (-1,1) mesh coords
-		this.transform.scaleWorld = data.scale_pos;
+		this.base.transform.scaleWorld = data.scale_pos;
 	}
 
-	override remove = () => {
+	remove = () => {
 		///if arm_particles
 		if (this.particleChildren != null) {
 			for (let c of this.particleChildren) c.remove();
 			this.particleChildren = null;
 		}
 		if (this.particleSystems != null) {
-			for (let psys of this.particleSystems) psys.remove();
+			for (let psys of this.particleSystems) ParticleSystem.remove(psys);
 			this.particleSystems = null;
 		}
 		///end
 		array_remove(Scene.meshes, this);
 		this.data._refcount--;
-		this.removeSuper();
+		this.base.removeSuper();
 	}
 
-	override setupAnimation = (oactions: TSceneFormat[] = null) => {
+	setupAnimation = (oactions: TSceneFormat[] = null) => {
 		///if arm_skin
-		let hasAction = this.parent != null && this.parent.raw != null && this.parent.raw.bone_actions != null;
+		let hasAction = this.base.parent != null && this.base.parent.raw != null && this.base.parent.raw.bone_actions != null;
 		if (hasAction) {
-			let armatureName = this.parent.name;
-			this.animation = this.getParentArmature(armatureName);
-			if (this.animation == null) this.animation = new BoneAnimation(armatureName);
-			if (this.data.skin != null) (this.animation as BoneAnimation).setSkin(this);
+			let armatureName = this.base.parent.name;
+			this.base.animation = this.base.getParentArmature(armatureName).base;
+			if (this.base.animation == null) this.base.animation = BoneAnimation.create(armatureName).base;
+			if (this.data.skin != null) BoneAnimation.setSkin(this.base.animation.ext, this);
 		}
 		///end
-		this.setupAnimationSuper(oactions);
+		this.base.setupAnimationSuper(oactions);
 	}
 
 	///if arm_particles
 	setupParticleSystem = (sceneName: string, pref: TParticleReference) => {
 		if (this.particleSystems == null) this.particleSystems = [];
-		let psys = new ParticleSystem(sceneName, pref);
+		let psys = ParticleSystem.create(sceneName, pref);
 		this.particleSystems.push(psys);
 	}
 	///end
 
 	setCulled = (b: bool): bool => {
-		this.culled = b;
+		this.base.culled = b;
 		return b;
 	}
 
@@ -82,7 +87,7 @@ class MeshObject extends BaseObject {
 		let mats = this.materials;
 		if (!this.validContext(mats, context)) return true;
 
-		if (!this.visible) return this.setCulled(true);
+		if (!this.base.visible) return this.setCulled(true);
 
 		if (this.skip_context == context) return this.setCulled(true);
 		if (this.force_context != null && this.force_context != context) return this.setCulled(true);
@@ -105,13 +110,13 @@ class MeshObject extends BaseObject {
 			if (this.data._instanced) radiusScale *= 100;
 			let frustumPlanes = camera.frustumPlanes;
 
-			if (!CameraObject.sphereInFrustum(frustumPlanes, this.transform, radiusScale)) {
+			if (!CameraObject.sphereInFrustum(frustumPlanes, this.base.transform, radiusScale)) {
 				return this.setCulled(true);
 			}
 		}
 
-		this.culled = false;
-		return this.culled;
+		this.base.culled = false;
+		return this.base.culled;
 	}
 
 	skipContext = (context: string, mat: TMaterialData): bool => {
@@ -142,12 +147,12 @@ class MeshObject extends BaseObject {
 
 	render = (g: Graphics4, context: string, bindParams: string[]) => {
 		if (this.data == null || !this.data._ready) return; // Data not yet streamed
-		if (!this.visible) return; // Skip render if object is hidden
+		if (!this.base.visible) return; // Skip render if object is hidden
 		if (this.cullMesh(context, Scene.camera, RenderPath.light)) return;
-		let meshContext = this.raw != null ? context == "mesh" : false;
+		let meshContext = this.base.raw != null ? context == "mesh" : false;
 
 		///if arm_particles
-		if (this.raw != null && this.raw.is_particle && this.particleOwner == null) return; // Instancing not yet set-up by particle system owner
+		if (this.base.raw != null && this.base.raw.is_particle && this.particleOwner == null) return; // Instancing not yet set-up by particle system owner
 		if (this.particleSystems != null && meshContext) {
 			if (this.particleChildren == null) {
 				this.particleChildren = [];
@@ -155,7 +160,7 @@ class MeshObject extends BaseObject {
 					// let c: MeshObject = Scene.getChild(psys.data.raw.instance_object);
 					Scene.spawnObject(psys.data.instance_object, null, (o: BaseObject) => {
 						if (o != null) {
-							let c: MeshObject = o as MeshObject;
+							let c: MeshObject = o.ext;
 							this.particleChildren.push(c);
 							c.particleOwner = this;
 							c.particleIndex = this.particleChildren.length - 1;
@@ -164,10 +169,10 @@ class MeshObject extends BaseObject {
 				}
 			}
 			for (let i = 0; i < this.particleSystems.length; ++i) {
-				this.particleSystems[i].update(this.particleChildren[i], this);
+				ParticleSystem.update(this.particleSystems[i], this.particleChildren[i], this);
 			}
 		}
-		if (this.particleSystems != null && this.particleSystems.length > 0 && !this.raw.render_emitter) return;
+		if (this.particleSystems != null && this.particleSystems.length > 0 && !this.base.raw.render_emitter) return;
 		///end
 
 		if (this.cullMaterial(context)) return;
@@ -179,7 +184,7 @@ class MeshObject extends BaseObject {
 
 		Uniforms.posUnpack = this.data.scale_pos;
 		Uniforms.texUnpack = this.data.scale_tex;
-		this.transform.update();
+		this.base.transform.update();
 
 		// Render mesh
 		for (let i = 0; i < this.data._indexBuffers.length; ++i) {
@@ -202,7 +207,7 @@ class MeshObject extends BaseObject {
 				// Uniforms.setContextConstants(g, scontext, bindParams);
 			}
 			Uniforms.setContextConstants(g, scontext, bindParams); //
-			Uniforms.setObjectConstants(g, scontext, this);
+			Uniforms.setObjectConstants(g, scontext, this.base);
 			if (materialContexts.length > mi) {
 				Uniforms.setMaterialConstants(g, scontext, materialContexts[mi]);
 			}
@@ -226,7 +231,7 @@ class MeshObject extends BaseObject {
 			}
 		}
 
-		this.prevMatrix.setFrom(this.transform.worldUnpack);
+		this.prevMatrix.setFrom(this.base.transform.worldUnpack);
 	}
 
 	validContext = (mats: TMaterialData[], context: string): bool => {
@@ -236,14 +241,14 @@ class MeshObject extends BaseObject {
 
 	computeCameraDistance = (camX: f32, camY: f32, camZ: f32) => {
 		// Render path mesh sorting
-		this.cameraDistance = Vec4.distancef(camX, camY, camZ, this.transform.worldx(), this.transform.worldy(), this.transform.worldz());
+		this.cameraDistance = Vec4.distancef(camX, camY, camZ, this.base.transform.worldx(), this.base.transform.worldy(), this.base.transform.worldz());
 	}
 
 	computeScreenSize = (camera: CameraObject) => {
 		// Approx..
 		// let rp = camera.renderPath;
 		// let screenVolume = rp.currentW * rp.currentH;
-		let tr = this.transform;
+		let tr = this.base.transform;
 		let volume = tr.dim.x * tr.dim.y * tr.dim.z;
 		this.screenSize = volume * (1.0 / this.cameraDistance);
 		this.screenSize = this.screenSize > 1.0 ? 1.0 : this.screenSize;

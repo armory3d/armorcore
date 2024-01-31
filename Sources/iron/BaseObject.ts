@@ -1,21 +1,20 @@
 
 class BaseObject {
-	static uidCounter = 0;
 	uid: i32;
 	urandom: f32;
 	raw: TObj = null;
-
 	name: string = "";
 	transform: Transform;
 	traits: any[] = [];
-
 	parent: BaseObject = null;
 	children: BaseObject[] = [];
-
-	animation: Animation = null;
+	animation: AnimationRaw = null;
 	visible = true; // Skip render, keep updating
 	culled = false; // BaseObject was culled last frame
 	isEmpty = false;
+	ext: any; // MeshObject | CameraObject | LightObject | SpeakerObject
+
+	static uidCounter = 0;
 
 	constructor() {
 		this.uid = BaseObject.uidCounter++;
@@ -44,7 +43,7 @@ class BaseObject {
 
 	removeSuper = () => {
 		if (this.isEmpty && Scene.ready) array_remove(Scene.empties, this);
-		if (this.animation != null) this.animation.remove();
+		if (this.animation != null) Animation.remove(this.animation);
 		while (this.children.length > 0) this.children[0].remove();
 		if (this.parent != null) {
 			array_remove(this.parent.children, this);
@@ -76,8 +75,8 @@ class BaseObject {
 	}
 
 	///if arm_skin
-	getParentArmature = (name: string): BoneAnimation => {
-		for (let a of Scene.animations) if (a.armature != null && a.armature.name == name) return a as BoneAnimation;
+	getParentArmature = (name: string): BoneAnimationRaw => {
+		for (let a of Scene.animations) if (a.armature != null && a.armature.name == name) return a.ext;
 		return null;
 	}
 	///end
@@ -88,13 +87,13 @@ class BaseObject {
 		if (this.raw.parent_bone != null) {
 			App.notifyOnInit(() => {
 				let banim = this.getParentArmature(this.parent.name);
-				if (banim != null) banim.addBoneChild(this.raw.parent_bone, this);
+				if (banim != null) BoneAnimation.addBoneChild(banim, this.raw.parent_bone, this);
 			});
 		}
 		///end
 		// BaseObject actions
 		if (oactions == null) return;
-		this.animation = new ObjectAnimation(this, oactions);
+		this.animation = ObjectAnimation.create(this, oactions).base;
 	}
 
 	setupAnimation = this.setupAnimationSuper;

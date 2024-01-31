@@ -1,29 +1,33 @@
 
 ///if arm_skin
 
-class Armature {
+class TArmature {
 	uid: i32;
 	name: string;
 	actions: TAction[] = [];
 	matsReady = false;
+}
 
-	constructor(uid: i32, name: string, actions: TSceneFormat[]) {
-		this.uid = uid;
-		this.name = name;
+class Armature {
+	static create(uid: i32, name: string, actions: TSceneFormat[]): TArmature {
+		let raw = new TArmature();
+		raw.uid = uid;
+		raw.name = name;
 
 		for (let a of actions) {
 			for (let o of a.objects) Armature.setParents(o);
 			let bones: TObj[] = [];
 			Armature.traverseBones(a.objects, (object: TObj) => { bones.push(object); });
-			this.actions.push({ name: a.name, bones: bones, mats: null });
+			raw.actions.push({ name: a.name, bones: bones, mats: null });
 		}
+		return raw;
 	}
 
-	initMats = () => {
-		if (this.matsReady) return;
-		this.matsReady = true;
+	static initMats = (raw: TArmature) => {
+		if (raw.matsReady) return;
+		raw.matsReady = true;
 
-		for (let a of this.actions) {
+		for (let a of raw.actions) {
 			if (a.mats != null) continue;
 			a.mats = [];
 			for (let b of a.bones) {
@@ -32,8 +36,8 @@ class Armature {
 		}
 	}
 
-	getAction = (name: string): TAction => {
-		for (let a of this.actions) if (a.name == name) return a;
+	static getAction = (raw: TArmature, name: string): TAction => {
+		for (let a of raw.actions) if (a.name == name) return a;
 		return null;
 	}
 

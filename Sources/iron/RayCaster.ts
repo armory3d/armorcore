@@ -62,7 +62,7 @@ class RayCaster {
 		let closest: Transform = null;
 		let minDist = Infinity;
 		for (let t of intersects) {
-			let dist = Vec4.distance(t.loc, camera.transform.loc);
+			let dist = Vec4.distance(t.loc, camera.base.transform.loc);
 			if (dist < minDist) {
 				minDist = dist;
 				closest = t;
