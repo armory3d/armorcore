@@ -9,9 +9,9 @@ class RenderPath {
 	static frameTime = 0.0;
 	static frame = 0;
 	static currentTarget: RenderTarget = null;
-	static light: LightObject = null;
-	static sun: LightObject = null;
-	static point: LightObject = null;
+	static light: TLightObject = null;
+	static sun: TLightObject = null;
+	static point: TLightObject = null;
 	static currentG: Graphics4 = null;
 	static frameG: Graphics4;
 	static drawOrder = DrawOrder.Distance;
@@ -62,7 +62,7 @@ class RenderPath {
 		RenderPath.meshesSorted = false;
 
 		for (let l of Scene.lights) {
-			if (l.base.visible) l.buildMatrix(Scene.camera);
+			if (l.base.visible) LightObject.buildMatrix(l, Scene.camera);
 			if (l.data.type == "sun") RenderPath.sun = l;
 			else RenderPath.point = l;
 		}
@@ -161,13 +161,13 @@ class RenderPath {
 		rt.image.generateMipmaps(1000);
 	}
 
-	static sortMeshesDistance = (meshes: MeshObject[]) => {
+	static sortMeshesDistance = (meshes: TMeshObject[]) => {
 		meshes.sort((a, b): i32 => {
 			return a.cameraDistance >= b.cameraDistance ? 1 : -1;
 		});
 	}
 
-	static sortMeshesShader = (meshes: MeshObject[]) => {
+	static sortMeshesShader = (meshes: TMeshObject[]) => {
 		meshes.sort((a, b): i32 => {
 			return a.materials[0].name >= b.materials[0].name ? 1 : -1;
 		});
@@ -184,18 +184,18 @@ class RenderPath {
 		MeshObject.lastPipeline = null;
 
 		if (!RenderPath.meshesSorted && camera != null) { // Order max once per frame for now
-			let camX = camera.base.transform.worldx();
-			let camY = camera.base.transform.worldy();
-			let camZ = camera.base.transform.worldz();
+			let camX = Transform.worldx(camera.base.transform);
+			let camY = Transform.worldy(camera.base.transform);
+			let camZ = Transform.worldz(camera.base.transform);
 			for (let mesh of meshes) {
-				mesh.computeCameraDistance(camX, camY, camZ);
+				MeshObject.computeCameraDistance(mesh, camX, camY, camZ);
 			}
 			RenderPath.drawOrder == DrawOrder.Shader ? RenderPath.sortMeshesShader(meshes) : RenderPath.sortMeshesDistance(meshes);
 			RenderPath.meshesSorted = true;
 		}
 
 		for (let m of meshes) {
-			m.render(RenderPath.currentG, context, RenderPath.bindParams);
+			MeshObject.render(m, RenderPath.currentG, context, RenderPath.bindParams);
 		}
 	}
 

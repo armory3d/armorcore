@@ -24,13 +24,13 @@ class Tween {
 			anim._comps = []; anim._x = []; anim._y = []; anim._z = []; anim._w = []; anim._normalize = [];
 			for (let p in anim.props) {
 				let val: any = anim.target[p];
-				if (val.constructor == Vec4 || val.constructor == Quat) {
+				if (val.constructor == TVec4 || val.constructor == TQuat) {
 					anim._comps.push(4);
 					anim._x.push(val.x);
 					anim._y.push(val.y);
 					anim._z.push(val.z);
 					anim._w.push(val.w);
-					anim._normalize.push(val.constructor == Quat);
+					anim._normalize.push(val.constructor == TQuat);
 				}
 				else {
 					anim._comps.push(1);
@@ -75,7 +75,7 @@ class Tween {
 
 			if (a.target != null) {
 
-				if (a.target.constructor == Transform) a.target.dirty = true;
+				if (a.target.constructor == TransformRaw) a.target.dirty = true;
 
 				// Way too much Reflect trickery..
 				let ps = Object.keys(a.props);

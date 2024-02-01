@@ -1,7 +1,7 @@
 
 class ObjectAnimationRaw {
 	base: AnimationRaw;
-	object: BaseObject;
+	object: TBaseObject;
 	oactions: TSceneFormat[];
 	oaction: TObj;
 	s0: f32 = 0.0;
@@ -10,7 +10,7 @@ class ObjectAnimationRaw {
 
 class ObjectAnimation {
 
-	static create(object: BaseObject, oactions: TSceneFormat[]): ObjectAnimationRaw {
+	static create(object: TBaseObject, oactions: TSceneFormat[]): ObjectAnimationRaw {
 		let raw = new ObjectAnimationRaw();
 		raw.base = Animation.create();
 		raw.base.ext = raw;
@@ -28,7 +28,7 @@ class ObjectAnimation {
 
 	static updateObjectAnim = (raw: ObjectAnimationRaw) => {
 		ObjectAnimation.updateTransformAnim(raw, raw.oaction.anim, raw.object.transform);
-		raw.object.transform.buildMatrix();
+		Transform.buildMatrix(raw.object.transform);
 	}
 
 	static interpolateLinear = (t: f32, t1: f32, t2: f32, v1: f32, v2: f32): f32 => {
@@ -42,7 +42,7 @@ class ObjectAnimation {
 			raw.base.frameIndex > 1 && t > frameValues[raw.base.frameIndex - 1] * raw.base.frameTime;
 	}
 
-	static updateTransformAnim = (raw: ObjectAnimationRaw, anim: TAnimation, transform: Transform) => {
+	static updateTransformAnim = (raw: ObjectAnimationRaw, anim: TAnimation, transform: TransformRaw) => {
 		if (anim == null) return;
 
 		let total = anim.end * raw.base.frameTime - anim.begin * raw.base.frameTime;
@@ -50,12 +50,12 @@ class ObjectAnimation {
 		if (anim.has_delta) {
 			let t = transform;
 			if (t.dloc == null) {
-				t.dloc = new Vec4();
-				t.drot = new Quat();
-				t.dscale = new Vec4();
+				t.dloc = Vec4.create();
+				t.drot = Quat.create();
+				t.dscale = Vec4.create();
 			}
-			t.dloc.set(0, 0, 0);
-			t.dscale.set(0, 0, 0);
+			Vec4.set(t.dloc, 0, 0, 0);
+			Vec4.set(t.dscale, 0, 0, 0);
 			t._deulerX = t._deulerY = t._deulerZ = 0.0;
 		}
 
@@ -94,9 +94,9 @@ class ObjectAnimation {
 				case "xloc": transform.loc.x = value;
 				case "yloc": transform.loc.y = value;
 				case "zloc": transform.loc.z = value;
-				case "xrot": transform.setRotation(value, transform._eulerY, transform._eulerZ);
-				case "yrot": transform.setRotation(transform._eulerX, value, transform._eulerZ);
-				case "zrot": transform.setRotation(transform._eulerX, transform._eulerY, value);
+				case "xrot": Transform.setRotation(transform, value, transform._eulerY, transform._eulerZ);
+				case "yrot": Transform.setRotation(transform, transform._eulerX, value, transform._eulerZ);
+				case "zrot": Transform.setRotation(transform, transform._eulerX, transform._eulerY, value);
 				case "qwrot": transform.rot.w = value;
 				case "qxrot": transform.rot.x = value;
 				case "qyrot": transform.rot.y = value;
@@ -123,6 +123,8 @@ class ObjectAnimation {
 	}
 
 	static play = (raw: ObjectAnimationRaw, action = "", onComplete: ()=>void = null, blendTime = 0.0, speed = 1.0, loop = true) => {
+		Animation.playSuper(raw.base, action, onComplete, blendTime, speed, loop);
+
 		if (raw.base.action == "" && raw.oactions[0] != null) {
 			raw.base.action = raw.oactions[0].objects[0].name;
 		}

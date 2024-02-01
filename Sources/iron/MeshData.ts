@@ -258,7 +258,7 @@ class MeshData {
 		}
 		raw._actions.set(name, actionBones);
 
-		let actionMats: Mat4[] = [];
+		let actionMats: TMat4[] = [];
 		for (let b of actionBones) {
 			actionMats.push(Mat4.fromFloat32Array(b.transform.values));
 		}
@@ -274,10 +274,10 @@ class MeshData {
 	}
 	///end
 
-	static calculateAABB = (raw: TMeshData): Vec4 => {
-		let aabbMin = new Vec4(-0.01, -0.01, -0.01);
-		let aabbMax = new Vec4(0.01, 0.01, 0.01);
-		let aabb = new Vec4();
+	static calculateAABB = (raw: TMeshData): TVec4 => {
+		let aabbMin = Vec4.create(-0.01, -0.01, -0.01);
+		let aabbMax = Vec4.create(0.01, 0.01, 0.01);
+		let aabb = Vec4.create();
 		let i = 0;
 		let positions = MeshData.getVArray(raw, 'pos');
 		while (i < positions.values.length) {

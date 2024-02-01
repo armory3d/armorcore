@@ -28,9 +28,9 @@ class TParticleSystem {
 	lapTime = 0.0;
 	m = Mat4.identity();
 
-	ownerLoc = new Vec4();
-	ownerRot = new Quat();
-	ownerScl = new Vec4();
+	ownerLoc = Vec4.create();
+	ownerRot = Quat.create();
+	ownerScl = Vec4.create();
 }
 
 class ParticleSystem {
@@ -70,20 +70,20 @@ class ParticleSystem {
 		raw.lifetime = raw.r.lifetime / raw.frameRate;
 	}
 
-	static update = (raw: TParticleSystem, object: MeshObject, owner: MeshObject) => {
+	static update = (raw: TParticleSystem, object: TMeshObject, owner: TMeshObject) => {
 		if (!raw.ready || object == null || raw.speed == 0.0) return;
 
 		// Copy owner world transform but discard scale
-		owner.base.transform.world.decompose(raw.ownerLoc, raw.ownerRot, raw.ownerScl);
+		Mat4.decompose(owner.base.transform.world, raw.ownerLoc, raw.ownerRot, raw.ownerScl);
 		object.base.transform.loc = raw.ownerLoc;
 		object.base.transform.rot = raw.ownerRot;
 
 		// Set particle size per particle system
-		object.base.transform.scale = new Vec4(raw.r.particle_size, raw.r.particle_size, raw.r.particle_size, 1);
+		object.base.transform.scale = Vec4.create(raw.r.particle_size, raw.r.particle_size, raw.r.particle_size, 1);
 
-		object.base.transform.buildMatrix();
-		owner.base.transform.buildMatrix();
-		object.base.transform.dim.setFrom(owner.base.transform.dim);
+		Transform.buildMatrix(object.base.transform);
+		Transform.buildMatrix(owner.base.transform);
+		Vec4.setFrom(object.base.transform.dim, owner.base.transform.dim);
 
 		raw.dimx = object.base.transform.dim.x;
 		raw.dimy = object.base.transform.dim.y;
@@ -97,7 +97,7 @@ class ParticleSystem {
 		ParticleSystem.updateGpu(raw, object, owner);
 	}
 
-	static getData = (raw: TParticleSystem): Mat4 => {
+	static getData = (raw: TParticleSystem): TMat4 => {
 		let hair = raw.r.type == 1;
 		raw.m._00 = raw.r.loop ? raw.animtime : -raw.animtime;
 		raw.m._01 = hair ? 1 / raw.particles.length : raw.spawnRate;
@@ -118,7 +118,7 @@ class ParticleSystem {
 		return raw.m;
 	}
 
-	static updateGpu = (raw: TParticleSystem, object: MeshObject, owner: MeshObject) => {
+	static updateGpu = (raw: TParticleSystem, object: TMeshObject, owner: TMeshObject) => {
 		if (!object.data._instanced) ParticleSystem.setupGeomGpu(raw, object, owner);
 		// GPU particles transform is attached to owner object
 	}
@@ -127,7 +127,7 @@ class ParticleSystem {
 		return Math.floor(Math.random() * max);
 	}
 
-	static setupGeomGpu = (raw: TParticleSystem, object: MeshObject, owner: MeshObject) => {
+	static setupGeomGpu = (raw: TParticleSystem, object: TMeshObject, owner: TMeshObject) => {
 		let instancedData = new Float32Array(raw.particles.length * 3);
 		let i = 0;
 
@@ -135,8 +135,8 @@ class ParticleSystem {
 		let scalePosOwner = owner.data.scale_pos;
 		let scalePosParticle = object.data.scale_pos;
 		let particleSize = raw.r.particle_size;
-		let scaleFactor = new Vec4().setFrom(owner.base.transform.scale);
-		scaleFactor.mult(scalePosOwner / (particleSize * scalePosParticle));
+		let scaleFactor = Vec4.setFrom(Vec4.create(), owner.base.transform.scale);
+		Vec4.mult(scaleFactor, scalePosOwner / (particleSize * scalePosParticle));
 
 		switch (raw.r.emit_from) {
 			case 0: // Vert
@@ -161,9 +161,9 @@ class ParticleSystem {
 					let i1 = ia[faceIndex * 3 + 1];
 					let i2 = ia[faceIndex * 3 + 2];
 
-					let v0 = new Vec3(positions[i0 * 4], positions[i0 * 4 + 1], positions[i0 * 4 + 2]);
-					let v1 = new Vec3(positions[i1 * 4], positions[i1 * 4 + 1], positions[i1 * 4 + 2]);
-					let v2 = new Vec3(positions[i2 * 4], positions[i2 * 4 + 1], positions[i2 * 4 + 2]);
+					let v0 = vec3_create(positions[i0 * 4], positions[i0 * 4 + 1], positions[i0 * 4 + 2]);
+					let v1 = vec3_create(positions[i1 * 4], positions[i1 * 4 + 1], positions[i1 * 4 + 2]);
+					let v2 = vec3_create(positions[i2 * 4], positions[i2 * 4 + 1], positions[i2 * 4 + 2]);
 
 					let pos = ParticleSystem.randomPointInTriangle(v0, v1, v2);
 
@@ -173,8 +173,8 @@ class ParticleSystem {
 				}
 
 			case 2: // Volume
-				let scaleFactorVolume = new Vec4().setFrom(object.base.transform.dim);
-				scaleFactorVolume.mult(0.5 / (particleSize * scalePosParticle));
+				let scaleFactorVolume = Vec4.setFrom(Vec4.create(), object.base.transform.dim);
+				Vec4.mult(scaleFactorVolume, 0.5 / (particleSize * scalePosParticle));
 
 				for (let p in raw.particles) {
 					instancedData[i] = (Math.random() * 2.0 - 1.0) * scaleFactorVolume.x; i++;
@@ -206,9 +206,9 @@ class ParticleSystem {
 		}
 
 		// Transform the point to the triangle abc
-		let u = b.sub(a);
-		let v = c.sub(a);
-		return a.add(u.mult(x).add(v.mult(y)));
+		let u = vec3_sub(b, a);
+		let v = vec3_sub(c, a);
+		return vec3_add(a, vec3_add(vec3_mult(u, x), vec3_mult(v, y)));
 	}
 }
 

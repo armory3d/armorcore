@@ -1,77 +1,82 @@
 /// <reference path='./Vec4.ts'/>
 /// <reference path='./Quat.ts'/>
 
-class CameraObject {
-
-	base: BaseObject;
+class TCameraObject {
+	base: TBaseObject;
 	data: TCameraData;
-	P: Mat4;
+	P: TMat4;
 	noJitterP = Mat4.identity();
 	frame = 0;
-	V: Mat4;
-	prevV: Mat4 = null;
-	VP: Mat4;
+	V: TMat4;
+	prevV: TMat4 = null;
+	VP: TMat4;
 	frustumPlanes: TFrustumPlane[] = null;
 	renderTarget: Image = null; // Render camera view to texture
 	currentFace = 0;
+}
 
-	static temp = new Vec4();
-	static q = new Quat();
-	static sphereCenter = new Vec4();
-	static vcenter = new Vec4();
-	static vup = new Vec4();
+class CameraObject {
+	static temp = Vec4.create();
+	static q = Quat.create();
+	static sphereCenter = Vec4.create();
+	static vcenter = Vec4.create();
+	static vup = Vec4.create();
 
-	constructor(data: TCameraData) {
-		this.base = new BaseObject();
-		this.base.ext = this;
-		this.base.remove = this.remove;
-		this.data = data;
+	static create(data: TCameraData): TCameraObject {
+		let raw = new TCameraObject();
+		raw.base = BaseObject.create();
+		raw.base.ext = raw;
+		raw.data = data;
 
-		this.buildProjection();
+		CameraObject.buildProjection(raw);
 
-		this.V = Mat4.identity();
-		this.VP = Mat4.identity();
+		raw.V = Mat4.identity();
+		raw.VP = Mat4.identity();
 
 		if (data.frustum_culling) {
-			this.frustumPlanes = [];
-			for (let i = 0; i < 6; ++i) this.frustumPlanes.push(new TFrustumPlane());
+			raw.frustumPlanes = [];
+			for (let i = 0; i < 6; ++i) {
+				raw.frustumPlanes.push(new TFrustumPlane());
+			}
 		}
 
-		Scene.cameras.push(this);
+		Scene.cameras.push(raw);
+		return raw;
 	}
 
-	buildProjection = (screenAspect: Null<f32> = null) => {
-		if (this.data.ortho != null) {
-			this.P = Mat4.ortho(this.data.ortho[0], this.data.ortho[1], this.data.ortho[2], this.data.ortho[3], this.data.near_plane, this.data.far_plane);
+	static buildProjection = (raw: TCameraObject, screenAspect: Null<f32> = null) => {
+		if (raw.data.ortho != null) {
+			raw.P = Mat4.ortho(raw.data.ortho[0], raw.data.ortho[1], raw.data.ortho[2], raw.data.ortho[3], raw.data.near_plane, raw.data.far_plane);
 		}
 		else {
 			if (screenAspect == null) screenAspect = App.w() / App.h();
-			let aspect = this.data.aspect != null ? this.data.aspect : screenAspect;
-			this.P = Mat4.persp(this.data.fov, aspect, this.data.near_plane, this.data.far_plane);
+			let aspect = raw.data.aspect != null ? raw.data.aspect : screenAspect;
+			raw.P = Mat4.persp(raw.data.fov, aspect, raw.data.near_plane, raw.data.far_plane);
 		}
-		this.noJitterP.setFrom(this.P);
+		Mat4.setFrom(raw.noJitterP, raw.P);
 	}
 
-	remove = () => {
-		array_remove(Scene.cameras, this);
+	static remove = (raw: TCameraObject) => {
+		array_remove(Scene.cameras, raw);
 		// if (renderTarget != null) renderTarget.unload();
-		this.base.removeSuper();
+
+		BaseObject.removeSuper(raw.base);
 	}
 
-	renderFrame = (g: Graphics4) => {
-		this.projectionJitter();
-		this.buildMatrix();
+	static renderFrame = (raw: TCameraObject, g: Graphics4) => {
+		CameraObject.projectionJitter(raw);
+		CameraObject.buildMatrix(raw);
 		RenderPath.renderFrame(g);
-		this.prevV.setFrom(this.V);
+		Mat4.setFrom(raw.prevV, raw.V);
 	}
 
-	projectionJitter = () => {
+	static projectionJitter = (raw: TCameraObject) => {
 		let w = RenderPath.currentW;
 		let h = RenderPath.currentH;
-		this.P.setFrom(this.noJitterP);
+		Mat4.setFrom(raw.P, raw.noJitterP);
 		let x = 0.0;
 		let y = 0.0;
-		if (this.frame % 2 == 0) {
+		if (raw.frame % 2 == 0) {
 			x = 0.25;
 			y = 0.25;
 		}
@@ -79,61 +84,61 @@ class CameraObject {
 			x = -0.25;
 			y = -0.25;
 		}
-		this.P._20 += x / w;
-		this.P._21 += y / h;
-		this.frame++;
+		raw.P._20 += x / w;
+		raw.P._21 += y / h;
+		raw.frame++;
 	}
 
-	buildMatrix = () => {
-		this.base.transform.buildMatrix();
+	static buildMatrix = (raw: TCameraObject) => {
+		Transform.buildMatrix(raw.base.transform);
 
 		// Prevent camera matrix scaling
 		// TODO: discards position affected by scaled camera parent
-		let sc = this.base.transform.world.getScale();
+		let sc = Mat4.getScale(raw.base.transform.world);
 		if (sc.x != 1.0 || sc.y != 1.0 || sc.z != 1.0) {
-			CameraObject.temp.set(1.0 / sc.x, 1.0 / sc.y, 1.0 / sc.z);
-			this.base.transform.world.scale(CameraObject.temp);
+			Vec4.set(CameraObject.temp, 1.0 / sc.x, 1.0 / sc.y, 1.0 / sc.z);
+			Mat4.scale(raw.base.transform.world, CameraObject.temp);
 		}
 
-		this.V.getInverse(this.base.transform.world);
-		this.VP.multmats(this.P, this.V);
+		Mat4.getInverse(raw.V, raw.base.transform.world);
+		Mat4.multmats(raw.VP, raw.P, raw.V);
 
-		if (this.data.frustum_culling) {
-			CameraObject.buildViewFrustum(this.VP, this.frustumPlanes);
+		if (raw.data.frustum_culling) {
+			CameraObject.buildViewFrustum(raw.VP, raw.frustumPlanes);
 		}
 
 		// First time setting up previous V, prevents first frame flicker
-		if (this.prevV == null) {
-			this.prevV = Mat4.identity();
-			this.prevV.setFrom(this.V);
+		if (raw.prevV == null) {
+			raw.prevV = Mat4.identity();
+			Mat4.setFrom(raw.prevV, raw.V);
 		}
 	}
 
-	right = (): Vec4 => {
-		return new Vec4(this.base.transform.local._00, this.base.transform.local._01, this.base.transform.local._02);
+	static right = (raw: TCameraObject): TVec4 => {
+		return Vec4.create(raw.base.transform.local._00, raw.base.transform.local._01, raw.base.transform.local._02);
 	}
 
-	up = (): Vec4 => {
-		return new Vec4(this.base.transform.local._10, this.base.transform.local._11, this.base.transform.local._12);
+	static up = (raw: TCameraObject): TVec4 => {
+		return Vec4.create(raw.base.transform.local._10, raw.base.transform.local._11, raw.base.transform.local._12);
 	}
 
-	look = (): Vec4 => {
-		return new Vec4(-this.base.transform.local._20, -this.base.transform.local._21, -this.base.transform.local._22);
+	static look = (raw: TCameraObject): TVec4 => {
+		return Vec4.create(-raw.base.transform.local._20, -raw.base.transform.local._21, -raw.base.transform.local._22);
 	}
 
-	rightWorld = (): Vec4 => {
-		return new Vec4(this.base.transform.world._00, this.base.transform.world._01, this.base.transform.world._02);
+	static rightWorld = (raw: TCameraObject): TVec4 => {
+		return Vec4.create(raw.base.transform.world._00, raw.base.transform.world._01, raw.base.transform.world._02);
 	}
 
-	upWorld = (): Vec4 => {
-		return new Vec4(this.base.transform.world._10, this.base.transform.world._11, this.base.transform.world._12);
+	static upWorld = (raw: TCameraObject): TVec4 => {
+		return Vec4.create(raw.base.transform.world._10, raw.base.transform.world._11, raw.base.transform.world._12);
 	}
 
-	lookWorld = (): Vec4 => {
-		return new Vec4(-this.base.transform.world._20, -this.base.transform.world._21, -this.base.transform.world._22);
+	static lookWorld = (raw: TCameraObject): TVec4 => {
+		return Vec4.create(-raw.base.transform.world._20, -raw.base.transform.world._21, -raw.base.transform.world._22);
 	}
 
-	static buildViewFrustum = (VP: Mat4, frustumPlanes: TFrustumPlane[]) => {
+	static buildViewFrustum = (VP: TMat4, frustumPlanes: TFrustumPlane[]) => {
 		// Left plane
 		FrustumPlane.setComponents(frustumPlanes[0], VP._03 + VP._00, VP._13 + VP._10, VP._23 + VP._20, VP._33 + VP._30);
 		// Right plane
@@ -150,11 +155,11 @@ class CameraObject {
 		for (let plane of frustumPlanes) FrustumPlane.normalize(plane);
 	}
 
-	static sphereInFrustum = (frustumPlanes: TFrustumPlane[], t: Transform, radiusScale = 1.0, offsetX = 0.0, offsetY = 0.0, offsetZ = 0.0): bool => {
+	static sphereInFrustum = (frustumPlanes: TFrustumPlane[], t: TransformRaw, radiusScale = 1.0, offsetX = 0.0, offsetY = 0.0, offsetZ = 0.0): bool => {
 		// Use scale when radius is changing
 		let radius = t.radius * radiusScale;
 		for (let plane of frustumPlanes) {
-			CameraObject.sphereCenter.set(t.worldx() + offsetX, t.worldy() + offsetY, t.worldz() + offsetZ);
+			Vec4.set(CameraObject.sphereCenter, Transform.worldx(t) + offsetX, Transform.worldy(t) + offsetY, Transform.worldz(t) + offsetZ);
 			// Outside the frustum
 			if (FrustumPlane.distanceToSphere(plane, CameraObject.sphereCenter, radius) + radius * 2 < 0) {
 				return false;
@@ -165,23 +170,23 @@ class CameraObject {
 }
 
 class TFrustumPlane {
-	normal = new Vec4(1.0, 0.0, 0.0);
+	normal = Vec4.create(1.0, 0.0, 0.0);
 	constant = 0.0;
 }
 
 class FrustumPlane {
 	static normalize = (raw: TFrustumPlane) => {
-		let inverseNormalLength = 1.0 / raw.normal.length();
-		raw.normal.mult(inverseNormalLength);
+		let inverseNormalLength = 1.0 / Vec4.vec4_length(raw.normal);
+		Vec4.mult(raw.normal, inverseNormalLength);
 		raw.constant *= inverseNormalLength;
 	}
 
-	static distanceToSphere = (raw: TFrustumPlane, sphereCenter: Vec4, sphereRadius: f32): f32 => {
-		return (raw.normal.dot(sphereCenter) + raw.constant) - sphereRadius;
+	static distanceToSphere = (raw: TFrustumPlane, sphereCenter: TVec4, sphereRadius: f32): f32 => {
+		return (Vec4.dot(raw.normal, sphereCenter) + raw.constant) - sphereRadius;
 	}
 
 	static setComponents = (raw: TFrustumPlane, x: f32, y: f32, z: f32, w: f32) => {
-		raw.normal.set(x, y, z);
+		Vec4.set(raw.normal, x, y, z);
 		raw.constant = w;
 	}
 }

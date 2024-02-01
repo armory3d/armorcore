@@ -1,82 +1,85 @@
 /// <reference path='./Vec4.ts'/>
 /// <reference path='./Mat4.ts'/>
 
-class LightObject {
-
-	base: BaseObject;
+class TLightObject {
+	base: TBaseObject;
 	data: TLightData;
-	V: Mat4 = Mat4.identity();
-	P: Mat4 = null;
-	VP: Mat4 = Mat4.identity();
+	V: TMat4 = Mat4.identity();
+	P: TMat4 = null;
+	VP: TMat4 = Mat4.identity();
 	frustumPlanes: TFrustumPlane[] = null;
+}
 
+class LightObject {
 	static m = Mat4.identity();
-	static eye = new Vec4();
+	static eye = Vec4.create();
 
-	constructor(data: TLightData) {
-		this.base = new BaseObject();
-		this.base.ext = this;
-		this.base.remove = this.remove;
-		this.data = data;
+	static create(data: TLightData): TLightObject {
+		let raw = new TLightObject();
+		raw.base = BaseObject.create();
+		raw.base.ext = raw;
+		raw.data = data;
 
 		let type = data.type;
 		let fov = data.fov;
 
 		if (type == "sun") {
-			this.P = Mat4.ortho(-1, 1, -1, 1, data.near_plane, data.far_plane);
+			raw.P = Mat4.ortho(-1, 1, -1, 1, data.near_plane, data.far_plane);
 		}
 		else if (type == "point" || type == "area") {
-			this.P = Mat4.persp(fov, 1, data.near_plane, data.far_plane);
+			raw.P = Mat4.persp(fov, 1, data.near_plane, data.far_plane);
 		}
 		else if (type == "spot") {
-			this.P = Mat4.persp(fov, 1, data.near_plane, data.far_plane);
+			raw.P = Mat4.persp(fov, 1, data.near_plane, data.far_plane);
 		}
 
-		Scene.lights.push(this);
+		Scene.lights.push(raw);
+		return raw;
 	}
 
-	remove = () => {
-		array_remove(Scene.lights, this);
-		if (RenderPath.light == this) { RenderPath.light = null; }
-		if (RenderPath.point == this) { RenderPath.point = null; }
-		else if (RenderPath.sun == this) { RenderPath.sun = null; }
-		this.base.removeSuper();
+	static remove = (raw: TLightObject) => {
+		array_remove(Scene.lights, raw);
+		if (RenderPath.light == raw) { RenderPath.light = null; }
+		if (RenderPath.point == raw) { RenderPath.point = null; }
+		else if (RenderPath.sun == raw) { RenderPath.sun = null; }
+
+		BaseObject.removeSuper(raw.base);
 	}
 
-	buildMatrix = (camera: CameraObject) => {
-		this.base.transform.buildMatrix();
-		if (this.data.type == "sun") { // Cover camera frustum
-			this.V.getInverse(this.base.transform.world);
-			this.updateViewFrustum(camera);
+	static buildMatrix = (raw: TLightObject, camera: TCameraObject) => {
+		Transform.buildMatrix(raw.base.transform);
+		if (raw.data.type == "sun") { // Cover camera frustum
+			Mat4.getInverse(raw.V, raw.base.transform.world);
+			LightObject.updateViewFrustum(raw, camera);
 		}
 		else { // Point, spot, area
-			this.V.getInverse(this.base.transform.world);
-			this.updateViewFrustum(camera);
+			Mat4.getInverse(raw.V, raw.base.transform.world);
+			LightObject.updateViewFrustum(raw, camera);
 		}
 	}
 
-	updateViewFrustum = (camera: CameraObject) => {
-		this.VP.multmats(this.P, this.V);
+	static updateViewFrustum = (raw: TLightObject, camera: TCameraObject) => {
+		Mat4.multmats(raw.VP, raw.P, raw.V);
 
 		// Frustum culling enabled
 		if (camera.data.frustum_culling) {
-			if (this.frustumPlanes == null) {
-				this.frustumPlanes = [];
-				for (let i = 0; i < 6; ++i) this.frustumPlanes.push(new TFrustumPlane());
+			if (raw.frustumPlanes == null) {
+				raw.frustumPlanes = [];
+				for (let i = 0; i < 6; ++i) raw.frustumPlanes.push(new TFrustumPlane());
 			}
-			CameraObject.buildViewFrustum(this.VP, this.frustumPlanes);
+			CameraObject.buildViewFrustum(raw.VP, raw.frustumPlanes);
 		}
 	}
 
-	right = (): Vec4 => {
-		return new Vec4(this.V._00, this.V._10, this.V._20);
+	static right = (raw: TLightObject): TVec4 => {
+		return Vec4.create(raw.V._00, raw.V._10, raw.V._20);
 	}
 
-	up = (): Vec4 => {
-		return new Vec4(this.V._01, this.V._11, this.V._21);
+	static up = (raw: TLightObject): TVec4 => {
+		return Vec4.create(raw.V._01, raw.V._11, raw.V._21);
 	}
 
-	look = (): Vec4 => {
-		return new Vec4(this.V._02, this.V._12, this.V._22);
+	static look = (raw: TLightObject): TVec4 => {
+		return Vec4.create(raw.V._02, raw.V._12, raw.V._22);
 	}
 }

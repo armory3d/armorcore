@@ -71,7 +71,7 @@ class App {
 			if (App.onResize != null) App.onResize();
 			else {
 				if (Scene.camera != null) {
-					Scene.camera.buildProjection();
+					CameraObject.buildProjection(Scene.camera);
 				}
 			}
 		}

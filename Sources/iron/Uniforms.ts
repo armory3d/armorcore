@@ -5,19 +5,19 @@ class Uniforms {
 
 	static helpMat = Mat4.identity();
 	static helpMat2 = Mat4.identity();
-	static helpMat3 = Mat3.identity();
-	static helpVec = new Vec4();
-	static helpVec2 = new Vec4();
-	static helpQuat = new Quat(); // Keep at identity
+	static helpMat3 = mat3_identity();
+	static helpVec = Vec4.create();
+	static helpVec2 = Vec4.create();
+	static helpQuat = Quat.create(); // Keep at identity
 
-	static externalTextureLinks: ((o: BaseObject, md: TMaterialData, s: string)=>Image)[] = null;
-	static externalMat4Links: ((o: BaseObject, md: TMaterialData, s: string)=>Mat4)[] = null;
-	static externalVec4Links: ((o: BaseObject, md: TMaterialData, s: string)=>Vec4)[] = null;
-	static externalVec3Links: ((o: BaseObject, md: TMaterialData, s: string)=>Vec4)[] = null;
-	static externalVec2Links: ((o: BaseObject, md: TMaterialData, s: string)=>Vec4)[] = null;
-	static externalFloatLinks: ((o: BaseObject, md: TMaterialData, s: string)=>Null<f32>)[] = null;
-	static externalFloatsLinks: ((o: BaseObject, md: TMaterialData, s: string)=>Float32Array)[] = null;
-	static externalIntLinks: ((o: BaseObject, md: TMaterialData, s: string)=>Null<i32>)[] = null;
+	static externalTextureLinks: ((o: TBaseObject, md: TMaterialData, s: string)=>Image)[] = null;
+	static externalMat4Links: ((o: TBaseObject, md: TMaterialData, s: string)=>TMat4)[] = null;
+	static externalVec4Links: ((o: TBaseObject, md: TMaterialData, s: string)=>TVec4)[] = null;
+	static externalVec3Links: ((o: TBaseObject, md: TMaterialData, s: string)=>TVec4)[] = null;
+	static externalVec2Links: ((o: TBaseObject, md: TMaterialData, s: string)=>TVec4)[] = null;
+	static externalFloatLinks: ((o: TBaseObject, md: TMaterialData, s: string)=>Null<f32>)[] = null;
+	static externalFloatsLinks: ((o: TBaseObject, md: TMaterialData, s: string)=>Float32Array)[] = null;
+	static externalIntLinks: ((o: TBaseObject, md: TMaterialData, s: string)=>Null<i32>)[] = null;
 	static posUnpack: Null<f32> = null;
 	static texUnpack: Null<f32> = null;
 
@@ -85,7 +85,7 @@ class Uniforms {
 		}
 	}
 
-	static setObjectConstants = (g: Graphics4, context: TShaderContext, object: BaseObject) => {
+	static setObjectConstants = (g: Graphics4, context: TShaderContext, object: TBaseObject) => {
 		if (context.constants != null) {
 			for (let i = 0; i < context.constants.length; ++i) {
 				let c = context.constants[i];
@@ -186,7 +186,7 @@ class Uniforms {
 		let light = RenderPath.light;
 
 		if (c.type == "mat4") {
-			let m: Mat4 = null;
+			let m: TMat4 = null;
 			switch (c.link) {
 				case "_viewMatrix": {
 					m = camera.V;
@@ -197,7 +197,7 @@ class Uniforms {
 					break;
 				}
 				case "_inverseProjectionMatrix": {
-					Uniforms.helpMat.getInverse(camera.P);
+					Mat4.getInverse(Uniforms.helpMat, camera.P);
 					m = Uniforms.helpMat;
 					break;
 				}
@@ -206,20 +206,20 @@ class Uniforms {
 					break;
 				}
 				case "_inverseViewProjectionMatrix": {
-					Uniforms.helpMat.setFrom(camera.V);
-					Uniforms.helpMat.multmat(camera.P);
-					Uniforms.helpMat.getInverse(Uniforms.helpMat);
+					Mat4.setFrom(Uniforms.helpMat, camera.V);
+					Mat4.multmat(Uniforms.helpMat, camera.P);
+					Mat4.getInverse(Uniforms.helpMat, Uniforms.helpMat);
 					m = Uniforms.helpMat;
 					break;
 				}
 				case "_skydomeMatrix": {
 					let tr = camera.base.transform;
-					Uniforms.helpVec.set(tr.worldx(), tr.worldy(), tr.worldz() - 3.5); // Sky
+					Vec4.set(Uniforms.helpVec, Transform.worldx(tr), Transform.worldy(tr), Transform.worldz(tr) - 3.5); // Sky
 					let bounds = camera.data.far_plane * 0.95;
-					Uniforms.helpVec2.set(bounds, bounds, bounds);
-					Uniforms.helpMat.compose(Uniforms.helpVec, Uniforms.helpQuat, Uniforms.helpVec2);
-					Uniforms.helpMat.multmat(camera.V);
-					Uniforms.helpMat.multmat(camera.P);
+					Vec4.set(Uniforms.helpVec2, bounds, bounds, bounds);
+					Mat4.compose(Uniforms.helpMat, Uniforms.helpVec, Uniforms.helpQuat, Uniforms.helpVec2);
+					Mat4.multmat(Uniforms.helpMat, camera.V);
+					Mat4.multmat(Uniforms.helpMat, camera.P);
 					m = Uniforms.helpMat;
 					break;
 				}
@@ -231,8 +231,8 @@ class Uniforms {
 			return true;
 		}
 		else if (c.type == "vec4") {
-			let v: Vec4 = null;
-			Uniforms.helpVec.set(0, 0, 0, 0);
+			let v: TVec4 = null;
+			Vec4.set(Uniforms.helpVec, 0, 0, 0, 0);
 			switch (c.link) {
 				default:
 					return false;
@@ -247,12 +247,12 @@ class Uniforms {
 			return true;
 		}
 		else if (c.type == "vec3") {
-			let v: Vec4 = null;
-			Uniforms.helpVec.set(0, 0, 0);
+			let v: TVec4 = null;
+			Vec4.set(Uniforms.helpVec, 0, 0, 0);
 			switch (c.link) {
 				case "_lightDirection": {
 					if (light != null) {
-						Uniforms.helpVec = light.look().normalize();
+						Uniforms.helpVec = Vec4.normalize(LightObject.look(light));
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -260,7 +260,7 @@ class Uniforms {
 				case "_pointPosition": {
 					let point = RenderPath.point;
 					if (point != null) {
-						Uniforms.helpVec.set(point.base.transform.worldx(), point.base.transform.worldy(), point.base.transform.worldz());
+						Vec4.set(Uniforms.helpVec, Transform.worldx(point.base.transform), Transform.worldy(point.base.transform), Transform.worldz(point.base.transform));
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -269,7 +269,7 @@ class Uniforms {
 					let point = RenderPath.point;
 					if (point != null) {
 						let str = point.base.visible ? point.data.strength : 0.0;
-						Uniforms.helpVec.set(point.data.color[0] * str, point.data.color[1] * str, point.data.color[2] * str);
+						Vec4.set(Uniforms.helpVec, point.data.color[0] * str, point.data.color[1] * str, point.data.color[2] * str);
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -279,8 +279,8 @@ class Uniforms {
 						let f2: f32 = 0.5;
 						let sx: f32 = light.data.size * f2;
 						let sy: f32 = light.data.size_y * f2;
-						Uniforms.helpVec.set(-sx, sy, 0.0);
-						Uniforms.helpVec.applymat(light.base.transform.world);
+						Vec4.set(Uniforms.helpVec, -sx, sy, 0.0);
+						Vec4.applymat(Uniforms.helpVec, light.base.transform.world);
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -290,8 +290,8 @@ class Uniforms {
 						let f2: f32 = 0.5;
 						let sx: f32 = light.data.size * f2;
 						let sy: f32 = light.data.size_y * f2;
-						Uniforms.helpVec.set(sx, sy, 0.0);
-						Uniforms.helpVec.applymat(light.base.transform.world);
+						Vec4.set(Uniforms.helpVec, sx, sy, 0.0);
+						Vec4.applymat(Uniforms.helpVec, light.base.transform.world);
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -301,8 +301,8 @@ class Uniforms {
 						let f2: f32 = 0.5;
 						let sx: f32 = light.data.size * f2;
 						let sy: f32 = light.data.size_y * f2;
-						Uniforms.helpVec.set(sx, -sy, 0.0);
-						Uniforms.helpVec.applymat(light.base.transform.world);
+						Vec4.set(Uniforms.helpVec, sx, -sy, 0.0);
+						Vec4.applymat(Uniforms.helpVec, light.base.transform.world);
 						v = Uniforms.helpVec;
 						break;
 					}
@@ -312,19 +312,19 @@ class Uniforms {
 						let f2: f32 = 0.5;
 						let sx: f32 = light.data.size * f2;
 						let sy: f32 = light.data.size_y * f2;
-						Uniforms.helpVec.set(-sx, -sy, 0.0);
-						Uniforms.helpVec.applymat(light.base.transform.world);
+						Vec4.set(Uniforms.helpVec, -sx, -sy, 0.0);
+						Vec4.applymat(Uniforms.helpVec, light.base.transform.world);
 						v = Uniforms.helpVec;
 						break;
 					}
 				}
 				case "_cameraPosition": {
-					Uniforms.helpVec.set(camera.base.transform.worldx(), camera.base.transform.worldy(), camera.base.transform.worldz());
+					Vec4.set(Uniforms.helpVec, Transform.worldx(camera.base.transform), Transform.worldy(camera.base.transform), Transform.worldz(camera.base.transform));
 					v = Uniforms.helpVec;
 					break;
 				}
 				case "_cameraLook": {
-					Uniforms.helpVec = camera.lookWorld().normalize();
+					Uniforms.helpVec = Vec4.normalize(CameraObject.lookWorld(camera));
 					v = Uniforms.helpVec;
 					break;
 				}
@@ -341,8 +341,8 @@ class Uniforms {
 			return true;
 		}
 		else if (c.type == "vec2") {
-			let v: Vec4 = null;
-			Uniforms.helpVec.set(0, 0, 0);
+			let v: TVec4 = null;
+			Vec4.set(Uniforms.helpVec, 0, 0, 0);
 			switch (c.link) {
 				case "_vec2x": {
 					v = Uniforms.helpVec;
@@ -486,42 +486,42 @@ class Uniforms {
 		return false;
 	}
 
-	static setObjectConstant = (g: Graphics4, object: BaseObject, location: ConstantLocation, c: TShaderConstant) => {
+	static setObjectConstant = (g: Graphics4, object: TBaseObject, location: ConstantLocation, c: TShaderConstant) => {
 		if (c.link == null) return;
 
 		let camera = Scene.camera;
 		let light = RenderPath.light;
 
 		if (c.type == "mat4") {
-			let m: Mat4 = null;
+			let m: TMat4 = null;
 			switch (c.link) {
 				case "_worldMatrix": {
 					m = object.transform.worldUnpack;
 					break;
 				}
 				case "_inverseWorldMatrix": {
-					Uniforms.helpMat.getInverse(object.transform.worldUnpack);
+					Mat4.getInverse(Uniforms.helpMat, object.transform.worldUnpack);
 					m = Uniforms.helpMat;
 					break;
 				}
 				case "_worldViewProjectionMatrix": {
-					Uniforms.helpMat.setFrom(object.transform.worldUnpack);
-					Uniforms.helpMat.multmat(camera.V);
-					Uniforms.helpMat.multmat(camera.P);
+					Mat4.setFrom(Uniforms.helpMat, object.transform.worldUnpack);
+					Mat4.multmat(Uniforms.helpMat, camera.V);
+					Mat4.multmat(Uniforms.helpMat, camera.P);
 					m = Uniforms.helpMat;
 					break;
 				}
 				case "_worldViewMatrix": {
-					Uniforms.helpMat.setFrom(object.transform.worldUnpack);
-					Uniforms.helpMat.multmat(camera.V);
+					Mat4.setFrom(Uniforms.helpMat, object.transform.worldUnpack);
+					Mat4.multmat(Uniforms.helpMat, camera.V);
 					m = Uniforms.helpMat;
 					break;
 				}
 				case "_prevWorldViewProjectionMatrix": {
-					Uniforms.helpMat.setFrom(object.ext.prevMatrix);
-					Uniforms.helpMat.multmat(camera.prevV);
+					Mat4.setFrom(Uniforms.helpMat, object.ext.prevMatrix);
+					Mat4.multmat(Uniforms.helpMat, camera.prevV);
 					// helpMat.multmat(camera.prevP);
-					Uniforms.helpMat.multmat(camera.P);
+					Mat4.multmat(Uniforms.helpMat, camera.P);
 					m = Uniforms.helpMat;
 					break;
 				}
@@ -550,14 +550,14 @@ class Uniforms {
 			let m: Mat3 = null;
 			switch (c.link) {
 				case "_normalMatrix": {
-					Uniforms.helpMat.getInverse(object.transform.world);
-					Uniforms.helpMat.transpose3x3();
-					Uniforms.helpMat3.setFrom4(Uniforms.helpMat);
+					Mat4.getInverse(Uniforms.helpMat, object.transform.world);
+					Mat4.transpose3x3(Uniforms.helpMat);
+					mat3_setFrom4(Uniforms.helpMat3, Uniforms.helpMat);
 					m = Uniforms.helpMat3;
 					break;
 				}
 				case "_viewMatrix3": {
-					Uniforms.helpMat3.setFrom4(camera.V);
+					mat3_setFrom4(Uniforms.helpMat3, camera.V);
 					m = Uniforms.helpMat3;
 					break;
 				}
@@ -567,8 +567,8 @@ class Uniforms {
 			g.setMatrix3(location, m);
 		}
 		else if (c.type == "vec4") {
-			let v: Vec4 = null;
-			Uniforms.helpVec.set(0, 0, 0);
+			let v: TVec4 = null;
+			Vec4.set(Uniforms.helpVec, 0, 0, 0);
 
 			if (v == null && Uniforms.externalVec4Links != null) {
 				for (let fn of Uniforms.externalVec4Links) {
@@ -581,20 +581,20 @@ class Uniforms {
 			g.setFloat4(location, v.x, v.y, v.z, v.w);
 		}
 		else if (c.type == "vec3") {
-			let v: Vec4 = null;
-			Uniforms.helpVec.set(0, 0, 0);
+			let v: TVec4 = null;
+			Vec4.set(Uniforms.helpVec, 0, 0, 0);
 			switch (c.link) {
 				case "_dim": { // Model space
 					let d = object.transform.dim;
 					let s = object.transform.scale;
-					Uniforms.helpVec.set((d.x / s.x), (d.y / s.y), (d.z / s.z));
+					Vec4.set(Uniforms.helpVec, (d.x / s.x), (d.y / s.y), (d.z / s.z));
 					v = Uniforms.helpVec;
 					break;
 				}
 				case "_halfDim": { // Model space
 					let d = object.transform.dim;
 					let s = object.transform.scale;
-					Uniforms.helpVec.set((d.x / s.x) / 2, (d.y / s.y) / 2, (d.z / s.z) / 2);
+					Vec4.set(Uniforms.helpVec, (d.x / s.x) / 2, (d.y / s.y) / 2, (d.z / s.z) / 2);
 					v = Uniforms.helpVec;
 					break;
 				}
@@ -748,7 +748,7 @@ class Uniforms {
 		}
 	}
 
-	static currentMat = (object: BaseObject): TMaterialData => {
+	static currentMat = (object: TBaseObject): TMaterialData => {
 		if (object != null && object.ext != null && object.ext.materials != null) {
 			let mo = object.ext;
 			return mo.materials[mo.materialIndex];

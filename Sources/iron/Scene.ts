@@ -5,25 +5,25 @@ class Scene {
 	static uidCounter = 0;
 	static uid: i32;
 	static raw: TSceneFormat;
-	static root: BaseObject;
-	static sceneParent: BaseObject;
-	static camera: CameraObject;
+	static root: TBaseObject;
+	static sceneParent: TBaseObject;
+	static camera: TCameraObject;
 	static world: TWorldData;
 
-	static meshes: MeshObject[];
-	static lights: LightObject[];
-	static cameras: CameraObject[];
+	static meshes: TMeshObject[];
+	static lights: TLightObject[];
+	static cameras: TCameraObject[];
 	///if arm_audio
-	static speakers: SpeakerObject[];
+	static speakers: TSpeakerObject[];
 	///end
-	static empties: BaseObject[];
+	static empties: TBaseObject[];
 	static animations: AnimationRaw[];
 	///if arm_skin
 	static armatures: TArmature[];
 	///end
 	static embedded: Map<string, Image>;
 
-	static create = (format: TSceneFormat, done: (o: BaseObject)=>void) => {
+	static create = (format: TSceneFormat, done: (o: TBaseObject)=>void) => {
 		Scene.uid = Scene.uidCounter++;
 		Scene.meshes = [];
 		Scene.lights = [];
@@ -37,7 +37,7 @@ class Scene {
 		Scene.armatures = [];
 		///end
 		Scene.embedded = new Map();
-		Scene.root = new BaseObject();
+		Scene.root = BaseObject.create();
 		Scene.root.name = "Root";
 
 		Scene.ready = false;
@@ -47,7 +47,7 @@ class Scene {
 			Scene.world = world;
 
 			// Startup scene
-			Scene.addScene(format.name, null, (sceneObject: BaseObject) => {
+			Scene.addScene(format.name, null, (sceneObject: TBaseObject) => {
 				if (Scene.cameras.length == 0) {
 					Krom.log('No camera found for scene "' + format.name + '"');
 				}
@@ -61,23 +61,23 @@ class Scene {
 	}
 
 	static remove = () => {
-		for (let o of Scene.meshes) o.remove();
-		for (let o of Scene.lights) o.remove();
-		for (let o of Scene.cameras) o.remove();
+		for (let o of Scene.meshes) MeshObject.remove(o);
+		for (let o of Scene.lights) LightObject.remove(o);
+		for (let o of Scene.cameras) CameraObject.remove(o);
 		///if arm_audio
-		for (let o of Scene.speakers) o.remove();
+		for (let o of Scene.speakers) SpeakerObject.remove(o);
 		///end
-		for (let o of Scene.empties) o.remove();
-		Scene.root.remove();
+		for (let o of Scene.empties) BaseObject.remove(o);
+		BaseObject.remove(Scene.root);
 	}
 
-	static setActive = (sceneName: string, done: (o: BaseObject)=>void = null) => {
+	static setActive = (sceneName: string, done: (o: TBaseObject)=>void = null) => {
 		if (Scene.root != null) {
 			Scene.remove();
 		}
 
 		Data.getSceneRaw(sceneName, (format: TSceneFormat) => {
-			Scene.create(format, (o: BaseObject) => {
+			Scene.create(format, (o: TBaseObject) => {
 				if (done != null) done(o);
 				///if arm_voxels // Revoxelize
 				RenderPath.voxelized = 0;
@@ -89,81 +89,81 @@ class Scene {
 	static updateFrame = () => {
 		if (!Scene.ready) return;
 		for (let anim of Scene.animations) Animation.update(anim, Time.delta);
-		for (let e of Scene.empties) if (e != null && e.parent != null) e.transform.update();
+		for (let e of Scene.empties) if (e != null && e.parent != null) Transform.update(e.transform);
 	}
 
 	static renderFrame = (g: Graphics4) => {
 		if (!Scene.ready || RenderPath.commands == null) return;
 
 		// Render active camera
-		Scene.camera != null ? Scene.camera.renderFrame(g) : RenderPath.renderFrame(g);
+		Scene.camera != null ? CameraObject.renderFrame(Scene.camera, g) : RenderPath.renderFrame(g);
 	}
 
 	// Objects
-	static addObject = (parent: BaseObject = null): BaseObject => {
-		let object = new BaseObject();
-		parent != null ? object.setParent(parent) : object.setParent(Scene.root);
+	static addObject = (parent: TBaseObject = null): TBaseObject => {
+		let object = BaseObject.create();
+		parent != null ? BaseObject.setParent(object, parent) : BaseObject.setParent(object, Scene.root);
 		return object;
 	}
 
-	static getChild = (name: string): BaseObject => {
-		return Scene.root.getChild(name);
+	static getChild = (name: string): TBaseObject => {
+		return BaseObject.getChild(Scene.root, name);
 	}
 
-	static getMesh = (name: string): MeshObject => {
+	static getMesh = (name: string): TMeshObject => {
 		for (let m of Scene.meshes) if (m.base.name == name) return m;
 		return null;
 	}
 
-	static getLight = (name: string): LightObject => {
+	static getLight = (name: string): TLightObject => {
 		for (let l of Scene.lights) if (l.base.name == name) return l;
 		return null;
 	}
 
-	static getCamera = (name: string): CameraObject => {
+	static getCamera = (name: string): TCameraObject => {
 		for (let c of Scene.cameras) if (c.base.name == name) return c;
 		return null;
 	}
 
 	///if arm_audio
-	static getSpeaker = (name: string): SpeakerObject => {
+	static getSpeaker = (name: string): TSpeakerObject => {
 		for (let s of Scene.speakers) if (s.base.name == name) return s;
 		return null;
 	}
 	///end
 
-	static getEmpty = (name: string): BaseObject => {
+	static getEmpty = (name: string): TBaseObject => {
 		for (let e of Scene.empties) if (e.name == name) return e;
 		return null;
 	}
 
-	static addMeshObject = (data: TMeshData, materials: TMaterialData[], parent: BaseObject = null): MeshObject => {
-		let object = new MeshObject(data, materials);
-		parent != null ? object.base.setParent(parent) : object.base.setParent(Scene.root);
+	static addMeshObject = (data: TMeshData, materials: TMaterialData[], parent: TBaseObject = null): TMeshObject => {
+		let object = MeshObject.create(data, materials);
+		parent != null ? BaseObject.setParent(object.base, parent) : BaseObject.setParent(object.base, Scene.root);
 		return object;
 	}
 
-	static addLightObject = (data: TLightData, parent: BaseObject = null): LightObject => {
-		let object = new LightObject(data);
-		parent != null ? object.base.setParent(parent) : object.base.setParent(Scene.root);
+	static addLightObject = (data: TLightData, parent: TBaseObject = null): TLightObject => {
+		let object = LightObject.create(data);
+		parent != null ? BaseObject.setParent(object.base, parent) : BaseObject.setParent(object.base, Scene.root);
 		return object;
 	}
 
-	static addCameraObject = (data: TCameraData, parent: BaseObject = null): CameraObject => {
-		let object = new CameraObject(data);
-		parent != null ? object.base.setParent(parent) : object.base.setParent(Scene.root);
+	static addCameraObject = (data: TCameraData, parent: TBaseObject = null): TCameraObject => {
+		let object = CameraObject.create(data);
+		parent != null ? BaseObject.setParent(object.base, parent) : BaseObject.setParent(object.base, Scene.root);
 		return object;
 	}
 
 	///if arm_audio
-	static addSpeakerObject = (data: TSpeakerData, parent: BaseObject = null): SpeakerObject => {
-		let object = new SpeakerObject(data);
-		parent != null ? object.base.setParent(parent) : object.base.setParent(Scene.root);
+	static addSpeakerObject = (data: TSpeakerData, parent: TBaseObject = null): TSpeakerObject => {
+		let object = SpeakerObject.create(data);
+		parent != null ? BaseObject.setParent(object.base, parent) : BaseObject.setParent(object.base, Scene.root);
 		return object;
 	}
 	///end
 
-	static addScene = (sceneName: string, parent: BaseObject, done: (o: BaseObject)=>void) => {
+	static addScene = (sceneName: string, parent: TBaseObject, done: (o: TBaseObject)=>void) => {
 		if (parent == null) {
 			parent = Scene.addObject();
 			parent.name = sceneName;
@@ -173,7 +173,7 @@ class Scene {
 				let objectsTraversed = 0;
 
 				let objectsCount = Scene.getObjectsCount(format.objects);
-				let traverseObjects = (parent: BaseObject, objects: TObj[], parentObject: TObj, done: ()=>void) => {
+				let traverseObjects = (parent: TBaseObject, objects: TObj[], parentObject: TObj, done: ()=>void) => {
 					if (objects == null) return;
 					for (let i = 0; i < objects.length; ++i) {
 						let o = objects[i];
@@ -182,7 +182,7 @@ class Scene {
 							continue; // Do not auto-create Scene object
 						}
 
-						Scene.createObject(o, format, parent, parentObject, (object: BaseObject) => {
+						Scene.createObject(o, format, parent, parentObject, (object: TBaseObject) => {
 							traverseObjects(object, o.children, o, done);
 							if (++objectsTraversed == objectsCount) done();
 						});
@@ -211,14 +211,14 @@ class Scene {
 		return result;
 	}
 
-	static spawnObject = (name: string, parent: Null<BaseObject>, done: Null<(o: BaseObject)=>void>, spawnChildren = true, srcRaw: Null<TSceneFormat> = null) => {
+	static spawnObject = (name: string, parent: Null<TBaseObject>, done: Null<(o: TBaseObject)=>void>, spawnChildren = true, srcRaw: Null<TSceneFormat> = null) => {
 		if (srcRaw == null) srcRaw = Scene.raw;
 		let objectsTraversed = 0;
 		let obj = Scene.getRawObjectByName(srcRaw, name);
 		let objectsCount = spawnChildren ? Scene.getObjectsCount([obj], false) : 1;
 		let rootId = -1;
-		let spawnObjectTree = (obj: TObj, parent: BaseObject, parentObject: TObj, done: (o: BaseObject)=>void) => {
-			Scene.createObject(obj, srcRaw, parent, parentObject, (object: BaseObject) => {
+		let spawnObjectTree = (obj: TObj, parent: TBaseObject, parentObject: TObj, done: (o: TBaseObject)=>void) => {
+			Scene.createObject(obj, srcRaw, parent, parentObject, (object: TBaseObject) => {
 				if (rootId == -1) {
 					rootId = object.uid;
 				}
@@ -254,7 +254,7 @@ class Scene {
 		return null;
 	}
 
-	static createObject = (o: TObj, format: TSceneFormat, parent: BaseObject, parentObject: TObj, done: (o: BaseObject)=>void) => {
+	static createObject = (o: TObj, format: TSceneFormat, parent: TBaseObject, parentObject: TObj, done: (o: TBaseObject)=>void) => {
 		let sceneName = format.name;
 
 		if (o.type == "camera_object") {
@@ -297,14 +297,14 @@ class Scene {
 		///end
 		else if (o.type == "object") {
 			let object = Scene.addObject(parent);
-			Scene.returnObject(object, o, (ro: BaseObject) => {
+			Scene.returnObject(object, o, (ro: TBaseObject) => {
 				done(ro);
 			});
 		}
 		else done(null);
 	}
 
-	static createMeshObject = (o: TObj, format: TSceneFormat, parent: BaseObject, parentObject: TObj, materials: TMaterialData[], done: (o: BaseObject)=>void) => {
+	static createMeshObject = (o: TObj, format: TSceneFormat, parent: TBaseObject, parentObject: TObj, materials: TMaterialData[], done: (o: TBaseObject)=>void) => {
 		// Mesh reference
 		let ref = o.data_ref.split("/");
 		let object_file = "";
@@ -360,7 +360,7 @@ class Scene {
 	}
 
 	static returnMeshObject = (object_file: string, data_ref: string, sceneName: string, armature: any, // TArmature
-		materials: TMaterialData[], parent: BaseObject, parentObject: TObj, o: TObj, done: (o: BaseObject)=>void) => {
+		materials: TMaterialData[], parent: TBaseObject, parentObject: TObj, o: TObj, done: (o: TBaseObject)=>void) => {
 
 			Data.getMesh(object_file, data_ref, (mesh: TMeshData) => {
 			///if arm_skin
@@ -374,7 +374,7 @@ class Scene {
 			///if arm_particles
 			if (o.particle_refs != null) {
 				for (let ref of o.particle_refs) {
-					object.setupParticleSystem(sceneName, ref);
+					MeshObject.setupParticleSystem(object, sceneName, ref);
 				}
 			}
 			///end
@@ -382,7 +382,7 @@ class Scene {
 		});
 	}
 
-	static returnObject = (object: BaseObject, o: TObj, done: (o: BaseObject)=>void) => {
+	static returnObject = (object: TBaseObject, o: TObj, done: (o: TBaseObject)=>void) => {
 		// Load object actions
 		if (object != null && o.object_actions != null) {
 			let oactions: TSceneFormat[] = [];
@@ -406,23 +406,23 @@ class Scene {
 		else Scene.returnObjectLoaded(object, o, null, done);
 	}
 
-	static returnObjectLoaded = (object: BaseObject, o: TObj, oactions: TSceneFormat[], done: (o: BaseObject)=>void) => {
+	static returnObjectLoaded = (object: TBaseObject, o: TObj, oactions: TSceneFormat[], done: (o: TBaseObject)=>void) => {
 		if (object != null) {
 			object.raw = o;
 			object.name = o.name;
 			if (o.visible != null) object.visible = o.visible;
 			Scene.generateTransform(o, object.transform);
-			object.setupAnimation(oactions);
+			BaseObject.setupAnimation(object, oactions);
 		}
 		done(object);
 	}
 
-	static generateTransform = (object: TObj, transform: Transform) => {
+	static generateTransform = (object: TObj, transform: TransformRaw) => {
 		transform.world = object.transform != null ? Mat4.fromFloat32Array(object.transform.values) : Mat4.identity();
-		transform.world.decompose(transform.loc, transform.rot, transform.scale);
+		Mat4.decompose(transform.world, transform.loc, transform.rot, transform.scale);
 		// Whether to apply parent matrix
 		if (object.local_only != null) transform.localOnly = object.local_only;
-		if (transform.object.parent != null) transform.update();
+		if (transform.object.parent != null) Transform.update(transform);
 	}
 
 	static loadEmbeddedData = (datas: string[], done: ()=>void) => {

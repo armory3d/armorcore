@@ -1156,11 +1156,11 @@ class Graphics4 {
 		Krom.setFloat3(location, value.x, value.y, value.z);
 	}
 
-	setVector4 = (location: ConstantLocation, value: Vec4) => {
+	setVector4 = (location: ConstantLocation, value: TVec4) => {
 		Krom.setFloat4(location, value.x, value.y, value.z, value.w);
 	}
 
- 	setMatrix = (location: ConstantLocation, matrix: Mat4) => {
+ 	setMatrix = (location: ConstantLocation, matrix: TMat4) => {
 		Krom.setMatrix(location, matrix.buffer.buffer);
 	}
 

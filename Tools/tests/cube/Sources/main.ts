@@ -111,7 +111,7 @@
 		raw.objects.push(o);
 
 		// Instantiate scene
-		Scene.create(raw, function(o: BaseObject) {
+		Scene.create(raw, function(o: TBaseObject) {
 			scene_ready();
 		});
 	}
@@ -120,13 +120,13 @@
 		// Set camera
 		let t = Scene.camera.transform;
 		t.loc.set(0, -6, 0);
-		t.rot.fromTo(new Vec4(0, 0, 1), new Vec4(0, -1, 0));
+		t.rot.fromTo(Vec4.create(0, 0, 1), Vec4.create(0, -1, 0));
 		t.buildMatrix();
 
 		// Rotate cube
 		let cube = Scene.getChild("Cube");
 		App.notifyOnUpdate(function() {
-			// cube.transform.rotate(new Vec4(0, 0, 1), 0.02);
+			// cube.transform.rotate(Vec4.create(0, 0, 1), 0.02);
 		});
 	}
 

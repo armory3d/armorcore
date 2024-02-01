@@ -1,100 +1,133 @@
 
-class BaseObject {
+class TBaseObject {
 	uid: i32;
 	urandom: f32;
 	raw: TObj = null;
 	name: string = "";
-	transform: Transform;
+	transform: TransformRaw;
 	traits: any[] = [];
-	parent: BaseObject = null;
-	children: BaseObject[] = [];
+	parent: TBaseObject = null;
+	children: TBaseObject[] = [];
 	animation: AnimationRaw = null;
 	visible = true; // Skip render, keep updating
-	culled = false; // BaseObject was culled last frame
+	culled = false; // TBaseObject was culled last frame
 	isEmpty = false;
-	ext: any; // MeshObject | CameraObject | LightObject | SpeakerObject
+	ext: any; // TMeshObject | TCameraObject | TLightObject | TSpeakerObject
+}
 
+class BaseObject {
 	static uidCounter = 0;
 
-	constructor() {
-		this.uid = BaseObject.uidCounter++;
-		this.transform = new Transform(this);
-		this.isEmpty = this.constructor == BaseObject;
-		if (this.isEmpty && Scene.ready) Scene.empties.push(this);
+	static create(): TBaseObject {
+		let raw = new TBaseObject();
+		raw.uid = BaseObject.uidCounter++;
+		raw.transform = Transform.create(raw);
+		raw.isEmpty = raw.constructor == TBaseObject;
+		if (raw.isEmpty && Scene.ready) Scene.empties.push(raw);
+		return raw;
 	}
 
-	setParent = (parentObject: BaseObject, parentInverse = false, keepTransform = false) => {
-		if (parentObject == this || parentObject == this.parent) return;
+	static setParent = (raw: TBaseObject, parentObject: TBaseObject, parentInverse = false, keepTransform = false) => {
+		if (parentObject == raw || parentObject == raw.parent) return;
 
-		if (this.parent != null) {
-			array_remove(this.parent.children, this);
-			if (keepTransform) this.transform.applyParent();
-			this.parent = null; // rebuild matrix without a parent
-			this.transform.buildMatrix();
+		if (raw.parent != null) {
+			array_remove(raw.parent.children, raw);
+			if (keepTransform) Transform.applyParent(raw.transform);
+			raw.parent = null; // rebuild matrix without a parent
+			Transform.buildMatrix(raw.transform);
 		}
 
 		if (parentObject == null) {
 			parentObject = Scene.sceneParent;
 		}
-		this.parent = parentObject;
-		this.parent.children.push(this);
-		if (parentInverse) this.transform.applyParentInverse();
+		raw.parent = parentObject;
+		raw.parent.children.push(raw);
+		if (parentInverse) Transform.applyParentInverse(raw.transform);
 	}
 
-	removeSuper = () => {
-		if (this.isEmpty && Scene.ready) array_remove(Scene.empties, this);
-		if (this.animation != null) Animation.remove(this.animation);
-		while (this.children.length > 0) this.children[0].remove();
-		if (this.parent != null) {
-			array_remove(this.parent.children, this);
-			this.parent = null;
+	static removeSuper = (raw: TBaseObject) => {
+		if (raw.isEmpty && Scene.ready) array_remove(Scene.empties, raw);
+		if (raw.animation != null) Animation.remove(raw.animation);
+		while (raw.children.length > 0) BaseObject.remove(raw.children[0]);
+		if (raw.parent != null) {
+			array_remove(raw.parent.children, raw);
+			raw.parent = null;
 		}
 	}
 
-	remove = this.removeSuper;
-
-	getChild = (name: string): BaseObject => {
-		if (this.name == name) return this;
+	static remove = (raw: TBaseObject) => {
+		if (raw.ext != null)  {
+			if (raw.ext.constructor == TMeshObject) {
+				MeshObject.remove(raw.ext);
+			}
+			else if (raw.ext.constructor == TCameraObject) {
+				CameraObject.remove(raw.ext);
+			}
+			else if (raw.ext.constructor == TLightObject) {
+				LightObject.remove(raw.ext);
+			}
+			///if arm_audio
+			else if (raw.ext.constructor == TSpeakerObject) {
+				SpeakerObject.remove(raw.ext);
+			}
+			///end
+		}
 		else {
-			for (let c of this.children) {
-				let r = c.getChild(name);
+			BaseObject.removeSuper(raw);
+		}
+	}
+
+	static getChild = (raw: TBaseObject, name: string): TBaseObject => {
+		if (raw.name == name) return raw;
+		else {
+			for (let c of raw.children) {
+				let r = BaseObject.getChild(c, name);
 				if (r != null) return r;
 			}
 		}
 		return null;
 	}
 
-	getChildren = (recursive = false): BaseObject[] => {
-		if (!recursive) return this.children;
+	static getChildren = (raw: TBaseObject, recursive = false): TBaseObject[] => {
+		if (!recursive) return raw.children;
 
-		let retChildren = this.children.slice();
-		for (let child of this.children) {
-			retChildren = retChildren.concat(child.getChildren(recursive));
+		let retChildren = raw.children.slice();
+		for (let child of raw.children) {
+			retChildren = retChildren.concat(BaseObject.getChildren(child, recursive));
 		}
 		return retChildren;
 	}
 
 	///if arm_skin
-	getParentArmature = (name: string): BoneAnimationRaw => {
+	static getParentArmature = (raw: TBaseObject, name: string): BoneAnimationRaw => {
 		for (let a of Scene.animations) if (a.armature != null && a.armature.name == name) return a.ext;
 		return null;
 	}
 	///end
 
-	setupAnimationSuper = (oactions: TSceneFormat[] = null) => {
+	static setupAnimationSuper = (raw: TBaseObject, oactions: TSceneFormat[] = null) => {
 		// Parented to bone
 		///if arm_skin
-		if (this.raw.parent_bone != null) {
+		if (raw.raw.parent_bone != null) {
 			App.notifyOnInit(() => {
-				let banim = this.getParentArmature(this.parent.name);
-				if (banim != null) BoneAnimation.addBoneChild(banim, this.raw.parent_bone, this);
+				let banim = BaseObject.getParentArmature(raw, raw.parent.name);
+				if (banim != null) BoneAnimation.addBoneChild(banim, raw.raw.parent_bone, raw);
 			});
 		}
 		///end
-		// BaseObject actions
+		// TBaseObject actions
 		if (oactions == null) return;
-		this.animation = ObjectAnimation.create(this, oactions).base;
+		raw.animation = ObjectAnimation.create(raw, oactions).base;
 	}
 
-	setupAnimation = this.setupAnimationSuper;
+	static setupAnimation = (raw: TBaseObject, oactions: TSceneFormat[] = null) => {
+		if (raw.ext != null)  {
+			if (raw.ext.constructor == TMeshObject) {
+				MeshObject.setupAnimation(raw.ext, oactions);
+			}
+		}
+		else {
+			BaseObject.setupAnimationSuper(raw, oactions);
+		}
+	}
 }

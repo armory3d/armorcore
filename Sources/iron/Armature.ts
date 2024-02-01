@@ -67,7 +67,7 @@ class Armature {
 type TAction = {
 	name: string;
 	bones: TObj[];
-	mats: Mat4[];
+	mats: TMat4[];
 }
 
 ///end

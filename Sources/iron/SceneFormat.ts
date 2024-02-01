@@ -39,9 +39,9 @@ type TMeshData = {
 	_instanced?: bool;
 	_instanceCount?: i32;
 	///if arm_skin
-	_skeletonTransformsI?: Mat4[];
+	_skeletonTransformsI?: TMat4[];
 	_actions?: Map<string, TObj[]>;
-	_mats?: Map<string, Mat4[]>;
+	_mats?: Map<string, TMat4[]>;
 	///end
 }
 

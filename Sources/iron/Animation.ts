@@ -29,15 +29,15 @@ class Animation {
 	// Lerp
 	static m1 = Mat4.identity();
 	static m2 = Mat4.identity();
-	static vpos = new Vec4();
-	static vpos2 = new Vec4();
-	static vscl = new Vec4();
-	static vscl2 = new Vec4();
-	static q1 = new Quat();
-	static q2 = new Quat();
-	static q3 = new Quat();
-	static vp = new Vec4();
-	static vs = new Vec4();
+	static vpos = Vec4.create();
+	static vpos2 = Vec4.create();
+	static vscl = Vec4.create();
+	static vscl2 = Vec4.create();
+	static q1 = Quat.create();
+	static q2 = Quat.create();
+	static q3 = Quat.create();
+	static vp = Vec4.create();
+	static vs = Vec4.create();
 
 	static create(): AnimationRaw {
 		let raw = new AnimationRaw();
@@ -45,7 +45,7 @@ class Animation {
 		return raw;
 	}
 
-	static play = (raw: AnimationRaw, action = "", onComplete: ()=>void = null, blendTime = 0.0, speed = 1.0, loop = true) => {
+	static playSuper = (raw: AnimationRaw, action = "", onComplete: ()=>void = null, blendTime = 0.0, speed = 1.0, loop = true) => {
 		if (blendTime > 0) {
 			raw.blendTime = blendTime;
 			raw.blendCurrent = 0.0;
@@ -59,19 +59,40 @@ class Animation {
 		raw.speed = speed;
 		raw.loop = loop;
 		raw.paused = false;
+	}
 
-		if (raw.ext.constructor.play != null) {
-			raw.ext.constructor.play(raw.ext, action, onComplete, blendTime, speed, loop);
+	static play = (raw: AnimationRaw, action = "", onComplete: ()=>void = null, blendTime = 0.0, speed = 1.0, loop = true) => {
+		if (raw.ext != null)  {
+			if (raw.ext.constructor == ObjectAnimationRaw) {
+				ObjectAnimation.play(raw.ext, action, onComplete, blendTime, speed, loop);
+			}
+			///if arm_skin
+			else if (raw.ext.constructor == BoneAnimationRaw) {
+				BoneAnimation.play(raw.ext, action, onComplete, blendTime, speed, loop);
+			}
+			///end
+		}
+		else {
+			Animation.playSuper(raw, action, onComplete, blendTime, speed, loop);
 		}
 	}
 
-	static blend = (raw: AnimationRaw, action1: string, action2: string, factor: f32) => {
-		if (raw.ext.constructor.blend != null) {
-			raw.ext.constructor.blend(raw.ext, action1, action2, factor);
-		}
-
+	static blendSuper = (raw: AnimationRaw, action1: string, action2: string, factor: f32) => {
 		raw.blendTime = 1.0; // Enable blending
 		raw.blendFactor = factor;
+	}
+
+	static blend = (raw: AnimationRaw, action1: string, action2: string, factor: f32) => {
+		if (raw.ext != null)  {
+			///if arm_skin
+			if (raw.ext.constructor == BoneAnimationRaw) {
+				BoneAnimation.blend(raw.ext, action1, action2, factor);
+			}
+			///end
+		}
+		else {
+			Animation.blendSuper(raw, action1, action2, factor);
+		}
 	}
 
 	static pause = (raw: AnimationRaw) => {
@@ -97,8 +118,15 @@ class Animation {
 	}
 
 	static update = (raw: AnimationRaw, delta: f32) => {
-		if (raw.ext.constructor.update != null) {
-			raw.ext.constructor.update(raw, delta);
+		if (raw.ext != null)  {
+			if (raw.ext.constructor == ObjectAnimationRaw) {
+				ObjectAnimation.update(raw.ext, delta);
+			}
+			///if arm_skin
+			else if (raw.ext.constructor == BoneAnimationRaw) {
+				BoneAnimation.update(raw.ext, delta);
+			}
+			///end
 		}
 		else {
 			Animation.updateSuper(raw, delta);
@@ -157,7 +185,7 @@ class Animation {
 		}
 	}
 
-	static updateAnimSampled = (raw: AnimationRaw, anim: TAnimation, m: Mat4) => {
+	static updateAnimSampled = (raw: AnimationRaw, anim: TAnimation, m: TMat4) => {
 		if (anim == null) return;
 		let track = anim.tracks[0];
 		let sign = raw.speed > 0 ? 1 : -1;
@@ -168,21 +196,21 @@ class Animation {
 		let t2 = track.frames[ti + sign] * raw.frameTime;
 		let s: f32 = (t - t1) / (t2 - t1); // Linear
 
-		Animation.m1.setF32(track.values, ti * 16); // Offset to 4x4 matrix array
-		Animation.m2.setF32(track.values, (ti + sign) * 16);
+		Mat4.setF32(Animation.m1, track.values, ti * 16); // Offset to 4x4 matrix array
+		Mat4.setF32(Animation.m2, track.values, (ti + sign) * 16);
 
 		// Decompose
-		Animation.m1.decompose(Animation.vpos, Animation.q1, Animation.vscl);
-		Animation.m2.decompose(Animation.vpos2, Animation.q2, Animation.vscl2);
+		Mat4.decompose(Animation.m1, Animation.vpos, Animation.q1, Animation.vscl);
+		Mat4.decompose(Animation.m2, Animation.vpos2, Animation.q2, Animation.vscl2);
 
 		// Lerp
-		Animation.vp.lerp(Animation.vpos, Animation.vpos2, s);
-		Animation.vs.lerp(Animation.vscl, Animation.vscl2, s);
-		Animation.q3.lerp(Animation.q1, Animation.q2, s);
+		Vec4.lerp(Animation.vp, Animation.vpos, Animation.vpos2, s);
+		Vec4.lerp(Animation.vs, Animation.vscl, Animation.vscl2, s);
+		Quat.lerp(Animation.q3, Animation.q1, Animation.q2, s);
 
 		// Compose
-		m.fromQuat(Animation.q3);
-		m.scale(Animation.vs);
+		Mat4.fromQuat(m, Animation.q3);
+		Mat4.scale(m, Animation.vs);
 		m._30 = Animation.vp.x;
 		m._31 = Animation.vp.y;
 		m._32 = Animation.vp.z;
