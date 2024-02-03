@@ -10,7 +10,7 @@
 type i32 = number;
 type f32 = number;
 type bool = boolean;
-type Image = any;
+type ImageRaw = any;
 type VertexElement = any;
 
 (function () {
@@ -85,7 +85,7 @@ type VertexElement = any;
 		function _krom_begin(): void {}
 	);
 
-	Krom.begin = function(render_target: Image, additional_render_targets: Image[]) {
+	Krom.begin = function(render_target: ImageRaw, additional_render_targets: ImageRaw[]) {
 		krom_begin();
 	};
 

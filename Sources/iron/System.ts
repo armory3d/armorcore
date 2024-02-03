@@ -1,6 +1,6 @@
 
 class System {
-	static renderListeners: ((g2: Graphics2, g4: Graphics4)=>void)[] = [];
+	static renderListeners: ((g2: Graphics2Raw, g4: Graphics4Raw)=>void)[] = [];
 	static foregroundListeners: (()=>void)[] = [];
 	static resumeListeners: (()=>void)[] = [];
 	static pauseListeners: (()=>void)[] = [];
@@ -12,16 +12,16 @@ class System {
 	static pasteListener: (data: string)=>void = null;
 
 	static startTime: f32;
-	static g2: Graphics2;
-	static g4: Graphics4;
+	static g2: Graphics2Raw;
+	static g4: Graphics4Raw;
 	static windowTitle: string;
 
 	static start = (options: SystemOptions, callback: ()=>void) => {
 		Krom.init(options.title, options.width, options.height, options.vsync, options.mode, options.features, options.x, options.y, options.frequency);
 
 		System.startTime = Krom.getTime();
-		System.g4 = new Graphics4();
-		System.g2 = new Graphics2(System.g4, null);
+		System.g4 = Graphics4.create();
+		System.g2 = Graphics2.create(System.g4, null);
 		Krom.setCallback(System.renderCallback);
 		Krom.setDropFilesCallback(System.dropFilesCallback);
 		Krom.setCutCopyPasteCallback(System.cutCallback, System.copyCallback, System.pasteCallback);
@@ -46,7 +46,7 @@ class System {
 		callback();
 	}
 
-	static notifyOnFrames = (listener: (g2: Graphics2, g4: Graphics4)=>void) => {
+	static notifyOnFrames = (listener: (g2: Graphics2Raw, g4: Graphics4Raw)=>void) => {
 		System.renderListeners.push(listener);
 	}
 
@@ -345,7 +345,7 @@ class System {
 		return u8a.buffer;
 	}
 
-	static shaders: Map<string, Shader> = new Map();
+	static shaders: Map<string, ShaderRaw> = new Map();
 
 	static get ext(): string {
 		///if krom_vulkan
@@ -370,44 +370,55 @@ class System {
 		///end
 	}
 
-	static getShader = (name: string): Shader => {
+	static getShader = (name: string): ShaderRaw => {
 		let shader = System.shaders.get(name);
 		if (shader == null) {
-			shader = new Shader(System.getShaderBuffer(name), name.endsWith(".frag") ? ShaderType.Fragment : name.endsWith(".vert") ? ShaderType.Vertex : ShaderType.Geometry);
+			shader = Shader.create(System.getShaderBuffer(name), name.endsWith(".frag") ? ShaderType.Fragment : name.endsWith(".vert") ? ShaderType.Vertex : ShaderType.Geometry);
 			System.shaders.set(name, shader);
 		}
 		return shader;
 	}
 }
 
+class VideoRaw {
+	video_: any;
+}
+
 class Video {
-	constructor() {}
-	unload = () => {}
+	static unload = (self: VideoRaw) => {}
+}
+
+class SoundRaw {
+	sound_: any;
 }
 
 class Sound {
-	sound_: any;
-
-	constructor(sound_: any) {
-		this.sound_ = sound_;
+	static create(sound_: any): SoundRaw {
+		let raw = new SoundRaw();
+		raw.sound_ = sound_;
+		return raw;
 	}
 
-	unload = () => {
-		Krom.unloadSound(this.sound_);
+	static unload = (raw: SoundRaw) => {
+		Krom.unloadSound(raw.sound_);
 	}
 }
 
-class Shader {
+class ShaderRaw {
 	shader_: any;
+}
 
-	constructor(buffer: ArrayBuffer, type: ShaderType) {
+class Shader {
+	static create(buffer: ArrayBuffer, type: ShaderType): ShaderRaw {
+		let raw = new ShaderRaw();
 		if (buffer != null) {
-			this.shader_ = Krom.createShader(buffer, type);
+			raw.shader_ = Krom.createShader(buffer, type);
 		}
+		return raw;
 	}
 
-	static fromSource = (source: string, type: ShaderType): Shader => {
-		let shader = new Shader(null, 0);
+	static fromSource = (source: string, type: ShaderType): ShaderRaw => {
+		let shader = Shader.create(null, 0);
 		if (type == ShaderType.Vertex) {
 			shader.shader_ = Krom.createVertexShaderFromSource(source);
 		}
@@ -417,17 +428,17 @@ class Shader {
 		return shader;
 	}
 
-	delete = () => {
-		Krom.deleteShader(this.shader_);
+	static delete = (raw: ShaderRaw) => {
+		Krom.deleteShader(raw.shader_);
 	}
 }
 
-class PipelineState {
+class PipelineStateRaw {
 	pipeline_: any;
-	inputLayout: VertexStructure[] = null;
-	vertexShader: Shader = null;
-	fragmentShader: Shader = null;
-	geometryShader: Shader = null;
+	inputLayout: VertexStructureRaw[] = null;
+	vertexShader: ShaderRaw = null;
+	fragmentShader: ShaderRaw = null;
+	geometryShader: ShaderRaw = null;
 	cullMode: CullMode;
 	depthWrite: bool;
 	depthMode: CompareMode;
@@ -442,7 +453,9 @@ class PipelineState {
 	colorAttachmentCount: i32;
 	colorAttachments: TextureFormat[];
 	depthStencilAttachment: DepthStencilFormat;
+}
 
+class PipelineState {
 	static getDepthBufferBits = (depthAndStencil: DepthStencilFormat): i32 => {
 		switch (depthAndStencil) {
 			case DepthStencilFormat.NoDepthAndStencil: return 0;
@@ -467,119 +480,130 @@ class PipelineState {
 		return 0;
 	}
 
-	constructor() {
-		this.cullMode = CullMode.None;
-		this.depthWrite = false;
-		this.depthMode = CompareMode.Always;
+	static create(): PipelineStateRaw {
+		let raw = new PipelineStateRaw();
+		raw.cullMode = CullMode.None;
+		raw.depthWrite = false;
+		raw.depthMode = CompareMode.Always;
 
-		this.blendSource = BlendingFactor.BlendOne;
-		this.blendDestination = BlendingFactor.BlendZero;
-		this.alphaBlendSource = BlendingFactor.BlendOne;
-		this.alphaBlendDestination = BlendingFactor.BlendZero;
+		raw.blendSource = BlendingFactor.BlendOne;
+		raw.blendDestination = BlendingFactor.BlendZero;
+		raw.alphaBlendSource = BlendingFactor.BlendOne;
+		raw.alphaBlendDestination = BlendingFactor.BlendZero;
 
-		this.colorWriteMasksRed = [];
-		this.colorWriteMasksGreen = [];
-		this.colorWriteMasksBlue = [];
-		this.colorWriteMasksAlpha = [];
-		for (let i = 0; i < 8; ++i) this.colorWriteMasksRed.push(true);
-		for (let i = 0; i < 8; ++i) this.colorWriteMasksGreen.push(true);
-		for (let i = 0; i < 8; ++i) this.colorWriteMasksBlue.push(true);
-		for (let i = 0; i < 8; ++i) this.colorWriteMasksAlpha.push(true);
+		raw.colorWriteMasksRed = [];
+		raw.colorWriteMasksGreen = [];
+		raw.colorWriteMasksBlue = [];
+		raw.colorWriteMasksAlpha = [];
+		for (let i = 0; i < 8; ++i) raw.colorWriteMasksRed.push(true);
+		for (let i = 0; i < 8; ++i) raw.colorWriteMasksGreen.push(true);
+		for (let i = 0; i < 8; ++i) raw.colorWriteMasksBlue.push(true);
+		for (let i = 0; i < 8; ++i) raw.colorWriteMasksAlpha.push(true);
 
-		this.colorAttachmentCount = 1;
-		this.colorAttachments = [];
-		for (let i = 0; i < 8; ++i) this.colorAttachments.push(TextureFormat.RGBA32);
-		this.depthStencilAttachment = DepthStencilFormat.NoDepthAndStencil;
+		raw.colorAttachmentCount = 1;
+		raw.colorAttachments = [];
+		for (let i = 0; i < 8; ++i) raw.colorAttachments.push(TextureFormat.RGBA32);
+		raw.depthStencilAttachment = DepthStencilFormat.NoDepthAndStencil;
 
-		this.pipeline_ = Krom.createPipeline();
+		raw.pipeline_ = Krom.createPipeline();
+		return raw;
 	}
 
-	delete = () => {
-		Krom.deletePipeline(this.pipeline_);
+	static delete = (raw: PipelineStateRaw) => {
+		Krom.deletePipeline(raw.pipeline_);
 	}
 
-	compile = () => {
-		let structure0 = this.inputLayout.length > 0 ? this.inputLayout[0] : null;
-		let structure1 = this.inputLayout.length > 1 ? this.inputLayout[1] : null;
-		let structure2 = this.inputLayout.length > 2 ? this.inputLayout[2] : null;
-		let structure3 = this.inputLayout.length > 3 ? this.inputLayout[3] : null;
-		let gs = this.geometryShader != null ? this.geometryShader.shader_ : null;
+	static compile = (raw: PipelineStateRaw) => {
+		let structure0 = raw.inputLayout.length > 0 ? raw.inputLayout[0] : null;
+		let structure1 = raw.inputLayout.length > 1 ? raw.inputLayout[1] : null;
+		let structure2 = raw.inputLayout.length > 2 ? raw.inputLayout[2] : null;
+		let structure3 = raw.inputLayout.length > 3 ? raw.inputLayout[3] : null;
+		let gs = raw.geometryShader != null ? raw.geometryShader.shader_ : null;
 		let colorAttachments: i32[] = [];
 		for (let i = 0; i < 8; ++i) {
-			colorAttachments.push(this.colorAttachments[i]);
+			colorAttachments.push(raw.colorAttachments[i]);
 		}
-		Krom.compilePipeline(this.pipeline_, structure0, structure1, structure2, structure3, this.inputLayout.length, this.vertexShader.shader_, this.fragmentShader.shader_, gs, {
-			cullMode: this.cullMode,
-			depthWrite: this.depthWrite,
-			depthMode: this.depthMode,
-			blendSource: this.blendSource,
-			blendDestination: this.blendDestination,
-			alphaBlendSource: this.alphaBlendSource,
-			alphaBlendDestination: this.alphaBlendDestination,
-			colorWriteMaskRed: this.colorWriteMasksRed,
-			colorWriteMaskGreen: this.colorWriteMasksGreen,
-			colorWriteMaskBlue: this.colorWriteMasksBlue,
-			colorWriteMaskAlpha: this.colorWriteMasksAlpha,
-			colorAttachmentCount: this.colorAttachmentCount,
-			colorAttachments: this.colorAttachments,
-			depthAttachmentBits: PipelineState.getDepthBufferBits(this.depthStencilAttachment),
-			stencilAttachmentBits: PipelineState.getStencilBufferBits(this.depthStencilAttachment)
+		Krom.compilePipeline(raw.pipeline_, structure0, structure1, structure2, structure3, raw.inputLayout.length, raw.vertexShader.shader_, raw.fragmentShader.shader_, gs, {
+			cullMode: raw.cullMode,
+			depthWrite: raw.depthWrite,
+			depthMode: raw.depthMode,
+			blendSource: raw.blendSource,
+			blendDestination: raw.blendDestination,
+			alphaBlendSource: raw.alphaBlendSource,
+			alphaBlendDestination: raw.alphaBlendDestination,
+			colorWriteMaskRed: raw.colorWriteMasksRed,
+			colorWriteMaskGreen: raw.colorWriteMasksGreen,
+			colorWriteMaskBlue: raw.colorWriteMasksBlue,
+			colorWriteMaskAlpha: raw.colorWriteMasksAlpha,
+			colorAttachmentCount: raw.colorAttachmentCount,
+			colorAttachments: raw.colorAttachments,
+			depthAttachmentBits: PipelineState.getDepthBufferBits(raw.depthStencilAttachment),
+			stencilAttachmentBits: PipelineState.getStencilBufferBits(raw.depthStencilAttachment)
 		});
 	}
 
-	set = () => {
-		Krom.setPipeline(this.pipeline_);
+	static set = (raw: PipelineStateRaw) => {
+		Krom.setPipeline(raw.pipeline_);
 	}
 
-	getConstantLocation = (name: string): ConstantLocation => {
-		return Krom.getConstantLocation(this.pipeline_, name);
+	static getConstantLocation = (raw: PipelineStateRaw, name: string): ConstantLocation => {
+		return Krom.getConstantLocation(raw.pipeline_, name);
 	}
 
-	getTextureUnit = (name: string): TextureUnit => {
-		return Krom.getTextureUnit(this.pipeline_, name);
+	static getTextureUnit = (raw: PipelineStateRaw, name: string): TextureUnit => {
+		return Krom.getTextureUnit(raw.pipeline_, name);
 	}
+}
+
+class VertexBufferRaw {
+	buffer_: any;
+	vertexCount: i32;
 }
 
 class VertexBuffer {
-	buffer_: any;
-	vertexCount: i32;
 
-	constructor(vertexCount: i32, structure: VertexStructure, usage: Usage, instanceDataStepRate: i32 = 0) {
-		this.vertexCount = vertexCount;
-		this.buffer_ = Krom.createVertexBuffer(vertexCount, structure.elements, usage, instanceDataStepRate);
+	static create(vertexCount: i32, structure: VertexStructureRaw, usage: Usage, instanceDataStepRate: i32 = 0): VertexBufferRaw {
+		let raw = new VertexBufferRaw();
+		raw.vertexCount = vertexCount;
+		raw.buffer_ = Krom.createVertexBuffer(vertexCount, structure.elements, usage, instanceDataStepRate);
+		return raw;
 	}
 
-	delete = () => {
-		Krom.deleteVertexBuffer(this.buffer_);
+	static delete = (raw: VertexBufferRaw) => {
+		Krom.deleteVertexBuffer(raw.buffer_);
 	}
 
-	lock = (): DataView => {
-		return new DataView(Krom.lockVertexBuffer(this.buffer_, 0, this.vertexCount));
+	static lock = (raw: VertexBufferRaw): DataView => {
+		return new DataView(Krom.lockVertexBuffer(raw.buffer_, 0, raw.vertexCount));
 	}
 
-	unlock = () => {
-		Krom.unlockVertexBuffer(this.buffer_, this.vertexCount);
+	static unlock = (raw: VertexBufferRaw) => {
+		Krom.unlockVertexBuffer(raw.buffer_, raw.vertexCount);
 	}
 
-	set = () => {
-		Krom.setVertexBuffer(this.buffer_);
+	static set = (raw: VertexBufferRaw) => {
+		Krom.setVertexBuffer(raw.buffer_);
 	}
 }
 
-class VertexStructure {
+class VertexStructureRaw {
 	elements: VertexElement[] = [];
 	instanced: bool = false;
+}
 
-	constructor() {}
-
-	add = (name: string, data: VertexData) => {
-		this.elements.push({name: name, data: data});
+class VertexStructure {
+	static create(): VertexStructureRaw {
+		return new VertexStructureRaw();
 	}
 
-	byteSize = (): i32 => {
+	static add = (raw: VertexStructureRaw, name: string, data: VertexData) => {
+		raw.elements.push({ name: name, data: data });
+	}
+
+	static byteSize = (raw: VertexStructureRaw): i32 => {
 		let byteSize = 0;
-		for (let i = 0; i < this.elements.length; ++i) {
-			byteSize += VertexStructure.dataByteSize(this.elements[i].data);
+		for (let i = 0; i < raw.elements.length; ++i) {
+			byteSize += VertexStructure.dataByteSize(raw.elements[i].data);
 		}
 		return byteSize;
 	}
@@ -605,89 +629,124 @@ class VertexStructure {
 	}
 }
 
-class IndexBuffer {
+class IndexBufferRaw {
 	buffer_: any;
+}
 
-	constructor(indexCount: i32, usage: Usage) {
-		this.buffer_ = Krom.createIndexBuffer(indexCount);
+class IndexBuffer {
+
+	static create(indexCount: i32, usage: Usage): IndexBufferRaw {
+		let raw = new IndexBufferRaw();
+		raw.buffer_ = Krom.createIndexBuffer(indexCount);
+		return raw;
 	}
 
-	delete = () => {
-		Krom.deleteIndexBuffer(this.buffer_);
+	static delete = (raw: IndexBufferRaw) => {
+		Krom.deleteIndexBuffer(raw.buffer_);
 	}
 
-	lock = (): Uint32Array => {
-		return Krom.lockIndexBuffer(this.buffer_);
+	static lock = (raw: IndexBufferRaw): Uint32Array => {
+		return Krom.lockIndexBuffer(raw.buffer_);
 	}
 
-	unlock = () => {
-		Krom.unlockIndexBuffer(this.buffer_);
+	static unlock = (raw: IndexBufferRaw) => {
+		Krom.unlockIndexBuffer(raw.buffer_);
 	}
 
-	set = () => {
-		Krom.setIndexBuffer(this.buffer_);
+	static set = (raw: IndexBufferRaw) => {
+		Krom.setIndexBuffer(raw.buffer_);
 	}
 }
 
 type Color = i32;
 
-class Font {
+class FontRaw {
 	font_: any = null;
 	blob: ArrayBuffer;
 	fontGlyphs: i32[] = null;
 	fontIndex = 0;
+}
 
-	constructor(blob: ArrayBuffer, fontIndex = 0) {
-		this.blob = blob;
-		this.fontIndex = fontIndex;
+class Font {
+
+	static create(blob: ArrayBuffer, fontIndex = 0): FontRaw {
+		let raw = new FontRaw();
+		raw.blob = blob;
+		raw.fontIndex = fontIndex;
+		return raw;
 	}
 
-	height = (fontSize: i32): f32 => {
-		this.init();
-		return Krom.g2_font_height(this.font_, fontSize);
+	static height = (raw: FontRaw, fontSize: i32): f32 => {
+		Font.init(raw);
+		return Krom.g2_font_height(raw.font_, fontSize);
 	}
 
-	width = (fontSize: i32, str: string): f32 => {
-		this.init();
-		return Krom.g2_string_width(this.font_, fontSize, str);
+	static width = (raw: FontRaw, fontSize: i32, str: string): f32 => {
+		Font.init(raw);
+		return Krom.g2_string_width(raw.font_, fontSize, str);
 	}
 
-	unload = () => {
-		this.blob = null;
+	static unload = (raw: FontRaw) => {
+		raw.blob = null;
 	}
 
-	setFontIndex = (fontIndex: i32) => {
-		this.fontIndex = fontIndex;
+	static setFontIndex = (raw: FontRaw, fontIndex: i32) => {
+		raw.fontIndex = fontIndex;
 		Graphics2.fontGlyphs = Graphics2.fontGlyphs.slice(); // Trigger atlas update
 	}
 
-	clone = (): Font => {
-		return new Font(this.blob, this.fontIndex);
+	static clone = (raw: FontRaw): FontRaw => {
+		return Font.create(raw.blob, raw.fontIndex);
 	}
 
-	init = () => {
+	static init = (raw: FontRaw) => {
 		if (Graphics2.fontGlyphsLast != Graphics2.fontGlyphs) {
 			Graphics2.fontGlyphsLast = Graphics2.fontGlyphs;
 			Krom.g2_font_set_glyphs(Graphics2.fontGlyphs);
 		}
-		if (this.fontGlyphs != Graphics2.fontGlyphs) {
-			this.fontGlyphs = Graphics2.fontGlyphs;
-			this.font_ = Krom.g2_font_init(this.blob, this.fontIndex);
+		if (raw.fontGlyphs != Graphics2.fontGlyphs) {
+			raw.fontGlyphs = Graphics2.fontGlyphs;
+			raw.font_ = Krom.g2_font_init(raw.blob, raw.fontIndex);
 		}
 	}
 }
 
-class Image {
+class ImageRaw {
 	texture_: any;
 	renderTarget_: any;
 	format: TextureFormat;
 	readable: bool;
-	graphics2: Graphics2;
-	graphics4: Graphics4;
+	graphics2: Graphics2Raw;
+	graphics4: Graphics4Raw;
 	pixels: ArrayBuffer = null;
 
-	constructor(texture: any) {
-		this.texture_ = texture;
+	get width(): i32 { return this.texture_ == null ? this.renderTarget_.width : this.texture_.width; }
+
+	get height(): i32 { return this.texture_ == null ? this.renderTarget_.height : this.texture_.height; }
+
+	get depth(): i32 { return this.texture_ != null ? this.texture_.depth : 1; }
+
+	get g2(): Graphics2Raw {
+		if (this.graphics2 == null) {
+			this.graphics2 = Graphics2.create(this.g4, this);
+		}
+		return this.graphics2;
+	}
+
+	get g4(): Graphics4Raw {
+		if (this.graphics4 == null) {
+			this.graphics4 = Graphics4.create(this);
+		}
+		return this.graphics4;
+	}
+}
+
+class Image {
+
+	static _create(texture: any): ImageRaw {
+		let raw = new ImageRaw();
+		raw.texture_ = texture;
+		return raw;
 	}
 
 	static getDepthBufferBits = (depthAndStencil: DepthStencilFormat): i32 => {
@@ -731,53 +790,53 @@ class Image {
 		}
 	}
 
-	static _fromTexture = (texture: any): Image => {
-		return new Image(texture);
+	static _fromTexture = (texture: any): ImageRaw => {
+		return Image._create(texture);
 	}
 
-	static fromBytes = (buffer: ArrayBuffer, width: i32, height: i32, format: TextureFormat = null, usage: Usage = null): Image => {
+	static fromBytes = (buffer: ArrayBuffer, width: i32, height: i32, format: TextureFormat = null, usage: Usage = null): ImageRaw => {
 		if (format == null) format = TextureFormat.RGBA32;
 		let readable = true;
-		let image = new Image(null);
+		let image = Image._create(null);
 		image.format = format;
 		image.texture_ = Krom.createTextureFromBytes(buffer, width, height, Image.getTextureFormat(format), readable);
 		return image;
 	}
 
-	static fromBytes3D = (buffer: ArrayBuffer, width: i32, height: i32, depth: i32, format: TextureFormat = null, usage: Usage = null): Image => {
+	static fromBytes3D = (buffer: ArrayBuffer, width: i32, height: i32, depth: i32, format: TextureFormat = null, usage: Usage = null): ImageRaw => {
 		if (format == null) format = TextureFormat.RGBA32;
 		let readable = true;
-		let image = new Image(null);
+		let image = Image._create(null);
 		image.format = format;
 		image.texture_ = Krom.createTextureFromBytes3D(buffer, width, height, depth, Image.getTextureFormat(format), readable);
 		return image;
 	}
 
-	static fromEncodedBytes = (buffer: ArrayBuffer, format: string, doneCallback: (img: Image)=>void, errorCallback: (s: string)=>void, readable: bool = false) => {
-		let image = new Image(null);
+	static fromEncodedBytes = (buffer: ArrayBuffer, format: string, doneCallback: (img: ImageRaw)=>void, errorCallback: (s: string)=>void, readable: bool = false) => {
+		let image = Image._create(null);
 		image.texture_ = Krom.createTextureFromEncodedBytes(buffer, format, readable);
 		doneCallback(image);
 	}
 
-	static create = (width: i32, height: i32, format: TextureFormat = null, usage: Usage = null): Image => {
+	static create = (width: i32, height: i32, format: TextureFormat = null, usage: Usage = null): ImageRaw => {
 		if (format == null) format = TextureFormat.RGBA32;
-		let image = new Image(null);
+		let image = Image._create(null);
 		image.format = format;
 		image.texture_ = Krom.createTexture(width, height, Image.getTextureFormat(format));
 		return image;
 	}
 
-	static create3D = (width: i32, height: i32, depth: i32, format: TextureFormat = null, usage: Usage = null): Image => {
+	static create3D = (width: i32, height: i32, depth: i32, format: TextureFormat = null, usage: Usage = null): ImageRaw => {
 		if (format == null) format = TextureFormat.RGBA32;
-		let image = new Image(null);
+		let image = Image._create(null);
 		image.format = format;
 		image.texture_ = Krom.createTexture3D(width, height, depth, Image.getTextureFormat(format));
 		return image;
 	}
 
-	static createRenderTarget = (width: i32, height: i32, format: TextureFormat = null, depthStencil: DepthStencilFormat = DepthStencilFormat.NoDepthAndStencil, antiAliasingSamples: i32 = 1): Image => {
+	static createRenderTarget = (width: i32, height: i32, format: TextureFormat = null, depthStencil: DepthStencilFormat = DepthStencilFormat.NoDepthAndStencil, antiAliasingSamples: i32 = 1): ImageRaw => {
 		if (format == null) format = TextureFormat.RGBA32;
-		let image = new Image(null);
+		let image = Image._create(null);
 		image.format = format;
 		image.renderTarget_ = Krom.createRenderTarget(width, height, format, Image.getDepthBufferBits(depthStencil), Image.getStencilBufferBits(depthStencil));
 		return image;
@@ -800,103 +859,61 @@ class Image {
 		}
 	}
 
-	unload = () => {
-		Krom.unloadImage(this);
-		this.texture_ = null;
-		this.renderTarget_ = null;
+	static unload = (raw: ImageRaw) => {
+		Krom.unloadImage(raw);
+		raw.texture_ = null;
+		raw.renderTarget_ = null;
 	}
 
-	lock = (level: i32 = 0): ArrayBuffer => {
-		return Krom.lockTexture(this.texture_, level);
+	static lock = (raw: ImageRaw, level: i32 = 0): ArrayBuffer => {
+		return Krom.lockTexture(raw.texture_, level);
 	}
 
-	unlock = () => {
-		Krom.unlockTexture(this.texture_);
+	static unlock = (raw: ImageRaw) => {
+		Krom.unlockTexture(raw.texture_);
 	}
 
-	getPixels = (): ArrayBuffer => {
-		if (this.renderTarget_ != null) {
+	static getPixels = (raw: ImageRaw): ArrayBuffer => {
+		if (raw.renderTarget_ != null) {
 			// Minimum size of 32x32 required after https://github.com/Kode/Kinc/commit/3797ebce5f6d7d360db3331eba28a17d1be87833
-			let pixelsWidth = this.width < 32 ? 32 : this.width;
-			let pixelsHeight = this.height < 32 ? 32 : this.height;
-			if (this.pixels == null) this.pixels = new ArrayBuffer(Image.formatByteSize(this.format) * pixelsWidth * pixelsHeight);
-			Krom.getRenderTargetPixels(this.renderTarget_, this.pixels);
-			return this.pixels;
+			let pixelsWidth = raw.width < 32 ? 32 : raw.width;
+			let pixelsHeight = raw.height < 32 ? 32 : raw.height;
+			if (raw.pixels == null) raw.pixels = new ArrayBuffer(Image.formatByteSize(raw.format) * pixelsWidth * pixelsHeight);
+			Krom.getRenderTargetPixels(raw.renderTarget_, raw.pixels);
+			return raw.pixels;
 		}
 		else {
-			return Krom.getTexturePixels(this.texture_);
+			return Krom.getTexturePixels(raw.texture_);
 		}
 	}
 
-	generateMipmaps = (levels: i32) => {
-		this.texture_ == null ? Krom.generateRenderTargetMipmaps(this.renderTarget_, levels) : Krom.generateTextureMipmaps(this.texture_, levels);
+	static generateMipmaps = (raw: ImageRaw, levels: i32) => {
+		raw.texture_ == null ? Krom.generateRenderTargetMipmaps(raw.renderTarget_, levels) : Krom.generateTextureMipmaps(raw.texture_, levels);
 	}
 
-	setMipmaps = (mipmaps: Image[]) => {
-		Krom.setMipmaps(this.texture_, mipmaps);
+	static setMipmaps = (raw: ImageRaw, mipmaps: ImageRaw[]) => {
+		Krom.setMipmaps(raw.texture_, mipmaps);
 	}
 
-	setDepthStencilFrom = (image: Image) => {
-		Krom.setDepthStencilFrom(this.renderTarget_, image.renderTarget_);
+	static setDepthStencilFrom = (raw: ImageRaw, image: ImageRaw) => {
+		Krom.setDepthStencilFrom(raw.renderTarget_, image.renderTarget_);
 	}
 
-	clear = (x: i32, y: i32, z: i32, width: i32, height: i32, depth: i32, color: Color) => {
-		Krom.clearTexture(this.texture_, x, y, z, width, height, depth, color);
-	}
-
-	get width(): i32 { return this.texture_ == null ? this.renderTarget_.width : this.texture_.width; }
-
-	get height(): i32 { return this.texture_ == null ? this.renderTarget_.height : this.texture_.height; }
-
-	get depth(): i32 { return this.texture_ != null ? this.texture_.depth : 1; }
-
-	get g2(): Graphics2 {
-		if (this.graphics2 == null) {
-			this.graphics2 = new Graphics2(this.g4, this);
-		}
-		return this.graphics2;
-	}
-
-	get g4(): Graphics4 {
-		if (this.graphics4 == null) {
-			this.graphics4 = new Graphics4(this);
-		}
-		return this.graphics4;
+	static clear = (raw: ImageRaw, x: i32, y: i32, z: i32, width: i32, height: i32, depth: i32, color: Color) => {
+		Krom.clearTexture(raw.texture_, x, y, z, width, height, depth, color);
 	}
 }
 
-class Graphics2 {
-	static makeGlyphs = (start: i32, end: i32): i32[] => {
-		let ar: i32[] = [];
-		for (let i = start; i < end; ++i) ar.push(i);
-		return ar;
-	}
-
-	static current: Graphics2;
-	static fontGlyphs: i32[] = Graphics2.makeGlyphs(32, 127);
-	static fontGlyphsLast: i32[] = Graphics2.fontGlyphs;
-	static thrown = false;
-	static mat = new Float32Array(9);
-	static initialized = false;
-
+class Graphics2Raw {
 	_color: Color;
-	_font: Font;
+	_font: FontRaw;
 	_fontSize: i32 = 0;
-	_pipeline: PipelineState;
+	_pipeline: PipelineStateRaw;
 	_imageScaleQuality: ImageScaleQuality;
 	_transformation: Mat3 = null;
 
-	g4: Graphics4;
-	renderTarget: Image;
-
-	constructor(g4: Graphics4, renderTarget: Image) {
-		if (!Graphics2.initialized) {
-			Krom.g2_init(System.getShaderBuffer("painter-image.vert"), System.getShaderBuffer("painter-image.frag"), System.getShaderBuffer("painter-colored.vert"), System.getShaderBuffer("painter-colored.frag"), System.getShaderBuffer("painter-text.vert"), System.getShaderBuffer("painter-text.frag"));
-			Graphics2.initialized = true;
-		}
-		this.g4 = g4;
-		this.renderTarget = renderTarget;
-	}
+	g4: Graphics4Raw;
+	renderTarget: ImageRaw;
 
 	get color(): Color {
 		return this._color;
@@ -907,16 +924,16 @@ class Graphics2 {
 		this._color = c;
 	}
 
-	set_font_and_size = (font: Font, fontSize: i32) => {
-		font.init();
+	set_font_and_size = (font: FontRaw, fontSize: i32) => {
+		Font.init(font);
 		Krom.g2_set_font(font.font_, fontSize);
 	}
 
-	get font(): Font {
+	get font(): FontRaw {
 		return this._font;
 	}
 
-	set font(f: Font) {
+	set font(f: FontRaw) {
 		if (this.fontSize != 0) this.set_font_and_size(f, this.fontSize);
 		this._font = f;
 	}
@@ -930,11 +947,11 @@ class Graphics2 {
 		this._fontSize = i;
 	}
 
-	get pipeline(): PipelineState {
+	get pipeline(): PipelineStateRaw {
 		return this._pipeline;
 	}
 
-	set pipeline(p: PipelineState) {
+	set pipeline(p: PipelineStateRaw) {
 		Krom.g2_set_pipeline(p == null ? null : p.pipeline_);
 		this._pipeline = p;
 	}
@@ -959,56 +976,89 @@ class Graphics2 {
 			Krom.g2_set_transform(Graphics2.mat.buffer);
 		}
 	}
+}
 
-	drawScaledSubImage = (img: Image, sx: f32, sy: f32, sw: f32, sh: f32, dx: f32, dy: f32, dw: f32, dh: f32) => {
+class Graphics2 {
+	static makeGlyphs = (start: i32, end: i32): i32[] => {
+		let ar: i32[] = [];
+		for (let i = start; i < end; ++i) ar.push(i);
+		return ar;
+	}
+
+	static current: Graphics2Raw;
+	static fontGlyphs: i32[] = Graphics2.makeGlyphs(32, 127);
+	static fontGlyphsLast: i32[] = Graphics2.fontGlyphs;
+	static thrown = false;
+	static mat = new Float32Array(9);
+	static initialized = false;
+
+	static create(g4: Graphics4Raw, renderTarget: ImageRaw): Graphics2Raw {
+		let raw = new Graphics2Raw();
+		if (!Graphics2.initialized) {
+			Krom.g2_init(
+				System.getShaderBuffer("painter-image.vert"),
+				System.getShaderBuffer("painter-image.frag"),
+				System.getShaderBuffer("painter-colored.vert"),
+				System.getShaderBuffer("painter-colored.frag"),
+				System.getShaderBuffer("painter-text.vert"),
+				System.getShaderBuffer("painter-text.frag")
+			);
+			Graphics2.initialized = true;
+		}
+		raw.g4 = g4;
+		raw.renderTarget = renderTarget;
+		return raw;
+	}
+
+	static drawScaledSubImage = (img: ImageRaw, sx: f32, sy: f32, sw: f32, sh: f32, dx: f32, dy: f32, dw: f32, dh: f32) => {
 		Krom.g2_draw_scaled_sub_image(img, sx, sy, sw, sh, dx, dy, dw, dh);
 	}
 
-	drawSubImage = (img: Image, x: f32, y: f32, sx: f32, sy: f32, sw: f32, sh: f32) => {
-		this.drawScaledSubImage(img, sx, sy, sw, sh, x, y, sw, sh);
+	static drawSubImage = (img: ImageRaw, x: f32, y: f32, sx: f32, sy: f32, sw: f32, sh: f32) => {
+		Graphics2.drawScaledSubImage(img, sx, sy, sw, sh, x, y, sw, sh);
 	}
 
-	drawScaledImage = (img: Image, dx: f32, dy: f32, dw: f32, dh: f32) => {
-		this.drawScaledSubImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
+	static drawScaledImage = (img: ImageRaw, dx: f32, dy: f32, dw: f32, dh: f32) => {
+		Graphics2.drawScaledSubImage(img, 0, 0, img.width, img.height, dx, dy, dw, dh);
 	}
 
-	drawImage = (img: Image, x: f32, y: f32) => {
-		this.drawScaledSubImage(img, 0, 0, img.width, img.height, x, y, img.width, img.height);
+	static drawImage = (img: ImageRaw, x: f32, y: f32) => {
+		Graphics2.drawScaledSubImage(img, 0, 0, img.width, img.height, x, y, img.width, img.height);
 	}
 
-	drawRect = (x: f32, y: f32, width: f32, height: f32, strength: f32 = 1.0) => {
+	static drawRect = (x: f32, y: f32, width: f32, height: f32, strength: f32 = 1.0) => {
 		Krom.g2_draw_rect(x, y, width, height, strength);
 	}
 
-	fillRect = (x: f32, y: f32, width: f32, height: f32) => {
+	static fillRect = (x: f32, y: f32, width: f32, height: f32) => {
 		Krom.g2_fill_rect(x, y, width, height);
 	}
 
-	drawString = (text: string, x: f32, y: f32) => {
+	static drawString = (text: string, x: f32, y: f32) => {
 		Krom.g2_draw_string(text, x, y);
 	}
 
-	drawLine = (x0: f32, y0: f32, x1: f32, y1: f32, strength: f32 = 1.0) => {
+	static drawLine = (x0: f32, y0: f32, x1: f32, y1: f32, strength: f32 = 1.0) => {
 		Krom.g2_draw_line(x0, y0, x1, y1, strength);
 	}
 
-	fillTriangle = (x0: f32, y0: f32, x1: f32, y1: f32, x2: f32, y2: f32) => {
+	static fillTriangle = (x0: f32, y0: f32, x1: f32, y1: f32, x2: f32, y2: f32) => {
 		Krom.g2_fill_triangle(x0, y0, x1, y1, x2, y2);
 	}
 
-	scissor = (x: i32, y: i32, width: i32, height: i32) => {
+	static scissor = (raw: Graphics2Raw, x: i32, y: i32, width: i32, height: i32) => {
 		Krom.g2_end(); // flush
-		this.g4.scissor(x, y, width, height);
+		Graphics4.scissor(x, y, width, height);
 	}
 
-	disableScissor = () => {
+	static disableScissor = (raw: Graphics2Raw) => {
 		Krom.g2_end(); // flush
-		this.g4.disableScissor();
+		Graphics4.disableScissor();
 	}
 
-	begin = (clear = true, clearColor: Color = null) => {
+	static begin = (raw: Graphics2Raw, clear = true, clearColor: Color = null) => {
 		if (Graphics2.current == null) {
-			Graphics2.current = this;
+			Graphics2.current = raw;
 		}
 		else {
 			if (!Graphics2.thrown) { Graphics2.thrown = true; throw "End before you begin"; }
@@ -1016,24 +1066,24 @@ class Graphics2 {
 
 		Krom.g2_begin();
 
-		if (this.renderTarget != null) {
-			Krom.g2_set_render_target(this.renderTarget.renderTarget_);
+		if (raw.renderTarget != null) {
+			Krom.g2_set_render_target(raw.renderTarget.renderTarget_);
 		}
 		else {
 			Krom.g2_restore_render_target();
 		}
 
-		if (clear) this.clear(clearColor);
+		if (clear) Graphics2.clear(raw, clearColor);
 	}
 
-	clear = (color = 0x00000000) => {
-		this.g4.clear(color);
+	static clear = (raw: Graphics2Raw, color = 0x00000000) => {
+		Graphics4.clear(color);
 	}
 
-	end = () => {
+	static end = (raw: Graphics2Raw) => {
 		Krom.g2_end();
 
-		if (Graphics2.current == this) {
+		if (Graphics2.current == raw) {
 			Graphics2.current = null;
 		}
 		else {
@@ -1041,35 +1091,40 @@ class Graphics2 {
 		}
 	}
 
-	fillCircle = (cx: f32, cy: f32, radius: f32, segments: i32 = 0) => {
+	static fillCircle = (cx: f32, cy: f32, radius: f32, segments: i32 = 0) => {
 		Krom.g2_fill_circle(cx, cy, radius, segments);
 	}
 
-	drawCircle = (cx: f32, cy: f32, radius: f32, segments: i32 = 0, strength: f32 = 1.0) => {
+	static drawCircle = (cx: f32, cy: f32, radius: f32, segments: i32 = 0, strength: f32 = 1.0) => {
 		Krom.g2_draw_circle(cx, cy, radius, segments, strength);
 	}
 
-	drawCubicBezier = (x: f32[], y: f32[], segments: i32 = 20, strength: f32 = 1.0) => {
+	static drawCubicBezier = (x: f32[], y: f32[], segments: i32 = 20, strength: f32 = 1.0) => {
 		Krom.g2_draw_cubic_bezier(x, y, segments, strength);
 	}
 }
 
+class Graphics4Raw {
+	renderTarget: ImageRaw;
+}
+
 class Graphics4 {
-	renderTarget: Image;
 
-	constructor(renderTarget: Image = null) {
-		this.renderTarget = renderTarget;
+	static create(renderTarget: ImageRaw = null): Graphics4Raw {
+		let raw = new Graphics4Raw();
+		raw.renderTarget = renderTarget;
+		return raw;
 	}
 
-	begin = (additionalRenderTargets: Image[] = null) => {
-		Krom.begin(this.renderTarget, additionalRenderTargets);
+	static begin = (raw: Graphics4Raw, additionalRenderTargets: ImageRaw[] = null) => {
+		Krom.begin(raw.renderTarget, additionalRenderTargets);
 	}
 
-	end = () => {
+	static end = () => {
 		Krom.end();
 	}
 
-	clear = (color?: Color, depth?: f32, stencil?: i32) => {
+	static clear = (color?: Color, depth?: f32, stencil?: i32) => {
 		let flags: i32 = 0;
 		if (color != null) flags |= 1;
 		if (depth != null) flags |= 2;
@@ -1077,110 +1132,110 @@ class Graphics4 {
 		Krom.clear(flags, color == null ? 0 : color, depth, stencil);
 	}
 
-	viewport = (x: i32, y: i32, width: i32, height: i32) => {
+	static viewport = (x: i32, y: i32, width: i32, height: i32) => {
 		Krom.viewport(x, y, width, height);
 	}
 
-	setVertexBuffer = (vertexBuffer: VertexBuffer) => {
-		vertexBuffer.set();
+	static setVertexBuffer = (vertexBuffer: VertexBufferRaw) => {
+		VertexBuffer.set(vertexBuffer);
 	}
 
-	setVertexBuffers = (vertexBuffers: VertexBuffer[]) => {
+	static setVertexBuffers = (vertexBuffers: VertexBufferRaw[]) => {
 		Krom.setVertexBuffers(vertexBuffers);
 	}
 
-	setIndexBuffer = (indexBuffer: IndexBuffer) => {
-		indexBuffer.set();
+	static setIndexBuffer = (indexBuffer: IndexBufferRaw) => {
+		IndexBuffer.set(indexBuffer);
 	}
 
-	setTexture = (unit: TextureUnit, texture: Image) => {
+	static setTexture = (unit: TextureUnit, texture: ImageRaw) => {
 		if (texture == null) return;
 		texture.texture_ != null ? Krom.setTexture(unit, texture.texture_) : Krom.setRenderTarget(unit, texture.renderTarget_);
 	}
 
-	setTextureDepth = (unit: TextureUnit, texture: Image) => {
+	static setTextureDepth = (unit: TextureUnit, texture: ImageRaw) => {
 		if (texture == null) return;
 		Krom.setTextureDepth(unit, texture.renderTarget_);
 	}
 
-	setImageTexture = (unit: TextureUnit, texture: Image) => {
+	static setImageTexture = (unit: TextureUnit, texture: ImageRaw) => {
 		if (texture == null) return;
 		Krom.setImageTexture(unit, texture.texture_);
 	}
 
-	setTextureParameters = (texunit: TextureUnit, uAddressing: TextureAddressing, vAddressing: TextureAddressing, minificationFilter: TextureFilter, magnificationFilter: TextureFilter, mipmapFilter: MipMapFilter) => {
+	static setTextureParameters = (texunit: TextureUnit, uAddressing: TextureAddressing, vAddressing: TextureAddressing, minificationFilter: TextureFilter, magnificationFilter: TextureFilter, mipmapFilter: MipMapFilter) => {
 		Krom.setTextureParameters(texunit, uAddressing, vAddressing, minificationFilter, magnificationFilter, mipmapFilter);
 	}
 
-	setTexture3DParameters = (texunit: TextureUnit, uAddressing: TextureAddressing, vAddressing: TextureAddressing, wAddressing: TextureAddressing, minificationFilter: TextureFilter, magnificationFilter: TextureFilter, mipmapFilter: MipMapFilter) => {
+	static setTexture3DParameters = (texunit: TextureUnit, uAddressing: TextureAddressing, vAddressing: TextureAddressing, wAddressing: TextureAddressing, minificationFilter: TextureFilter, magnificationFilter: TextureFilter, mipmapFilter: MipMapFilter) => {
 		Krom.setTexture3DParameters(texunit, uAddressing, vAddressing, wAddressing, minificationFilter, magnificationFilter, mipmapFilter);
 	}
 
-	setPipeline = (pipeline: PipelineState) => {
-		pipeline.set();
+	static setPipeline = (pipeline: PipelineStateRaw) => {
+		PipelineState.set(pipeline);
 	}
 
-	setBool = (location: ConstantLocation, value: bool) => {
+	static setBool = (location: ConstantLocation, value: bool) => {
 		Krom.setBool(location, value);
 	}
 
-	setInt = (location: ConstantLocation, value: i32) => {
+	static setInt = (location: ConstantLocation, value: i32) => {
 		Krom.setInt(location, value);
 	}
 
-	setFloat = (location: ConstantLocation, value: f32) => {
+	static setFloat = (location: ConstantLocation, value: f32) => {
 		Krom.setFloat(location, value);
 	}
 
-	setFloat2 = (location: ConstantLocation, value1: f32, value2: f32) => {
+	static setFloat2 = (location: ConstantLocation, value1: f32, value2: f32) => {
 		Krom.setFloat2(location, value1, value2);
 	}
 
-	setFloat3 = (location: ConstantLocation, value1: f32, value2: f32, value3: f32) => {
+	static setFloat3 = (location: ConstantLocation, value1: f32, value2: f32, value3: f32) => {
 		Krom.setFloat3(location, value1, value2, value3);
 	}
 
-	setFloat4 = (location: ConstantLocation, value1: f32, value2: f32, value3: f32, value4: f32) => {
+	static setFloat4 = (location: ConstantLocation, value1: f32, value2: f32, value3: f32, value4: f32) => {
 		Krom.setFloat4(location, value1, value2, value3, value4);
 	}
 
-	setFloats = (location: ConstantLocation, values: Float32Array) => {
+	static setFloats = (location: ConstantLocation, values: Float32Array) => {
 		Krom.setFloats(location, values.buffer);
 	}
 
-	setVector2 = (location: ConstantLocation, value: Vec2) => {
+	static setVector2 = (location: ConstantLocation, value: Vec2) => {
 		Krom.setFloat2(location, value.x, value.y);
 	}
 
-	setVector3 = (location: ConstantLocation, value: Vec3) => {
+	static setVector3 = (location: ConstantLocation, value: Vec3) => {
 		Krom.setFloat3(location, value.x, value.y, value.z);
 	}
 
-	setVector4 = (location: ConstantLocation, value: TVec4) => {
+	static setVector4 = (location: ConstantLocation, value: TVec4) => {
 		Krom.setFloat4(location, value.x, value.y, value.z, value.w);
 	}
 
- 	setMatrix = (location: ConstantLocation, matrix: TMat4) => {
+	static setMatrix = (location: ConstantLocation, matrix: TMat4) => {
 		Krom.setMatrix(location, matrix.buffer.buffer);
 	}
 
- 	setMatrix3 = (location: ConstantLocation, matrix: Mat3) => {
+	static setMatrix3 = (location: ConstantLocation, matrix: Mat3) => {
 		Krom.setMatrix3(location, matrix.buffer.buffer);
 	}
 
-	drawIndexedVertices = (start: i32 = 0, count: i32 = -1) => {
+	static drawIndexedVertices = (start: i32 = 0, count: i32 = -1) => {
 		Krom.drawIndexedVertices(start, count);
 	}
 
-	drawIndexedVerticesInstanced = (instanceCount: i32, start: i32 = 0, count: i32 = -1) => {
+	static drawIndexedVerticesInstanced = (instanceCount: i32, start: i32 = 0, count: i32 = -1) => {
 		Krom.drawIndexedVerticesInstanced(instanceCount, start, count);
 	}
 
-	scissor = (x: i32, y: i32, width: i32, height: i32) => {
+	static scissor = (x: i32, y: i32, width: i32, height: i32) => {
 		Krom.scissor(x, y, width, height);
 	}
 
-	disableScissor = () => {
+	static disableScissor = () => {
 		Krom.disableScissor();
 	}
 }

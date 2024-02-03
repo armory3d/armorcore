@@ -1,11 +1,11 @@
 // Bindings to Zui in C
 
 type ZuiOptions = {
-	font: Font;
+	font: FontRaw;
 	theme: Theme;
 	scaleFactor: f32;
-	color_wheel: Image;
-	black_white_gradient: Image;
+	color_wheel: ImageRaw;
+	black_white_gradient: ImageRaw;
 }
 
 class Zui {
@@ -172,8 +172,8 @@ class Zui {
 		this._t = theme;
 	}
 
-	g: Graphics2;
-	font: Font;
+	g: Graphics2Raw;
+	font: FontRaw;
 	zui_: any;
 
 	constructor(ops: ZuiOptions) {
@@ -191,8 +191,8 @@ class Zui {
 		this.font = ops.font;
 	}
 
-	setFont(font: Font) {
-		font.init(); // Make sure font_ is ready
+	setFont(font: FontRaw) {
+		Font.init(font); // Make sure font_ is ready
 		this.font = font;
 		Krom.zui_set_font(this.zui_, font.font_);
 	}
@@ -205,7 +205,7 @@ class Zui {
 		Krom.zui_set_scale(this.zui_, factor);
 	}
 
-	begin(g: Graphics2) {
+	begin(g: Graphics2Raw) {
 		Zui.current = this;
 		Krom.zui_begin(this.zui_);
 		Graphics2.current = g;
@@ -216,7 +216,7 @@ class Zui {
 		Graphics2.current = null;
 	}
 
-	beginRegion(g: Graphics2, x: i32, y: i32, w: i32) {
+	beginRegion(g: Graphics2Raw, x: i32, y: i32, w: i32) {
 		Zui.current = this;
 		this.g = g;
 		Krom.zui_begin_region(this.zui_, x, y, w);
@@ -239,7 +239,7 @@ class Zui {
 	}
 
 	window(handle: Handle, x: i32, y: i32, w: i32, h: i32, drag = false): bool {
-		let img = new Image(null);
+		let img = Image._create(null);
 		img.renderTarget_ = handle.texture;
 		Graphics2.current = this.g = img.g2;
 		return Krom.zui_window(handle.handle_, x, y, w, h, drag);
@@ -257,7 +257,7 @@ class Zui {
 		return Krom.zui_panel(handle.handle_, text, isTree, filled, pack);
 	}
 
-	image(image: Image, tint = 0xffffffff, h: Null<f32> = null, sx = 0, sy = 0, sw = 0, sh = 0): State {
+	image(image: ImageRaw, tint = 0xffffffff, h: Null<f32> = null, sx = 0, sy = 0, sw = 0, sh = 0): State {
 		return Krom.zui_image(image, tint, h == null ? -1 : Math.floor(h), sx, sy, sw, sh);
 	}
 
@@ -269,7 +269,7 @@ class Zui {
 		return Krom.zui_text_input(handle.handle_, label, align, editable, liveUpdate);
 	}
 
-	button(text: string, align = Align.Center, label = "", icon: Image = null, sx = 0, sy = 0, sw = 0, sh = 0): bool {
+	button(text: string, align = Align.Center, label = "", icon: ImageRaw = null, sx = 0, sy = 0, sw = 0, sh = 0): bool {
 		return Krom.zui_button(text, align, label);
 	}
 
@@ -297,7 +297,7 @@ class Zui {
 		Krom.zui_tooltip(text);
 	}
 
-	tooltipImage(image: Image, maxWidth: Null<i32> = null) {
+	tooltipImage(image: ImageRaw, maxWidth: Null<i32> = null) {
 		Krom.zui_tooltip_image(image, maxWidth == null ? 0 : maxWidth);
 	}
 
@@ -313,7 +313,7 @@ class Zui {
 		Krom.zui_rect(x, y, w, h, color, strength);
 	}
 
-	drawRect(g: Graphics2, fill: bool, x: f32, y: f32, w: f32, h: f32, strength = 0.0) {
+	drawRect(g: Graphics2Raw, fill: bool, x: f32, y: f32, w: f32, h: f32, strength = 0.0) {
 		Krom.zui_draw_rect(fill, x, y, w, h, strength);
 	}
 
@@ -329,7 +329,7 @@ class Zui {
 		return Krom.zui_input_in_rect(x, y, w, h);
 	}
 
-	drawString(g: Graphics2, text: string, xOffset: Null<f32> = null, yOffset: f32 = 0, align = Align.Left, truncation = true) {
+	drawString(g: Graphics2Raw, text: string, xOffset: Null<f32> = null, yOffset: f32 = 0, align = Align.Left, truncation = true) {
 		Krom.zui_draw_string(text, xOffset == null ? -1 : xOffset, yOffset, align, truncation);
 	}
 

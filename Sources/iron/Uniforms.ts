@@ -10,7 +10,7 @@ class Uniforms {
 	static helpVec2 = Vec4.create();
 	static helpQuat = Quat.create(); // Keep at identity
 
-	static externalTextureLinks: ((o: TBaseObject, md: TMaterialData, s: string)=>Image)[] = null;
+	static externalTextureLinks: ((o: TBaseObject, md: TMaterialData, s: string)=>ImageRaw)[] = null;
 	static externalMat4Links: ((o: TBaseObject, md: TMaterialData, s: string)=>TMat4)[] = null;
 	static externalVec4Links: ((o: TBaseObject, md: TMaterialData, s: string)=>TVec4)[] = null;
 	static externalVec3Links: ((o: TBaseObject, md: TMaterialData, s: string)=>TVec4)[] = null;
@@ -21,7 +21,7 @@ class Uniforms {
 	static posUnpack: Null<f32> = null;
 	static texUnpack: Null<f32> = null;
 
-	static setContextConstants = (g: Graphics4, context: TShaderContext, bindParams: string[]) => {
+	static setContextConstants = (g: Graphics4Raw, context: TShaderContext, bindParams: string[]) => {
 		if (context.constants != null) {
 			for (let i = 0; i < context.constants.length; ++i) {
 				let c = context.constants[i];
@@ -53,12 +53,12 @@ class Uniforms {
 				if (tulink == null) continue;
 
 				if (tulink.charAt(0) == "$") { // Link to embedded data
-					g.setTexture(context._textureUnits[j], Scene.embedded.get(tulink.substr(1)));
+					Graphics4.setTexture(context._textureUnits[j], Scene.embedded.get(tulink.substr(1)));
 					if (tulink.endsWith(".raw")) { // Raw 3D texture
-						g.setTexture3DParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
+						Graphics4.setTexture3DParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 					}
 					else { // 2D texture
-						g.setTextureParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
+						Graphics4.setTextureParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 					}
 				}
 				else {
@@ -66,16 +66,16 @@ class Uniforms {
 						case "_envmapRadiance": {
 							let w = Scene.world;
 							if (w != null) {
-								g.setTexture(context._textureUnits[j], w._radiance);
-								g.setTextureParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
+								Graphics4.setTexture(context._textureUnits[j], w._radiance);
+								Graphics4.setTextureParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
 							}
 							break;
 						}
 						case "_envmap": {
 							let w = Scene.world;
 							if (w != null) {
-								g.setTexture(context._textureUnits[j], w._envmap);
-								g.setTextureParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
+								Graphics4.setTexture(context._textureUnits[j], w._envmap);
+								Graphics4.setTextureParameters(context._textureUnits[j], TextureAddressing.Repeat, TextureAddressing.Repeat, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.NoMipFilter);
 							}
 							break;
 						}
@@ -85,7 +85,7 @@ class Uniforms {
 		}
 	}
 
-	static setObjectConstants = (g: Graphics4, context: TShaderContext, object: TBaseObject) => {
+	static setObjectConstants = (g: Graphics4Raw, context: TShaderContext, object: TBaseObject) => {
 		if (context.constants != null) {
 			for (let i = 0; i < context.constants.length; ++i) {
 				let c = context.constants[i];
@@ -110,9 +110,9 @@ class Uniforms {
 						let image = f(object, Uniforms.currentMat(object), tu.link);
 						if (image != null) {
 							tu.link.endsWith("_depth") ?
-								g.setTextureDepth(context._textureUnits[j], image) :
-								g.setTexture(context._textureUnits[j], image);
-							g.setTextureParameters(context._textureUnits[j], tuAddrU, tuAddrV, tuFilterMin, tuFilterMag, tuMipMapFilter);
+								Graphics4.setTextureDepth(context._textureUnits[j], image) :
+								Graphics4.setTexture(context._textureUnits[j], image);
+							Graphics4.setTextureParameters(context._textureUnits[j], tuAddrU, tuAddrV, tuFilterMin, tuFilterMag, tuMipMapFilter);
 							break;
 						}
 					}
@@ -121,7 +121,7 @@ class Uniforms {
 		}
 	}
 
-	static bindRenderTarget = (g: Graphics4, rt: RenderTarget, context: TShaderContext, samplerID: string, attachDepth: bool) => {
+	static bindRenderTarget = (g: Graphics4Raw, rt: RenderTargetRaw, context: TShaderContext, samplerID: string, attachDepth: bool) => {
 		if (rt != null) {
 			let tus = context.texture_units;
 
@@ -130,35 +130,35 @@ class Uniforms {
 					let isImage = tus[j].is_image != null && tus[j].is_image;
 					let paramsSet = false;
 
-					if (rt.raw.depth > 1) { // sampler3D
-						g.setTexture3DParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.AnisotropicFilter, MipMapFilter.LinearMipFilter);
+					if (rt.depth > 1) { // sampler3D
+						Graphics4.setTexture3DParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.AnisotropicFilter, MipMapFilter.LinearMipFilter);
 						paramsSet = true;
 					}
 
 					if (isImage) {
-						g.setImageTexture(context._textureUnits[j], rt.image); // image2D/3D
+						Graphics4.setImageTexture(context._textureUnits[j], rt.image); // image2D/3D
 						// Multiple voxel volumes, always set params
-						g.setTexture3DParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.PointFilter, MipMapFilter.LinearMipFilter);
+						Graphics4.setTexture3DParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.PointFilter, MipMapFilter.LinearMipFilter);
 						paramsSet = true;
 					}
 					else {
-						if (attachDepth) g.setTextureDepth(context._textureUnits[j], rt.image); // sampler2D
-						else g.setTexture(context._textureUnits[j], rt.image); // sampler2D
+						if (attachDepth) Graphics4.setTextureDepth(context._textureUnits[j], rt.image); // sampler2D
+						else Graphics4.setTexture(context._textureUnits[j], rt.image); // sampler2D
 					}
 
-					if (!paramsSet && rt.raw.mipmaps != null && rt.raw.mipmaps == true && !isImage) {
-						g.setTextureParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
+					if (!paramsSet && rt.mipmaps != null && rt.mipmaps == true && !isImage) {
+						Graphics4.setTextureParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
 						paramsSet = true;
 					}
 
 					if (!paramsSet) {
-						if (rt.raw.name.startsWith("bloom")) {
+						if (rt.name.startsWith("bloom")) {
 							// Use bilinear filter for bloom mips to get correct blur
-							g.setTextureParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
+							Graphics4.setTextureParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.LinearFilter, TextureFilter.LinearFilter, MipMapFilter.LinearMipFilter);
 							paramsSet = true;
 						}
 						if (attachDepth) {
-							g.setTextureParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.PointFilter, TextureFilter.PointFilter, MipMapFilter.NoMipFilter);
+							Graphics4.setTextureParameters(context._textureUnits[j], TextureAddressing.Clamp, TextureAddressing.Clamp, TextureFilter.PointFilter, TextureFilter.PointFilter, MipMapFilter.NoMipFilter);
 							paramsSet = true;
 						}
 					}
@@ -170,7 +170,7 @@ class Uniforms {
 						if (allowParams) {
 							let addressing = (oc != null && oc.addressing == "repeat") ? TextureAddressing.Repeat : TextureAddressing.Clamp;
 							let filter = (oc != null && oc.filter == "point") ? TextureFilter.PointFilter : TextureFilter.LinearFilter;
-							g.setTextureParameters(context._textureUnits[j], addressing, addressing, filter, filter, MipMapFilter.NoMipFilter);
+							Graphics4.setTextureParameters(context._textureUnits[j], addressing, addressing, filter, filter, MipMapFilter.NoMipFilter);
 						}
 						paramsSet = true;
 					}
@@ -179,7 +179,7 @@ class Uniforms {
 		}
 	}
 
-	static setContextConstant = (g: Graphics4, location: ConstantLocation, c: TShaderConstant): bool => {
+	static setContextConstant = (g: Graphics4Raw, location: ConstantLocation, c: TShaderConstant): bool => {
 		if (c.link == null) return true;
 
 		let camera = Scene.camera;
@@ -227,7 +227,7 @@ class Uniforms {
 					return false;
 			}
 
-			g.setMatrix(location, m != null ? m : Mat4.identity());
+			Graphics4.setMatrix(location, m != null ? m : Mat4.identity());
 			return true;
 		}
 		else if (c.type == "vec4") {
@@ -239,10 +239,10 @@ class Uniforms {
 			}
 
 			if (v != null) {
-				g.setFloat4(location, v.x, v.y, v.z, v.w);
+				Graphics4.setFloat4(location, v.x, v.y, v.z, v.w);
 			}
 			else {
-				g.setFloat4(location, 0, 0, 0, 0);
+				Graphics4.setFloat4(location, 0, 0, 0, 0);
 			}
 			return true;
 		}
@@ -333,10 +333,10 @@ class Uniforms {
 			}
 
 			if (v != null) {
-				g.setFloat3(location, v.x, v.y, v.z);
+				Graphics4.setFloat3(location, v.x, v.y, v.z);
 			}
 			else {
-				g.setFloat3(location, 0.0, 0.0, 0.0);
+				Graphics4.setFloat3(location, 0.0, 0.0, 0.0);
 			}
 			return true;
 		}
@@ -429,10 +429,10 @@ class Uniforms {
 			}
 
 			if (v != null) {
-				g.setFloat2(location, v.x, v.y);
+				Graphics4.setFloat2(location, v.x, v.y);
 			}
 			else {
-				g.setFloat2(location, 0.0, 0.0);
+				Graphics4.setFloat2(location, 0.0, 0.0);
 			}
 			return true;
 		}
@@ -451,7 +451,7 @@ class Uniforms {
 					return false;
 			}
 
-			g.setFloat(location, f != null ? f : 0);
+			Graphics4.setFloat(location, f != null ? f : 0);
 			return true;
 		}
 		else if (c.type == "floats") {
@@ -464,7 +464,7 @@ class Uniforms {
 			}
 
 			if (fa != null) {
-				g.setFloats(location, fa);
+				Graphics4.setFloats(location, fa);
 				return true;
 			}
 		}
@@ -480,13 +480,13 @@ class Uniforms {
 					return false;
 			}
 
-			g.setInt(location, i != null ? i : 0);
+			Graphics4.setInt(location, i != null ? i : 0);
 			return true;
 		}
 		return false;
 	}
 
-	static setObjectConstant = (g: Graphics4, object: TBaseObject, location: ConstantLocation, c: TShaderConstant) => {
+	static setObjectConstant = (g: Graphics4Raw, object: TBaseObject, location: ConstantLocation, c: TShaderConstant) => {
 		if (c.link == null) return;
 
 		let camera = Scene.camera;
@@ -544,7 +544,7 @@ class Uniforms {
 			}
 
 			if (m == null) return;
-			g.setMatrix(location, m);
+			Graphics4.setMatrix(location, m);
 		}
 		else if (c.type == "mat3") {
 			let m: Mat3 = null;
@@ -564,7 +564,7 @@ class Uniforms {
 			}
 
 			if (m == null) return;
-			g.setMatrix3(location, m);
+			Graphics4.setMatrix3(location, m);
 		}
 		else if (c.type == "vec4") {
 			let v: TVec4 = null;
@@ -578,7 +578,7 @@ class Uniforms {
 			}
 
 			if (v == null) return;
-			g.setFloat4(location, v.x, v.y, v.z, v.w);
+			Graphics4.setFloat4(location, v.x, v.y, v.z, v.w);
 		}
 		else if (c.type == "vec3") {
 			let v: TVec4 = null;
@@ -608,7 +608,7 @@ class Uniforms {
 			}
 
 			if (v == null) return;
-			g.setFloat3(location, v.x, v.y, v.z);
+			Graphics4.setFloat3(location, v.x, v.y, v.z);
 		}
 		else if (c.type == "vec2") {
 			let vx: Null<f32> = null;
@@ -626,7 +626,7 @@ class Uniforms {
 			}
 
 			if (vx == null) return;
-			g.setFloat2(location, vx, vy);
+			Graphics4.setFloat2(location, vx, vy);
 		}
 		else if (c.type == "float") {
 			let f: Null<f32> = null;
@@ -664,7 +664,7 @@ class Uniforms {
 			}
 
 			if (f == null) return;
-			g.setFloat(location, f);
+			Graphics4.setFloat(location, f);
 		}
 		else if (c.type == "floats") {
 			let fa: Float32Array = null;
@@ -687,7 +687,7 @@ class Uniforms {
 			}
 
 			if (fa == null) return;
-			g.setFloats(location, fa);
+			Graphics4.setFloats(location, fa);
 		}
 		else if (c.type == "int") {
 			let i: Null<i32> = null;
@@ -709,11 +709,11 @@ class Uniforms {
 			}
 
 			if (i == null) return;
-			g.setInt(location, i);
+			Graphics4.setInt(location, i);
 		}
 	}
 
-	static setMaterialConstants = (g: Graphics4, context: TShaderContext, materialContext: TMaterialContext) => {
+	static setMaterialConstants = (g: Graphics4Raw, context: TShaderContext, materialContext: TMaterialContext) => {
 		if (materialContext.bind_constants != null) {
 			for (let i = 0; i < materialContext.bind_constants.length; ++i) {
 				let matc = materialContext.bind_constants[i];
@@ -738,7 +738,7 @@ class Uniforms {
 				for (let j = 0; j < context._textureUnits.length; ++j) {
 					let sname = context.texture_units[j].name;
 					if (mname == sname) {
-						g.setTexture(context._textureUnits[j], materialContext._textures[i]);
+						Graphics4.setTexture(context._textureUnits[j], materialContext._textures[i]);
 						// After texture sampler have been assigned, set texture parameters
 						MaterialContext.setTextureParameters(materialContext, g, i, context, j);
 						break;
@@ -756,25 +756,25 @@ class Uniforms {
 		return null;
 	}
 
-	static setMaterialConstant = (g: Graphics4, location: ConstantLocation, c: TShaderConstant, matc: TBindConstant) => {
+	static setMaterialConstant = (g: Graphics4Raw, location: ConstantLocation, c: TShaderConstant, matc: TBindConstant) => {
 		switch (c.type) {
 			case "vec4":
-				g.setFloat4(location, matc.vec4[0], matc.vec4[1], matc.vec4[2], matc.vec4[3]);
+				Graphics4.setFloat4(location, matc.vec4[0], matc.vec4[1], matc.vec4[2], matc.vec4[3]);
 				break;
 			case "vec3":
-				g.setFloat3(location, matc.vec3[0], matc.vec3[1], matc.vec3[2]);
+				Graphics4.setFloat3(location, matc.vec3[0], matc.vec3[1], matc.vec3[2]);
 				break;
 			case "vec2":
-				g.setFloat2(location, matc.vec2[0], matc.vec2[1]);
+				Graphics4.setFloat2(location, matc.vec2[0], matc.vec2[1]);
 				break;
 			case "float":
-				g.setFloat(location,  matc.float);
+				Graphics4.setFloat(location,  matc.float);
 				break;
 			case "bool":
-				g.setBool(location, matc.bool);
+				Graphics4.setBool(location, matc.bool);
 				break;
 			case "int":
-				g.setInt(location, matc.int);
+				Graphics4.setInt(location, matc.int);
 				break;
 		}
 	}

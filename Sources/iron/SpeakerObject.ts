@@ -5,7 +5,7 @@ class TSpeakerObject {
 	base: TBaseObject;
 	data: TSpeakerData;
 	paused = false;
-	sound: Sound = null;
+	sound: SoundRaw = null;
 	channels: TAudioChannel[] = [];
 	volume: f32;
 }
@@ -22,7 +22,7 @@ class SpeakerObject {
 
 		if (data.sound == "") return raw;
 
-		Data.getSound(data.sound, (sound: Sound) => {
+		Data.getSound(data.sound, (sound: SoundRaw) => {
 			raw.sound = sound;
 			App.notifyOnInit(function() {
 				if (raw.base.visible && raw.data.play_on_start) {

@@ -8,20 +8,20 @@ class RenderPath {
 
 	static frameTime = 0.0;
 	static frame = 0;
-	static currentTarget: RenderTarget = null;
+	static currentTarget: RenderTargetRaw = null;
 	static light: TLightObject = null;
 	static sun: TLightObject = null;
 	static point: TLightObject = null;
-	static currentG: Graphics4 = null;
-	static frameG: Graphics4;
+	static currentG: Graphics4Raw = null;
+	static frameG: Graphics4Raw;
 	static drawOrder = DrawOrder.Distance;
 	static paused = false;
 
 	static get ready(): bool { return RenderPath.loading == 0; }
 
 	static commands: ()=>void = null;
-	static renderTargets: Map<string, RenderTarget> = new Map();
-	static depthToRenderTarget: Map<string, RenderTarget> = new Map();
+	static renderTargets: Map<string, RenderTargetRaw> = new Map();
+	static depthToRenderTarget: Map<string, RenderTargetRaw> = new Map();
 	static currentW: i32;
 	static currentH: i32;
 	static currentD: i32;
@@ -42,7 +42,7 @@ class RenderPath {
 	}
 	///end
 
-	static renderFrame = (g: Graphics4) => {
+	static renderFrame = (g: Graphics4Raw) => {
 		if (!RenderPath.ready || RenderPath.paused || App.w() == 0 || App.h() == 0) return;
 
 		if (RenderPath.lastW > 0 && (RenderPath.lastW != App.w() || RenderPath.lastH != App.h())) RenderPath.resize();
@@ -86,7 +86,7 @@ class RenderPath {
 		else { // Render target
 			let rt = RenderPath.renderTargets.get(target);
 			RenderPath.currentTarget = rt;
-			let additionalImages: Image[] = null;
+			let additionalImages: ImageRaw[] = null;
 			if (additional != null) {
 				additionalImages = [];
 				for (let s of additional) {
@@ -105,31 +105,31 @@ class RenderPath {
 
 	static setDepthFrom = (target: string, from: string) => {
 		let rt = RenderPath.renderTargets.get(target);
-		rt.image.setDepthStencilFrom(RenderPath.renderTargets.get(from).image);
+		Image.setDepthStencilFrom(rt.image, RenderPath.renderTargets.get(from).image);
 	}
 
-	static begin = (g: Graphics4, additionalRenderTargets: Image[] = null) => {
+	static begin = (g: Graphics4Raw, additionalRenderTargets: ImageRaw[] = null) => {
 		if (RenderPath.currentG != null) RenderPath.end();
 		RenderPath.currentG = g;
-		g.begin(additionalRenderTargets);
+		Graphics4.begin(g, additionalRenderTargets);
 	}
 
 	static end = () => {
 		if (RenderPath.scissorSet) {
-			RenderPath.currentG.disableScissor();
+			Graphics4.disableScissor();
 			RenderPath.scissorSet = false;
 		}
-		RenderPath.currentG.end();
+		Graphics4.end();
 		RenderPath.currentG = null;
 		RenderPath.bindParams = null;
 	}
 
 	static setCurrentViewport = (viewW: i32, viewH: i32) => {
-		RenderPath.currentG.viewport(App.x(), RenderPath.currentH - (viewH - App.y()), viewW, viewH);
+		Graphics4.viewport(App.x(), RenderPath.currentH - (viewH - App.y()), viewW, viewH);
 	}
 
 	static setCurrentScissor = (viewW: i32, viewH: i32) => {
-		RenderPath.currentG.scissor(App.x(), RenderPath.currentH - (viewH - App.y()), viewW, viewH);
+		Graphics4.scissor(App.x(), RenderPath.currentH - (viewH - App.y()), viewW, viewH);
 		RenderPath.scissorSet = true;
 	}
 
@@ -148,17 +148,17 @@ class RenderPath {
 				if (cc != null) colorFlag = color_from_floats(cc[0], cc[1], cc[2]);
 			}
 		}
-		RenderPath.currentG.clear(colorFlag, depthFlag, null);
+		Graphics4.clear(colorFlag, depthFlag, null);
 	}
 
 	static clearImage = (target: string, color: i32) => {
 		let rt = RenderPath.renderTargets.get(target);
-		rt.image.clear(0, 0, 0, rt.image.width, rt.image.height, rt.image.depth, color);
+		Image.clear(rt.image, 0, 0, 0, rt.image.width, rt.image.height, rt.image.depth, color);
 	}
 
 	static generateMipmaps = (target: string) => {
 		let rt = RenderPath.renderTargets.get(target);
-		rt.image.generateMipmaps(1000);
+		Image.generateMipmaps(rt.image, 1000);
 	}
 
 	static sortMeshesDistance = (meshes: TMeshObject[]) => {
@@ -203,12 +203,12 @@ class RenderPath {
 		if (ConstData.skydomeVB == null) ConstData.createSkydomeData();
 		let cc: CachedShaderContext = RenderPath.cachedShaderContexts.get(handle);
 		if (cc.context == null) return; // World data not specified
-		RenderPath.currentG.setPipeline(cc.context._pipeState);
+		Graphics4.setPipeline(cc.context._pipeState);
 		Uniforms.setContextConstants(RenderPath.currentG, cc.context, RenderPath.bindParams);
 		Uniforms.setObjectConstants(RenderPath.currentG, cc.context, null); // External hosek
-		RenderPath.currentG.setVertexBuffer(ConstData.skydomeVB);
-		RenderPath.currentG.setIndexBuffer(ConstData.skydomeIB);
-		RenderPath.currentG.drawIndexedVertices();
+		Graphics4.setVertexBuffer(ConstData.skydomeVB);
+		Graphics4.setIndexBuffer(ConstData.skydomeIB);
+		Graphics4.drawIndexedVertices();
 		RenderPath.end();
 	}
 
@@ -225,12 +225,12 @@ class RenderPath {
 		// file/data_name/context
 		let cc: CachedShaderContext = RenderPath.cachedShaderContexts.get(handle);
 		if (ConstData.screenAlignedVB == null) ConstData.createScreenAlignedData();
-		RenderPath.currentG.setPipeline(cc.context._pipeState);
+		Graphics4.setPipeline(cc.context._pipeState);
 		Uniforms.setContextConstants(RenderPath.currentG, cc.context, RenderPath.bindParams);
 		Uniforms.setObjectConstants(RenderPath.currentG, cc.context, null);
-		RenderPath.currentG.setVertexBuffer(ConstData.screenAlignedVB);
-		RenderPath.currentG.setIndexBuffer(ConstData.screenAlignedIB);
-		RenderPath.currentG.drawIndexedVertices();
+		Graphics4.setVertexBuffer(ConstData.screenAlignedVB);
+		Graphics4.setIndexBuffer(ConstData.screenAlignedIB);
+		Graphics4.drawIndexedVertices();
 
 		RenderPath.end();
 	}
@@ -265,7 +265,7 @@ class RenderPath {
 	}
 
 	static unload = () => {
-		for (let rt of RenderPath.renderTargets.values()) rt.unload();
+		for (let rt of RenderPath.renderTargets.values()) RenderTarget.unload(rt);
 	}
 
 	static resize = () => {
@@ -274,18 +274,18 @@ class RenderPath {
 		// Make sure depth buffer is attached to single target only and gets released once
 		for (let rt of RenderPath.renderTargets.values()) {
 			if (rt == null ||
-				rt.raw.width > 0 ||
+				rt.width > 0 ||
 				rt.depthStencilFrom == "" ||
 				rt == RenderPath.depthToRenderTarget.get(rt.depthStencilFrom)) {
 				continue;
 			}
 
-			let nodepth: RenderTarget = null;
+			let nodepth: RenderTargetRaw = null;
 			for (let rt2 of RenderPath.renderTargets.values()) {
 				if (rt2 == null ||
-					rt2.raw.width > 0 ||
+					rt2.width > 0 ||
 					rt2.depthStencilFrom != "" ||
-					RenderPath.depthToRenderTarget.get(rt2.raw.depth_buffer) != null) {
+					RenderPath.depthToRenderTarget.get(rt2.depth_buffer) != null) {
 					continue;
 				}
 
@@ -294,70 +294,70 @@ class RenderPath {
 			}
 
 			if (nodepth != null) {
-				rt.image.setDepthStencilFrom(nodepth.image);
+				Image.setDepthStencilFrom(rt.image, nodepth.image);
 			}
 		}
 
 		// Resize textures
 		for (let rt of RenderPath.renderTargets.values()) {
-			if (rt != null && rt.raw.width == 0) {
-				App.notifyOnInit(rt.image.unload);
-				rt.image = RenderPath.createImage(rt.raw, rt.depthStencil);
+			if (rt != null && rt.width == 0) {
+				let _image = rt.image;
+				App.notifyOnInit(function() { Image.unload(_image); });
+				rt.image = RenderPath.createImage(rt, rt.depthStencil);
 			}
 		}
 
 		// Attach depth buffers
 		for (let rt of RenderPath.renderTargets.values()) {
 			if (rt != null && rt.depthStencilFrom != "") {
-				rt.image.setDepthStencilFrom(RenderPath.depthToRenderTarget.get(rt.depthStencilFrom).image);
+				Image.setDepthStencilFrom(rt.image, RenderPath.depthToRenderTarget.get(rt.depthStencilFrom).image);
 			}
 		}
 	}
 
-	static createRenderTarget = (t: RenderTargetRaw): RenderTarget => {
-		let rt = RenderPath.createTarget(t);
-		RenderPath.renderTargets.set(t.name, rt);
-		return rt;
+	static createRenderTarget = (t: RenderTargetRaw): RenderTargetRaw => {
+		RenderPath.createTarget(t);
+		RenderPath.renderTargets.set(t.name, t);
+		return t;
 	}
 
 	static createDepthBuffer = (name: string, format: string = null) => {
 		RenderPath.depthBuffers.push({ name: name, format: format });
 	}
 
-	static createTarget = (t: RenderTargetRaw): RenderTarget => {
-		let rt = new RenderTarget(t);
+	static createTarget = (t: RenderTargetRaw): RenderTargetRaw => {
 		// With depth buffer
 		if (t.depth_buffer != null) {
-			rt.hasDepth = true;
+			t.hasDepth = true;
 			let depthTarget = RenderPath.depthToRenderTarget.get(t.depth_buffer);
 
 			if (depthTarget == null) { // Create new one
 				for (let db of RenderPath.depthBuffers) {
 					if (db.name == t.depth_buffer) {
-						RenderPath.depthToRenderTarget.set(db.name, rt);
-						rt.depthStencil = RenderPath.getDepthStencilFormat(db.format);
-						rt.image = RenderPath.createImage(t, rt.depthStencil);
+						RenderPath.depthToRenderTarget.set(db.name, t);
+						t.depthStencil = RenderPath.getDepthStencilFormat(db.format);
+						t.image = RenderPath.createImage(t, t.depthStencil);
 						break;
 					}
 				}
 			}
 			else { // Reuse
-				rt.depthStencil = DepthStencilFormat.NoDepthAndStencil;
-				rt.depthStencilFrom = t.depth_buffer;
-				rt.image = RenderPath.createImage(t, rt.depthStencil);
-				rt.image.setDepthStencilFrom(depthTarget.image);
+				t.depthStencil = DepthStencilFormat.NoDepthAndStencil;
+				t.depthStencilFrom = t.depth_buffer;
+				t.image = RenderPath.createImage(t, t.depthStencil);
+				Image.setDepthStencilFrom(t.image, depthTarget.image);
 			}
 		}
 		else { // No depth buffer
-			rt.hasDepth = false;
-			if (t.depth != null && t.depth > 1) rt.is3D = true;
-			rt.depthStencil = DepthStencilFormat.NoDepthAndStencil;
-			rt.image = RenderPath.createImage(t, rt.depthStencil);
+			t.hasDepth = false;
+			if (t.depth != null && t.depth > 1) t.is3D = true;
+			t.depthStencil = DepthStencilFormat.NoDepthAndStencil;
+			t.image = RenderPath.createImage(t, t.depthStencil);
 		}
-		return rt;
+		return t;
 	}
 
-	static createImage = (t: RenderTargetRaw, depthStencil: DepthStencilFormat): Image => {
+	static createImage = (t: RenderTargetRaw, depthStencil: DepthStencilFormat): ImageRaw => {
 		let width = t.width == 0 ? App.w() : t.width;
 		let height = t.height == 0 ? App.h() : t.height;
 		let depth = t.depth != null ? t.depth : 0;
@@ -372,7 +372,7 @@ class RenderPath {
 			// Image only
 			let img = Image.create3D(width, height, depth,
 				t.format != null ? RenderPath.getTextureFormat(t.format) : TextureFormat.RGBA32);
-			if (t.mipmaps) img.generateMipmaps(1000); // Allocate mipmaps
+			if (t.mipmaps) Image.generateMipmaps(img, 1000); // Allocate mipmaps
 			return img;
 		}
 		else { // 2D texture
@@ -421,18 +421,21 @@ class RenderTargetRaw {
 	mipmaps: Null<bool> = null;
 	depth: Null<i32> = null; // 3D texture
 	is_image: Null<bool> = null; // Image
+	// Runtime:
+	depthStencil: DepthStencilFormat;
+	depthStencilFrom = "";
+	image: ImageRaw = null; // RT or image
+	hasDepth = false;
+	is3D = false; // sampler2D / sampler3D
 }
 
 class RenderTarget {
-	raw: RenderTargetRaw;
-	depthStencil: DepthStencilFormat;
-	depthStencilFrom = "";
-	image: Image = null; // RT or image
-	hasDepth = false;
-	is3D = false; // sampler2D / sampler3D
-	constructor(raw: RenderTargetRaw) { this.raw = raw; }
-	unload() {
-		if (this.image != null) this.image.unload();
+	static create(): RenderTargetRaw {
+		return new RenderTargetRaw();
+	}
+
+	static unload(raw: RenderTargetRaw) {
+		if (raw.image != null) Image.unload(raw.image);
 	}
 }
 

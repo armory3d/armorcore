@@ -12,11 +12,11 @@ class Data {
 	static cachedShaders: Map<string, TShaderData> = new Map();
 
 	static cachedBlobs: Map<string, ArrayBuffer> = new Map();
-	static cachedImages: Map<string, Image> = new Map();
-	static cachedVideos: Map<string, Video> = new Map();
-	static cachedFonts: Map<string, Font> = new Map();
+	static cachedImages: Map<string, ImageRaw> = new Map();
+	static cachedVideos: Map<string, VideoRaw> = new Map();
+	static cachedFonts: Map<string, FontRaw> = new Map();
 	///if arm_audio
-	static cachedSounds: Map<string, Sound> = new Map();
+	static cachedSounds: Map<string, SoundRaw> = new Map();
 	///end
 
 	static assetsLoaded = 0;
@@ -29,11 +29,11 @@ class Data {
 	static loadingShaders: Map<string, ((d: TShaderData)=>void)[]> = new Map();
 	static loadingSceneRaws: Map<string, ((fmt: TSceneFormat)=>void)[]> = new Map();
 	static loadingBlobs: Map<string, ((ab: ArrayBuffer)=>void)[]> = new Map();
-	static loadingImages: Map<string, ((img: Image)=>void)[]> = new Map();
-	static loadingVideos: Map<string, ((vid: Video)=>void)[]> = new Map();
-	static loadingFonts: Map<string, ((f: Font)=>void)[]> = new Map();
+	static loadingImages: Map<string, ((img: ImageRaw)=>void)[]> = new Map();
+	static loadingVideos: Map<string, ((vid: VideoRaw)=>void)[]> = new Map();
+	static loadingFonts: Map<string, ((f: FontRaw)=>void)[]> = new Map();
 	///if arm_audio
-	static loadingSounds: Map<string, ((snd: Sound)=>void)[]> = new Map();
+	static loadingSounds: Map<string, ((snd: SoundRaw)=>void)[]> = new Map();
 	///end
 
 	static get sep(): string {
@@ -66,15 +66,15 @@ class Data {
 		RenderPath.unload();
 
 		Data.cachedBlobs = new Map();
-		for (let c of Data.cachedImages.values()) c.unload();
+		for (let c of Data.cachedImages.values()) Image.unload(c);
 		Data.cachedImages = new Map();
 		///if arm_audio
-		for (let c of Data.cachedSounds.values()) c.unload();
+		for (let c of Data.cachedSounds.values()) Sound.unload(c);
 		Data.cachedSounds = new Map();
 		///end
-		for (let c of Data.cachedVideos.values()) c.unload();
+		for (let c of Data.cachedVideos.values()) Video.unload(c);
 		Data.cachedVideos = new Map();
-		for (let c of Data.cachedFonts.values()) c.unload();
+		for (let c of Data.cachedFonts.values()) Font.unload(c);
 		Data.cachedFonts = new Map();
 	}
 
@@ -367,7 +367,7 @@ class Data {
 		Data.cachedBlobs.delete(handle);
 	}
 
-	static getImage = (file: string, done: (img: Image)=>void, readable = false, format = "RGBA32") => {
+	static getImage = (file: string, done: (img: ImageRaw)=>void, readable = false, format = "RGBA32") => {
 		let cached = Data.cachedImages.get(file);
 		if (cached != null) {
 			done(cached);
@@ -385,7 +385,7 @@ class Data {
 		///if arm_image_embed
 		let imageBlob = Data.cachedBlobs.get(file);
 		if (imageBlob != null) {
-			Image.fromEncodedBytes(imageBlob, ".k", (b: Image) => {
+			Image.fromEncodedBytes(imageBlob, ".k", (b: ImageRaw) => {
 				Data.cachedImages.set(file, b);
 				for (let f of Data.loadingImages.get(file)) f(b);
 				Data.loadingImages.delete(file);
@@ -395,7 +395,7 @@ class Data {
 		}
 		///end
 
-		// Krom.load_image(resolvePath(file), readable, (b: Image) => {
+		// Krom.load_image(resolvePath(file), readable, (b: ImageRaw) => {
 			let image_ = Krom.loadImage(Data.resolvePath(file), readable);
 			if (image_ != null) {
 				let b = Image._fromTexture(image_);
@@ -410,12 +410,12 @@ class Data {
 	static deleteImage = (handle: string) => {
 		let image = Data.cachedImages.get(handle);
 		if (image == null) return;
-		image.unload();
+		Image.unload(image);
 		Data.cachedImages.delete(handle);
 	}
 
 	///if arm_audio
-	static getSound = (file: string, done: (snd: Sound)=>void) => {
+	static getSound = (file: string, done: (snd: SoundRaw)=>void) => {
 		let cached = Data.cachedSounds.get(file);
 		if (cached != null) {
 			done(cached);
@@ -430,9 +430,8 @@ class Data {
 
 		Data.loadingSounds.set(file, [done]);
 
-
-		// Krom.load_sound(Data.resolvePath(file), (b: Sound) => {
-			let b = new Sound(Krom.loadSound(Data.resolvePath(file)));
+		// Krom.load_sound(Data.resolvePath(file), (b: SoundRaw) => {
+			let b = Sound.create(Krom.loadSound(Data.resolvePath(file)));
 			Data.cachedSounds.set(file, b);
 			for (let f of Data.loadingSounds.get(file)) f(b);
 			Data.loadingSounds.delete(file);
@@ -443,7 +442,7 @@ class Data {
 	static deleteSound = (handle: string) => {
 		let sound = Data.cachedSounds.get(handle);
 		if (sound == null) return;
-		sound.unload();
+		Sound.unload(sound);
 		Data.cachedSounds.delete(handle);
 	}
 	///end
@@ -475,11 +474,11 @@ class Data {
 	static deleteVideo = (handle: string) => {
 		let video = Data.cachedVideos.get(handle);
 		if (video == null) return;
-		video.unload();
+		Video.unload(video);
 		Data.cachedVideos.delete(handle);
 	}
 
-	static getFont = (file: string, done: (f: Font)=>void) => {
+	static getFont = (file: string, done: (f: FontRaw)=>void) => {
 		let cached = Data.cachedFonts.get(file);
 		if (cached != null) {
 			done(cached);
@@ -496,7 +495,7 @@ class Data {
 
 		// Krom.load_blob(resolvePath(file), (blob: ArrayBuffer) => {
 			let blob = Krom.loadBlob(Data.resolvePath(file));
-			let b = new Font(blob);
+			let b = Font.create(blob);
 			Data.cachedFonts.set(file, b);
 			for (let f of Data.loadingFonts.get(file)) f(b);
 			Data.loadingFonts.delete(file);
@@ -507,7 +506,7 @@ class Data {
 	static deleteFont = (handle: string) => {
 		let font = Data.cachedFonts.get(handle);
 		if (font == null) return;
-		font.unload();
+		Font.unload(font);
 		Data.cachedFonts.delete(handle);
 	}
 

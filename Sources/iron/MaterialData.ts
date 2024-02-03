@@ -75,25 +75,25 @@ class MaterialContext {
 					continue;
 				}
 
-				Data.getImage(tex.file, (image: Image) => {
+				Data.getImage(tex.file, (image: ImageRaw) => {
 					raw._textures[i] = image;
 					texturesLoaded++;
 
 					// Set mipmaps
 					if (tex.mipmaps != null) {
-						let mipmaps: Image[] = [];
+						let mipmaps: ImageRaw[] = [];
 						while (mipmaps.length < tex.mipmaps.length) mipmaps.push(null);
 						let mipmapsLoaded = 0;
 
 						for (let j = 0; j < tex.mipmaps.length; ++j) {
 							let name = tex.mipmaps[j];
 
-							Data.getImage(name, (mipimg: Image) => {
+							Data.getImage(name, (mipimg: ImageRaw) => {
 								mipmaps[j] = mipimg;
 								mipmapsLoaded++;
 
 								if (mipmapsLoaded == tex.mipmaps.length) {
-									image.setMipmaps(mipmaps);
+									Image.setMipmaps(image, mipmaps);
 									tex.mipmaps = null;
 									tex.generate_mipmaps = false;
 
@@ -103,7 +103,7 @@ class MaterialContext {
 						}
 					}
 					else if (tex.generate_mipmaps == true && image != null) {
-						image.generateMipmaps(1000);
+						Image.generateMipmaps(image, 1000);
 						tex.mipmaps = null;
 						tex.generate_mipmaps = false;
 
@@ -117,7 +117,7 @@ class MaterialContext {
 		else done(raw);
 	}
 
-	static setTextureParameters = (raw: TMaterialContext, g: Graphics4, textureIndex: i32, context: TShaderContext, unitIndex: i32) => {
+	static setTextureParameters = (raw: TMaterialContext, g: Graphics4Raw, textureIndex: i32, context: TShaderContext, unitIndex: i32) => {
 		// This function is called by MeshObject for samplers set using material context
 		ShaderContext.setTextureParameters(context, g, unitIndex, raw.bind_textures[textureIndex]);
 	}

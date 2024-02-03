@@ -11,8 +11,8 @@ class App {
 	static traitInits: (()=>void)[] = [];
 	static traitUpdates: (()=>void)[] = [];
 	static traitLateUpdates: (()=>void)[] = [];
-	static traitRenders: ((g4: Graphics4)=>void)[] = [];
-	static traitRenders2D: ((g2: Graphics2)=>void)[] = [];
+	static traitRenders: ((g4: Graphics4Raw)=>void)[] = [];
+	static traitRenders2D: ((g2: Graphics2Raw)=>void)[] = [];
 	static pauseUpdates = false;
 	static lastw = -1;
 	static lasth = -1;
@@ -79,7 +79,7 @@ class App {
 		App.lasth = App.h();
 	}
 
-	static render = (g2: Graphics2, g4: Graphics4) => {
+	static render = (g2: Graphics2Raw, g4: Graphics4Raw) => {
 		App.update();
 
 		Time.update();
@@ -107,14 +107,14 @@ class App {
 		App.render2D(g2);
 	}
 
-	static render2D = (g2: Graphics2) => {
+	static render2D = (g2: Graphics2Raw) => {
 		if (App.traitRenders2D.length > 0) {
-			g2.begin(false);
+			Graphics2.begin(g2, false);
 			for (let f of App.traitRenders2D) {
 				if (App.traitRenders2D.length > 0) f(g2);
 				else break;
 			}
-			g2.end();
+			Graphics2.end(g2);
 		}
 	}
 
@@ -143,19 +143,19 @@ class App {
 		array_remove(App.traitLateUpdates, f);
 	}
 
-	static notifyOnRender = (f: (g4: Graphics4)=>void) => {
+	static notifyOnRender = (f: (g4: Graphics4Raw)=>void) => {
 		App.traitRenders.push(f);
 	}
 
-	static removeRender = (f: (g4: Graphics4)=>void) => {
+	static removeRender = (f: (g4: Graphics4Raw)=>void) => {
 		array_remove(App.traitRenders, f);
 	}
 
-	static notifyOnRender2D = (f: (g2: Graphics2)=>void) => {
+	static notifyOnRender2D = (f: (g2: Graphics2Raw)=>void) => {
 		App.traitRenders2D.push(f);
 	}
 
-	static removeRender2D = (f: (g2: Graphics2)=>void) => {
+	static removeRender2D = (f: (g2: Graphics2Raw)=>void) => {
 		array_remove(App.traitRenders2D, f);
 	}
 

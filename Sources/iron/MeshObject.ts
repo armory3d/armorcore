@@ -19,7 +19,7 @@ class TMeshObject {
 }
 
 class MeshObject {
-	static lastPipeline: PipelineState = null;
+	static lastPipeline: PipelineStateRaw = null;
 
 	static create(data: TMeshData, materials: TMaterialData[]): TMeshObject {
 		let raw = new TMeshObject();
@@ -148,7 +148,7 @@ class MeshObject {
 		}
 	}
 
-	static render = (raw: TMeshObject, g: Graphics4, context: string, bindParams: string[]) => {
+	static render = (raw: TMeshObject, g: Graphics4Raw, context: string, bindParams: string[]) => {
 		if (raw.data == null || !raw.data._ready) return; // Data not yet streamed
 		if (!raw.base.visible) return; // Skip render if object is hidden
 		if (MeshObject.cullMesh(raw, context, Scene.camera, RenderPath.light)) return;
@@ -205,7 +205,7 @@ class MeshObject {
 
 			// Uniforms
 			if (scontext._pipeState != MeshObject.lastPipeline) {
-				g.setPipeline(scontext._pipeState);
+				Graphics4.setPipeline(scontext._pipeState);
 				MeshObject.lastPipeline = scontext._pipeState;
 				// Uniforms.setContextConstants(g, scontext, bindParams);
 			}
@@ -217,20 +217,20 @@ class MeshObject {
 
 			// VB / IB
 			if (raw.data._instancedVB != null) {
-				g.setVertexBuffers([MeshData.get(raw.data, elems), raw.data._instancedVB]);
+				Graphics4.setVertexBuffers([MeshData.get(raw.data, elems), raw.data._instancedVB]);
 			}
 			else {
-				g.setVertexBuffer(MeshData.get(raw.data, elems));
+				Graphics4.setVertexBuffer(MeshData.get(raw.data, elems));
 			}
 
-			g.setIndexBuffer(raw.data._indexBuffers[i]);
+			Graphics4.setIndexBuffer(raw.data._indexBuffers[i]);
 
 			// Draw
 			if (raw.data._instanced) {
-				g.drawIndexedVerticesInstanced(raw.data._instanceCount, 0, -1);
+				Graphics4.drawIndexedVerticesInstanced(raw.data._instanceCount, 0, -1);
 			}
 			else {
-				g.drawIndexedVertices(0, -1);
+				Graphics4.drawIndexedVertices(0, -1);
 			}
 		}
 

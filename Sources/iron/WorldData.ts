@@ -16,7 +16,7 @@ class WorldData {
 			WorldData.setIrradiance(raw, (irr: Float32Array) => {
 				raw._irradiance = irr;
 				if (raw.radiance != null) {
-					Data.getImage(raw.radiance, (rad: Image) => {
+					Data.getImage(raw.radiance, (rad: ImageRaw) => {
 						raw._radiance = rad;
 						while (raw._radianceMipmaps.length < raw.radiance_mipmaps) {
 							raw._radianceMipmaps.push(null);
@@ -27,12 +27,12 @@ class WorldData {
 
 						let mipsLoaded = 0;
 						for (let i = 0; i < raw.radiance_mipmaps; ++i) {
-							Data.getImage(base + "_" + i + ext, (mipimg: Image) => {
+							Data.getImage(base + "_" + i + ext, (mipimg: ImageRaw) => {
 								raw._radianceMipmaps[i] = mipimg;
 								mipsLoaded++;
 
 								if (mipsLoaded == raw.radiance_mipmaps) {
-									raw._radiance.setMipmaps(raw._radianceMipmaps);
+									Image.setMipmaps(raw._radiance, raw._radianceMipmaps);
 									done(raw);
 								}
 							}, true); // Readable
@@ -70,7 +70,7 @@ class WorldData {
 
 	static loadEnvmap = (raw:TWorldData, done: (wd: TWorldData)=>void) => {
 		if (raw.envmap != null) {
-			Data.getImage(raw.envmap, (image: Image) => {
+			Data.getImage(raw.envmap, (image: ImageRaw) => {
 				raw._envmap = image;
 				done(raw);
 			});

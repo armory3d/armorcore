@@ -11,7 +11,7 @@ class TCameraObject {
 	prevV: TMat4 = null;
 	VP: TMat4;
 	frustumPlanes: TFrustumPlane[] = null;
-	renderTarget: Image = null; // Render camera view to texture
+	renderTarget: ImageRaw = null; // Render camera view to texture
 	currentFace = 0;
 }
 
@@ -63,7 +63,7 @@ class CameraObject {
 		BaseObject.removeSuper(raw.base);
 	}
 
-	static renderFrame = (raw: TCameraObject, g: Graphics4) => {
+	static renderFrame = (raw: TCameraObject, g: Graphics4Raw) => {
 		CameraObject.projectionJitter(raw);
 		CameraObject.buildMatrix(raw);
 		RenderPath.renderFrame(g);

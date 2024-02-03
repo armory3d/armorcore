@@ -66,19 +66,19 @@ class ShaderContext {
 	}
 
 	static compile = (raw: TShaderContext, done: (sc: TShaderContext)=>void) => {
-		if (raw._pipeState != null) raw._pipeState.delete();
-		raw._pipeState = new PipelineState();
+		if (raw._pipeState != null) PipelineState.delete(raw._pipeState);
+		raw._pipeState = PipelineState.create();
 		raw._constants = [];
 		raw._textureUnits = [];
 
 		if (raw._instancingType > 0) { // Instancing
-			let instStruct = new VertexStructure();
-			instStruct.add("ipos", VertexData.F32_3X);
+			let instStruct = VertexStructure.create();
+			VertexStructure.add(instStruct, "ipos", VertexData.F32_3X);
 			if (raw._instancingType == 2 || raw._instancingType == 4) {
-				instStruct.add("irot", VertexData.F32_3X);
+				VertexStructure.add(instStruct, "irot", VertexData.F32_3X);
 			}
 			if (raw._instancingType == 3 || raw._instancingType == 4) {
-				instStruct.add("iscl", VertexData.F32_3X);
+				VertexStructure.add(instStruct, "iscl", VertexData.F32_3X);
 			}
 			instStruct.instanced = true;
 			raw._pipeState.inputLayout = [raw._structure, instStruct];
@@ -140,9 +140,9 @@ class ShaderContext {
 			let loadShader = (file: string, type: i32) => {
 				let path = file + ShaderData.ext;
 				Data.getBlob(path, (b: ArrayBuffer) => {
-					if (type == 0) raw._pipeState.vertexShader = new Shader(b, ShaderType.Vertex);
-					else if (type == 1) raw._pipeState.fragmentShader = new Shader(b, ShaderType.Fragment);
-					else if (type == 2) raw._pipeState.geometryShader = new Shader(b, ShaderType.Geometry);
+					if (type == 0) raw._pipeState.vertexShader = Shader.create(b, ShaderType.Vertex);
+					else if (type == 1) raw._pipeState.fragmentShader = Shader.create(b, ShaderType.Fragment);
+					else if (type == 2) raw._pipeState.geometryShader = Shader.create(b, ShaderType.Geometry);
 					shadersLoaded++;
 					if (shadersLoaded >= numShaders) ShaderContext.finishCompile(raw, done);
 				});
@@ -172,7 +172,7 @@ class ShaderContext {
 			}
 		}
 
-		raw._pipeState.compile();
+		PipelineState.compile(raw._pipeState);
 
 		if (raw.constants != null) {
 			for (let c of raw.constants) ShaderContext.addConstant(raw, c);
@@ -196,7 +196,7 @@ class ShaderContext {
 	}
 
 	static parseVertexStructure = (raw: TShaderContext) => {
-		raw._structure = new VertexStructure();
+		raw._structure = VertexStructure.create();
 		let ipos = false;
 		let irot = false;
 		let iscl = false;
@@ -204,7 +204,7 @@ class ShaderContext {
 			if (elem.name == "ipos") { ipos = true; continue; }
 			if (elem.name == "irot") { irot = true; continue; }
 			if (elem.name == "iscl") { iscl = true; continue; }
-			raw._structure.add(elem.name, ShaderContext.parseData(elem.data));
+			VertexStructure.add(raw._structure, elem.name, ShaderContext.parseData(elem.data));
 		}
 		if (ipos && !irot && !iscl) raw._instancingType = 1;
 		else if (ipos && irot && !iscl) raw._instancingType = 2;
@@ -213,10 +213,10 @@ class ShaderContext {
 	}
 
 	static delete = (raw: TShaderContext) => {
-		if (raw._pipeState.fragmentShader != null) raw._pipeState.fragmentShader.delete();
-		if (raw._pipeState.vertexShader != null) raw._pipeState.vertexShader.delete();
-		if (raw._pipeState.geometryShader != null) raw._pipeState.geometryShader.delete();
-		raw._pipeState.delete();
+		if (raw._pipeState.fragmentShader != null) Shader.delete(raw._pipeState.fragmentShader);
+		if (raw._pipeState.vertexShader != null) Shader.delete(raw._pipeState.vertexShader);
+		if (raw._pipeState.geometryShader != null) Shader.delete(raw._pipeState.geometryShader);
+		PipelineState.delete(raw._pipeState);
 	}
 
 	static getCompareMode = (s: string): CompareMode => {
@@ -303,18 +303,18 @@ class ShaderContext {
 	}
 
 	static addConstant = (raw: TShaderContext, c: TShaderConstant) => {
-		raw._constants.push(raw._pipeState.getConstantLocation(c.name));
+		raw._constants.push(PipelineState.getConstantLocation(raw._pipeState, c.name));
 	}
 
 	static addTexture = (raw: TShaderContext, tu: TTextureUnit) => {
-		let unit = raw._pipeState.getTextureUnit(tu.name);
+		let unit = PipelineState.getTextureUnit(raw._pipeState, tu.name);
 		raw._textureUnits.push(unit);
 	}
 
-	static setTextureParameters = (raw: TShaderContext, g: Graphics4, unitIndex: i32, tex: TBindTexture) => {
+	static setTextureParameters = (raw: TShaderContext, g: Graphics4Raw, unitIndex: i32, tex: TBindTexture) => {
 		// This function is called for samplers set using material context
 		let unit = raw._textureUnits[unitIndex];
-		g.setTextureParameters(unit,
+		Graphics4.setTextureParameters(unit,
 			tex.u_addressing == null ? TextureAddressing.Repeat : ShaderContext.getTextureAddresing(tex.u_addressing),
 			tex.v_addressing == null ? TextureAddressing.Repeat : ShaderContext.getTextureAddresing(tex.v_addressing),
 			tex.min_filter == null ? TextureFilter.LinearFilter : ShaderContext.getTextureFilter(tex.min_filter),

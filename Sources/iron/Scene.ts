@@ -21,7 +21,7 @@ class Scene {
 	///if arm_skin
 	static armatures: TArmature[];
 	///end
-	static embedded: Map<string, Image>;
+	static embedded: Map<string, ImageRaw>;
 
 	static create = (format: TSceneFormat, done: (o: TBaseObject)=>void) => {
 		Scene.uid = Scene.uidCounter++;
@@ -92,7 +92,7 @@ class Scene {
 		for (let e of Scene.empties) if (e != null && e.parent != null) Transform.update(e.transform);
 	}
 
-	static renderFrame = (g: Graphics4) => {
+	static renderFrame = (g: Graphics4Raw) => {
 		if (!Scene.ready || RenderPath.commands == null) return;
 
 		// Render active camera
@@ -450,7 +450,7 @@ class Scene {
 			});
 		}
 		else {
-			Data.getImage(file, (image: Image) => {
+			Data.getImage(file, (image: ImageRaw) => {
 				Scene.embedded.set(file, image);
 				done();
 			});

@@ -27,15 +27,15 @@ type TMeshData = {
 	// Runtime:
 	_refcount?: i32; // Number of users
 	_handle?: string; // Handle used to retrieve this object in Data
-	_vertexBuffer?: VertexBuffer;
-	_vertexBufferMap?: Map<string, VertexBuffer>;
-	_indexBuffers?: IndexBuffer[];
+	_vertexBuffer?: VertexBufferRaw;
+	_vertexBufferMap?: Map<string, VertexBufferRaw>;
+	_indexBuffers?: IndexBufferRaw[];
 	_ready?: bool;
 	_vertices?: DataView;
 	_indices?: Uint32Array[];
 	_materialIndices?: i32[];
-	_struct?: VertexStructure;
-	_instancedVB?: VertexBuffer;
+	_struct?: VertexStructureRaw;
+	_instancedVB?: VertexBufferRaw;
 	_instanced?: bool;
 	_instanceCount?: i32;
 	///if arm_skin
@@ -116,7 +116,7 @@ type TMaterialContext = {
 	bind_constants?: TBindConstant[];
 	bind_textures?: TBindTexture[];
 	// Runtime:
-	_textures?: Image[];
+	_textures?: ImageRaw[];
 }
 
 type TBindConstant = {
@@ -175,11 +175,11 @@ type TShaderContext = {
 	depth_attachment?: string; // DEPTH32
 	shader_from_source?: Null<bool>; // Build shader at runtime using fromSource()
 	// Runtime:
-	_pipeState?: PipelineState;
+	_pipeState?: PipelineStateRaw;
 	_constants?: ConstantLocation[];
 	_textureUnits?: TextureUnit[];
 	_overrideContext?: TShaderOverride;
-	_structure?: VertexStructure;
+	_structure?: VertexStructureRaw;
 	_instancingType?: i32;
 }
 
@@ -231,9 +231,9 @@ type TWorldData = {
 	radiance_mipmaps?: Null<i32>;
 	envmap?: string;
 	// Runtime:
-	_envmap?: Image;
-	_radiance?: Image;
-	_radianceMipmaps?: Image[];
+	_envmap?: ImageRaw;
+	_radiance?: ImageRaw;
+	_radianceMipmaps?: ImageRaw[];
 	_irradiance?: Float32Array;
 }
 
