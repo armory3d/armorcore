@@ -29,6 +29,9 @@
 #include <kinc/graphics4/pipeline.h>
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
+#ifdef WITH_COMPUTE
+#include <kinc/compute/compute.h>
+#endif
 #include <kinc/io/lz4/lz4.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
@@ -2063,6 +2066,238 @@ namespace {
 		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, cbd);
 	}
 
+	#ifdef WITH_COMPUTE
+	void krom_set_bool_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		int32_t value = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_bool(*location, value != 0);
+	}
+
+	void krom_set_int_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		int32_t value = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_int(*location, value);
+	}
+
+	void krom_set_float_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		float value = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_float(*location, value);
+	}
+
+	void krom_set_float2_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_float2(*location, value1, value2);
+	}
+
+	void krom_set_float3_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value3 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_float3(*location, value1, value2, value3);
+	}
+
+	void krom_set_float4_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value3 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value4 = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_float4(*location, value1, value2, value3, value4);
+	}
+
+	void krom_set_floats_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
+		kinc_compute_set_floats(*location, from, int(content->ByteLength() / 4));
+	}
+
+	void krom_set_matrix_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
+		kinc_compute_set_matrix4(*location, (kinc_matrix4x4_t *)from);
+	}
+
+	void krom_set_matrix3_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
+		kinc_compute_set_matrix3(*location, (kinc_matrix3x3_t *)from);
+	}
+
+	void krom_set_texture_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+		int access = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		kinc_compute_set_texture(*unit, texture, (kinc_compute_access_t)access);
+	}
+
+	void krom_set_render_target_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
+		int access = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		kinc_compute_set_render_target(*unit, render_target, (kinc_compute_access_t)access);
+	}
+
+	void krom_set_sampled_texture_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+		kinc_compute_set_sampled_texture(*unit, texture);
+	}
+
+	void krom_set_sampled_render_target_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
+		kinc_compute_set_sampled_render_target(*unit, render_target);
+	}
+
+	void krom_set_sampled_depth_texture_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
+		kinc_compute_set_sampled_depth_from_render_target(*unit, render_target);
+	}
+
+	void krom_set_texture_parameters_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		kinc_compute_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture_minification_filter(*unit, (kinc_g4_texture_filter_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture_magnification_filter(*unit, (kinc_g4_texture_filter_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+	}
+
+	void krom_set_texture3d_parameters_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		kinc_compute_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_W, (kinc_g4_texture_addressing_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_minification_filter(*unit, (kinc_g4_texture_filter_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_magnification_filter(*unit, (kinc_g4_texture_filter_t)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+	}
+
+	void krom_set_shader_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> shaderfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
+		kinc_compute_set_shader(shader);
+	}
+
+	void krom_create_shader_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		kinc_compute_shader *shader = (kinc_compute_shader *)malloc(sizeof(kinc_compute_shader));
+		kinc_compute_shader_init(shader, content->Data(), (int)content->ByteLength());
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		obj->SetInternalField(0, External::New(isolate, shader));
+		args.GetReturnValue().Set(obj);
+	}
+
+	void krom_delete_shader_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Object> shaderobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<External> shaderfield = Local<External>::Cast(shaderobj->GetInternalField(0));
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
+		kinc_compute_shader_destroy(shader);
+		free(shader);
+	}
+
+	void krom_get_constant_location_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> shaderfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
+
+		String::Utf8Value utf8_value(isolate, args[1]);
+		kinc_compute_constant_location_t location = kinc_compute_shader_get_constant_location(shader, *utf8_value);
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		kinc_compute_constant_location_t *location_copy = (kinc_compute_constant_location_t *)malloc(sizeof(kinc_compute_constant_location_t)); // TODO
+		memcpy(location_copy, &location, sizeof(kinc_compute_constant_location_t));
+		obj->SetInternalField(0, External::New(isolate, location_copy));
+		args.GetReturnValue().Set(obj);
+	}
+
+	void krom_get_texture_unit_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> shaderfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
+
+		String::Utf8Value utf8_value(isolate, args[1]);
+		kinc_compute_texture_unit_t unit = kinc_compute_shader_get_texture_unit(shader, *utf8_value);
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		kinc_compute_texture_unit_t *unit_copy = (kinc_compute_texture_unit_t *)malloc(sizeof(kinc_compute_texture_unit_t)); // TODO
+		memcpy(unit_copy, &unit, sizeof(kinc_compute_texture_unit_t));
+		obj->SetInternalField(0, External::New(isolate, unit_copy));
+		args.GetReturnValue().Set(obj);
+	}
+
+	void krom_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int z = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute(x, y, z);
+	}
+	#endif
+
 	bool window_close_callback(void *data) {
 		return true;
 	}
@@ -2310,6 +2545,30 @@ namespace {
 		SET_FUNCTION(krom, "getArg", krom_get_arg);
 		SET_FUNCTION(krom, "getFilesLocation", krom_get_files_location);
 		SET_FUNCTION(krom, "httpRequest", krom_http_request);
+		#ifdef WITH_COMPUTE
+		SET_FUNCTION(krom, "setBoolCompute", krom_set_bool_compute);
+		SET_FUNCTION(krom, "setIntCompute", krom_set_int_compute);
+		SET_FUNCTION(krom, "setFloatCompute", krom_set_float_compute);
+		SET_FUNCTION(krom, "setFloat2Compute", krom_set_float2_compute);
+		SET_FUNCTION(krom, "setFloat3Compute", krom_set_float3_compute);
+		SET_FUNCTION(krom, "setFloat4Compute", krom_set_float4_compute);
+		SET_FUNCTION(krom, "setFloatsCompute", krom_set_floats_compute);
+		SET_FUNCTION(krom, "setMatrixCompute", krom_set_matrix_compute);
+		SET_FUNCTION(krom, "setMatrix3Compute", krom_set_matrix3_compute);
+		SET_FUNCTION(krom, "setTextureCompute", krom_set_texture_compute);
+		SET_FUNCTION(krom, "setRenderTargetCompute", krom_set_render_target_compute);
+		SET_FUNCTION(krom, "setSampledTextureCompute", krom_set_sampled_texture_compute);
+		SET_FUNCTION(krom, "setSampledRenderTargetCompute", krom_set_sampled_render_target_compute);
+		SET_FUNCTION(krom, "setSampledDepthTextureCompute", krom_set_sampled_depth_texture_compute);
+		SET_FUNCTION(krom, "setTextureParametersCompute", krom_set_texture_parameters_compute);
+		SET_FUNCTION(krom, "setTexture3DParametersCompute", krom_set_texture3d_parameters_compute);
+		SET_FUNCTION(krom, "setShaderCompute", krom_set_shader_compute);
+		SET_FUNCTION(krom, "deleteShaderCompute", krom_delete_shader_compute);
+		SET_FUNCTION(krom, "createShaderCompute", krom_create_shader_compute);
+		SET_FUNCTION(krom, "getConstantLocationCompute", krom_get_constant_location_compute);
+		SET_FUNCTION(krom, "getTextureUnitCompute", krom_get_texture_unit_compute);
+		SET_FUNCTION(krom, "compute", krom_compute);
+		#endif
 		SET_FUNCTION(krom, "setSaveAndQuitCallback", krom_set_save_and_quit_callback);
 		SET_FUNCTION(krom, "setMouseCursor", krom_set_mouse_cursor);
 		SET_FUNCTION_FAST(krom, "delayIdleSleep", krom_delay_idle_sleep);
