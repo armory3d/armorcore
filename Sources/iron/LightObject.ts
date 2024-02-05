@@ -1,20 +1,20 @@
-/// <reference path='./Vec4.ts'/>
-/// <reference path='./Mat4.ts'/>
+/// <reference path='./vec4.ts'/>
+/// <reference path='./mat4.ts'/>
 
 class TLightObject {
 	base: TBaseObject;
-	data: TLightData;
-	V: TMat4 = Mat4.identity();
-	P: TMat4 = null;
-	VP: TMat4 = Mat4.identity();
+	data: light_data_t;
+	V: mat4_t = mat4_identity();
+	P: mat4_t = null;
+	VP: mat4_t = mat4_identity();
 	frustumPlanes: TFrustumPlane[] = null;
 }
 
 class LightObject {
-	static m = Mat4.identity();
-	static eye = Vec4.create();
+	static m = mat4_identity();
+	static eye = vec4_create();
 
-	static create(data: TLightData): TLightObject {
+	static create(data: light_data_t): TLightObject {
 		let raw = new TLightObject();
 		raw.base = BaseObject.create();
 		raw.base.ext = raw;
@@ -24,42 +24,42 @@ class LightObject {
 		let fov = data.fov;
 
 		if (type == "sun") {
-			raw.P = Mat4.ortho(-1, 1, -1, 1, data.near_plane, data.far_plane);
+			raw.P = mat4_ortho(-1, 1, -1, 1, data.near_plane, data.far_plane);
 		}
 		else if (type == "point" || type == "area") {
-			raw.P = Mat4.persp(fov, 1, data.near_plane, data.far_plane);
+			raw.P = mat4_persp(fov, 1, data.near_plane, data.far_plane);
 		}
 		else if (type == "spot") {
-			raw.P = Mat4.persp(fov, 1, data.near_plane, data.far_plane);
+			raw.P = mat4_persp(fov, 1, data.near_plane, data.far_plane);
 		}
 
-		Scene.lights.push(raw);
+		scene_lights.push(raw);
 		return raw;
 	}
 
 	static remove = (raw: TLightObject) => {
-		array_remove(Scene.lights, raw);
-		if (RenderPath.light == raw) { RenderPath.light = null; }
-		if (RenderPath.point == raw) { RenderPath.point = null; }
-		else if (RenderPath.sun == raw) { RenderPath.sun = null; }
+		array_remove(scene_lights, raw);
+		if (_render_path_light == raw) {_render_path_light = null; }
+		if (_render_path_point == raw) {_render_path_point = null; }
+		else if (_render_path_sun == raw) {_render_path_sun = null; }
 
 		BaseObject.removeSuper(raw.base);
 	}
 
 	static buildMatrix = (raw: TLightObject, camera: TCameraObject) => {
-		Transform.buildMatrix(raw.base.transform);
+		transform_build_matrix(raw.base.transform);
 		if (raw.data.type == "sun") { // Cover camera frustum
-			Mat4.getInverse(raw.V, raw.base.transform.world);
+			mat4_get_inv(raw.V, raw.base.transform.world);
 			LightObject.updateViewFrustum(raw, camera);
 		}
 		else { // Point, spot, area
-			Mat4.getInverse(raw.V, raw.base.transform.world);
+			mat4_get_inv(raw.V, raw.base.transform.world);
 			LightObject.updateViewFrustum(raw, camera);
 		}
 	}
 
 	static updateViewFrustum = (raw: TLightObject, camera: TCameraObject) => {
-		Mat4.multmats(raw.VP, raw.P, raw.V);
+		mat4_mult_mats(raw.VP, raw.P, raw.V);
 
 		// Frustum culling enabled
 		if (camera.data.frustum_culling) {
@@ -71,15 +71,15 @@ class LightObject {
 		}
 	}
 
-	static right = (raw: TLightObject): TVec4 => {
-		return Vec4.create(raw.V._00, raw.V._10, raw.V._20);
+	static right = (raw: TLightObject): vec4_t => {
+		return vec4_create(raw.V._00, raw.V._10, raw.V._20);
 	}
 
-	static up = (raw: TLightObject): TVec4 => {
-		return Vec4.create(raw.V._01, raw.V._11, raw.V._21);
+	static up = (raw: TLightObject): vec4_t => {
+		return vec4_create(raw.V._01, raw.V._11, raw.V._21);
 	}
 
-	static look = (raw: TLightObject): TVec4 => {
-		return Vec4.create(raw.V._02, raw.V._12, raw.V._22);
+	static look = (raw: TLightObject): vec4_t => {
+		return vec4_create(raw.V._02, raw.V._12, raw.V._22);
 	}
 }

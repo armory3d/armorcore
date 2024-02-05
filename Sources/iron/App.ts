@@ -1,8 +1,8 @@
 
 class App {
 
-	static w(): i32 { return System.width; }
-	static h(): i32 { return System.height; }
+	static w(): i32 { return sys_width(); }
+	static h(): i32 { return sys_height(); }
 	static x(): i32 { return 0; }
 	static y(): i32 { return 0; }
 
@@ -11,8 +11,8 @@ class App {
 	static traitInits: (()=>void)[] = [];
 	static traitUpdates: (()=>void)[] = [];
 	static traitLateUpdates: (()=>void)[] = [];
-	static traitRenders: ((g4: Graphics4Raw)=>void)[] = [];
-	static traitRenders2D: ((g2: Graphics2Raw)=>void)[] = [];
+	static traitRenders: ((g4: g4_t)=>void)[] = [];
+	static traitRenders2D: ((g2: g2_t)=>void)[] = [];
 	static pauseUpdates = false;
 	static lastw = -1;
 	static lasth = -1;
@@ -20,7 +20,7 @@ class App {
 
 	static init = (done: ()=>void) => {
 		done();
-		System.notifyOnFrames(App.render);
+		sys_notify_on_frames(App.render);
 	}
 
 	static reset = () => {
@@ -33,10 +33,10 @@ class App {
 	}
 
 	static update = () => {
-		if (!Scene.ready) return;
+		if (!_scene_ready) return;
 		if (App.pauseUpdates) return;
 
-		Scene.updateFrame();
+		scene_update_frame();
 
 		let i = 0;
 		let l = App.traitUpdates.length;
@@ -70,8 +70,8 @@ class App {
 		if (App.lastw != App.w() || App.lasth != App.h()) {
 			if (App.onResize != null) App.onResize();
 			else {
-				if (Scene.camera != null) {
-					CameraObject.buildProjection(Scene.camera);
+				if (scene_camera != null) {
+					CameraObject.buildProjection(scene_camera);
 				}
 			}
 		}
@@ -79,12 +79,12 @@ class App {
 		App.lasth = App.h();
 	}
 
-	static render = (g2: Graphics2Raw, g4: Graphics4Raw) => {
+	static render = (g2: g2_t, g4: g4_t) => {
 		App.update();
 
-		Time.update();
+		time_update();
 
-		if (!Scene.ready) {
+		if (!_scene_ready) {
 			App.render2D(g2);
 			return;
 		}
@@ -97,7 +97,7 @@ class App {
 			App.traitInits.splice(0, App.traitInits.length);
 		}
 
-		Scene.renderFrame(g4);
+		scene_render_frame(g4);
 
 		for (let f of App.traitRenders) {
 			if (App.traitRenders.length > 0) f(g4);
@@ -107,14 +107,14 @@ class App {
 		App.render2D(g2);
 	}
 
-	static render2D = (g2: Graphics2Raw) => {
+	static render2D = (g2: g2_t) => {
 		if (App.traitRenders2D.length > 0) {
-			Graphics2.begin(g2, false);
+			g2_begin(g2, false);
 			for (let f of App.traitRenders2D) {
 				if (App.traitRenders2D.length > 0) f(g2);
 				else break;
 			}
-			Graphics2.end(g2);
+			g2_end(g2);
 		}
 	}
 
@@ -143,19 +143,19 @@ class App {
 		array_remove(App.traitLateUpdates, f);
 	}
 
-	static notifyOnRender = (f: (g4: Graphics4Raw)=>void) => {
+	static notifyOnRender = (f: (g4: g4_t)=>void) => {
 		App.traitRenders.push(f);
 	}
 
-	static removeRender = (f: (g4: Graphics4Raw)=>void) => {
+	static removeRender = (f: (g4: g4_t)=>void) => {
 		array_remove(App.traitRenders, f);
 	}
 
-	static notifyOnRender2D = (f: (g2: Graphics2Raw)=>void) => {
+	static notifyOnRender2D = (f: (g2: g2_t)=>void) => {
 		App.traitRenders2D.push(f);
 	}
 
-	static removeRender2D = (f: (g2: Graphics2Raw)=>void) => {
+	static removeRender2D = (f: (g2: g2_t)=>void) => {
 		array_remove(App.traitRenders2D, f);
 	}
 

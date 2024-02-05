@@ -2,10 +2,10 @@
 
 (function () {
 
-    let raw: TSceneFormat;
+    let raw: scene_t;
 
 	function main() {
-		System.start({
+		sys_start({
             title: "Empty",
             width: 1280,
             height: 720,
@@ -21,10 +21,10 @@
 	}
 
 	function app_ready() {
-		RenderPath.commands = function() {
-			RenderPath.setTarget("");
-			RenderPath.clearTarget(0xff6495ed, 1.0);
-			RenderPath.drawMeshes("mesh");
+		render_path_commands = function() {
+			render_path_set_target("");
+			render_path_clear_target(0xff6495ed, 1.0);
+			render_path_draw_meshes("mesh");
 		};
 
 		raw = {
@@ -38,7 +38,7 @@
 		};
 		Data.cachedSceneRaws.set(raw.name, raw);
 
-		let cd: TCameraData = {
+		let cd: camera_data_t = {
 			name: "MyCamera",
 			near_plane: 0.1,
 			far_plane: 100.0,
@@ -46,7 +46,7 @@
 		};
 		raw.camera_datas.push(cd);
 
-		let sh: TShaderData = {
+		let sh: shader_data_t = {
 			name: "MyShader",
 			contexts: [
 				{
@@ -71,7 +71,7 @@
 		};
 		raw.shader_datas.push(sh);
 
-		let md: TMaterialData = {
+		let md: material_data_t = {
 			name: "MyMaterial",
 			shader: "MyShader",
 			contexts: [
@@ -85,14 +85,14 @@
 		};
 		raw.material_datas.push(md);
 
-		MaterialData.parse(raw.name, md.name, function(res: TMaterialData) {
+		material_data_parse(raw.name, md.name, function(res: material_data_t) {
 			data_ready();
 		});
 	}
 
 	function data_ready() {
 		// Camera object
-		let co: TObj = {
+		let co: obj_t = {
 			name: "Camera",
 			type: "camera_object",
 			data_ref: "MyCamera",
@@ -101,7 +101,7 @@
 		raw.objects.push(co);
 
 		// Mesh object
-		let o: TObj = {
+		let o: obj_t = {
 			name: "Cube",
 			type: "mesh_object",
 			data_ref: "cube.arm/Cube",
@@ -111,20 +111,20 @@
 		raw.objects.push(o);
 
 		// Instantiate scene
-		Scene.create(raw, function(o: TBaseObject) {
+		scene_create(raw, function(o: TBaseObject) {
 			scene_ready();
 		});
 	}
 
 	function scene_ready() {
 		// Set camera
-		let t = Scene.camera.transform;
-		t.loc.set(0, -6, 0);
-		t.rot.fromTo(Vec4.create(0, 0, 1), Vec4.create(0, -1, 0));
-		t.buildMatrix();
+		let t = scene_camera.transform;
+		vec4_set(t.loc, 0, -6, 0);
+		quat_from_to(t.rot, vec4_create(0, 0, 1), vec4_create(0, -1, 0));
+		transform_build_mat(t);
 
 		// Rotate cube
-		let cube = Scene.getChild("Cube");
+		let cube = scene_get_child("Cube");
 		App.notifyOnUpdate(function() {
 			// cube.transform.rotate(Vec4.create(0, 0, 1), 0.02);
 		});

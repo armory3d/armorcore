@@ -1,50 +1,29 @@
 // Bindings to Zui in C
 
-type ZuiOptions = {
-	font: FontRaw;
-	theme: Theme;
-	scaleFactor: f32;
-	color_wheel: ImageRaw;
-	black_white_gradient: ImageRaw;
-}
+class ZuiRaw {
 
-class Zui {
-	static current: Zui = null;
+	_t: Theme = null;
 
-	static set onBorderHover(f: (handle_ptr: any, side: i32)=>void) { Krom.zui_set_on_border_hover(f); }
-
-	static set onTextHover(f: ()=>void) { Krom.zui_set_on_text_hover(f); }
-
-	static set onDeselectText(f: ()=>void) { Krom.zui_set_on_deselect_text(f); }
-
-	static set onTabDrop(f: (to_ptr: any, to_pos: i32, from_ptr: any, from_pos: i32)=>void) { Krom.zui_set_on_tab_drop(f); }
-
-	static set textAreaLineNumbers(a: bool) { Krom.zui_set(null, "zui_text_area_line_numbers", a); }
-
-	static set textAreaScrollPastEnd(a: bool) { Krom.zui_set(null, "zui_text_area_scroll_past_end", a); }
-
-	static set textAreaColoring(coloring: TTextColoring) {
-		Krom.zui_text_area_coloring(coloring == null ? null : ArmPack.encode(coloring));
+	get t(): Theme {
+		return this._t;
 	}
 
-	static get alwaysRedrawWindow(): bool { return Krom.zui_get(null, "zui_always_redraw_window"); }
-	static set alwaysRedrawWindow(a: bool) { Krom.zui_set(null, "zui_always_redraw_window", a); }
+	set t(theme: Theme) {
+		if (this.t != null) {
+			for (let key of Object.getOwnPropertyNames(Theme.prototype)) {
+				if (key == "constructor") continue;
+				let t_: any = this.t;
+				let theme_: any = theme;
+				t_[key] = theme_[key];
+			}
+			theme.theme_ = this.t.theme_;
+		}
+		this._t = theme;
+	}
 
-	static get touchScroll(): bool { return Krom.zui_get(null, "zui_touch_scroll"); }
-	static set touchScroll(a: bool) { Krom.zui_set(null, "zui_touch_scroll", a); }
-
-	static get touchHold(): bool { return Krom.zui_get(null, "zui_touch_hold"); }
-	static set touchHold(a: bool) { Krom.zui_set(null, "zui_touch_hold", a); }
-
-	static get touchTooltip(): bool { return Krom.zui_get(null, "zui_touch_tooltip"); }
-	static set touchTooltip(a: bool) { Krom.zui_set(null, "zui_touch_tooltip", a); }
-
-	static set isCut(a: bool) { Krom.zui_set(null, "zui_is_cut", a); }
-
-	static set isCopy(a: bool) { Krom.zui_set(null, "zui_is_copy", a); }
-
-	static get isPaste(): bool { return Krom.zui_get(null, "zui_is_paste"); }
-	static set isPaste(a: bool) { Krom.zui_set(null, "zui_is_paste", a); }
+	g: g2_t;
+	font: font_t;
+	zui_: any;
 
 	get isScrolling(): bool { return Krom.zui_get(this.zui_, "is_scrolling"); }
 
@@ -154,30 +133,70 @@ class Zui {
 	get submitTextHandle_ptr(): Null<i32> { let h = Krom.zui_get(this.zui_, "submit_text_handle"); return h == 0 ? null : h; }
 
 	get comboSelectedHandle_ptr(): Null<i32> { let h = Krom.zui_get(this.zui_, "combo_selected_handle"); return h == 0 ? null : h; }
+}
 
-	_t: Theme = null;
-	get t(): Theme {
-		return this._t;
-	}
-	set t(theme: Theme) {
-		if (this.t != null) {
-			for (let key of Object.getOwnPropertyNames(Theme.prototype)) {
-				if (key == "constructor") continue;
-				let t_: any = this.t;
-				let theme_: any = theme;
-				t_[key] = theme_[key];
-			}
-			theme.theme_ = this.t.theme_;
+class Zui {
+	static current: ZuiRaw = null;
+
+	static children: Map<string, HandleRaw> = new Map();
+
+	static handle(s: string, ops: HandleOptions = null): HandleRaw {
+		let h = Zui.children.get(s);
+		if (h == null) {
+			h = Handle.create(ops);
+			Zui.children.set(s, h);
 		}
-		this._t = theme;
+		return h;
 	}
 
-	g: Graphics2Raw;
-	font: FontRaw;
-	zui_: any;
+	static nest(raw: HandleRaw, i: i32, ops: HandleOptions = null): HandleRaw {
+		if (raw.children == null) raw.children = new Map();
+		let c = raw.children.get(i);
+		if (c == null) {
+			c = Handle.create(ops);
+			raw.children.set(i, c);
+		}
+		return c;
+	}
 
-	constructor(ops: ZuiOptions) {
-		this.zui_ = Krom.zui_init(
+	static set onBorderHover(f: (handle_ptr: any, side: i32)=>void) { Krom.zui_set_on_border_hover(f); }
+
+	static set onTextHover(f: ()=>void) { Krom.zui_set_on_text_hover(f); }
+
+	static set onDeselectText(f: ()=>void) { Krom.zui_set_on_deselect_text(f); }
+
+	static set onTabDrop(f: (to_ptr: any, to_pos: i32, from_ptr: any, from_pos: i32)=>void) { Krom.zui_set_on_tab_drop(f); }
+
+	static set textAreaLineNumbers(a: bool) { Krom.zui_set(null, "zui_text_area_line_numbers", a); }
+
+	static set textAreaScrollPastEnd(a: bool) { Krom.zui_set(null, "zui_text_area_scroll_past_end", a); }
+
+	static set textAreaColoring(coloring: TTextColoring) {
+		Krom.zui_text_area_coloring(coloring == null ? null : armpack_encode(coloring));
+	}
+
+	static get alwaysRedrawWindow(): bool { return Krom.zui_get(null, "zui_always_redraw_window"); }
+	static set alwaysRedrawWindow(a: bool) { Krom.zui_set(null, "zui_always_redraw_window", a); }
+
+	static get touchScroll(): bool { return Krom.zui_get(null, "zui_touch_scroll"); }
+	static set touchScroll(a: bool) { Krom.zui_set(null, "zui_touch_scroll", a); }
+
+	static get touchHold(): bool { return Krom.zui_get(null, "zui_touch_hold"); }
+	static set touchHold(a: bool) { Krom.zui_set(null, "zui_touch_hold", a); }
+
+	static get touchTooltip(): bool { return Krom.zui_get(null, "zui_touch_tooltip"); }
+	static set touchTooltip(a: bool) { Krom.zui_set(null, "zui_touch_tooltip", a); }
+
+	static set isCut(a: bool) { Krom.zui_set(null, "zui_is_cut", a); }
+
+	static set isCopy(a: bool) { Krom.zui_set(null, "zui_is_copy", a); }
+
+	static get isPaste(): bool { return Krom.zui_get(null, "zui_is_paste"); }
+	static set isPaste(a: bool) { Krom.zui_set(null, "zui_is_paste", a); }
+
+	static create(ops: ZuiOptions): ZuiRaw {
+		let raw = new ZuiRaw();
+		raw.zui_ = Krom.zui_init(
 			{
 				font: ops.font.font_,
 				theme: ops.theme.theme_,
@@ -186,228 +205,220 @@ class Zui {
 				black_white_gradient: ops.black_white_gradient != null ? ops.black_white_gradient.texture_ : null
 			}
 		);
-		Zui.current = this;
-		this.t = ops.theme;
-		this.font = ops.font;
+		Zui.current = raw;
+		raw.t = ops.theme;
+		raw.font = ops.font;
+		return raw;
 	}
 
-	setFont(font: FontRaw) {
-		Font.init(font); // Make sure font_ is ready
-		this.font = font;
-		Krom.zui_set_font(this.zui_, font.font_);
+	static setFont(raw: ZuiRaw, font: font_t) {
+		font_init(font); // Make sure font_ is ready
+		raw.font = font;
+		Krom.zui_set_font(raw.zui_, font.font_);
 	}
 
-	SCALE(): f32 {
-		return Krom.zui_get_scale(this.zui_);
+	static SCALE(raw: ZuiRaw): f32 {
+		return Krom.zui_get_scale(raw.zui_);
 	}
 
-	setScale(factor: f32) {
-		Krom.zui_set_scale(this.zui_, factor);
+	static setScale(raw: ZuiRaw, factor: f32) {
+		Krom.zui_set_scale(raw.zui_, factor);
 	}
 
-	begin(g: Graphics2Raw) {
-		Zui.current = this;
-		Krom.zui_begin(this.zui_);
-		Graphics2.current = g;
+	static begin(raw: ZuiRaw, g: g2_t) {
+		Zui.current = raw;
+		Krom.zui_begin(raw.zui_);
+		_g2_current = g;
 	}
 
-	end(last = true) {
+	static end(last = true) {
 		Krom.zui_end(last);
-		Graphics2.current = null;
+		_g2_current = null;
 	}
 
-	beginRegion(g: Graphics2Raw, x: i32, y: i32, w: i32) {
-		Zui.current = this;
-		this.g = g;
-		Krom.zui_begin_region(this.zui_, x, y, w);
+	static beginRegion(raw: ZuiRaw, g: g2_t, x: i32, y: i32, w: i32) {
+		Zui.current = raw;
+		raw.g = g;
+		Krom.zui_begin_region(raw.zui_, x, y, w);
 	}
 
-	endRegion(last = true) {
+	static endRegion(last = true) {
 		Krom.zui_end_region(last);
 	}
 
-	beginSticky() {
+	static beginSticky() {
 		Krom.zui_begin_sticky();
 	}
 
-	endSticky() {
+	static endSticky() {
 		Krom.zui_end_sticky();
 	}
 
-	endInput() {
+	static endInput() {
 		Krom.zui_end_input();
 	}
 
-	window(handle: Handle, x: i32, y: i32, w: i32, h: i32, drag = false): bool {
-		let img = Image._create(null);
+	static window(raw: ZuiRaw, handle: HandleRaw, x: i32, y: i32, w: i32, h: i32, drag = false): bool {
+		let img = _image_create(null);
 		img.renderTarget_ = handle.texture;
-		Graphics2.current = this.g = img.g2;
+		_g2_current = raw.g = img.g2;
 		return Krom.zui_window(handle.handle_, x, y, w, h, drag);
 	}
 
-	endWindow(bindGlobalG = true) {
+	static endWindow(bindGlobalG = true) {
 		Krom.zui_end_window(bindGlobalG);
 	}
 
-	tab(handle: Handle, text: string, vertical = false, color: i32 = -1): bool {
+	static tab(handle: HandleRaw, text: string, vertical = false, color: i32 = -1): bool {
 		return Krom.zui_tab(handle.handle_, text, vertical, color);
 	}
 
-	panel(handle: Handle, text: string, isTree = false, filled = true, pack = true): bool {
+	static panel(handle: HandleRaw, text: string, isTree = false, filled = true, pack = true): bool {
 		return Krom.zui_panel(handle.handle_, text, isTree, filled, pack);
 	}
 
-	image(image: ImageRaw, tint = 0xffffffff, h: Null<f32> = null, sx = 0, sy = 0, sw = 0, sh = 0): State {
+	static image(image: image_t, tint = 0xffffffff, h: Null<f32> = null, sx = 0, sy = 0, sw = 0, sh = 0): State {
 		return Krom.zui_image(image, tint, h == null ? -1 : Math.floor(h), sx, sy, sw, sh);
 	}
 
-	text(text: string, align = Align.Left, bg = 0x00000000): State {
+	static text(text: string, align = Align.Left, bg = 0x00000000): State {
 		return Krom.zui_text(text, align, bg);
 	}
 
-	textInput(handle: Handle, label = "", align = Align.Left, editable = true, liveUpdate = false): string {
+	static textInput(handle: HandleRaw, label = "", align = Align.Left, editable = true, liveUpdate = false): string {
 		return Krom.zui_text_input(handle.handle_, label, align, editable, liveUpdate);
 	}
 
-	button(text: string, align = Align.Center, label = "", icon: ImageRaw = null, sx = 0, sy = 0, sw = 0, sh = 0): bool {
+	static button(text: string, align = Align.Center, label = "", icon: image_t = null, sx = 0, sy = 0, sw = 0, sh = 0): bool {
 		return Krom.zui_button(text, align, label);
 	}
 
-	check(handle: Handle, text: string, label: string = ""): bool {
+	static check(handle: HandleRaw, text: string, label: string = ""): bool {
 		return Krom.zui_check(handle.handle_, text, label);
 	}
 
-	radio(handle: Handle, position: i32, text: string, label: string = ""): bool {
+	static radio(handle: HandleRaw, position: i32, text: string, label: string = ""): bool {
 		return Krom.zui_radio(handle.handle_, position, text, label);
 	}
 
-	combo(handle: Handle, texts: string[], label = "", showLabel = false, align = Align.Left, searchBar = true): i32 {
+	static combo(handle: HandleRaw, texts: string[], label = "", showLabel = false, align = Align.Left, searchBar = true): i32 {
 		return Krom.zui_combo(handle.handle_, texts, label, showLabel, align, searchBar);
 	}
 
-	slider(handle: Handle, text: string, from = 0.0, to = 1.0, filled = false, precision = 100.0, displayValue = true, align = Align.Right, textEdit = true): f32 {
+	static slider(handle: HandleRaw, text: string, from = 0.0, to = 1.0, filled = false, precision = 100.0, displayValue = true, align = Align.Right, textEdit = true): f32 {
 		return Krom.zui_slider(handle.handle_, text, from, to, filled, precision, displayValue, align, textEdit);
 	}
 
-	separator(h = 4, fill = true) {
+	static separator(h = 4, fill = true) {
 		Krom.zui_separator(h, fill);
 	}
 
-	tooltip(text: string) {
+	static tooltip(text: string) {
 		Krom.zui_tooltip(text);
 	}
 
-	tooltipImage(image: ImageRaw, maxWidth: Null<i32> = null) {
+	static tooltipImage(image: image_t, maxWidth: Null<i32> = null) {
 		Krom.zui_tooltip_image(image, maxWidth == null ? 0 : maxWidth);
 	}
 
-	row(ratios: f32[]) {
+	static row(ratios: f32[]) {
 		Krom.zui_row(ratios);
 	}
 
-	fill(x: f32, y: f32, w: f32, h: f32, color: Color) {
+	static fill(x: f32, y: f32, w: f32, h: f32, color: Color) {
 		Krom.zui_fill(x, y, w, h, color);
 	}
 
-	rect(x: f32, y: f32, w: f32, h: f32, color: Color, strength = 1.0) {
+	static rect(x: f32, y: f32, w: f32, h: f32, color: Color, strength = 1.0) {
 		Krom.zui_rect(x, y, w, h, color, strength);
 	}
 
-	drawRect(g: Graphics2Raw, fill: bool, x: f32, y: f32, w: f32, h: f32, strength = 0.0) {
+	static drawRect(g: g2_t, fill: bool, x: f32, y: f32, w: f32, h: f32, strength = 0.0) {
 		Krom.zui_draw_rect(fill, x, y, w, h, strength);
 	}
 
-	endElement(elementSize: Null<f32> = null) {
+	static endElement(elementSize: Null<f32> = null) {
 		Krom.zui_end_element(elementSize == null ? -1 : elementSize);
 	}
 
-	startTextEdit(handle: Handle, align = Align.Left) {
+	static startTextEdit(handle: HandleRaw, align = Align.Left) {
 		Krom.zui_start_text_edit(handle.handle_, align);
 	}
 
-	getInputInRect(x: f32, y: f32, w: f32, h: f32): bool {
+	static getInputInRect(x: f32, y: f32, w: f32, h: f32): bool {
 		return Krom.zui_input_in_rect(x, y, w, h);
 	}
 
-	drawString(g: Graphics2Raw, text: string, xOffset: Null<f32> = null, yOffset: f32 = 0, align = Align.Left, truncation = true) {
+	static drawString(g: g2_t, text: string, xOffset: Null<f32> = null, yOffset: f32 = 0, align = Align.Left, truncation = true) {
 		Krom.zui_draw_string(text, xOffset == null ? -1 : xOffset, yOffset, align, truncation);
 	}
 
-	getHoveredTabName(): string {
+	static getHoveredTabName(): string {
 		return Krom.zui_get_hovered_tab_name();
 	}
 
-	setHoveredTabName(name: string) {
+	static setHoveredTabName(name: string) {
 		Krom.zui_set_hovered_tab_name(name);
 	}
 
-	ELEMENT_W(): f32 {
-		return this.t.ELEMENT_W * this.SCALE();
+	static ELEMENT_W(raw: ZuiRaw): f32 {
+		return raw.t.ELEMENT_W * Zui.SCALE(raw);
 	}
 
-	ELEMENT_H(): f32 {
-		return this.t.ELEMENT_H * this.SCALE();
+	static ELEMENT_H(raw: ZuiRaw): f32 {
+		return raw.t.ELEMENT_H * Zui.SCALE(raw);
 	}
 
-	ELEMENT_OFFSET(): f32 {
-		return this.t.ELEMENT_OFFSET * this.SCALE();
+	static ELEMENT_OFFSET(raw: ZuiRaw): f32 {
+		return raw.t.ELEMENT_OFFSET * Zui.SCALE(raw);
 	}
 
-	floatInput(handle: Handle, label = "", align = Align.Left, precision = 1000.0): f32 {
+	static floatInput(handle: HandleRaw, label = "", align = Align.Left, precision = 1000.0): f32 {
 		return Krom.zui_float_input(handle.handle_, label, align, precision);
 	}
 
-	inlineRadio(handle: Handle, texts: string[], align = Align.Left): i32 {
+	static inlineRadio(handle: HandleRaw, texts: string[], align = Align.Left): i32 {
 		return Krom.zui_inline_radio(handle.handle_, texts, align);
 	}
 
-	colorWheel(handle: Handle, alpha = false, w: Null<f32> = null, h: Null<f32> = null, colorPreview = true, picker: ()=>void = null): Color {
+	static colorWheel(handle: HandleRaw, alpha = false, w: Null<f32> = null, h: Null<f32> = null, colorPreview = true, picker: ()=>void = null): Color {
 		return Krom.zui_color_wheel(handle.handle_, alpha, w != null ? w : -1, h != null ? h : -1, colorPreview, picker);
 	}
 
-	textArea(handle: Handle, align = Align.Left, editable = true, label = "", wordWrap = false): string {
+	static textArea(handle: HandleRaw, align = Align.Left, editable = true, label = "", wordWrap = false): string {
 		return Krom.zui_text_area(handle.handle_, align, editable, label, wordWrap);
 	}
 
-	beginMenu() {
+	static beginMenu() {
 		Krom.zui_begin_menu();
 	}
 
-	endMenu() {
+	static endMenu() {
 		Krom.zui_end_menu();
 	}
 
-	menuButton(text: string): bool {
+	static menuButton(text: string): bool {
 		return Krom.zui_menu_button(text);
 	}
 
-	MENUBAR_H(): f32 {
-		let buttonOffsetY = (this.t.ELEMENT_H * this.SCALE() - this.t.BUTTON_H * this.SCALE()) / 2;
-		return this.t.BUTTON_H * this.SCALE() * 1.1 + 2 + buttonOffsetY;
+	static MENUBAR_H(raw: ZuiRaw): f32 {
+		let buttonOffsetY = (raw.t.ELEMENT_H * Zui.SCALE(raw) - raw.t.BUTTON_H * Zui.SCALE(raw)) / 2;
+		return raw.t.BUTTON_H * Zui.SCALE(raw) * 1.1 + 2 + buttonOffsetY;
 	}
+}
 
-	static children: Map<string, Handle> = new Map();
-
-	static handle(s: string, ops: HandleOptions = null): Handle {
-		let h = Zui.children.get(s);
-		if (h == null) {
-			h = new Handle(ops);
-			Zui.children.set(s, h);
+class HandleRaw {
+	handle__: any = null;
+	get handle_(): any {
+		if (this.handle__ == null) {
+			this.handle__ = Krom.zui_handle(this.ops);
 		}
-		return h;
+		return this.handle__;
 	}
-}
 
-type HandleOptions = {
-	selected?: boolean,
-	position?: i32,
-	value?: f32,
-	text?: string,
-	color?: Color,
-	layout?: Layout
-}
+	ops: HandleOptions;
+	children: Map<i32, HandleRaw>;
 
-class Handle {
 	get selected(): bool { return Krom.zui_handle_get(this.handle_, "selected"); }
 	set selected(a: bool) { Krom.zui_handle_set(this.handle_, "selected", a); }
 
@@ -439,14 +450,11 @@ class Handle {
 	get texture(): any { return Krom.zui_handle_get(this.handle_, "texture"); }
 
 	get ptr(): Null<i32> { return Krom.zui_handle_ptr(this.handle_); }
+}
 
-	ops: HandleOptions;
-	children: Map<i32, Handle>;
-
-	handle__: any = null;
-	get handle_(): any { if (this.handle__ == null) this.handle__ = Krom.zui_handle(this.ops); return this.handle__; }
-
-	constructor(ops: HandleOptions = null) {
+class Handle {
+	static create(ops: HandleOptions = null): HandleRaw {
+		let raw = new HandleRaw();
 		if (ops == null) ops = {};
 		if (ops.selected == null) ops.selected = false;
 		if (ops.position == null) ops.position = 0;
@@ -454,56 +462,18 @@ class Handle {
 		if (ops.text == null) ops.text = "";
 		if (ops.color == null) ops.color = 0xffffffff;
 		if (ops.layout == null) ops.layout = Layout.Vertical;
-		this.ops = ops;
+		raw.ops = ops;
+		return raw;
 	}
-
-	nest(i: i32, ops: HandleOptions = null): Handle {
-		if (this.children == null) this.children = new Map();
-		let c = this.children.get(i);
-		if (c == null) {
-			c = new Handle(ops);
-			this.children.set(i, c);
-		}
-		return c;
-	}
-}
-
-enum Layout {
-	Vertical,
-	Horizontal,
-}
-
-enum Align {
-	Left,
-	Center,
-	Right,
-}
-
-enum State {
-	Idle,
-	Started,
-	Down,
-	Released,
-	Hovered,
-}
-
-type TColoring = {
-	color: i32;
-	start: string[];
-	end: string;
-	separated: boolean;
-}
-
-type TTextColoring = {
-	colorings: TColoring[];
-	default_color: i32;
 }
 
 class Theme {
 	theme_: any;
 
-	constructor() {
-		this.theme_ = Krom.zui_theme_init();
+	static create(): Theme {
+		let raw = new Theme();
+		raw.theme_ = Krom.zui_theme_init();
+		return raw;
 	}
 
 	get WINDOW_BG_COL(): i32 { return Krom.zui_theme_get(this.theme_, "WINDOW_BG_COL"); }
@@ -606,30 +576,8 @@ class Theme {
 	set ROUND_CORNERS(a: bool) { Krom.zui_theme_set(this.theme_, "ROUND_CORNERS", a); }
 }
 
-class Nodes {
-	static current: Nodes;
-	static currentCanvas: TNodeCanvas;
-	static tr: (id: string, vars?: Map<string, string>)=>string;
-
-	static clipboard = "";
-
-	static excludeRemove: string[] = ["OUTPUT_MATERIAL_PBR", "GROUP_OUTPUT", "GROUP_INPUT", "BrushOutputNode"];
-
-	static set onLinkDrag(f: (link_drag_id: i32, is_new_link: bool)=>void) { Krom.zui_nodes_set_on_link_drag(f); }
-
-	static set onSocketReleased(f: (socket_id: i32)=>void) { Krom.zui_nodes_set_on_socket_released(f); }
-
-	static set onCanvasReleased(f: ()=>void) { Krom.zui_nodes_set_on_canvas_released(f); }
-
-	// static onNodeRemove: (node_id: i32)=>void;
-
-	static set onCanvasControl(f: ()=>CanvasControl) { Krom.zui_nodes_set_on_canvas_control(f); }
-
-	static get socketReleased(): bool { return Krom.zui_nodes_get(null, "socket_released"); }
-
-	static enumTextsHaxe: (node_type: string)=>string[] = null;
-	static set enumTexts(f: (node_type: string)=>string[]) { Nodes.enumTextsHaxe = f; Krom.zui_nodes_set_enum_texts(f); }
-
+class NodesRaw {
+	nodes_: any;
 	colorPickerCallback: (col: Color)=>void = null;
 
 	get nodesSelectedId(): i32[] { return Krom.zui_nodes_get(this.nodes_, "nodes_selected_id"); }
@@ -649,43 +597,56 @@ class Nodes {
 
 	get linkDragId(): i32 { return Krom.zui_nodes_get(this.nodes_, "link_drag_id"); }
 	set linkDragId(a: i32) { Krom.zui_nodes_set(this.nodes_, "link_drag_id", a); }
+}
 
-	handle = new Handle();
-	ELEMENT_H = 25;
-	nodes_: any;
+class Nodes {
+	static current: NodesRaw;
+	static currentCanvas: TNodeCanvas;
+	static tr: (id: string, vars?: Map<string, string>)=>string;
 
-	constructor() {
-		this.nodes_ = Krom.zui_nodes_init();
+	static clipboard = "";
+	static ELEMENT_H = 25;
+	static excludeRemove: string[] = ["OUTPUT_MATERIAL_PBR", "GROUP_OUTPUT", "GROUP_INPUT", "BrushOutputNode"];
+
+	static set onLinkDrag(f: (link_drag_id: i32, is_new_link: bool)=>void) { Krom.zui_nodes_set_on_link_drag(f); }
+	static set onSocketReleased(f: (socket_id: i32)=>void) { Krom.zui_nodes_set_on_socket_released(f); }
+	static set onCanvasReleased(f: ()=>void) { Krom.zui_nodes_set_on_canvas_released(f); }
+	static set onCanvasControl(f: ()=>CanvasControl) { Krom.zui_nodes_set_on_canvas_control(f); }
+	static get socketReleased(): bool { return Krom.zui_nodes_get(null, "socket_released"); }
+
+	static enumTextsHaxe: (node_type: string)=>string[] = null;
+	static set enumTexts(f: (node_type: string)=>string[]) { Nodes.enumTextsHaxe = f; Krom.zui_nodes_set_enum_texts(f); }
+
+	static create(): NodesRaw {
+		let raw = new NodesRaw();
+		raw.nodes_ = Krom.zui_nodes_init();
 		Krom.zui_nodes_set_on_custom_button(Nodes.on_custom_button);
+		return raw;
 	}
 
-	static on_custom_button(node_id: i32, button_name: string) {
-		eval(button_name + "(Zui.current, Nodes.current, Nodes.current.getNode(currentCanvas.nodes, node_id))");
-	}
-
-	getNode(nodes: TNode[], id: i32): TNode {
+	static getNode(nodes: TNode[], id: i32): TNode {
 		for (let node of nodes) if (node.id == id) return node;
 		return null;
 	}
 
-	nodeId = -1;
-	getNodeId(nodes: TNode[]): i32 {
-		if (this.nodeId == -1) for (let n of nodes) if (this.nodeId < n.id) this.nodeId = n.id;
-		return ++this.nodeId;
+	static getNodeId(nodes: TNode[]): i32 {
+		let id = 0;
+		for (let n of nodes) if (n.id >= id) id = n.id + 1;
+		return id;
 	}
 
-	getLink(links: TNodeLink[], id: i32): TNodeLink {
+	static getLink(links: TNodeLink[], id: i32): TNodeLink {
 		for (let link of links) if (link.id == id) return link;
 		return null;
 	}
 
-	getLinkId(links: TNodeLink[]): i32 {
+	static getLinkId(links: TNodeLink[]): i32 {
 		let id = 0;
 		for (let l of links) if (l.id >= id) id = l.id + 1;
 		return id;
 	}
 
-	getSocket(nodes: TNode[], id: i32): TNodeSocket {
+	static getSocket(nodes: TNode[], id: i32): TNodeSocket {
 		for (let n of nodes) {
 			for (let s of n.inputs) if (s.id == id) return s;
 			for (let s of n.outputs) if (s.id == id) return s;
@@ -693,7 +654,7 @@ class Nodes {
 		return null;
 	}
 
-	getSocketId(nodes: TNode[]): i32 {
+	static getSocketId(nodes: TNode[]): i32 {
 		let id = 0;
 		for (let n of nodes) {
 			for (let s of n.inputs) if (s.id >= id) id = s.id + 1;
@@ -702,7 +663,226 @@ class Nodes {
 		return id;
 	}
 
+	static nodeCanvas(raw: NodesRaw, ui: ZuiRaw, canvas: TNodeCanvas) {
+		Nodes.current = raw;
+		Nodes.currentCanvas = canvas;
+
+		// Fill in optional values
+		Nodes.updateCanvasFormat(canvas);
+
+		// Ensure properties order
+		let canvas_: TNodeCanvas = {
+			name: canvas.name,
+			nodes: canvas.nodes.slice(),
+			nodes_count: canvas.nodes.length,
+			links: canvas.links.slice(),
+			links_count: canvas.links.length,
+		}
+
+		// Convert default data
+		for (let n of canvas_.nodes) {
+			for (let soc of n.inputs) {
+				soc.default_value = Nodes.jsToC(soc.type, soc.default_value);
+			}
+			for (let soc of n.outputs) {
+				soc.default_value = Nodes.jsToC(soc.type, soc.default_value);
+			}
+			for (let but of n.buttons) {
+				but.default_value = Nodes.jsToC(but.type, but.default_value);
+				but.data = Nodes.jsToCData(but.type, but.data);
+			}
+		}
+
+		// Ensure properties order
+		for (let n of canvas_.nodes) {
+			n.name = Nodes.tr(n.name);
+			for (let i = 0; i < n.inputs.length; ++i) {
+				n.inputs[i] = {
+					id: n.inputs[i].id,
+					node_id: n.inputs[i].node_id,
+					name: Nodes.tr(n.inputs[i].name),
+					type: n.inputs[i].type,
+					color: n.inputs[i].color,
+					default_value: n.inputs[i].default_value,
+					min: n.inputs[i].min,
+					max: n.inputs[i].max,
+					precision: n.inputs[i].precision,
+					display: n.inputs[i].display,
+				};
+			}
+			for (let i = 0; i < n.outputs.length; ++i) {
+				n.outputs[i] = {
+					id: n.outputs[i].id,
+					node_id: n.outputs[i].node_id,
+					name: Nodes.tr(n.outputs[i].name),
+					type: n.outputs[i].type,
+					color: n.outputs[i].color,
+					default_value: n.outputs[i].default_value,
+					min: n.outputs[i].min,
+					max: n.outputs[i].max,
+					precision: n.outputs[i].precision,
+					display: n.outputs[i].display,
+				};
+			}
+			for (let i = 0; i < n.buttons.length; ++i) {
+				n.buttons[i] = {
+					name: Nodes.tr(n.buttons[i].name),
+					type: n.buttons[i].type,
+					output: n.buttons[i].output,
+					default_value: n.buttons[i].default_value,
+					data: n.buttons[i].data,
+					min: n.buttons[i].min,
+					max: n.buttons[i].max,
+					precision: n.buttons[i].precision,
+					height: n.buttons[i].height,
+				};
+			}
+		}
+
+		// Reserve capacity
+		while (canvas_.nodes.length < 128) {
+			canvas_.nodes.push({ id: -1, name: "", type: "", x: 0, y: 0, color: 0, inputs: [], outputs: [], buttons: [], width: 0 });
+		}
+		while (canvas_.links.length < 256) {
+			canvas_.links.push({ id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
+		}
+
+		let packed = Krom.zui_node_canvas(raw.nodes_, armpack_encode(canvas_));
+		canvas_ = armpack_decode(packed);
+		if (canvas_.nodes == null) canvas_.nodes = [];
+		if (canvas_.links == null) canvas_.links = [];
+
+		// Convert default data
+		for (let n of canvas_.nodes) {
+			for (let soc of n.inputs) {
+				soc.default_value = Nodes.cToJs(soc.type, soc.default_value);
+			}
+			for (let soc of n.outputs) {
+				soc.default_value = Nodes.cToJs(soc.type, soc.default_value);
+			}
+			for (let but of n.buttons) {
+				but.default_value = Nodes.cToJs(but.type, but.default_value);
+				but.data = Nodes.cToJsData(but.type, but.data);
+			}
+		}
+
+		canvas.name = canvas_.name;
+		canvas.nodes = canvas_.nodes;
+		canvas.links = canvas_.links;
+
+		// Restore nodes modified in js while Krom.zui_node_canvas was running
+		for (let n of Nodes.node_replace) {
+			for (let i = 0; i < canvas.nodes.length; ++i) {
+				if (canvas.nodes[i].id == n.id) {
+					canvas.nodes[i] = n;
+					break;
+				}
+			}
+		}
+		Nodes.node_replace = [];
+
+		Nodes.ELEMENT_H = ui.t.ELEMENT_H + 2;
+	}
+
+	static rgbaPopup(ui: ZuiRaw, nhandle: HandleRaw, val: Float32Array, x: i32, y: i32) {
+		Krom.zui_nodes_rgba_popup(nhandle.handle_, val.buffer, x, y);
+	}
+
+	static removeNode(n: TNode, canvas: TNodeCanvas) {
+		if (n == null) return;
+		let i = 0;
+		while (i < canvas.links.length) {
+			let l = canvas.links[i];
+			if (l.from_id == n.id || l.to_id == n.id) {
+				canvas.links.splice(i, 1);
+			}
+			else i++;
+		}
+		array_remove(canvas.nodes, n);
+	}
+
+	static SCALE(): f32 {
+		return Krom.zui_nodes_scale();
+	}
+
+	static PAN_X(): f32 {
+		return Krom.zui_nodes_pan_x();
+	}
+
+	static PAN_Y(): f32 {
+		return Krom.zui_nodes_pan_y();
+	}
+
+	static NODE_H(canvas: TNodeCanvas, node: TNode): i32 {
+		return Math.floor(Nodes.LINE_H() * 1.2 + Nodes.INPUTS_H(canvas, node.inputs) + Nodes.OUTPUTS_H(node.outputs) + Nodes.BUTTONS_H(node));
+	}
+
+	static NODE_W(node: TNode): i32 {
+		return Math.floor((node.width != 0 ? node.width : 140) * Nodes.SCALE());
+	}
+
+	static NODE_X(node: TNode): f32 {
+		return node.x * Nodes.SCALE() + Nodes.PAN_X();
+	}
+
+	static NODE_Y(node: TNode): f32 {
+		return node.y * Nodes.SCALE() + Nodes.PAN_Y();
+	}
+
+	static BUTTONS_H(node: TNode): i32 {
+		let h = 0.0;
+		for (let but of node.buttons) {
+			if (but.type == "RGBA") h += 102 * Nodes.SCALE() + Nodes.LINE_H() * 5; // Color wheel + controls
+			else if (but.type == "VECTOR") h += Nodes.LINE_H() * 4;
+			else if (but.type == "CUSTOM") h += Nodes.LINE_H() * but.height;
+			else h += Nodes.LINE_H();
+		}
+		return Math.floor(h);
+	}
+
+	static OUTPUTS_H(sockets: TNodeSocket[], length: Null<i32> = null): i32 {
+		let h = 0.0;
+		for (let i = 0; i < (length == null ? sockets.length : length); ++i) {
+			h += Nodes.LINE_H();
+		}
+		return Math.floor(h);
+	}
+
+	static inputLinked(canvas: TNodeCanvas, node_id: i32, i: i32): bool {
+		for (let l of canvas.links) if (l.to_id == node_id && l.to_socket == i) return true;
+		return false;
+	}
+
+	static INPUTS_H(canvas: TNodeCanvas, sockets: TNodeSocket[], length: Null<i32> = null): i32 {
+		let h = 0.0;
+		for (let i = 0; i < (length == null ? sockets.length : length); ++i) {
+			if (sockets[i].type == "VECTOR" && sockets[i].display == 1 && !Nodes.inputLinked(canvas, sockets[i].node_id, i)) h += Nodes.LINE_H() * 4;
+			else h += Nodes.LINE_H();
+		}
+		return Math.floor(h);
+	}
+
+	static INPUT_Y(canvas: TNodeCanvas, sockets: TNodeSocket[], pos: i32): i32 {
+		return Math.floor(Nodes.LINE_H() * 1.62) + Nodes.INPUTS_H(canvas, sockets, pos);
+	}
+
+	static OUTPUT_Y(sockets: TNodeSocket[], pos: i32): i32 {
+		return Math.floor(Nodes.LINE_H() * 1.62) + Nodes.OUTPUTS_H(sockets, pos);
+	}
+
+	static LINE_H(): i32 {
+		return Math.floor(Nodes.ELEMENT_H * Nodes.SCALE());
+	}
+
+	static p(f: f32): f32 {
+		return f * Nodes.SCALE();
+	}
+
 	static eps = 0.00001;
+
+	static on_custom_button(node_id: i32, button_name: string) {
+		eval(button_name + "(Zui.current, Nodes.current, Nodes.current.getNode(currentCanvas.nodes, node_id))");
+	}
 
 	static jsToC(type: string, d: any): Uint8Array {
 		if (type == "RGBA") {
@@ -866,224 +1046,35 @@ class Nodes {
 	}
 
 	static node_replace: TNode[] = [];
+}
 
-	nodeCanvas(ui: Zui, canvas: TNodeCanvas) {
-		Nodes.current = this;
-		Nodes.currentCanvas = canvas;
+type ZuiOptions = {
+	font: font_t;
+	theme: Theme;
+	scaleFactor: f32;
+	color_wheel: image_t;
+	black_white_gradient: image_t;
+}
 
-		// Fill in optional values
-		Nodes.updateCanvasFormat(canvas);
+type HandleOptions = {
+	selected?: boolean,
+	position?: i32,
+	value?: f32,
+	text?: string,
+	color?: Color,
+	layout?: Layout
+}
 
-		// Ensure properties order
-		let canvas_: TNodeCanvas = {
-			name: canvas.name,
-			nodes: canvas.nodes.slice(),
-			nodes_count: canvas.nodes.length,
-			links: canvas.links.slice(),
-			links_count: canvas.links.length,
-		}
+type TColoring = {
+	color: i32;
+	start: string[];
+	end: string;
+	separated: boolean;
+}
 
-		// Convert default data
-		for (let n of canvas_.nodes) {
-			for (let soc of n.inputs) {
-				soc.default_value = Nodes.jsToC(soc.type, soc.default_value);
-			}
-			for (let soc of n.outputs) {
-				soc.default_value = Nodes.jsToC(soc.type, soc.default_value);
-			}
-			for (let but of n.buttons) {
-				but.default_value = Nodes.jsToC(but.type, but.default_value);
-				but.data = Nodes.jsToCData(but.type, but.data);
-			}
-		}
-
-		// Ensure properties order
-		for (let n of canvas_.nodes) {
-			n.name = Nodes.tr(n.name);
-			for (let i = 0; i < n.inputs.length; ++i) {
-				n.inputs[i] = {
-					id: n.inputs[i].id,
-					node_id: n.inputs[i].node_id,
-					name: Nodes.tr(n.inputs[i].name),
-					type: n.inputs[i].type,
-					color: n.inputs[i].color,
-					default_value: n.inputs[i].default_value,
-					min: n.inputs[i].min,
-					max: n.inputs[i].max,
-					precision: n.inputs[i].precision,
-					display: n.inputs[i].display,
-				};
-			}
-			for (let i = 0; i < n.outputs.length; ++i) {
-				n.outputs[i] = {
-					id: n.outputs[i].id,
-					node_id: n.outputs[i].node_id,
-					name: Nodes.tr(n.outputs[i].name),
-					type: n.outputs[i].type,
-					color: n.outputs[i].color,
-					default_value: n.outputs[i].default_value,
-					min: n.outputs[i].min,
-					max: n.outputs[i].max,
-					precision: n.outputs[i].precision,
-					display: n.outputs[i].display,
-				};
-			}
-			for (let i = 0; i < n.buttons.length; ++i) {
-				n.buttons[i] = {
-					name: Nodes.tr(n.buttons[i].name),
-					type: n.buttons[i].type,
-					output: n.buttons[i].output,
-					default_value: n.buttons[i].default_value,
-					data: n.buttons[i].data,
-					min: n.buttons[i].min,
-					max: n.buttons[i].max,
-					precision: n.buttons[i].precision,
-					height: n.buttons[i].height,
-				};
-			}
-		}
-
-		// Reserve capacity
-		while (canvas_.nodes.length < 128) {
-			canvas_.nodes.push({ id: -1, name: "", type: "", x: 0, y: 0, color: 0, inputs: [], outputs: [], buttons: [], width: 0 });
-		}
-		while (canvas_.links.length < 256) {
-			canvas_.links.push({ id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
-		}
-
-		let packed = Krom.zui_node_canvas(this.nodes_, ArmPack.encode(canvas_));
-		canvas_ = ArmPack.decode(packed);
-		if (canvas_.nodes == null) canvas_.nodes = [];
-		if (canvas_.links == null) canvas_.links = [];
-
-		// Convert default data
-		for (let n of canvas_.nodes) {
-			for (let soc of n.inputs) {
-				soc.default_value = Nodes.cToJs(soc.type, soc.default_value);
-			}
-			for (let soc of n.outputs) {
-				soc.default_value = Nodes.cToJs(soc.type, soc.default_value);
-			}
-			for (let but of n.buttons) {
-				but.default_value = Nodes.cToJs(but.type, but.default_value);
-				but.data = Nodes.cToJsData(but.type, but.data);
-			}
-		}
-
-		canvas.name = canvas_.name;
-		canvas.nodes = canvas_.nodes;
-		canvas.links = canvas_.links;
-
-		// Restore nodes modified in js while Krom.zui_node_canvas was running
-		for (let n of Nodes.node_replace) {
-			for (let i = 0; i < canvas.nodes.length; ++i) {
-				if (canvas.nodes[i].id == n.id) {
-					canvas.nodes[i] = n;
-					break;
-				}
-			}
-		}
-		Nodes.node_replace = [];
-
-		this.ELEMENT_H = ui.t.ELEMENT_H + 2;
-	}
-
-	rgbaPopup(ui: Zui, nhandle: Handle, val: Float32Array, x: i32, y: i32) {
-		Krom.zui_nodes_rgba_popup(nhandle.handle_, val.buffer, x, y);
-	}
-
-	removeNode(n: TNode, canvas: TNodeCanvas) {
-		if (n == null) return;
-		let i = 0;
-		while (i < canvas.links.length) {
-			let l = canvas.links[i];
-			if (l.from_id == n.id || l.to_id == n.id) {
-				canvas.links.splice(i, 1);
-			}
-			else i++;
-		}
-		array_remove(canvas.nodes, n);
-		// if (onNodeRemove != null) {
-		// 	onNodeRemove(n);
-		// }
-	}
-
-	SCALE(): f32 {
-		return Krom.zui_nodes_scale();
-	}
-
-	PAN_X(): f32 {
-		return Krom.zui_nodes_pan_x();
-	}
-
-	PAN_Y(): f32 {
-		return Krom.zui_nodes_pan_y();
-	}
-
-	NODE_H(canvas: TNodeCanvas, node: TNode): i32 {
-		return Math.floor(this.LINE_H() * 1.2 + this.INPUTS_H(canvas, node.inputs) + this.OUTPUTS_H(node.outputs) + this.BUTTONS_H(node));
-	}
-
-	NODE_W(node: TNode): i32 {
-		return Math.floor((node.width != 0 ? node.width : 140) * this.SCALE());
-	}
-
-	NODE_X(node: TNode): f32 {
-		return node.x * this.SCALE() + this.PAN_X();
-	}
-
-	NODE_Y(node: TNode): f32 {
-		return node.y * this.SCALE() + this.PAN_Y();
-	}
-
-	BUTTONS_H(node: TNode): i32 {
-		let h = 0.0;
-		for (let but of node.buttons) {
-			if (but.type == "RGBA") h += 102 * this.SCALE() + this.LINE_H() * 5; // Color wheel + controls
-			else if (but.type == "VECTOR") h += this.LINE_H() * 4;
-			else if (but.type == "CUSTOM") h += this.LINE_H() * but.height;
-			else h += this.LINE_H();
-		}
-		return Math.floor(h);
-	}
-
-	OUTPUTS_H(sockets: TNodeSocket[], length: Null<i32> = null): i32 {
-		let h = 0.0;
-		for (let i = 0; i < (length == null ? sockets.length : length); ++i) {
-			h += this.LINE_H();
-		}
-		return Math.floor(h);
-	}
-
-	inputLinked(canvas: TNodeCanvas, node_id: i32, i: i32): bool {
-		for (let l of canvas.links) if (l.to_id == node_id && l.to_socket == i) return true;
-		return false;
-	}
-
-	INPUTS_H(canvas: TNodeCanvas, sockets: TNodeSocket[], length: Null<i32> = null): i32 {
-		let h = 0.0;
-		for (let i = 0; i < (length == null ? sockets.length : length); ++i) {
-			if (sockets[i].type == "VECTOR" && sockets[i].display == 1 && !this.inputLinked(canvas, sockets[i].node_id, i)) h += this.LINE_H() * 4;
-			else h += this.LINE_H();
-		}
-		return Math.floor(h);
-	}
-
-	INPUT_Y(canvas: TNodeCanvas, sockets: TNodeSocket[], pos: i32): i32 {
-		return Math.floor(this.LINE_H() * 1.62) + this.INPUTS_H(canvas, sockets, pos);
-	}
-
-	OUTPUT_Y(sockets: TNodeSocket[], pos: i32): i32 {
-		return Math.floor(this.LINE_H() * 1.62) + this.OUTPUTS_H(sockets, pos);
-	}
-
-	LINE_H(): i32 {
-		return Math.floor(this.ELEMENT_H * this.SCALE());
-	}
-
-	p(f: f32): f32 {
-		return f * this.SCALE();
-	}
+type TTextColoring = {
+	colorings: TColoring[];
+	default_color: i32;
 }
 
 type CanvasControl = {
@@ -1144,4 +1135,23 @@ type TNodeButton = {
 	max?: f32;
 	precision?: f32;
 	height?: f32;
+}
+
+enum Layout {
+	Vertical,
+	Horizontal,
+}
+
+enum Align {
+	Left,
+	Center,
+	Right,
+}
+
+enum State {
+	Idle,
+	Started,
+	Down,
+	Released,
+	Hovered,
 }

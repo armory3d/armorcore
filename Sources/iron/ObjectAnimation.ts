@@ -2,15 +2,15 @@
 class ObjectAnimationRaw {
 	base: AnimationRaw;
 	object: TBaseObject;
-	oactions: TSceneFormat[];
-	oaction: TObj;
+	oactions: scene_t[];
+	oaction: obj_t;
 	s0: f32 = 0.0;
 	bezierFrameIndex = -1;
 }
 
 class ObjectAnimation {
 
-	static create(object: TBaseObject, oactions: TSceneFormat[]): ObjectAnimationRaw {
+	static create(object: TBaseObject, oactions: scene_t[]): ObjectAnimationRaw {
 		let raw = new ObjectAnimationRaw();
 		raw.base = Animation.create();
 		raw.base.ext = raw;
@@ -21,14 +21,14 @@ class ObjectAnimation {
 		return raw;
 	}
 
-	static getAction = (raw: ObjectAnimationRaw, action: string): TObj => {
+	static getAction = (raw: ObjectAnimationRaw, action: string): obj_t => {
 		for (let a of raw.oactions) if (a != null && a.objects[0].name == action) return a.objects[0];
 		return null;
 	}
 
 	static updateObjectAnim = (raw: ObjectAnimationRaw) => {
 		ObjectAnimation.updateTransformAnim(raw, raw.oaction.anim, raw.object.transform);
-		Transform.buildMatrix(raw.object.transform);
+		transform_build_matrix(raw.object.transform);
 	}
 
 	static interpolateLinear = (t: f32, t1: f32, t2: f32, v1: f32, v2: f32): f32 => {
@@ -42,7 +42,7 @@ class ObjectAnimation {
 			raw.base.frameIndex > 1 && t > frameValues[raw.base.frameIndex - 1] * raw.base.frameTime;
 	}
 
-	static updateTransformAnim = (raw: ObjectAnimationRaw, anim: TAnimation, transform: TransformRaw) => {
+	static updateTransformAnim = (raw: ObjectAnimationRaw, anim: anim_t, transform: transform_t) => {
 		if (anim == null) return;
 
 		let total = anim.end * raw.base.frameTime - anim.begin * raw.base.frameTime;
@@ -50,12 +50,12 @@ class ObjectAnimation {
 		if (anim.has_delta) {
 			let t = transform;
 			if (t.dloc == null) {
-				t.dloc = Vec4.create();
-				t.drot = Quat.create();
-				t.dscale = Vec4.create();
+				t.dloc = vec4_create();
+				t.drot = quat_create();
+				t.dscale = vec4_create();
 			}
-			Vec4.set(t.dloc, 0, 0, 0);
-			Vec4.set(t.dscale, 0, 0, 0);
+			vec4_set(t.dloc, 0, 0, 0);
+			vec4_set(t.dscale, 0, 0, 0);
 			t._deulerX = t._deulerY = t._deulerZ = 0.0;
 		}
 
@@ -94,9 +94,9 @@ class ObjectAnimation {
 				case "xloc": transform.loc.x = value;
 				case "yloc": transform.loc.y = value;
 				case "zloc": transform.loc.z = value;
-				case "xrot": Transform.setRotation(transform, value, transform._eulerY, transform._eulerZ);
-				case "yrot": Transform.setRotation(transform, transform._eulerX, value, transform._eulerZ);
-				case "zrot": Transform.setRotation(transform, transform._eulerX, transform._eulerY, value);
+				case "xrot": transform_set_rot(transform, value, transform._eulerY, transform._eulerZ);
+				case "yrot": transform_set_rot(transform, transform._eulerX, value, transform._eulerZ);
+				case "zrot": transform_set_rot(transform, transform._eulerX, transform._eulerY, value);
 				case "qwrot": transform.rot.w = value;
 				case "qxrot": transform.rot.x = value;
 				case "qyrot": transform.rot.y = value;
@@ -143,7 +143,7 @@ class ObjectAnimation {
 		if (!raw.base.isSkinned) ObjectAnimation.updateObjectAnim(raw);
 	}
 
-	static isTrackEnd = (raw: ObjectAnimationRaw, track: TTrack): bool => {
+	static isTrackEnd = (raw: ObjectAnimationRaw, track: track_t): bool => {
 		return raw.base.speed > 0 ?
 			raw.base.frameIndex >= track.frames.length - 2 :
 			raw.base.frameIndex <= 0;

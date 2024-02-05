@@ -1,11 +1,11 @@
 
 class TMeshObject {
 	base: TBaseObject;
-	data: TMeshData = null;
-	materials: TMaterialData[];
+	data: mesh_data_t = null;
+	materials: material_data_t[];
 	materialIndex = 0;
 	///if arm_particles
-	particleSystems: TParticleSystem[] = null; // Particle owner
+	particleSystems: particle_sys_t[] = null; // Particle owner
 	particleChildren: TMeshObject[] = null;
 	particleOwner: TMeshObject = null; // Particle object
 	particleIndex = -1;
@@ -15,30 +15,30 @@ class TMeshObject {
 	frustumCulling = true;
 	skip_context: string = null; // Do not draw this context
 	force_context: string = null; // Draw only this context
-	prevMatrix = Mat4.identity();
+	prevMatrix = mat4_identity();
 }
 
 class MeshObject {
-	static lastPipeline: PipelineStateRaw = null;
+	static lastPipeline: pipeline_t = null;
 
-	static create(data: TMeshData, materials: TMaterialData[]): TMeshObject {
+	static create(data: mesh_data_t, materials: material_data_t[]): TMeshObject {
 		let raw = new TMeshObject();
 		raw.base = BaseObject.create();
 		raw.base.ext = raw;
 
 		raw.materials = materials;
 		MeshObject.setData(raw, data);
-		Scene.meshes.push(raw);
+		scene_meshes.push(raw);
 		return raw;
 	}
 
-	static setData = (raw: TMeshObject, data: TMeshData) => {
+	static setData = (raw: TMeshObject, data: mesh_data_t) => {
 		raw.data = data;
 		data._refcount++;
 		MeshData.build(data);
 
 		// Scale-up packed (-1,1) mesh coords
-		raw.base.transform.scaleWorld = data.scale_pos;
+		raw.base.transform.scale_world = data.scale_pos;
 	}
 
 	static remove = (raw: TMeshObject) => {
@@ -48,17 +48,17 @@ class MeshObject {
 			raw.particleChildren = null;
 		}
 		if (raw.particleSystems != null) {
-			for (let psys of raw.particleSystems) ParticleSystem.remove(psys);
+			for (let psys of raw.particleSystems) particle_sys_remove(psys);
 			raw.particleSystems = null;
 		}
 		///end
-		array_remove(Scene.meshes, raw);
+		array_remove(scene_meshes, raw);
 		raw.data._refcount--;
 
 		BaseObject.removeSuper(raw.base);
 	}
 
-	static setupAnimation = (raw: TMeshObject, oactions: TSceneFormat[] = null) => {
+	static setupAnimation = (raw: TMeshObject, oactions: scene_t[] = null) => {
 		///if arm_skin
 		let hasAction = raw.base.parent != null && raw.base.parent.raw != null && raw.base.parent.raw.bone_actions != null;
 		if (hasAction) {
@@ -73,9 +73,9 @@ class MeshObject {
 	}
 
 	///if arm_particles
-	static setupParticleSystem = (raw: TMeshObject, sceneName: string, pref: TParticleReference) => {
+	static setupParticleSystem = (raw: TMeshObject, sceneName: string, pref: particle_ref_t) => {
 		if (raw.particleSystems == null) raw.particleSystems = [];
-		let psys = ParticleSystem.create(sceneName, pref);
+		let psys = particle_sys_create(sceneName, pref);
 		raw.particleSystems.push(psys);
 	}
 	///end
@@ -122,7 +122,7 @@ class MeshObject {
 		return raw.base.culled;
 	}
 
-	static skipContext = (raw: TMeshObject, context: string, mat: TMaterialData): bool => {
+	static skipContext = (raw: TMeshObject, context: string, mat: material_data_t): bool => {
 		if (mat.skip_context != null &&
 			mat.skip_context == context) {
 			return true;
@@ -130,13 +130,13 @@ class MeshObject {
 		return false;
 	}
 
-	static getContexts = (raw: TMeshObject, context: string, materials: TMaterialData[], materialContexts: TMaterialContext[], shaderContexts: TShaderContext[]) => {
+	static getContexts = (raw: TMeshObject, context: string, materials: material_data_t[], materialContexts: material_context_t[], shaderContexts: shader_context_t[]) => {
 		for (let mat of materials) {
 			let found = false;
 			for (let i = 0; i < mat.contexts.length; ++i) {
 				if (mat.contexts[i].name.substr(0, context.length) == context) {
 					materialContexts.push(mat._contexts[i]);
-					shaderContexts.push(ShaderData.getContext(mat._shader, context));
+					shaderContexts.push(shader_data_get_context(mat._shader, context));
 					found = true;
 					break;
 				}
@@ -148,10 +148,10 @@ class MeshObject {
 		}
 	}
 
-	static render = (raw: TMeshObject, g: Graphics4Raw, context: string, bindParams: string[]) => {
+	static render = (raw: TMeshObject, g: g4_t, context: string, bindParams: string[]) => {
 		if (raw.data == null || !raw.data._ready) return; // Data not yet streamed
 		if (!raw.base.visible) return; // Skip render if object is hidden
-		if (MeshObject.cullMesh(raw, context, Scene.camera, RenderPath.light)) return;
+		if (MeshObject.cullMesh(raw, context, scene_camera,_render_path_light)) return;
 		let meshContext = raw.base.raw != null ? context == "mesh" : false;
 
 		///if arm_particles
@@ -160,8 +160,8 @@ class MeshObject {
 			if (raw.particleChildren == null) {
 				raw.particleChildren = [];
 				for (let psys of raw.particleSystems) {
-					// let c: TMeshObject = Scene.getChild(psys.data.raw.instance_object);
-					Scene.spawnObject(psys.data.instance_object, null, (o: TBaseObject) => {
+					// let c: TMeshObject = scene_get_child(psys.data.raw.instance_object);
+					scene_spawn_object(psys.data.instance_object, null, (o: TBaseObject) => {
 						if (o != null) {
 							let c: TMeshObject = o.ext;
 							raw.particleChildren.push(c);
@@ -172,7 +172,7 @@ class MeshObject {
 				}
 			}
 			for (let i = 0; i < raw.particleSystems.length; ++i) {
-				ParticleSystem.update(raw.particleSystems[i], raw.particleChildren[i], raw);
+				particle_sys_update(raw.particleSystems[i], raw.particleChildren[i], raw);
 			}
 		}
 		if (raw.particleSystems != null && raw.particleSystems.length > 0 && !raw.base.raw.render_emitter) return;
@@ -181,18 +181,18 @@ class MeshObject {
 		if (MeshObject.cullMaterial(raw, context)) return;
 
 		// Get context
-		let materialContexts: TMaterialContext[] = [];
-		let shaderContexts: TShaderContext[] = [];
+		let materialContexts: material_context_t[] = [];
+		let shaderContexts: shader_context_t[] = [];
 		MeshObject.getContexts(raw, context, raw.materials, materialContexts, shaderContexts);
 
-		Uniforms.posUnpack = raw.data.scale_pos;
-		Uniforms.texUnpack = raw.data.scale_tex;
-		Transform.update(raw.base.transform);
+		uniforms_pos_unpack = raw.data.scale_pos;
+		uniforms_tex_unpack = raw.data.scale_tex;
+		transform_update(raw.base.transform);
 
 		// Render mesh
-		for (let i = 0; i < raw.data._indexBuffers.length; ++i) {
+		for (let i = 0; i < raw.data._index_buffers.length; ++i) {
 
-			let mi = raw.data._materialIndices[i];
+			let mi = raw.data._material_indices[i];
 			if (shaderContexts.length <= mi || shaderContexts[mi] == null) continue;
 			raw.materialIndex = mi;
 
@@ -204,47 +204,47 @@ class MeshObject {
 			let elems = scontext.vertex_elements;
 
 			// Uniforms
-			if (scontext._pipeState != MeshObject.lastPipeline) {
-				Graphics4.setPipeline(scontext._pipeState);
-				MeshObject.lastPipeline = scontext._pipeState;
-				// Uniforms.setContextConstants(g, scontext, bindParams);
+			if (scontext._pipe_state != MeshObject.lastPipeline) {
+				g4_set_pipeline(scontext._pipe_state);
+				MeshObject.lastPipeline = scontext._pipe_state;
+				// setContextConstants(g, scontext, bindParams);
 			}
-			Uniforms.setContextConstants(g, scontext, bindParams); //
-			Uniforms.setObjectConstants(g, scontext, raw.base);
+			uniforms_set_context_consts(g, scontext, bindParams); //
+			uniforms_set_obj_consts(g, scontext, raw.base);
 			if (materialContexts.length > mi) {
-				Uniforms.setMaterialConstants(g, scontext, materialContexts[mi]);
+				uniforms_set_material_consts(g, scontext, materialContexts[mi]);
 			}
 
 			// VB / IB
-			if (raw.data._instancedVB != null) {
-				Graphics4.setVertexBuffers([MeshData.get(raw.data, elems), raw.data._instancedVB]);
+			if (raw.data._instanced_vb != null) {
+				g4_set_vertex_buffers([MeshData.get(raw.data, elems), raw.data._instanced_vb]);
 			}
 			else {
-				Graphics4.setVertexBuffer(MeshData.get(raw.data, elems));
+				g4_set_vertex_buffer(MeshData.get(raw.data, elems));
 			}
 
-			Graphics4.setIndexBuffer(raw.data._indexBuffers[i]);
+			g4_set_index_buffer(raw.data._index_buffers[i]);
 
 			// Draw
 			if (raw.data._instanced) {
-				Graphics4.drawIndexedVerticesInstanced(raw.data._instanceCount, 0, -1);
+				g4_draw_inst(raw.data._instance_count, 0, -1);
 			}
 			else {
-				Graphics4.drawIndexedVertices(0, -1);
+				g4_draw(0, -1);
 			}
 		}
 
-		Mat4.setFrom(raw.prevMatrix, raw.base.transform.worldUnpack);
+		mat4_set_from(raw.prevMatrix, raw.base.transform.world_unpack);
 	}
 
-	static validContext = (raw: TMeshObject, mats: TMaterialData[], context: string): bool => {
+	static validContext = (raw: TMeshObject, mats: material_data_t[], context: string): bool => {
 		for (let mat of mats) if (MaterialData.getContext(mat, context) != null) return true;
 		return false;
 	}
 
 	static computeCameraDistance = (raw: TMeshObject, camX: f32, camY: f32, camZ: f32) => {
 		// Render path mesh sorting
-		raw.cameraDistance = Vec4.distancef(camX, camY, camZ, Transform.worldx(raw.base.transform), Transform.worldy(raw.base.transform), Transform.worldz(raw.base.transform));
+		raw.cameraDistance = vec4_dist_f(camX, camY, camZ, transform_world_x(raw.base.transform), transform_world_y(raw.base.transform), transform_world_z(raw.base.transform));
 	}
 
 	static computeScreenSize = (raw: TMeshObject, camera: TCameraObject) => {

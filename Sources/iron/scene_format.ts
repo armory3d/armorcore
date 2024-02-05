@@ -1,25 +1,25 @@
 
-type TSceneFormat = {
+type scene_t = {
 	name?: string;
-	mesh_datas?: TMeshData[];
-	light_datas?: TLightData[];
-	camera_datas?: TCameraData[];
+	mesh_datas?: mesh_data_t[];
+	light_datas?: light_data_t[];
+	camera_datas?: camera_data_t[];
 	camera_ref?: string; // Active camera
-	material_datas?: TMaterialData[];
-	particle_datas?: TParticleData[];
-	shader_datas?: TShaderData[];
-	speaker_datas?: TSpeakerData[];
-	world_datas?: TWorldData[];
+	material_datas?: material_data_t[];
+	particle_datas?: particle_data_t[];
+	shader_datas?: shader_data_t[];
+	speaker_datas?: speaker_data_t[];
+	world_datas?: world_data_t[];
 	world_ref?: string;
-	objects?: TObj[];
+	objects?: obj_t[];
 	embedded_datas?: string[]; // Preload for this scene, images only for now
 }
 
-type TMeshData = {
+type mesh_data_t = {
 	name: string;
-	vertex_arrays: TVertexArray[];
-	index_arrays: TIndexArray[];
-	skin?: TSkin;
+	vertex_arrays: vertex_array_t[];
+	index_arrays: index_array_t[];
+	skin?: skin_t;
 	instanced_data?: Float32Array;
 	instanced_type?: Null<i32>; // off, loc, loc+rot, loc+scale, loc+rot+scale
 	scale_pos?: Null<f32>; // Unpack pos from (-1,1) coords
@@ -27,26 +27,26 @@ type TMeshData = {
 	// Runtime:
 	_refcount?: i32; // Number of users
 	_handle?: string; // Handle used to retrieve this object in Data
-	_vertexBuffer?: VertexBufferRaw;
-	_vertexBufferMap?: Map<string, VertexBufferRaw>;
-	_indexBuffers?: IndexBufferRaw[];
+	_vertex_buffer?: vertex_buffer_t;
+	_vertex_buffer_map?: Map<string, vertex_buffer_t>;
+	_index_buffers?: index_buffer_t[];
 	_ready?: bool;
 	_vertices?: DataView;
 	_indices?: Uint32Array[];
-	_materialIndices?: i32[];
-	_struct?: VertexStructureRaw;
-	_instancedVB?: VertexBufferRaw;
+	_material_indices?: i32[];
+	_struct?: vertex_struct_t;
+	_instanced_vb?: vertex_buffer_t;
 	_instanced?: bool;
-	_instanceCount?: i32;
+	_instance_count?: i32;
 	///if arm_skin
-	_skeletonTransformsI?: TMat4[];
-	_actions?: Map<string, TObj[]>;
-	_mats?: Map<string, TMat4[]>;
+	_skeleton_transforms_inv?: mat4_t[];
+	_actions?: Map<string, obj_t[]>;
+	_mats?: Map<string, mat4_t[]>;
 	///end
 }
 
-type TSkin = {
-	transform: TTransform;
+type skin_t = {
+	transform: transform_values_t;
 	bone_ref_array: string[];
 	bone_len_array: Float32Array;
 	transformsI: Float32Array[]; // per-bone, size = 16, with skin.transform, pre-inverted
@@ -55,7 +55,7 @@ type TSkin = {
 	bone_weight_array: Int16Array;
 }
 
-type TVertexArray = {
+type vertex_array_t = {
 	attrib: string;
 	values: Int16Array;
 	data: string; // short4norm, short2norm
@@ -64,12 +64,12 @@ type TVertexArray = {
 	_size?: Null<i32>;
 }
 
-type TIndexArray = {
+type index_array_t = {
 	values: Uint32Array; // size = 3
 	material: i32;
 }
 
-type TLightData = {
+type light_data_t = {
 	name: string;
 	type: string; // sun, point, spot
 	color: Float32Array;
@@ -81,7 +81,7 @@ type TLightData = {
 	size_y?: Null<f32>;
 }
 
-type TCameraData = {
+type camera_data_t = {
 	name: string;
 	near_plane: f32;
 	far_plane: f32;
@@ -92,34 +92,34 @@ type TCameraData = {
 	ortho?: Float32Array; // Indicates ortho camera, left, right, bottom, top
 }
 
-type TMaterialData = {
+type material_data_t = {
 	name: string;
 	shader: string;
-	contexts: TMaterialContext[];
+	contexts: material_context_t[];
 	skip_context?: string;
-	override_context?: TShaderOverride;
+	override_context?: shader_override_t;
 	// Runtime:
 	_uid: f32;
-	_shader: TShaderData;
-	_contexts: TMaterialContext[];
+	_shader: shader_data_t;
+	_contexts: material_context_t[];
 }
 
-type TShaderOverride = {
+type shader_override_t = {
 	cull_mode?: string;
 	addressing?: string;
 	filter?: string;
 	shared_sampler?: string;
 }
 
-type TMaterialContext = {
+type material_context_t = {
 	name: string;
-	bind_constants?: TBindConstant[];
-	bind_textures?: TBindTexture[];
+	bind_constants?: bind_const_t[];
+	bind_textures?: bind_tex_t[];
 	// Runtime:
-	_textures?: ImageRaw[];
+	_textures?: image_t[];
 }
 
-type TBindConstant = {
+type bind_const_t = {
 	name: string;
 	vec4?: Float32Array;
 	vec3?: Float32Array;
@@ -129,7 +129,7 @@ type TBindConstant = {
 	int?: Null<i32>;
 }
 
-type TBindTexture = {
+type bind_tex_t = {
 	name: string;
 	file: string;
 	format?: string; // RGBA32, RGBA64, R8
@@ -143,24 +143,24 @@ type TBindTexture = {
 	source?: string; // file, movie
 }
 
-type TShaderData = {
+type shader_data_t = {
 	name: string;
-	contexts: TShaderContext[];
+	contexts: shader_context_t[];
 	// Runtime:
-	_contexts: TShaderContext[];
+	_contexts: shader_context_t[];
 }
 
-type TShaderContext = {
+type shader_context_t = {
 	name: string;
 	depth_write: bool;
 	compare_mode: string;
 	cull_mode: string;
-	vertex_elements: TVertexElement[];
+	vertex_elements: vertex_element_t[];
 	vertex_shader: string;
 	fragment_shader: string;
 	geometry_shader?: string;
-	constants?: TShaderConstant[];
-	texture_units?: TTextureUnit[];
+	constants?: shader_const_t[];
+	texture_units?: tex_unit_t[];
 	blend_source?: string;
 	blend_destination?: string;
 	blend_operation?: string;
@@ -175,20 +175,20 @@ type TShaderContext = {
 	depth_attachment?: string; // DEPTH32
 	shader_from_source?: Null<bool>; // Build shader at runtime using fromSource()
 	// Runtime:
-	_pipeState?: PipelineStateRaw;
-	_constants?: ConstantLocation[];
-	_textureUnits?: TextureUnit[];
-	_overrideContext?: TShaderOverride;
-	_structure?: VertexStructureRaw;
-	_instancingType?: i32;
+	_pipe_state?: pipeline_t;
+	_constants?: kinc_const_loc_t[];
+	_tex_units?: kinc_tex_unit_t[];
+	_override_context?: shader_override_t;
+	_structure?: vertex_struct_t;
+	_instancing_type?: i32;
 }
 
-type TVertexElement = {
+type vertex_element_t = {
 	name: string;
 	data: string; // "short4norm", "short2norm"
 }
 
-type TShaderConstant = {
+type shader_const_t = {
 	name: string;
 	type: string;
 	link?: string;
@@ -200,7 +200,7 @@ type TShaderConstant = {
 	int?: Null<i32>;
 }
 
-type TTextureUnit = {
+type tex_unit_t = {
 	name: string;
 	is_image?: Null<bool>; // image2D
 	link?: string;
@@ -211,7 +211,7 @@ type TTextureUnit = {
 	mipmap_filter?: string;
 }
 
-type TSpeakerData = {
+type speaker_data_t = {
 	name: string;
 	sound: string;
 	muted: bool;
@@ -222,7 +222,7 @@ type TSpeakerData = {
 	play_on_start: bool;
 }
 
-type TWorldData = {
+type world_data_t = {
 	name: string;
 	background_color: i32;
 	strength: f32;
@@ -231,17 +231,17 @@ type TWorldData = {
 	radiance_mipmaps?: Null<i32>;
 	envmap?: string;
 	// Runtime:
-	_envmap?: ImageRaw;
-	_radiance?: ImageRaw;
-	_radianceMipmaps?: ImageRaw[];
+	_envmap?: image_t;
+	_radiance?: image_t;
+	_radianceMipmaps?: image_t[];
 	_irradiance?: Float32Array;
 }
 
-type TIrradiance = {
+type irradiance_t = {
 	irradiance: Float32Array; // Blob with spherical harmonics, bands 0,1,2
 }
 
-type TParticleData = {
+type particle_data_t = {
 	name: string;
 	type: i32; // 0 - Emitter, Hair
 	loop: bool;
@@ -261,27 +261,27 @@ type TParticleData = {
 	weight_gravity: f32;
 }
 
-type TParticleReference = {
+type particle_ref_t = {
 	name: string;
 	particle: string;
 	seed: i32;
 }
 
-type TObj = {
+type obj_t = {
 	type: string; // object, mesh_object, light_object, camera_object, speaker_object, decal_object
 	name: string;
 	data_ref: string;
-	transform: TTransform;
+	transform: transform_values_t;
 	material_refs?: string[];
-	particle_refs?: TParticleReference[];
+	particle_refs?: particle_ref_t[];
 	render_emitter?: bool;
 	is_particle?: Null<bool>; // This object is used as a particle object
-	children?: TObj[];
+	children?: obj_t[];
 	dimensions?: Float32Array; // Geometry objects
 	object_actions?: string[];
 	bone_actions?: string[];
-	anim?: TAnimation; // Bone/object animation
-	parent?: TObj;
+	anim?: anim_t; // Bone/object animation
+	parent?: obj_t;
 	parent_bone?: string;
 	parent_bone_tail?: Float32Array; // Translate from head to tail
 	parent_bone_tail_pose?: Float32Array;
@@ -293,13 +293,13 @@ type TObj = {
 	is_ik_fk_only?: Null<bool>; // Bone IK or FK only
 }
 
-type TTransform = {
+type transform_values_t = {
 	target?: string;
 	values: Float32Array;
 }
 
-type TAnimation = {
-	tracks: TTrack[];
+type anim_t = {
+	tracks: track_t[];
 	begin?: Null<i32>; // Frames, for non-sampled
 	end?: Null<i32>;
 	has_delta?: Null<bool>; // Delta transform
@@ -307,7 +307,7 @@ type TAnimation = {
 	marker_names?: string[];
 }
 
-type TTrack = {
+type track_t = {
 	target: string;
 	frames: Uint32Array;
 	values: Float32Array; // sampled - full matrix transforms, non-sampled - values

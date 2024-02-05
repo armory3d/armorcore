@@ -3,7 +3,7 @@ class MaterialData {
 
 	static uidCounter = 0;
 
-	static create(raw: TMaterialData, done: (data: TMaterialData)=>void, file = "") {
+	static create(raw: material_data_t, done: (data: material_data_t)=>void, file = "") {
 		raw._uid = ++MaterialData.uidCounter; // Start from 1
 
 		let ref = raw.shader.split("/");
@@ -18,7 +18,7 @@ class MaterialData {
 			data_ref = raw.shader;
 		}
 
-		Data.getShader(object_file, data_ref, (b: TShaderData) => {
+		Data.getShader(object_file, data_ref, (b: shader_data_t) => {
 			raw._shader = b;
 
 			// Contexts have to be in the same order as in raw data for now
@@ -28,7 +28,7 @@ class MaterialData {
 
 			for (let i = 0; i < raw.contexts.length; ++i) {
 				let c = raw.contexts[i];
-				MaterialContext.create(c, (self: TMaterialContext) => {
+				MaterialContext.create(c, (self: material_context_t) => {
 					raw._contexts[i] = self;
 					contextsLoaded++;
 					if (contextsLoaded == raw.contexts.length) done(raw);
@@ -37,9 +37,9 @@ class MaterialData {
 		}, raw.override_context);
 	}
 
-	static parse = (file: string, name: string, done: (data: TMaterialData)=>void) => {
-		Data.getSceneRaw(file, (format: TSceneFormat) => {
-			let raw: TMaterialData = Data.getMaterialRawByName(format.material_datas, name);
+	static parse = (file: string, name: string, done: (data: material_data_t)=>void) => {
+		Data.getSceneRaw(file, (format: scene_t) => {
+			let raw: material_data_t = Data.getMaterialRawByName(format.material_datas, name);
 			if (raw == null) {
 				Krom.log(`Material data "${name}" not found!`);
 				done(null);
@@ -48,7 +48,7 @@ class MaterialData {
 		});
 	}
 
-	static getContext = (raw: TMaterialData, name: string): TMaterialContext => {
+	static getContext = (raw: material_data_t, name: string): material_context_t => {
 		for (let c of raw._contexts) {
 			// 'mesh' will fetch both 'mesh' and 'meshheight' contexts
 			if (c.name.substr(0, name.length) == name) return c;
@@ -59,7 +59,7 @@ class MaterialData {
 
 class MaterialContext {
 
-	static create(raw: TMaterialContext, done: (context: TMaterialContext)=>void) {
+	static create(raw: material_context_t, done: (context: material_context_t)=>void) {
 
 		if (raw.bind_textures != null && raw.bind_textures.length > 0) {
 
@@ -75,25 +75,25 @@ class MaterialContext {
 					continue;
 				}
 
-				Data.getImage(tex.file, (image: ImageRaw) => {
+				Data.getImage(tex.file, (image: image_t) => {
 					raw._textures[i] = image;
 					texturesLoaded++;
 
 					// Set mipmaps
 					if (tex.mipmaps != null) {
-						let mipmaps: ImageRaw[] = [];
+						let mipmaps: image_t[] = [];
 						while (mipmaps.length < tex.mipmaps.length) mipmaps.push(null);
 						let mipmapsLoaded = 0;
 
 						for (let j = 0; j < tex.mipmaps.length; ++j) {
 							let name = tex.mipmaps[j];
 
-							Data.getImage(name, (mipimg: ImageRaw) => {
+							Data.getImage(name, (mipimg: image_t) => {
 								mipmaps[j] = mipimg;
 								mipmapsLoaded++;
 
 								if (mipmapsLoaded == tex.mipmaps.length) {
-									Image.setMipmaps(image, mipmaps);
+									image_set_mipmaps(image, mipmaps);
 									tex.mipmaps = null;
 									tex.generate_mipmaps = false;
 
@@ -103,7 +103,7 @@ class MaterialContext {
 						}
 					}
 					else if (tex.generate_mipmaps == true && image != null) {
-						Image.generateMipmaps(image, 1000);
+						image_gen_mipmaps(image, 1000);
 						tex.mipmaps = null;
 						tex.generate_mipmaps = false;
 
@@ -117,8 +117,8 @@ class MaterialContext {
 		else done(raw);
 	}
 
-	static setTextureParameters = (raw: TMaterialContext, g: Graphics4Raw, textureIndex: i32, context: TShaderContext, unitIndex: i32) => {
+	static setTextureParameters = (raw: material_context_t, g: g4_t, textureIndex: i32, context: shader_context_t, unitIndex: i32) => {
 		// This function is called by MeshObject for samplers set using material context
-		ShaderContext.setTextureParameters(context, g, unitIndex, raw.bind_textures[textureIndex]);
+		shader_context_set_tex_params(context, g, unitIndex, raw.bind_textures[textureIndex]);
 	}
 }

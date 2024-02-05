@@ -2,38 +2,38 @@
 // Global data list and asynchronous data loading
 class Data {
 
-	static cachedSceneRaws: Map<string, TSceneFormat> = new Map();
-	static cachedMeshes: Map<string, TMeshData> = new Map();
-	static cachedLights: Map<string, TLightData> = new Map();
-	static cachedCameras: Map<string, TCameraData> = new Map();
-	static cachedMaterials: Map<string, TMaterialData> = new Map();
-	static cachedParticles: Map<string, TParticleData> = new Map();
-	static cachedWorlds: Map<string, TWorldData> = new Map();
-	static cachedShaders: Map<string, TShaderData> = new Map();
+	static cachedSceneRaws: Map<string, scene_t> = new Map();
+	static cachedMeshes: Map<string, mesh_data_t> = new Map();
+	static cachedLights: Map<string, light_data_t> = new Map();
+	static cachedCameras: Map<string, camera_data_t> = new Map();
+	static cachedMaterials: Map<string, material_data_t> = new Map();
+	static cachedParticles: Map<string, particle_data_t> = new Map();
+	static cachedWorlds: Map<string, world_data_t> = new Map();
+	static cachedShaders: Map<string, shader_data_t> = new Map();
 
 	static cachedBlobs: Map<string, ArrayBuffer> = new Map();
-	static cachedImages: Map<string, ImageRaw> = new Map();
-	static cachedVideos: Map<string, VideoRaw> = new Map();
-	static cachedFonts: Map<string, FontRaw> = new Map();
+	static cachedImages: Map<string, image_t> = new Map();
+	static cachedVideos: Map<string, video_t> = new Map();
+	static cachedFonts: Map<string, font_t> = new Map();
 	///if arm_audio
-	static cachedSounds: Map<string, SoundRaw> = new Map();
+	static cachedSounds: Map<string, sound_t> = new Map();
 	///end
 
 	static assetsLoaded = 0;
-	static loadingMeshes: Map<string, ((d: TMeshData)=>void)[]> = new Map();
-	static loadingLights: Map<string, ((d: TLightData)=>void)[]> = new Map();
-	static loadingCameras: Map<string, ((d: TCameraData)=>void)[]> = new Map();
-	static loadingMaterials: Map<string, ((d: TMaterialData)=>void)[]> = new Map();
-	static loadingParticles: Map<string, ((d: TParticleData)=>void)[]> = new Map();
-	static loadingWorlds: Map<string, ((d: TWorldData)=>void)[]> = new Map();
-	static loadingShaders: Map<string, ((d: TShaderData)=>void)[]> = new Map();
-	static loadingSceneRaws: Map<string, ((fmt: TSceneFormat)=>void)[]> = new Map();
+	static loadingMeshes: Map<string, ((d: mesh_data_t)=>void)[]> = new Map();
+	static loadingLights: Map<string, ((d: light_data_t)=>void)[]> = new Map();
+	static loadingCameras: Map<string, ((d: camera_data_t)=>void)[]> = new Map();
+	static loadingMaterials: Map<string, ((d: material_data_t)=>void)[]> = new Map();
+	static loadingParticles: Map<string, ((d: particle_data_t)=>void)[]> = new Map();
+	static loadingWorlds: Map<string, ((d: world_data_t)=>void)[]> = new Map();
+	static loadingShaders: Map<string, ((d: shader_data_t)=>void)[]> = new Map();
+	static loadingSceneRaws: Map<string, ((fmt: scene_t)=>void)[]> = new Map();
 	static loadingBlobs: Map<string, ((ab: ArrayBuffer)=>void)[]> = new Map();
-	static loadingImages: Map<string, ((img: ImageRaw)=>void)[]> = new Map();
-	static loadingVideos: Map<string, ((vid: VideoRaw)=>void)[]> = new Map();
-	static loadingFonts: Map<string, ((f: FontRaw)=>void)[]> = new Map();
+	static loadingImages: Map<string, ((img: image_t)=>void)[]> = new Map();
+	static loadingVideos: Map<string, ((vid: video_t)=>void)[]> = new Map();
+	static loadingFonts: Map<string, ((f: font_t)=>void)[]> = new Map();
 	///if arm_audio
-	static loadingSounds: Map<string, ((snd: SoundRaw)=>void)[]> = new Map();
+	static loadingSounds: Map<string, ((snd: sound_t)=>void)[]> = new Map();
 	///end
 
 	static get sep(): string {
@@ -55,7 +55,7 @@ class Data {
 	static deleteAll = () => {
 		for (let c of Data.cachedMeshes.values()) MeshData.delete(c);
 		Data.cachedMeshes = new Map();
-		for (let c of Data.cachedShaders.values()) ShaderData.delete(c);
+		for (let c of Data.cachedShaders.values()) shader_data_delete(c);
 		Data.cachedShaders = new Map();
 		Data.cachedSceneRaws = new Map();
 		Data.cachedLights = new Map();
@@ -63,22 +63,22 @@ class Data {
 		Data.cachedMaterials = new Map();
 		Data.cachedParticles = new Map();
 		Data.cachedWorlds = new Map();
-		RenderPath.unload();
+		render_path_unload();
 
 		Data.cachedBlobs = new Map();
-		for (let c of Data.cachedImages.values()) Image.unload(c);
+		for (let c of Data.cachedImages.values()) image_unload(c);
 		Data.cachedImages = new Map();
 		///if arm_audio
-		for (let c of Data.cachedSounds.values()) Sound.unload(c);
+		for (let c of Data.cachedSounds.values()) sound_unload(c);
 		Data.cachedSounds = new Map();
 		///end
-		for (let c of Data.cachedVideos.values()) Video.unload(c);
+		for (let c of Data.cachedVideos.values()) video_unload(c);
 		Data.cachedVideos = new Map();
-		for (let c of Data.cachedFonts.values()) Font.unload(c);
+		for (let c of Data.cachedFonts.values()) font_unload(c);
 		Data.cachedFonts = new Map();
 	}
 
-	static getMesh = (file: string, name: string, done: (md: TMeshData)=>void) => {
+	static getMesh = (file: string, name: string, done: (md: mesh_data_t)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedMeshes.get(handle);
 		if (cached != null) {
@@ -94,7 +94,7 @@ class Data {
 
 		Data.loadingMeshes.set(handle, [done]);
 
-		MeshData.parse(file, name, (b: TMeshData) => {
+		MeshData.parse(file, name, (b: mesh_data_t) => {
 			Data.cachedMeshes.set(handle, b);
 			b._handle = handle;
 			for (let f of Data.loadingMeshes.get(handle)) f(b);
@@ -110,7 +110,7 @@ class Data {
 		Data.cachedMeshes.delete(handle);
 	}
 
-	static getLight = (file: string, name: string, done: (ld: TLightData)=>void) => {
+	static getLight = (file: string, name: string, done: (ld: light_data_t)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedLights.get(handle);
 		if (cached != null) {
@@ -126,14 +126,14 @@ class Data {
 
 		Data.loadingLights.set(handle, [done]);
 
-		light_data_parse(file, name, (b: TLightData) => {
+		light_data_parse(file, name, (b: light_data_t) => {
 			Data.cachedLights.set(handle, b);
 			for (let f of Data.loadingLights.get(handle)) f(b);
 			Data.loadingLights.delete(handle);
 		});
 	}
 
-	static getCamera = (file: string, name: string, done: (cd: TCameraData)=>void) => {
+	static getCamera = (file: string, name: string, done: (cd: camera_data_t)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedCameras.get(handle);
 		if (cached != null) {
@@ -149,14 +149,14 @@ class Data {
 
 		Data.loadingCameras.set(handle, [done]);
 
-		camera_data_parse(file, name, (b: TCameraData) => {
+		camera_data_parse(file, name, (b: camera_data_t) => {
 			Data.cachedCameras.set(handle, b);
 			for (let f of Data.loadingCameras.get(handle)) f(b);
 			Data.loadingCameras.delete(handle);
 		});
 	}
 
-	static getMaterial = (file: string, name: string, done: (md: TMaterialData)=>void) => {
+	static getMaterial = (file: string, name: string, done: (md: material_data_t)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedMaterials.get(handle);
 		if (cached != null) {
@@ -172,14 +172,14 @@ class Data {
 
 		Data.loadingMaterials.set(handle, [done]);
 
-		MaterialData.parse(file, name, (b: TMaterialData) => {
+		MaterialData.parse(file, name, (b: material_data_t) => {
 			Data.cachedMaterials.set(handle, b);
 			for (let f of Data.loadingMaterials.get(handle)) f(b);
 			Data.loadingMaterials.delete(handle);
 		});
 	}
 
-	static getParticle = (file: string, name: string, done: (pd: TParticleData)=>void) => {
+	static getParticle = (file: string, name: string, done: (pd: particle_data_t)=>void) => {
 		let handle = file + name;
 		let cached = Data.cachedParticles.get(handle);
 		if (cached != null) {
@@ -195,14 +195,14 @@ class Data {
 
 		Data.loadingParticles.set(handle, [done]);
 
-		particle_data_parse(file, name, (b: TParticleData) => {
+		particle_data_parse(file, name, (b: particle_data_t) => {
 			Data.cachedParticles.set(handle, b);
 			for (let f of Data.loadingParticles.get(handle)) f(b);
 			Data.loadingParticles.delete(handle);
 		});
 	}
 
-	static getWorld = (file: string, name: string, done: (wd: TWorldData)=>void) => {
+	static getWorld = (file: string, name: string, done: (wd: world_data_t)=>void) => {
 		if (name == null) { // No world defined in scene
 			done(null);
 			return;
@@ -223,14 +223,14 @@ class Data {
 
 		Data.loadingWorlds.set(handle, [done]);
 
-		WorldData.parse(file, name, (b: TWorldData) => {
+		world_data_parse(file, name, (b: world_data_t) => {
 			Data.cachedWorlds.set(handle, b);
 			for (let f of Data.loadingWorlds.get(handle)) f(b);
 			Data.loadingWorlds.delete(handle);
 		});
 	}
 
-	static getShader = (file: string, name: string, done: (sd: TShaderData)=>void, overrideContext: TShaderOverride = null) => {
+	static getShader = (file: string, name: string, done: (sd: shader_data_t)=>void, overrideContext: shader_override_t = null) => {
 		// Only one context override per shader data for now
 		let cacheName = name;
 		if (overrideContext != null) cacheName += "2";
@@ -248,14 +248,14 @@ class Data {
 
 		Data.loadingShaders.set(cacheName, [done]);
 
-		ShaderData.parse(file, name, (b: TShaderData) => {
+		shader_data_parse(file, name, (b: shader_data_t) => {
 			Data.cachedShaders.set(cacheName, b);
 			for (let f of Data.loadingShaders.get(cacheName)) f(b);
 			Data.loadingShaders.delete(cacheName);
 		}, overrideContext);
 	}
 
-	static getSceneRaw = (file: string, done: (fmt: TSceneFormat)=>void) => {
+	static getSceneRaw = (file: string, done: (fmt: scene_t)=>void) => {
 		let cached = Data.cachedSceneRaws.get(file);
 		if (cached != null) {
 			done(cached);
@@ -274,62 +274,62 @@ class Data {
 		let ext = file.endsWith(".arm") ? "" : ".arm";
 
 		Data.getBlob(file + ext, (b: ArrayBuffer) => {
-			let parsed: TSceneFormat = null;
-			parsed = ArmPack.decode(b);
+			let parsed: scene_t = null;
+			parsed = armpack_decode(b);
 			Data.returnSceneRaw(file, parsed);
 		});
 	}
 
-	static returnSceneRaw = (file: string, parsed: TSceneFormat) => {
+	static returnSceneRaw = (file: string, parsed: scene_t) => {
 		Data.cachedSceneRaws.set(file, parsed);
 		for (let f of Data.loadingSceneRaws.get(file)) f(parsed);
 		Data.loadingSceneRaws.delete(file);
 	}
 
-	static getMeshRawByName = (datas: TMeshData[], name: string): TMeshData => {
+	static getMeshRawByName = (datas: mesh_data_t[], name: string): mesh_data_t => {
 		if (name == "") return datas[0];
 		for (let dat of datas) if (dat.name == name) return dat;
 		return null;
 	}
 
-	static getLightRawByName = (datas: TLightData[], name: string): TLightData => {
+	static getLightRawByName = (datas: light_data_t[], name: string): light_data_t => {
 		if (name == "") return datas[0];
 		for (let dat of datas) if (dat.name == name) return dat;
 		return null;
 	}
 
-	static getCameraRawByName = (datas: TCameraData[], name: string): TCameraData => {
+	static getCameraRawByName = (datas: camera_data_t[], name: string): camera_data_t => {
 		if (name == "") return datas[0];
 		for (let dat of datas) if (dat.name == name) return dat;
 		return null;
 	}
 
-	static getMaterialRawByName = (datas: TMaterialData[], name: string): TMaterialData => {
+	static getMaterialRawByName = (datas: material_data_t[], name: string): material_data_t => {
 		if (name == "") return datas[0];
 		for (let dat of datas) if (dat.name == name) return dat;
 		return null;
 	}
 
-	static getParticleRawByName = (datas: TParticleData[], name: string): TParticleData => {
+	static getParticleRawByName = (datas: particle_data_t[], name: string): particle_data_t => {
 		if (name == "") return datas[0];
 		for (let dat of datas) if (dat.name == name) return dat;
 		return null;
 	}
 
-	static getWorldRawByName = (datas: TWorldData[], name: string): TWorldData => {
+	static getWorldRawByName = (datas: world_data_t[], name: string): world_data_t => {
 		if (name == "") return datas[0];
 		for (let dat of datas) if (dat.name == name) return dat;
 		return null;
 	}
 
-	static getShaderRawByName = (datas: TShaderData[], name: string): TShaderData => {
+	static getShaderRawByName = (datas: shader_data_t[], name: string): shader_data_t => {
 		if (name == "") return datas[0];
 		for (let dat of datas) if (dat.name == name) return dat;
 		return null;
 	}
 
 	///if arm_audio
-	static getSpeakerRawByName = (datas: TSpeakerData[], name: string): TSpeakerData => {
+	static getSpeakerRawByName = (datas: speaker_data_t[], name: string): speaker_data_t => {
 		if (name == "") return datas[0];
 		for (let dat of datas) if (dat.name == name) return dat;
 		return null;
@@ -367,7 +367,7 @@ class Data {
 		Data.cachedBlobs.delete(handle);
 	}
 
-	static getImage = (file: string, done: (img: ImageRaw)=>void, readable = false, format = "RGBA32") => {
+	static getImage = (file: string, done: (img: image_t)=>void, readable = false, format = "RGBA32") => {
 		let cached = Data.cachedImages.get(file);
 		if (cached != null) {
 			done(cached);
@@ -385,7 +385,7 @@ class Data {
 		///if arm_image_embed
 		let imageBlob = Data.cachedBlobs.get(file);
 		if (imageBlob != null) {
-			Image.fromEncodedBytes(imageBlob, ".k", (b: ImageRaw) => {
+			image_from_encoded_bytes(imageBlob, ".k", (b: image_t) => {
 				Data.cachedImages.set(file, b);
 				for (let f of Data.loadingImages.get(file)) f(b);
 				Data.loadingImages.delete(file);
@@ -398,7 +398,7 @@ class Data {
 		// Krom.load_image(resolvePath(file), readable, (b: ImageRaw) => {
 			let image_ = Krom.loadImage(Data.resolvePath(file), readable);
 			if (image_ != null) {
-				let b = Image._fromTexture(image_);
+				let b = image_from_texture(image_);
 				Data.cachedImages.set(file, b);
 				for (let f of Data.loadingImages.get(file)) f(b);
 				Data.loadingImages.delete(file);
@@ -410,12 +410,12 @@ class Data {
 	static deleteImage = (handle: string) => {
 		let image = Data.cachedImages.get(handle);
 		if (image == null) return;
-		Image.unload(image);
+		image_unload(image);
 		Data.cachedImages.delete(handle);
 	}
 
 	///if arm_audio
-	static getSound = (file: string, done: (snd: SoundRaw)=>void) => {
+	static getSound = (file: string, done: (snd: sound_t)=>void) => {
 		let cached = Data.cachedSounds.get(file);
 		if (cached != null) {
 			done(cached);
@@ -431,7 +431,7 @@ class Data {
 		Data.loadingSounds.set(file, [done]);
 
 		// Krom.load_sound(Data.resolvePath(file), (b: SoundRaw) => {
-			let b = Sound.create(Krom.loadSound(Data.resolvePath(file)));
+			let b = sound_create(Krom.loadSound(Data.resolvePath(file)));
 			Data.cachedSounds.set(file, b);
 			for (let f of Data.loadingSounds.get(file)) f(b);
 			Data.loadingSounds.delete(file);
@@ -442,12 +442,12 @@ class Data {
 	static deleteSound = (handle: string) => {
 		let sound = Data.cachedSounds.get(handle);
 		if (sound == null) return;
-		Sound.unload(sound);
+		sound_unload(sound);
 		Data.cachedSounds.delete(handle);
 	}
 	///end
 
-	static getVideo = (file: string, done: (vid: Video)=>void) => {
+	static getVideo = (file: string, done: (vid: video_t)=>void) => {
 		file = file.substring(0, file.length - 4) + ".webm";
 		let cached = Data.cachedVideos.get(file);
 		if (cached != null) {
@@ -463,7 +463,7 @@ class Data {
 
 		Data.loadingVideos.set(file, [done]);
 
-		// Krom.load_video(Data.resolvePath(file), (b: Video) => {
+		// Krom.load_video(Data.resolvePath(file), (b: video_t) => {
 		// 	cachedVideos.set(file, b);
 		// 	for (let f of Data.loadingVideos.get(file)) f(b);
 		// 	Data.loadingVideos.delete(file);
@@ -474,11 +474,11 @@ class Data {
 	static deleteVideo = (handle: string) => {
 		let video = Data.cachedVideos.get(handle);
 		if (video == null) return;
-		Video.unload(video);
+		video_unload(video);
 		Data.cachedVideos.delete(handle);
 	}
 
-	static getFont = (file: string, done: (f: FontRaw)=>void) => {
+	static getFont = (file: string, done: (f: font_t)=>void) => {
 		let cached = Data.cachedFonts.get(file);
 		if (cached != null) {
 			done(cached);
@@ -495,7 +495,7 @@ class Data {
 
 		// Krom.load_blob(resolvePath(file), (blob: ArrayBuffer) => {
 			let blob = Krom.loadBlob(Data.resolvePath(file));
-			let b = Font.create(blob);
+			let b = font_create(blob);
 			Data.cachedFonts.set(file, b);
 			for (let f of Data.loadingFonts.get(file)) f(b);
 			Data.loadingFonts.delete(file);
@@ -506,7 +506,7 @@ class Data {
 	static deleteFont = (handle: string) => {
 		let font = Data.cachedFonts.get(handle);
 		if (font == null) return;
-		Font.unload(font);
+		font_unload(font);
 		Data.cachedFonts.delete(handle);
 	}
 

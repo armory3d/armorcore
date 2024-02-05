@@ -1,5 +1,5 @@
-/// <reference path='./Vec4.ts'/>
-/// <reference path='./Quat.ts'/>
+/// <reference path='./vec4.ts'/>
+/// <reference path='./quat.ts'/>
 
 class AnimationRaw {
 	ext: any; // BoneAnimation | ObjectAnimation
@@ -7,7 +7,7 @@ class AnimationRaw {
 	isSampled: bool;
 	action = "";
 	///if arm_skin
-	armature: TArmature; // Bone
+	armature: armature_t; // Bone
 	///end
 	time: f32 = 0.0;
 	speed: f32 = 1.0;
@@ -27,21 +27,21 @@ class AnimationRaw {
 class Animation {
 
 	// Lerp
-	static m1 = Mat4.identity();
-	static m2 = Mat4.identity();
-	static vpos = Vec4.create();
-	static vpos2 = Vec4.create();
-	static vscl = Vec4.create();
-	static vscl2 = Vec4.create();
-	static q1 = Quat.create();
-	static q2 = Quat.create();
-	static q3 = Quat.create();
-	static vp = Vec4.create();
-	static vs = Vec4.create();
+	static m1 = mat4_identity();
+	static m2 = mat4_identity();
+	static vpos = vec4_create();
+	static vpos2 = vec4_create();
+	static vscl = vec4_create();
+	static vscl2 = vec4_create();
+	static q1 = quat_create();
+	static q2 = quat_create();
+	static q3 = quat_create();
+	static vp = vec4_create();
+	static vs = vec4_create();
 
 	static create(): AnimationRaw {
 		let raw = new AnimationRaw();
-		Scene.animations.push(raw);
+		scene_animations.push(raw);
 		return raw;
 	}
 
@@ -104,7 +104,7 @@ class Animation {
 	}
 
 	static remove = (raw: AnimationRaw) => {
-		array_remove(Scene.animations, raw);
+		array_remove(scene_animations, raw);
 	}
 
 	static updateSuper = (raw: AnimationRaw, delta: f32) => {
@@ -133,7 +133,7 @@ class Animation {
 		}
 	}
 
-	static isTrackEnd = (raw: AnimationRaw, track: TTrack): bool => {
+	static isTrackEnd = (raw: AnimationRaw, track: track_t): bool => {
 		return raw.speed > 0 ?
 			raw.frameIndex >= track.frames.length - 1 :
 			raw.frameIndex <= 0;
@@ -145,12 +145,12 @@ class Animation {
 			((raw.frameIndex - 1) > -1 && raw.time < frameValues[raw.frameIndex - 1] * raw.frameTime);
 	}
 
-	static rewind = (raw: AnimationRaw, track: TTrack) => {
+	static rewind = (raw: AnimationRaw, track: track_t) => {
 		raw.frameIndex = raw.speed > 0 ? 0 : track.frames.length - 1;
 		raw.time = track.frames[raw.frameIndex] * raw.frameTime;
 	}
 
-	static updateTrack = (raw: AnimationRaw, anim: TAnimation) => {
+	static updateTrack = (raw: AnimationRaw, anim: anim_t) => {
 		if (anim == null) return;
 
 		let track = anim.tracks[0];
@@ -185,7 +185,7 @@ class Animation {
 		}
 	}
 
-	static updateAnimSampled = (raw: AnimationRaw, anim: TAnimation, m: TMat4) => {
+	static updateAnimSampled = (raw: AnimationRaw, anim: anim_t, m: mat4_t) => {
 		if (anim == null) return;
 		let track = anim.tracks[0];
 		let sign = raw.speed > 0 ? 1 : -1;
@@ -196,21 +196,21 @@ class Animation {
 		let t2 = track.frames[ti + sign] * raw.frameTime;
 		let s: f32 = (t - t1) / (t2 - t1); // Linear
 
-		Mat4.setF32(Animation.m1, track.values, ti * 16); // Offset to 4x4 matrix array
-		Mat4.setF32(Animation.m2, track.values, (ti + sign) * 16);
+		mat4_set_from_f32_array(Animation.m1, track.values, ti * 16); // Offset to 4x4 matrix array
+		mat4_set_from_f32_array(Animation.m2, track.values, (ti + sign) * 16);
 
 		// Decompose
-		Mat4.decompose(Animation.m1, Animation.vpos, Animation.q1, Animation.vscl);
-		Mat4.decompose(Animation.m2, Animation.vpos2, Animation.q2, Animation.vscl2);
+		mat4_decompose(Animation.m1, Animation.vpos, Animation.q1, Animation.vscl);
+		mat4_decompose(Animation.m2, Animation.vpos2, Animation.q2, Animation.vscl2);
 
 		// Lerp
-		Vec4.lerp(Animation.vp, Animation.vpos, Animation.vpos2, s);
-		Vec4.lerp(Animation.vs, Animation.vscl, Animation.vscl2, s);
-		Quat.lerp(Animation.q3, Animation.q1, Animation.q2, s);
+		vec4_lerp(Animation.vp, Animation.vpos, Animation.vpos2, s);
+		vec4_lerp(Animation.vs, Animation.vscl, Animation.vscl2, s);
+		quat_lerp(Animation.q3, Animation.q1, Animation.q2, s);
 
 		// Compose
-		Mat4.fromQuat(m, Animation.q3);
-		Mat4.scale(m, Animation.vs);
+		mat4_from_quat(m, Animation.q3);
+		mat4_scale(m, Animation.vs);
 		m._30 = Animation.vp.x;
 		m._31 = Animation.vp.y;
 		m._32 = Animation.vp.z;

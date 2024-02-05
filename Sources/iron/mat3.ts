@@ -47,7 +47,7 @@ function mat3_rotation(alpha: f32): Mat3 {
 	);
 }
 
-function mat3_setFrom4(self: Mat3, m: TMat4) {
+function mat3_setFrom4(self: Mat3, m: mat4_t) {
 	self._00 = m._00;
 	self._01 = m._01;
 	self._02 = m._02;

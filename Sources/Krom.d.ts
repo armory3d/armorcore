@@ -29,7 +29,7 @@ declare namespace Krom {
 	function setMatrix(location: any, matrix: ArrayBuffer): void;
 	function setMatrix3(location: any, matrix: ArrayBuffer): void;
 
-	function begin(renderTarget: ImageRaw, additionalRenderTargets: ImageRaw[]): void;
+	function begin(renderTarget: image_t, additionalRenderTargets: image_t[]): void;
 	function end(): void;
 	function renderTargetsInvertedY(): bool;
 	function viewport(x: i32, y: i32, width: i32, height: i32): void;
@@ -47,7 +47,7 @@ declare namespace Krom {
 	function unlockTexture(texture: any): void;
 	function generateTextureMipmaps(texture: any, levels: i32): void;
 	function generateRenderTargetMipmaps(renderTarget: any, levels: i32): void;
-	function setMipmaps(texture: any, mipmaps: ImageRaw[]): void;
+	function setMipmaps(texture: any, mipmaps: image_t[]): void;
 	function setDepthStencilFrom(target: any, source: any): void;
 	function clearTexture(target: any, x: i32, y: i32, z: i32, width: i32, height: i32, depth: i32, color: i32): void;
 	function createIndexBuffer(count: i32): any;
@@ -55,17 +55,17 @@ declare namespace Krom {
 	function lockIndexBuffer(buffer: any): Uint32Array;
 	function unlockIndexBuffer(buffer: any): void;
 	function setIndexBuffer(buffer: any): void;
-	function createVertexBuffer(count: i32, structure: VertexElement[], usage: i32, instanceDataStepRate: i32): any;
+	function createVertexBuffer(count: i32, structure: kinc_vertex_elem_t[], usage: i32, instanceDataStepRate: i32): any;
 	function deleteVertexBuffer(buffer: any): any;
 	function lockVertexBuffer(buffer: any, start: i32, count: i32): ArrayBuffer;
 	function unlockVertexBuffer(buffer: any, count: i32): void;
 	function setVertexBuffer(buffer: any): void;
-	function setVertexBuffers(vertexBuffers: VertexBufferRaw[]): void;
+	function setVertexBuffers(vertexBuffers: vertex_buffer_t[]): void;
 	function drawIndexedVertices(start: i32, count: i32): void;
 	function drawIndexedVerticesInstanced(instanceCount: i32, start: i32, count: i32): void;
 
 	function loadImage(file: string, readable: bool): any;
-	function unloadImage(image: ImageRaw): void;
+	function unloadImage(image: image_t): void;
 	function loadBlob(file: string): ArrayBuffer;
 	function loadUrl(url: string): void;
 	function copyToClipboard(text: string): void;
@@ -136,7 +136,7 @@ declare namespace Krom {
 	function g2_init(image_vert: ArrayBuffer, image_frag: ArrayBuffer, colored_vert: ArrayBuffer, colored_frag: ArrayBuffer, text_vert: ArrayBuffer, text_frag: ArrayBuffer): void;
 	function g2_begin(): void;
 	function g2_end(): void;
-	function g2_draw_scaled_sub_image(image: ImageRaw, sx: f32, sy: f32, sw: f32, sh: f32, dx: f32, dy: f32, dw: f32, dh: f32): void;
+	function g2_draw_scaled_sub_image(image: image_t, sx: f32, sy: f32, sw: f32, sh: f32, dx: f32, dy: f32, dw: f32, dh: f32): void;
 	function g2_fill_triangle(x0: f32, y0: f32, x1: f32, y1: f32, x2: f32, y2: f32): void;
 	function g2_fill_rect(x: f32, y: f32, width: f32, height: f32): void;
 	function g2_draw_rect(x: f32, y: f32, width: f32, height: f32, strength: f32): void;
@@ -164,7 +164,7 @@ declare namespace Krom {
 	function delayIdleSleep(): void;
 	function raytraceSupported(): bool;
 	function raytraceInit(shader: ArrayBuffer, vb: any, ib: any, scale: f32): void;
-	function raytraceSetTextures(tex0: ImageRaw, tex1: ImageRaw, tex2: ImageRaw, texenv: any, tex_sobol: any, tex_scramble: any, tex_rank: any): void;
+	function raytraceSetTextures(tex0: image_t, tex1: image_t, tex2: image_t, texenv: any, tex_sobol: any, tex_scramble: any, tex_rank: any): void;
 	function raytraceDispatchRays(target: any, cb: ArrayBuffer): void;
 	function saveDialog(filterList: string, defaultPath: string): string;
 	function openDialog(filterList: string, defaultPath: string, openMultiple: bool): string[];
@@ -206,7 +206,7 @@ declare namespace Krom {
 	function zui_radio(handle: any, position: i32, text: string, label: string): bool;
 	function zui_combo(handle: any, texts: string[], label: string, show_label: bool, align: i32, search_bar: bool): i32;
 	function zui_slider(handle: any, text: string, from: f32, to: f32, filled: bool, precision: f32, display_value: bool, align: i32, text_edit: bool): f32;
-	function zui_image(image: ImageRaw, tint: i32, h: i32, sx: i32, sy: i32, sw: i32, sh: i32): i32;
+	function zui_image(image: image_t, tint: i32, h: i32, sx: i32, sy: i32, sw: i32, sh: i32): i32;
 	function zui_text(text: string, align: i32, bg: i32): i32;
 	function zui_text_input(handle: any, label: string, align: i32, editable: bool, live_update: bool): string;
 	function zui_tab(handle: any, text: string, vertical: bool, color: i32): bool;
@@ -214,7 +214,7 @@ declare namespace Krom {
 	function zui_handle(ops: any): any;
 	function zui_separator(h: i32, fill: bool): void;
 	function zui_tooltip(text: string): void;
-	function zui_tooltip_image(image: ImageRaw, max_width: i32): void;
+	function zui_tooltip_image(image: image_t, max_width: i32): void;
 	function zui_row(ratios: f32[]): void;
 	function zui_fill(x: f32, y: f32, w: f32, h: f32, color: i32): void;
 	function zui_rect(x: f32, y: f32, w: f32, h: f32, color: i32, strength: f32): void;

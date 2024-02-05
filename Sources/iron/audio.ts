@@ -1,0 +1,31 @@
+
+///if arm_audio
+
+class audio_channel_t {
+	sound: sound_t;
+	loop: bool;
+	length: f32;
+	volume: f32;
+	finished: bool;
+}
+
+function audio_channel(sound: sound_t, loop = false, stream = false): audio_channel_t {
+	let channel = new audio_channel_t();
+	channel.sound = sound;
+	channel.loop = loop;
+	return channel;
+}
+
+function audio_play(channel: audio_channel_t) {
+	Krom.playSound(channel.sound.sound_, channel.loop);
+}
+
+function audio_pause(channel: audio_channel_t) {
+
+}
+
+function audio_stop(channel: audio_channel_t) {
+	Krom.stopSound(channel.sound.sound_);
+}
+
+///end

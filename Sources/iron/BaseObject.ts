@@ -2,9 +2,9 @@
 class TBaseObject {
 	uid: i32;
 	urandom: f32;
-	raw: TObj = null;
+	raw: obj_t = null;
 	name: string = "";
-	transform: TransformRaw;
+	transform: transform_t;
 	traits: any[] = [];
 	parent: TBaseObject = null;
 	children: TBaseObject[] = [];
@@ -21,9 +21,9 @@ class BaseObject {
 	static create(): TBaseObject {
 		let raw = new TBaseObject();
 		raw.uid = BaseObject.uidCounter++;
-		raw.transform = Transform.create(raw);
+		raw.transform = transform_create(raw);
 		raw.isEmpty = raw.constructor == TBaseObject;
-		if (raw.isEmpty && Scene.ready) Scene.empties.push(raw);
+		if (raw.isEmpty && _scene_ready) scene_empties.push(raw);
 		return raw;
 	}
 
@@ -32,21 +32,21 @@ class BaseObject {
 
 		if (raw.parent != null) {
 			array_remove(raw.parent.children, raw);
-			if (keepTransform) Transform.applyParent(raw.transform);
+			if (keepTransform) transform_apply_parent(raw.transform);
 			raw.parent = null; // rebuild matrix without a parent
-			Transform.buildMatrix(raw.transform);
+			transform_build_matrix(raw.transform);
 		}
 
 		if (parentObject == null) {
-			parentObject = Scene.sceneParent;
+			parentObject = _scene_scene_parent;
 		}
 		raw.parent = parentObject;
 		raw.parent.children.push(raw);
-		if (parentInverse) Transform.applyParentInverse(raw.transform);
+		if (parentInverse) transform_apply_parent_inv(raw.transform);
 	}
 
 	static removeSuper = (raw: TBaseObject) => {
-		if (raw.isEmpty && Scene.ready) array_remove(Scene.empties, raw);
+		if (raw.isEmpty && _scene_ready) array_remove(scene_empties, raw);
 		if (raw.animation != null) Animation.remove(raw.animation);
 		while (raw.children.length > 0) BaseObject.remove(raw.children[0]);
 		if (raw.parent != null) {
@@ -67,8 +67,8 @@ class BaseObject {
 				LightObject.remove(raw.ext);
 			}
 			///if arm_audio
-			else if (raw.ext.constructor == TSpeakerObject) {
-				SpeakerObject.remove(raw.ext);
+			else if (raw.ext.constructor == speaker_object_t) {
+				speaker_object_remove(raw.ext);
 			}
 			///end
 		}
@@ -100,12 +100,12 @@ class BaseObject {
 
 	///if arm_skin
 	static getParentArmature = (raw: TBaseObject, name: string): BoneAnimationRaw => {
-		for (let a of Scene.animations) if (a.armature != null && a.armature.name == name) return a.ext;
+		for (let a of scene_animations) if (a.armature != null && a.armature.name == name) return a.ext;
 		return null;
 	}
 	///end
 
-	static setupAnimationSuper = (raw: TBaseObject, oactions: TSceneFormat[] = null) => {
+	static setupAnimationSuper = (raw: TBaseObject, oactions: scene_t[] = null) => {
 		// Parented to bone
 		///if arm_skin
 		if (raw.raw.parent_bone != null) {
@@ -120,7 +120,7 @@ class BaseObject {
 		raw.animation = ObjectAnimation.create(raw, oactions).base;
 	}
 
-	static setupAnimation = (raw: TBaseObject, oactions: TSceneFormat[] = null) => {
+	static setupAnimation = (raw: TBaseObject, oactions: scene_t[] = null) => {
 		if (raw.ext != null)  {
 			if (raw.ext.constructor == TMeshObject) {
 				MeshObject.setupAnimation(raw.ext, oactions);

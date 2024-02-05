@@ -1,15 +1,15 @@
 
 class MeshData {
 
-	static parse = (name: string, id: string, done: (md: TMeshData)=>void) => {
-		Data.getSceneRaw(name, (format: TSceneFormat) => {
-			let raw: TMeshData = Data.getMeshRawByName(format.mesh_datas, id);
+	static parse = (name: string, id: string, done: (md: mesh_data_t)=>void) => {
+		Data.getSceneRaw(name, (format: scene_t) => {
+			let raw: mesh_data_t = Data.getMeshRawByName(format.mesh_datas, id);
 			if (raw == null) {
 				Krom.log(`Mesh data "${id}" not found!`);
 				done(null);
 			}
 
-			MeshData.create(raw, (dat: TMeshData) => {
+			MeshData.create(raw, (dat: mesh_data_t) => {
 				///if arm_skin
 				if (raw.skin != null) {
 					MeshData.initSkeletonTransforms(dat, raw.skin.transformsI);
@@ -20,15 +20,15 @@ class MeshData {
 		});
 	}
 
-	static create(raw: TMeshData, done: (md: TMeshData)=>void) {
+	static create(raw: mesh_data_t, done: (md: mesh_data_t)=>void) {
 		if (raw.scale_pos == null) raw.scale_pos = 1.0;
 		if (raw.scale_tex == null) raw.scale_tex = 1.0;
 
 		raw._refcount = 0;
-		raw._vertexBufferMap = new Map();
+		raw._vertex_buffer_map = new Map();
 		raw._ready = false;
 		raw._instanced = false;
-		raw._instanceCount = 0;
+		raw._instance_count = 0;
 
 		// Mesh data
 		let indices: Uint32Array[] = [];
@@ -81,16 +81,16 @@ class MeshData {
 
 		// Make vertex buffers
 		raw._indices = indices;
-		raw._materialIndices = materialIndices;
+		raw._material_indices = materialIndices;
 		raw._struct = MeshData.getVertexStructure(raw.vertex_arrays);
 
 		done(raw);
 	}
 
-	static getVertexStructure = (vertexArrays: TVertexArray[]): VertexStructureRaw => {
-		let structure = VertexStructure.create();
+	static getVertexStructure = (vertexArrays: vertex_array_t[]): vertex_struct_t => {
+		let structure = vertex_struct_create();
 		for (let i = 0; i < vertexArrays.length; ++i) {
-			VertexStructure.add(structure, vertexArrays[i].attrib, MeshData.getVertexData(vertexArrays[i].data));
+			vertex_struct_add(structure, vertexArrays[i].attrib, MeshData.getVertexData(vertexArrays[i].data));
 		}
 		return structure;
 	}
@@ -103,7 +103,7 @@ class MeshData {
 		}
 	}
 
-	static buildVertices = (vertices: DataView, vertexArrays: TVertexArray[], offset = 0, fakeUVs = false, uvsIndex = -1) => {
+	static buildVertices = (vertices: DataView, vertexArrays: vertex_array_t[], offset = 0, fakeUVs = false, uvsIndex = -1) => {
 		let numVertices = vertexArrays[0].values.length / vertexArrays[0]._size;
 		let di = -1 + offset;
 		for (let i = 0; i < numVertices; ++i) {
@@ -133,7 +133,7 @@ class MeshData {
 		}
 	}
 
-	static getVArray = (raw: TMeshData, name: string): TVertexArray => {
+	static getVArray = (raw: mesh_data_t, name: string): vertex_array_t => {
 		for (let i = 0; i < raw.vertex_arrays.length; ++i) {
 			if (raw.vertex_arrays[i].attrib == name) {
 				return raw.vertex_arrays[i];
@@ -142,30 +142,30 @@ class MeshData {
 		return null;
 	}
 
-	static setupInstanced = (raw: TMeshData, data: Float32Array, instancedType: i32) => {
-		let structure = VertexStructure.create();
+	static setupInstanced = (raw: mesh_data_t, data: Float32Array, instancedType: i32) => {
+		let structure = vertex_struct_create();
 		structure.instanced = true;
 		raw._instanced = true;
 		// pos, pos+rot, pos+scale, pos+rot+scale
-		VertexStructure.add(structure, "ipos", VertexData.F32_3X);
+		vertex_struct_add(structure, "ipos", VertexData.F32_3X);
 		if (instancedType == 2 || instancedType == 4) {
-			VertexStructure.add(structure, "irot", VertexData.F32_3X);
+			vertex_struct_add(structure, "irot", VertexData.F32_3X);
 		}
 		if (instancedType == 3 || instancedType == 4) {
-			VertexStructure.add(structure, "iscl", VertexData.F32_3X);
+			vertex_struct_add(structure, "iscl", VertexData.F32_3X);
 		}
 
-		raw._instanceCount = Math.floor(data.length / Math.floor(VertexStructure.byteSize(structure) / 4));
-		raw._instancedVB = VertexBuffer.create(raw._instanceCount, structure, Usage.StaticUsage, 1);
-		let vertices = VertexBuffer.lock(raw._instancedVB);
+		raw._instance_count = Math.floor(data.length / Math.floor(vertex_struct_byte_size(structure) / 4));
+		raw._instanced_vb = vertex_buffer_create(raw._instance_count, structure, Usage.StaticUsage, 1);
+		let vertices = vertex_buffer_lock(raw._instanced_vb);
 		for (let i = 0; i < Math.floor(vertices.byteLength / 4); ++i) vertices.setFloat32(i * 4, data[i], true);
-		VertexBuffer.unlock(raw._instancedVB);
+		vertex_buffer_unlock(raw._instanced_vb);
 	}
 
-	static get = (raw: TMeshData, vs: TVertexElement[]): VertexBufferRaw => {
+	static get = (raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_t => {
 		let key = "";
 		for (let e of vs) key += e.name;
-		let vb = raw._vertexBufferMap.get(key);
+		let vb = raw._vertex_buffer_map.get(key);
 		if (vb == null) {
 			let vertexArrays = [];
 			let hasTex = false;
@@ -190,40 +190,40 @@ class MeshData {
 			let uvs = MeshData.getVArray(raw, 'tex');
 			let cols = MeshData.getVArray(raw, 'col');
 			let struct = MeshData.getVertexStructure(vertexArrays);
-			vb = VertexBuffer.create(Math.floor(positions.values.length / positions._size), struct, Usage.StaticUsage);
-			raw._vertices = VertexBuffer.lock(vb);
+			vb = vertex_buffer_create(Math.floor(positions.values.length / positions._size), struct, Usage.StaticUsage);
+			raw._vertices = vertex_buffer_lock(vb);
 			MeshData.buildVertices(raw._vertices, vertexArrays, 0, hasTex && uvs == null, texOffset);
-			VertexBuffer.unlock(vb);
-			raw._vertexBufferMap.set(key, vb);
+			vertex_buffer_unlock(vb);
+			raw._vertex_buffer_map.set(key, vb);
 			if (hasTex && uvs == null) Krom.log("Armory Warning: Geometry " + raw.name + " is missing UV map");
 			if (hasCol && cols == null) Krom.log("Armory Warning: Geometry " + raw.name + " is missing vertex colors");
 		}
 		return vb;
 	}
 
-	static build = (raw: TMeshData) => {
+	static build = (raw: mesh_data_t) => {
 		if (raw._ready) return;
 
 		let positions = MeshData.getVArray(raw, 'pos');
-		raw._vertexBuffer = VertexBuffer.create(Math.floor(positions.values.length / positions._size), raw._struct, Usage.StaticUsage);
-		raw._vertices = VertexBuffer.lock(raw._vertexBuffer);
+		raw._vertex_buffer = vertex_buffer_create(Math.floor(positions.values.length / positions._size), raw._struct, Usage.StaticUsage);
+		raw._vertices = vertex_buffer_lock(raw._vertex_buffer);
 		MeshData.buildVertices(raw._vertices, raw.vertex_arrays);
-		VertexBuffer.unlock(raw._vertexBuffer);
+		vertex_buffer_unlock(raw._vertex_buffer);
 
 		let structStr = "";
 		for (let e of raw._struct.elements) structStr += e.name;
-		raw._vertexBufferMap.set(structStr, raw._vertexBuffer);
+		raw._vertex_buffer_map.set(structStr, raw._vertex_buffer);
 
-		raw._indexBuffers = [];
+		raw._index_buffers = [];
 		for (let id of raw._indices) {
 			if (id.length == 0) continue;
-			let indexBuffer = IndexBuffer.create(id.length, Usage.StaticUsage);
+			let indexBuffer = index_buffer_create(id.length);
 
-			let indicesA = IndexBuffer.lock(indexBuffer);
+			let indicesA = index_buffer_lock(indexBuffer);
 			for (let i = 0; i < indicesA.length; ++i) indicesA[i] = id[i];
 
-			IndexBuffer.unlock(indexBuffer);
-			raw._indexBuffers.push(indexBuffer);
+			index_buffer_unlock(indexBuffer);
+			raw._index_buffers.push(indexBuffer);
 		}
 
 		// Instanced
@@ -233,20 +233,20 @@ class MeshData {
 	}
 
 	///if arm_skin
-	static addArmature = (raw: TMeshData, armature: TArmature) => {
+	static addArmature = (raw: mesh_data_t, armature: armature_t) => {
 		for (let a of armature.actions) {
 			MeshData.addAction(raw, a.bones, a.name);
 		}
 	}
 
-	static addAction = (raw: TMeshData, bones: TObj[], name: string) => {
+	static addAction = (raw: mesh_data_t, bones: obj_t[], name: string) => {
 		if (bones == null) return;
 		if (raw._actions == null) {
 			raw._actions = new Map();
 			raw._mats = new Map();
 		}
 		if (raw._actions.get(name) != null) return;
-		let actionBones: TObj[] = [];
+		let actionBones: obj_t[] = [];
 
 		// Set bone references
 		for (let s of raw.skin.bone_ref_array) {
@@ -258,26 +258,26 @@ class MeshData {
 		}
 		raw._actions.set(name, actionBones);
 
-		let actionMats: TMat4[] = [];
+		let actionMats: mat4_t[] = [];
 		for (let b of actionBones) {
-			actionMats.push(Mat4.fromFloat32Array(b.transform.values));
+			actionMats.push(mat4_from_f32_array(b.transform.values));
 		}
 		raw._mats.set(name, actionMats);
 	}
 
-	static initSkeletonTransforms = (raw: TMeshData, transformsI: Float32Array[]) => {
-		raw._skeletonTransformsI = [];
+	static initSkeletonTransforms = (raw: mesh_data_t, transformsI: Float32Array[]) => {
+		raw._skeleton_transforms_inv = [];
 		for (let t of transformsI) {
-			let mi = Mat4.fromFloat32Array(t);
-			raw._skeletonTransformsI.push(mi);
+			let mi = mat4_from_f32_array(t);
+			raw._skeleton_transforms_inv.push(mi);
 		}
 	}
 	///end
 
-	static calculateAABB = (raw: TMeshData): TVec4 => {
-		let aabbMin = Vec4.create(-0.01, -0.01, -0.01);
-		let aabbMax = Vec4.create(0.01, 0.01, 0.01);
-		let aabb = Vec4.create();
+	static calculateAABB = (raw: mesh_data_t): vec4_t => {
+		let aabbMin = vec4_create(-0.01, -0.01, -0.01);
+		let aabbMax = vec4_create(0.01, 0.01, 0.01);
+		let aabb = vec4_create();
 		let i = 0;
 		let positions = MeshData.getVArray(raw, 'pos');
 		while (i < positions.values.length) {
@@ -295,9 +295,9 @@ class MeshData {
 		return aabb;
 	}
 
-	static delete = (raw: TMeshData) => {
-		for (let buf of raw._vertexBufferMap.values()) if (buf != null) VertexBuffer.delete(buf);
-		for (let buf of raw._indexBuffers) IndexBuffer.delete(buf);
+	static delete = (raw: mesh_data_t) => {
+		for (let buf of raw._vertex_buffer_map.values()) if (buf != null) vertex_buffer_delete(buf);
+		for (let buf of raw._index_buffers) index_buffer_delete(buf);
 	}
 }
 
