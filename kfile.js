@@ -6,7 +6,8 @@ let flags = {
 	package: 'org.armory3d',
 	release: process.argv.indexOf("--debug") == -1,
 	with_audio: true,
-	with_worker: true
+	with_worker: true,
+	with_compute: true
 };
 
 const system = platform === Platform.Windows ? "win32" :
@@ -32,6 +33,10 @@ if (fs.existsSync(process.cwd() + '/icon.png')) {
 
 if (flags.with_audio) {
 	project.addDefine('WITH_AUDIO');
+}
+
+if (flags.with_compute) {
+	project.addDefine('WITH_COMPUTE');
 }
 
 project.addFile('Sources/main.cpp');
