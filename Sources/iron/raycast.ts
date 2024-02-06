@@ -3,7 +3,7 @@ let _raycast_vp_inv = mat4_identity();
 let _raycast_p_inv = mat4_identity();
 let _raycast_v_inv = mat4_identity();
 
-function raycast_get_ray(input_x: f32, input_y: f32, camera: TCameraObject): ray_t {
+function raycast_get_ray(input_x: f32, input_y: f32, camera: camera_object_t): ray_t {
 	let start = vec4_create();
 	let end = vec4_create();
 	raycast_get_dir(start, end, input_x, input_y, camera);
@@ -18,24 +18,24 @@ function raycast_get_ray(input_x: f32, input_y: f32, camera: TCameraObject): ray
 	return ray_create(start, end);
 }
 
-function raycast_get_dir(start: vec4_t, end: vec4_t, input_x: f32, input_y: f32, camera: TCameraObject) {
+function raycast_get_dir(start: vec4_t, end: vec4_t, input_x: f32, input_y: f32, camera: camera_object_t) {
 	// Get 3D point form screen coords
 	// Set two vectors with opposing z values
-	start.x = (input_x / App.w()) * 2.0 - 1.0;
-	start.y = -((input_y / App.h()) * 2.0 - 1.0);
+	start.x = (input_x / app_w()) * 2.0 - 1.0;
+	start.y = -((input_y / app_h()) * 2.0 - 1.0);
 	start.z = -1.0;
 	end.x = start.x;
 	end.y = start.y;
 	end.z = 1.0;
 
-	mat4_get_inv(_raycast_p_inv, camera.P);
-	mat4_get_inv(_raycast_v_inv, camera.V);
+	mat4_get_inv(_raycast_p_inv, camera.p);
+	mat4_get_inv(_raycast_v_inv, camera.v);
 	mat4_mult_mats(_raycast_vp_inv, _raycast_v_inv, _raycast_p_inv);
 	vec4_apply_proj(start, _raycast_vp_inv);
 	vec4_apply_proj(end, _raycast_vp_inv);
 }
 
-function raycast_box_intersect(transform: transform_t, input_x: f32, input_y: f32, camera: TCameraObject): vec4_t {
+function raycast_box_intersect(transform: transform_t, input_x: f32, input_y: f32, camera: camera_object_t): vec4_t {
 	let ray = raycast_get_ray(input_x, input_y, camera);
 
 	let t = transform;
@@ -44,7 +44,7 @@ function raycast_box_intersect(transform: transform_t, input_x: f32, input_y: f3
 	return ray_intersect_box(ray, c, s);
 }
 
-function raycast_closest_box_intersect(transforms: transform_t[], input_x: f32, input_y: f32, camera: TCameraObject): transform_t {
+function raycast_closest_box_intersect(transforms: transform_t[], input_x: f32, input_y: f32, camera: camera_object_t): transform_t {
 	let intersects: transform_t[] = [];
 
 	// Get intersects
@@ -70,7 +70,7 @@ function raycast_closest_box_intersect(transforms: transform_t[], input_x: f32, 
 	return closest;
 }
 
-function raycast_plane_intersect(normal: vec4_t, a: vec4_t, input_x: f32, input_y: f32, camera: TCameraObject): vec4_t {
+function raycast_plane_intersect(normal: vec4_t, a: vec4_t, input_x: f32, input_y: f32, camera: camera_object_t): vec4_t {
 	let ray = raycast_get_ray(input_x, input_y, camera);
 
 	let plane = new plane_t();

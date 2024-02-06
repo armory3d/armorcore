@@ -2,7 +2,7 @@
 ///if arm_audio
 
 class speaker_object_t {
-	base: TBaseObject;
+	base: object_t;
 	data: speaker_data_t;
 	paused = false;
 	sound: sound_t = null;
@@ -12,7 +12,7 @@ class speaker_object_t {
 
 function speaker_object_create(data: speaker_data_t): speaker_object_t {
 	let raw = new speaker_object_t();
-	raw.base = BaseObject.create();
+	raw.base = object_create();
 	raw.base.ext = raw;
 	raw.data = data;
 
@@ -20,9 +20,9 @@ function speaker_object_create(data: speaker_data_t): speaker_object_t {
 
 	if (data.sound == "") return raw;
 
-	Data.getSound(data.sound, (sound: sound_t) => {
+	data_get_sound(data.sound, (sound: sound_t) => {
 		raw.sound = sound;
-		App.notifyOnInit(function() {
+		app_notify_on_init(function() {
 			if (raw.base.visible && raw.data.play_on_start) {
 				speaker_object_play(raw);
 			}
@@ -46,7 +46,7 @@ function speaker_object_play(raw: speaker_object_t) {
 		if (raw.data.attenuation > 0 && raw.channels.length == 1) {
 			function _update() { speaker_object_update(raw); }
 			(raw as any).update = _update;
-			App.notifyOnUpdate(_update);
+			app_notify_on_update(_update);
 		}
 	}
 }
@@ -65,7 +65,7 @@ function speaker_object_update(raw: speaker_object_t) {
 	if (raw.paused) return;
 	for (let c of raw.channels) if (c.finished) array_remove(raw.channels, c);
 	if (raw.channels.length == 0) {
-		App.removeUpdate((raw as any).update);
+		app_remove_update((raw as any).update);
 		return;
 	}
 
@@ -85,7 +85,7 @@ function speaker_object_remove(raw: speaker_object_t) {
 	speaker_object_stop(raw);
 	array_remove(scene_speakers, this);
 
-	BaseObject.removeSuper(raw.base);
+	object_remove_super(raw.base);
 }
 
 ///end

@@ -7,9 +7,9 @@ enum DrawOrder {
 let _render_path_frame_time = 0.0;
 let _render_path_frame = 0;
 let _render_path_current_target: render_target_t = null;
-let _render_path_light: TLightObject = null;
-let _render_path_sun: TLightObject = null;
-let _render_path_point: TLightObject = null;
+let _render_path_light: light_object_t = null;
+let _render_path_sun: light_object_t = null;
+let _render_path_point: light_object_t = null;
 let _render_path_current_g: g4_t = null;
 let _render_path_frame_g: g4_t;
 let _render_path_draw_order = DrawOrder.Distance;
@@ -41,11 +41,11 @@ function render_path_voxelize() { // Returns true if scene should be voxelized
 ///end
 
 function render_path_render_frame(g: g4_t) {
-	if (!render_path_ready() ||_render_path_paused || App.w() == 0 || App.h() == 0) return;
+	if (!render_path_ready() ||_render_path_paused || app_w() == 0 || app_h() == 0) return;
 
-	if (render_path_last_w > 0 && (render_path_last_w != App.w() ||render_path_last_h != App.h())) render_path_resize();
-	render_path_last_w = App.w();
-	render_path_last_h = App.h();
+	if (render_path_last_w > 0 && (render_path_last_w != app_w() ||render_path_last_h != app_h())) render_path_resize();
+	render_path_last_w = app_w();
+	render_path_last_h = app_h();
 
 	_render_path_frame_time = time_time() -render_path_last_frame_time;
 	render_path_last_frame_time = time_time();
@@ -54,13 +54,13 @@ function render_path_render_frame(g: g4_t) {
 	let cam = scene_camera;
 	_render_path_frame_g = g;
 
-	render_path_current_w = App.w();
-	render_path_current_h = App.h();
+	render_path_current_w = app_w();
+	render_path_current_h = app_h();
 	render_path_current_d = 1;
 	render_path_meshes_sorted = false;
 
 	for (let l of scene_lights) {
-		if (l.base.visible) LightObject.buildMatrix(l, scene_camera);
+		if (l.base.visible) light_object_build_mat(l, scene_camera);
 		if (l.data.type == "sun") _render_path_sun = l;
 		else _render_path_point = l;
 	}
@@ -75,11 +75,11 @@ function render_path_set_target(target: string, additional: string[] = null) {
 	if (target == "") { // Framebuffer
 		render_path_current_d = 1;
 		_render_path_current_target = null;
-		render_path_current_w = App.w();
-		render_path_current_h = App.h();
+		render_path_current_w = app_w();
+		render_path_current_h = app_h();
 		render_path_begin(_render_path_frame_g);
-		render_path_set_current_viewport(App.w(), App.h());
-		render_path_set_current_scissor(App.w(), App.h());
+		render_path_set_current_viewport(app_w(), app_h());
+		render_path_set_current_scissor(app_w(), app_h());
 	}
 	else { // Render target
 		let rt = render_path_render_targets.get(target);
@@ -123,11 +123,11 @@ function render_path_end() {
 }
 
 function render_path_set_current_viewport(view_w: i32, view_h: i32) {
-	g4_viewport(App.x(),render_path_current_h - (view_h - App.y()), view_w, view_h);
+	g4_viewport(app_x(),render_path_current_h - (view_h - app_y()), view_w, view_h);
 }
 
 function render_path_set_current_scissor(view_w: i32, view_h: i32) {
-	g4_scissor(App.x(),render_path_current_h - (view_h - App.y()), view_w, view_h);
+	g4_scissor(app_x(),render_path_current_h - (view_h - app_y()), view_w, view_h);
 	render_path_scissor_set = true;
 }
 
@@ -159,13 +159,13 @@ function render_path_gen_mipmaps(target: string) {
 	image_gen_mipmaps(rt.image, 1000);
 }
 
-function render_path_sort_meshes_dist(meshes: TMeshObject[]) {
+function render_path_sort_meshes_dist(meshes: mesh_object_t[]) {
 	meshes.sort((a, b): i32 => {
-		return a.cameraDistance >= b.cameraDistance ? 1 : -1;
+		return a.camera_dist >= b.camera_dist ? 1 : -1;
 	});
 }
 
-function render_path_sort_meshes_shader(meshes: TMeshObject[]) {
+function render_path_sort_meshes_shader(meshes: mesh_object_t[]) {
 	meshes.sort((a, b): i32 => {
 		return a.materials[0].name >= b.materials[0].name ? 1 : -1;
 	});
@@ -179,33 +179,33 @@ function render_path_draw_meshes(context: string) {
 function render_path_submit_draw(context: string) {
 	let camera = scene_camera;
 	let meshes = scene_meshes;
-	MeshObject.lastPipeline = null;
+	mesh_object_last_pipeline = null;
 
 	if (!render_path_meshes_sorted && camera != null) { // Order max once per frame for now
 		let camX = transform_world_x(camera.base.transform);
 		let camY = transform_world_y(camera.base.transform);
 		let camZ = transform_world_z(camera.base.transform);
 		for (let mesh of meshes) {
-			MeshObject.computeCameraDistance(mesh, camX, camY, camZ);
+			mesh_object_compute_camera_dist(mesh, camX, camY, camZ);
 		}
 		_render_path_draw_order == DrawOrder.Shader ?render_path_sort_meshes_shader(meshes) :render_path_sort_meshes_dist(meshes);
 		render_path_meshes_sorted = true;
 	}
 
 	for (let m of meshes) {
-		MeshObject.render(m,_render_path_current_g, context,render_path_bind_params);
+		mesh_object_render(m,_render_path_current_g, context,render_path_bind_params);
 	}
 }
 
 function render_path_draw_skydome(handle: string) {
-	if (ConstData.skydomeVB == null) ConstData.createSkydomeData();
+	if (const_data_skydome_vb == null) const_data_create_skydome_data();
 	let cc: cached_shader_context_t = render_path_cached_shader_contexts.get(handle);
 	if (cc.context == null) return; // World data not specified
 	g4_set_pipeline(cc.context._pipe_state);
 	uniforms_set_context_consts(_render_path_current_g, cc.context,render_path_bind_params);
 	uniforms_set_obj_consts(_render_path_current_g, cc.context, null); // External hosek
-	g4_set_vertex_buffer(ConstData.skydomeVB);
-	g4_set_index_buffer(ConstData.skydomeIB);
+	g4_set_vertex_buffer(const_data_skydome_vb);
+	g4_set_index_buffer(const_data_skydome_ib);
 	g4_draw();
 	render_path_end();
 }
@@ -222,12 +222,12 @@ function render_path_bind_target(target: string, uniform: string) {
 function render_path_draw_shader(handle: string) {
 	// file/data_name/context
 	let cc: cached_shader_context_t = render_path_cached_shader_contexts.get(handle);
-	if (ConstData.screenAlignedVB == null) ConstData.createScreenAlignedData();
+	if (const_data_screen_aligned_vb == null) const_data_create_screen_aligned_data();
 	g4_set_pipeline(cc.context._pipe_state);
 	uniforms_set_context_consts(_render_path_current_g, cc.context,render_path_bind_params);
 	uniforms_set_obj_consts(_render_path_current_g, cc.context, null);
-	g4_set_vertex_buffer(ConstData.screenAlignedVB);
-	g4_set_index_buffer(ConstData.screenAlignedIB);
+	g4_set_vertex_buffer(const_data_screen_aligned_vb);
+	g4_set_index_buffer(const_data_screen_aligned_ib);
 	g4_draw();
 
 	render_path_end();
@@ -247,7 +247,7 @@ function render_path_load_shader(handle: string) {
 	// file/data_name/context
 	let shaderPath = handle.split("/");
 
-	Data.getShader(shaderPath[0], shaderPath[1], (res: shader_data_t) => {
+	data_get_shader(shaderPath[0], shaderPath[1], (res: shader_data_t) => {
 		cc.context = shader_data_get_context(res, shaderPath[2]);
 		render_path_loading--;
 	});
@@ -258,8 +258,8 @@ function render_path_unload_shader(handle: string) {
 
 	// file/data_name/context
 	let shaderPath = handle.split("/");
-	// Todo: Handle context overrides (see Data.getShader())
-	Data.cachedShaders.delete(shaderPath[1]);
+	// Todo: Handle context overrides (see data_get_shader())
+	data_cached_shaders.delete(shaderPath[1]);
 }
 
 function render_path_unload() {
@@ -300,7 +300,7 @@ function render_path_resize() {
 	for (let rt of render_path_render_targets.values()) {
 		if (rt != null && rt.width == 0) {
 			let _image = rt.image;
-			App.notifyOnInit(function() { image_unload(_image); });
+			app_notify_on_init(function() { image_unload(_image); });
 			rt.image = render_path_create_image(rt, rt.depth_format);
 		}
 	}
@@ -356,8 +356,8 @@ function render_path_create_target(t: render_target_t): render_target_t {
 }
 
 function render_path_create_image(t: render_target_t, depthStencil: DepthFormat): image_t {
-	let width = t.width == 0 ? App.w() : t.width;
-	let height = t.height == 0 ? App.h() : t.height;
+	let width = t.width == 0 ? app_w() : t.width;
+	let height = t.height == 0 ? app_h() : t.height;
 	let depth = t.depth != null ? t.depth : 0;
 	if (t.scale != null) {
 		width = Math.floor(width * t.scale);

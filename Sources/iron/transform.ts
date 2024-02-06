@@ -9,7 +9,7 @@ class transform_t {
 	scale_world: f32 = 1.0;
 	world_unpack: mat4_t;
 	dirty: bool;
-	object: TBaseObject;
+	object: object_t;
 	dim: vec4_t;
 	radius: f32;
 
@@ -33,7 +33,7 @@ class transform_t {
 let _transform_tmp = mat4_identity();
 let _transform_q = quat_create();
 
-function transform_create(object: TBaseObject): transform_t {
+function transform_create(object: object_t): transform_t {
 	let raw = new transform_t();
 	raw.object = object;
 	transform_reset(raw);

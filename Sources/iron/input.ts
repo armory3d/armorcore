@@ -20,8 +20,8 @@ function input_end_frame() {
 function input_register() {
 	if (_input_registered) return;
 	_input_registered = true;
-	App.notifyOnEndFrame(input_end_frame);
-	App.notifyOnReset(input_reset);
+	app_notify_on_end_frame(input_end_frame);
+	app_notify_on_reset(input_reset);
 	// Reset mouse delta on foreground
 	sys_notify_on_app_state(function() { mouse_reset(); }, null, null, null, null);
 	keyboard_reset();
@@ -202,11 +202,11 @@ function mouse_on_touch_move(index: i32, x: i32, y: i32) {
 ///end
 
 function mouse_view_x(): f32 {
-	return mouse_x - App.x();
+	return mouse_x - app_x();
 }
 
 function mouse_view_y(): f32 {
-	return mouse_y - App.y();
+	return mouse_y - app_y();
 }
 
 let pen_buttons = ["tip"];
@@ -311,11 +311,11 @@ function pen_move_listener(x: i32, y: i32, pressure: f32) {
 }
 
 function pen_view_x(): f32 {
-	return pen_x - App.x();
+	return pen_x - app_x();
 }
 
 function pen_view_y(): f32 {
-	return pen_y - App.y();
+	return pen_y - app_y();
 }
 
 let keyboard_keys = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "space", "backspace", "tab", "enter", "shift", "control", "alt", "win", "escape", "delete", "up", "down", "left", "right", "back", ",", ".", ":", ";", "<", "=", ">", "?", "!", '"', "#", "$", "%", "&", "_", "(", ")", "*", "|", "{", "}", "[", "]", "~", "`", "/", "\\", "@", "+", "-", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"];

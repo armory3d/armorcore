@@ -7,14 +7,14 @@ let _uniforms_vec = vec4_create();
 let _uniforms_vec2 = vec4_create();
 let _uniforms_quat = quat_create();
 
-let uniforms_tex_links: ((o: TBaseObject, md: material_data_t, s: string)=>image_t)[] = null;
-let uniforms_mat4_links: ((o: TBaseObject, md: material_data_t, s: string)=>mat4_t)[] = null;
-let uniforms_vec4_links: ((o: TBaseObject, md: material_data_t, s: string)=>vec4_t)[] = null;
-let uniforms_vec3_links: ((o: TBaseObject, md: material_data_t, s: string)=>vec4_t)[] = null;
-let uniforms_vec2_links: ((o: TBaseObject, md: material_data_t, s: string)=>vec4_t)[] = null;
-let uniforms_f32_links: ((o: TBaseObject, md: material_data_t, s: string)=>Null<f32>)[] = null;
-let uniforms_f32_array_links: ((o: TBaseObject, md: material_data_t, s: string)=>Float32Array)[] = null;
-let uniforms_i32_links: ((o: TBaseObject, md: material_data_t, s: string)=>Null<i32>)[] = null;
+let uniforms_tex_links: ((o: object_t, md: material_data_t, s: string)=>image_t)[] = null;
+let uniforms_mat4_links: ((o: object_t, md: material_data_t, s: string)=>mat4_t)[] = null;
+let uniforms_vec4_links: ((o: object_t, md: material_data_t, s: string)=>vec4_t)[] = null;
+let uniforms_vec3_links: ((o: object_t, md: material_data_t, s: string)=>vec4_t)[] = null;
+let uniforms_vec2_links: ((o: object_t, md: material_data_t, s: string)=>vec4_t)[] = null;
+let uniforms_f32_links: ((o: object_t, md: material_data_t, s: string)=>Null<f32>)[] = null;
+let uniforms_f32_array_links: ((o: object_t, md: material_data_t, s: string)=>Float32Array)[] = null;
+let uniforms_i32_links: ((o: object_t, md: material_data_t, s: string)=>Null<i32>)[] = null;
 let uniforms_pos_unpack: Null<f32> = null;
 let uniforms_tex_unpack: Null<f32> = null;
 
@@ -82,7 +82,7 @@ function uniforms_set_context_consts(g: g4_t, context: shader_context_t, bind_pa
 	}
 }
 
-function uniforms_set_obj_consts(g: g4_t, context: shader_context_t, object: TBaseObject) {
+function uniforms_set_obj_consts(g: g4_t, context: shader_context_t, object: object_t) {
 	if (context.constants != null) {
 		for (let i = 0; i < context.constants.length; ++i) {
 			let c = context.constants[i];
@@ -186,25 +186,25 @@ function uniforms_set_context_const(g: g4_t, location: kinc_const_loc_t, c: shad
 		let m: mat4_t = null;
 		switch (c.link) {
 			case "_viewMatrix": {
-				m = camera.V;
+				m = camera.v;
 				break;
 			}
 			case "_projectionMatrix": {
-				m = camera.P;
+				m = camera.p;
 				break;
 			}
 			case "_inverseProjectionMatrix": {
-				mat4_get_inv(_uniforms_mat, camera.P);
+				mat4_get_inv(_uniforms_mat, camera.p);
 				m = _uniforms_mat;
 				break;
 			}
 			case "_viewProjectionMatrix": {
-				m = camera.VP;
+				m = camera.vp;
 				break;
 			}
 			case "_inverseViewProjectionMatrix": {
-				mat4_set_from(_uniforms_mat, camera.V);
-				mat4_mult_mat(_uniforms_mat, camera.P);
+				mat4_set_from(_uniforms_mat, camera.v);
+				mat4_mult_mat(_uniforms_mat, camera.p);
 				mat4_get_inv(_uniforms_mat, _uniforms_mat);
 				m = _uniforms_mat;
 				break;
@@ -215,8 +215,8 @@ function uniforms_set_context_const(g: g4_t, location: kinc_const_loc_t, c: shad
 				let bounds = camera.data.far_plane * 0.95;
 				vec4_set(_uniforms_vec2, bounds, bounds, bounds);
 				mat4_compose(_uniforms_mat, _uniforms_vec, _uniforms_quat, _uniforms_vec2);
-				mat4_mult_mat(_uniforms_mat, camera.V);
-				mat4_mult_mat(_uniforms_mat, camera.P);
+				mat4_mult_mat(_uniforms_mat, camera.v);
+				mat4_mult_mat(_uniforms_mat, camera.p);
 				m = _uniforms_mat;
 				break;
 			}
@@ -249,7 +249,7 @@ function uniforms_set_context_const(g: g4_t, location: kinc_const_loc_t, c: shad
 		switch (c.link) {
 			case "_lightDirection": {
 				if (light != null) {
-					_uniforms_vec = vec4_normalize(LightObject.look(light));
+					_uniforms_vec = vec4_normalize(light_object_look(light));
 					v = _uniforms_vec;
 					break;
 				}
@@ -321,7 +321,7 @@ function uniforms_set_context_const(g: g4_t, location: kinc_const_loc_t, c: shad
 				break;
 			}
 			case "_cameraLook": {
-				_uniforms_vec = vec4_normalize(CameraObject.lookWorld(camera));
+				_uniforms_vec = vec4_normalize(camera_object_look_world(camera));
 				v = _uniforms_vec;
 				break;
 			}
@@ -441,7 +441,7 @@ function uniforms_set_context_const(g: g4_t, location: kinc_const_loc_t, c: shad
 				break;
 			}
 			case "_aspectRatioWindowF": {
-				f = App.w() / App.h();
+				f = app_w() / app_h();
 				break;
 			}
 			default:
@@ -483,7 +483,7 @@ function uniforms_set_context_const(g: g4_t, location: kinc_const_loc_t, c: shad
 	return false;
 }
 
-function uniforms_set_obj_const(g: g4_t, obj: TBaseObject, loc: kinc_const_loc_t, c: shader_const_t) {
+function uniforms_set_obj_const(g: g4_t, obj: object_t, loc: kinc_const_loc_t, c: shader_const_t) {
 	if (c.link == null) return;
 
 	let camera = scene_camera;
@@ -503,22 +503,22 @@ function uniforms_set_obj_const(g: g4_t, obj: TBaseObject, loc: kinc_const_loc_t
 			}
 			case "_worldViewProjectionMatrix": {
 				mat4_set_from(_uniforms_mat, obj.transform.world_unpack);
-				mat4_mult_mat(_uniforms_mat, camera.V);
-				mat4_mult_mat(_uniforms_mat, camera.P);
+				mat4_mult_mat(_uniforms_mat, camera.v);
+				mat4_mult_mat(_uniforms_mat, camera.p);
 				m = _uniforms_mat;
 				break;
 			}
 			case "_worldViewMatrix": {
 				mat4_set_from(_uniforms_mat, obj.transform.world_unpack);
-				mat4_mult_mat(_uniforms_mat, camera.V);
+				mat4_mult_mat(_uniforms_mat, camera.v);
 				m = _uniforms_mat;
 				break;
 			}
 			case "_prevWorldViewProjectionMatrix": {
-				mat4_set_from(_uniforms_mat, obj.ext.prevMatrix);
-				mat4_mult_mat(_uniforms_mat, camera.prevV);
+				mat4_set_from(_uniforms_mat, obj.ext.prev_matrix);
+				mat4_mult_mat(_uniforms_mat, camera.prev_v);
 				// helpMat.multmat(camera.prevP);
-				mat4_mult_mat(_uniforms_mat, camera.P);
+				mat4_mult_mat(_uniforms_mat, camera.p);
 				m = _uniforms_mat;
 				break;
 			}
@@ -554,7 +554,7 @@ function uniforms_set_obj_const(g: g4_t, obj: TBaseObject, loc: kinc_const_loc_t
 				break;
 			}
 			case "_viewMatrix3": {
-				mat3_setFrom4(_uniforms_mat3, camera.V);
+				mat3_setFrom4(_uniforms_mat3, camera.v);
 				m = _uniforms_mat3;
 				break;
 			}
@@ -737,7 +737,7 @@ function uniforms_set_material_consts(g: g4_t, context: shader_context_t, materi
 				if (mname == sname) {
 					g4_set_tex(context._tex_units[j], material_context._textures[i]);
 					// After texture sampler have been assigned, set texture parameters
-					MaterialContext.setTextureParameters(material_context, g, i, context, j);
+					material_context_set_tex_params(material_context, g, i, context, j);
 					break;
 				}
 			}
@@ -745,7 +745,7 @@ function uniforms_set_material_consts(g: g4_t, context: shader_context_t, materi
 	}
 }
 
-function current_material(object: TBaseObject): material_data_t {
+function current_material(object: object_t): material_data_t {
 	if (object != null && object.ext != null && object.ext.materials != null) {
 		let mo = object.ext;
 		return mo.materials[mo.materialIndex];

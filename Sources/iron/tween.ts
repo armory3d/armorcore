@@ -5,9 +5,9 @@ let _tween_registered = false;
 
 function tween_register() {
 	_tween_registered = true;
-	App.notifyOnUpdate(tween_update);
-	App.notifyOnReset(function() {
-		App.notifyOnUpdate(tween_update);
+	app_notify_on_update(tween_update);
+	app_notify_on_reset(function() {
+		app_notify_on_update(tween_update);
 		tween_reset();
 	});
 }

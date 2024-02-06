@@ -49,7 +49,7 @@ type skin_t = {
 	transform: transform_values_t;
 	bone_ref_array: string[];
 	bone_len_array: Float32Array;
-	transformsI: Float32Array[]; // per-bone, size = 16, with skin.transform, pre-inverted
+	transforms_inv: Float32Array[]; // per-bone, size = 16, with skin.transform, pre-inverted
 	bone_count_array: Int16Array;
 	bone_index_array: Int16Array;
 	bone_weight_array: Int16Array;

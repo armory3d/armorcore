@@ -38,7 +38,7 @@ function particle_sys_create(scene_name: string, ref: particle_ref_t): particle_
 	raw.seed = ref.seed;
 	raw.particles = [];
 	raw.ready = false;
-	Data.getParticle(scene_name, ref.particle, (b: particle_data_t) => {
+	data_get_particle(scene_name, ref.particle, (b: particle_data_t) => {
 		raw.data = b;
 		raw.r = raw.data;
 		raw.gx = 0;
@@ -68,7 +68,7 @@ function particle_sys_resume(raw: particle_sys_t) {
 	raw.lifetime = raw.r.lifetime / raw.frame_rate;
 }
 
-function particle_sys_update(raw: particle_sys_t, object: TMeshObject, owner: TMeshObject) {
+function particle_sys_update(raw: particle_sys_t, object: mesh_object_t, owner: mesh_object_t) {
 	if (!raw.ready || object == null || raw.speed == 0.0) return;
 
 	// Copy owner world transform but discard scale
@@ -116,7 +116,7 @@ function particle_sys_get_data(raw: particle_sys_t): mat4_t {
 	return raw.m;
 }
 
-function particle_sys_update_gpu(raw: particle_sys_t, object: TMeshObject, owner: TMeshObject) {
+function particle_sys_update_gpu(raw: particle_sys_t, object: mesh_object_t, owner: mesh_object_t) {
 	if (!object.data._instanced) particle_sys_setup_geom(raw, object, owner);
 	// GPU particles transform is attached to owner object
 }
@@ -125,7 +125,7 @@ function particle_sys_rand(max: i32): i32 {
 	return Math.floor(Math.random() * max);
 }
 
-function particle_sys_setup_geom(raw: particle_sys_t, object: TMeshObject, owner: TMeshObject) {
+function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, owner: mesh_object_t) {
 	let instancedData = new Float32Array(raw.particles.length * 3);
 	let i = 0;
 
@@ -138,7 +138,7 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: TMeshObject, owner
 
 	switch (raw.r.emit_from) {
 		case 0: // Vert
-			let pa = MeshData.getVArray(owner.data, 'pos');
+			let pa = mesh_data_get_vertex_array(owner.data, 'pos');
 
 			for (let p of raw.particles) {
 				let j = Math.floor(particle_sys_fhash(i) * (pa.values.length / pa._size));
@@ -148,7 +148,7 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: TMeshObject, owner
 			}
 
 		case 1: // Face
-			let positions = MeshData.getVArray(owner.data, 'pos').values;
+			let positions = mesh_data_get_vertex_array(owner.data, 'pos').values;
 
 			for (let p of raw.particles) {
 				// Choose random index array (there is one per material) and random face
@@ -180,7 +180,7 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: TMeshObject, owner
 				instancedData[i] = (Math.random() * 2.0 - 1.0) * scaleFactorVolume.z; i++;
 			}
 	}
-	MeshData.setupInstanced(object.data, instancedData, 1);
+	mesh_data_setup_inst(object.data, instancedData, 1);
 }
 
 function particle_sys_fhash(n: i32): f32 {

@@ -367,13 +367,13 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
                 oskin["bone_len_array"][i] = 0.0
 
         # Write the bind pose transform array
-        oskin["transformsI"] = []
+        oskin["transforms_inv"] = []
         for i in range(bone_count):
-            skeletonI = (
+            skeleton_inv = (
                 armature.matrix_world @ bone_array[i].matrix_local
             ).inverted_safe()
-            skeletonI = skeletonI @ bobject.matrix_world
-            oskin["transformsI"].append(self.write_matrix(skeletonI))
+            skeleton_inv = skeleton_inv @ bobject.matrix_world
+            oskin["transforms_inv"].append(self.write_matrix(skeleton_inv))
 
         # Export the per-vertex bone influence data
         group_remap = []

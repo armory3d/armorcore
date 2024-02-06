@@ -16,7 +16,7 @@
             frequency: 60,
             vsync: true
         }, function() {
-			App.init(app_ready);
+			app_init(app_ready);
 		});
 	}
 
@@ -36,7 +36,7 @@
 			camera_ref: "Camera",
 			objects: []
 		};
-		Data.cachedSceneRaws.set(raw.name, raw);
+		data_cached_scene_raws.set(raw.name, raw);
 
 		let cd: camera_data_t = {
 			name: "MyCamera",
@@ -125,7 +125,7 @@
 
 		// Rotate cube
 		let cube = scene_get_child("Cube");
-		App.notifyOnUpdate(function() {
+		app_notify_on_update(function() {
 			// cube.transform.rotate(Vec4.create(0, 0, 1), 0.02);
 		});
 	}

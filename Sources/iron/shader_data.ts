@@ -29,8 +29,8 @@ function shader_data_ext(): string {
 }
 
 function shader_data_parse(file: string, name: string, done: (sd: shader_data_t)=>void, override_context: shader_override_t = null) {
-	Data.getSceneRaw(file, (format: scene_t) => {
-		let raw: shader_data_t = Data.getShaderRawByName(format.shader_datas, name);
+	data_get_scene_raw(file, (format: scene_t) => {
+		let raw: shader_data_t = data_get_shader_raw_by_name(format.shader_datas, name);
 		if (raw == null) {
 			Krom.log(`Shader data "${name}" not found!`);
 			done(null);
@@ -134,7 +134,7 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 
 		function load_shader(file: string, type: i32) {
 			let path = file + shader_data_ext();
-			Data.getBlob(path, (b: ArrayBuffer) => {
+			data_get_blob(path, (b: ArrayBuffer) => {
 				if (type == 0) raw._pipe_state.vertexShader = shader_create(b, ShaderType.Vertex);
 				else if (type == 1) raw._pipe_state.fragmentShader = shader_create(b, ShaderType.Fragment);
 				else if (type == 2) raw._pipe_state.geometryShader = shader_create(b, ShaderType.Geometry);
