@@ -842,8 +842,20 @@ function writeTSProject(projectdir, projectFiles, options) {
 		let shermes = __dirname + '/hermes/linux/shermes';
 		let include = __dirname + '/hermes/include';
 
+		let out = "";
+		let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
+		file_paths.unshift(__dirname + '/Sources/hermes/Krom.ts');
+		for (let file_path of file_paths) {
+			if (file_path.endsWith('d.ts')) {
+				continue;
+			}
+			file = fs.readFileSync(file_path);
+			out += file;
+		}
+		fs.writeFileSync('build/main.ts', out);
+
 		// '-parse-ts' '-emit-c'
-		let result = child_process.spawnSync(shermes, ['-c', '-typed', '-Wc,-I' + include, '-o', 'build/main.o', 'armorcore/Sources/hermes/Krom.ts', 'Sources/main.ts']);
+		let result = child_process.spawnSync(shermes, ['-c', '-typed', '-Wc,-I' + include, '-o', 'build/main.o', 'build/main.ts']);
 		if (result.status !== 0) {
 			console.log(result.stderr.toString());
 			process.exit();
