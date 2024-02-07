@@ -13,14 +13,23 @@ function tween_register() {
 }
 
 function tween_to(anim: tween_anim_t): tween_anim_t {
-	if (!_tween_registered) tween_register();
+	if (!_tween_registered) {
+		tween_register();
+	}
 	anim._time = 0;
 	anim.is_playing = (anim.delay != null && anim.delay > 0.0) ? false : true;
 
-	if (anim.ease == null) anim.ease = Ease.Linear;
+	if (anim.ease == null) {
+		anim.ease = Ease.Linear;
+	}
 
 	if (anim.target != null && anim.props != null) {
-		anim._comps = []; anim._x = []; anim._y = []; anim._z = []; anim._w = []; anim._normalize = [];
+		anim._comps = [];
+		anim._x = [];
+		anim._y = [];
+		anim._z = [];
+		anim._w = [];
+		anim._normalize = [];
 		for (let p in anim.props) {
 			let val: any = anim.target[p];
 			if (val.constructor == vec4_t || val.constructor == quat_t) {
@@ -66,7 +75,9 @@ function tween_update() {
 
 		if (a.delay > 0) { // Delay
 			a.delay -= d;
-			if (a.delay > 0) continue;
+			if (a.delay > 0) {
+				continue;
+			}
 		}
 
 		a._time += d;
@@ -74,14 +85,18 @@ function tween_update() {
 
 		if (a.target != null) {
 
-			if (a.target.constructor == transform_t) a.target.dirty = true;
+			if (a.target.constructor == transform_t) {
+				a.target.dirty = true;
+			}
 
 			// Way too much Reflect trickery..
 			let ps = Object.keys(a.props);
 			for (let i = 0; i < ps.length; ++i) {
 				let p = ps[i];
 				let k = a._time / a.duration;
-				if (k > 1) k = 1;
+				if (k > 1) {
+					k = 1;
+				}
 
 				if (a._comps[i] == 1) {
 					let from_val: f32 = a._x[i];
@@ -122,13 +137,17 @@ function tween_update() {
 		}
 
 		if (a.is_playing) {
-			if (a.tick != null) a.tick();
+			if (a.tick != null) {
+				a.tick();
+			}
 		}
 		else {
 			_tween_anims.splice(i, 1);
 			i--;
 			a.is_playing = false;
-			if (a.done != null) a.done();
+			if (a.done != null) {
+				a.done();
+			}
 		}
 	}
 }

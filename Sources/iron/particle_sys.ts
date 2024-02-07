@@ -38,7 +38,7 @@ function particle_sys_create(scene_name: string, ref: particle_ref_t): particle_
 	raw.seed = ref.seed;
 	raw.particles = [];
 	raw.ready = false;
-	data_get_particle(scene_name, ref.particle, (b: particle_data_t) => {
+	data_get_particle(scene_name, ref.particle, function (b: particle_data_t) {
 		raw.data = b;
 		raw.r = raw.data;
 		raw.gx = 0;
@@ -69,7 +69,9 @@ function particle_sys_resume(raw: particle_sys_t) {
 }
 
 function particle_sys_update(raw: particle_sys_t, object: mesh_object_t, owner: mesh_object_t) {
-	if (!raw.ready || object == null || raw.speed == 0.0) return;
+	if (!raw.ready || object == null || raw.speed == 0.0) {
+		return;
+	}
 
 	// Copy owner world transform but discard scale
 	mat4_decompose(owner.base.transform.world, raw.owner_loc, raw.owner_rot, raw.owner_scale);
@@ -117,7 +119,9 @@ function particle_sys_get_data(raw: particle_sys_t): mat4_t {
 }
 
 function particle_sys_update_gpu(raw: particle_sys_t, object: mesh_object_t, owner: mesh_object_t) {
-	if (!object.data._instanced) particle_sys_setup_geom(raw, object, owner);
+	if (!object.data._instanced) {
+		particle_sys_setup_geom(raw, object, owner);
+	}
 	// GPU particles transform is attached to owner object
 }
 
@@ -126,7 +130,7 @@ function particle_sys_rand(max: i32): i32 {
 }
 
 function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, owner: mesh_object_t) {
-	let instancedData = new Float32Array(raw.particles.length * 3);
+	let instanced_data = new Float32Array(raw.particles.length * 3);
 	let i = 0;
 
 	let norm_fac = 1 / 32767; // pa.values are not normalized
@@ -142,9 +146,9 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 
 			for (let p of raw.particles) {
 				let j = Math.floor(particle_sys_fhash(i) * (pa.values.length / pa._size));
-				instancedData[i] = pa.values[j * pa._size    ] * norm_fac * scale_fac.x; i++;
-				instancedData[i] = pa.values[j * pa._size + 1] * norm_fac * scale_fac.y; i++;
-				instancedData[i] = pa.values[j * pa._size + 2] * norm_fac * scale_fac.z; i++;
+				instanced_data[i] = pa.values[j * pa._size    ] * norm_fac * scale_fac.x; i++;
+				instanced_data[i] = pa.values[j * pa._size + 1] * norm_fac * scale_fac.y; i++;
+				instanced_data[i] = pa.values[j * pa._size + 2] * norm_fac * scale_fac.z; i++;
 			}
 
 		case 1: // Face
@@ -153,11 +157,11 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 			for (let p of raw.particles) {
 				// Choose random index array (there is one per material) and random face
 				let ia = owner.data._indices[particle_sys_rand(owner.data._indices.length)];
-				let faceIndex = particle_sys_rand(Math.floor(ia.length / 3));
+				let face_index = particle_sys_rand(Math.floor(ia.length / 3));
 
-				let i0 = ia[faceIndex * 3 + 0];
-				let i1 = ia[faceIndex * 3 + 1];
-				let i2 = ia[faceIndex * 3 + 2];
+				let i0 = ia[face_index * 3 + 0];
+				let i1 = ia[face_index * 3 + 1];
+				let i2 = ia[face_index * 3 + 2];
 
 				let v0 = vec3_create(positions[i0 * 4], positions[i0 * 4 + 1], positions[i0 * 4 + 2]);
 				let v1 = vec3_create(positions[i1 * 4], positions[i1 * 4 + 1], positions[i1 * 4 + 2]);
@@ -165,22 +169,22 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 
 				let pos = particle_sys_random_point_in_triangle(v0, v1, v2);
 
-				instancedData[i] = pos.x * norm_fac * scale_fac.x; i++;
-				instancedData[i] = pos.y * norm_fac * scale_fac.y; i++;
-				instancedData[i] = pos.z * norm_fac * scale_fac.z; i++;
+				instanced_data[i] = pos.x * norm_fac * scale_fac.x; i++;
+				instanced_data[i] = pos.y * norm_fac * scale_fac.y; i++;
+				instanced_data[i] = pos.z * norm_fac * scale_fac.z; i++;
 			}
 
 		case 2: // Volume
-			let scaleFactorVolume = vec4_set_from(vec4_create(), object.base.transform.dim);
-			vec4_mult(scaleFactorVolume, 0.5 / (particle_size * scale_pos_particle));
+			let scale_factor_volume = vec4_set_from(vec4_create(), object.base.transform.dim);
+			vec4_mult(scale_factor_volume, 0.5 / (particle_size * scale_pos_particle));
 
 			for (let p in raw.particles) {
-				instancedData[i] = (Math.random() * 2.0 - 1.0) * scaleFactorVolume.x; i++;
-				instancedData[i] = (Math.random() * 2.0 - 1.0) * scaleFactorVolume.y; i++;
-				instancedData[i] = (Math.random() * 2.0 - 1.0) * scaleFactorVolume.z; i++;
+				instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.x; i++;
+				instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.y; i++;
+				instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.z; i++;
 			}
 	}
-	mesh_data_setup_inst(object.data, instancedData, 1);
+	mesh_data_setup_inst(object.data, instanced_data, 1);
 }
 
 function particle_sys_fhash(n: i32): f32 {

@@ -1246,7 +1246,7 @@ namespace {
 		if (args[0]->IsNullOrUndefined()) return;
 		Local<Object> image = TO_OBJ(args[0]);
 		Local<Value> tex = OBJ_GET(image, "texture_");
-		Local<Value> rt = OBJ_GET(image, "renderTarget_");
+		Local<Value> rt = OBJ_GET(image, "render_target_");
 
 		if (tex->IsObject()) {
 			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(tex));
@@ -1918,7 +1918,7 @@ namespace {
 			kinc_g4_restore_render_target();
 		}
 		else {
-			Local<Object> obj = TO_OBJ(OBJ_GET(TO_OBJ(args[0]), "renderTarget_"));
+			Local<Object> obj = TO_OBJ(OBJ_GET(TO_OBJ(args[0]), "render_target_"));
 			Local<External> rtfield = Local<External>::Cast(obj->GetInternalField(0));
 			kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
 
@@ -1929,7 +1929,7 @@ namespace {
 				length = TO_I32(OBJ_GET(js_array, "length")) + 1;
 				if (length > 8) length = 8;
 				for (int32_t i = 1; i < length; ++i) {
-					Local<Object> artobj = TO_OBJ(OBJ_GET(TO_OBJ(ARRAY_GET(js_array, i - 1)), "renderTarget_"));
+					Local<Object> artobj = TO_OBJ(OBJ_GET(TO_OBJ(ARRAY_GET(js_array, i - 1)), "render_target_"));
 					Local<External> artfield = Local<External>::Cast(artobj->GetInternalField(0));
 					kinc_g4_render_target_t *art = (kinc_g4_render_target_t *)artfield->Value();
 					render_targets[i] = art;
@@ -2114,7 +2114,7 @@ namespace {
 			g2_draw_scaled_sub_image(texture, sx, sy, sw, sh, dx, dy, dw, dh);
 		}
 		else {
-			Local<Value> rt = OBJ_GET(image, "renderTarget_");
+			Local<Value> rt = OBJ_GET(image, "render_target_");
 			kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(rt));
 			g2_draw_scaled_sub_render_target(render_target, sx, sy, sw, sh, dx, dy, dw, dh);
 		}
@@ -2910,7 +2910,7 @@ namespace {
 		kinc_g4_render_target_t *texpaint2;
 		Local<Object> texpaint0_image = TO_OBJ(args[0]);
 		Local<Value> texpaint0_tex = OBJ_GET(texpaint0_image, "texture_");
-		Local<Value> texpaint0_rt = OBJ_GET(texpaint0_image, "renderTarget_");
+		Local<Value> texpaint0_rt = OBJ_GET(texpaint0_image, "render_target_");
 
 		if (texpaint0_tex->IsObject()) {
 			#ifdef KORE_DIRECT3D12
@@ -2929,7 +2929,7 @@ namespace {
 
 		Local<Object> texpaint1_image = TO_OBJ(args[1]);
 		Local<Value> texpaint1_tex = OBJ_GET(texpaint1_image, "texture_");
-		Local<Value> texpaint1_rt = OBJ_GET(texpaint1_image, "renderTarget_");
+		Local<Value> texpaint1_rt = OBJ_GET(texpaint1_image, "render_target_");
 
 		if (texpaint1_tex->IsObject()) {
 			#ifdef KORE_DIRECT3D12
@@ -2948,7 +2948,7 @@ namespace {
 
 		Local<Object> texpaint2_image = TO_OBJ(args[2]);
 		Local<Value> texpaint2_tex = OBJ_GET(texpaint2_image, "texture_");
-		Local<Value> texpaint2_rt = OBJ_GET(texpaint2_image, "renderTarget_");
+		Local<Value> texpaint2_rt = OBJ_GET(texpaint2_image, "render_target_");
 
 		if (texpaint2_tex->IsObject()) {
 			#ifdef KORE_DIRECT3D12
@@ -3420,7 +3420,7 @@ namespace {
 			is_rt = false;
 		}
 		else {
-			Local<Value> rt = OBJ_GET(image_object, "renderTarget_");
+			Local<Value> rt = OBJ_GET(image_object, "render_target_");
 			Local<External> rtfield = Local<External>::Cast(GET_INTERNAL(rt));
 			image = (void *)rtfield->Value();
 			is_rt = true;
@@ -3511,7 +3511,7 @@ namespace {
 			zui_tooltip_image(image, max_width);
 		}
 		else {
-			Local<Value> rt = OBJ_GET(image_object, "renderTarget_");
+			Local<Value> rt = OBJ_GET(image_object, "render_target_");
 			kinc_g4_render_target_t *image = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(rt));
 			zui_tooltip_render_target(image, max_width);
 		}

@@ -21,12 +21,16 @@ function object_create(): object_t {
 	raw.uid = object_uid_counter++;
 	raw.transform = transform_create(raw);
 	raw.is_empty = raw.constructor == object_t;
-	if (raw.is_empty && _scene_ready) scene_empties.push(raw);
+	if (raw.is_empty && _scene_ready) {
+		scene_empties.push(raw);
+	}
 	return raw;
 }
 
 function object_set_parent(raw: object_t, parent_object: object_t, parent_inv = false, keep_transform = false) {
-	if (parent_object == raw || parent_object == raw.parent) return;
+	if (parent_object == raw || parent_object == raw.parent) {
+		return;
+	}
 
 	if (raw.parent != null) {
 		array_remove(raw.parent.children, raw);
@@ -48,9 +52,15 @@ function object_set_parent(raw: object_t, parent_object: object_t, parent_inv = 
 }
 
 function object_remove_super(raw: object_t) {
-	if (raw.is_empty && _scene_ready) array_remove(scene_empties, raw);
-	if (raw.animation != null) anim_remove(raw.animation);
-	while (raw.children.length > 0) object_remove(raw.children[0]);
+	if (raw.is_empty && _scene_ready) {
+		array_remove(scene_empties, raw);
+	}
+	if (raw.animation != null) {
+		anim_remove(raw.animation);
+	}
+	while (raw.children.length > 0) {
+		object_remove(raw.children[0]);
+	}
 	if (raw.parent != null) {
 		array_remove(raw.parent.children, raw);
 		raw.parent = null;
@@ -80,29 +90,39 @@ function object_remove(raw: object_t) {
 }
 
 function object_get_child(raw: object_t, name: string): object_t {
-	if (raw.name == name) return raw;
+	if (raw.name == name) {
+		return raw;
+	}
 	else {
 		for (let c of raw.children) {
 			let r = object_get_child(c, name);
-			if (r != null) return r;
+			if (r != null) {
+				return r;
+			}
 		}
 	}
 	return null;
 }
 
 function object_get_children(raw: object_t, recursive = false): object_t[] {
-	if (!recursive) return raw.children;
-
-	let retChildren = raw.children.slice();
-	for (let child of raw.children) {
-		retChildren = retChildren.concat(object_get_children(child, recursive));
+	if (!recursive) {
+		return raw.children;
 	}
-	return retChildren;
+
+	let ret_children = raw.children.slice();
+	for (let child of raw.children) {
+		ret_children = ret_children.concat(object_get_children(child, recursive));
+	}
+	return ret_children;
 }
 
 ///if arm_skin
 function object_get_parent_armature(raw: object_t, name: string): anim_bone_t {
-	for (let a of scene_animations) if (a.armature != null && a.armature.name == name) return a.ext;
+	for (let a of scene_animations) {
+		if (a.armature != null && a.armature.name == name) {
+			return a.ext;
+		}
+	}
 	return null;
 }
 ///end
@@ -111,14 +131,18 @@ function object_setup_animation_super(raw: object_t, oactions: scene_t[] = null)
 	// Parented to bone
 	///if arm_skin
 	if (raw.raw.parent_bone != null) {
-		app_notify_on_init(() => {
+		app_notify_on_init(function () {
 			let banim = object_get_parent_armature(raw, raw.parent.name);
-			if (banim != null) anim_bone_add_bone_child(banim, raw.raw.parent_bone, raw);
+			if (banim != null) {
+				anim_bone_add_bone_child(banim, raw.raw.parent_bone, raw);
+			}
 		});
 	}
 	///end
 	// TBaseObject actions
-	if (oactions == null) return;
+	if (oactions == null) {
+		return;
+	}
 	raw.animation = anim_object_create(raw, oactions).base;
 }
 

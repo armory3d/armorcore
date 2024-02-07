@@ -10,12 +10,13 @@ let _render_path_current_target: render_target_t = null;
 let _render_path_light: light_object_t = null;
 let _render_path_sun: light_object_t = null;
 let _render_path_point: light_object_t = null;
-let _render_path_current_g: g4_t = null;
-let _render_path_frame_g: g4_t;
+let _render_path_current_image: image_t = null;
 let _render_path_draw_order = DrawOrder.Distance;
 let _render_path_paused = false;
 
-function render_path_ready(): bool { return render_path_loading == 0; }
+function render_path_ready(): bool {
+	return render_path_loading == 0;
+}
 
 let render_path_commands: ()=>void = null;
 let render_path_render_targets: Map<string, render_target_t> = new Map();
@@ -40,19 +41,19 @@ function render_path_voxelize() { // Returns true if scene should be voxelized
 }
 ///end
 
-function render_path_render_frame(g: g4_t) {
-	if (!render_path_ready() ||_render_path_paused || app_w() == 0 || app_h() == 0) return;
+function render_path_render_frame() {
+	if (!render_path_ready() ||_render_path_paused || app_w() == 0 || app_h() == 0) {
+		return;
+	}
 
-	if (render_path_last_w > 0 && (render_path_last_w != app_w() ||render_path_last_h != app_h())) render_path_resize();
+	if (render_path_last_w > 0 && (render_path_last_w != app_w() ||render_path_last_h != app_h())) {
+		render_path_resize();
+	}
 	render_path_last_w = app_w();
 	render_path_last_h = app_h();
 
 	_render_path_frame_time = time_time() -render_path_last_frame_time;
 	render_path_last_frame_time = time_time();
-
-	// Render to screen or probe
-	let cam = scene_camera;
-	_render_path_frame_g = g;
 
 	render_path_current_w = app_w();
 	render_path_current_h = app_h();
@@ -60,9 +61,15 @@ function render_path_render_frame(g: g4_t) {
 	render_path_meshes_sorted = false;
 
 	for (let l of scene_lights) {
-		if (l.base.visible) light_object_build_mat(l, scene_camera);
-		if (l.data.type == "sun") _render_path_sun = l;
-		else _render_path_point = l;
+		if (l.base.visible) {
+			light_object_build_mat(l, scene_camera);
+		}
+		if (l.data.type == "sun") {
+			_render_path_sun = l;
+		}
+		else {
+			_render_path_point = l;
+		}
 	}
 	_render_path_light = scene_lights[0];
 
@@ -77,26 +84,27 @@ function render_path_set_target(target: string, additional: string[] = null) {
 		_render_path_current_target = null;
 		render_path_current_w = app_w();
 		render_path_current_h = app_h();
-		render_path_begin(_render_path_frame_g);
+		render_path_begin();
 		render_path_set_current_viewport(app_w(), app_h());
 		render_path_set_current_scissor(app_w(), app_h());
 	}
 	else { // Render target
 		let rt = render_path_render_targets.get(target);
 		_render_path_current_target = rt;
-		let additionalImages: image_t[] = null;
+		let additional_images: image_t[] = null;
 		if (additional != null) {
-			additionalImages = [];
+			additional_images = [];
 			for (let s of additional) {
 				let t = render_path_render_targets.get(s);
-				additionalImages.push(t.image);
+				additional_images.push(t.image);
 			}
 		}
-		let targetG = rt.image.g4;
 		render_path_current_w = rt.image.width;
 		render_path_current_h = rt.image.height;
-		if (rt.is_3d) render_path_current_d = rt.image.depth;
-		render_path_begin(targetG, additionalImages);
+		if (rt.is_3d) {
+			render_path_current_d = rt.image.depth;
+		}
+		render_path_begin(rt.image, additional_images);
 	}
 	render_path_bind_params = null;
 }
@@ -106,10 +114,12 @@ function render_path_set_depth_from(target: string, from: string) {
 	image_set_depth_from(rt.image,render_path_render_targets.get(from).image);
 }
 
-function render_path_begin(g: g4_t, additional_targets: image_t[] = null) {
-	if (_render_path_current_g != null) render_path_end();
-	_render_path_current_g = g;
-	g4_begin(g, additional_targets);
+function render_path_begin(render_target: image_t = null, additional_targets: image_t[] = null) {
+	if (_render_path_current_image != null) {
+		render_path_end();
+	}
+	_render_path_current_image = render_target;
+	g4_begin(render_target, additional_targets);
 }
 
 function render_path_end() {
@@ -118,7 +128,7 @@ function render_path_end() {
 		render_path_scissor_set = false;
 	}
 	g4_end();
-	_render_path_current_g = null;
+	_render_path_current_image = null;
 	render_path_bind_params = null;
 }
 
@@ -143,7 +153,9 @@ function render_path_clear_target(color_flag: Null<i32> = null, depth_flag: Null
 		}
 		else if (scene_camera != null) {
 			let cc = scene_camera.data.clear_color;
-			if (cc != null) color_flag = color_from_floats(cc[0], cc[1], cc[2]);
+			if (cc != null) {
+				color_flag = color_from_floats(cc[0], cc[1], cc[2]);
+			}
 		}
 	}
 	g4_clear(color_flag, depth_flag);
@@ -160,13 +172,13 @@ function render_path_gen_mipmaps(target: string) {
 }
 
 function render_path_sort_meshes_dist(meshes: mesh_object_t[]) {
-	meshes.sort((a, b): i32 => {
+	meshes.sort(function (a: mesh_object_t, b: mesh_object_t): i32 {
 		return a.camera_dist >= b.camera_dist ? 1 : -1;
 	});
 }
 
 function render_path_sort_meshes_shader(meshes: mesh_object_t[]) {
-	meshes.sort((a, b): i32 => {
+	meshes.sort(function (a: mesh_object_t, b: mesh_object_t): i32 {
 		return a.materials[0].name >= b.materials[0].name ? 1 : -1;
 	});
 }
@@ -182,28 +194,32 @@ function render_path_submit_draw(context: string) {
 	mesh_object_last_pipeline = null;
 
 	if (!render_path_meshes_sorted && camera != null) { // Order max once per frame for now
-		let camX = transform_world_x(camera.base.transform);
-		let camY = transform_world_y(camera.base.transform);
-		let camZ = transform_world_z(camera.base.transform);
+		let cam_x = transform_world_x(camera.base.transform);
+		let cam_y = transform_world_y(camera.base.transform);
+		let cam_z = transform_world_z(camera.base.transform);
 		for (let mesh of meshes) {
-			mesh_object_compute_camera_dist(mesh, camX, camY, camZ);
+			mesh_object_compute_camera_dist(mesh, cam_x, cam_y, cam_z);
 		}
-		_render_path_draw_order == DrawOrder.Shader ?render_path_sort_meshes_shader(meshes) :render_path_sort_meshes_dist(meshes);
+		_render_path_draw_order == DrawOrder.Shader ? render_path_sort_meshes_shader(meshes) : render_path_sort_meshes_dist(meshes);
 		render_path_meshes_sorted = true;
 	}
 
 	for (let m of meshes) {
-		mesh_object_render(m,_render_path_current_g, context,render_path_bind_params);
+		mesh_object_render(m, context, render_path_bind_params);
 	}
 }
 
 function render_path_draw_skydome(handle: string) {
-	if (const_data_skydome_vb == null) const_data_create_skydome_data();
+	if (const_data_skydome_vb == null) {
+		const_data_create_skydome_data();
+	}
 	let cc: cached_shader_context_t = render_path_cached_shader_contexts.get(handle);
-	if (cc.context == null) return; // World data not specified
+	if (cc.context == null) {
+		return; // World data not specified
+	}
 	g4_set_pipeline(cc.context._pipe_state);
-	uniforms_set_context_consts(_render_path_current_g, cc.context,render_path_bind_params);
-	uniforms_set_obj_consts(_render_path_current_g, cc.context, null); // External hosek
+	uniforms_set_context_consts(cc.context, render_path_bind_params);
+	uniforms_set_obj_consts(cc.context, null); // External hosek
 	g4_set_vertex_buffer(const_data_skydome_vb);
 	g4_set_index_buffer(const_data_skydome_ib);
 	g4_draw();
@@ -215,17 +231,21 @@ function render_path_bind_target(target: string, uniform: string) {
 		render_path_bind_params.push(target);
 		render_path_bind_params.push(uniform);
 	}
-	else render_path_bind_params = [target, uniform];
+	else {
+		render_path_bind_params = [target, uniform];
+	}
 }
 
 // Full-screen triangle
 function render_path_draw_shader(handle: string) {
 	// file/data_name/context
 	let cc: cached_shader_context_t = render_path_cached_shader_contexts.get(handle);
-	if (const_data_screen_aligned_vb == null) const_data_create_screen_aligned_data();
+	if (const_data_screen_aligned_vb == null) {
+		const_data_create_screen_aligned_data();
+	}
 	g4_set_pipeline(cc.context._pipe_state);
-	uniforms_set_context_consts(_render_path_current_g, cc.context,render_path_bind_params);
-	uniforms_set_obj_consts(_render_path_current_g, cc.context, null);
+	uniforms_set_context_consts(cc.context,render_path_bind_params);
+	uniforms_set_obj_consts(cc.context, null);
 	g4_set_vertex_buffer(const_data_screen_aligned_vb);
 	g4_set_index_buffer(const_data_screen_aligned_ib);
 	g4_draw();
@@ -245,10 +265,10 @@ function render_path_load_shader(handle: string) {
 	render_path_cached_shader_contexts.set(handle, cc);
 
 	// file/data_name/context
-	let shaderPath = handle.split("/");
+	let shader_path = handle.split("/");
 
-	data_get_shader(shaderPath[0], shaderPath[1], (res: shader_data_t) => {
-		cc.context = shader_data_get_context(res, shaderPath[2]);
+	data_get_shader(shader_path[0], shader_path[1], function (res: shader_data_t) {
+		cc.context = shader_data_get_context(res, shader_path[2]);
 		render_path_loading--;
 	});
 }
@@ -257,17 +277,21 @@ function render_path_unload_shader(handle: string) {
 	render_path_cached_shader_contexts.delete(handle);
 
 	// file/data_name/context
-	let shaderPath = handle.split("/");
+	let shader_path = handle.split("/");
 	// Todo: Handle context overrides (see data_get_shader())
-	data_cached_shaders.delete(shaderPath[1]);
+	data_cached_shaders.delete(shader_path[1]);
 }
 
 function render_path_unload() {
-	for (let rt of render_path_render_targets.values()) render_target_unload(rt);
+	for (let rt of render_path_render_targets.values()) {
+		render_target_unload(rt);
+	}
 }
 
 function render_path_resize() {
-	if (sys_width() == 0 || sys_height() == 0) return;
+	if (sys_width() == 0 || sys_height() == 0) {
+		return;
+	}
 
 	// Make sure depth buffer is attached to single target only and gets released once
 	for (let rt of render_path_render_targets.values()) {
@@ -300,7 +324,9 @@ function render_path_resize() {
 	for (let rt of render_path_render_targets.values()) {
 		if (rt != null && rt.width == 0) {
 			let _image = rt.image;
-			app_notify_on_init(function() { image_unload(_image); });
+			app_notify_on_init(function() {
+				image_unload(_image);
+			});
 			rt.image = render_path_create_image(rt, rt.depth_format);
 		}
 	}
@@ -327,9 +353,9 @@ function render_path_create_target(t: render_target_t): render_target_t {
 	// With depth buffer
 	if (t.depth_buffer != null) {
 		t.has_depth = true;
-		let depthTarget = render_path_depth_to_render_target.get(t.depth_buffer);
+		let depth_target = render_path_depth_to_render_target.get(t.depth_buffer);
 
-		if (depthTarget == null) { // Create new one
+		if (depth_target == null) { // Create new one
 			for (let db of render_path_depth_buffers) {
 				if (db.name == t.depth_buffer) {
 					render_path_depth_to_render_target.set(db.name, t);
@@ -343,19 +369,21 @@ function render_path_create_target(t: render_target_t): render_target_t {
 			t.depth_format = DepthFormat.NoDepthAndStencil;
 			t.depth_from = t.depth_buffer;
 			t.image = render_path_create_image(t, t.depth_format);
-			image_set_depth_from(t.image, depthTarget.image);
+			image_set_depth_from(t.image, depth_target.image);
 		}
 	}
 	else { // No depth buffer
 		t.has_depth = false;
-		if (t.depth != null && t.depth > 1) t.is_3d = true;
+		if (t.depth != null && t.depth > 1) {
+			t.is_3d = true;
+		}
 		t.depth_format = DepthFormat.NoDepthAndStencil;
 		t.image = render_path_create_image(t, t.depth_format);
 	}
 	return t;
 }
 
-function render_path_create_image(t: render_target_t, depthStencil: DepthFormat): image_t {
+function render_path_create_image(t: render_target_t, depth_format: DepthFormat): image_t {
 	let width = t.width == 0 ? app_w() : t.width;
 	let height = t.height == 0 ? app_h() : t.height;
 	let depth = t.depth != null ? t.depth : 0;
@@ -364,13 +392,19 @@ function render_path_create_image(t: render_target_t, depthStencil: DepthFormat)
 		height = Math.floor(height * t.scale);
 		depth = Math.floor(depth * t.scale);
 	}
-	if (width < 1) width = 1;
-	if (height < 1) height = 1;
+	if (width < 1) {
+		width = 1;
+	}
+	if (height < 1) {
+		height = 1;
+	}
 	if (t.depth != null && t.depth > 1) { // 3D texture
 		// Image only
 		let img = image_create_3d(width, height, depth,
 			t.format != null ?render_path_get_tex_format(t.format) : TextureFormat.RGBA32);
-		if (t.mipmaps) image_gen_mipmaps(img, 1000); // Allocate mipmaps
+		if (t.mipmaps) {
+			image_gen_mipmaps(img, 1000); // Allocate mipmaps
+		}
 		return img;
 	}
 	else { // 2D texture
@@ -381,7 +415,7 @@ function render_path_create_image(t: render_target_t, depthStencil: DepthFormat)
 		else { // Render target
 			return image_create_render_target(width, height,
 				t.format != null ?render_path_get_tex_format(t.format) : TextureFormat.RGBA32,
-				depthStencil);
+				depth_format);
 		}
 	}
 }
@@ -400,7 +434,9 @@ function render_path_get_tex_format(s: string): TextureFormat {
 }
 
 function render_path_get_depth_format(s: string): DepthFormat {
-	if (s == null || s == "") return DepthFormat.DepthOnly;
+	if (s == null || s == "") {
+		return DepthFormat.DepthOnly;
+	}
 	switch (s) {
 		case "DEPTH24": return DepthFormat.DepthOnly;
 		case "DEPTH16": return DepthFormat.Depth16;

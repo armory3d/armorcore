@@ -50,11 +50,15 @@ function raycast_closest_box_intersect(transforms: transform_t[], input_x: f32, 
 	// Get intersects
 	for (let t of transforms) {
 		let intersect = raycast_box_intersect(t, input_x, input_y, camera);
-		if (intersect != null) intersects.push(t);
+		if (intersect != null) {
+			intersects.push(t);
+		}
 	}
 
 	// No intersects
-	if (intersects.length == 0) return null;
+	if (intersects.length == 0) {
+		return null;
+	}
 
 	// Get closest intersect
 	let closest: transform_t = null;
@@ -117,10 +121,14 @@ function ray_intersects_sphere(raw: ray_t, sphere_center: vec4_t, sphere_radius:
 function ray_intersects_plane(raw: ray_t, plane: plane_t): bool {
 	// Check if the ray lies on the plane first
 	let dist_to_point = plane_dist_to_point(plane, raw.origin);
-	if (dist_to_point == 0) return true;
+	if (dist_to_point == 0) {
+		return true;
+	}
 
 	let denominator = vec4_dot(plane.normal, raw.dir);
-	if (denominator * dist_to_point < 0) return true;
+	if (denominator * dist_to_point < 0) {
+		return true;
+	}
 
 	// Ray origin is behind the plane (and is pointing behind it)
 	return false;
@@ -146,13 +154,20 @@ function ray_dist_to_plane(raw: ray_t, plane: plane_t): f32 {
 
 function ray_intersect_plane(raw: ray_t, plane: plane_t): vec4_t {
 	let t = ray_dist_to_plane(raw, plane);
-	if (t == -1) return null;
+	if (t == -1) {
+		return null;
+	}
 	return ray_at(raw, t);
 }
 
 function ray_intersect_box(raw: ray_t, center: vec4_t, dim: vec4_t): vec4_t {
 	// http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-7-intersecting-simple-shapes/ray-box-intersection/
-	let tmin, tmax, tymin, tymax, tzmin, tzmax;
+	let tmin;
+	let tmax;
+	let tymin;
+	let tymax;
+	let tzmin;
+	let tzmax;
 
 	let half_x = dim.x / 2;
 	let half_y = dim.y / 2;
@@ -188,12 +203,18 @@ function ray_intersect_box(raw: ray_t, center: vec4_t, dim: vec4_t): vec4_t {
 		tymax = (box_min_y - origin.y) * invdiry;
 	}
 
-	if ((tmin > tymax) || (tymin > tmax)) return null;
+	if ((tmin > tymax) || (tymin > tmax)) {
+		return null;
+	}
 
 	// These lines also handle the case where tmin or tmax is NaN
 	// (result of 0 * Infinity). x !== x returns true if x is NaN
-	if (tymin > tmin || tmin != tmin) tmin = tymin;
-	if (tymax < tmax || tmax != tmax) tmax = tymax;
+	if (tymin > tmin || tmin != tmin) {
+		tmin = tymin;
+	}
+	if (tymax < tmax || tmax != tmax) {
+		tmax = tymax;
+	}
 
 	if (invdirz >= 0) {
 		tzmin = (box_min_z - origin.z) * invdirz;
@@ -204,12 +225,20 @@ function ray_intersect_box(raw: ray_t, center: vec4_t, dim: vec4_t): vec4_t {
 		tzmax = (box_min_z - origin.z) * invdirz;
 	}
 
-	if ((tmin > tzmax) || (tzmin > tmax)) return null;
-	if (tzmin > tmin || tmin != tmin ) tmin = tzmin;
-	if (tzmax < tmax || tmax != tmax ) tmax = tzmax;
+	if ((tmin > tzmax) || (tzmin > tmax)) {
+		return null;
+	}
+	if (tzmin > tmin || tmin != tmin) {
+		tmin = tzmin;
+	}
+	if (tzmax < tmax || tmax != tmax) {
+		tmax = tzmax;
+	}
 
 	// Return point closest to the ray (positive side)
-	if (tmax < 0) return null;
+	if (tmax < 0) {
+		return null;
+	}
 
 	return ray_at(raw, tmin >= 0 ? tmin : tmax);
 }
@@ -230,7 +259,9 @@ function ray_intersect_triangle(raw: ray_t, a: vec4_t, b: vec4_t, c: vec4_t, cul
 	let sign;
 
 	if (ddn > 0) {
-		if (cull_backface) return null;
+		if (cull_backface) {
+			return null;
+		}
 		sign = 1;
 	}
 	else if (ddn < 0) {

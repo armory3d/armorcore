@@ -18,9 +18,11 @@ function speaker_object_create(data: speaker_data_t): speaker_object_t {
 
 	scene_speakers.push(raw);
 
-	if (data.sound == "") return raw;
+	if (data.sound == "") {
+		return raw;
+	}
 
-	data_get_sound(data.sound, (sound: sound_t) => {
+	data_get_sound(data.sound, function (sound: sound_t) {
 		raw.sound = sound;
 		app_notify_on_init(function() {
 			if (raw.base.visible && raw.data.play_on_start) {
@@ -32,7 +34,9 @@ function speaker_object_create(data: speaker_data_t): speaker_object_t {
 }
 
 function speaker_object_play(raw: speaker_object_t) {
-	if (raw.sound == null || raw.data.muted) return;
+	if (raw.sound == null || raw.data.muted) {
+		return;
+	}
 	if (raw.paused) {
 		for (let c of raw.channels) {
 			audio_play(c);
@@ -44,7 +48,9 @@ function speaker_object_play(raw: speaker_object_t) {
 	if (channel != null) {
 		raw.channels.push(channel);
 		if (raw.data.attenuation > 0 && raw.channels.length == 1) {
-			function _update() { speaker_object_update(raw); }
+			function _update() {
+				speaker_object_update(raw);
+			}
 			(raw as any).update = _update;
 			app_notify_on_update(_update);
 		}
@@ -52,18 +58,28 @@ function speaker_object_play(raw: speaker_object_t) {
 }
 
 function speaker_object_pause(raw: speaker_object_t) {
-	for (let c of raw.channels) audio_pause(c);
+	for (let c of raw.channels) {
+		audio_pause(c);
+	}
 	raw.paused = true;
 }
 
 function speaker_object_stop(raw: speaker_object_t) {
-	for (let c of raw.channels) audio_stop(c);
+	for (let c of raw.channels) {
+		audio_stop(c);
+	}
 	raw.channels.splice(0, raw.channels.length);
 }
 
 function speaker_object_update(raw: speaker_object_t) {
-	if (raw.paused) return;
-	for (let c of raw.channels) if (c.finished) array_remove(raw.channels, c);
+	if (raw.paused) {
+		return;
+	}
+	for (let c of raw.channels) {
+		if (c.finished) {
+			array_remove(raw.channels, c);
+		}
+	}
 	if (raw.channels.length == 0) {
 		app_remove_update((raw as any).update);
 		return;
@@ -78,13 +94,14 @@ function speaker_object_update(raw: speaker_object_t) {
 		raw.volume = raw.data.volume;
 	}
 
-	for (let c of raw.channels) c.volume = raw.volume;
+	for (let c of raw.channels) {
+		c.volume = raw.volume;
+	}
 }
 
 function speaker_object_remove(raw: speaker_object_t) {
 	speaker_object_stop(raw);
-	array_remove(scene_speakers, this);
-
+	array_remove(scene_speakers, raw);
 	object_remove_super(raw.base);
 }
 

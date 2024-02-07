@@ -10,8 +10,8 @@
 type i32 = number;
 type f32 = number;
 type bool = boolean;
-type ImageRaw = any;
-type VertexElement = any;
+type image_t = any;
+type vertex_element_t = any;
 
 (function () {
 
@@ -85,7 +85,7 @@ type VertexElement = any;
 		function _krom_begin(): void {}
 	);
 
-	Krom.begin = function(render_target: ImageRaw, additional_render_targets: ImageRaw[]) {
+	Krom.begin = function(render_target: image_t, additional_render_targets: image_t[]) {
 		krom_begin();
 	};
 
@@ -203,7 +203,7 @@ type VertexElement = any;
 		): c_ptr { throw 0; }
 	);
 
-	Krom.createVertexBuffer = function(count: i32, elements: VertexElement[], usage: i32, instance_data_step_rate: i32): any {
+	Krom.createVertexBuffer = function(count: i32, elements: vertex_element_t[], usage: i32, instance_data_step_rate: i32): any {
 		let name0 = elements.length > 0 ? to_c_string(elements[0].name) : c_null;
 		let data0 = elements.length > 0 ? elements[0].data : 0;
 		let name1 = elements.length > 1 ? to_c_string(elements[1].name) : c_null;

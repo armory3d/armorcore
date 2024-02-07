@@ -29,10 +29,22 @@ function mat4_create(_00: f32, _10: f32, _20: f32, _30: f32,
 					 _02: f32, _12: f32, _22: f32, _32: f32,
 					 _03: f32, _13: f32, _23: f32, _33: f32): mat4_t {
 	let self = new mat4_t();
-	self._00 = _00; self._10 = _10; self._20 = _20; self._30 = _30;
-	self._01 = _01; self._11 = _11; self._21 = _21; self._31 = _31;
-	self._02 = _02; self._12 = _12; self._22 = _22; self._32 = _32;
-	self._03 = _03; self._13 = _13; self._23 = _23; self._33 = _33;
+	self._00 = _00;
+	self._10 = _10;
+	self._20 = _20;
+	self._30 = _30;
+	self._01 = _01;
+	self._11 = _11;
+	self._21 = _21;
+	self._31 = _31;
+	self._02 = _02;
+	self._12 = _12;
+	self._22 = _22;
+	self._32 = _32;
+	self._03 = _03;
+	self._13 = _13;
+	self._23 = _23;
+	self._33 = _33;
 	return self;
 }
 
@@ -99,11 +111,15 @@ function mat4_compose(self: mat4_t, loc: vec4_t, quat: quat_t, sc: vec4_t): mat4
 }
 
 function mat4_decompose(self: mat4_t, loc: vec4_t, quat: quat_t, scale: vec4_t): mat4_t {
-	loc.x = self._30; loc.y = self._31; loc.z = self._32;
+	loc.x = self._30;
+	loc.y = self._31;
+	loc.z = self._32;
 	scale.x = vec4_len(vec4_set(_mat4_vec, self._00, self._01, self._02));
 	scale.y = vec4_len(vec4_set(_mat4_vec, self._10, self._11, self._12));
 	scale.z = vec4_len(vec4_set(_mat4_vec, self._20, self._21, self._22));
-	if (mat4_determinant(self) < 0.0) scale.x = -scale.x;
+	if (mat4_determinant(self) < 0.0) {
+		scale.x = -scale.x;
+	}
 	let invs = 1.0 / scale.x; // Scale the rotation part
 	_mat4_mat._00 = self._00 * invs;
 	_mat4_mat._01 = self._01 * invs;
@@ -128,11 +144,22 @@ function mat4_set_loc(self: mat4_t, v: vec4_t): mat4_t {
 }
 
 function mat4_from_quat(self: mat4_t, q: quat_t): mat4_t {
-	let x = q.x; let y = q.y; let z = q.z; let w = q.w;
-	let x2 = x + x; let y2 = y + y; let z2 = z + z;
-	let xx = x * x2; let xy = x * y2; let xz = x * z2;
-	let yy = y * y2; let yz = y * z2; let zz = z * z2;
-	let wx = w * x2; let wy = w * y2; let wz = w * z2;
+	let x = q.x;
+	let y = q.y;
+	let z = q.z;
+	let w = q.w;
+	let x2 = x + x;
+	let y2 = y + y;
+	let z2 = z + z;
+	let xx = x * x2;
+	let xy = x * y2;
+	let xz = x * z2;
+	let yy = y * y2;
+	let yz = y * z2;
+	let zz = z * z2;
+	let wx = w * x2;
+	let wy = w * y2;
+	let wz = w * z2;
 
 	self._00 = 1.0 - (yy + zz);
 	self._10 = xy - wz;
@@ -158,31 +185,65 @@ function mat4_from_quat(self: mat4_t, q: quat_t): mat4_t {
 }
 
 function mat4_set_identity(self: mat4_t): mat4_t {
-	self._00 = 1.0; self._01 = 0.0; self._02 = 0.0; self._03 = 0.0;
-	self._10 = 0.0; self._11 = 1.0; self._12 = 0.0; self._13 = 0.0;
-	self._20 = 0.0; self._21 = 0.0; self._22 = 1.0; self._23 = 0.0;
-	self._30 = 0.0; self._31 = 0.0; self._32 = 0.0; self._33 = 1.0;
+	self._00 = 1.0;
+	self._01 = 0.0;
+	self._02 = 0.0;
+	self._03 = 0.0;
+	self._10 = 0.0;
+	self._11 = 1.0;
+	self._12 = 0.0;
+	self._13 = 0.0;
+	self._20 = 0.0;
+	self._21 = 0.0;
+	self._22 = 1.0;
+	self._23 = 0.0;
+	self._30 = 0.0;
+	self._31 = 0.0;
+	self._32 = 0.0;
+	self._33 = 1.0;
 	return self;
 }
 
 function mat4_init_translate(self: mat4_t, x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0): mat4_t {
-	self._00 = 1.0; self._01 = 0.0; self._02 = 0.0; self._03 = 0.0;
-	self._10 = 0.0; self._11 = 1.0; self._12 = 0.0; self._13 = 0.0;
-	self._20 = 0.0; self._21 = 0.0; self._22 = 1.0; self._23 = 0.0;
-	self._30 = x;   self._31 = y;   self._32 = z;   self._33 = 1.0;
+	self._00 = 1.0;
+	self._01 = 0.0;
+	self._02 = 0.0;
+	self._03 = 0.0;
+	self._10 = 0.0;
+	self._11 = 1.0;
+	self._12 = 0.0;
+	self._13 = 0.0;
+	self._20 = 0.0;
+	self._21 = 0.0;
+	self._22 = 1.0;
+	self._23 = 0.0;
+	self._30 = x;
+	self._31 = y;
+	self._32 = z;
+	self._33 = 1.0;
 	return self;
 }
 
 function mat4_translate(self: mat4_t, x: f32, y: f32, z: f32): mat4_t {
-	self._00 += x * self._03; self._01 += y * self._03; self._02 += z * self._03;
-	self._10 += x * self._13; self._11 += y * self._13; self._12 += z * self._13;
-	self._20 += x * self._23; self._21 += y * self._23; self._22 += z * self._23;
-	self._30 += x * self._33; self._31 += y * self._33; self._32 += z * self._33;
+	self._00 += x * self._03;
+	self._01 += y * self._03;
+	self._02 += z * self._03;
+	self._10 += x * self._13;
+	self._11 += y * self._13;
+	self._12 += z * self._13;
+	self._20 += x * self._23;
+	self._21 += y * self._23;
+	self._22 += z * self._23;
+	self._30 += x * self._33;
+	self._31 += y * self._33;
+	self._32 += z * self._33;
 	return self;
 }
 
 function mat4_scale(self: mat4_t, v: vec4_t): mat4_t {
-	let x = v.x; let y = v.y; let z = v.z;
+	let x = v.x;
+	let y = v.y;
+	let z = v.z;
 	self._00 *= x;
 	self._01 *= x;
 	self._02 *= x;
@@ -199,24 +260,45 @@ function mat4_scale(self: mat4_t, v: vec4_t): mat4_t {
 }
 
 function mat4_mult_mats3x4(self: mat4_t, a: mat4_t, b: mat4_t): mat4_t {
-	let a00 = a._00; let a01 = a._01; let a02 = a._02; let a03 = a._03;
-	let a10 = a._10; let a11 = a._11; let a12 = a._12; let a13 = a._13;
-	let a20 = a._20; let a21 = a._21; let a22 = a._22; let a23 = a._23;
-	let a30 = a._30; let a31 = a._31; let a32 = a._32; let a33 = a._33;
+	let a00 = a._00;
+	let a01 = a._01;
+	let a02 = a._02;
+	let a03 = a._03;
+	let a10 = a._10;
+	let a11 = a._11;
+	let a12 = a._12;
+	let a13 = a._13;
+	let a20 = a._20;
+	let a21 = a._21;
+	let a22 = a._22;
+	let a23 = a._23;
+	let a30 = a._30;
+	let a31 = a._31;
+	let a32 = a._32;
+	let a33 = a._33;
 
-	let b0 = b._00; let b1 = b._10; let b2 = b._20; let b3 = b._30;
+	let b0 = b._00;
+	let b1 = b._10;
+	let b2 = b._20;
+	let b3 = b._30;
 	self._00 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._10 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._20 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
 	self._30 = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
 
-	b0 = b._01; b1 = b._11; b2 = b._21; b3 = b._31;
+	b0 = b._01;
+	b1 = b._11;
+	b2 = b._21;
+	b3 = b._31;
 	self._01 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._11 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._21 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
 	self._31 = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
 
-	b0 = b._02; b1 = b._12; b2 = b._22; b3 = b._32;
+	b0 = b._02;
+	b1 = b._12;
+	b2 = b._22;
+	b3 = b._32;
 	self._02 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._12 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._22 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
@@ -230,30 +312,54 @@ function mat4_mult_mats3x4(self: mat4_t, a: mat4_t, b: mat4_t): mat4_t {
 }
 
 function mat4_mult_mats(self: mat4_t, b: mat4_t, a: mat4_t): mat4_t {
-	let a00 = a._00; let a01 = a._01; let a02 = a._02; let a03 = a._03;
-	let a10 = a._10; let a11 = a._11; let a12 = a._12; let a13 = a._13;
-	let a20 = a._20; let a21 = a._21; let a22 = a._22; let a23 = a._23;
-	let a30 = a._30; let a31 = a._31; let a32 = a._32; let a33 = a._33;
+	let a00 = a._00;
+	let a01 = a._01;
+	let a02 = a._02;
+	let a03 = a._03;
+	let a10 = a._10;
+	let a11 = a._11;
+	let a12 = a._12;
+	let a13 = a._13;
+	let a20 = a._20;
+	let a21 = a._21;
+	let a22 = a._22;
+	let a23 = a._23;
+	let a30 = a._30;
+	let a31 = a._31;
+	let a32 = a._32;
+	let a33 = a._33;
 
-	let b0 = b._00; let b1 = b._10; let b2 = b._20; let b3 = b._30;
+	let b0 = b._00;
+	let b1 = b._10;
+	let b2 = b._20;
+	let b3 = b._30;
 	self._00 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._10 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._20 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
 	self._30 = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
 
-	b0 = b._01; b1 = b._11; b2 = b._21; b3 = b._31;
+	b0 = b._01;
+	b1 = b._11;
+	b2 = b._21;
+	b3 = b._31;
 	self._01 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._11 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._21 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
 	self._31 = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
 
-	b0 = b._02; b1 = b._12; b2 = b._22; b3 = b._32;
+	b0 = b._02;
+	b1 = b._12;
+	b2 = b._22;
+	b3 = b._32;
 	self._02 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._12 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._22 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
 	self._32 = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
 
-	b0 = b._03; b1 = b._13; b2 = b._23; b3 = b._33;
+	b0 = b._03;
+	b1 = b._13;
+	b2 = b._23;
+	b3 = b._33;
 	self._03 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._13 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._23 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
@@ -263,30 +369,54 @@ function mat4_mult_mats(self: mat4_t, b: mat4_t, a: mat4_t): mat4_t {
 }
 
 function mat4_mult_mat(self: mat4_t, m: mat4_t): mat4_t {
-	let a00 = self._00; let a01 = self._01; let a02 = self._02; let a03 = self._03;
-	let a10 = self._10; let a11 = self._11; let a12 = self._12; let a13 = self._13;
-	let a20 = self._20; let a21 = self._21; let a22 = self._22; let a23 = self._23;
-	let a30 = self._30; let a31 = self._31; let a32 = self._32; let a33 = self._33;
+	let a00 = self._00;
+	let a01 = self._01;
+	let a02 = self._02;
+	let a03 = self._03;
+	let a10 = self._10;
+	let a11 = self._11;
+	let a12 = self._12;
+	let a13 = self._13;
+	let a20 = self._20;
+	let a21 = self._21;
+	let a22 = self._22;
+	let a23 = self._23;
+	let a30 = self._30;
+	let a31 = self._31;
+	let a32 = self._32;
+	let a33 = self._33;
 
-	let b0 = m._00; let b1 = m._10; let b2 = m._20; let b3 = m._30;
+	let b0 = m._00;
+	let b1 = m._10;
+	let b2 = m._20;
+	let b3 = m._30;
 	self._00 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._10 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._20 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
 	self._30 = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
 
-	b0 = m._01; b1 = m._11; b2 = m._21; b3 = m._31;
+	b0 = m._01;
+	b1 = m._11;
+	b2 = m._21;
+	b3 = m._31;
 	self._01 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._11 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._21 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
 	self._31 = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
 
-	b0 = m._02; b1 = m._12; b2 = m._22; b3 = m._32;
+	b0 = m._02;
+	b1 = m._12;
+	b2 = m._22;
+	b3 = m._32;
 	self._02 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._12 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._22 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
 	self._32 = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
 
-	b0 = m._03; b1 = m._13; b2 = m._23; b3 = m._33;
+	b0 = m._03;
+	b1 = m._13;
+	b2 = m._23;
+	b3 = m._33;
 	self._03 = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self._13 = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self._23 = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
@@ -296,10 +426,22 @@ function mat4_mult_mat(self: mat4_t, m: mat4_t): mat4_t {
 }
 
 function mat4_get_inv(self: mat4_t, m: mat4_t): mat4_t {
-	let a00 = m._00; let a01 = m._01; let a02 = m._02; let a03 = m._03;
-	let a10 = m._10; let a11 = m._11; let a12 = m._12; let a13 = m._13;
-	let a20 = m._20; let a21 = m._21; let a22 = m._22; let a23 = m._23;
-	let a30 = m._30; let a31 = m._31; let a32 = m._32; let a33 = m._33;
+	let a00 = m._00;
+	let a01 = m._01;
+	let a02 = m._02;
+	let a03 = m._03;
+	let a10 = m._10;
+	let a11 = m._11;
+	let a12 = m._12;
+	let a13 = m._13;
+	let a20 = m._20;
+	let a21 = m._21;
+	let a22 = m._22;
+	let a23 = m._23;
+	let a30 = m._30;
+	let a31 = m._31;
+	let a32 = m._32;
+	let a33 = m._33;
 	let b00 = a00 * a11 - a01 * a10;
 	let b01 = a00 * a12 - a02 * a10;
 	let b02 = a00 * a13 - a03 * a10;
@@ -314,7 +456,9 @@ function mat4_get_inv(self: mat4_t, m: mat4_t): mat4_t {
 	let b11 = a22 * a33 - a23 * a32;
 
 	let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
-	if (det == 0.0) return mat4_set_identity(self);
+	if (det == 0.0) {
+		return mat4_set_identity(self);
+	}
 	det = 1.0 / det;
 
 	self._00 = (a11 * b11 - a12 * b10 + a13 * b09) * det;
@@ -338,19 +482,46 @@ function mat4_get_inv(self: mat4_t, m: mat4_t): mat4_t {
 }
 
 function mat4_transpose(self: mat4_t): mat4_t {
-	let f = self._01; self._01 = self._10; self._10 = f;
-	f = self._02; self._02 = self._20; self._20 = f;
-	f = self._03; self._03 = self._30; self._30 = f;
-	f = self._12; self._12 = self._21; self._21 = f;
-	f = self._13; self._13 = self._31; self._31 = f;
-	f = self._23; self._23 = self._32; self._32 = f;
+	let f = self._01;
+	self._01 = self._10;
+	self._10 = f;
+
+	f = self._02;
+	self._02 = self._20;
+	self._20 = f;
+
+	f = self._03;
+	self._03 = self._30;
+	self._30 = f;
+
+	f = self._12;
+	self._12 = self._21;
+	self._21 = f;
+
+	f = self._13;
+	self._13 = self._31;
+	self._31 = f;
+
+	f = self._23;
+	self._23 = self._32;
+	self._32 = f;
+
 	return self;
 }
 
 function mat4_transpose3x3(self: mat4_t): mat4_t {
-	let f = self._01; self._01 = self._10; self._10 = f;
-	f = self._02; self._02 = self._20; self._20 = f;
-	f = self._12; self._12 = self._21; self._21 = f;
+	let f = self._01;
+	self._01 = self._10;
+	self._10 = f;
+
+	f = self._02;
+	self._02 = self._20;
+	self._20 = f;
+
+	f = self._12;
+	self._12 = self._21;
+	self._21 = f;
+
 	return self;
 }
 
@@ -364,18 +535,42 @@ function mat4_clone(self: mat4_t): mat4_t {
 }
 
 function mat4_set_from_f32_array(self: mat4_t, a: Float32Array, offset = 0): mat4_t {
-	self._00 = a[0 + offset]; self._10 = a[1 + offset]; self._20 = a[2 + offset]; self._30 = a[3 + offset];
-	self._01 = a[4 + offset]; self._11 = a[5 + offset]; self._21 = a[6 + offset]; self._31 = a[7 + offset];
-	self._02 = a[8 + offset]; self._12 = a[9 + offset]; self._22 = a[10 + offset]; self._32 = a[11 + offset];
-	self._03 = a[12 + offset]; self._13 = a[13 + offset]; self._23 = a[14 + offset]; self._33 = a[15 + offset];
+	self._00 = a[0 + offset];
+	self._10 = a[1 + offset];
+	self._20 = a[2 + offset];
+	self._30 = a[3 + offset];
+	self._01 = a[4 + offset];
+	self._11 = a[5 + offset];
+	self._21 = a[6 + offset];
+	self._31 = a[7 + offset];
+	self._02 = a[8 + offset];
+	self._12 = a[9 + offset];
+	self._22 = a[10 + offset];
+	self._32 = a[11 + offset];
+	self._03 = a[12 + offset];
+	self._13 = a[13 + offset];
+	self._23 = a[14 + offset];
+	self._33 = a[15 + offset];
 	return self;
 }
 
 function mat4_set_from(self: mat4_t, m: mat4_t): mat4_t {
-	self._00 = m._00; self._01 = m._01; self._02 = m._02; self._03 = m._03;
-	self._10 = m._10; self._11 = m._11; self._12 = m._12; self._13 = m._13;
-	self._20 = m._20; self._21 = m._21; self._22 = m._22; self._23 = m._23;
-	self._30 = m._30; self._31 = m._31; self._32 = m._32; self._33 = m._33;
+	self._00 = m._00;
+	self._01 = m._01;
+	self._02 = m._02;
+	self._03 = m._03;
+	self._10 = m._10;
+	self._11 = m._11;
+	self._12 = m._12;
+	self._13 = m._13;
+	self._20 = m._20;
+	self._21 = m._21;
+	self._22 = m._22;
+	self._23 = m._23;
+	self._30 = m._30;
+	self._31 = m._31;
+	self._32 = m._32;
+	self._33 = m._33;
 	return self;
 }
 
@@ -392,10 +587,22 @@ function mat4_get_scale(self: mat4_t): vec4_t {
 }
 
 function mat4_mult(self: mat4_t, s: f32): mat4_t {
-	self._00 *= s; self._10 *= s; self._20 *= s; self._30 *= s;
-	self._01 *= s; self._11 *= s; self._21 *= s; self._31 *= s;
-	self._02 *= s; self._12 *= s; self._22 *= s; self._32 *= s;
-	self._03 *= s; self._13 *= s; self._23 *= s; self._33 *= s;
+	self._00 *= s;
+	self._10 *= s;
+	self._20 *= s;
+	self._30 *= s;
+	self._01 *= s;
+	self._11 *= s;
+	self._21 *= s;
+	self._31 *= s;
+	self._02 *= s;
+	self._12 *= s;
+	self._22 *= s;
+	self._32 *= s;
+	self._03 *= s;
+	self._13 *= s;
+	self._23 *= s;
+	self._33 *= s;
 	return self;
 }
 
@@ -456,10 +663,10 @@ function mat4_to_f32_array(self: mat4_t): Float32Array {
 }
 
 function mat4_cofactor(self: mat4_t,
-			m0: f32, m1: f32, m2: f32,
-			m3: f32, m4: f32, m5: f32,
-			m6: f32, m7: f32, m8: f32): f32 {
-	return m0 * ( m4 * m8 - m5 * m7 ) - m1 * ( m3 * m8 - m5 * m6 ) + m2 * ( m3 * m7 - m4 * m6 );
+					   m0: f32, m1: f32, m2: f32,
+					   m3: f32, m4: f32, m5: f32,
+					   m6: f32, m7: f32, m8: f32): f32 {
+	return m0 * (m4 * m8 - m5 * m7) - m1 * (m3 * m8 - m5 * m6) + m2 * (m3 * m7 - m4 * m6);
 }
 
 function mat4_determinant(self: mat4_t): f32 {

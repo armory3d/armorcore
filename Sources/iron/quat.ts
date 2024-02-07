@@ -48,9 +48,15 @@ function quat_from_mat(self: quat_t, m: mat4_t): quat_t {
 
 function quat_from_rot_mat(self: quat_t, m: mat4_t): quat_t {
 	// Assumes the upper 3x3 is a pure rotation matrix
-	let m11 = m._00; let m12 = m._10; let m13 = m._20;
-	let m21 = m._01; let m22 = m._11; let m23 = m._21;
-	let m31 = m._02; let m32 = m._12; let m33 = m._22;
+	let m11 = m._00;
+	let m12 = m._10;
+	let m13 = m._20;
+	let m21 = m._01;
+	let m22 = m._11;
+	let m23 = m._21;
+	let m31 = m._02;
+	let m32 = m._12;
+	let m33 = m._22;
 	let tr = m11 + m22 + m33;
 	let s = 0.0;
 
@@ -90,8 +96,14 @@ function quat_mult(self: quat_t, q: quat_t): quat_t {
 }
 
 function quat_mult_quats(self: quat_t, q1: quat_t, q2: quat_t): quat_t {
-	let q1x = q1.x; let q1y = q1.y; let q1z = q1.z; let q1w = q1.w;
-	let q2x = q2.x; let q2y = q2.y; let q2z = q2.z; let q2w = q2.w;
+	let q1x = q1.x;
+	let q1y = q1.y;
+	let q1z = q1.z;
+	let q1w = q1.w;
+	let q2x = q2.x;
+	let q2y = q2.y;
+	let q2z = q2.z;
+	let q2w = q2.w;
 	self.x = q1x * q2w + q1w * q2x + q1y * q2z - q1z * q2y;
 	self.y = q1w * q2y - q1x * q2z + q1y * q2w + q1z * q2x;
 	self.z = q1w * q2z + q1x * q2y - q1y * q2x + q1z * q2w;
@@ -182,7 +194,9 @@ function quat_from_to(self: quat_t, v1: vec4_t, v2: vec4_t): quat_t {
 	let dot = vec4_dot(v1, v2);
 	if (dot < -0.999999) {
 		vec4_cross_vecs(a, _quat_x_axis, v1);
-		if (vec4_len(a) < 0.000001) vec4_cross_vecs(a, _quat_y_axis, v1);
+		if (vec4_len(a) < 0.000001) {
+			vec4_cross_vecs(a, _quat_y_axis, v1);
+		}
 		vec4_normalize(a);
 		quat_from_axis_angle(self, a, Math.PI);
 	}

@@ -103,10 +103,10 @@ function vec4_sub_vecs(self: vec4_t, a: vec4_t, b: vec4_t): vec4_t {
 function vec4_normalize(self: vec4_t): vec4_t {
 	let n = vec4_len(self);
 	if (n > 0.0) {
-		let invN = 1.0 / n;
-		self.x *= invN;
-		self.y *= invN;
-		self.z *= invN;
+		let inv_n = 1.0 / n;
+		self.x *= inv_n;
+		self.y *= inv_n;
+		self.z *= inv_n;
 	}
 	return self;
 }

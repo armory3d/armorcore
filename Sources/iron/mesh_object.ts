@@ -117,21 +117,29 @@ function mesh_object_cull_material(raw: mesh_object_t, context: string): bool {
 }
 
 function mesh_object_cull_mesh(raw: mesh_object_t, context: string, camera: camera_object_t, light: light_object_t): bool {
-	if (camera == null) return false;
+	if (camera == null) {
+		return false;
+	}
 
 	if (camera.data.frustum_culling && raw.frustum_culling) {
 		// Scale radius for skinned mesh and particle system
 		// TODO: define skin & particle bounds
-		let radiusScale = raw.data.skin != null ? 2.0 : 1.0;
+		let radius_scale = raw.data.skin != null ? 2.0 : 1.0;
 		///if arm_particles
 		// particleSystems for update, particleOwner for render
-		if (raw.particle_systems != null || raw.particle_owner != null) radiusScale *= 1000;
+		if (raw.particle_systems != null || raw.particle_owner != null) {
+			radius_scale *= 1000;
+		}
 		///end
-		if (context == "voxel") radiusScale *= 100;
-		if (raw.data._instanced) radiusScale *= 100;
-		let frustumPlanes = camera.frustum_planes;
+		if (context == "voxel") {
+			radius_scale *= 100;
+		}
+		if (raw.data._instanced) {
+			radius_scale *= 100;
+		}
 
-		if (!camera_object_sphere_in_frustum(frustumPlanes, raw.base.transform, radiusScale)) {
+		let frustum_planes = camera.frustum_planes;
+		if (!camera_object_sphere_in_frustum(frustum_planes, raw.base.transform, radius_scale)) {
 			return mesh_object_set_culled(raw, true);
 		}
 	}
@@ -166,20 +174,28 @@ function mesh_object_get_contexts(raw: mesh_object_t, context: string, materials
 	}
 }
 
-function mesh_object_render(raw: mesh_object_t, g: g4_t, context: string, bind_params: string[]) {
-	if (raw.data == null || !raw.data._ready) return; // Data not yet streamed
-	if (!raw.base.visible) return; // Skip render if object is hidden
-	if (mesh_object_cull_mesh(raw, context, scene_camera,_render_path_light)) return;
+function mesh_object_render(raw: mesh_object_t, context: string, bind_params: string[]) {
+	if (raw.data == null || !raw.data._ready) {
+		return; // Data not yet streamed
+	}
+	if (!raw.base.visible) {
+		return; // Skip render if object is hidden
+	}
+	if (mesh_object_cull_mesh(raw, context, scene_camera,_render_path_light)) {
+		return;
+	}
 	let mesh_context = raw.base.raw != null ? context == "mesh" : false;
 
 	///if arm_particles
-	if (raw.base.raw != null && raw.base.raw.is_particle && raw.particle_owner == null) return; // Instancing not yet set-up by particle system owner
+	if (raw.base.raw != null && raw.base.raw.is_particle && raw.particle_owner == null) {
+		return; // Instancing not yet set-up by particle system owner
+	}
 	if (raw.particle_systems != null && mesh_context) {
 		if (raw.particle_children == null) {
 			raw.particle_children = [];
 			for (let psys of raw.particle_systems) {
-				// let c: TMeshObject = scene_get_child(psys.data.raw.instance_object);
-				scene_spawn_object(psys.data.instance_object, null, (o: object_t) => {
+				// let c: mesh_object_t = scene_get_child(psys.data.raw.instance_object);
+				scene_spawn_object(psys.data.instance_object, null, function (o: object_t) {
 					if (o != null) {
 						let c: mesh_object_t = o.ext;
 						raw.particle_children.push(c);
@@ -226,19 +242,21 @@ function mesh_object_render(raw: mesh_object_t, g: g4_t, context: string, bind_p
 		}
 
 		let scontext = shader_contexts[mi];
-		if (scontext == null) continue;
+		if (scontext == null) {
+			continue;
+		}
 		let elems = scontext.vertex_elements;
 
 		// Uniforms
 		if (scontext._pipe_state != mesh_object_last_pipeline) {
 			g4_set_pipeline(scontext._pipe_state);
 			mesh_object_last_pipeline = scontext._pipe_state;
-			// setContextConstants(g, scontext, bindParams);
+			// uniforms_set_context_consts(g, scontext, bind_params);
 		}
-		uniforms_set_context_consts(g, scontext, bind_params); //
-		uniforms_set_obj_consts(g, scontext, raw.base);
+		uniforms_set_context_consts(scontext, bind_params); //
+		uniforms_set_obj_consts(scontext, raw.base);
 		if (material_contexts.length > mi) {
-			uniforms_set_material_consts(g, scontext, material_contexts[mi]);
+			uniforms_set_material_consts(scontext, material_contexts[mi]);
 		}
 
 		// VB / IB
@@ -279,8 +297,8 @@ function mesh_object_compute_camera_dist(raw: mesh_object_t, cam_x: f32, cam_y: 
 
 function mesh_object_compute_screen_size(raw: mesh_object_t, camera: camera_object_t) {
 	// Approx..
-	// let rp = camera.renderPath;
-	// let screenVolume = rp.currentW * rp.currentH;
+	// let rp = camera_render_path;
+	// let screen_volume = rp.current_w * rp.current_h;
 	let tr = raw.base.transform;
 	let volume = tr.dim.x * tr.dim.y * tr.dim.z;
 	raw.screen_size = volume * (1.0 / raw.camera_dist);

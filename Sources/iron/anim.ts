@@ -51,7 +51,9 @@ function anim_play_super(raw: anim_raw_t, action = "", on_complete: ()=>void = n
 		raw.frame_index = 0;
 		raw.time = 0.0;
 	}
-	else raw.frame_index = -1;
+	else {
+		raw.frame_index = -1;
+	}
 	raw.action = action;
 	raw.on_complete = on_complete;
 	raw.speed = speed;
@@ -106,12 +108,16 @@ function anim_remove(raw: anim_raw_t) {
 }
 
 function anim_update_super(raw: anim_raw_t, delta: f32) {
-	if (raw.paused || raw.speed == 0.0) return;
+	if (raw.paused || raw.speed == 0.0) {
+		return;
+	}
 	raw.time += delta * raw.speed;
 
 	if (raw.blend_time > 0 && raw.blend_factor == 0) {
 		raw.blend_current += delta;
-		if (raw.blend_current >= raw.blend_time) raw.blend_time = 0.0;
+		if (raw.blend_current >= raw.blend_time) {
+			raw.blend_time = 0.0;
+		}
 	}
 }
 
@@ -149,22 +155,32 @@ function anim_rewind(raw: anim_raw_t, track: track_t) {
 }
 
 function anim_update_track(raw: anim_raw_t, anim: anim_t) {
-	if (anim == null) return;
+	if (anim == null) {
+		return;
+	}
 
 	let track = anim.tracks[0];
 
-	if (raw.frame_index == -1) anim_rewind(raw, track);
+	if (raw.frame_index == -1) {
+		anim_rewind(raw, track);
+	}
 
 	// Move keyframe
 	let sign = raw.speed > 0 ? 1 : -1;
-	while (anim_check_frame_index(raw, track.frames)) raw.frame_index += sign;
+	while (anim_check_frame_index(raw, track.frames)) {
+		raw.frame_index += sign;
+	}
 
 	// Marker events
 	if (raw.marker_events != null && anim.marker_names != null && raw.frame_index != raw.last_frame_index) {
 		for (let i = 0; i < anim.marker_frames.length; ++i) {
 			if (raw.frame_index == anim.marker_frames[i]) {
 				let ar = raw.marker_events.get(anim.marker_names[i]);
-				if (ar != null) for (let f of ar) f();
+				if (ar != null) {
+					for (let f of ar) {
+						f();
+					}
+				}
 			}
 		}
 		raw.last_frame_index = raw.frame_index;
@@ -179,12 +195,16 @@ function anim_update_track(raw: anim_raw_t, anim: anim_t) {
 			raw.frame_index -= sign;
 			raw.paused = true;
 		}
-		if (raw.on_complete != null && raw.blend_time == 0) raw.on_complete();
+		if (raw.on_complete != null && raw.blend_time == 0) {
+			raw.on_complete();
+		}
 	}
 }
 
 function anim_update_anim_sampled(raw: anim_raw_t, anim: anim_t, m: mat4_t) {
-	if (anim == null) return;
+	if (anim == null) {
+		return;
+	}
 	let track = anim.tracks[0];
 	let sign = raw.speed > 0 ? 1 : -1;
 
@@ -220,18 +240,20 @@ function anim_set_frame(raw: anim_raw_t, frame: i32) {
 	anim_update(raw, frame * raw.frame_time);
 }
 
-function anim_notify_on_marker(raw: anim_raw_t, name: string, onMarker: ()=>void) {
-	if (raw.marker_events == null) raw.marker_events = new Map();
+function anim_notify_on_marker(raw: anim_raw_t, name: string, on_marker: ()=>void) {
+	if (raw.marker_events == null) {
+		raw.marker_events = new Map();
+	}
 	let ar = raw.marker_events.get(name);
 	if (ar == null) {
 		ar = [];
 		raw.marker_events.set(name, ar);
 	}
-	ar.push(onMarker);
+	ar.push(on_marker);
 }
 
-function anim_remove_marker(raw: anim_raw_t, name: string, onMarker: ()=>void) {
-	array_remove(raw.marker_events.get(name), onMarker);
+function anim_remove_marker(raw: anim_raw_t, name: string, on_marker: ()=>void) {
+	array_remove(raw.marker_events.get(name), on_marker);
 }
 
 function anim_current_frame(raw: anim_raw_t): i32 {

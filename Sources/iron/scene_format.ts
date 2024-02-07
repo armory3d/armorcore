@@ -99,9 +99,9 @@ type material_data_t = {
 	skip_context?: string;
 	override_context?: shader_override_t;
 	// Runtime:
-	_uid: f32;
-	_shader: shader_data_t;
-	_contexts: material_context_t[];
+	_uid?: f32;
+	_shader?: shader_data_t;
+	_contexts?: material_context_t[];
 }
 
 type shader_override_t = {
@@ -147,7 +147,7 @@ type shader_data_t = {
 	name: string;
 	contexts: shader_context_t[];
 	// Runtime:
-	_contexts: shader_context_t[];
+	_contexts?: shader_context_t[];
 }
 
 type shader_context_t = {
@@ -173,7 +173,7 @@ type shader_context_t = {
 	color_writes_alpha?: bool[];
 	color_attachments?: string[]; // RGBA32, RGBA64, R8
 	depth_attachment?: string; // DEPTH32
-	shader_from_source?: Null<bool>; // Build shader at runtime using fromSource()
+	shader_from_source?: Null<bool>; // Build shader at runtime using from_source()
 	// Runtime:
 	_pipe_state?: pipeline_t;
 	_constants?: kinc_const_loc_t[];
@@ -233,7 +233,7 @@ type world_data_t = {
 	// Runtime:
 	_envmap?: image_t;
 	_radiance?: image_t;
-	_radianceMipmaps?: image_t[];
+	_radiance_mipmaps?: image_t[];
 	_irradiance?: Float32Array;
 }
 

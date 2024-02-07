@@ -20,7 +20,11 @@ function anim_object_create(object: object_t, oactions: scene_t[]): anim_object_
 }
 
 function anim_object_get_action(raw: anim_object_t, action: string): obj_t {
-	for (let a of raw.oactions) if (a != null && a.objects[0].name == action) return a.objects[0];
+	for (let a of raw.oactions) {
+		if (a != null && a.objects[0].name == action) {
+			return a.objects[0];
+		}
+	}
 	return null;
 }
 
@@ -34,14 +38,16 @@ function anim_object_interpolate_linear(t: f32, t1: f32, t2: f32, v1: f32, v2: f
 	return (1.0 - s) * v1 + s * v2;
 }
 
-function anim_object_check_frame_index_t(raw: anim_object_t, frameValues: Uint32Array, t: f32): bool {
+function anim_object_check_frame_index_t(raw: anim_object_t, frame_values: Uint32Array, t: f32): bool {
 	return raw.base.speed > 0 ?
-		raw.base.frame_index < frameValues.length - 2 && t > frameValues[raw.base.frame_index + 1] * raw.base.frame_time :
-		raw.base.frame_index > 1 && t > frameValues[raw.base.frame_index - 1] * raw.base.frame_time;
+		raw.base.frame_index < frame_values.length - 2 && t > frame_values[raw.base.frame_index + 1] * raw.base.frame_time :
+		raw.base.frame_index > 1 && t > frame_values[raw.base.frame_index - 1] * raw.base.frame_time;
 }
 
 function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, transform: transform_t) {
-	if (anim == null) return;
+	if (anim == null) {
+		return;
+	}
 
 	let total = anim.end * raw.base.frame_time - anim.begin * raw.base.frame_time;
 
@@ -54,25 +60,35 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 		}
 		vec4_set(t.dloc, 0, 0, 0);
 		vec4_set(t.dscale, 0, 0, 0);
-		t._deulerX = t._deulerY = t._deulerZ = 0.0;
+		t._deuler_x = t._deuler_y = t._deuler_z = 0.0;
 	}
 
 	for (let track of anim.tracks) {
 
-		if (raw.base.frame_index == -1) anim_rewind(raw.base, track);
+		if (raw.base.frame_index == -1) {
+			anim_rewind(raw.base, track);
+		}
 		let sign = raw.base.speed > 0 ? 1 : -1;
 
 		// End of current time range
 		let t = raw.base.time + anim.begin * raw.base.frame_time;
-		while (anim_object_check_frame_index_t(raw, track.frames, t)) raw.base.frame_index += sign;
+		while (anim_object_check_frame_index_t(raw, track.frames, t)) {
+			raw.base.frame_index += sign;
+		}
 
 		// No data for raw track at current time
-		if (raw.base.frame_index >= track.frames.length) continue;
+		if (raw.base.frame_index >= track.frames.length) {
+			continue;
+		}
 
 		// End of track
 		if (raw.base.time > total) {
-			if (raw.base.on_complete != null) raw.base.on_complete();
-			if (raw.base.loop) anim_rewind(raw.base, track);
+			if (raw.base.on_complete != null) {
+				raw.base.on_complete();
+			}
+			if (raw.base.loop) {
+				anim_rewind(raw.base, track);
+			}
 			else {
 				raw.base.frame_index -= sign;
 				raw.base.paused = true;
@@ -92,9 +108,9 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 			case "xloc": transform.loc.x = value;
 			case "yloc": transform.loc.y = value;
 			case "zloc": transform.loc.z = value;
-			case "xrot": transform_set_rot(transform, value, transform._eulerY, transform._eulerZ);
-			case "yrot": transform_set_rot(transform, transform._eulerX, value, transform._eulerZ);
-			case "zrot": transform_set_rot(transform, transform._eulerX, transform._eulerY, value);
+			case "xrot": transform_set_rot(transform, value, transform._euler_y, transform._euler_z);
+			case "yrot": transform_set_rot(transform, transform._euler_x, value, transform._euler_z);
+			case "zrot": transform_set_rot(transform, transform._euler_x, transform._euler_y, value);
 			case "qwrot": transform.rot.w = value;
 			case "qxrot": transform.rot.x = value;
 			case "qyrot": transform.rot.y = value;
@@ -106,9 +122,9 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 			case "dxloc": transform.dloc.x = value;
 			case "dyloc": transform.dloc.y = value;
 			case "dzloc": transform.dloc.z = value;
-			case "dxrot": transform._deulerX = value;
-			case "dyrot": transform._deulerY = value;
-			case "dzrot": transform._deulerZ = value;
+			case "dxrot": transform._deuler_x = value;
+			case "dyrot": transform._deuler_y = value;
+			case "dzrot": transform._deuler_z = value;
 			case "dqwrot": transform.drot.w = value;
 			case "dqxrot": transform.drot.x = value;
 			case "dqyrot": transform.drot.y = value;
@@ -133,12 +149,18 @@ function anim_object_play(raw: anim_object_t, action = "", on_complete: ()=>void
 }
 
 function anim_object_update(raw: anim_object_t, delta: f32) {
-	if (!raw.object.visible || raw.object.culled || raw.oaction == null) return;
+	if (!raw.object.visible || raw.object.culled || raw.oaction == null) {
+		return;
+	}
 
 	anim_update_super(raw.base, delta);
 
-	if (raw.base.paused) return;
-	if (!raw.base.is_skinned) anim_object_update_object_anim(raw);
+	if (raw.base.paused) {
+		return;
+	}
+	if (!raw.base.is_skinned) {
+		anim_object_update_object_anim(raw);
+	}
 }
 
 function anim_object_is_track_end(raw: anim_object_t, track: track_t): bool {
@@ -148,6 +170,8 @@ function anim_object_is_track_end(raw: anim_object_t, track: track_t): bool {
 }
 
 function anim_object_total_frames(raw: anim_object_t): i32 {
-	if (raw.oaction == null || raw.oaction.anim == null) return 0;
+	if (raw.oaction == null || raw.oaction.anim == null) {
+		return 0;
+	}
 	return raw.oaction.anim.end - raw.oaction.anim.begin;
 }

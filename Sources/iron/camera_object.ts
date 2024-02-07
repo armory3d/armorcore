@@ -48,7 +48,9 @@ function camera_object_build_projection(raw: camera_object_t, screen_aspect: Nul
 		raw.p = mat4_ortho(raw.data.ortho[0], raw.data.ortho[1], raw.data.ortho[2], raw.data.ortho[3], raw.data.near_plane, raw.data.far_plane);
 	}
 	else {
-		if (screen_aspect == null) screen_aspect = app_w() / app_h();
+		if (screen_aspect == null) {
+			screen_aspect = app_w() / app_h();
+		}
 		let aspect = raw.data.aspect != null ? raw.data.aspect : screen_aspect;
 		raw.p = mat4_persp(raw.data.fov, aspect, raw.data.near_plane, raw.data.far_plane);
 	}
@@ -57,15 +59,13 @@ function camera_object_build_projection(raw: camera_object_t, screen_aspect: Nul
 
 function camera_object_remove(raw: camera_object_t) {
 	array_remove(scene_cameras, raw);
-	// if (renderTarget != null) renderTarget.unload();
-
 	object_remove_super(raw.base);
 }
 
-function camera_object_render_frame(raw: camera_object_t, g: g4_t) {
+function camera_object_render_frame(raw: camera_object_t) {
 	camera_object_projection_jitter(raw);
 	camera_object_build_matrix(raw);
-	render_path_render_frame(g);
+	render_path_render_frame();
 	mat4_set_from(raw.prev_v, raw.v);
 }
 
@@ -151,7 +151,9 @@ function camera_object_build_view_frustum(vp: mat4_t, frustum_planes: frustum_pl
 	// Far plane
 	frustum_plane_set_components(frustum_planes[5], vp._03 - vp._02, vp._13 - vp._12, vp._23 - vp._22, vp._33 - vp._32);
 	// Normalize planes
-	for (let plane of frustum_planes) frustum_plane_normalize(plane);
+	for (let plane of frustum_planes) {
+		frustum_plane_normalize(plane);
+	}
 }
 
 function camera_object_sphere_in_frustum(frustum_planes: frustum_plane_t[], t: transform_t, radius_scale = 1.0, offset_x = 0.0, offset_y = 0.0, offset_z = 0.0): bool {

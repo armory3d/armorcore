@@ -80,11 +80,21 @@ function armpack_read(v: DataView): any {
 		case 0xde: return armpack_read_map(v, armpack_read_u16(v));
 		case 0xdf: return armpack_read_map(v, armpack_read_i32(v));
 		default: {
-			if (b < 0x80) return b; // positive fix num
-			else if (b < 0x90) return armpack_read_map(v, (0xf & b)); // fix map
-			else if (b < 0xa0) return armpack_read_array(v, (0xf & b)); // fix array
-			else if (b < 0xc0) return armpack_read_string(v, 0x1f & b); // fix string
-			else if (b > 0xdf) return 0xffffff00 | b; // negative fix num
+			if (b < 0x80) {
+				return b; // positive fix num
+			}
+			else if (b < 0x90) {
+				return armpack_read_map(v, (0xf & b)); // fix map
+			}
+			else if (b < 0xa0) {
+				return armpack_read_array(v, (0xf & b)); // fix array
+			}
+			else if (b < 0xc0) {
+				return armpack_read_string(v, 0x1f & b); // fix string
+			}
+			else if (b > 0xdf) {
+				return 0xffffff00 | b; // negative fix num
+			}
 		}
 	}
 	return null;
@@ -95,28 +105,38 @@ function armpack_read_array(v: DataView, length: i32): any {
 
 	if (b == 0xca) { // Typed float32
 		let a = new Float32Array(length);
-		for (let x = 0; x < length; ++x) a[x] = armpack_read_f32(v);
+		for (let x = 0; x < length; ++x) {
+			a[x] = armpack_read_f32(v);
+		}
 		return a;
 	}
 	else if (b == 0xd2) { // Typed int32
 		let a = new Uint32Array(length);
-		for (let x = 0; x < length; ++x) a[x] = armpack_read_i32(v);
+		for (let x = 0; x < length; ++x) {
+			a[x] = armpack_read_i32(v);
+		}
 		return a;
 	}
 	else if (b == 0xd1) { // Typed int16
 		let a = new Int16Array(length);
-		for (let x = 0; x < length; ++x) a[x] = armpack_read_i16(v);
+		for (let x = 0; x < length; ++x) {
+			a[x] = armpack_read_i16(v);
+		}
 		return a;
 	}
 	else if (b == 0xc4) { // Typed uint8
 		let a = new Uint8Array(length);
-		for (let x = 0; x < length; ++x) a[x] = armpack_read_u8(v);
+		for (let x = 0; x < length; ++x) {
+			a[x] = armpack_read_u8(v);
+		}
 		return a;
 	}
 	else { // any type-value
 		_armpack_pos--;
 		let a: any[] = [];
-		for (let x = 0; x < length; ++x) a.push(armpack_read(v));
+		for (let x = 0; x < length; ++x) {
+			a.push(armpack_read(v));
+		}
 		return a;
 	}
 }
@@ -206,25 +226,35 @@ function armpack_write(v: DataView, d: any) {
 		armpack_write_i32(v, (d as any).length);
 		if (d.constructor == Uint8Array) {
 			armpack_write_u8(v, 0xc4);
-			for (let i = 0; i < (d as Uint8Array).length; ++i) armpack_write_u8(v, d[i]);
+			for (let i = 0; i < (d as Uint8Array).length; ++i) {
+				armpack_write_u8(v, d[i]);
+			}
 		}
 		else if (d.constructor == Int16Array) {
 			armpack_write_u8(v, 0xd1);
-			for (let i = 0; i < (d as Int16Array).length; ++i) armpack_write_i16(v, d[i]);
+			for (let i = 0; i < (d as Int16Array).length; ++i) {
+				armpack_write_i16(v, d[i]);
+			}
 		}
 		else if (d.constructor == Float32Array) {
 			armpack_write_u8(v, 0xca);
-			for (let i = 0; i < (d as Float32Array).length; ++i) armpack_write_f32(v, d[i]);
+			for (let i = 0; i < (d as Float32Array).length; ++i) {
+				armpack_write_f32(v, d[i]);
+			}
 		}
 		else if (d.constructor == Uint32Array) {
 			armpack_write_u8(v, 0xd2);
-			for (let i = 0; i < (d as Uint32Array).length; ++i) armpack_write_i32(v, d[i]);
+			for (let i = 0; i < (d as Uint32Array).length; ++i) {
+				armpack_write_i32(v, d[i]);
+			}
 		}
 	}
 	else if (Array.isArray(d)) {
 		armpack_write_u8(v, 0xdd);
 		armpack_write_i32(v, d.length);
-		for (let i = 0; i < d.length; ++i) armpack_write(v, d[i]);
+		for (let i = 0; i < d.length; ++i) {
+			armpack_write(v, d[i]);
+		}
 	}
 	else {
 		armpack_write_object(v, d);
@@ -269,25 +299,35 @@ function armpack_write_dummy(d: any) {
 		_armpack_pos += 4;
 		if (d.constructor == Uint8Array) {
 			_armpack_pos += 1;
-			for (let i = 0; i < (d as Uint8Array).length; ++i) _armpack_pos += 1;
+			for (let i = 0; i < (d as Uint8Array).length; ++i) {
+				_armpack_pos += 1;
+			}
 		}
 		else if (d.constructor == Int16Array) {
 			_armpack_pos += 1;
-			for (let i = 0; i < (d as Int16Array).length; ++i) _armpack_pos += 2;
+			for (let i = 0; i < (d as Int16Array).length; ++i) {
+				_armpack_pos += 2;
+			}
 		}
 		else if (d.constructor == Float32Array) {
 			_armpack_pos += 1;
-			for (let i = 0; i < (d as Float32Array).length; ++i) _armpack_pos += 4;
+			for (let i = 0; i < (d as Float32Array).length; ++i) {
+				_armpack_pos += 4;
+			}
 		}
 		else if (d.constructor == Uint32Array) {
 			_armpack_pos += 1;
-			for (let i = 0; i < (d as Uint32Array).length; ++i) _armpack_pos += 4;
+			for (let i = 0; i < (d as Uint32Array).length; ++i) {
+				_armpack_pos += 4;
+			}
 		}
 	}
 	else if (Array.isArray(d)) {
 		_armpack_pos += 1;
 		_armpack_pos += 4;
-		for (let i = 0; i < d.length; ++i) armpack_write_dummy(d[i]);
+		for (let i = 0; i < d.length; ++i) {
+			armpack_write_dummy(d[i]);
+		}
 	}
 	else {
 		armpack_write_object_dummy(d);

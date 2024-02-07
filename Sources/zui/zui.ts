@@ -21,7 +21,6 @@ class zui_t {
 		this._t = theme;
 	}
 
-	g: g2_t;
 	font: font_t;
 	zui_: any;
 
@@ -197,7 +196,7 @@ function zui_create(ops: zui_ops_t): zui_t {
 }
 
 function zui_set_font(raw: zui_t, font: font_t) {
-	font_init(font); // Make sure font_ is ready
+	g2_font_init(font); // Make sure font_ is ready
 	raw.font = font;
 	Krom.zui_set_font(raw.zui_, font.font_);
 }
@@ -210,10 +209,9 @@ function zui_set_scale(raw: zui_t, factor: f32) {
 	Krom.zui_set_scale(raw.zui_, factor);
 }
 
-function zui_begin(raw: zui_t, g: g2_t) {
+function zui_begin(raw: zui_t) {
 	zui_current = raw;
 	Krom.zui_begin(raw.zui_);
-	_g2_current = g;
 }
 
 function zui_end(last = true) {
@@ -221,9 +219,8 @@ function zui_end(last = true) {
 	_g2_current = null;
 }
 
-function zui_begin_region(raw: zui_t, g: g2_t, x: i32, y: i32, w: i32) {
+function zui_begin_region(raw: zui_t, x: i32, y: i32, w: i32) {
 	zui_current = raw;
-	raw.g = g;
 	Krom.zui_begin_region(raw.zui_, x, y, w);
 }
 
@@ -243,10 +240,10 @@ function zui_end_input() {
 	Krom.zui_end_input();
 }
 
-function zui_window(raw: zui_t, handle: zui_handle_t, x: i32, y: i32, w: i32, h: i32, drag = false): bool {
+function zui_window(handle: zui_handle_t, x: i32, y: i32, w: i32, h: i32, drag = false): bool {
 	let img = _image_create(null);
-	img.renderTarget_ = handle.texture;
-	_g2_current = raw.g = img.g2;
+	img.render_target_ = handle.texture;
+	_g2_current = img;
 	return Krom.zui_window(handle.handle_, x, y, w, h, drag);
 }
 
@@ -318,7 +315,7 @@ function zui_rect(x: f32, y: f32, w: f32, h: f32, color: Color, strength = 1.0) 
 	Krom.zui_rect(x, y, w, h, color, strength);
 }
 
-function zui_draw_rect(g: g2_t, fill: bool, x: f32, y: f32, w: f32, h: f32, strength = 0.0) {
+function zui_draw_rect(fill: bool, x: f32, y: f32, w: f32, h: f32, strength = 0.0) {
 	Krom.zui_draw_rect(fill, x, y, w, h, strength);
 }
 
@@ -334,7 +331,7 @@ function zui_get_input_in_rect(x: f32, y: f32, w: f32, h: f32): bool {
 	return Krom.zui_input_in_rect(x, y, w, h);
 }
 
-function zui_draw_string(g: g2_t, text: string, x_offset: Null<f32> = null, y_offset: f32 = 0, align = Align.Left, truncation = true) {
+function zui_draw_string(text: string, x_offset: Null<f32> = null, y_offset: f32 = 0, align = Align.Left, truncation = true) {
 	Krom.zui_draw_string(text, x_offset == null ? -1 : x_offset, y_offset, align, truncation);
 }
 

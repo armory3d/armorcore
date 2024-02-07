@@ -1,3 +1,5 @@
+// ../../../Kinc/make --from ../../../ -g opengl --compiler clang --run
+
 "use strict";
 
 (function () {
@@ -111,22 +113,22 @@
 		raw.objects.push(o);
 
 		// Instantiate scene
-		scene_create(raw, function(o: TBaseObject) {
+		scene_create(raw, function(o: object_t) {
 			scene_ready();
 		});
 	}
 
 	function scene_ready() {
 		// Set camera
-		let t = scene_camera.transform;
+		let t = scene_camera.base.transform;
 		vec4_set(t.loc, 0, -6, 0);
 		quat_from_to(t.rot, vec4_create(0, 0, 1), vec4_create(0, -1, 0));
-		transform_build_mat(t);
+		transform_build_matrix(t);
 
 		// Rotate cube
 		let cube = scene_get_child("Cube");
 		app_notify_on_update(function() {
-			// cube.transform.rotate(Vec4.create(0, 0, 1), 0.02);
+			transform_rotate(cube.transform, vec4_create(0, 0, 1), 0.01);
 		});
 	}
 

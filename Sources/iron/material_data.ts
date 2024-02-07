@@ -16,27 +16,31 @@ function material_data_create(raw: material_data_t, done: (data: material_data_t
 		data_ref = raw.shader;
 	}
 
-	data_get_shader(object_file, data_ref, (b: shader_data_t) => {
+	data_get_shader(object_file, data_ref, function (b: shader_data_t) {
 		raw._shader = b;
 
 		// Contexts have to be in the same order as in raw data for now
 		raw._contexts = [];
-		while (raw._contexts.length < raw.contexts.length) raw._contexts.push(null);
+		while (raw._contexts.length < raw.contexts.length) {
+			raw._contexts.push(null);
+		}
 		let contexts_loaded = 0;
 
 		for (let i = 0; i < raw.contexts.length; ++i) {
 			let c = raw.contexts[i];
-			material_context_create(c, (self: material_context_t) => {
+			material_context_create(c, function (self: material_context_t) {
 				raw._contexts[i] = self;
 				contexts_loaded++;
-				if (contexts_loaded == raw.contexts.length) done(raw);
+				if (contexts_loaded == raw.contexts.length) {
+					done(raw);
+				}
 			});
 		}
 	}, raw.override_context);
 }
 
 function material_data_parse(file: string, name: string, done: (data: material_data_t)=>void) {
-	data_get_scene_raw(file, (format: scene_t) => {
+	data_get_scene_raw(file, function (format: scene_t) {
 		let raw: material_data_t = data_get_material_raw_by_name(format.material_datas, name);
 		if (raw == null) {
 			Krom.log(`Material data "${name}" not found!`);
@@ -49,7 +53,9 @@ function material_data_parse(file: string, name: string, done: (data: material_d
 function material_data_get_context(raw: material_data_t, name: string): material_context_t {
 	for (let c of raw._contexts) {
 		// 'mesh' will fetch both 'mesh' and 'meshheight' contexts
-		if (c.name.substr(0, name.length) == name) return c;
+		if (c.name.substr(0, name.length) == name) {
+			return c;
+		}
 	}
 	return null;
 }
@@ -72,7 +78,7 @@ function material_context_create(raw: material_context_t, done: (context: materi
 				continue;
 			}
 
-			data_get_image(tex.file, (image: image_t) => {
+			data_get_image(tex.file, function (image: image_t) {
 				raw._textures[i] = image;
 				textures_loaded++;
 
@@ -87,7 +93,7 @@ function material_context_create(raw: material_context_t, done: (context: materi
 					for (let j = 0; j < tex.mipmaps.length; ++j) {
 						let name = tex.mipmaps[j];
 
-						data_get_image(name, (mipimg: image_t) => {
+						data_get_image(name, function (mipimg: image_t) {
 							mipmaps[j] = mipimg;
 							mipmaps_loaded++;
 
@@ -124,7 +130,7 @@ function material_context_create(raw: material_context_t, done: (context: materi
 	}
 }
 
-function material_context_set_tex_params(raw: material_context_t, g: g4_t, texture_index: i32, context: shader_context_t, unit_index: i32) {
-	// This function is called by MeshObject for samplers set using material context
-	shader_context_set_tex_params(context, g, unit_index, raw.bind_textures[texture_index]);
+function material_context_set_tex_params(raw: material_context_t, texture_index: i32, context: shader_context_t, unit_index: i32) {
+	// This function is called by mesh_object_t for samplers set using material context
+	shader_context_set_tex_params(context, unit_index, raw.bind_textures[texture_index]);
 }

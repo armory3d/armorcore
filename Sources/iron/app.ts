@@ -9,8 +9,8 @@ let app_on_end_frames: (()=>void)[] = null;
 let app_trait_inits: (()=>void)[] = [];
 let app_trait_updates: (()=>void)[] = [];
 let app_trait_late_updates: (()=>void)[] = [];
-let app_trait_renders: ((g4: g4_t)=>void)[] = [];
-let app_trait_renders_2d: ((g2: g2_t)=>void)[] = [];
+let app_trait_renders: (()=>void)[] = [];
+let app_trait_renders_2d: (()=>void)[] = [];
 let app_pause_updates = false;
 let app_lastw = -1;
 let app_lasth = -1;
@@ -27,12 +27,20 @@ function app_reset() {
 	app_trait_late_updates = [];
 	app_trait_renders = [];
 	app_trait_renders_2d = [];
-	if (app_on_resets != null) for (let f of app_on_resets) f();
+	if (app_on_resets != null) {
+		for (let f of app_on_resets) {
+			f();
+		}
+	}
 }
 
 function app_update() {
-	if (!_scene_ready) return;
-	if (app_pause_updates) return;
+	if (!_scene_ready) {
+		return;
+	}
+	if (app_pause_updates) {
+		return;
+	}
 
 	scene_update_frame();
 
@@ -41,8 +49,12 @@ function app_update() {
 	while (i < l) {
 		if (app_trait_inits.length > 0) {
 			for (let f of app_trait_inits) {
-				if (app_trait_inits.length > 0) f();
-				else break;
+				if (app_trait_inits.length > 0) {
+					f();
+				}
+				else {
+					break;
+				}
 			}
 			app_trait_inits.splice(0, app_trait_inits.length);
 		}
@@ -58,7 +70,11 @@ function app_update() {
 		l <= app_trait_late_updates.length ? i++ : l = app_trait_late_updates.length;
 	}
 
-	if (app_on_end_frames != null) for (let f of app_on_end_frames) f();
+	if (app_on_end_frames != null) {
+		for (let f of app_on_end_frames) {
+			f();
+		}
+	}
 
 	// Rebuild projection on window resize
 	if (app_lastw == -1) {
@@ -66,7 +82,9 @@ function app_update() {
 		app_lasth = app_h();
 	}
 	if (app_lastw != app_w() || app_lasth != app_h()) {
-		if (app_on_resize != null) app_on_resize();
+		if (app_on_resize != null) {
+			app_on_resize();
+		}
 		else {
 			if (scene_camera != null) {
 				camera_object_build_projection(scene_camera);
@@ -77,42 +95,54 @@ function app_update() {
 	app_lasth = app_h();
 }
 
-function app_render(g2: g2_t, g4: g4_t) {
+function app_render() {
 	app_update();
 
 	time_update();
 
 	if (!_scene_ready) {
-		app_render_2d(g2);
+		app_render_2d();
 		return;
 	}
 
 	if (app_trait_inits.length > 0) {
 		for (let f of app_trait_inits) {
-			if (app_trait_inits.length > 0) f();
-			else break;
+			if (app_trait_inits.length > 0) {
+				f();
+			}
+			else {
+				break;
+			}
 		}
 		app_trait_inits.splice(0, app_trait_inits.length);
 	}
 
-	scene_render_frame(g4);
+	scene_render_frame();
 
 	for (let f of app_trait_renders) {
-		if (app_trait_renders.length > 0) f(g4);
-		else break;
+		if (app_trait_renders.length > 0) {
+			f();
+		}
+		else {
+			break;
+		}
 	}
 
-	app_render_2d(g2);
+	app_render_2d();
 }
 
-function app_render_2d(g2: g2_t) {
+function app_render_2d() {
 	if (app_trait_renders_2d.length > 0) {
-		g2_begin(g2, false);
+		g2_begin();
 		for (let f of app_trait_renders_2d) {
-			if (app_trait_renders_2d.length > 0) f(g2);
-			else break;
+			if (app_trait_renders_2d.length > 0) {
+				f();
+			}
+			else {
+				break;
+			}
 		}
-		g2_end(g2);
+		g2_end();
 	}
 }
 
@@ -141,24 +171,26 @@ function app_remove_late_update(f: ()=>void) {
 	array_remove(app_trait_late_updates, f);
 }
 
-function app_notify_on_render(f: (g4: g4_t)=>void) {
+function app_notify_on_render(f: ()=>void) {
 	app_trait_renders.push(f);
 }
 
-function app_remove_render(f: (g4: g4_t)=>void) {
+function app_remove_render(f: ()=>void) {
 	array_remove(app_trait_renders, f);
 }
 
-function app_notify_on_render_2d(f: (g2: g2_t)=>void) {
+function app_notify_on_render_2d(f: ()=>void) {
 	app_trait_renders_2d.push(f);
 }
 
-function app_remove_render_2d(f: (g2: g2_t)=>void) {
+function app_remove_render_2d(f: ()=>void) {
 	array_remove(app_trait_renders_2d, f);
 }
 
 function app_notify_on_reset(f: ()=>void) {
-	if (app_on_resets == null) app_on_resets = [];
+	if (app_on_resets == null) {
+		app_on_resets = [];
+	}
 	app_on_resets.push(f);
 }
 
@@ -167,7 +199,9 @@ function app_remove_reset(f: ()=>void) {
 }
 
 function app_notify_on_end_frame(f: ()=>void) {
-	if (app_on_end_frames == null) app_on_end_frames = [];
+	if (app_on_end_frames == null) {
+		app_on_end_frames = [];
+	}
 	app_on_end_frames.push(f);
 }
 

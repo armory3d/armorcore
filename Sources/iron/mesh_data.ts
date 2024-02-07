@@ -1,13 +1,13 @@
 
 function mesh_data_parse(name: string, id: string, done: (md: mesh_data_t)=>void) {
-	data_get_scene_raw(name, (format: scene_t) => {
+	data_get_scene_raw(name, function (format: scene_t) {
 		let raw: mesh_data_t = data_get_mesh_raw_by_name(format.mesh_datas, id);
 		if (raw == null) {
 			Krom.log(`Mesh data "${id}" not found!`);
 			done(null);
 		}
 
-		mesh_data_create(raw, (dat: mesh_data_t) => {
+		mesh_data_create(raw, function (dat: mesh_data_t) {
 			///if arm_skin
 			if (raw.skin != null) {
 				mesh_data_init_skeleton_transforms(dat, raw.skin.transforms_inv);
@@ -19,8 +19,12 @@ function mesh_data_parse(name: string, id: string, done: (md: mesh_data_t)=>void
 }
 
 function mesh_data_create(raw: mesh_data_t, done: (md: mesh_data_t)=>void) {
-	if (raw.scale_pos == null) raw.scale_pos = 1.0;
-	if (raw.scale_tex == null) raw.scale_tex = 1.0;
+	if (raw.scale_pos == null) {
+		raw.scale_pos = 1.0;
+	}
+	if (raw.scale_tex == null) {
+		raw.scale_tex = 1.0;
+	}
 
 	raw._refcount = 0;
 	raw._vertex_buffer_map = new Map();
@@ -108,7 +112,9 @@ function mesh_data_build_vertices(vertices: DataView, vertex_arrays: vertex_arra
 		for (let va = 0; va < vertex_arrays.length; ++va) {
 			let l = vertex_arrays[va]._size;
 			if (fake_uvs && va == uvs_index) { // Add fake uvs if uvs where "asked" for but not found
-				for (let j = 0; j < l; ++j) vertices.setInt16(++di * 2, 0, true);
+				for (let j = 0; j < l; ++j) {
+					vertices.setInt16(++di * 2, 0, true);
+				}
 				continue;
 			}
 			for (let o  = 0; o < l; ++o) {
@@ -156,13 +162,17 @@ function mesh_data_setup_inst(raw: mesh_data_t, data: Float32Array, inst_type: i
 	raw._instance_count = Math.floor(data.length / Math.floor(vertex_struct_byte_size(structure) / 4));
 	raw._instanced_vb = vertex_buffer_create(raw._instance_count, structure, Usage.StaticUsage, 1);
 	let vertices = vertex_buffer_lock(raw._instanced_vb);
-	for (let i = 0; i < Math.floor(vertices.byteLength / 4); ++i) vertices.setFloat32(i * 4, data[i], true);
+	for (let i = 0; i < Math.floor(vertices.byteLength / 4); ++i) {
+		vertices.setFloat32(i * 4, data[i], true);
+	}
 	vertex_buffer_unlock(raw._instanced_vb);
 }
 
 function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_t {
 	let key = "";
-	for (let e of vs) key += e.name;
+	for (let e of vs) {
+		key += e.name;
+	}
 	let vb = raw._vertex_buffer_map.get(key);
 	if (vb == null) {
 		let vertex_arrays = [];
@@ -193,14 +203,20 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 		mesh_data_build_vertices(raw._vertices, vertex_arrays, 0, has_tex && uvs == null, tex_offset);
 		vertex_buffer_unlock(vb);
 		raw._vertex_buffer_map.set(key, vb);
-		if (has_tex && uvs == null) Krom.log("Armory Warning: Geometry " + raw.name + " is missing UV map");
-		if (has_col && cols == null) Krom.log("Armory Warning: Geometry " + raw.name + " is missing vertex colors");
+		if (has_tex && uvs == null) {
+			Krom.log("Geometry " + raw.name + " is missing UV map");
+		}
+		if (has_col && cols == null) {
+			Krom.log("Geometry " + raw.name + " is missing vertex colors");
+		}
 	}
 	return vb;
 }
 
 function mesh_data_build(raw: mesh_data_t) {
-	if (raw._ready) return;
+	if (raw._ready) {
+		return;
+	}
 
 	let positions = mesh_data_get_vertex_array(raw, 'pos');
 	raw._vertex_buffer = vertex_buffer_create(Math.floor(positions.values.length / positions._size), raw._struct, Usage.StaticUsage);
@@ -209,23 +225,31 @@ function mesh_data_build(raw: mesh_data_t) {
 	vertex_buffer_unlock(raw._vertex_buffer);
 
 	let struct_str = "";
-	for (let e of raw._struct.elements) struct_str += e.name;
+	for (let e of raw._struct.elements) {
+		struct_str += e.name;
+	}
 	raw._vertex_buffer_map.set(struct_str, raw._vertex_buffer);
 
 	raw._index_buffers = [];
 	for (let id of raw._indices) {
-		if (id.length == 0) continue;
+		if (id.length == 0) {
+			continue;
+		}
 		let index_buffer = index_buffer_create(id.length);
 
 		let indices_array = index_buffer_lock(index_buffer);
-		for (let i = 0; i < indices_array.length; ++i) indices_array[i] = id[i];
+		for (let i = 0; i < indices_array.length; ++i) {
+			indices_array[i] = id[i];
+		}
 
 		index_buffer_unlock(index_buffer);
 		raw._index_buffers.push(index_buffer);
 	}
 
 	// Instanced
-	if (raw.instanced_data != null) mesh_data_setup_inst(raw, raw.instanced_data, raw.instanced_type);
+	if (raw.instanced_data != null) {
+		mesh_data_setup_inst(raw, raw.instanced_data, raw.instanced_type);
+	}
 
 	raw._ready = true;
 }
@@ -238,12 +262,16 @@ function mesh_data_add_armature(raw: mesh_data_t, armature: armature_t) {
 }
 
 function mesh_data_add_action(raw: mesh_data_t, bones: obj_t[], name: string) {
-	if (bones == null) return;
+	if (bones == null) {
+		return;
+	}
 	if (raw._actions == null) {
 		raw._actions = new Map();
 		raw._mats = new Map();
 	}
-	if (raw._actions.get(name) != null) return;
+	if (raw._actions.get(name) != null) {
+		return;
+	}
 	let action_bones: obj_t[] = [];
 
 	// Set bone references
@@ -279,12 +307,24 @@ function mesh_data_calculate_aabb(raw: mesh_data_t): vec4_t {
 	let i = 0;
 	let positions = mesh_data_get_vertex_array(raw, 'pos');
 	while (i < positions.values.length) {
-		if (positions.values[i    ] > aabb_max.x) aabb_max.x = positions.values[i];
-		if (positions.values[i + 1] > aabb_max.y) aabb_max.y = positions.values[i + 1];
-		if (positions.values[i + 2] > aabb_max.z) aabb_max.z = positions.values[i + 2];
-		if (positions.values[i    ] < aabb_min.x) aabb_min.x = positions.values[i];
-		if (positions.values[i + 1] < aabb_min.y) aabb_min.y = positions.values[i + 1];
-		if (positions.values[i + 2] < aabb_min.z) aabb_min.z = positions.values[i + 2];
+		if (positions.values[i] > aabb_max.x) {
+			aabb_max.x = positions.values[i];
+		}
+		if (positions.values[i + 1] > aabb_max.y) {
+			aabb_max.y = positions.values[i + 1];
+		}
+		if (positions.values[i + 2] > aabb_max.z) {
+			aabb_max.z = positions.values[i + 2];
+		}
+		if (positions.values[i] < aabb_min.x) {
+			aabb_min.x = positions.values[i];
+		}
+		if (positions.values[i + 1] < aabb_min.y) {
+			aabb_min.y = positions.values[i + 1];
+		}
+		if (positions.values[i + 2] < aabb_min.z) {
+			aabb_min.z = positions.values[i + 2];
+		}
 		i += 4;
 	}
 	aabb.x = (Math.abs(aabb_min.x) + Math.abs(aabb_max.x)) / 32767 * raw.scale_pos;

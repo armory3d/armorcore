@@ -38,9 +38,15 @@ function light_object_create(data: light_data_t): light_object_t {
 
 function light_object_remove(raw: light_object_t) {
 	array_remove(scene_lights, raw);
-	if (_render_path_light == raw) { _render_path_light = null; }
-	if (_render_path_point == raw) { _render_path_point = null; }
-	else if (_render_path_sun == raw) { _render_path_sun = null; }
+	if (_render_path_light == raw) {
+		_render_path_light = null;
+	}
+	if (_render_path_point == raw) {
+		_render_path_point = null;
+	}
+	else if (_render_path_sun == raw) {
+		_render_path_sun = null;
+	}
 
 	object_remove_super(raw.base);
 }
@@ -64,7 +70,9 @@ function light_object_update_view_frustum(raw: light_object_t, camera: camera_ob
 	if (camera.data.frustum_culling) {
 		if (raw.frustum_planes == null) {
 			raw.frustum_planes = [];
-			for (let i = 0; i < 6; ++i) raw.frustum_planes.push(new frustum_plane_t());
+			for (let i = 0; i < 6; ++i) {
+				raw.frustum_planes.push(new frustum_plane_t());
+			}
 		}
 		camera_object_build_view_frustum(raw.vp, raw.frustum_planes);
 	}

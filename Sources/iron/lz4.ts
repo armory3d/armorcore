@@ -40,7 +40,9 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 	// "The last 5 bytes are always literals"
 	let last_literal_pos = ilen - 5;
 
-	if (_lz4_hash_table == null) _lz4_hash_table = new Int32Array(65536);
+	if (_lz4_hash_table == null) {
+		_lz4_hash_table = new Int32Array(65536);
+	}
 	for (let i = 0; i < _lz4_hash_table.length; ++i) {
 		_lz4_hash_table[i] = -65536;
 	}
@@ -76,7 +78,9 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 		}
 
 		// No match found
-		if (ipos > last_match_pos) break;
+		if (ipos > last_match_pos) {
+			break;
+		}
 
 		// Match found
 		let llen = ipos - anchor_pos;
@@ -107,7 +111,9 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 			obuf[opos++] = ibuf[anchor_pos++];
 		}
 
-		if (mlen == 0) break;
+		if (mlen == 0) {
+			break;
+		}
 
 		// Write offset of match
 		obuf[opos + 0] = moffset;
@@ -167,7 +173,9 @@ function lz4_decode(b: ArrayBuffer, olen: i32): ArrayBuffer {
 				let l = 0;
 				while (true) {
 					l = ibuf[ipos++];
-					if (l != 255) break;
+					if (l != 255) {
+						break;
+					}
 					clen += 255;
 				}
 				clen += l;
@@ -178,12 +186,16 @@ function lz4_decode(b: ArrayBuffer, olen: i32): ArrayBuffer {
 			while (ipos < end) {
 				obuf[opos++] = ibuf[ipos++];
 			}
-			if (ipos == ilen) break;
+			if (ipos == ilen) {
+				break;
+			}
 		}
 
 		// Match
 		let moffset = ibuf[ipos + 0] | (ibuf[ipos + 1] << 8);
-		if (moffset == 0 || moffset > opos) return null;
+		if (moffset == 0 || moffset > opos) {
+			return null;
+		}
 		ipos += 2;
 
 		// Length of match
@@ -192,7 +204,9 @@ function lz4_decode(b: ArrayBuffer, olen: i32): ArrayBuffer {
 			let l = 0;
 			while (true) {
 				l = ibuf[ipos++];
-				if (l != 255) break;
+				if (l != 255) {
+					break;
+				}
 				clen += 255;
 			}
 			clen += l;
