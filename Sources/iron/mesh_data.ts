@@ -97,12 +97,10 @@ function mesh_data_get_vertex_struct(vertex_arrays: vertex_array_t[]): vertex_st
 	return structure;
 }
 
-function mesh_data_get_vertex_data(data: string): VertexData {
-	switch (data) {
-		case "short4norm": return VertexData.I16_4X_Normalized;
-		case "short2norm": return VertexData.I16_2X_Normalized;
-		default: return VertexData.I16_4X_Normalized;
-	}
+function mesh_data_get_vertex_data(data: string): vertex_data_t {
+	if (data == "short4norm") return vertex_data_t.I16_4X_NORM;
+	else if (data == "short2norm") return vertex_data_t.I16_2X_NORM;
+	else return vertex_data_t.I16_4X_NORM;
 }
 
 function mesh_data_build_vertices(vertices: DataView, vertex_arrays: vertex_array_t[], offset = 0, fake_uvs = false, uvs_index = -1) {
@@ -130,11 +128,9 @@ function mesh_data_build_vertices(vertices: DataView, vertex_arrays: vertex_arra
 }
 
 function mesh_data_get_vertex_size(vertex_data: string, padding: i32 = 0): i32 {
-	switch (vertex_data) {
-		case "short4norm": return 4 - padding;
-		case "short2norm": return 2 - padding;
-		default: return 0;
-	}
+	if (vertex_data == "short4norm") return 4 - padding;
+	else if (vertex_data == "short2norm") return 2 - padding;
+	else return 0;
 }
 
 function mesh_data_get_vertex_array(raw: mesh_data_t, name: string): vertex_array_t {
@@ -151,16 +147,16 @@ function mesh_data_setup_inst(raw: mesh_data_t, data: Float32Array, inst_type: i
 	structure.instanced = true;
 	raw._instanced = true;
 	// pos, pos+rot, pos+scale, pos+rot+scale
-	vertex_struct_add(structure, "ipos", VertexData.F32_3X);
+	vertex_struct_add(structure, "ipos", vertex_data_t.F32_3X);
 	if (inst_type == 2 || inst_type == 4) {
-		vertex_struct_add(structure, "irot", VertexData.F32_3X);
+		vertex_struct_add(structure, "irot", vertex_data_t.F32_3X);
 	}
 	if (inst_type == 3 || inst_type == 4) {
-		vertex_struct_add(structure, "iscl", VertexData.F32_3X);
+		vertex_struct_add(structure, "iscl", vertex_data_t.F32_3X);
 	}
 
 	raw._instance_count = Math.floor(data.length / Math.floor(vertex_struct_byte_size(structure) / 4));
-	raw._instanced_vb = vertex_buffer_create(raw._instance_count, structure, Usage.StaticUsage, 1);
+	raw._instanced_vb = vertex_buffer_create(raw._instance_count, structure, usage_t.STATIC, 1);
 	let vertices = vertex_buffer_lock(raw._instanced_vb);
 	for (let i = 0; i < Math.floor(vertices.byteLength / 4); ++i) {
 		vertices.setFloat32(i * 4, data[i], true);
@@ -198,7 +194,7 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 		let uvs = mesh_data_get_vertex_array(raw, 'tex');
 		let cols = mesh_data_get_vertex_array(raw, 'col');
 		let struct = mesh_data_get_vertex_struct(vertex_arrays);
-		vb = vertex_buffer_create(Math.floor(positions.values.length / positions._size), struct, Usage.StaticUsage);
+		vb = vertex_buffer_create(Math.floor(positions.values.length / positions._size), struct, usage_t.STATIC);
 		raw._vertices = vertex_buffer_lock(vb);
 		mesh_data_build_vertices(raw._vertices, vertex_arrays, 0, has_tex && uvs == null, tex_offset);
 		vertex_buffer_unlock(vb);
@@ -219,7 +215,7 @@ function mesh_data_build(raw: mesh_data_t) {
 	}
 
 	let positions = mesh_data_get_vertex_array(raw, 'pos');
-	raw._vertex_buffer = vertex_buffer_create(Math.floor(positions.values.length / positions._size), raw._struct, Usage.StaticUsage);
+	raw._vertex_buffer = vertex_buffer_create(Math.floor(positions.values.length / positions._size), raw._struct, usage_t.STATIC);
 	raw._vertices = vertex_buffer_lock(raw._vertex_buffer);
 	mesh_data_build_vertices(raw._vertices, raw.vertex_arrays);
 	vertex_buffer_unlock(raw._vertex_buffer);

@@ -2,12 +2,12 @@
 class object_t {
 	uid: i32;
 	urandom: f32;
-	raw: obj_t = null;
+	raw: obj_t;
 	name: string = "";
 	transform: transform_t;
-	parent: object_t = null;
+	parent: object_t;
 	children: object_t[] = [];
-	animation: anim_raw_t = null;
+	animation: anim_raw_t;
 	visible = true; // Skip render, keep updating
 	culled = false; // TBaseObject was culled last frame
 	is_empty = false;

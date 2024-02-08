@@ -53,7 +53,7 @@ function material_data_parse(file: string, name: string, done: (data: material_d
 function material_data_get_context(raw: material_data_t, name: string): material_context_t {
 	for (let c of raw._contexts) {
 		// 'mesh' will fetch both 'mesh' and 'meshheight' contexts
-		if (c.name.substr(0, name.length) == name) {
+		if (c.name.substring(0, name.length) == name) {
 			return c;
 		}
 	}

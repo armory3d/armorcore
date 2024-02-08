@@ -13,8 +13,8 @@ class transform_t {
 	dim: vec4_t;
 	radius: f32;
 
-	bone_parent: mat4_t = null;
-	last_world: mat4_t = null;
+	bone_parent: mat4_t;
+	last_world: mat4_t;
 
 	// Wrong order returned from get_euler(), store last state for animation
 	_euler_x: f32;
@@ -22,9 +22,9 @@ class transform_t {
 	_euler_z: f32;
 
 	// Animated delta transform
-	dloc: vec4_t = null;
-	drot: quat_t = null;
-	dscale: vec4_t = null;
+	dloc: vec4_t;
+	drot: quat_t;
+	dscale: vec4_t;
 	_deuler_x: f32;
 	_deuler_y: f32;
 	_deuler_z: f32;

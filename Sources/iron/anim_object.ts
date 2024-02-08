@@ -4,8 +4,6 @@ class anim_object_t {
 	object: object_t;
 	oactions: scene_t[];
 	oaction: obj_t;
-	s0: f32 = 0.0;
-	bezier_frame_index = -1;
 }
 
 function anim_object_create(object: object_t, oactions: scene_t[]): anim_object_t {
@@ -104,35 +102,34 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 
 		let value = anim_object_interpolate_linear(t, t1, t2, v1, v2);
 
-		switch (track.target) {
-			case "xloc": transform.loc.x = value;
-			case "yloc": transform.loc.y = value;
-			case "zloc": transform.loc.z = value;
-			case "xrot": transform_set_rot(transform, value, transform._euler_y, transform._euler_z);
-			case "yrot": transform_set_rot(transform, transform._euler_x, value, transform._euler_z);
-			case "zrot": transform_set_rot(transform, transform._euler_x, transform._euler_y, value);
-			case "qwrot": transform.rot.w = value;
-			case "qxrot": transform.rot.x = value;
-			case "qyrot": transform.rot.y = value;
-			case "qzrot": transform.rot.z = value;
-			case "xscl": transform.scale.x = value;
-			case "yscl": transform.scale.y = value;
-			case "zscl": transform.scale.z = value;
-			// Delta
-			case "dxloc": transform.dloc.x = value;
-			case "dyloc": transform.dloc.y = value;
-			case "dzloc": transform.dloc.z = value;
-			case "dxrot": transform._deuler_x = value;
-			case "dyrot": transform._deuler_y = value;
-			case "dzrot": transform._deuler_z = value;
-			case "dqwrot": transform.drot.w = value;
-			case "dqxrot": transform.drot.x = value;
-			case "dqyrot": transform.drot.y = value;
-			case "dqzrot": transform.drot.z = value;
-			case "dxscl": transform.dscale.x = value;
-			case "dyscl": transform.dscale.y = value;
-			case "dzscl": transform.dscale.z = value;
-		}
+		let tt = track.target;
+		if (tt == "xloc") transform.loc.x = value;
+		else if (tt == "yloc") transform.loc.y = value;
+		else if (tt == "zloc") transform.loc.z = value;
+		else if (tt == "xrot") transform_set_rot(transform, value, transform._euler_y, transform._euler_z);
+		else if (tt == "yrot") transform_set_rot(transform, transform._euler_x, value, transform._euler_z);
+		else if (tt == "zrot") transform_set_rot(transform, transform._euler_x, transform._euler_y, value);
+		else if (tt == "qwrot") transform.rot.w = value;
+		else if (tt == "qxrot") transform.rot.x = value;
+		else if (tt == "qyrot") transform.rot.y = value;
+		else if (tt == "qzrot") transform.rot.z = value;
+		else if (tt == "xscl") transform.scale.x = value;
+		else if (tt == "yscl") transform.scale.y = value;
+		else if (tt == "zscl") transform.scale.z = value;
+		// Delta
+		else if (tt == "dxloc") transform.dloc.x = value;
+		else if (tt == "dyloc") transform.dloc.y = value;
+		else if (tt == "dzloc") transform.dloc.z = value;
+		else if (tt == "dxrot") transform._deuler_x = value;
+		else if (tt == "dyrot") transform._deuler_y = value;
+		else if (tt == "dzrot") transform._deuler_z = value;
+		else if (tt == "dqwrot") transform.drot.w = value;
+		else if (tt == "dqxrot") transform.drot.x = value;
+		else if (tt == "dqyrot") transform.drot.y = value;
+		else if (tt == "dqzrot") transform.drot.z = value;
+		else if (tt == "dxscl") transform.dscale.x = value;
+		else if (tt == "dyscl") transform.dscale.y = value;
+		else if (tt == "dzscl") transform.dscale.z = value;
 	}
 }
 

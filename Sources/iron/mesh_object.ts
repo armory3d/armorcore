@@ -1,20 +1,20 @@
 
 class mesh_object_t {
 	base: object_t;
-	data: mesh_data_t = null;
+	data: mesh_data_t;
 	materials: material_data_t[];
 	material_index = 0;
 	///if arm_particles
-	particle_systems: particle_sys_t[] = null; // Particle owner
-	particle_children: mesh_object_t[] = null;
-	particle_owner: mesh_object_t = null; // Particle object
+	particle_systems: particle_sys_t[]; // Particle owner
+	particle_children: mesh_object_t[];
+	particle_owner: mesh_object_t; // Particle object
 	particle_index = -1;
 	///end
 	camera_dist: f32;
 	screen_size = 0.0;
 	frustum_culling = true;
-	skip_context: string = null; // Do not draw this context
-	force_context: string = null; // Draw only this context
+	skip_context: string; // Do not draw this context
+	force_context: string; // Draw only this context
 	prev_matrix = mat4_identity();
 }
 
@@ -160,7 +160,7 @@ function mesh_object_get_contexts(raw: mesh_object_t, context: string, materials
 	for (let mat of materials) {
 		let found = false;
 		for (let i = 0; i < mat.contexts.length; ++i) {
-			if (mat.contexts[i].name.substr(0, context.length) == context) {
+			if (mat.contexts[i].name.substring(0, context.length) == context) {
 				material_contexts.push(mat._contexts[i]);
 				shader_contexts.push(shader_data_get_context(mat._shader, context));
 				found = true;

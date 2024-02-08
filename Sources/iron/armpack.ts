@@ -58,43 +58,41 @@ function armpack_read_buffer(v: DataView, len: i32): ArrayBuffer {
 
 function armpack_read(v: DataView): any {
 	let b = armpack_read_u8(v);
-	switch (b) {
-		case 0xc0: return null;
-		case 0xc2: return false;
-		case 0xc3: return true;
-		case 0xc4: return armpack_read_buffer(v, armpack_read_u8(v));
-		case 0xc5: return armpack_read_buffer(v, armpack_read_u16(v));
-		case 0xc6: return armpack_read_buffer(v, armpack_read_i32(v));
-		case 0xca: return armpack_read_f32(v);
-		case 0xcc: return armpack_read_u8(v);
-		case 0xcd: return armpack_read_u16(v);
-		case 0xce: return armpack_read_i32(v);
-		case 0xd0: return armpack_read_i8(v);
-		case 0xd1: return armpack_read_i16(v);
-		case 0xd2: return armpack_read_i32(v);
-		case 0xd9: return armpack_read_string(v, armpack_read_u8(v));
-		case 0xda: return armpack_read_string(v, armpack_read_u16(v));
-		case 0xdb: return armpack_read_string(v, armpack_read_i32(v));
-		case 0xdc: return armpack_read_array(v, armpack_read_u16(v));
-		case 0xdd: return armpack_read_array(v, armpack_read_i32(v));
-		case 0xde: return armpack_read_map(v, armpack_read_u16(v));
-		case 0xdf: return armpack_read_map(v, armpack_read_i32(v));
-		default: {
-			if (b < 0x80) {
-				return b; // positive fix num
-			}
-			else if (b < 0x90) {
-				return armpack_read_map(v, (0xf & b)); // fix map
-			}
-			else if (b < 0xa0) {
-				return armpack_read_array(v, (0xf & b)); // fix array
-			}
-			else if (b < 0xc0) {
-				return armpack_read_string(v, 0x1f & b); // fix string
-			}
-			else if (b > 0xdf) {
-				return 0xffffff00 | b; // negative fix num
-			}
+	if (b == 0xc0) return null;
+	else if (b == 0xc2) return false;
+	else if (b == 0xc3) return true;
+	else if (b == 0xc4) return armpack_read_buffer(v, armpack_read_u8(v));
+	else if (b == 0xc5) return armpack_read_buffer(v, armpack_read_u16(v));
+	else if (b == 0xc6) return armpack_read_buffer(v, armpack_read_i32(v));
+	else if (b == 0xca) return armpack_read_f32(v);
+	else if (b == 0xcc) return armpack_read_u8(v);
+	else if (b == 0xcd) return armpack_read_u16(v);
+	else if (b == 0xce) return armpack_read_i32(v);
+	else if (b == 0xd0) return armpack_read_i8(v);
+	else if (b == 0xd1) return armpack_read_i16(v);
+	else if (b == 0xd2) return armpack_read_i32(v);
+	else if (b == 0xd9) return armpack_read_string(v, armpack_read_u8(v));
+	else if (b == 0xda) return armpack_read_string(v, armpack_read_u16(v));
+	else if (b == 0xdb) return armpack_read_string(v, armpack_read_i32(v));
+	else if (b == 0xdc) return armpack_read_array(v, armpack_read_u16(v));
+	else if (b == 0xdd) return armpack_read_array(v, armpack_read_i32(v));
+	else if (b == 0xde) return armpack_read_map(v, armpack_read_u16(v));
+	else if (b == 0xdf) return armpack_read_map(v, armpack_read_i32(v));
+	else {
+		if (b < 0x80) {
+			return b; // positive fix num
+		}
+		else if (b < 0x90) {
+			return armpack_read_map(v, (0xf & b)); // fix map
+		}
+		else if (b < 0xa0) {
+			return armpack_read_array(v, (0xf & b)); // fix array
+		}
+		else if (b < 0xc0) {
+			return armpack_read_string(v, 0x1f & b); // fix string
+		}
+		else if (b > 0xdf) {
+			return 0xffffff00 | b; // negative fix num
 		}
 	}
 	return null;

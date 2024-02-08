@@ -1,10 +1,10 @@
 
 let _time_last = 0.0;
 let _time_real_delta = 0.0;
-let _time_frequency: Null<i32> = null;
+let _time_frequency: i32 = -1;
 
 function time_delta(): f32 {
-	if (_time_frequency == null) {
+	if (_time_frequency < 0) {
 		_time_frequency = sys_display_frequency();
 	}
 	return (1 / _time_frequency);

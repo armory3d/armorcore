@@ -5,7 +5,7 @@ class speaker_object_t {
 	base: object_t;
 	data: speaker_data_t;
 	paused = false;
-	sound: sound_t = null;
+	sound: sound_t;
 	channels: audio_channel_t[] = [];
 	volume: f32;
 }

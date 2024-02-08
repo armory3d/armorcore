@@ -13,7 +13,7 @@ class anim_raw_t {
 	speed: f32 = 1.0;
 	loop = true;
 	frame_index = 0;
-	on_complete: ()=>void = null;
+	on_complete: ()=>void;
 	paused = false;
 	frame_time: f32 = 1 / 60;
 	blend_time: f32 = 0.0;
@@ -21,7 +21,7 @@ class anim_raw_t {
 	blend_action = "";
 	blend_factor: f32 = 0.0;
 	last_frame_index = -1;
-	marker_events: Map<string, (()=>void)[]> = null;
+	marker_events: Map<string, (()=>void)[]>;
 }
 
 // Lerp

@@ -618,7 +618,7 @@ function data_is_up(file: string): bool {
 
 function data_base_name(path: string): string {
 	let slash = path.lastIndexOf(data_sep());
-	return slash >= 0 ? path.substr(slash + 1) : path;
+	return slash >= 0 ? path.substring(slash + 1) : path;
 }
 
 function data_resolve_path(file: string): string {

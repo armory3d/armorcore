@@ -263,7 +263,7 @@ function scene_get_objects_count(objects: obj_t[], discard_no_spawn = true): i32
 	return result;
 }
 
-function scene_spawn_object(name: string, parent: Null<object_t>, done: Null<(o: object_t)=>void>, spawn_children = true, src_raw: Null<scene_t> = null) {
+function scene_spawn_object(name: string, parent: object_t, done: (o: object_t)=>void, spawn_children = true, src_raw: scene_t = null) {
 	if (src_raw == null) {
 		src_raw = _scene_raw;
 	}
@@ -516,7 +516,7 @@ function scene_embed_data(file: string, done: ()=>void) {
 		data_get_blob(file, function (b: ArrayBuffer) {
 			// Raw 3D texture bytes
 			let w = Math.floor(Math.pow(b.byteLength, 1 / 3)) + 1;
-			let image = image_from_bytes_3d(b, w, w, w, TextureFormat.R8);
+			let image = image_from_bytes_3d(b, w, w, w, tex_format_t.R8);
 			scene_embedded.set(file, image);
 			done();
 		});

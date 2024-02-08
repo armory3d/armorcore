@@ -1,4 +1,14 @@
 
+class ray_t {
+	origin: vec4_t;
+	dir: vec4_t;
+}
+
+class plane_t {
+	normal = vec4_create(1.0, 0.0, 0.0);
+	constant = 0.0;
+}
+
 let _raycast_vp_inv = mat4_identity();
 let _raycast_p_inv = mat4_identity();
 let _raycast_v_inv = mat4_identity();
@@ -83,11 +93,6 @@ function raycast_plane_intersect(normal: vec4_t, a: vec4_t, input_x: f32, input_
 	return ray_intersect_plane(ray, plane);
 }
 
-class ray_t {
-	origin: vec4_t;
-	dir: vec4_t;
-}
-
 function ray_create(origin: vec4_t = null, dir: vec4_t = null): ray_t {
 	let raw = new ray_t();
 	raw.origin = origin == null ? vec4_create() : origin;
@@ -142,7 +147,6 @@ function ray_dist_to_plane(raw: ray_t, plane: plane_t): f32 {
 			return 0;
 		}
 
-		// Null is preferable to undefined since undefined means.... it is undefined
 		return -1;
 	}
 
@@ -302,11 +306,6 @@ function ray_intersect_triangle(raw: ray_t, a: vec4_t, b: vec4_t, c: vec4_t, cul
 
 	// Ray intersects triangle.
 	return ray_at(raw, qdn / ddn);
-}
-
-class plane_t {
-	normal = vec4_create(1.0, 0.0, 0.0);
-	constant = 0.0;
 }
 
 function plane_dist_to_point(raw: plane_t, point: vec4_t): f32 {

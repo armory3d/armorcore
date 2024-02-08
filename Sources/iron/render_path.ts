@@ -1,7 +1,29 @@
 
-enum DrawOrder {
-	Distance, // Early-z
-	Shader, // Less state changes
+class render_target_t {
+	name: string;
+	width: i32;
+	height: i32;
+	// Optional:
+	format: string;
+	scale: f32 = 1.0;
+	depth_buffer: string; // 2D texture
+	mipmaps: bool = false;
+	depth: i32 = 1; // 3D texture
+	is_image: bool = false; // Image
+	// Runtime:
+	depth_format: depth_format_t;
+	depth_from = "";
+	image: image_t; // RT or image
+	has_depth = false;
+}
+
+class cached_shader_context_t {
+	context: shader_context_t;
+}
+
+enum draw_order_t {
+	DIST, // Early-z
+	SHADER, // Less state changes
 }
 
 let _render_path_frame_time = 0.0;
@@ -11,12 +33,8 @@ let _render_path_light: light_object_t = null;
 let _render_path_sun: light_object_t = null;
 let _render_path_point: light_object_t = null;
 let _render_path_current_image: image_t = null;
-let _render_path_draw_order = DrawOrder.Distance;
+let _render_path_draw_order = draw_order_t.DIST;
 let _render_path_paused = false;
-
-function render_path_ready(): bool {
-	return render_path_loading == 0;
-}
 
 let render_path_commands: ()=>void = null;
 let render_path_render_targets: Map<string, render_target_t> = new Map();
@@ -33,6 +51,10 @@ let render_path_last_frame_time = 0.0;
 let render_path_loading = 0;
 let render_path_cached_shader_contexts: Map<string, cached_shader_context_t> = new Map();
 let render_path_depth_buffers: { name: string, format: string }[] = [];
+
+function render_path_ready(): bool {
+	return render_path_loading == 0;
+}
 
 ///if arm_voxels
 let render_path_voxelized = 0;
@@ -101,7 +123,7 @@ function render_path_set_target(target: string, additional: string[] = null) {
 		}
 		render_path_current_w = rt.image.width;
 		render_path_current_h = rt.image.height;
-		if (rt.is_3d) {
+		if (rt.depth > 1) {
 			render_path_current_d = rt.image.depth;
 		}
 		render_path_begin(rt.image, additional_images);
@@ -146,7 +168,7 @@ function render_path_set_viewport(view_w: i32, view_h: i32) {
 	render_path_set_current_scissor(view_w, view_h);
 }
 
-function render_path_clear_target(color_flag: Null<i32> = null, depth_flag: Null<f32> = null) {
+function render_path_clear_target(color_flag?: i32, depth_flag?: f32) {
 	if (color_flag == -1) { // -1 == 0xffffffff
 		if (scene_world != null) {
 			color_flag = scene_world.background_color;
@@ -200,7 +222,7 @@ function render_path_submit_draw(context: string) {
 		for (let mesh of meshes) {
 			mesh_object_compute_camera_dist(mesh, cam_x, cam_y, cam_z);
 		}
-		_render_path_draw_order == DrawOrder.Shader ? render_path_sort_meshes_shader(meshes) : render_path_sort_meshes_dist(meshes);
+		_render_path_draw_order == draw_order_t.SHADER ? render_path_sort_meshes_shader(meshes) : render_path_sort_meshes_dist(meshes);
 		render_path_meshes_sorted = true;
 	}
 
@@ -366,7 +388,7 @@ function render_path_create_target(t: render_target_t): render_target_t {
 			}
 		}
 		else { // Reuse
-			t.depth_format = DepthFormat.NoDepthAndStencil;
+			t.depth_format = depth_format_t.NO_DEPTH;
 			t.depth_from = t.depth_buffer;
 			t.image = render_path_create_image(t, t.depth_format);
 			image_set_depth_from(t.image, depth_target.image);
@@ -374,92 +396,65 @@ function render_path_create_target(t: render_target_t): render_target_t {
 	}
 	else { // No depth buffer
 		t.has_depth = false;
-		if (t.depth != null && t.depth > 1) {
-			t.is_3d = true;
-		}
-		t.depth_format = DepthFormat.NoDepthAndStencil;
+		t.depth_format = depth_format_t.NO_DEPTH;
 		t.image = render_path_create_image(t, t.depth_format);
 	}
 	return t;
 }
 
-function render_path_create_image(t: render_target_t, depth_format: DepthFormat): image_t {
+function render_path_create_image(t: render_target_t, depth_format: depth_format_t): image_t {
 	let width = t.width == 0 ? app_w() : t.width;
 	let height = t.height == 0 ? app_h() : t.height;
-	let depth = t.depth != null ? t.depth : 0;
-	if (t.scale != null) {
-		width = Math.floor(width * t.scale);
-		height = Math.floor(height * t.scale);
-		depth = Math.floor(depth * t.scale);
-	}
+	let depth = t.depth;
+	width = Math.floor(width * t.scale);
+	height = Math.floor(height * t.scale);
+	depth = Math.floor(depth * t.scale);
 	if (width < 1) {
 		width = 1;
 	}
 	if (height < 1) {
 		height = 1;
 	}
-	if (t.depth != null && t.depth > 1) { // 3D texture
+	if (t.depth > 1) { // 3D texture
 		// Image only
 		let img = image_create_3d(width, height, depth,
-			t.format != null ?render_path_get_tex_format(t.format) : TextureFormat.RGBA32);
+			t.format != null ?render_path_get_tex_format(t.format) : tex_format_t.RGBA32);
 		if (t.mipmaps) {
 			image_gen_mipmaps(img, 1000); // Allocate mipmaps
 		}
 		return img;
 	}
 	else { // 2D texture
-		if (t.is_image != null && t.is_image) { // Image
+		if (t.is_image) { // Image
 			return image_create(width, height,
-				t.format != null ?render_path_get_tex_format(t.format) : TextureFormat.RGBA32);
+				t.format != null ?render_path_get_tex_format(t.format) : tex_format_t.RGBA32);
 		}
 		else { // Render target
 			return image_create_render_target(width, height,
-				t.format != null ?render_path_get_tex_format(t.format) : TextureFormat.RGBA32,
+				t.format != null ?render_path_get_tex_format(t.format) : tex_format_t.RGBA32,
 				depth_format);
 		}
 	}
 }
 
-function render_path_get_tex_format(s: string): TextureFormat {
-	switch (s) {
-		case "RGBA32": return TextureFormat.RGBA32;
-		case "RGBA64": return TextureFormat.RGBA64;
-		case "RGBA128": return TextureFormat.RGBA128;
-		case "DEPTH16": return TextureFormat.DEPTH16;
-		case "R32": return TextureFormat.R32;
-		case "R16": return TextureFormat.R16;
-		case "R8": return TextureFormat.R8;
-		default: return TextureFormat.RGBA32;
-	}
+function render_path_get_tex_format(s: string): tex_format_t {
+	if (s == "RGBA32") return tex_format_t.RGBA32;
+	if (s == "RGBA64") return tex_format_t.RGBA64;
+	if (s == "RGBA128") return tex_format_t.RGBA128;
+	if (s == "DEPTH16") return tex_format_t.DEPTH16;
+	if (s == "R32") return tex_format_t.R32;
+	if (s == "R16") return tex_format_t.R16;
+	if (s == "R8") return tex_format_t.R8;
+	return tex_format_t.RGBA32;
 }
 
-function render_path_get_depth_format(s: string): DepthFormat {
+function render_path_get_depth_format(s: string): depth_format_t {
 	if (s == null || s == "") {
-		return DepthFormat.DepthOnly;
+		return depth_format_t.DEPTH24;
 	}
-	switch (s) {
-		case "DEPTH24": return DepthFormat.DepthOnly;
-		case "DEPTH16": return DepthFormat.Depth16;
-		default: return DepthFormat.DepthOnly;
-	}
-}
-
-class render_target_t {
-	name: string;
-	width: i32;
-	height: i32;
-	format: string = null;
-	scale: Null<f32> = null;
-	depth_buffer: string = null; // 2D texture
-	mipmaps: Null<bool> = null;
-	depth: Null<i32> = null; // 3D texture
-	is_image: Null<bool> = null; // Image
-	// Runtime:
-	depth_format: DepthFormat;
-	depth_from = "";
-	image: image_t = null; // RT or image
-	has_depth = false;
-	is_3d = false; // sampler2D / sampler3D
+	if (s == "DEPTH24") return depth_format_t.DEPTH24;
+	if (s == "DEPTH16") return depth_format_t.DEPTH16;
+	return depth_format_t.DEPTH24;
 }
 
 function render_target_create(): render_target_t {
@@ -470,8 +465,4 @@ function render_target_unload(raw: render_target_t) {
 	if (raw.image != null) {
 		image_unload(raw.image);
 	}
-}
-
-class cached_shader_context_t {
-	context: shader_context_t;
 }

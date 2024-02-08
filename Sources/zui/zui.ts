@@ -92,7 +92,7 @@ class zui_t {
 
 	get is_return_down(): bool { return Krom.zui_get(this.zui_, "is_return_down"); }
 
-	get key(): KeyCode { return Krom.zui_get(this.zui_, "key_code"); }
+	get key(): key_code_t { return Krom.zui_get(this.zui_, "key_code"); }
 
 	get cur_ratio(): i32 { return Krom.zui_get(this.zui_, "current_ratio"); }
 	set cur_ratio(a: i32) { Krom.zui_set(this.zui_, "current_ratio", a); }

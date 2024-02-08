@@ -5,9 +5,9 @@ class light_object_t {
 	base: object_t;
 	data: light_data_t;
 	v: mat4_t = mat4_identity();
-	p: mat4_t = null;
+	p: mat4_t;
 	vp: mat4_t = mat4_identity();
-	frustum_planes: frustum_plane_t[] = null;
+	frustum_planes: frustum_plane_t[];
 }
 
 let light_object_m = mat4_identity();

@@ -6,11 +6,11 @@ let app_y = function(): i32 { return 0; }
 
 let app_on_resets: (()=>void)[] = null;
 let app_on_end_frames: (()=>void)[] = null;
-let app_trait_inits: (()=>void)[] = [];
-let app_trait_updates: (()=>void)[] = [];
-let app_trait_late_updates: (()=>void)[] = [];
-let app_trait_renders: (()=>void)[] = [];
-let app_trait_renders_2d: (()=>void)[] = [];
+let app_on_inits: (()=>void)[] = [];
+let app_on_updates: (()=>void)[] = [];
+let app_on_late_updates: (()=>void)[] = [];
+let app_on_renders: (()=>void)[] = [];
+let app_on_renders_2d: (()=>void)[] = [];
 let app_pause_updates = false;
 let app_lastw = -1;
 let app_lasth = -1;
@@ -22,11 +22,11 @@ function app_init(done: ()=>void) {
 }
 
 function app_reset() {
-	app_trait_inits = [];
-	app_trait_updates = [];
-	app_trait_late_updates = [];
-	app_trait_renders = [];
-	app_trait_renders_2d = [];
+	app_on_inits = [];
+	app_on_updates = [];
+	app_on_late_updates = [];
+	app_on_renders = [];
+	app_on_renders_2d = [];
 	if (app_on_resets != null) {
 		for (let f of app_on_resets) {
 			f();
@@ -45,29 +45,29 @@ function app_update() {
 	scene_update_frame();
 
 	let i = 0;
-	let l = app_trait_updates.length;
+	let l = app_on_updates.length;
 	while (i < l) {
-		if (app_trait_inits.length > 0) {
-			for (let f of app_trait_inits) {
-				if (app_trait_inits.length > 0) {
+		if (app_on_inits.length > 0) {
+			for (let f of app_on_inits) {
+				if (app_on_inits.length > 0) {
 					f();
 				}
 				else {
 					break;
 				}
 			}
-			app_trait_inits.splice(0, app_trait_inits.length);
+			app_on_inits.splice(0, app_on_inits.length);
 		}
-		app_trait_updates[i]();
+		app_on_updates[i]();
 		// Account for removed traits
-		l <= app_trait_updates.length ? i++ : l = app_trait_updates.length;
+		l <= app_on_updates.length ? i++ : l = app_on_updates.length;
 	}
 
 	i = 0;
-	l = app_trait_late_updates.length;
+	l = app_on_late_updates.length;
 	while (i < l) {
-		app_trait_late_updates[i]();
-		l <= app_trait_late_updates.length ? i++ : l = app_trait_late_updates.length;
+		app_on_late_updates[i]();
+		l <= app_on_late_updates.length ? i++ : l = app_on_late_updates.length;
 	}
 
 	if (app_on_end_frames != null) {
@@ -105,22 +105,22 @@ function app_render() {
 		return;
 	}
 
-	if (app_trait_inits.length > 0) {
-		for (let f of app_trait_inits) {
-			if (app_trait_inits.length > 0) {
+	if (app_on_inits.length > 0) {
+		for (let f of app_on_inits) {
+			if (app_on_inits.length > 0) {
 				f();
 			}
 			else {
 				break;
 			}
 		}
-		app_trait_inits.splice(0, app_trait_inits.length);
+		app_on_inits.splice(0, app_on_inits.length);
 	}
 
 	scene_render_frame();
 
-	for (let f of app_trait_renders) {
-		if (app_trait_renders.length > 0) {
+	for (let f of app_on_renders) {
+		if (app_on_renders.length > 0) {
 			f();
 		}
 		else {
@@ -132,10 +132,10 @@ function app_render() {
 }
 
 function app_render_2d() {
-	if (app_trait_renders_2d.length > 0) {
+	if (app_on_renders_2d.length > 0) {
 		g2_begin();
-		for (let f of app_trait_renders_2d) {
-			if (app_trait_renders_2d.length > 0) {
+		for (let f of app_on_renders_2d) {
+			if (app_on_renders_2d.length > 0) {
 				f();
 			}
 			else {
@@ -148,43 +148,43 @@ function app_render_2d() {
 
 // Hooks
 function app_notify_on_init(f: ()=>void) {
-	app_trait_inits.push(f);
+	app_on_inits.push(f);
 }
 
 function app_remove_init(f: ()=>void) {
-	array_remove(app_trait_inits, f);
+	array_remove(app_on_inits, f);
 }
 
 function app_notify_on_update(f: ()=>void) {
-	app_trait_updates.push(f);
+	app_on_updates.push(f);
 }
 
 function app_remove_update(f: ()=>void) {
-	array_remove(app_trait_updates, f);
+	array_remove(app_on_updates, f);
 }
 
 function app_notify_on_late_update(f: ()=>void) {
-	app_trait_late_updates.push(f);
+	app_on_late_updates.push(f);
 }
 
 function app_remove_late_update(f: ()=>void) {
-	array_remove(app_trait_late_updates, f);
+	array_remove(app_on_late_updates, f);
 }
 
 function app_notify_on_render(f: ()=>void) {
-	app_trait_renders.push(f);
+	app_on_renders.push(f);
 }
 
 function app_remove_render(f: ()=>void) {
-	array_remove(app_trait_renders, f);
+	array_remove(app_on_renders, f);
 }
 
 function app_notify_on_render_2d(f: ()=>void) {
-	app_trait_renders_2d.push(f);
+	app_on_renders_2d.push(f);
 }
 
 function app_remove_render_2d(f: ()=>void) {
-	array_remove(app_trait_renders_2d, f);
+	array_remove(app_on_renders_2d, f);
 }
 
 function app_notify_on_reset(f: ()=>void) {

@@ -6,19 +6,19 @@ class anim_bone_t {
 	object: mesh_object_t;
 	data: mesh_data_t;
 	skin_buffer: Float32Array;
-	skeleton_bones: obj_t[] = null;
-	skeleton_mats: mat4_t[] = null;
-	skeleton_bones_blend: obj_t[] = null;
-	skeleton_mats_blend: mat4_t[] = null;
-	abs_mats: mat4_t[] = null;
-	apply_parent: bool[] = null;
+	skeleton_bones: obj_t[];
+	skeleton_mats: mat4_t[];
+	skeleton_bones_blend: obj_t[];
+	skeleton_mats_blend: mat4_t[];
+	abs_mats: mat4_t[];
+	apply_parent: bool[];
 	mats_fast: mat4_t[] = [];
 	mats_fast_sort: i32[] = [];
 	mats_fast_blend: mat4_t[] = [];
 	mats_fast_blend_sort: i32[] = [];
-	bone_children: Map<string, object_t[]> = null; // Parented to bone
+	bone_children: Map<string, object_t[]>; // Parented to bone
 	// Do inverse kinematics here
-	on_updates: (()=>void)[] = null;
+	on_updates: (()=>void)[];
 }
 
 let anim_bone_skin_max_bones = 128;

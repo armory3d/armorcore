@@ -21,9 +21,9 @@ type mesh_data_t = {
 	index_arrays: index_array_t[];
 	skin?: skin_t;
 	instanced_data?: Float32Array;
-	instanced_type?: Null<i32>; // off, loc, loc+rot, loc+scale, loc+rot+scale
-	scale_pos?: Null<f32>; // Unpack pos from (-1,1) coords
-	scale_tex?: Null<f32>; // Unpack tex from (-1,1) coords
+	instanced_type?: i32; // off, loc, loc+rot, loc+scale, loc+rot+scale
+	scale_pos?: f32; // Unpack pos from (-1,1) coords
+	scale_tex?: f32; // Unpack tex from (-1,1) coords
 	// Runtime:
 	_refcount?: i32; // Number of users
 	_handle?: string; // Handle used to retrieve this object in Data
@@ -59,9 +59,9 @@ type vertex_array_t = {
 	attrib: string;
 	values: Int16Array;
 	data: string; // short4norm, short2norm
-	padding?: Null<i32>;
+	padding?: i32;
 	// Runtime:
-	_size?: Null<i32>;
+	_size?: i32;
 }
 
 type index_array_t = {
@@ -74,11 +74,11 @@ type light_data_t = {
 	type: string; // sun, point, spot
 	color: Float32Array;
 	strength: f32;
-	near_plane?: Null<f32>;
-	far_plane?: Null<f32>;
-	fov?: Null<f32>;
-	size?: Null<f32>; // Area light
-	size_y?: Null<f32>;
+	near_plane?: f32;
+	far_plane?: f32;
+	fov?: f32;
+	size?: f32; // Area light
+	size_y?: f32;
 }
 
 type camera_data_t = {
@@ -87,8 +87,8 @@ type camera_data_t = {
 	far_plane: f32;
 	fov: f32;
 	clear_color?: Float32Array;
-	aspect?: Null<f32>;
-	frustum_culling?: Null<bool>;
+	aspect?: f32;
+	frustum_culling?: bool;
 	ortho?: Float32Array; // Indicates ortho camera, left, right, bottom, top
 }
 
@@ -124,16 +124,16 @@ type bind_const_t = {
 	vec4?: Float32Array;
 	vec3?: Float32Array;
 	vec2?: Float32Array;
-	float?: Null<f32>;
-	bool?: Null<bool>;
-	int?: Null<i32>;
+	float?: f32;
+	bool?: bool;
+	int?: i32;
 }
 
 type bind_tex_t = {
 	name: string;
 	file: string;
 	format?: string; // RGBA32, RGBA64, R8
-	generate_mipmaps?: Null<bool>;
+	generate_mipmaps?: bool;
 	mipmaps?: string[]; // Reference image names
 	u_addressing?: string;
 	v_addressing?: string;
@@ -173,7 +173,7 @@ type shader_context_t = {
 	color_writes_alpha?: bool[];
 	color_attachments?: string[]; // RGBA32, RGBA64, R8
 	depth_attachment?: string; // DEPTH32
-	shader_from_source?: Null<bool>; // Build shader at runtime using from_source()
+	shader_from_source?: bool; // Build shader at runtime using from_source()
 	// Runtime:
 	_pipe_state?: pipeline_t;
 	_constants?: kinc_const_loc_t[];
@@ -195,14 +195,14 @@ type shader_const_t = {
 	vec4?: Float32Array;
 	vec3?: Float32Array;
 	vec2?: Float32Array;
-	float?: Null<f32>;
-	bool?: Null<bool>;
-	int?: Null<i32>;
+	float?: f32;
+	bool?: bool;
+	int?: i32;
 }
 
 type tex_unit_t = {
 	name: string;
-	is_image?: Null<bool>; // image2D
+	is_image?: bool; // image2D
 	link?: string;
 	addressing_u?: string;
 	addressing_v?: string;
@@ -228,7 +228,7 @@ type world_data_t = {
 	strength: f32;
 	irradiance?: string; // Reference to TIrradiance blob
 	radiance?: string;
-	radiance_mipmaps?: Null<i32>;
+	radiance_mipmaps?: i32;
 	envmap?: string;
 	// Runtime:
 	_envmap?: image_t;
@@ -275,7 +275,7 @@ type obj_t = {
 	material_refs?: string[];
 	particle_refs?: particle_ref_t[];
 	render_emitter?: bool;
-	is_particle?: Null<bool>; // This object is used as a particle object
+	is_particle?: bool; // This object is used as a particle object
 	children?: obj_t[];
 	dimensions?: Float32Array; // Geometry objects
 	object_actions?: string[];
@@ -285,12 +285,12 @@ type obj_t = {
 	parent_bone?: string;
 	parent_bone_tail?: Float32Array; // Translate from head to tail
 	parent_bone_tail_pose?: Float32Array;
-	parent_bone_connected?: Null<bool>;
-	visible?: Null<bool>;
-	spawn?: Null<bool>; // Auto add object when creating scene
-	local_only?: Null<bool>; // Apply parent matrix
-	sampled?: Null<bool>; // Object action
-	is_ik_fk_only?: Null<bool>; // Bone IK or FK only
+	parent_bone_connected?: bool;
+	visible?: bool;
+	spawn?: bool; // Auto add object when creating scene
+	local_only?: bool; // Apply parent matrix
+	sampled?: bool; // Object action
+	is_ik_fk_only?: bool; // Bone IK or FK only
 }
 
 type transform_values_t = {
@@ -300,9 +300,9 @@ type transform_values_t = {
 
 type anim_t = {
 	tracks: track_t[];
-	begin?: Null<i32>; // Frames, for non-sampled
-	end?: Null<i32>;
-	has_delta?: Null<bool>; // Delta transform
+	begin?: i32; // Frames, for non-sampled
+	end?: i32;
+	has_delta?: bool; // Delta transform
 	marker_frames?: Uint32Array;
 	marker_names?: string[];
 }

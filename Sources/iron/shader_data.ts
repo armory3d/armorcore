@@ -80,12 +80,12 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 
 	if (raw._instancing_type > 0) { // Instancing
 		let inst_struct = vertex_struct_create();
-		vertex_struct_add(inst_struct, "ipos", VertexData.F32_3X);
+		vertex_struct_add(inst_struct, "ipos", vertex_data_t.F32_3X);
 		if (raw._instancing_type == 2 || raw._instancing_type == 4) {
-			vertex_struct_add(inst_struct, "irot", VertexData.F32_3X);
+			vertex_struct_add(inst_struct, "irot", vertex_data_t.F32_3X);
 		}
 		if (raw._instancing_type == 3 || raw._instancing_type == 4) {
-			vertex_struct_add(inst_struct, "iscl", VertexData.F32_3X);
+			vertex_struct_add(inst_struct, "iscl", vertex_data_t.F32_3X);
 		}
 		inst_struct.instanced = true;
 		raw._pipe_state.input_layout = [raw._structure, inst_struct];
@@ -152,8 +152,8 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 
 	// Shaders
 	if (raw.shader_from_source) {
-		raw._pipe_state.vertex_shader = shader_from_source(raw.vertex_shader, ShaderType.Vertex);
-		raw._pipe_state.fragment_shader = shader_from_source(raw.fragment_shader, ShaderType.Fragment);
+		raw._pipe_state.vertex_shader = shader_from_source(raw.vertex_shader, shader_type_t.VERTEX);
+		raw._pipe_state.fragment_shader = shader_from_source(raw.fragment_shader, shader_type_t.FRAGMENT);
 
 		// Shader compile error
 		if (raw._pipe_state.vertex_shader.shader_ == null || raw._pipe_state.fragment_shader.shader_ == null) {
@@ -176,13 +176,13 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 			let path = file + shader_data_ext();
 			data_get_blob(path, function (b: ArrayBuffer) {
 				if (type == 0) {
-					raw._pipe_state.vertex_shader = shader_create(b, ShaderType.Vertex);
+					raw._pipe_state.vertex_shader = shader_create(b, shader_type_t.VERTEX);
 				}
 				else if (type == 1) {
-					raw._pipe_state.fragment_shader = shader_create(b, ShaderType.Fragment);
+					raw._pipe_state.fragment_shader = shader_create(b, shader_type_t.FRAGMENT);
 				}
 				else if (type == 2) {
-					raw._pipe_state.geometry_shader = shader_create(b, ShaderType.Geometry);
+					raw._pipe_state.geometry_shader = shader_create(b, shader_type_t.GEOMETRY);
 				}
 				shaders_loaded++;
 				if (shaders_loaded >= num_shaders) {
@@ -234,14 +234,14 @@ function shader_context_finish_compile(raw: shader_context_t, done: (sc: shader_
 	done(raw);
 }
 
-function shader_context_parse_data(data: string): VertexData {
-	if (data == "float1") return VertexData.F32_1X;
-	else if (data == "float2") return VertexData.F32_2X;
-	else if (data == "float3") return VertexData.F32_3X;
-	else if (data == "float4") return VertexData.F32_4X;
-	else if (data == "short2norm") return VertexData.I16_2X_Normalized;
-	else if (data == "short4norm") return VertexData.I16_4X_Normalized;
-	return VertexData.F32_1X;
+function shader_context_parse_data(data: string): vertex_data_t {
+	if (data == "float1") return vertex_data_t.F32_1X;
+	else if (data == "float2") return vertex_data_t.F32_2X;
+	else if (data == "float3") return vertex_data_t.F32_3X;
+	else if (data == "float4") return vertex_data_t.F32_4X;
+	else if (data == "short2norm") return vertex_data_t.I16_2X_NORM;
+	else if (data == "short4norm") return vertex_data_t.I16_4X_NORM;
+	return vertex_data_t.F32_1X;
 }
 
 function shader_context_parse_vertex_struct(raw: shader_context_t) {
@@ -291,87 +291,71 @@ function shader_context_delete(raw: shader_context_t) {
 	pipeline_delete(raw._pipe_state);
 }
 
-function shader_context_get_compare_mode(s: string): CompareMode {
-	switch (s) {
-		case "always": return CompareMode.Always;
-		case "never": return CompareMode.Never;
-		case "less": return CompareMode.Less;
-		case "less_equal": return CompareMode.LessEqual;
-		case "greater": return CompareMode.Greater;
-		case "greater_equal": return CompareMode.GreaterEqual;
-		case "equal": return CompareMode.Equal;
-		case "not_equal": return CompareMode.NotEqual;
-		default: return CompareMode.Less;
-	}
+function shader_context_get_compare_mode(s: string): compare_mode_t {
+	if (s == "always") return compare_mode_t.ALWAYS;
+	if (s == "never") return compare_mode_t.NEVER;
+	if (s == "less") return compare_mode_t.LESS;
+	if (s == "less_equal") return compare_mode_t.LESS_EQUAL;
+	if (s == "greater") return compare_mode_t.GREATER;
+	if (s == "greater_equal") return compare_mode_t.GREATER_EQUAL;
+	if (s == "equal") return compare_mode_t.EQUAL;
+	if (s == "not_equal") return compare_mode_t.NOT_EQUAL;
+	return compare_mode_t.LESS;
 }
 
-function shader_context_get_cull_mode(s: string): CullMode {
-	switch (s) {
-		case "none": return CullMode.None;
-		case "clockwise": return CullMode.Clockwise;
-		default: return CullMode.CounterClockwise;
-	}
+function shader_context_get_cull_mode(s: string): cull_mode_t {
+	if (s == "none") return cull_mode_t.NONE;
+	if (s == "clockwise") return cull_mode_t.CLOCKWISE;
+	return cull_mode_t.COUNTER_CLOCKWISE;
 }
 
-function shader_context_get_blend_fac(s: string): BlendingFactor {
-	switch (s) {
-		case "blend_one": return BlendingFactor.BlendOne;
-		case "blend_zero": return BlendingFactor.BlendZero;
-		case "source_alpha": return BlendingFactor.SourceAlpha;
-		case "destination_alpha": return BlendingFactor.DestinationAlpha;
-		case "inverse_source_alpha": return BlendingFactor.InverseSourceAlpha;
-		case "inverse_destination_alpha": return BlendingFactor.InverseDestinationAlpha;
-		case "source_color": return BlendingFactor.SourceColor;
-		case "destination_color": return BlendingFactor.DestinationColor;
-		case "inverse_source_color": return BlendingFactor.InverseSourceColor;
-		case "inverse_destination_color": return BlendingFactor.InverseDestinationColor;
-		default: return BlendingFactor.BlendOne;
-	}
+function shader_context_get_blend_fac(s: string): blend_factor_t {
+	if (s == "blend_one") return blend_factor_t.BLEND_ONE;
+	if (s == "blend_zero") return blend_factor_t.BLEND_ZERO;
+	if (s == "source_alpha") return blend_factor_t.SOURCE_ALPHA;
+	if (s == "destination_alpha") return blend_factor_t.DEST_ALPHA;
+	if (s == "inverse_source_alpha") return blend_factor_t.INV_SOURCE_ALPHA;
+	if (s == "inverse_destination_alpha") return blend_factor_t.INV_DEST_ALPHA;
+	if (s == "source_color") return blend_factor_t.SOURCE_COLOR;
+	if (s == "destination_color") return blend_factor_t.DEST_COLOR;
+	if (s == "inverse_source_color") return blend_factor_t.INV_SOURCE_COLOR;
+	if (s == "inverse_destination_color") return blend_factor_t.INV_DEST_COLOR;
+	return blend_factor_t.BLEND_ONE;
 }
 
-function shader_context_get_tex_addresing(s: string): TextureAddressing {
-	switch (s) {
-		case "repeat": return TextureAddressing.Repeat;
-		case "mirror": return TextureAddressing.Mirror;
-		default: return TextureAddressing.Clamp;
-	}
+function shader_context_get_tex_addresing(s: string): tex_addressing {
+	if (s == "repeat") return tex_addressing.REPEAT;
+	if (s == "mirror") return tex_addressing.MIRROR;
+	return tex_addressing.CLAMP;
 }
 
-function shader_context_get_tex_filter(s: string): TextureFilter {
-	switch (s) {
-		case "point": return TextureFilter.PointFilter;
-		case "linear": return TextureFilter.LinearFilter;
-		default: return TextureFilter.AnisotropicFilter;
-	}
+function shader_context_get_tex_filter(s: string): tex_filter_t {
+	if (s == "point") return tex_filter_t.POINT;
+	if (s == "linear") return tex_filter_t.LINEAR;
+	return tex_filter_t.ANISOTROPIC;
 }
 
-function shader_context_get_mipmap_filter(s: string): MipMapFilter {
-	switch (s) {
-		case "no": return MipMapFilter.NoMipFilter;
-		case "point": return MipMapFilter.PointMipFilter;
-		default: return MipMapFilter.LinearMipFilter;
-	}
+function shader_context_get_mipmap_filter(s: string): mip_map_filter_t {
+	if (s == "no") return mip_map_filter_t.NONE;
+	if (s == "point") return mip_map_filter_t.POINT;
+	return mip_map_filter_t.LINEAR;
 }
 
-function shader_context_get_tex_format(s: string): TextureFormat {
-	switch (s) {
-		case "RGBA32": return TextureFormat.RGBA32;
-		case "RGBA64": return TextureFormat.RGBA64;
-		case "RGBA128": return TextureFormat.RGBA128;
-		case "DEPTH16": return TextureFormat.DEPTH16;
-		case "R32": return TextureFormat.R32;
-		case "R16": return TextureFormat.R16;
-		case "R8": return TextureFormat.R8;
-		default: return TextureFormat.RGBA32;
-	}
+function shader_context_get_tex_format(s: string): tex_format_t {
+	if (s == "RGBA32") return tex_format_t.RGBA32;
+	if (s == "RGBA64") return tex_format_t.RGBA64;
+	if (s == "RGBA128") return tex_format_t.RGBA128;
+	if (s == "DEPTH16") return tex_format_t.DEPTH16;
+	if (s == "R32") return tex_format_t.R32;
+	if (s == "R16") return tex_format_t.R16;
+	if (s == "R8") return tex_format_t.R8;
+	return tex_format_t.RGBA32;
 }
 
-function shader_context_get_depth_format(s: string): DepthFormat {
-	switch (s) {
-		case "DEPTH32": return DepthFormat.DepthOnly;
-		case "NONE": return DepthFormat.NoDepthAndStencil;
-		default: return DepthFormat.DepthOnly;
-	}
+function shader_context_get_depth_format(s: string): depth_format_t {
+	if (s == "DEPTH32") return depth_format_t.DEPTH24;
+	if (s == "NONE") return depth_format_t.NO_DEPTH;
+	return depth_format_t.DEPTH24;
 }
 
 function shader_context_add_const(raw: shader_context_t, c: shader_const_t) {
@@ -387,9 +371,9 @@ function shader_context_set_tex_params(raw: shader_context_t, unit_index: i32, t
 	// This function is called for samplers set using material context
 	let unit = raw._tex_units[unit_index];
 	g4_set_tex_params(unit,
-		tex.u_addressing == null ? TextureAddressing.Repeat : shader_context_get_tex_addresing(tex.u_addressing),
-		tex.v_addressing == null ? TextureAddressing.Repeat : shader_context_get_tex_addresing(tex.v_addressing),
-		tex.min_filter == null ? TextureFilter.LinearFilter : shader_context_get_tex_filter(tex.min_filter),
-		tex.mag_filter == null ? TextureFilter.LinearFilter : shader_context_get_tex_filter(tex.mag_filter),
-		tex.mipmap_filter == null ? MipMapFilter.NoMipFilter : shader_context_get_mipmap_filter(tex.mipmap_filter));
+		tex.u_addressing == null ? tex_addressing.REPEAT : shader_context_get_tex_addresing(tex.u_addressing),
+		tex.v_addressing == null ? tex_addressing.REPEAT : shader_context_get_tex_addresing(tex.v_addressing),
+		tex.min_filter == null ? tex_filter_t.LINEAR : shader_context_get_tex_filter(tex.min_filter),
+		tex.mag_filter == null ? tex_filter_t.LINEAR : shader_context_get_tex_filter(tex.mag_filter),
+		tex.mipmap_filter == null ? mip_map_filter_t.NONE : shader_context_get_mipmap_filter(tex.mipmap_filter));
 }

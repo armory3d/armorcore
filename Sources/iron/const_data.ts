@@ -11,8 +11,8 @@ function const_data_create_screen_aligned_data() {
 
 	// Mandatory vertex data names and sizes
 	let structure = vertex_struct_create();
-	vertex_struct_add(structure, "pos", VertexData.F32_2X);
-	const_data_screen_aligned_vb = vertex_buffer_create(Math.floor(data.length / Math.floor(vertex_struct_byte_size(structure) / 4)), structure, Usage.StaticUsage);
+	vertex_struct_add(structure, "pos", vertex_data_t.F32_2X);
+	const_data_screen_aligned_vb = vertex_buffer_create(Math.floor(data.length / Math.floor(vertex_struct_byte_size(structure) / 4)), structure, usage_t.STATIC);
 	let vertices = vertex_buffer_lock(const_data_screen_aligned_vb);
 	for (let i = 0; i < Math.floor(vertices.byteLength / 4); ++i) {
 		vertices.setFloat32(i * 4, data[i], true);
@@ -32,10 +32,10 @@ function const_data_create_skydome_data() {
 	let nor = const_data_skydome_nor;
 
 	let structure = vertex_struct_create();
-	vertex_struct_add(structure, "pos", VertexData.F32_3X);
-	vertex_struct_add(structure, "nor", VertexData.F32_3X);
+	vertex_struct_add(structure, "pos", vertex_data_t.F32_3X);
+	vertex_struct_add(structure, "nor", vertex_data_t.F32_3X);
 	let struct_length = Math.floor(vertex_struct_byte_size(structure) / 4);
-	const_data_skydome_vb = vertex_buffer_create(Math.floor(pos.length / 3), structure, Usage.StaticUsage);
+	const_data_skydome_vb = vertex_buffer_create(Math.floor(pos.length / 3), structure, usage_t.STATIC);
 	let vertices = vertex_buffer_lock(const_data_skydome_vb);
 	for (let i = 0; i < Math.floor(vertices.byteLength / 4 / struct_length); ++i) {
 		vertices.setFloat32((i * struct_length) * 4, pos[i * 3], true);
@@ -69,8 +69,8 @@ function const_data_init_ltc() {
 	// https://eheitzresearch.wordpress.com/415-2/
 	data_get_blob("ltc_mat.arm", function (ltc_mat: ArrayBuffer) {
 		data_get_blob("ltc_mag.arm", function (ltc_mag: ArrayBuffer) {
-			const_data_ltc_mat_tex = image_from_bytes(armpack_decode(ltc_mat), 64, 64, TextureFormat.RGBA128);
-			const_data_ltc_mag_tex = image_from_bytes(armpack_decode(ltc_mag), 64, 64, TextureFormat.R32);
+			const_data_ltc_mat_tex = image_from_bytes(armpack_decode(ltc_mat), 64, 64, tex_format_t.RGBA128);
+			const_data_ltc_mag_tex = image_from_bytes(armpack_decode(ltc_mag), 64, 64, tex_format_t.R32);
 		});
 	});
 }

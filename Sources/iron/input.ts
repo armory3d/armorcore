@@ -392,98 +392,96 @@ function keyboard_repeat(key: string): bool {
 	return keyboard_keys_started.get(key) || (keyboard_repeat_key && keyboard_keys_down.get(key));
 }
 
-function keyboard_key_code(key: KeyCode): string {
-	switch(key) {
-		case KeyCode.Space: return "space";
-		case KeyCode.Backspace: return "backspace";
-		case KeyCode.Tab: return "tab";
-		case KeyCode.Return: return "enter";
-		case KeyCode.Shift: return "shift";
-		case KeyCode.Control: return "control";
-		///if krom_darwin
-		case KeyCode.Meta: return "control";
-		///end
-		case KeyCode.Alt: return "alt";
-		case KeyCode.Win: return "win";
-		case KeyCode.Escape: return "escape";
-		case KeyCode.Delete: return "delete";
-		case KeyCode.Up: return "up";
-		case KeyCode.Down: return "down";
-		case KeyCode.Left: return "left";
-		case KeyCode.Right: return "right";
-		case KeyCode.Back: return "back";
-		case KeyCode.Comma: return ",";
-		case KeyCode.Period: return ".";
-		case KeyCode.Colon: return ":";
-		case KeyCode.Semicolon: return ";";
-		case KeyCode.LessThan: return "<";
-		case KeyCode.Equals: return "=";
-		case KeyCode.GreaterThan: return ">";
-		case KeyCode.QuestionMark: return "?";
-		case KeyCode.Exclamation: return "!";
-		case KeyCode.DoubleQuote: return '"';
-		case KeyCode.Hash: return "#";
-		case KeyCode.Dollar: return "$";
-		case KeyCode.Percent: return "%";
-		case KeyCode.Ampersand: return "&";
-		case KeyCode.Underscore: return "_";
-		case KeyCode.OpenParen: return "(";
-		case KeyCode.CloseParen: return ")";
-		case KeyCode.Asterisk: return "*";
-		case KeyCode.Pipe: return "|";
-		case KeyCode.OpenCurlyBracket: return "{";
-		case KeyCode.CloseCurlyBracket: return "}";
-		case KeyCode.OpenBracket: return "[";
-		case KeyCode.CloseBracket: return "]";
-		case KeyCode.Tilde: return "~";
-		case KeyCode.BackQuote: return "`";
-		case KeyCode.Slash: return "/";
-		case KeyCode.BackSlash: return "\\";
-		case KeyCode.At: return "@";
-		case KeyCode.Add: return "+";
-		case KeyCode.Plus: return "+";
-		case KeyCode.Subtract: return "-";
-		case KeyCode.HyphenMinus: return "-";
-		case KeyCode.Multiply: return "*";
-		case KeyCode.Divide: return "/";
-		case KeyCode.Decimal: return ".";
-		case KeyCode.Zero: return "0";
-		case KeyCode.Numpad0: return "0";
-		case KeyCode.One: return "1";
-		case KeyCode.Numpad1: return "1";
-		case KeyCode.Two: return "2";
-		case KeyCode.Numpad2: return "2";
-		case KeyCode.Three: return "3";
-		case KeyCode.Numpad3: return "3";
-		case KeyCode.Four: return "4";
-		case KeyCode.Numpad4: return "4";
-		case KeyCode.Five: return "5";
-		case KeyCode.Numpad5: return "5";
-		case KeyCode.Six: return "6";
-		case KeyCode.Numpad6: return "6";
-		case KeyCode.Seven: return "7";
-		case KeyCode.Numpad7: return "7";
-		case KeyCode.Eight: return "8";
-		case KeyCode.Numpad8: return "8";
-		case KeyCode.Nine: return "9";
-		case KeyCode.Numpad9: return "9";
-		case KeyCode.F1: return "f1";
-		case KeyCode.F2: return "f2";
-		case KeyCode.F3: return "f3";
-		case KeyCode.F4: return "f4";
-		case KeyCode.F5: return "f5";
-		case KeyCode.F6: return "f6";
-		case KeyCode.F7: return "f7";
-		case KeyCode.F8: return "f8";
-		case KeyCode.F9: return "f9";
-		case KeyCode.F10: return "f10";
-		case KeyCode.F11: return "f11";
-		case KeyCode.F12: return "f12";
-		default: return String.fromCharCode(key).toLowerCase();
-	}
+function keyboard_key_code(key: key_code_t): string {
+	if (key == key_code_t.SPACE) return "space";
+	else if (key == key_code_t.BACKSPACE) return "backspace";
+	else if (key == key_code_t.TAB) return "tab";
+	else if (key == key_code_t.RETURN) return "enter";
+	else if (key == key_code_t.SHIFT) return "shift";
+	else if (key == key_code_t.CONTROL) return "control";
+	///if krom_darwin
+	else if (key == key_code_t.META) return "control";
+	///end
+	else if (key == key_code_t.ALT) return "alt";
+	else if (key == key_code_t.WIN) return "win";
+	else if (key == key_code_t.ESCAPE) return "escape";
+	else if (key == key_code_t.DELETE) return "delete";
+	else if (key == key_code_t.UP) return "up";
+	else if (key == key_code_t.DOWN) return "down";
+	else if (key == key_code_t.LEFT) return "left";
+	else if (key == key_code_t.RIGHT) return "right";
+	else if (key == key_code_t.BACK) return "back";
+	else if (key == key_code_t.COMMA) return ",";
+	else if (key == key_code_t.PERIOD) return ".";
+	else if (key == key_code_t.COLON) return ":";
+	else if (key == key_code_t.SEMICOLON) return ";";
+	else if (key == key_code_t.LESS_THAN) return "<";
+	else if (key == key_code_t.EQUALS) return "=";
+	else if (key == key_code_t.GREATER_THAN) return ">";
+	else if (key == key_code_t.QUESTION_MARK) return "?";
+	else if (key == key_code_t.EXCLAMATION) return "!";
+	else if (key == key_code_t.DOUBLE_QUOTE) return '"';
+	else if (key == key_code_t.HASH) return "#";
+	else if (key == key_code_t.DOLLAR) return "$";
+	else if (key == key_code_t.PERCENT) return "%";
+	else if (key == key_code_t.AMPERSAND) return "&";
+	else if (key == key_code_t.UNDERSCORE) return "_";
+	else if (key == key_code_t.OPEN_PAREN) return "(";
+	else if (key == key_code_t.CLOSE_PAREN) return ")";
+	else if (key == key_code_t.ASTERISK) return "*";
+	else if (key == key_code_t.PIPE) return "|";
+	else if (key == key_code_t.OPEN_CURLY_BRACKET) return "{";
+	else if (key == key_code_t.CLOSE_CURLY_BRACKET) return "}";
+	else if (key == key_code_t.OPEN_BRACKET) return "[";
+	else if (key == key_code_t.CLOSE_BRACKET) return "]";
+	else if (key == key_code_t.TILDE) return "~";
+	else if (key == key_code_t.BACK_QUOTE) return "`";
+	else if (key == key_code_t.SLASH) return "/";
+	else if (key == key_code_t.BACK_SLASH) return "\\";
+	else if (key == key_code_t.AT) return "@";
+	else if (key == key_code_t.ADD) return "+";
+	else if (key == key_code_t.PLUS) return "+";
+	else if (key == key_code_t.SUBTRACT) return "-";
+	else if (key == key_code_t.HYPHEN_MINUS) return "-";
+	else if (key == key_code_t.MULTIPLY) return "*";
+	else if (key == key_code_t.DIVIDE) return "/";
+	else if (key == key_code_t.DECIMAL) return ".";
+	else if (key == key_code_t.ZERO) return "0";
+	else if (key == key_code_t.NUMPAD0) return "0";
+	else if (key == key_code_t.ONE) return "1";
+	else if (key == key_code_t.NUMPAD1) return "1";
+	else if (key == key_code_t.TWO) return "2";
+	else if (key == key_code_t.NUMPAD2) return "2";
+	else if (key == key_code_t.THREE) return "3";
+	else if (key == key_code_t.NUMPAD3) return "3";
+	else if (key == key_code_t.FOUR) return "4";
+	else if (key == key_code_t.NUMPAD4) return "4";
+	else if (key == key_code_t.FIVE) return "5";
+	else if (key == key_code_t.NUMPAD5) return "5";
+	else if (key == key_code_t.SIX) return "6";
+	else if (key == key_code_t.NUMPAD6) return "6";
+	else if (key == key_code_t.SEVEN) return "7";
+	else if (key == key_code_t.NUMPAD7) return "7";
+	else if (key == key_code_t.EIGHT) return "8";
+	else if (key == key_code_t.NUMPAD8) return "8";
+	else if (key == key_code_t.NINE) return "9";
+	else if (key == key_code_t.NUMPAD9) return "9";
+	else if (key == key_code_t.F1) return "f1";
+	else if (key == key_code_t.F2) return "f2";
+	else if (key == key_code_t.F3) return "f3";
+	else if (key == key_code_t.F4) return "f4";
+	else if (key == key_code_t.F5) return "f5";
+	else if (key == key_code_t.F6) return "f6";
+	else if (key == key_code_t.F7) return "f7";
+	else if (key == key_code_t.F8) return "f8";
+	else if (key == key_code_t.F9) return "f9";
+	else if (key == key_code_t.F10) return "f10";
+	else if (key == key_code_t.F11) return "f11";
+	else if (key == key_code_t.F12) return "f12";
+	else return String.fromCharCode(key).toLowerCase();
 }
 
-function keyboard_down_listener(code: KeyCode) {
+function keyboard_down_listener(code: key_code_t) {
 	let s = keyboard_key_code(code);
 	keyboard_keys_frame.push(s);
 	keyboard_keys_started.set(s, true);
@@ -491,7 +489,7 @@ function keyboard_down_listener(code: KeyCode) {
 	keyboard_repeat_time = time_time() + 0.4;
 
 	///if krom_android_rmb // Detect right mouse button on Android..
-	if (code == KeyCode.Back) {
+	if (code == key_code_t.BACK) {
 		if (!_mouse_buttons_down[1]) {
 			mouse_down_listener(1, Math.floor(mouse_x), Math.floor(mouse_y));
 		}
@@ -499,14 +497,14 @@ function keyboard_down_listener(code: KeyCode) {
 	///end
 }
 
-function keyboard_up_listener(code: KeyCode) {
+function keyboard_up_listener(code: key_code_t) {
 	let s = keyboard_key_code(code);
 	keyboard_keys_frame.push(s);
 	keyboard_keys_released.set(s, true);
 	keyboard_keys_down.set(s, false);
 
 	///if krom_android_rmb
-	if (code == KeyCode.Back) {
+	if (code == key_code_t.BACK) {
 		mouse_up_listener(1, Math.floor(mouse_x), Math.floor(mouse_y));
 	}
 	///end
@@ -624,64 +622,49 @@ function gamepad_button_listener(i: i32, button: i32, value: f32) {
 	}
 }
 
-enum KeyCode {
-	Unknown = 0,
-	Back = 1, // Android
-	Cancel = 3,
-	Help = 6,
-	Backspace = 8,
-	Tab = 9,
-	Clear = 12,
-	Return = 13,
-	Shift = 16,
-	Control = 17,
-	Alt = 18,
-	Pause = 19,
-	CapsLock = 20,
-	Kana = 21,
-	Hangul = 21,
-	Eisu = 22,
-	Junja = 23,
-	Final = 24,
-	Hanja = 25,
-	Kanji = 25,
-	Escape = 27,
-	Convert = 28,
-	NonConvert = 29,
-	Accept = 30,
-	ModeChange = 31,
-	Space = 32,
-	PageUp = 33,
-	PageDown = 34,
-	End = 35,
-	Home = 36,
-	Left = 37,
-	Up = 38,
-	Right = 39,
-	Down = 40,
-	Select = 41,
-	Print = 42,
-	Execute = 43,
-	PrintScreen = 44,
-	Insert = 45,
-	Delete = 46,
-	Zero = 48,
-	One = 49,
-	Two = 50,
-	Three = 51,
-	Four = 52,
-	Five = 53,
-	Six = 54,
-	Seven = 55,
-	Eight = 56,
-	Nine = 57,
-	Colon = 58,
-	Semicolon = 59,
-	LessThan = 60,
-	Equals = 61,
-	GreaterThan = 62,
-	QuestionMark = 63,
-	At = 64,
+enum key_code_t {
+	UNKNOWN = 0,
+	BACK = 1, // Android
+	CANCEL = 3,
+	HELP = 6,
+	BACKSPACE = 8,
+	TAB = 9,
+	RETURN = 13,
+	SHIFT = 16,
+	CONTROL = 17,
+	ALT = 18,
+	PAUSE = 19,
+	CAPS_LOCK = 20,
+	ESCAPE = 27,
+	SPACE = 32,
+	PAGE_UP = 33,
+	PAGE_DOWN = 34,
+	END = 35,
+	HOME = 36,
+	LEFT = 37,
+	UP = 38,
+	RIGHT = 39,
+	DOWN = 40,
+	PRINT_SCREEN = 44,
+	INSERT = 45,
+	DELETE = 46,
+	ZERO = 48,
+	ONE = 49,
+	TWO = 50,
+	THREE = 51,
+	FOUR = 52,
+	FIVE = 53,
+	SIX = 54,
+	SEVEN = 55,
+	EIGHT = 56,
+	NINE = 57,
+	COLON = 58,
+	SEMICOLON = 59,
+	LESS_THAN = 60,
+	EQUALS = 61,
+	GREATER_THAN = 62,
+	QUESTION_MARK = 63,
+	AT = 64,
 	A = 65,
 	B = 66,
 	C = 67,
@@ -708,25 +691,25 @@ enum KeyCode {
 	X = 88,
 	Y = 89,
 	Z = 90,
-	Win = 91,
-	ContextMenu = 93,
-	Sleep = 95,
-	Numpad0 = 96,
-	Numpad1 = 97,
-	Numpad2 = 98,
-	Numpad3 = 99,
-	Numpad4 = 100,
-	Numpad5 = 101,
-	Numpad6 = 102,
-	Numpad7 = 103,
-	Numpad8 = 104,
-	Numpad9 = 105,
-	Multiply = 106,
-	Add = 107,
-	Separator = 108,
-	Subtract = 109,
-	Decimal = 110,
-	Divide = 111,
+	WIN = 91,
+	CONTEXT_MENU = 93,
+	SLEEP = 95,
+	NUMPAD0 = 96,
+	NUMPAD1 = 97,
+	NUMPAD2 = 98,
+	NUMPAD3 = 99,
+	NUMPAD4 = 100,
+	NUMPAD5 = 101,
+	NUMPAD6 = 102,
+	NUMPAD7 = 103,
+	NUMPAD8 = 104,
+	NUMPAD9 = 105,
+	MULTIPLY = 106,
+	ADD = 107,
+	SEPARATOR = 108,
+	SUBTRACT = 109,
+	DECIMAL = 110,
+	DIVIDE = 111,
 	F1 = 112,
 	F2 = 113,
 	F3 = 114,
@@ -751,65 +734,35 @@ enum KeyCode {
 	F22 = 133,
 	F23 = 134,
 	F24 = 135,
-	NumLock = 144,
-	ScrollLock = 145,
-	WinOemFjJisho = 146,
-	WinOemFjMasshou = 147,
-	WinOemFjTouroku = 148,
-	WinOemFjLoya = 149,
-	WinOemFjRoya = 150,
-	Circumflex = 160,
-	Exclamation = 161,
-	DoubleQuote = 162,
-	Hash = 163,
-	Dollar = 164,
-	Percent = 165,
-	Ampersand = 166,
-	Underscore = 167,
-	OpenParen = 168,
-	CloseParen = 169,
-	Asterisk = 170,
-	Plus = 171,
-	Pipe = 172,
-	HyphenMinus = 173,
-	OpenCurlyBracket = 174,
-	CloseCurlyBracket = 175,
-	Tilde = 176,
-	VolumeMute = 181,
-	VolumeDown = 182,
-	VolumeUp = 183,
-	Comma = 188,
-	Period = 190,
-	Slash = 191,
-	BackQuote = 192,
-	OpenBracket = 219,
-	BackSlash = 220,
-	CloseBracket = 221,
-	Quote = 222,
-	Meta = 224,
-	AltGr = 225,
-	WinIcoHelp = 227,
-	WinIco00 = 228,
-	WinIcoClear = 230,
-	WinOemReset = 233,
-	WinOemJump = 234,
-	WinOemPA1 = 235,
-	WinOemPA2 = 236,
-	WinOemPA3 = 237,
-	WinOemWSCTRL = 238,
-	WinOemCUSEL = 239,
-	WinOemATTN = 240,
-	WinOemFinish = 241,
-	WinOemCopy = 242,
-	WinOemAuto = 243,
-	WinOemENLW = 244,
-	WinOemBackTab = 245,
-	ATTN = 246,
-	CRSEL = 247,
-	EXSEL = 248,
-	EREOF = 249,
-	Play = 250,
-	Zoom = 251,
-	PA1 = 253,
-	WinOemClear = 254,
+	NUM_LOCK = 144,
+	SCROLL_LOCK = 145,
+	EXCLAMATION = 161,
+	DOUBLE_QUOTE = 162,
+	HASH = 163,
+	DOLLAR = 164,
+	PERCENT = 165,
+	AMPERSAND = 166,
+	UNDERSCORE = 167,
+	OPEN_PAREN = 168,
+	CLOSE_PAREN = 169,
+	ASTERISK = 170,
+	PLUS = 171,
+	PIPE = 172,
+	HYPHEN_MINUS = 173,
+	OPEN_CURLY_BRACKET = 174,
+	CLOSE_CURLY_BRACKET = 175,
+	TILDE = 176,
+	VOLUME_MUTE = 181,
+	VOLUME_DOWN = 182,
+	VOLUME_UP = 183,
+	COMMA = 188,
+	PERIOD = 190,
+	SLASH = 191,
+	BACK_QUOTE = 192,
+	OPEN_BRACKET = 219,
+	BACK_SLASH = 220,
+	CLOSE_BRACKET = 221,
+	QUOTE = 222,
+	META = 224,
+	ALTGR = 225,
 }

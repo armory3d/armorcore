@@ -8,10 +8,10 @@ class camera_object_t {
 	no_jitter_p = mat4_identity();
 	frame = 0;
 	v: mat4_t;
-	prev_v: mat4_t = null;
+	prev_v: mat4_t;
 	vp: mat4_t;
-	frustum_planes: frustum_plane_t[] = null;
-	render_target: image_t = null; // Render camera view to texture
+	frustum_planes: frustum_plane_t[];
+	render_target: image_t; // Render camera view to texture
 	current_face = 0;
 }
 
@@ -43,12 +43,12 @@ function camera_object_create(data: camera_data_t): camera_object_t {
 	return raw;
 }
 
-function camera_object_build_projection(raw: camera_object_t, screen_aspect: Null<f32> = null) {
+function camera_object_build_projection(raw: camera_object_t, screen_aspect: f32 = -1) {
 	if (raw.data.ortho != null) {
 		raw.p = mat4_ortho(raw.data.ortho[0], raw.data.ortho[1], raw.data.ortho[2], raw.data.ortho[3], raw.data.near_plane, raw.data.far_plane);
 	}
 	else {
-		if (screen_aspect == null) {
+		if (screen_aspect < 0) {
 			screen_aspect = app_w() / app_h();
 		}
 		let aspect = raw.data.aspect != null ? raw.data.aspect : screen_aspect;

@@ -299,11 +299,11 @@ function sys_height(): i32 {
 	return Krom.windowHeight();
 }
 
-function sys_mode(): WindowMode {
+function sys_mode(): window_mode_t {
 	return Krom.getWindowMode();
 }
 
-function sys_mode_set(mode: WindowMode) {
+function sys_mode_set(mode: window_mode_t) {
 	Krom.setWindowMode(mode);
 }
 
@@ -382,21 +382,13 @@ function sys_get_shader(name: string): shader_t {
 	if (shader == null) {
 		shader = shader_create(
 			sys_get_shader_buffer(name),
-			name.endsWith(".frag") ? ShaderType.Fragment : name.endsWith(".vert") ? ShaderType.Vertex : ShaderType.Geometry);
+			name.endsWith(".frag") ? shader_type_t.FRAGMENT : name.endsWith(".vert") ? shader_type_t.VERTEX : shader_type_t.GEOMETRY);
 		_sys_shaders.set(name, shader);
 	}
 	return shader;
 }
 
-class video_t {
-	video_: any;
-}
-
 function video_unload(self: video_t) {}
-
-class sound_t {
-	sound_: any;
-}
 
 function sound_create(sound_: any): sound_t {
 	let raw = new sound_t();
@@ -408,11 +400,7 @@ function sound_unload(raw: sound_t) {
 	Krom.unloadSound(raw.sound_);
 }
 
-class shader_t {
-	shader_: any;
-}
-
-function shader_create(buffer: ArrayBuffer, type: ShaderType): shader_t {
+function shader_create(buffer: ArrayBuffer, type: shader_type_t): shader_t {
 	let raw = new shader_t();
 	if (buffer != null) {
 		raw.shader_ = Krom.createShader(buffer, type);
@@ -420,12 +408,12 @@ function shader_create(buffer: ArrayBuffer, type: ShaderType): shader_t {
 	return raw;
 }
 
-function shader_from_source(source: string, type: ShaderType): shader_t {
+function shader_from_source(source: string, type: shader_type_t): shader_t {
 	let shader = shader_create(null, 0);
-	if (type == ShaderType.Vertex) {
+	if (type == shader_type_t.VERTEX) {
 		shader.shader_ = Krom.createVertexShaderFromSource(source);
 	}
-	else if (type == ShaderType.Fragment) {
+	else if (type == shader_type_t.FRAGMENT) {
 		shader.shader_ = Krom.createFragmentShaderFromSource(source);
 	}
 	return shader;
@@ -435,38 +423,16 @@ function shader_delete(raw: shader_t) {
 	Krom.deleteShader(raw.shader_);
 }
 
-class pipeline_t {
-	pipeline_: any;
-	input_layout: vertex_struct_t[] = null;
-	vertex_shader: shader_t = null;
-	fragment_shader: shader_t = null;
-	geometry_shader: shader_t = null;
-	cull_mode: CullMode;
-	depth_write: bool;
-	depth_mode: CompareMode;
-	blend_source: BlendingFactor;
-	blend_dest: BlendingFactor;
-	alpha_blend_source: BlendingFactor;
-	alpha_blend_dest: BlendingFactor;
-	color_write_masks_red: bool[];
-	color_write_masks_green: bool[];
-	color_write_masks_blue: bool[];
-	color_write_masks_alpha: bool[];
-	color_attachment_count: i32;
-	color_attachments: TextureFormat[];
-	depth_attachment: DepthFormat;
-}
-
 function pipeline_create(): pipeline_t {
 	let raw = new pipeline_t();
-	raw.cull_mode = CullMode.None;
+	raw.cull_mode = cull_mode_t.NONE;
 	raw.depth_write = false;
-	raw.depth_mode = CompareMode.Always;
+	raw.depth_mode = compare_mode_t.ALWAYS;
 
-	raw.blend_source = BlendingFactor.BlendOne;
-	raw.blend_dest = BlendingFactor.BlendZero;
-	raw.alpha_blend_source = BlendingFactor.BlendOne;
-	raw.alpha_blend_dest = BlendingFactor.BlendZero;
+	raw.blend_source = blend_factor_t.BLEND_ONE;
+	raw.blend_dest = blend_factor_t.BLEND_ZERO;
+	raw.alpha_blend_source = blend_factor_t.BLEND_ONE;
+	raw.alpha_blend_dest = blend_factor_t.BLEND_ZERO;
 
 	raw.color_write_masks_red = [];
 	raw.color_write_masks_green = [];
@@ -488,23 +454,18 @@ function pipeline_create(): pipeline_t {
 	raw.color_attachment_count = 1;
 	raw.color_attachments = [];
 	for (let i = 0; i < 8; ++i) {
-		raw.color_attachments.push(TextureFormat.RGBA32);
+		raw.color_attachments.push(tex_format_t.RGBA32);
 	}
-	raw.depth_attachment = DepthFormat.NoDepthAndStencil;
+	raw.depth_attachment = depth_format_t.NO_DEPTH;
 
 	raw.pipeline_ = Krom.createPipeline();
 	return raw;
 }
 
-function pipeline_get_depth_buffer_bits(format: DepthFormat): i32 {
-	switch (format) {
-		case DepthFormat.NoDepthAndStencil: return 0;
-		case DepthFormat.DepthOnly: return 24;
-		case DepthFormat.DepthAutoStencilAuto: return 24;
-		case DepthFormat.Depth24Stencil8: return 24;
-		case DepthFormat.Depth32Stencil8: return 32;
-		case DepthFormat.Depth16: return 16;
-	}
+function pipeline_get_depth_buffer_bits(format: depth_format_t): i32 {
+	if (format == depth_format_t.NO_DEPTH) return 0;
+	if (format == depth_format_t.DEPTH24) return 24;
+	if (format == depth_format_t.DEPTH16) return 16;
 	return 0;
 }
 
@@ -553,12 +514,7 @@ function pipeline_get_tex_unit(raw: pipeline_t, name: string): kinc_tex_unit_t {
 	return Krom.getTextureUnit(raw.pipeline_, name);
 }
 
-class vertex_buffer_t {
-	buffer_: any;
-	vertex_count: i32;
-}
-
-function vertex_buffer_create(vertex_count: i32, structure: vertex_struct_t, usage: Usage, inst_data_step_rate: i32 = 0): vertex_buffer_t {
+function vertex_buffer_create(vertex_count: i32, structure: vertex_struct_t, usage: usage_t, inst_data_step_rate: i32 = 0): vertex_buffer_t {
 	let raw = new vertex_buffer_t();
 	raw.vertex_count = vertex_count;
 	raw.buffer_ = Krom.createVertexBuffer(vertex_count, structure.elements, usage, inst_data_step_rate);
@@ -581,16 +537,11 @@ function vertex_buffer_set(raw: vertex_buffer_t) {
 	Krom.setVertexBuffer(raw.buffer_);
 }
 
-class vertex_struct_t {
-	elements: kinc_vertex_elem_t[] = [];
-	instanced: bool = false;
-}
-
 function vertex_struct_create(): vertex_struct_t {
 	return new vertex_struct_t();
 }
 
-function vertex_struct_add(raw: vertex_struct_t, name: string, data: VertexData) {
+function vertex_struct_add(raw: vertex_struct_t, name: string, data: vertex_data_t) {
 	raw.elements.push({ name: name, data: data });
 }
 
@@ -602,21 +553,15 @@ function vertex_struct_byte_size(raw: vertex_struct_t): i32 {
 	return byte_size;
 }
 
-function vertex_struct_data_byte_size(data: VertexData): i32 {
-	switch (data) {
-		case VertexData.F32_1X: return 1 * 4;
-		case VertexData.F32_2X: return 2 * 4;
-		case VertexData.F32_3X: return 3 * 4;
-		case VertexData.F32_4X: return 4 * 4;
-		case VertexData.U8_4X_Normalized: return 4 * 1;
-		case VertexData.I16_2X_Normalized: return 2 * 2;
-		case VertexData.I16_4X_Normalized: return 4 * 2;
-	}
+function vertex_struct_data_byte_size(data: vertex_data_t): i32 {
+	if (data == vertex_data_t.F32_1X) return 1 * 4;
+	if (data == vertex_data_t.F32_2X) return 2 * 4;
+	if (data == vertex_data_t.F32_3X) return 3 * 4;
+	if (data == vertex_data_t.F32_4X) return 4 * 4;
+	if (data == vertex_data_t.U8_4X_NORM) return 4 * 1;
+	if (data == vertex_data_t.I16_2X_NORM) return 2 * 2;
+	if (data == vertex_data_t.I16_4X_NORM) return 4 * 2;
 	return 0;
-}
-
-class index_buffer_t {
-	buffer_: any;
 }
 
 function index_buffer_create(index_count: i32): index_buffer_t {
@@ -639,15 +584,6 @@ function index_buffer_unlock(raw: index_buffer_t) {
 
 function index_buffer_set(raw: index_buffer_t) {
 	Krom.setIndexBuffer(raw.buffer_);
-}
-
-type Color = i32;
-
-class font_t {
-	font_: any = null;
-	blob: ArrayBuffer;
-	glyphs: i32[] = null;
-	index = 0;
 }
 
 function font_create(blob: ArrayBuffer, index = 0): font_t {
@@ -691,54 +627,35 @@ function g2_font_init(raw: font_t) {
 	}
 }
 
-class image_t {
-	texture_: any;
-	render_target_: any;
-	format: TextureFormat;
-	readable: bool;
-	pixels: ArrayBuffer = null;
-
-	get width(): i32 { return this.texture_ == null ? this.render_target_.width : this.texture_.width; }
-	get height(): i32 { return this.texture_ == null ? this.render_target_.height : this.texture_.height; }
-	get depth(): i32 { return this.texture_ != null ? this.texture_.depth : 1; }
-}
-
 function _image_create(tex: any): image_t {
 	let raw = new image_t();
 	raw.texture_ = tex;
 	return raw;
 }
 
-function image_get_depth_buffer_bits(format: DepthFormat): i32 {
-	switch (format) {
-		case DepthFormat.NoDepthAndStencil: return -1;
-		case DepthFormat.DepthOnly: return 24;
-		case DepthFormat.DepthAutoStencilAuto: return 24;
-		case DepthFormat.Depth24Stencil8: return 24;
-		case DepthFormat.Depth32Stencil8: return 32;
-		case DepthFormat.Depth16: return 16;
-	}
+function image_get_depth_buffer_bits(format: depth_format_t): i32 {
+	if (format == depth_format_t.NO_DEPTH) return -1;
+	if (format == depth_format_t.DEPTH24) return 24;
+	if (format == depth_format_t.DEPTH16) return 16;
 	return 0;
 }
 
-function image_get_tex_format(format: TextureFormat): i32 {
-	switch (format) {
-	case TextureFormat.RGBA32: return 0;
-	case TextureFormat.RGBA128: return 3;
-	case TextureFormat.RGBA64: return 4;
-	case TextureFormat.R32: return 5;
-	case TextureFormat.R16: return 7;
-	default: return 1; // R8
-	}
+function image_get_tex_format(format: tex_format_t): i32 {
+	if (format == tex_format_t.RGBA32) return 0;
+	if (format == tex_format_t.RGBA128) return 3;
+	if (format == tex_format_t.RGBA64) return 4;
+	if (format == tex_format_t.R32) return 5;
+	if (format == tex_format_t.R16) return 7;
+	return 1; // R8
 }
 
 function image_from_texture(tex: any): image_t {
 	return _image_create(tex);
 }
 
-function image_from_bytes(buffer: ArrayBuffer, width: i32, height: i32, format: TextureFormat = null, usage: Usage = null): image_t {
+function image_from_bytes(buffer: ArrayBuffer, width: i32, height: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
 	if (format == null) {
-		format = TextureFormat.RGBA32;
+		format = tex_format_t.RGBA32;
 	}
 	let readable = true;
 	let image = _image_create(null);
@@ -747,9 +664,9 @@ function image_from_bytes(buffer: ArrayBuffer, width: i32, height: i32, format: 
 	return image;
 }
 
-function image_from_bytes_3d(buffer: ArrayBuffer, width: i32, height: i32, depth: i32, format: TextureFormat = null, usage: Usage = null): image_t {
+function image_from_bytes_3d(buffer: ArrayBuffer, width: i32, height: i32, depth: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
 	if (format == null) {
-		format = TextureFormat.RGBA32;
+		format = tex_format_t.RGBA32;
 	}
 	let readable = true;
 	let image = _image_create(null);
@@ -764,9 +681,9 @@ function image_from_encoded_bytes(buffer: ArrayBuffer, format: string, done: (im
 	done(image);
 }
 
-function image_create(width: i32, height: i32, format: TextureFormat = null, usage: Usage = null): image_t {
+function image_create(width: i32, height: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
 	if (format == null) {
-		format = TextureFormat.RGBA32;
+		format = tex_format_t.RGBA32;
 	}
 	let image = _image_create(null);
 	image.format = format;
@@ -774,9 +691,9 @@ function image_create(width: i32, height: i32, format: TextureFormat = null, usa
 	return image;
 }
 
-function image_create_3d(width: i32, height: i32, depth: i32, format: TextureFormat = null, usage: Usage = null): image_t {
+function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
 	if (format == null) {
-		format = TextureFormat.RGBA32;
+		format = tex_format_t.RGBA32;
 	}
 	let image = _image_create(null);
 	image.format = format;
@@ -784,9 +701,9 @@ function image_create_3d(width: i32, height: i32, depth: i32, format: TextureFor
 	return image;
 }
 
-function image_create_render_target(width: i32, height: i32, format: TextureFormat = null, depth_format: DepthFormat = DepthFormat.NoDepthAndStencil): image_t {
+function image_create_render_target(width: i32, height: i32, format: tex_format_t = null, depth_format: depth_format_t = depth_format_t.NO_DEPTH): image_t {
 	if (format == null) {
-		format = TextureFormat.RGBA32;
+		format = tex_format_t.RGBA32;
 	}
 	let image = _image_create(null);
 	image.format = format;
@@ -798,17 +715,15 @@ function image_render_targets_inv_y(): bool {
 	return Krom.renderTargetsInvertedY();
 }
 
-function image_format_byte_size(format: TextureFormat): i32 {
-	switch(format) {
-		case TextureFormat.RGBA32: return 4;
-		case TextureFormat.R8: return 1;
-		case TextureFormat.RGBA128: return 16;
-		case TextureFormat.DEPTH16: return 2;
-		case TextureFormat.RGBA64: return 8;
-		case TextureFormat.R32: return 4;
-		case TextureFormat.R16: return 2;
-		default: return 4;
-	}
+function image_format_byte_size(format: tex_format_t): i32 {
+	if (format == tex_format_t.RGBA32) return 4;
+	if (format == tex_format_t.R8) return 1;
+	if (format == tex_format_t.RGBA128) return 16;
+	if (format == tex_format_t.DEPTH16) return 2;
+	if (format == tex_format_t.RGBA64) return 8;
+	if (format == tex_format_t.R32) return 4;
+	if (format == tex_format_t.R16) return 2;
+	return 4;
 }
 
 function image_unload(raw: image_t) {
@@ -861,7 +776,6 @@ let _g2_color: Color;
 let _g2_font: font_t;
 let _g2_font_size: i32 = 0;
 let _g2_pipeline: pipeline_t;
-let _g2_image_scale_quality: ImageScaleQuality;
 let _g2_transformation: mat3_t = null;
 let _g2_render_target: image_t;
 
@@ -894,9 +808,8 @@ function g2_set_pipeline(p: pipeline_t) {
 	_g2_pipeline = p;
 }
 
-function g2_set_image_scale_quality(q: ImageScaleQuality) {
-	Krom.g2_set_bilinear_filter(q == ImageScaleQuality.High);
-	_g2_image_scale_quality = q;
+function g2_set_bilinear_filter(bilinear: bool) {
+	Krom.g2_set_bilinear_filter(bilinear);
 }
 
 function g2_set_transformation(m: mat3_t) {
@@ -1097,11 +1010,11 @@ function g4_set_image_tex(unit: kinc_tex_unit_t, tex: image_t) {
 	Krom.setImageTexture(unit, tex.texture_);
 }
 
-function g4_set_tex_params(tex_unit: kinc_tex_unit_t, u_addressing: TextureAddressing, v_addressing: TextureAddressing, minification_filter: TextureFilter, magnification_filter: TextureFilter, mipmap_filter: MipMapFilter) {
+function g4_set_tex_params(tex_unit: kinc_tex_unit_t, u_addressing: tex_addressing, v_addressing: tex_addressing, minification_filter: tex_filter_t, magnification_filter: tex_filter_t, mipmap_filter: mip_map_filter_t) {
 	Krom.setTextureParameters(tex_unit, u_addressing, v_addressing, minification_filter, magnification_filter, mipmap_filter);
 }
 
-function g4_set_tex_3d_params(tex_unit: kinc_tex_unit_t, u_addressing: TextureAddressing, v_addressing: TextureAddressing, w_addressing: TextureAddressing, minification_filter: TextureFilter, magnification_filter: TextureFilter, mipmap_filter: MipMapFilter) {
+function g4_set_tex_3d_params(tex_unit: kinc_tex_unit_t, u_addressing: tex_addressing, v_addressing: tex_addressing, w_addressing: tex_addressing, minification_filter: tex_filter_t, magnification_filter: tex_filter_t, mipmap_filter: mip_map_filter_t) {
 	Krom.setTexture3DParameters(tex_unit, u_addressing, v_addressing, w_addressing, minification_filter, magnification_filter, mipmap_filter);
 }
 
@@ -1173,51 +1086,120 @@ function g4_disable_scissor() {
 	Krom.disableScissor();
 }
 
+type Color = i32;
+
+class video_t {
+	video_: any;
+}
+
+class sound_t {
+	sound_: any;
+}
+
+class shader_t {
+	shader_: any;
+}
+
+class pipeline_t {
+	pipeline_: any;
+	input_layout: vertex_struct_t[];
+	vertex_shader: shader_t;
+	fragment_shader: shader_t;
+	geometry_shader: shader_t;
+	cull_mode: cull_mode_t;
+	depth_write: bool;
+	depth_mode: compare_mode_t;
+	blend_source: blend_factor_t;
+	blend_dest: blend_factor_t;
+	alpha_blend_source: blend_factor_t;
+	alpha_blend_dest: blend_factor_t;
+	color_write_masks_red: bool[];
+	color_write_masks_green: bool[];
+	color_write_masks_blue: bool[];
+	color_write_masks_alpha: bool[];
+	color_attachment_count: i32;
+	color_attachments: tex_format_t[];
+	depth_attachment: depth_format_t;
+}
+
+class vertex_buffer_t {
+	buffer_: any;
+	vertex_count: i32;
+}
+
+class vertex_struct_t {
+	elements: kinc_vertex_elem_t[] = [];
+	instanced: bool = false;
+}
+
+class index_buffer_t {
+	buffer_: any;
+}
+
+class font_t {
+	font_: any;
+	blob: ArrayBuffer;
+	glyphs: i32[];
+	index = 0;
+}
+
+class image_t {
+	texture_: any;
+	render_target_: any;
+	format: tex_format_t;
+	readable: bool;
+	pixels: ArrayBuffer;
+
+	get width(): i32 { return this.texture_ == null ? this.render_target_.width : this.texture_.width; }
+	get height(): i32 { return this.texture_ == null ? this.render_target_.height : this.texture_.height; }
+	get depth(): i32 { return this.texture_ != null ? this.texture_.depth : 1; }
+}
+
 type kinc_sys_ops_t = {
 	title: string;
 	x: i32;
 	y: i32;
 	width: i32;
 	height: i32;
-	features: WindowFeatures;
-	mode: WindowMode;
+	features: window_features_t;
+	mode: window_mode_t;
 	frequency: i32;
 	vsync: bool;
 }
 
 type kinc_vertex_elem_t = {
 	name: string;
-	data: VertexData;
+	data: vertex_data_t;
 }
 
 type kinc_const_loc_t = any;
 type kinc_tex_unit_t = any;
 
-enum TextureFilter {
-	PointFilter,
-	LinearFilter,
-	AnisotropicFilter,
+enum tex_filter_t {
+	POINT,
+	LINEAR,
+	ANISOTROPIC,
 }
 
-enum MipMapFilter {
-	NoMipFilter,
-	PointMipFilter,
-	LinearMipFilter,
+enum mip_map_filter_t {
+	NONE,
+	POINT,
+	LINEAR,
 }
 
-enum TextureAddressing {
-	Repeat,
-	Mirror,
-	Clamp,
+enum tex_addressing {
+	REPEAT,
+	MIRROR,
+	CLAMP,
 }
 
-enum Usage {
-	StaticUsage,
-	DynamicUsage,
-	ReadableUsage,
+enum usage_t {
+	STATIC,
+	DYNAMIC,
+	READABLE,
 }
 
-enum TextureFormat {
+enum tex_format_t {
 	RGBA32,
 	RGBA64,
 	R32,
@@ -1227,74 +1209,66 @@ enum TextureFormat {
 	R16,
 }
 
-enum DepthFormat {
-	NoDepthAndStencil,
-	DepthOnly,
-	DepthAutoStencilAuto,
-	Depth24Stencil8,
-	Depth32Stencil8,
-	Depth16,
+enum depth_format_t {
+	NO_DEPTH,
+	DEPTH16,
+	DEPTH24,
 }
 
-enum VertexData {
+enum vertex_data_t {
 	F32_1X = 1,
 	F32_2X = 2,
 	F32_3X = 3,
 	F32_4X = 4,
-	U8_4X_Normalized = 17,
-	I16_2X_Normalized = 24,
-	I16_4X_Normalized = 28,
+	U8_4X_NORM = 17,
+	I16_2X_NORM = 24,
+	I16_4X_NORM = 28,
 }
 
-enum BlendingFactor {
-	BlendOne,
-	BlendZero,
-	SourceAlpha,
-	DestinationAlpha,
-	InverseSourceAlpha,
-	InverseDestinationAlpha,
-	SourceColor,
-	DestinationColor,
-	InverseSourceColor,
-	InverseDestinationColor,
+enum blend_factor_t {
+	BLEND_ONE,
+	BLEND_ZERO,
+	SOURCE_ALPHA,
+	DEST_ALPHA,
+	INV_SOURCE_ALPHA,
+	INV_DEST_ALPHA,
+	SOURCE_COLOR,
+	DEST_COLOR,
+	INV_SOURCE_COLOR,
+	INV_DEST_COLOR,
 }
 
-enum CompareMode {
-	Always,
-	Never,
-	Equal,
-	NotEqual,
-	Less,
-	LessEqual,
-	Greater,
-	GreaterEqual,
+enum compare_mode_t {
+	ALWAYS,
+	NEVER,
+	EQUAL,
+	NOT_EQUAL,
+	LESS,
+	LESS_EQUAL,
+	GREATER,
+	GREATER_EQUAL,
 }
 
-enum CullMode {
-	Clockwise,
-	CounterClockwise,
-	None,
+enum cull_mode_t {
+	CLOCKWISE,
+	COUNTER_CLOCKWISE,
+	NONE,
 }
 
-enum ShaderType {
-	Fragment = 0,
-	Vertex = 1,
-	Geometry = 3,
+enum shader_type_t {
+	FRAGMENT = 0,
+	VERTEX = 1,
+	GEOMETRY = 3,
 }
 
-enum WindowFeatures {
-    FeatureNone = 0,
-    FeatureResizable = 1,
-    FeatureMinimizable = 2,
-    FeatureMaximizable = 4,
+enum window_features_t {
+    NONE = 0,
+    RESIZABLE = 1,
+    MINIMIZABLE = 2,
+    MAXIMIZABLE = 4,
 }
 
-enum WindowMode {
-	Windowed,
-	Fullscreen,
-}
-
-enum ImageScaleQuality {
-	Low,
-	High,
+enum window_mode_t {
+	WINDOWED,
+	FULLSCREEN,
 }
