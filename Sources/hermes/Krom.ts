@@ -7,6 +7,7 @@
 // declare type c_size_t = number;
 // declare function print(s: string): void;
 // declare let $SHBuiltin: any;
+type u8 = number;
 type i32 = number;
 type f32 = number;
 type bool = boolean;
@@ -52,16 +53,13 @@ type vertex_element_t = any;
 		return res;
 	}
 
-	let Krom: any = globalThis.Krom = {};
-
-
 	let krom_init = $SHBuiltin.extern_c({},
 		function _krom_init(title: c_ptr, width: c_int, height: c_int,
 			v_sync: c_int, window_mode: c_int, window_features: c_int,
 			x: c_int, y: c_int, frequency: c_int): void {}
 	);
 
-	Krom.init = function(title: string, width: i32, height: i32,
+	globalThis.krom_init = function(title: string, width: i32, height: i32,
 		v_sync: bool, window_mode: i32, window_features: i32,
 		x: i32, y: i32, frequency: i32) {
 
@@ -71,12 +69,12 @@ type vertex_element_t = any;
 	};
 
 
-	let krom_set_callback = $SHBuiltin.extern_c({},
-		function _krom_set_callback(callback: c_ptr): void {}
+	let krom_set_update_callback = $SHBuiltin.extern_c({},
+		function _krom_set_update_callback(callback: c_ptr): void {}
 	);
 
-	Krom.setCallback = function(callback: ()=>void) {
-		// krom_set_callback(callback);
+	globalThis.krom_set_update_callback = function(callback: ()=>void) {
+		// krom_set_update_callback(callback);
 		globalThis.krom_callback = callback;
 	};
 
@@ -85,7 +83,7 @@ type vertex_element_t = any;
 		function _krom_begin(): void {}
 	);
 
-	Krom.begin = function(render_target: image_t, additional_render_targets: image_t[]) {
+	globalThis.krom_begin = function(render_target: image_t, additional_render_targets: image_t[]) {
 		krom_begin();
 	};
 
@@ -94,17 +92,17 @@ type vertex_element_t = any;
 		function _krom_end(): void {}
 	);
 
-	Krom.end = function() {
+	globalThis.krom_end = function() {
 		krom_end();
 	};
 
 
 	let krom_clear = $SHBuiltin.extern_c({},
-		function _krom_clear(flags: c_int, color: c_int, depth: c_float, stencil: c_int): void {}
+		function _krom_clear(flags: c_int, color: c_int, depth: c_float): void {}
 	);
 
-	Krom.clear = function(flags: i32, color: i32, depth: f32, stencil: i32) {
-		krom_clear(flags, color, depth, stencil);
+	globalThis.krom_clear = function(flags: i32, color: i32, depth: f32) {
+		krom_clear(flags, color, depth);
 	};
 
 
@@ -112,7 +110,7 @@ type vertex_element_t = any;
 		function _krom_create_pipeline(): c_ptr { throw 0; }
 	);
 
-	Krom.createPipeline = function(): any {
+	globalThis.krom_create_pipeline = function(): any {
 		return krom_create_pipeline();
 	};
 
@@ -121,7 +119,7 @@ type vertex_element_t = any;
 		function _krom_create_vertex_shader_from_source(source: c_ptr): c_ptr { throw 0; }
 	);
 
-    Krom.createVertexShaderFromSource = function(source: string): any {
+    globalThis.krom_create_vertex_shader_from_source = function(source: string): any {
         return krom_create_vertex_shader_from_source(to_c_string(source));
     };
 
@@ -130,7 +128,7 @@ type vertex_element_t = any;
 		function _krom_create_fragment_shader_from_source(source: c_ptr): c_ptr { throw 0; }
 	);
 
-    Krom.createFragmentShaderFromSource = function(source: string): any {
+    globalThis.krom_create_fragment_shader_from_source = function(source: string): any {
         return krom_create_fragment_shader_from_source(to_c_string(source));
     };
 
@@ -147,15 +145,15 @@ type vertex_element_t = any;
 			name6: c_ptr, data6: c_int,
 			name7: c_ptr, data7: c_int,
 			cull_mode: c_int, depth_write: c_int, depth_mode: c_int,
-			blend_source: c_int, blend_destination: c_int,
-			alpha_blend_source: c_int, alpha_blend_destination: c_int,
+			blend_source: c_int, blend_dest: c_int,
+			alpha_blend_source: c_int, alpha_blend_dest: c_int,
 			color_write_mask_red: c_int, color_write_mask_green: c_int, color_write_mask_blue: c_int, color_write_mask_alpha: c_int,
 			color_attachment_count: c_int, depth_attachment_bits: c_int,
 			vertex_shader: c_ptr, fragment_shader: c_ptr
 		): void {}
 	);
 
-	Krom.compilePipeline = function(pipeline: any,
+	globalThis.krom_compile_pipeline = function(pipeline: any,
 		structure0: any, structure1: any, structure2: any, structure3: any, length: i32,
 		vertex_shader: any, fragment_shader: any, geometry_shader: any, state: any) {
 
@@ -178,11 +176,12 @@ type vertex_element_t = any;
 		krom_compile_pipeline(pipeline,
 			name0, data0, name1, data1, name2, data2, name3, data3,
 			name4, data4, name5, data5, name6, data6, name7, data7,
-			state.cullMode, state.depthWrite ? 1 : 0, state.depthMode,
-			state.blendSource, state.blendDestination,
-			state.alphaBlendSource, state.alphaBlendDestination,
-			state.colorWriteMaskRed[0] ? 1 : 0, state.colorWriteMaskGreen[0] ? 1 : 0, state.colorWriteMaskBlue[0] ? 1 : 0, state.colorWriteMaskAlpha[0] ? 1 : 0,
-			state.colorAttachmentCount, state.depthAttachmentBits,
+			state.cull_mode, state.depth_write ? 1 : 0, state.depth_mode,
+			state.blend_source, state.blend_dest,
+			state.alpha_blend_source, state.alpha_blend_dest,
+			state.color_write_masks_red[0] ? 1 : 0, state.color_write_masks_green[0] ? 1 : 0,
+			state.color_write_masks_blue[0] ? 1 : 0, state.color_write_masks_alpha[0] ? 1 : 0,
+			state.color_attachment_count, state.depth_attachment_bits,
 			vertex_shader, fragment_shader
 		);
 	};
@@ -199,11 +198,11 @@ type vertex_element_t = any;
 			name5: c_ptr, data5: c_int,
 			name6: c_ptr, data6: c_int,
 			name7: c_ptr, data7: c_int,
-			usage: c_int, instance_data_step_rate: c_int
+			usage: c_int, inst_data_step_rate: c_int
 		): c_ptr { throw 0; }
 	);
 
-	Krom.createVertexBuffer = function(count: i32, elements: vertex_element_t[], usage: i32, instance_data_step_rate: i32): any {
+	globalThis.krom_create_vertex_buffer = function(count: i32, elements: vertex_element_t[], usage: i32, inst_data_step_rate: i32): any {
 		let name0 = elements.length > 0 ? to_c_string(elements[0].name) : c_null;
 		let data0 = elements.length > 0 ? elements[0].data : 0;
 		let name1 = elements.length > 1 ? to_c_string(elements[1].name) : c_null;
@@ -224,27 +223,27 @@ type vertex_element_t = any;
 		return krom_create_vertex_buffer(count,
 			name0, data0, name1, data1, name2, data2, name3, data3,
 			name4, data4, name5, data5, name6, data6, name7, data7,
-			usage, instance_data_step_rate);
+			usage, inst_data_step_rate);
 	};
 
 
 	let krom_lock_vertex_buffer = $SHBuiltin.extern_c({},
-		function _krom_lock_vertex_buffer(buffer: c_ptr, start: c_int, count: c_int): c_ptr { throw 0; }
+		function _krom_lock_vertex_buffer(buffer: c_ptr): c_ptr { throw 0; }
 	);
 
-	Krom.lockVertexBuffer = function(buffer: any, start: i32, count: i32): any/*ArrayBuffer*/ {
-		// return krom_lock_vertex_buffer(buffer, start, count);
-		krom_lock_vertex_buffer(buffer, start, count);
+	globalThis.krom_lock_vertex_buffer = function(buffer: any): any/*ArrayBuffer*/ {
+		// return krom_lock_vertex_buffer(buffer);
+		krom_lock_vertex_buffer(buffer);
 		return globalThis._arraybuffer;
 	};
 
 
 	let krom_unlock_vertex_buffer = $SHBuiltin.extern_c({},
-		function _krom_unlock_vertex_buffer(buffer: c_ptr, count: c_int): void {}
+		function _krom_unlock_vertex_buffer(buffer: c_ptr): void {}
 	);
 
-	Krom.unlockVertexBuffer = function(buffer: any, count: i32) {
-		krom_unlock_vertex_buffer(buffer, count);
+	globalThis.krom_unlock_vertex_buffer = function(buffer: any) {
+		krom_unlock_vertex_buffer(buffer);
 	};
 
 
@@ -252,7 +251,7 @@ type vertex_element_t = any;
 		function _krom_create_index_buffer(count: c_int): c_ptr { throw 0; }
 	);
 
-	Krom.createIndexBuffer = function(count: i32): any {
+	globalThis.krom_create_index_buffer = function(count: i32): any {
 		return krom_create_index_buffer(count);
 	};
 
@@ -261,7 +260,7 @@ type vertex_element_t = any;
 		function _krom_lock_index_buffer(buffer: c_ptr): c_ptr { throw 0; }
 	);
 
-	Krom.lockIndexBuffer = function(buffer: any): any/*Uint32Array*/ {
+	globalThis.krom_lock_index_buffer = function(buffer: any): any/*Uint32Array*/ {
 		// return krom_lock_index_buffer(buffer);
 		krom_lock_index_buffer(buffer);
 		return new Uint32Array(globalThis._arraybuffer);
@@ -272,7 +271,7 @@ type vertex_element_t = any;
 		function _krom_unlock_index_buffer(buffer: c_ptr): void {}
 	);
 
-	Krom.unlockIndexBuffer = function(buffer: any) {
+	globalThis.krom_unlock_index_buffer = function(buffer: any) {
 		krom_unlock_index_buffer(buffer);
 	};
 
@@ -281,7 +280,7 @@ type vertex_element_t = any;
 		function _krom_set_pipeline(pipeline: c_ptr): void {}
 	);
 
-	Krom.setPipeline = function(pipeline: any) {
+	globalThis.krom_set_pipeline = function(pipeline: any) {
 		krom_set_pipeline(pipeline);
 	};
 
@@ -290,7 +289,7 @@ type vertex_element_t = any;
 		function _krom_set_vertex_buffer(vb: c_ptr): void {}
 	);
 
-	Krom.setVertexBuffer = function(vb: any) {
+	globalThis.krom_set_vertex_buffer = function(vb: any) {
 		krom_set_vertex_buffer(vb);
 	};
 
@@ -299,7 +298,7 @@ type vertex_element_t = any;
 		function _krom_set_index_buffer(vb: c_ptr): void {}
 	);
 
-	Krom.setIndexBuffer = function(ib: any) {
+	globalThis.krom_set_index_buffer = function(ib: any) {
 		krom_set_index_buffer(ib);
 	};
 
@@ -308,7 +307,7 @@ type vertex_element_t = any;
 		function _krom_draw_indexed_vertices(start: c_int, count: c_int): void {}
 	);
 
-	Krom.drawIndexedVertices = function(start: i32, count: i32) {
+	globalThis.krom_draw_indexed_vertices = function(start: i32, count: i32) {
 		krom_draw_indexed_vertices(start, count);
 	};
 

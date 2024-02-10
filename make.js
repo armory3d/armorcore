@@ -671,8 +671,12 @@ class ArmorCoreExporter {
 		this.sources = [];
 		this.libraries = [];
 		this.addSourceDirectory(path.join(options.root, 'Sources'));
-		this.addSourceDirectory(path.join(options.root, 'Sources/iron'));
-		this.addSourceDirectory(path.join(options.root, 'Sources/zui'));
+		if (globalThis.flags.with_iron) {
+			this.addSourceDirectory(path.join(options.root, 'Sources/iron'));
+		}
+		if (globalThis.flags.with_zui) {
+			this.addSourceDirectory(path.join(options.root, 'Sources/zui'));
+		}
 		this.projectFiles = !options.noproject;
 		this.parameters = [];
 	}
