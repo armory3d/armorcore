@@ -272,7 +272,7 @@ function armpack_write_object(v: DataView, d: any) {
 }
 
 function armpack_write_dummy(d: any) {
-	if (typeof d == null) {
+	if (d == null) {
 		_armpack_pos += 1;
 	}
 	else if (typeof d == "boolean") {
