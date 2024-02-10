@@ -1,8 +1,8 @@
 
-let material_data_uid_counter = 0;
+let _material_data_uid_counter = 0;
 
 function material_data_create(raw: material_data_t, done: (data: material_data_t)=>void, file = "") {
-	raw._uid = ++material_data_uid_counter; // Start from 1
+	raw._uid = ++_material_data_uid_counter; // Start from 1
 
 	let ref = raw.shader.split("/");
 	let object_file = "";
@@ -43,7 +43,7 @@ function material_data_parse(file: string, name: string, done: (data: material_d
 	data_get_scene_raw(file, function (format: scene_t) {
 		let raw: material_data_t = data_get_material_raw_by_name(format.material_datas, name);
 		if (raw == null) {
-			Krom.log(`Material data "${name}" not found!`);
+			krom_log(`Material data "${name}" not found!`);
 			done(null);
 		}
 		material_data_create(raw, done, file);

@@ -5,8 +5,8 @@ class ray_t {
 }
 
 class plane_t {
-	normal = vec4_create(1.0, 0.0, 0.0);
-	constant = 0.0;
+	normal: vec4_t;
+	constant: f32;
 }
 
 let _raycast_vp_inv = mat4_identity();
@@ -84,10 +84,17 @@ function raycast_closest_box_intersect(transforms: transform_t[], input_x: f32, 
 	return closest;
 }
 
+function plane_create(): plane_t {
+	let raw = new plane_t();
+	raw.normal = vec4_create(1.0, 0.0, 0.0);
+	raw.constant = 0.0;
+	return raw;
+}
+
 function raycast_plane_intersect(normal: vec4_t, a: vec4_t, input_x: f32, input_y: f32, camera: camera_object_t): vec4_t {
 	let ray = raycast_get_ray(input_x, input_y, camera);
 
-	let plane = new plane_t();
+	let plane = plane_create();
 	plane_set(plane, normal, a);
 
 	return ray_intersect_plane(ray, plane);

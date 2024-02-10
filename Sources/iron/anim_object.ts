@@ -103,33 +103,85 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 		let value = anim_object_interpolate_linear(t, t1, t2, v1, v2);
 
 		let tt = track.target;
-		if (tt == "xloc") transform.loc.x = value;
-		else if (tt == "yloc") transform.loc.y = value;
-		else if (tt == "zloc") transform.loc.z = value;
-		else if (tt == "xrot") transform_set_rot(transform, value, transform._euler_y, transform._euler_z);
-		else if (tt == "yrot") transform_set_rot(transform, transform._euler_x, value, transform._euler_z);
-		else if (tt == "zrot") transform_set_rot(transform, transform._euler_x, transform._euler_y, value);
-		else if (tt == "qwrot") transform.rot.w = value;
-		else if (tt == "qxrot") transform.rot.x = value;
-		else if (tt == "qyrot") transform.rot.y = value;
-		else if (tt == "qzrot") transform.rot.z = value;
-		else if (tt == "xscl") transform.scale.x = value;
-		else if (tt == "yscl") transform.scale.y = value;
-		else if (tt == "zscl") transform.scale.z = value;
+		if (tt == "xloc") {
+			transform.loc.x = value;
+		}
+		else if (tt == "yloc") {
+			transform.loc.y = value;
+		}
+		else if (tt == "zloc") {
+			transform.loc.z = value;
+		}
+		else if (tt == "xrot") {
+			transform_set_rot(transform, value, transform._euler_y, transform._euler_z);
+		}
+		else if (tt == "yrot") {
+			transform_set_rot(transform, transform._euler_x, value, transform._euler_z);
+		}
+		else if (tt == "zrot") {
+			transform_set_rot(transform, transform._euler_x, transform._euler_y, value);
+		}
+		else if (tt == "qwrot") {
+			transform.rot.w = value;
+		}
+		else if (tt == "qxrot") {
+			transform.rot.x = value;
+		}
+		else if (tt == "qyrot") {
+			transform.rot.y = value;
+		}
+		else if (tt == "qzrot") {
+			transform.rot.z = value;
+		}
+		else if (tt == "xscl") {
+			transform.scale.x = value;
+		}
+		else if (tt == "yscl") {
+			transform.scale.y = value;
+		}
+		else if (tt == "zscl") {
+			transform.scale.z = value;
+		}
 		// Delta
-		else if (tt == "dxloc") transform.dloc.x = value;
-		else if (tt == "dyloc") transform.dloc.y = value;
-		else if (tt == "dzloc") transform.dloc.z = value;
-		else if (tt == "dxrot") transform._deuler_x = value;
-		else if (tt == "dyrot") transform._deuler_y = value;
-		else if (tt == "dzrot") transform._deuler_z = value;
-		else if (tt == "dqwrot") transform.drot.w = value;
-		else if (tt == "dqxrot") transform.drot.x = value;
-		else if (tt == "dqyrot") transform.drot.y = value;
-		else if (tt == "dqzrot") transform.drot.z = value;
-		else if (tt == "dxscl") transform.dscale.x = value;
-		else if (tt == "dyscl") transform.dscale.y = value;
-		else if (tt == "dzscl") transform.dscale.z = value;
+		else if (tt == "dxloc") {
+			transform.dloc.x = value;
+		}
+		else if (tt == "dyloc") {
+			transform.dloc.y = value;
+		}
+		else if (tt == "dzloc") {
+			transform.dloc.z = value;
+		}
+		else if (tt == "dxrot") {
+			transform._deuler_x = value;
+		}
+		else if (tt == "dyrot") {
+			transform._deuler_y = value;
+		}
+		else if (tt == "dzrot") {
+			transform._deuler_z = value;
+		}
+		else if (tt == "dqwrot") {
+			transform.drot.w = value;
+		}
+		else if (tt == "dqxrot") {
+			transform.drot.x = value;
+		}
+		else if (tt == "dqyrot") {
+			transform.drot.y = value;
+		}
+		else if (tt == "dqzrot") {
+			transform.drot.z = value;
+		}
+		else if (tt == "dxscl") {
+			transform.dscale.x = value;
+		}
+		else if (tt == "dyscl") {
+			transform.dscale.y = value;
+		}
+		else if (tt == "dzscl") {
+			transform.dscale.z = value;
+		}
 	}
 }
 

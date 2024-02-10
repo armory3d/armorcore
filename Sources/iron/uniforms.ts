@@ -38,7 +38,7 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 				attach_depth = true;
 				rt_id = rt_id.substring(1);
 			}
-			let rt = attach_depth ? render_path_depth_to_render_target.get(rt_id) : render_path_render_targets.get(rt_id);
+			let rt = attach_depth ? _render_path_depth_to_render_target.get(rt_id) : render_path_render_targets.get(rt_id);
 			uniforms_bind_render_target(rt, context, sampler_id, attach_depth);
 		}
 	}
@@ -695,19 +695,31 @@ function uniforms_set_material_const(location: kinc_const_loc_t, shader_const: s
 }
 
 function uniforms_get_tex_addressing(s: string): tex_addressing {
-	if (s == "clamp") return tex_addressing.CLAMP;
-	if (s == "mirror") return tex_addressing.MIRROR;
+	if (s == "clamp") {
+		return tex_addressing.CLAMP;
+	}
+	if (s == "mirror") {
+		return tex_addressing.MIRROR;
+	}
 	return tex_addressing.REPEAT;
 }
 
 function uniforms_get_tex_filter(s: string): tex_filter_t {
-	if (s == "anisotropic") return tex_filter_t.ANISOTROPIC;
-	if (s == "point") return tex_filter_t.POINT;
+	if (s == "anisotropic") {
+		return tex_filter_t.ANISOTROPIC;
+	}
+	if (s == "point") {
+		return tex_filter_t.POINT;
+	}
 	return tex_filter_t.LINEAR;
 }
 
 function uniforms_get_mip_map_filter(s: string): mip_map_filter_t {
-	if (s == "linear") return mip_map_filter_t.LINEAR;
-	if (s == "point") return mip_map_filter_t.POINT;
+	if (s == "linear") {
+		return mip_map_filter_t.LINEAR;
+	}
+	if (s == "point") {
+		return mip_map_filter_t.POINT;
+	}
 	return mip_map_filter_t.NONE;
 }

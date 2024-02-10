@@ -4,15 +4,17 @@
 class speaker_object_t {
 	base: object_t;
 	data: speaker_data_t;
-	paused = false;
+	paused: bool;
 	sound: sound_t;
-	channels: audio_channel_t[] = [];
+	channels: audio_channel_t[];
 	volume: f32;
 }
 
 function speaker_object_create(data: speaker_data_t): speaker_object_t {
 	let raw = new speaker_object_t();
-	raw.base = object_create();
+	raw.paused = false;
+	raw.channels = [];
+	raw.base = object_create(false);
 	raw.base.ext = raw;
 	raw.data = data;
 
@@ -24,7 +26,7 @@ function speaker_object_create(data: speaker_data_t): speaker_object_t {
 
 	data_get_sound(data.sound, function (sound: sound_t) {
 		raw.sound = sound;
-		app_notify_on_init(function() {
+		app_notify_on_init(function () {
 			if (raw.base.visible && raw.data.play_on_start) {
 				speaker_object_play(raw);
 			}

@@ -1,33 +1,29 @@
 /// <reference path='./vec4.ts'/>
-/// <reference path='./quat.ts'/>
 
 class camera_object_t {
 	base: object_t;
 	data: camera_data_t;
 	p: mat4_t;
-	no_jitter_p = mat4_identity();
-	frame = 0;
+	no_jitter_p: mat4_t;
+	frame: i32;
 	v: mat4_t;
 	prev_v: mat4_t;
 	vp: mat4_t;
 	frustum_planes: frustum_plane_t[];
-	render_target: image_t; // Render camera view to texture
-	current_face = 0;
 }
 
-let camera_object_v = vec4_create();
-let camera_object_q = quat_create();
-let camera_object_sphere_center = vec4_create();
-let camera_object_vcenter = vec4_create();
-let camera_object_vup = vec4_create();
+let _camera_object_v = vec4_create();
+let _camera_object_sphere_center = vec4_create();
 
 function camera_object_create(data: camera_data_t): camera_object_t {
 	let raw = new camera_object_t();
-	raw.base = object_create();
+	raw.no_jitter_p = mat4_identity();
+	raw.frame = 0;
+	raw.base = object_create(false);
 	raw.base.ext = raw;
 	raw.data = data;
 
-	camera_object_build_projection(raw);
+	camera_object_build_proj(raw);
 
 	raw.v = mat4_identity();
 	raw.vp = mat4_identity();
@@ -43,7 +39,7 @@ function camera_object_create(data: camera_data_t): camera_object_t {
 	return raw;
 }
 
-function camera_object_build_projection(raw: camera_object_t, screen_aspect: f32 = -1) {
+function camera_object_build_proj(raw: camera_object_t, screen_aspect: f32 = -1) {
 	if (raw.data.ortho != null) {
 		raw.p = mat4_ortho(raw.data.ortho[0], raw.data.ortho[1], raw.data.ortho[2], raw.data.ortho[3], raw.data.near_plane, raw.data.far_plane);
 	}
@@ -63,13 +59,13 @@ function camera_object_remove(raw: camera_object_t) {
 }
 
 function camera_object_render_frame(raw: camera_object_t) {
-	camera_object_projection_jitter(raw);
-	camera_object_build_matrix(raw);
+	camera_object_proj_jitter(raw);
+	camera_object_build_mat(raw);
 	render_path_render_frame();
 	mat4_set_from(raw.prev_v, raw.v);
 }
 
-function camera_object_projection_jitter(raw: camera_object_t) {
+function camera_object_proj_jitter(raw: camera_object_t) {
 	let w = render_path_current_w;
 	let h = render_path_current_h;
 	mat4_set_from(raw.p, raw.no_jitter_p);
@@ -83,20 +79,20 @@ function camera_object_projection_jitter(raw: camera_object_t) {
 		x = -0.25;
 		y = -0.25;
 	}
-	raw.p._20 += x / w;
-	raw.p._21 += y / h;
+	raw.p.m[8] += x / w;
+	raw.p.m[9] += y / h;
 	raw.frame++;
 }
 
-function camera_object_build_matrix(raw: camera_object_t) {
+function camera_object_build_mat(raw: camera_object_t) {
 	transform_build_matrix(raw.base.transform);
 
 	// Prevent camera matrix scaling
 	// TODO: discards position affected by scaled camera parent
 	let sc = mat4_get_scale(raw.base.transform.world);
 	if (sc.x != 1.0 || sc.y != 1.0 || sc.z != 1.0) {
-		vec4_set(camera_object_v, 1.0 / sc.x, 1.0 / sc.y, 1.0 / sc.z);
-		mat4_scale(raw.base.transform.world, camera_object_v);
+		vec4_set(_camera_object_v, 1.0 / sc.x, 1.0 / sc.y, 1.0 / sc.z);
+		mat4_scale(raw.base.transform.world, _camera_object_v);
 	}
 
 	mat4_get_inv(raw.v, raw.base.transform.world);
@@ -114,42 +110,42 @@ function camera_object_build_matrix(raw: camera_object_t) {
 }
 
 function camera_object_right(raw: camera_object_t): vec4_t {
-	return vec4_create(raw.base.transform.local._00, raw.base.transform.local._01, raw.base.transform.local._02);
+	return vec4_create(raw.base.transform.local.m[0], raw.base.transform.local.m[1], raw.base.transform.local.m[2]);
 }
 
 function camera_object_up(raw: camera_object_t): vec4_t {
-	return vec4_create(raw.base.transform.local._10, raw.base.transform.local._11, raw.base.transform.local._12);
+	return vec4_create(raw.base.transform.local.m[4], raw.base.transform.local.m[5], raw.base.transform.local.m[6]);
 }
 
 function camera_object_look(raw: camera_object_t): vec4_t {
-	return vec4_create(-raw.base.transform.local._20, -raw.base.transform.local._21, -raw.base.transform.local._22);
+	return vec4_create(-raw.base.transform.local.m[8], -raw.base.transform.local.m[9], -raw.base.transform.local.m[10]);
 }
 
 function camera_object_right_world(raw: camera_object_t): vec4_t {
-	return vec4_create(raw.base.transform.world._00, raw.base.transform.world._01, raw.base.transform.world._02);
+	return vec4_create(raw.base.transform.world.m[0], raw.base.transform.world.m[1], raw.base.transform.world.m[2]);
 }
 
 function camera_object_up_world(raw: camera_object_t): vec4_t {
-	return vec4_create(raw.base.transform.world._10, raw.base.transform.world._11, raw.base.transform.world._12);
+	return vec4_create(raw.base.transform.world.m[4], raw.base.transform.world.m[5], raw.base.transform.world.m[6]);
 }
 
 function camera_object_look_world(raw: camera_object_t): vec4_t {
-	return vec4_create(-raw.base.transform.world._20, -raw.base.transform.world._21, -raw.base.transform.world._22);
+	return vec4_create(-raw.base.transform.world.m[8], -raw.base.transform.world.m[9], -raw.base.transform.world.m[10]);
 }
 
 function camera_object_build_view_frustum(vp: mat4_t, frustum_planes: frustum_plane_t[]) {
 	// Left plane
-	frustum_plane_set_components(frustum_planes[0], vp._03 + vp._00, vp._13 + vp._10, vp._23 + vp._20, vp._33 + vp._30);
+	frustum_plane_set_components(frustum_planes[0], vp.m[3] + vp.m[0], vp.m[7] + vp.m[4], vp.m[11] + vp.m[8], vp.m[15] + vp.m[12]);
 	// Right plane
-	frustum_plane_set_components(frustum_planes[1], vp._03 - vp._00, vp._13 - vp._10, vp._23 - vp._20, vp._33 - vp._30);
+	frustum_plane_set_components(frustum_planes[1], vp.m[3] - vp.m[0], vp.m[7] - vp.m[4], vp.m[11] - vp.m[8], vp.m[15] - vp.m[12]);
 	// Top plane
-	frustum_plane_set_components(frustum_planes[2], vp._03 - vp._01, vp._13 - vp._11, vp._23 - vp._21, vp._33 - vp._31);
+	frustum_plane_set_components(frustum_planes[2], vp.m[3] - vp.m[1], vp.m[7] - vp.m[5], vp.m[11] - vp.m[9], vp.m[15] - vp.m[13]);
 	// Bottom plane
-	frustum_plane_set_components(frustum_planes[3], vp._03 + vp._01, vp._13 + vp._11, vp._23 + vp._21, vp._33 + vp._31);
+	frustum_plane_set_components(frustum_planes[3], vp.m[3] + vp.m[1], vp.m[7] + vp.m[5], vp.m[11] + vp.m[9], vp.m[15] + vp.m[13]);
 	// Near plane
-	frustum_plane_set_components(frustum_planes[4], vp._02, vp._12, vp._22, vp._32);
+	frustum_plane_set_components(frustum_planes[4], vp.m[2], vp.m[6], vp.m[10], vp.m[14]);
 	// Far plane
-	frustum_plane_set_components(frustum_planes[5], vp._03 - vp._02, vp._13 - vp._12, vp._23 - vp._22, vp._33 - vp._32);
+	frustum_plane_set_components(frustum_planes[5], vp.m[3] - vp.m[2], vp.m[7] - vp.m[6], vp.m[11] - vp.m[10], vp.m[15] - vp.m[14]);
 	// Normalize planes
 	for (let plane of frustum_planes) {
 		frustum_plane_normalize(plane);
@@ -160,9 +156,9 @@ function camera_object_sphere_in_frustum(frustum_planes: frustum_plane_t[], t: t
 	// Use scale when radius is changing
 	let radius = t.radius * radius_scale;
 	for (let plane of frustum_planes) {
-		vec4_set(camera_object_sphere_center, transform_world_x(t) + offset_x, transform_world_y(t) + offset_y, transform_world_z(t) + offset_z);
+		vec4_set(_camera_object_sphere_center, transform_world_x(t) + offset_x, transform_world_y(t) + offset_y, transform_world_z(t) + offset_z);
 		// Outside the frustum
-		if (frustum_plane_dist_to_sphere(plane, camera_object_sphere_center, radius) + radius * 2 < 0) {
+		if (frustum_plane_dist_to_sphere(plane, _camera_object_sphere_center, radius) + radius * 2 < 0) {
 			return false;
 		}
 	}

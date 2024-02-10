@@ -12,26 +12,26 @@ let data_cached_shaders: Map<string, shader_data_t> = new Map();
 let data_cached_blobs: Map<string, ArrayBuffer> = new Map();
 let data_cached_images: Map<string, image_t> = new Map();
 let data_cached_videos: Map<string, video_t> = new Map();
-let data_cached_fonts: Map<string, font_t> = new Map();
+let data_cached_fonts: Map<string, g2_font_t> = new Map();
 ///if arm_audio
 let data_cached_sounds: Map<string, sound_t> = new Map();
 ///end
 
 let data_assets_loaded = 0;
-let data_loading_meshes: Map<string, ((d: mesh_data_t)=>void)[]> = new Map();
-let data_loading_lights: Map<string, ((d: light_data_t)=>void)[]> = new Map();
-let data_loading_cameras: Map<string, ((d: camera_data_t)=>void)[]> = new Map();
-let data_loading_materials: Map<string, ((d: material_data_t)=>void)[]> = new Map();
-let data_loading_particles: Map<string, ((d: particle_data_t)=>void)[]> = new Map();
-let data_loading_worlds: Map<string, ((d: world_data_t)=>void)[]> = new Map();
-let data_loading_shaders: Map<string, ((d: shader_data_t)=>void)[]> = new Map();
-let data_loading_scene_raws: Map<string, ((fmt: scene_t)=>void)[]> = new Map();
-let data_loading_blobs: Map<string, ((ab: ArrayBuffer)=>void)[]> = new Map();
-let data_loading_images: Map<string, ((img: image_t)=>void)[]> = new Map();
-let data_loading_videos: Map<string, ((vid: video_t)=>void)[]> = new Map();
-let data_loading_fonts: Map<string, ((f: font_t)=>void)[]> = new Map();
+let _data_loading_meshes: Map<string, ((d: mesh_data_t)=>void)[]> = new Map();
+let _data_loading_lights: Map<string, ((d: light_data_t)=>void)[]> = new Map();
+let _data_loading_cameras: Map<string, ((d: camera_data_t)=>void)[]> = new Map();
+let _data_loading_materials: Map<string, ((d: material_data_t)=>void)[]> = new Map();
+let _data_loading_particles: Map<string, ((d: particle_data_t)=>void)[]> = new Map();
+let _data_loading_worlds: Map<string, ((d: world_data_t)=>void)[]> = new Map();
+let _data_loading_shaders: Map<string, ((d: shader_data_t)=>void)[]> = new Map();
+let _data_loading_scene_raws: Map<string, ((fmt: scene_t)=>void)[]> = new Map();
+let _data_loading_blobs: Map<string, ((ab: ArrayBuffer)=>void)[]> = new Map();
+let _data_loading_images: Map<string, ((img: image_t)=>void)[]> = new Map();
+let _data_loading_videos: Map<string, ((vid: video_t)=>void)[]> = new Map();
+let _data_loading_fonts: Map<string, ((f: g2_font_t)=>void)[]> = new Map();
 ///if arm_audio
-let data_loading_sounds: Map<string, ((snd: sound_t)=>void)[]> = new Map();
+let _data_loading_sounds: Map<string, ((snd: sound_t)=>void)[]> = new Map();
 ///end
 
 function data_sep(): string {
@@ -83,7 +83,7 @@ function data_delete_all() {
 	}
 	data_cached_videos = new Map();
 	for (let c of data_cached_fonts.values()) {
-		font_unload(c);
+		g2_font_unload(c);
 	}
 	data_cached_fonts = new Map();
 }
@@ -96,21 +96,21 @@ function data_get_mesh(file: string, name: string, done: (md: mesh_data_t)=>void
 		return;
 	}
 
-	let loading = data_loading_meshes.get(handle);
+	let loading = _data_loading_meshes.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_meshes.set(handle, [done]);
+	_data_loading_meshes.set(handle, [done]);
 
 	mesh_data_parse(file, name, function (b: mesh_data_t) {
 		data_cached_meshes.set(handle, b);
 		b._handle = handle;
-		for (let f of data_loading_meshes.get(handle)) {
+		for (let f of _data_loading_meshes.get(handle)) {
 			f(b);
 		}
-		data_loading_meshes.delete(handle);
+		_data_loading_meshes.delete(handle);
 	});
 }
 
@@ -132,20 +132,20 @@ function data_get_light(file: string, name: string, done: (ld: light_data_t)=>vo
 		return;
 	}
 
-	let loading = data_loading_lights.get(handle);
+	let loading = _data_loading_lights.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_lights.set(handle, [done]);
+	_data_loading_lights.set(handle, [done]);
 
-	light_data_parse(file, name, function(b: light_data_t) {
+	light_data_parse(file, name, function (b: light_data_t) {
 		data_cached_lights.set(handle, b);
-		for (let f of data_loading_lights.get(handle)) {
+		for (let f of _data_loading_lights.get(handle)) {
 			f(b);
 		}
-		data_loading_lights.delete(handle);
+		_data_loading_lights.delete(handle);
 	});
 }
 
@@ -157,20 +157,20 @@ function data_get_camera(file: string, name: string, done: (cd: camera_data_t)=>
 		return;
 	}
 
-	let loading = data_loading_cameras.get(handle);
+	let loading = _data_loading_cameras.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_cameras.set(handle, [done]);
+	_data_loading_cameras.set(handle, [done]);
 
 	camera_data_parse(file, name, function (b: camera_data_t) {
 		data_cached_cameras.set(handle, b);
-		for (let f of data_loading_cameras.get(handle)) {
+		for (let f of _data_loading_cameras.get(handle)) {
 			f(b);
 		}
-		data_loading_cameras.delete(handle);
+		_data_loading_cameras.delete(handle);
 	});
 }
 
@@ -182,20 +182,20 @@ function data_get_material(file: string, name: string, done: (md: material_data_
 		return;
 	}
 
-	let loading = data_loading_materials.get(handle);
+	let loading = _data_loading_materials.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_materials.set(handle, [done]);
+	_data_loading_materials.set(handle, [done]);
 
 	material_data_parse(file, name, function (b: material_data_t) {
 		data_cached_materials.set(handle, b);
-		for (let f of data_loading_materials.get(handle)) {
+		for (let f of _data_loading_materials.get(handle)) {
 			f(b);
 		}
-		data_loading_materials.delete(handle);
+		_data_loading_materials.delete(handle);
 	});
 }
 
@@ -207,20 +207,20 @@ function data_get_particle(file: string, name: string, done: (pd: particle_data_
 		return;
 	}
 
-	let loading = data_loading_particles.get(handle);
+	let loading = _data_loading_particles.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_particles.set(handle, [done]);
+	_data_loading_particles.set(handle, [done]);
 
 	particle_data_parse(file, name, function (b: particle_data_t) {
 		data_cached_particles.set(handle, b);
-		for (let f of data_loading_particles.get(handle)) {
+		for (let f of _data_loading_particles.get(handle)) {
 			f(b);
 		}
-		data_loading_particles.delete(handle);
+		_data_loading_particles.delete(handle);
 	});
 }
 
@@ -237,47 +237,49 @@ function data_get_world(file: string, name: string, done: (wd: world_data_t)=>vo
 		return;
 	}
 
-	let loading = data_loading_worlds.get(handle);
+	let loading = _data_loading_worlds.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_worlds.set(handle, [done]);
+	_data_loading_worlds.set(handle, [done]);
 
 	world_data_parse(file, name, function (b: world_data_t) {
 		data_cached_worlds.set(handle, b);
-		for (let f of data_loading_worlds.get(handle)) {
+		for (let f of _data_loading_worlds.get(handle)) {
 			f(b);
 		}
-		data_loading_worlds.delete(handle);
+		_data_loading_worlds.delete(handle);
 	});
 }
 
 function data_get_shader(file: string, name: string, done: (sd: shader_data_t)=>void, override_context: shader_override_t = null) {
 	// Only one context override per shader data for now
 	let cache_name = name;
-	if (override_context != null) cache_name += "2";
+	if (override_context != null) {
+		cache_name += "2";
+	}
 	let cached = data_cached_shaders.get(cache_name); // Shader must have unique name
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = data_loading_shaders.get(cache_name);
+	let loading = _data_loading_shaders.get(cache_name);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_shaders.set(cache_name, [done]);
+	_data_loading_shaders.set(cache_name, [done]);
 
 	shader_data_parse(file, name, function (b: shader_data_t) {
 		data_cached_shaders.set(cache_name, b);
-		for (let f of data_loading_shaders.get(cache_name)) {
+		for (let f of _data_loading_shaders.get(cache_name)) {
 			f(b);
 		}
-		data_loading_shaders.delete(cache_name);
+		_data_loading_shaders.delete(cache_name);
 	}, override_context);
 }
 
@@ -288,13 +290,13 @@ function data_get_scene_raw(file: string, done: (fmt: scene_t)=>void) {
 		return;
 	}
 
-	let loading = data_loading_scene_raws.get(file);
+	let loading = _data_loading_scene_raws.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_scene_raws.set(file, [done]);
+	_data_loading_scene_raws.set(file, [done]);
 
 	// If no extension specified, set to .arm
 	let ext = file.endsWith(".arm") ? "" : ".arm";
@@ -308,10 +310,10 @@ function data_get_scene_raw(file: string, done: (fmt: scene_t)=>void) {
 
 function data_return_scene_raw(file: string, parsed: scene_t) {
 	data_cached_scene_raws.set(file, parsed);
-	for (let f of data_loading_scene_raws.get(file)) {
+	for (let f of _data_loading_scene_raws.get(file)) {
 		f(parsed);
 	}
-	data_loading_scene_raws.delete(file);
+	_data_loading_scene_raws.delete(file);
 }
 
 function data_get_mesh_raw_by_name(datas: mesh_data_t[], name: string): mesh_data_t {
@@ -420,21 +422,21 @@ function data_get_blob(file: string, done: (ab: ArrayBuffer)=>void) {
 		return;
 	}
 
-	let loading = data_loading_blobs.get(file); // Is already being loaded
+	let loading = _data_loading_blobs.get(file); // Is already being loaded
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_blobs.set(file, [done]); // Start loading
+	_data_loading_blobs.set(file, [done]); // Start loading
 
-	// Krom.load_blob(resolvePath(file), function (b: ArrayBuffer) {
-		let b = Krom.loadBlob(data_resolve_path(file));
+	// krom_load_blob(resolvePath(file), function (b: ArrayBuffer) {
+		let b = krom_load_blob(data_resolve_path(file));
 		data_cached_blobs.set(file, b);
-		for (let f of data_loading_blobs.get(file)) {
+		for (let f of _data_loading_blobs.get(file)) {
 			f(b);
 		}
-		data_loading_blobs.delete(file);
+		_data_loading_blobs.delete(file);
 		data_assets_loaded++;
 	// });
 }
@@ -454,38 +456,38 @@ function data_get_image(file: string, done: (img: image_t)=>void, readable = fal
 		return;
 	}
 
-	let loading = data_loading_images.get(file);
+	let loading = _data_loading_images.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_images.set(file, [done]);
+	_data_loading_images.set(file, [done]);
 
 	///if arm_image_embed
 	let image_blob = data_cached_blobs.get(file);
 	if (image_blob != null) {
 		image_from_encoded_bytes(image_blob, ".k", function (b: image_t) {
 			data_cached_images.set(file, b);
-			for (let f of data_loading_images.get(file)) {
+			for (let f of _data_loading_images.get(file)) {
 				f(b);
 			}
-			data_loading_images.delete(file);
+			_data_loading_images.delete(file);
 			data_assets_loaded++;
-		}, null, readable);
+		}, readable);
 		return;
 	}
 	///end
 
-	// Krom.load_image(resolvePath(file), readable, function (b: image_t) {
-		let image_ = Krom.loadImage(data_resolve_path(file), readable);
+	// krom_load_image(resolvePath(file), readable, function (b: image_t) {
+		let image_ = krom_load_image(data_resolve_path(file), readable);
 		if (image_ != null) {
 			let b = image_from_texture(image_);
 			data_cached_images.set(file, b);
-			for (let f of data_loading_images.get(file)) {
+			for (let f of _data_loading_images.get(file)) {
 				f(b);
 			}
-			data_loading_images.delete(file);
+			_data_loading_images.delete(file);
 			data_assets_loaded++;
 		}
 	// });
@@ -508,21 +510,21 @@ function data_get_sound(file: string, done: (snd: sound_t)=>void) {
 		return;
 	}
 
-	let loading = data_loading_sounds.get(file);
+	let loading = _data_loading_sounds.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_sounds.set(file, [done]);
+	_data_loading_sounds.set(file, [done]);
 
-	// Krom.load_sound(data_resolve_path(file), function (b: sound_t) {
-		let b = sound_create(Krom.loadSound(data_resolve_path(file)));
+	// krom_load_sound(data_resolve_path(file), function (b: sound_t) {
+		let b = sound_create(krom_load_sound(data_resolve_path(file)));
 		data_cached_sounds.set(file, b);
-		for (let f of data_loading_sounds.get(file)) {
+		for (let f of _data_loading_sounds.get(file)) {
 			f(b);
 		}
-		data_loading_sounds.delete(file);
+		_data_loading_sounds.delete(file);
 		data_assets_loaded++;
 	// });
 }
@@ -545,15 +547,15 @@ function data_get_video(file: string, done: (vid: video_t)=>void) {
 		return;
 	}
 
-	let loading = data_loading_videos.get(file);
+	let loading = _data_loading_videos.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_videos.set(file, [done]);
+	_data_loading_videos.set(file, [done]);
 
-	// Krom.load_video(data_resolve_path(file), function (b: video_t) {
+	// krom_load_video(data_resolve_path(file), function (b: video_t) {
 	// 	cachedVideos.set(file, b);
 	// 	for (let f of data_loading_videos.get(file)) {
 	//		f(b);
@@ -572,29 +574,29 @@ function data_delete_video(handle: string) {
 	data_cached_videos.delete(handle);
 }
 
-function data_get_font(file: string, done: (f: font_t)=>void) {
+function data_get_font(file: string, done: (f: g2_font_t)=>void) {
 	let cached = data_cached_fonts.get(file);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = data_loading_fonts.get(file);
+	let loading = _data_loading_fonts.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
 	}
 
-	data_loading_fonts.set(file, [done]);
+	_data_loading_fonts.set(file, [done]);
 
-	// Krom.load_blob(resolvePath(file), function (blob: ArrayBuffer) {
-		let blob = Krom.loadBlob(data_resolve_path(file));
-		let b = font_create(blob);
+	// krom_load_blob(resolvePath(file), function (blob: ArrayBuffer) {
+		let blob = krom_load_blob(data_resolve_path(file));
+		let b = g2_font_create(blob);
 		data_cached_fonts.set(file, b);
-		for (let f of data_loading_fonts.get(file)) {
+		for (let f of _data_loading_fonts.get(file)) {
 			f(b);
 		}
-		data_loading_fonts.delete(file);
+		_data_loading_fonts.delete(file);
 		data_assets_loaded++;
 	// });
 }
@@ -604,7 +606,7 @@ function data_delete_font(handle: string) {
 	if (font == null) {
 		return;
 	}
-	font_unload(font);
+	g2_font_unload(font);
 	data_cached_fonts.delete(handle);
 }
 

@@ -5,16 +5,16 @@ class render_target_t {
 	height: i32;
 	// Optional:
 	format: string;
-	scale: f32 = 1.0;
+	scale: f32;
 	depth_buffer: string; // 2D texture
-	mipmaps: bool = false;
-	depth: i32 = 1; // 3D texture
-	is_image: bool = false; // Image
+	mipmaps: bool;
+	depth: i32; // 3D texture
+	is_image: bool; // Image
 	// Runtime:
 	depth_format: depth_format_t;
-	depth_from = "";
+	depth_from: string;
 	image: image_t; // RT or image
-	has_depth = false;
+	has_depth: bool;
 }
 
 class cached_shader_context_t {
@@ -26,6 +26,11 @@ enum draw_order_t {
 	SHADER, // Less state changes
 }
 
+let render_path_commands: ()=>void = null;
+let render_path_render_targets: Map<string, render_target_t> = new Map();
+let render_path_current_w: i32;
+let render_path_current_h: i32;
+let render_path_current_d: i32;
 let _render_path_frame_time = 0.0;
 let _render_path_frame = 0;
 let _render_path_current_target: render_target_t = null;
@@ -35,31 +40,25 @@ let _render_path_point: light_object_t = null;
 let _render_path_current_image: image_t = null;
 let _render_path_draw_order = draw_order_t.DIST;
 let _render_path_paused = false;
-
-let render_path_commands: ()=>void = null;
-let render_path_render_targets: Map<string, render_target_t> = new Map();
-let render_path_depth_to_render_target: Map<string, render_target_t> = new Map();
-let render_path_current_w: i32;
-let render_path_current_h: i32;
-let render_path_current_d: i32;
-let render_path_last_w = 0;
-let render_path_last_h = 0;
-let render_path_bind_params: string[];
-let render_path_meshes_sorted: bool;
-let render_path_scissor_set = false;
-let render_path_last_frame_time = 0.0;
-let render_path_loading = 0;
-let render_path_cached_shader_contexts: Map<string, cached_shader_context_t> = new Map();
-let render_path_depth_buffers: { name: string, format: string }[] = [];
+let _render_path_depth_to_render_target: Map<string, render_target_t> = new Map();
+let _render_path_last_w = 0;
+let _render_path_last_h = 0;
+let _render_path_bind_params: string[];
+let _render_path_meshes_sorted: bool;
+let _render_path_scissor_set = false;
+let _render_path_last_frame_time = 0.0;
+let _render_path_loading = 0;
+let _render_path_cached_shader_contexts: Map<string, cached_shader_context_t> = new Map();
+let _render_path_depth_buffers: { name: string, format: string }[] = [];
 
 function render_path_ready(): bool {
-	return render_path_loading == 0;
+	return _render_path_loading == 0;
 }
 
 ///if arm_voxels
-let render_path_voxelized = 0;
+let _render_path_voxelized = 0;
 function render_path_voxelize() { // Returns true if scene should be voxelized
-	return ++render_path_voxelized > 2 ? false : true;
+	return ++_render_path_voxelized > 2 ? false : true;
 }
 ///end
 
@@ -68,19 +67,19 @@ function render_path_render_frame() {
 		return;
 	}
 
-	if (render_path_last_w > 0 && (render_path_last_w != app_w() ||render_path_last_h != app_h())) {
+	if (_render_path_last_w > 0 && (_render_path_last_w != app_w() ||_render_path_last_h != app_h())) {
 		render_path_resize();
 	}
-	render_path_last_w = app_w();
-	render_path_last_h = app_h();
+	_render_path_last_w = app_w();
+	_render_path_last_h = app_h();
 
-	_render_path_frame_time = time_time() -render_path_last_frame_time;
-	render_path_last_frame_time = time_time();
+	_render_path_frame_time = time_time() -_render_path_last_frame_time;
+	_render_path_last_frame_time = time_time();
 
 	render_path_current_w = app_w();
 	render_path_current_h = app_h();
 	render_path_current_d = 1;
-	render_path_meshes_sorted = false;
+	_render_path_meshes_sorted = false;
 
 	for (let l of scene_lights) {
 		if (l.base.visible) {
@@ -128,7 +127,7 @@ function render_path_set_target(target: string, additional: string[] = null) {
 		}
 		render_path_begin(rt.image, additional_images);
 	}
-	render_path_bind_params = null;
+	_render_path_bind_params = null;
 }
 
 function render_path_set_depth_from(target: string, from: string) {
@@ -145,13 +144,13 @@ function render_path_begin(render_target: image_t = null, additional_targets: im
 }
 
 function render_path_end() {
-	if (render_path_scissor_set) {
+	if (_render_path_scissor_set) {
 		g4_disable_scissor();
-		render_path_scissor_set = false;
+		_render_path_scissor_set = false;
 	}
 	g4_end();
 	_render_path_current_image = null;
-	render_path_bind_params = null;
+	_render_path_bind_params = null;
 }
 
 function render_path_set_current_viewport(view_w: i32, view_h: i32) {
@@ -160,7 +159,7 @@ function render_path_set_current_viewport(view_w: i32, view_h: i32) {
 
 function render_path_set_current_scissor(view_w: i32, view_h: i32) {
 	g4_scissor(app_x(),render_path_current_h - (view_h - app_y()), view_w, view_h);
-	render_path_scissor_set = true;
+	_render_path_scissor_set = true;
 }
 
 function render_path_set_viewport(view_w: i32, view_h: i32) {
@@ -213,9 +212,9 @@ function render_path_draw_meshes(context: string) {
 function render_path_submit_draw(context: string) {
 	let camera = scene_camera;
 	let meshes = scene_meshes;
-	mesh_object_last_pipeline = null;
+	_mesh_object_last_pipeline = null;
 
-	if (!render_path_meshes_sorted && camera != null) { // Order max once per frame for now
+	if (!_render_path_meshes_sorted && camera != null) { // Order max once per frame for now
 		let cam_x = transform_world_x(camera.base.transform);
 		let cam_y = transform_world_y(camera.base.transform);
 		let cam_z = transform_world_z(camera.base.transform);
@@ -223,11 +222,11 @@ function render_path_submit_draw(context: string) {
 			mesh_object_compute_camera_dist(mesh, cam_x, cam_y, cam_z);
 		}
 		_render_path_draw_order == draw_order_t.SHADER ? render_path_sort_meshes_shader(meshes) : render_path_sort_meshes_dist(meshes);
-		render_path_meshes_sorted = true;
+		_render_path_meshes_sorted = true;
 	}
 
 	for (let m of meshes) {
-		mesh_object_render(m, context, render_path_bind_params);
+		mesh_object_render(m, context, _render_path_bind_params);
 	}
 }
 
@@ -235,12 +234,12 @@ function render_path_draw_skydome(handle: string) {
 	if (const_data_skydome_vb == null) {
 		const_data_create_skydome_data();
 	}
-	let cc: cached_shader_context_t = render_path_cached_shader_contexts.get(handle);
+	let cc: cached_shader_context_t = _render_path_cached_shader_contexts.get(handle);
 	if (cc.context == null) {
 		return; // World data not specified
 	}
 	g4_set_pipeline(cc.context._pipe_state);
-	uniforms_set_context_consts(cc.context, render_path_bind_params);
+	uniforms_set_context_consts(cc.context, _render_path_bind_params);
 	uniforms_set_obj_consts(cc.context, null); // External hosek
 	g4_set_vertex_buffer(const_data_skydome_vb);
 	g4_set_index_buffer(const_data_skydome_ib);
@@ -249,24 +248,24 @@ function render_path_draw_skydome(handle: string) {
 }
 
 function render_path_bind_target(target: string, uniform: string) {
-	if (render_path_bind_params != null) {
-		render_path_bind_params.push(target);
-		render_path_bind_params.push(uniform);
+	if (_render_path_bind_params != null) {
+		_render_path_bind_params.push(target);
+		_render_path_bind_params.push(uniform);
 	}
 	else {
-		render_path_bind_params = [target, uniform];
+		_render_path_bind_params = [target, uniform];
 	}
 }
 
 // Full-screen triangle
 function render_path_draw_shader(handle: string) {
 	// file/data_name/context
-	let cc: cached_shader_context_t = render_path_cached_shader_contexts.get(handle);
+	let cc: cached_shader_context_t = _render_path_cached_shader_contexts.get(handle);
 	if (const_data_screen_aligned_vb == null) {
 		const_data_create_screen_aligned_data();
 	}
 	g4_set_pipeline(cc.context._pipe_state);
-	uniforms_set_context_consts(cc.context,render_path_bind_params);
+	uniforms_set_context_consts(cc.context,_render_path_bind_params);
 	uniforms_set_obj_consts(cc.context, null);
 	g4_set_vertex_buffer(const_data_screen_aligned_vb);
 	g4_set_index_buffer(const_data_screen_aligned_ib);
@@ -276,27 +275,27 @@ function render_path_draw_shader(handle: string) {
 }
 
 function render_path_load_shader(handle: string) {
-	render_path_loading++;
-	let cc: cached_shader_context_t = render_path_cached_shader_contexts.get(handle);
+	_render_path_loading++;
+	let cc: cached_shader_context_t = _render_path_cached_shader_contexts.get(handle);
 	if (cc != null) {
-		render_path_loading--;
+		_render_path_loading--;
 		return;
 	}
 
 	cc = new cached_shader_context_t();
-	render_path_cached_shader_contexts.set(handle, cc);
+	_render_path_cached_shader_contexts.set(handle, cc);
 
 	// file/data_name/context
 	let shader_path = handle.split("/");
 
 	data_get_shader(shader_path[0], shader_path[1], function (res: shader_data_t) {
 		cc.context = shader_data_get_context(res, shader_path[2]);
-		render_path_loading--;
+		_render_path_loading--;
 	});
 }
 
 function render_path_unload_shader(handle: string) {
-	render_path_cached_shader_contexts.delete(handle);
+	_render_path_cached_shader_contexts.delete(handle);
 
 	// file/data_name/context
 	let shader_path = handle.split("/");
@@ -317,19 +316,13 @@ function render_path_resize() {
 
 	// Make sure depth buffer is attached to single target only and gets released once
 	for (let rt of render_path_render_targets.values()) {
-		if (rt == null ||
-			rt.width > 0 ||
-			rt.depth_from == "" ||
-			rt == render_path_depth_to_render_target.get(rt.depth_from)) {
+		if (rt == null || rt.width > 0 || rt.depth_from == "" || rt == _render_path_depth_to_render_target.get(rt.depth_from)) {
 			continue;
 		}
 
 		let nodepth: render_target_t = null;
 		for (let rt2 of render_path_render_targets.values()) {
-			if (rt2 == null ||
-				rt2.width > 0 ||
-				rt2.depth_from != "" ||
-				render_path_depth_to_render_target.get(rt2.depth_buffer) != null) {
+			if (rt2 == null || rt2.width > 0 || rt2.depth_from != "" || _render_path_depth_to_render_target.get(rt2.depth_buffer) != null) {
 				continue;
 			}
 
@@ -346,7 +339,7 @@ function render_path_resize() {
 	for (let rt of render_path_render_targets.values()) {
 		if (rt != null && rt.width == 0) {
 			let _image = rt.image;
-			app_notify_on_init(function() {
+			app_notify_on_init(function () {
 				image_unload(_image);
 			});
 			rt.image = render_path_create_image(rt, rt.depth_format);
@@ -356,7 +349,7 @@ function render_path_resize() {
 	// Attach depth buffers
 	for (let rt of render_path_render_targets.values()) {
 		if (rt != null && rt.depth_from != "") {
-			image_set_depth_from(rt.image,render_path_depth_to_render_target.get(rt.depth_from).image);
+			image_set_depth_from(rt.image,_render_path_depth_to_render_target.get(rt.depth_from).image);
 		}
 	}
 }
@@ -368,19 +361,19 @@ function render_path_create_render_target(t: render_target_t): render_target_t {
 }
 
 function render_path_create_depth_buffer(name: string, format: string = null) {
-	render_path_depth_buffers.push({ name: name, format: format });
+	_render_path_depth_buffers.push({ name: name, format: format });
 }
 
 function render_path_create_target(t: render_target_t): render_target_t {
 	// With depth buffer
 	if (t.depth_buffer != null) {
 		t.has_depth = true;
-		let depth_target = render_path_depth_to_render_target.get(t.depth_buffer);
+		let depth_target = _render_path_depth_to_render_target.get(t.depth_buffer);
 
 		if (depth_target == null) { // Create new one
-			for (let db of render_path_depth_buffers) {
+			for (let db of _render_path_depth_buffers) {
 				if (db.name == t.depth_buffer) {
-					render_path_depth_to_render_target.set(db.name, t);
+					_render_path_depth_to_render_target.set(db.name, t);
 					t.depth_format = render_path_get_depth_format(db.format);
 					t.image = render_path_create_image(t, t.depth_format);
 					break;
@@ -438,13 +431,27 @@ function render_path_create_image(t: render_target_t, depth_format: depth_format
 }
 
 function render_path_get_tex_format(s: string): tex_format_t {
-	if (s == "RGBA32") return tex_format_t.RGBA32;
-	if (s == "RGBA64") return tex_format_t.RGBA64;
-	if (s == "RGBA128") return tex_format_t.RGBA128;
-	if (s == "DEPTH16") return tex_format_t.DEPTH16;
-	if (s == "R32") return tex_format_t.R32;
-	if (s == "R16") return tex_format_t.R16;
-	if (s == "R8") return tex_format_t.R8;
+	if (s == "RGBA32") {
+		return tex_format_t.RGBA32;
+	}
+	if (s == "RGBA64") {
+		return tex_format_t.RGBA64;
+	}
+	if (s == "RGBA128") {
+		return tex_format_t.RGBA128;
+	}
+	if (s == "DEPTH16") {
+		return tex_format_t.DEPTH16;
+	}
+	if (s == "R32") {
+		return tex_format_t.R32;
+	}
+	if (s == "R16") {
+		return tex_format_t.R16;
+	}
+	if (s == "R8") {
+		return tex_format_t.R8;
+	}
 	return tex_format_t.RGBA32;
 }
 
@@ -452,13 +459,24 @@ function render_path_get_depth_format(s: string): depth_format_t {
 	if (s == null || s == "") {
 		return depth_format_t.DEPTH24;
 	}
-	if (s == "DEPTH24") return depth_format_t.DEPTH24;
-	if (s == "DEPTH16") return depth_format_t.DEPTH16;
+	if (s == "DEPTH24") {
+		return depth_format_t.DEPTH24;
+	}
+	if (s == "DEPTH16") {
+		return depth_format_t.DEPTH16;
+	}
 	return depth_format_t.DEPTH24;
 }
 
 function render_target_create(): render_target_t {
-	return new render_target_t();
+	let raw = new render_target_t();
+	raw.scale = 1.0;
+	raw.mipmaps = false;
+	raw.depth = 1;
+	raw.is_image = false;
+	raw.depth_from = "";
+	raw.has_depth = false;
+	return raw;
 }
 
 function render_target_unload(raw: render_target_t) {

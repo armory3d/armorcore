@@ -3,26 +3,33 @@ class mesh_object_t {
 	base: object_t;
 	data: mesh_data_t;
 	materials: material_data_t[];
-	material_index = 0;
+	material_index: i32;
 	///if arm_particles
 	particle_systems: particle_sys_t[]; // Particle owner
 	particle_children: mesh_object_t[];
 	particle_owner: mesh_object_t; // Particle object
-	particle_index = -1;
+	particle_index: i32;
 	///end
 	camera_dist: f32;
-	screen_size = 0.0;
-	frustum_culling = true;
+	screen_size: f32;
+	frustum_culling: bool;
 	skip_context: string; // Do not draw this context
 	force_context: string; // Draw only this context
-	prev_matrix = mat4_identity();
+	prev_matrix: mat4_t;
 }
 
-let mesh_object_last_pipeline: pipeline_t = null;
+let _mesh_object_last_pipeline: pipeline_t = null;
 
 function mesh_object_create(data: mesh_data_t, materials: material_data_t[]): mesh_object_t {
 	let raw = new mesh_object_t();
-	raw.base = object_create();
+	raw.material_index = 0;
+	///if arm_particles
+	raw.particle_index = -1;
+	///end
+	raw.screen_size = 0.0;
+	raw.frustum_culling = true;
+	raw.prev_matrix = mat4_identity();
+	raw.base = object_create(false);
 	raw.base.ext = raw;
 
 	raw.materials = materials;
@@ -149,8 +156,7 @@ function mesh_object_cull_mesh(raw: mesh_object_t, context: string, camera: came
 }
 
 function mesh_object_skip_context(raw: mesh_object_t, context: string, mat: material_data_t): bool {
-	if (mat.skip_context != null &&
-		mat.skip_context == context) {
+	if (mat.skip_context != null && mat.skip_context == context) {
 		return true;
 	}
 	return false;
@@ -248,9 +254,9 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 		let elems = scontext.vertex_elements;
 
 		// Uniforms
-		if (scontext._pipe_state != mesh_object_last_pipeline) {
+		if (scontext._pipe_state != _mesh_object_last_pipeline) {
 			g4_set_pipeline(scontext._pipe_state);
-			mesh_object_last_pipeline = scontext._pipe_state;
+			_mesh_object_last_pipeline = scontext._pipe_state;
 			// uniforms_set_context_consts(g, scontext, bind_params);
 		}
 		uniforms_set_context_consts(scontext, bind_params); //

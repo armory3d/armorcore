@@ -5,40 +5,52 @@ class anim_raw_t {
 	ext: any; // anim_bone_t | anim_object_t
 	is_skinned: bool;
 	is_sampled: bool;
-	action = "";
+	action: string;
 	///if arm_skin
 	armature: armature_t; // Bone
 	///end
-	time: f32 = 0.0;
-	speed: f32 = 1.0;
-	loop = true;
-	frame_index = 0;
+	time: f32;
+	speed: f32;
+	loop: bool;
+	frame_index: i32;
 	on_complete: ()=>void;
-	paused = false;
-	frame_time: f32 = 1 / 60;
-	blend_time: f32 = 0.0;
-	blend_current: f32 = 0.0;
-	blend_action = "";
-	blend_factor: f32 = 0.0;
-	last_frame_index = -1;
+	paused: bool;
+	frame_time: f32;
+	blend_time: f32;
+	blend_current: f32;
+	blend_action: string;
+	blend_factor: f32;
+	last_frame_index: i32;
 	marker_events: Map<string, (()=>void)[]>;
 }
 
 // Lerp
-let anim_m1 = mat4_identity();
-let anim_m2 = mat4_identity();
-let anim_vpos = vec4_create();
-let anim_vpos2 = vec4_create();
-let anim_vscale = vec4_create();
-let anim_vscale2 = vec4_create();
-let anim_q1 = quat_create();
-let anim_q2 = quat_create();
-let anim_q3 = quat_create();
-let anim_vp = vec4_create();
-let anim_vs = vec4_create();
+let _anim_m1 = mat4_identity();
+let _anim_m2 = mat4_identity();
+let _anim_vpos = vec4_create();
+let _anim_vpos2 = vec4_create();
+let _anim_vscale = vec4_create();
+let _anim_vscale2 = vec4_create();
+let _anim_q1 = quat_create();
+let _anim_q2 = quat_create();
+let _anim_q3 = quat_create();
+let _anim_vp = vec4_create();
+let _anim_vs = vec4_create();
 
 function anim_create(): anim_raw_t {
 	let raw = new anim_raw_t();
+	raw.action = "";
+	raw.time = 0.0;
+	raw.speed = 1.0;
+	raw.loop = true;
+	raw.frame_index = 0;
+	raw.paused = false;
+	raw.frame_time = 1 / 60;
+	raw.blend_time = 0.0;
+	raw.blend_current = 0.0;
+	raw.blend_action = "";
+	raw.blend_factor = 0.0;
+	raw.last_frame_index = -1;
 	scene_animations.push(raw);
 	return raw;
 }
@@ -214,24 +226,24 @@ function anim_update_anim_sampled(raw: anim_raw_t, anim: anim_t, m: mat4_t) {
 	let t2 = track.frames[ti + sign] * raw.frame_time;
 	let s: f32 = (t - t1) / (t2 - t1); // Linear
 
-	mat4_set_from_f32_array(anim_m1, track.values, ti * 16); // Offset to 4x4 matrix array
-	mat4_set_from_f32_array(anim_m2, track.values, (ti + sign) * 16);
+	mat4_set_from_f32_array(_anim_m1, track.values, ti * 16); // Offset to 4x4 matrix array
+	mat4_set_from_f32_array(_anim_m2, track.values, (ti + sign) * 16);
 
 	// Decompose
-	mat4_decompose(anim_m1, anim_vpos, anim_q1, anim_vscale);
-	mat4_decompose(anim_m2, anim_vpos2, anim_q2, anim_vscale2);
+	mat4_decompose(_anim_m1, _anim_vpos, _anim_q1, _anim_vscale);
+	mat4_decompose(_anim_m2, _anim_vpos2, _anim_q2, _anim_vscale2);
 
 	// Lerp
-	vec4_lerp(anim_vp, anim_vpos, anim_vpos2, s);
-	vec4_lerp(anim_vs, anim_vscale, anim_vscale2, s);
-	quat_lerp(anim_q3, anim_q1, anim_q2, s);
+	vec4_lerp(_anim_vp, _anim_vpos, _anim_vpos2, s);
+	vec4_lerp(_anim_vs, _anim_vscale, _anim_vscale2, s);
+	quat_lerp(_anim_q3, _anim_q1, _anim_q2, s);
 
 	// Compose
-	mat4_from_quat(m, anim_q3);
-	mat4_scale(m, anim_vs);
-	m._30 = anim_vp.x;
-	m._31 = anim_vp.y;
-	m._32 = anim_vp.z;
+	mat4_from_quat(m, _anim_q3);
+	mat4_scale(m, _anim_vs);
+	m.m[12] = _anim_vp.x;
+	m.m[13] = _anim_vp.y;
+	m.m[14] = _anim_vp.z;
 }
 
 function anim_set_frame(raw: anim_raw_t, frame: i32) {

@@ -3,7 +3,7 @@ let _input_occupied = false;
 let _input_registered = false;
 
 function input_reset() {
-	_input_occupied = false;
+	// _input_occupied = false;
 	mouse_reset();
 	pen_reset();
 	keyboard_reset();
@@ -25,7 +25,7 @@ function input_register() {
 	app_notify_on_end_frame(input_end_frame);
 	app_notify_on_reset(input_reset);
 	// Reset mouse delta on foreground
-	sys_notify_on_app_state(function() { mouse_reset(); }, null, null, null, null);
+	sys_notify_on_app_state(function () { mouse_reset(); }, null, null, null, null);
 	keyboard_reset();
 	gamepad_reset();
 }
@@ -393,92 +393,260 @@ function keyboard_repeat(key: string): bool {
 }
 
 function keyboard_key_code(key: key_code_t): string {
-	if (key == key_code_t.SPACE) return "space";
-	else if (key == key_code_t.BACKSPACE) return "backspace";
-	else if (key == key_code_t.TAB) return "tab";
-	else if (key == key_code_t.RETURN) return "enter";
-	else if (key == key_code_t.SHIFT) return "shift";
-	else if (key == key_code_t.CONTROL) return "control";
+	if (key == key_code_t.SPACE) {
+		return "space";
+	}
+	else if (key == key_code_t.BACKSPACE) {
+		return "backspace";
+	}
+	else if (key == key_code_t.TAB) {
+		return "tab";
+	}
+	else if (key == key_code_t.RETURN) {
+		return "enter";
+	}
+	else if (key == key_code_t.SHIFT) {
+		return "shift";
+	}
+	else if (key == key_code_t.CONTROL) {
+		return "control";
+	}
 	///if krom_darwin
-	else if (key == key_code_t.META) return "control";
+	else if (key == key_code_t.META) {
+		return "control";
+	}
 	///end
-	else if (key == key_code_t.ALT) return "alt";
-	else if (key == key_code_t.WIN) return "win";
-	else if (key == key_code_t.ESCAPE) return "escape";
-	else if (key == key_code_t.DELETE) return "delete";
-	else if (key == key_code_t.UP) return "up";
-	else if (key == key_code_t.DOWN) return "down";
-	else if (key == key_code_t.LEFT) return "left";
-	else if (key == key_code_t.RIGHT) return "right";
-	else if (key == key_code_t.BACK) return "back";
-	else if (key == key_code_t.COMMA) return ",";
-	else if (key == key_code_t.PERIOD) return ".";
-	else if (key == key_code_t.COLON) return ":";
-	else if (key == key_code_t.SEMICOLON) return ";";
-	else if (key == key_code_t.LESS_THAN) return "<";
-	else if (key == key_code_t.EQUALS) return "=";
-	else if (key == key_code_t.GREATER_THAN) return ">";
-	else if (key == key_code_t.QUESTION_MARK) return "?";
-	else if (key == key_code_t.EXCLAMATION) return "!";
-	else if (key == key_code_t.DOUBLE_QUOTE) return '"';
-	else if (key == key_code_t.HASH) return "#";
-	else if (key == key_code_t.DOLLAR) return "$";
-	else if (key == key_code_t.PERCENT) return "%";
-	else if (key == key_code_t.AMPERSAND) return "&";
-	else if (key == key_code_t.UNDERSCORE) return "_";
-	else if (key == key_code_t.OPEN_PAREN) return "(";
-	else if (key == key_code_t.CLOSE_PAREN) return ")";
-	else if (key == key_code_t.ASTERISK) return "*";
-	else if (key == key_code_t.PIPE) return "|";
-	else if (key == key_code_t.OPEN_CURLY_BRACKET) return "{";
-	else if (key == key_code_t.CLOSE_CURLY_BRACKET) return "}";
-	else if (key == key_code_t.OPEN_BRACKET) return "[";
-	else if (key == key_code_t.CLOSE_BRACKET) return "]";
-	else if (key == key_code_t.TILDE) return "~";
-	else if (key == key_code_t.BACK_QUOTE) return "`";
-	else if (key == key_code_t.SLASH) return "/";
-	else if (key == key_code_t.BACK_SLASH) return "\\";
-	else if (key == key_code_t.AT) return "@";
-	else if (key == key_code_t.ADD) return "+";
-	else if (key == key_code_t.PLUS) return "+";
-	else if (key == key_code_t.SUBTRACT) return "-";
-	else if (key == key_code_t.HYPHEN_MINUS) return "-";
-	else if (key == key_code_t.MULTIPLY) return "*";
-	else if (key == key_code_t.DIVIDE) return "/";
-	else if (key == key_code_t.DECIMAL) return ".";
-	else if (key == key_code_t.ZERO) return "0";
-	else if (key == key_code_t.NUMPAD0) return "0";
-	else if (key == key_code_t.ONE) return "1";
-	else if (key == key_code_t.NUMPAD1) return "1";
-	else if (key == key_code_t.TWO) return "2";
-	else if (key == key_code_t.NUMPAD2) return "2";
-	else if (key == key_code_t.THREE) return "3";
-	else if (key == key_code_t.NUMPAD3) return "3";
-	else if (key == key_code_t.FOUR) return "4";
-	else if (key == key_code_t.NUMPAD4) return "4";
-	else if (key == key_code_t.FIVE) return "5";
-	else if (key == key_code_t.NUMPAD5) return "5";
-	else if (key == key_code_t.SIX) return "6";
-	else if (key == key_code_t.NUMPAD6) return "6";
-	else if (key == key_code_t.SEVEN) return "7";
-	else if (key == key_code_t.NUMPAD7) return "7";
-	else if (key == key_code_t.EIGHT) return "8";
-	else if (key == key_code_t.NUMPAD8) return "8";
-	else if (key == key_code_t.NINE) return "9";
-	else if (key == key_code_t.NUMPAD9) return "9";
-	else if (key == key_code_t.F1) return "f1";
-	else if (key == key_code_t.F2) return "f2";
-	else if (key == key_code_t.F3) return "f3";
-	else if (key == key_code_t.F4) return "f4";
-	else if (key == key_code_t.F5) return "f5";
-	else if (key == key_code_t.F6) return "f6";
-	else if (key == key_code_t.F7) return "f7";
-	else if (key == key_code_t.F8) return "f8";
-	else if (key == key_code_t.F9) return "f9";
-	else if (key == key_code_t.F10) return "f10";
-	else if (key == key_code_t.F11) return "f11";
-	else if (key == key_code_t.F12) return "f12";
-	else return String.fromCharCode(key).toLowerCase();
+	else if (key == key_code_t.ALT) {
+		return "alt";
+	}
+	else if (key == key_code_t.WIN) {
+		return "win";
+	}
+	else if (key == key_code_t.ESCAPE) {
+		return "escape";
+	}
+	else if (key == key_code_t.DELETE) {
+		return "delete";
+	}
+	else if (key == key_code_t.UP) {
+		return "up";
+	}
+	else if (key == key_code_t.DOWN) {
+		return "down";
+	}
+	else if (key == key_code_t.LEFT) {
+		return "left";
+	}
+	else if (key == key_code_t.RIGHT) {
+		return "right";
+	}
+	else if (key == key_code_t.BACK) {
+		return "back";
+	}
+	else if (key == key_code_t.COMMA) {
+		return ",";
+	}
+	else if (key == key_code_t.PERIOD) {
+		return ".";
+	}
+	else if (key == key_code_t.COLON) {
+		return ":";
+	}
+	else if (key == key_code_t.SEMICOLON) {
+		return ";";
+	}
+	else if (key == key_code_t.LESS_THAN) {
+		return "<";
+	}
+	else if (key == key_code_t.EQUALS) {
+		return "=";
+	}
+	else if (key == key_code_t.GREATER_THAN) {
+		return ">";
+	}
+	else if (key == key_code_t.QUESTION_MARK) {
+		return "?";
+	}
+	else if (key == key_code_t.EXCLAMATION) {
+		return "!";
+	}
+	else if (key == key_code_t.DOUBLE_QUOTE) {
+		return '"';
+	}
+	else if (key == key_code_t.HASH) {
+		return "#";
+	}
+	else if (key == key_code_t.DOLLAR) {
+		return "$";
+	}
+	else if (key == key_code_t.PERCENT) {
+		return "%";
+	}
+	else if (key == key_code_t.AMPERSAND) {
+		return "&";
+	}
+	else if (key == key_code_t.UNDERSCORE) {
+		return "_";
+	}
+	else if (key == key_code_t.OPEN_PAREN) {
+		return "(";
+	}
+	else if (key == key_code_t.CLOSE_PAREN) {
+		return ")";
+	}
+	else if (key == key_code_t.ASTERISK) {
+		return "*";
+	}
+	else if (key == key_code_t.PIPE) {
+		return "|";
+	}
+	else if (key == key_code_t.OPEN_CURLY_BRACKET) {
+		return "{";
+	}
+	else if (key == key_code_t.CLOSE_CURLY_BRACKET) {
+		return "}";
+	}
+	else if (key == key_code_t.OPEN_BRACKET) {
+		return "[";
+	}
+	else if (key == key_code_t.CLOSE_BRACKET) {
+		return "]";
+	}
+	else if (key == key_code_t.TILDE) {
+		return "~";
+	}
+	else if (key == key_code_t.BACK_QUOTE) {
+		return "`";
+	}
+	else if (key == key_code_t.SLASH) {
+		return "/";
+	}
+	else if (key == key_code_t.BACK_SLASH) {
+		return "\\";
+	}
+	else if (key == key_code_t.AT) {
+		return "@";
+	}
+	else if (key == key_code_t.ADD) {
+		return "+";
+	}
+	else if (key == key_code_t.PLUS) {
+		return "+";
+	}
+	else if (key == key_code_t.SUBTRACT) {
+		return "-";
+	}
+	else if (key == key_code_t.HYPHEN_MINUS) {
+		return "-";
+	}
+	else if (key == key_code_t.MULTIPLY) {
+		return "*";
+	}
+	else if (key == key_code_t.DIVIDE) {
+		return "/";
+	}
+	else if (key == key_code_t.DECIMAL) {
+		return ".";
+	}
+	else if (key == key_code_t.ZERO) {
+		return "0";
+	}
+	else if (key == key_code_t.NUMPAD0) {
+		return "0";
+	}
+	else if (key == key_code_t.ONE) {
+		return "1";
+	}
+	else if (key == key_code_t.NUMPAD1) {
+		return "1";
+	}
+	else if (key == key_code_t.TWO) {
+		return "2";
+	}
+	else if (key == key_code_t.NUMPAD2) {
+		return "2";
+	}
+	else if (key == key_code_t.THREE) {
+		return "3";
+	}
+	else if (key == key_code_t.NUMPAD3) {
+		return "3";
+	}
+	else if (key == key_code_t.FOUR) {
+		return "4";
+	}
+	else if (key == key_code_t.NUMPAD4) {
+		return "4";
+	}
+	else if (key == key_code_t.FIVE) {
+		return "5";
+	}
+	else if (key == key_code_t.NUMPAD5) {
+		return "5";
+	}
+	else if (key == key_code_t.SIX) {
+		return "6";
+	}
+	else if (key == key_code_t.NUMPAD6) {
+		return "6";
+	}
+	else if (key == key_code_t.SEVEN) {
+		return "7";
+	}
+	else if (key == key_code_t.NUMPAD7) {
+		return "7";
+	}
+	else if (key == key_code_t.EIGHT) {
+		return "8";
+	}
+	else if (key == key_code_t.NUMPAD8) {
+		return "8";
+	}
+	else if (key == key_code_t.NINE) {
+		return "9";
+	}
+	else if (key == key_code_t.NUMPAD9) {
+		return "9";
+	}
+	else if (key == key_code_t.F1) {
+		return "f1";
+	}
+	else if (key == key_code_t.F2) {
+		return "f2";
+	}
+	else if (key == key_code_t.F3) {
+		return "f3";
+	}
+	else if (key == key_code_t.F4) {
+		return "f4";
+	}
+	else if (key == key_code_t.F5) {
+		return "f5";
+	}
+	else if (key == key_code_t.F6) {
+		return "f6";
+	}
+	else if (key == key_code_t.F7) {
+		return "f7";
+	}
+	else if (key == key_code_t.F8) {
+		return "f8";
+	}
+	else if (key == key_code_t.F9) {
+		return "f9";
+	}
+	else if (key == key_code_t.F10) {
+		return "f10";
+	}
+	else if (key == key_code_t.F11) {
+		return "f11";
+	}
+	else if (key == key_code_t.F12) {
+		return "f12";
+	}
+	else {
+		return String.fromCharCode(key).toLowerCase();
+	}
 }
 
 function keyboard_down_listener(code: key_code_t) {
@@ -512,25 +680,6 @@ function keyboard_up_listener(code: key_code_t) {
 
 function keyboard_press_listener(char: string) {}
 
-class gamepad_stick_t {
-	x = 0.0;
-	y = 0.0;
-	last_x = 0.0;
-	last_y = 0.0;
-	moved = false;
-	movement_x = 0.0;
-	movement_y = 0.0;
-}
-
-class gamepad_t {
-	buttons_down: f32[] = []; // Intensity 0 - 1
-	buttons_started: bool[] = [];
-	buttons_released: bool[] = [];
-	buttons_frame: i32[] = [];
-	left_stick = new gamepad_stick_t();
-	right_stick = new gamepad_stick_t();
-}
-
 let gamepad_buttons_ps = ["cross", "circle", "square", "triangle", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
 let gamepad_buttons_xbox = ["a", "b", "x", "y", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
 let gamepad_buttons = gamepad_buttons_ps;
@@ -554,10 +703,33 @@ function gamepad_end_frame() {
 	}
 }
 
+function gamepad_stick_create(): gamepad_stick_t {
+	let raw = new gamepad_stick_t();
+	raw.x = 0.0;
+	raw.y = 0.0;
+	raw.last_x = 0.0;
+	raw.last_y = 0.0;
+	raw.moved = false;
+	raw.movement_x = 0.0;
+	raw.movement_y = 0.0;
+	return raw;
+}
+
+function gamepad_create(): gamepad_t {
+	let raw = new gamepad_t();
+	raw.buttons_down = [];
+	raw.buttons_started = [];
+	raw.buttons_released = [];
+	raw.buttons_frame = [];
+	raw.left_stick = gamepad_stick_create();
+	raw.right_stick = gamepad_stick_create();
+	return raw;
+}
+
 function gamepad_reset() {
 	gamepad_raws = [];
 	for (let i = 0; i < 4; ++i) {
-		let g = new gamepad_t();
+		let g = gamepad_create();
 		gamepad_raws.push(g);
 		for (let s of gamepad_buttons) {
 			g.buttons_down.push(0.0);
@@ -620,6 +792,25 @@ function gamepad_button_listener(i: i32, button: i32, value: f32) {
 	else {
 		gamepad_raws[i].buttons_released[button] = true;
 	}
+}
+
+class gamepad_stick_t {
+	x: f32;
+	y: f32;
+	last_x: f32;
+	last_y: f32;
+	moved: bool;
+	movement_x: f32;
+	movement_y: f32;
+}
+
+class gamepad_t {
+	buttons_down: f32[]; // Intensity 0 - 1
+	buttons_started: bool[];
+	buttons_released: bool[];
+	buttons_frame: i32[];
+	left_stick: gamepad_stick_t;
+	right_stick: gamepad_stick_t;
 }
 
 enum key_code_t {

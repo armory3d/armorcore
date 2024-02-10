@@ -408,7 +408,7 @@ namespace {
 		#endif
 	}
 
-	void krom_set_application_name(ARGS) {
+	void krom_set_app_name(ARGS) {
 		// Name used by kinc_internal_save_path()
 		SCOPE();
 		String::Utf8Value name(isolate, args[0]);
@@ -433,17 +433,16 @@ namespace {
 		}
 	}
 
-	void krom_clear_fast(Local<Object> receiver, int flags, int color, float depth, int stencil) {
-		kinc_g4_clear(flags, color, depth, stencil);
+	void krom_g4_clear_fast(Local<Object> receiver, int flags, int color, float depth) {
+		kinc_g4_clear(flags, color, depth, 0);
 	}
 
-	void krom_clear(ARGS) {
+	void krom_g4_clear(ARGS) {
 		SCOPE();
 		int flags = TO_I32(args[0]);
 		int color = TO_I32(args[1]);
 		float depth = TO_F32(args[2]);
-		int stencil = TO_I32(args[3]);
-		krom_clear_fast(args.This(), flags, color, depth, stencil);
+		krom_g4_clear_fast(args.This(), flags, color, depth);
 	}
 
 	void krom_set_update_callback(ARGS) {
@@ -639,14 +638,14 @@ namespace {
 		krom_show_keyboard_fast(args.This(), show);
 	}
 
-	void krom_create_indexbuffer(ARGS) {
+	void krom_g4_create_index_buffer(ARGS) {
 		SCOPE();
 		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)malloc(sizeof(kinc_g4_index_buffer_t));
 		kinc_g4_index_buffer_init(buffer, TO_I32(args[0]), KINC_G4_INDEX_BUFFER_FORMAT_32BIT, KINC_G4_USAGE_STATIC);
 		RETURN_OBJ(buffer)
 	}
 
-	void krom_delete_indexbuffer(ARGS) {
+	void krom_g4_delete_index_buffer(ARGS) {
 		SCOPE();
 		Local<External> field = Local<External>::Cast(GET_INTERNAL(args[0]));
 		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)field->Value();
@@ -654,7 +653,7 @@ namespace {
 		free(buffer);
 	}
 
-	void krom_lock_indexbuffer(ARGS) {
+	void krom_g4_lock_index_buffer(ARGS) {
 		SCOPE();
 		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		void *vertices = kinc_g4_index_buffer_lock_all(buffer);
@@ -664,19 +663,19 @@ namespace {
 		args.GetReturnValue().Set(Uint32Array::New(abuffer, 0, kinc_g4_index_buffer_count(buffer)));
 	}
 
-	void krom_unlock_indexbuffer(ARGS) {
+	void krom_g4_unlock_index_buffer(ARGS) {
 		SCOPE();
 		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_index_buffer_unlock_all(buffer);
 	}
 
-	void krom_set_indexbuffer(ARGS) {
+	void krom_g4_set_index_buffer(ARGS) {
 		SCOPE();
 		kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_set_index_buffer(buffer);
 	}
 
-	void krom_create_vertexbuffer(ARGS) {
+	void krom_g4_create_vertex_buffer(ARGS) {
 		SCOPE();
 		Local<Object> js_structure = TO_OBJ(args[1]);
 		int32_t length = TO_I32(OBJ_GET(js_structure, "length"));
@@ -695,36 +694,33 @@ namespace {
 		RETURN_OBJ(buffer);
 	}
 
-	void krom_delete_vertexbuffer(ARGS) {
+	void krom_g4_delete_vertex_buffer(ARGS) {
 		SCOPE();
 		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_vertex_buffer_destroy(buffer);
 		free(buffer);
 	}
 
-	void krom_lock_vertex_buffer(ARGS) {
+	void krom_g4_lock_vertex_buffer(ARGS) {
 		SCOPE();
 		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
-		int start = TO_I32(args[1]);
-		int count = TO_I32(args[2]);
-		float *vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
-		RETURN_BUFFER(vertices, (count * kinc_g4_vertex_buffer_stride(buffer)));
+		float *vertices = kinc_g4_vertex_buffer_lock_all(buffer);
+		RETURN_BUFFER(vertices, (kinc_g4_vertex_buffer_count(buffer) * kinc_g4_vertex_buffer_stride(buffer)));
 	}
 
-	void krom_unlock_vertex_buffer(ARGS) {
+	void krom_g4_unlock_vertex_buffer(ARGS) {
 		SCOPE();
 		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
-		int count = TO_I32(args[1]);
-		kinc_g4_vertex_buffer_unlock(buffer, count);
+		kinc_g4_vertex_buffer_unlock_all(buffer);
 	}
 
-	void krom_set_vertexbuffer(ARGS) {
+	void krom_g4_set_vertex_buffer(ARGS) {
 		SCOPE();
 		kinc_g4_vertex_buffer_t *buffer = (kinc_g4_vertex_buffer_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_set_vertex_buffer(buffer);
 	}
 
-	void krom_set_vertexbuffers(ARGS) {
+	void krom_g4_set_vertex_buffers(ARGS) {
 		SCOPE();
 		kinc_g4_vertex_buffer_t *vertex_buffers[8] = { nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr };
 		Local<Object> js_array = TO_OBJ(args[0]);
@@ -737,7 +733,7 @@ namespace {
 		kinc_g4_set_vertex_buffers(vertex_buffers, length);
 	}
 
-	void krom_draw_indexed_vertices_fast(Local<Object> receiver, int start, int count) {
+	void krom_g4_draw_indexed_vertices_fast(Local<Object> receiver, int start, int count) {
 		#ifdef KORE_DIRECT3D12
 		// TODO: Prevent heapIndex overflow in texture.c.h/kinc_g5_internal_set_textures
 		waitAfterNextDraw = true;
@@ -746,27 +742,27 @@ namespace {
 		else kinc_g4_draw_indexed_vertices_from_to(start, count);
 	}
 
-	void krom_draw_indexed_vertices(ARGS) {
+	void krom_g4_draw_indexed_vertices(ARGS) {
 		SCOPE();
 		int start = TO_I32(args[0]);
 		int count = TO_I32(args[1]);
-		krom_draw_indexed_vertices_fast(args.This(), start, count);
+		krom_g4_draw_indexed_vertices_fast(args.This(), start, count);
 	}
 
-	void krom_draw_indexed_vertices_instanced_fast(Local<Object> receiver, int instance_count, int start, int count) {
+	void krom_g4_draw_indexed_vertices_instanced_fast(Local<Object> receiver, int instance_count, int start, int count) {
 		if (count < 0) kinc_g4_draw_indexed_vertices_instanced(instance_count);
 		else kinc_g4_draw_indexed_vertices_instanced_from_to(instance_count, start, count);
 	}
 
-	void krom_draw_indexed_vertices_instanced(ARGS) {
+	void krom_g4_draw_indexed_vertices_instanced(ARGS) {
 		SCOPE();
 		int instance_count = TO_I32(args[0]);
 		int start = TO_I32(args[1]);
 		int count = TO_I32(args[2]);
-		krom_draw_indexed_vertices_instanced_fast(args.This(), instance_count, start, count);
+		krom_g4_draw_indexed_vertices_instanced_fast(args.This(), instance_count, start, count);
 	}
 
-	void krom_create_shader(ARGS) {
+	void krom_g4_create_shader(ARGS) {
 		SCOPE();
 		MAKE_CONTENT(args[0]);
 		int shader_type = TO_I32(args[1]);
@@ -775,7 +771,7 @@ namespace {
 		RETURN_OBJ(shader);
 	}
 
-	void krom_create_vertex_shader_from_source(ARGS) {
+	void krom_g4_create_vertex_shader_from_source(ARGS) {
 		SCOPE();
 		String::Utf8Value utf8_value(isolate, args[0]);
 
@@ -915,7 +911,7 @@ namespace {
 		RETURN_OBJ(shader);
 	}
 
-	void krom_create_fragment_shader_from_source(ARGS) {
+	void krom_g4_create_fragment_shader_from_source(ARGS) {
 		SCOPE();
 		String::Utf8Value utf8_value(isolate, args[0]);
 
@@ -1034,28 +1030,28 @@ namespace {
 		RETURN_OBJ(shader);
 	}
 
-	void krom_delete_shader(ARGS) {
+	void krom_g4_delete_shader(ARGS) {
 		SCOPE();
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_shader_destroy(shader);
 		free(shader);
 	}
 
-	void krom_create_pipeline(ARGS) {
+	void krom_g4_create_pipeline(ARGS) {
 		SCOPE();
 		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)malloc(sizeof(kinc_g4_pipeline_t));
 		kinc_g4_pipeline_init(pipeline);
 		RETURN_OBJ(pipeline);
 	}
 
-	void krom_delete_pipeline(ARGS) {
+	void krom_g4_delete_pipeline(ARGS) {
 		SCOPE();
 		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_pipeline_destroy(pipeline);
 		free(pipeline);
 	}
 
-	void krom_compile_pipeline(ARGS) {
+	void krom_g4_compile_pipeline(ARGS) {
 		SCOPE();
 		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_vertex_structure_t s0, s1, s2, s3;
@@ -1093,38 +1089,38 @@ namespace {
 		pipeline->input_layout[size] = nullptr;
 
 		Local<Object> state = TO_OBJ(args[9]);
-		pipeline->cull_mode = (kinc_g4_cull_mode_t)TO_I32(OBJ_GET(state, "cullMode"));
-		pipeline->depth_write = OBJ_GET(state, "depthWrite")->BooleanValue(isolate);
-		pipeline->depth_mode = (kinc_g4_compare_mode_t)TO_I32(OBJ_GET(state, "depthMode"));
-		pipeline->blend_source = (kinc_g4_blending_factor_t)TO_I32(OBJ_GET(state, "blendSource"));
-		pipeline->blend_destination = (kinc_g4_blending_factor_t)TO_I32(OBJ_GET(state, "blendDestination"));
-		pipeline->alpha_blend_source = (kinc_g4_blending_factor_t)TO_I32(OBJ_GET(state, "alphaBlendSource"));
-		pipeline->alpha_blend_destination = (kinc_g4_blending_factor_t)TO_I32(OBJ_GET(state, "alphaBlendDestination"));
+		pipeline->cull_mode = (kinc_g4_cull_mode_t)TO_I32(OBJ_GET(state, "cull_mode"));
+		pipeline->depth_write = OBJ_GET(state, "depth_write")->BooleanValue(isolate);
+		pipeline->depth_mode = (kinc_g4_compare_mode_t)TO_I32(OBJ_GET(state, "depth_mode"));
+		pipeline->blend_source = (kinc_g4_blending_factor_t)TO_I32(OBJ_GET(state, "blend_source"));
+		pipeline->blend_destination = (kinc_g4_blending_factor_t)TO_I32(OBJ_GET(state, "blend_dest"));
+		pipeline->alpha_blend_source = (kinc_g4_blending_factor_t)TO_I32(OBJ_GET(state, "alpha_blend_dource"));
+		pipeline->alpha_blend_destination = (kinc_g4_blending_factor_t)TO_I32(OBJ_GET(state, "alpha_blend_dest"));
 
-		Local<Object> maskRedArray = TO_OBJ(OBJ_GET(state, "colorWriteMaskRed"));
-		Local<Object> maskGreenArray = TO_OBJ(OBJ_GET(state, "colorWriteMaskGreen"));
-		Local<Object> maskBlueArray = TO_OBJ(OBJ_GET(state, "colorWriteMaskBlue"));
-		Local<Object> maskAlphaArray = TO_OBJ(OBJ_GET(state, "colorWriteMaskAlpha"));
+		Local<Object> mask_red_array = TO_OBJ(OBJ_GET(state, "color_write_masks_red"));
+		Local<Object> mask_green_array = TO_OBJ(OBJ_GET(state, "color_write_masks_green"));
+		Local<Object> mask_blue_array = TO_OBJ(OBJ_GET(state, "color_write_masks_blue"));
+		Local<Object> mask_alpha_array = TO_OBJ(OBJ_GET(state, "color_write_masks_alpha"));
 
 		for (int i = 0; i < 8; ++i) {
-			pipeline->color_write_mask_red[i] = ARRAY_GET(maskRedArray, i)->BooleanValue(isolate);
-			pipeline->color_write_mask_green[i] = ARRAY_GET(maskGreenArray, i)->BooleanValue(isolate);
-			pipeline->color_write_mask_blue[i] = ARRAY_GET(maskBlueArray, i)->BooleanValue(isolate);
-			pipeline->color_write_mask_alpha[i] = ARRAY_GET(maskAlphaArray, i)->BooleanValue(isolate);
+			pipeline->color_write_mask_red[i] = ARRAY_GET(mask_red_array, i)->BooleanValue(isolate);
+			pipeline->color_write_mask_green[i] = ARRAY_GET(mask_green_array, i)->BooleanValue(isolate);
+			pipeline->color_write_mask_blue[i] = ARRAY_GET(mask_blue_array, i)->BooleanValue(isolate);
+			pipeline->color_write_mask_alpha[i] = ARRAY_GET(mask_alpha_array, i)->BooleanValue(isolate);
 		}
 
-		pipeline->color_attachment_count = TO_I32(OBJ_GET(state, "colorAttachmentCount"));
-		Local<Object> colorAttachmentArray = TO_OBJ(OBJ_GET(state, "colorAttachments"));
+		pipeline->color_attachment_count = TO_I32(OBJ_GET(state, "color_attachment_count"));
+		Local<Object> color_attachment_array = TO_OBJ(OBJ_GET(state, "color_attachments"));
 		for (int i = 0; i < 8; ++i) {
-			pipeline->color_attachment[i] = (kinc_g4_render_target_format_t)TO_I32(ARRAY_GET(colorAttachmentArray, i));
+			pipeline->color_attachment[i] = (kinc_g4_render_target_format_t)TO_I32(ARRAY_GET(color_attachment_array, i));
 		}
-		pipeline->depth_attachment_bits = TO_I32(OBJ_GET(state, "depthAttachmentBits"));
-		pipeline->stencil_attachment_bits = TO_I32(OBJ_GET(state, "stencilAttachmentBits"));
+		pipeline->depth_attachment_bits = TO_I32(OBJ_GET(state, "depth_attachment_bits"));
+		pipeline->stencil_attachment_bits = 0;
 
 		kinc_g4_pipeline_compile(pipeline);
 	}
 
-	void krom_set_pipeline(ARGS) {
+	void krom_g4_set_pipeline(ARGS) {
 		SCOPE();
 		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_set_pipeline(pipeline);
@@ -1315,7 +1311,7 @@ namespace {
 		kinc_copy_to_clipboard(*utf8_value);
 	}
 
-	void krom_get_constant_location(ARGS) {
+	void krom_g4_get_constant_location(ARGS) {
 		SCOPE();
 		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		String::Utf8Value utf8_value(isolate, args[1]);
@@ -1325,7 +1321,7 @@ namespace {
 		RETURN_OBJ(location_copy);
 	}
 
-	void krom_get_texture_unit(ARGS) {
+	void krom_g4_get_texture_unit(ARGS) {
 		SCOPE();
 		kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		String::Utf8Value utf8_value(isolate, args[1]);
@@ -1335,35 +1331,35 @@ namespace {
 		RETURN_OBJ(unit_copy)
 	}
 
-	void krom_set_texture(ARGS) {
+	void krom_g4_set_texture(ARGS) {
 		SCOPE();
 		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(args[1]));
 		kinc_g4_set_texture(*unit, texture);
 	}
 
-	void krom_set_render_target(ARGS) {
+	void krom_g4_set_render_target(ARGS) {
 		SCOPE();
 		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(args[1]));
 		kinc_g4_render_target_use_color_as_texture(render_target, *unit);
 	}
 
-	void krom_set_texture_depth(ARGS) {
+	void krom_g4_set_texture_depth(ARGS) {
 		SCOPE();
 		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(args[1]));
 		kinc_g4_render_target_use_depth_as_texture(render_target, *unit);
 	}
 
-	void krom_set_image_texture(ARGS) {
+	void krom_g4_set_image_texture(ARGS) {
 		SCOPE();
 		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(args[1]));
 		kinc_g4_set_image_texture(*unit, texture);
 	}
 
-	void krom_set_texture_parameters(ARGS) {
+	void krom_g4_set_texture_parameters(ARGS) {
 		SCOPE();
 		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)TO_I32(args[1]));
@@ -1373,7 +1369,7 @@ namespace {
 		kinc_g4_set_texture_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)TO_I32(args[5]));
 	}
 
-	void krom_set_texture3d_parameters(ARGS) {
+	void krom_g4_set_texture3d_parameters(ARGS) {
 		SCOPE();
 		kinc_g4_texture_unit_t *unit = (kinc_g4_texture_unit_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)TO_I32(args[1]));
@@ -1384,28 +1380,28 @@ namespace {
 		kinc_g4_set_texture3d_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)TO_I32(args[6]));
 	}
 
-	void krom_set_bool(ARGS) {
+	void krom_g4_set_bool(ARGS) {
 		SCOPE();
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		int32_t value = TO_I32(args[1]);
 		kinc_g4_set_bool(*location, value != 0);
 	}
 
-	void krom_set_int(ARGS) {
+	void krom_g4_set_int(ARGS) {
 		SCOPE();
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		int32_t value = TO_I32(args[1]);
 		kinc_g4_set_int(*location, value);
 	}
 
-	void krom_set_float(ARGS) {
+	void krom_g4_set_float(ARGS) {
 		SCOPE();
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		float value = TO_F32(args[1]);
 		kinc_g4_set_float(*location, value);
 	}
 
-	void krom_set_float2(ARGS) {
+	void krom_g4_set_float2(ARGS) {
 		SCOPE();
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		float value1 = TO_F32(args[1]);
@@ -1413,7 +1409,7 @@ namespace {
 		kinc_g4_set_float2(*location, value1, value2);
 	}
 
-	void krom_set_float3(ARGS) {
+	void krom_g4_set_float3(ARGS) {
 		SCOPE();
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		float value1 = TO_F32(args[1]);
@@ -1422,7 +1418,7 @@ namespace {
 		kinc_g4_set_float3(*location, value1, value2, value3);
 	}
 
-	void krom_set_float4(ARGS) {
+	void krom_g4_set_float4(ARGS) {
 		SCOPE();
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		float value1 = TO_F32(args[1]);
@@ -1432,21 +1428,21 @@ namespace {
 		kinc_g4_set_float4(*location, value1, value2, value3, value4);
 	}
 
-	void krom_set_floats(ARGS) {
+	void krom_g4_set_floats(ARGS) {
 		SCOPE();
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		MAKE_CONTENT(args[1]);
 		kinc_g4_set_floats(*location, (float *)content->Data(), int(content->ByteLength() / 4));
 	}
 
-	void krom_set_matrix(ARGS) {
+	void krom_g4_set_matrix4(ARGS) {
 		SCOPE();
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		MAKE_CONTENT(args[1]);
 		kinc_g4_set_matrix4(*location, (kinc_matrix4x4_t *)content->Data());
 	}
 
-	void krom_set_matrix3(ARGS) {
+	void krom_g4_set_matrix3(ARGS) {
 		SCOPE();
 		kinc_g4_constant_location_t *location = (kinc_g4_constant_location_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		MAKE_CONTENT(args[1]);
@@ -1601,7 +1597,7 @@ namespace {
 		args.GetReturnValue().Set(buffer);
 	}
 
-	void krom_create_render_target(ARGS) {
+	void krom_g4_create_render_target(ARGS) {
 		SCOPE();
 		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
 		kinc_g4_render_target_init(render_target, TO_I32(args[0]), TO_I32(args[1]), (kinc_g4_render_target_format_t)TO_I32(args[2]), TO_I32(args[3]), TO_I32(args[4]));
@@ -1611,7 +1607,7 @@ namespace {
 		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("height"), Int32::New(isolate, render_target->height));
 	}
 
-	void krom_create_texture(ARGS) {
+	void krom_g4_create_texture(ARGS) {
 		SCOPE();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_g4_texture_init(texture, TO_I32(args[0]), TO_I32(args[1]), (kinc_image_format_t)TO_I32(args[2]));
@@ -1621,7 +1617,7 @@ namespace {
 		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("height"), Int32::New(isolate, texture->tex_height));
 	}
 
-	void krom_create_texture3d(ARGS) {
+	void krom_g4_create_texture3d(ARGS) {
 		SCOPE();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 		kinc_g4_texture_init3d(texture, TO_I32(args[0]), TO_I32(args[1]), TO_I32(args[2]), (kinc_image_format_t)TO_I32(args[3]));
@@ -1632,7 +1628,7 @@ namespace {
 		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("depth"), Int32::New(isolate, texture->tex_depth));
 	}
 
-	void krom_create_texture_from_bytes(ARGS) {
+	void krom_g4_create_texture_from_bytes(ARGS) {
 		SCOPE();
 		MAKE_CONTENT(args[0]);
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
@@ -1662,7 +1658,7 @@ namespace {
 		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("height"), Int32::New(isolate, texture->tex_height));
 	}
 
-	void krom_create_texture_from_bytes3d(ARGS) {
+	void krom_g4_create_texture_from_bytes3d(ARGS) {
 		SCOPE();
 		MAKE_CONTENT(args[0]);
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
@@ -1693,7 +1689,7 @@ namespace {
 		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("depth"), Int32::New(isolate, texture->tex_depth));
 	}
 
-	void krom_create_texture_from_encoded_bytes(ARGS) {
+	void krom_g4_create_texture_from_encoded_bytes(ARGS) {
 		SCOPE();
 		MAKE_CONTENT(args[0]);
 		String::Utf8Value format(isolate, args[1]);
@@ -1778,7 +1774,7 @@ namespace {
 		}
 	}
 
-	void krom_get_texture_pixels(ARGS) {
+	void krom_g4_get_texture_pixels(ARGS) {
 		SCOPE();
 		kinc_image_t *image = (kinc_image_t *)TO_EXTERNAL(GET_INTERNALI(args[0], 1));
 		uint8_t *data = kinc_image_get_pixels(image);
@@ -1786,7 +1782,7 @@ namespace {
 		RETURN_BUFFER(data, byteLength);
 	}
 
-	void krom_get_render_target_pixels(ARGS) {
+	void krom_g4_get_render_target_pixels(ARGS) {
 		SCOPE();
 		kinc_g4_render_target_t *rt = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 
@@ -1808,7 +1804,7 @@ namespace {
 		#endif
 	}
 
-	void krom_lock_texture(ARGS) {
+	void krom_g4_lock_texture(ARGS) {
 		SCOPE();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		uint8_t *tex = kinc_g4_texture_lock(texture);
@@ -1817,13 +1813,13 @@ namespace {
 		RETURN_BUFFER(tex, byteLength);
 	}
 
-	void krom_unlock_texture(ARGS) {
+	void krom_g4_unlock_texture(ARGS) {
 		SCOPE();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_texture_unlock(texture);
 	}
 
-	void krom_clear_texture(ARGS) {
+	void krom_g4_clear_texture(ARGS) {
 		SCOPE();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		int x = TO_I32(args[1]);
@@ -1836,19 +1832,19 @@ namespace {
 		kinc_g4_texture_clear(texture, x, y, z, width, height, depth, color);
 	}
 
-	void krom_generate_texture_mipmaps(ARGS) {
+	void krom_g4_generate_texture_mipmaps(ARGS) {
 		SCOPE();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_texture_generate_mipmaps(texture, TO_I32(args[1]));
 	}
 
-	void krom_generate_render_target_mipmaps(ARGS) {
+	void krom_g4_generate_render_target_mipmaps(ARGS) {
 		SCOPE();
 		kinc_g4_render_target_t *rt = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_render_target_generate_mipmaps(rt, TO_I32(args[1]));
 	}
 
-	void krom_set_mipmaps(ARGS) {
+	void krom_g4_set_mipmaps(ARGS) {
 		SCOPE();
 		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 
@@ -1862,57 +1858,57 @@ namespace {
 		}
 	}
 
-	void krom_set_depth_stencil_from(ARGS) {
+	void krom_g4_set_depth_from(ARGS) {
 		SCOPE();
 		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		kinc_g4_render_target_t *source_target = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(args[1]));
 		kinc_g4_render_target_set_depth_stencil_from(render_target, source_target);
 	}
 
-	void krom_viewport_fast(Local<Object> receiver, int x, int y, int w, int h) {
+	void krom_g4_viewport_fast(Local<Object> receiver, int x, int y, int w, int h) {
 		kinc_g4_viewport(x, y, w, h);
 	}
 
-	void krom_viewport(ARGS) {
+	void krom_g4_viewport(ARGS) {
 		SCOPE();
 		int x = TO_I32(args[0]);
 		int y = TO_I32(args[1]);
 		int w = TO_I32(args[2]);
 		int h = TO_I32(args[3]);
-		krom_viewport_fast(args.This(), x, y, w, h);
+		krom_g4_viewport_fast(args.This(), x, y, w, h);
 	}
 
-	void krom_scissor_fast(Local<Object> receiver, int x, int y, int w, int h) {
+	void krom_g4_scissor_fast(Local<Object> receiver, int x, int y, int w, int h) {
 		kinc_g4_scissor(x, y, w, h);
 	}
 
-	void krom_scissor(ARGS) {
+	void krom_g4_scissor(ARGS) {
 		SCOPE();
 		int x = TO_I32(args[0]);
 		int y = TO_I32(args[1]);
 		int w = TO_I32(args[2]);
 		int h = TO_I32(args[3]);
-		krom_scissor_fast(args.This(), x, y, w, h);
+		krom_g4_scissor_fast(args.This(), x, y, w, h);
 	}
 
-	void krom_disable_scissor_fast(Local<Object> receiver) {
+	void krom_g4_disable_scissor_fast(Local<Object> receiver) {
 		kinc_g4_disable_scissor();
 	}
 
-	void krom_disable_scissor(ARGS) {
-		krom_disable_scissor_fast(args.This());
+	void krom_g4_disable_scissor(ARGS) {
+		krom_g4_disable_scissor_fast(args.This());
 	}
 
-	int krom_render_targets_inverted_y_fast(Local<Object> receiver) {
+	int krom_g4_render_targets_inverted_y_fast(Local<Object> receiver) {
 		return kinc_g4_render_targets_inverted_y();
 	}
 
-	void krom_render_targets_inverted_y(ARGS) {
+	void krom_g4_render_targets_inverted_y(ARGS) {
 		SCOPE();
-		RETURN_I32(krom_render_targets_inverted_y_fast(args.This()));
+		RETURN_I32(krom_g4_render_targets_inverted_y_fast(args.This()));
 	}
 
-	void krom_begin(ARGS) {
+	void krom_g4_begin(ARGS) {
 		SCOPE();
 		if (args[0]->IsNullOrUndefined()) {
 			kinc_g4_restore_render_target();
@@ -1939,7 +1935,7 @@ namespace {
 		}
 	}
 
-	void krom_end(ARGS) {
+	void krom_g4_end(ARGS) {
 		SCOPE();
 	}
 
@@ -4138,278 +4134,282 @@ namespace {
 		Isolate::Scope isolate_scope(isolate);
 		HandleScope handle_scope(isolate);
 
-		Local<ObjectTemplate> krom = ObjectTemplate::New(isolate);
-		BIND_FUNCTION(krom, "init", krom_init);
-		BIND_FUNCTION(krom, "setApplicationName", krom_set_application_name);
-		BIND_FUNCTION(krom, "log", krom_log);
-		BIND_FUNCTION_FAST(krom, "clear", krom_clear);
-		BIND_FUNCTION(krom, "setCallback", krom_set_update_callback);
-		BIND_FUNCTION(krom, "setDropFilesCallback", krom_set_drop_files_callback);
-		BIND_FUNCTION(krom, "setCutCopyPasteCallback", krom_set_cut_copy_paste_callback); ////
-		BIND_FUNCTION(krom, "setApplicationStateCallback", krom_set_application_state_callback);
-		BIND_FUNCTION(krom, "setKeyboardDownCallback", krom_set_keyboard_down_callback);
-		BIND_FUNCTION(krom, "setKeyboardUpCallback", krom_set_keyboard_up_callback);
-		BIND_FUNCTION(krom, "setKeyboardPressCallback", krom_set_keyboard_press_callback);
-		BIND_FUNCTION(krom, "setMouseDownCallback", krom_set_mouse_down_callback);
-		BIND_FUNCTION(krom, "setMouseUpCallback", krom_set_mouse_up_callback);
-		BIND_FUNCTION(krom, "setMouseMoveCallback", krom_set_mouse_move_callback);
-		BIND_FUNCTION(krom, "setTouchDownCallback", krom_set_touch_down_callback);
-		BIND_FUNCTION(krom, "setTouchUpCallback", krom_set_touch_up_callback);
-		BIND_FUNCTION(krom, "setTouchMoveCallback", krom_set_touch_move_callback);
-		BIND_FUNCTION(krom, "setMouseWheelCallback", krom_set_mouse_wheel_callback);
-		BIND_FUNCTION(krom, "setPenDownCallback", krom_set_pen_down_callback);
-		BIND_FUNCTION(krom, "setPenUpCallback", krom_set_pen_up_callback);
-		BIND_FUNCTION(krom, "setPenMoveCallback", krom_set_pen_move_callback);
-		BIND_FUNCTION(krom, "setGamepadAxisCallback", krom_set_gamepad_axis_callback);
-		BIND_FUNCTION(krom, "setGamepadButtonCallback", krom_set_gamepad_button_callback);
-		BIND_FUNCTION_FAST(krom, "lockMouse", krom_lock_mouse);
-		BIND_FUNCTION_FAST(krom, "unlockMouse", krom_unlock_mouse);
-		BIND_FUNCTION_FAST(krom, "canLockMouse", krom_can_lock_mouse);
-		BIND_FUNCTION_FAST(krom, "isMouseLocked", krom_is_mouse_locked);
-		BIND_FUNCTION_FAST(krom, "setMousePosition", krom_set_mouse_position);
-		BIND_FUNCTION_FAST(krom, "showMouse", krom_show_mouse);
-		BIND_FUNCTION_FAST(krom, "showKeyboard", krom_show_keyboard);
-		BIND_FUNCTION(krom, "createIndexBuffer", krom_create_indexbuffer);
-		BIND_FUNCTION(krom, "deleteIndexBuffer", krom_delete_indexbuffer);
-		BIND_FUNCTION(krom, "lockIndexBuffer", krom_lock_indexbuffer);
-		BIND_FUNCTION(krom, "unlockIndexBuffer", krom_unlock_indexbuffer);
-		BIND_FUNCTION(krom, "setIndexBuffer", krom_set_indexbuffer);
-		BIND_FUNCTION(krom, "createVertexBuffer", krom_create_vertexbuffer);
-		BIND_FUNCTION(krom, "deleteVertexBuffer", krom_delete_vertexbuffer);
-		BIND_FUNCTION(krom, "lockVertexBuffer", krom_lock_vertex_buffer);
-		BIND_FUNCTION(krom, "unlockVertexBuffer", krom_unlock_vertex_buffer);
-		BIND_FUNCTION(krom, "setVertexBuffer", krom_set_vertexbuffer);
-		BIND_FUNCTION(krom, "setVertexBuffers", krom_set_vertexbuffers);
-		BIND_FUNCTION_FAST(krom, "drawIndexedVertices", krom_draw_indexed_vertices);
-		BIND_FUNCTION_FAST(krom, "drawIndexedVerticesInstanced", krom_draw_indexed_vertices_instanced);
-		BIND_FUNCTION(krom, "createShader", krom_create_shader);
-		BIND_FUNCTION(krom, "createVertexShaderFromSource", krom_create_vertex_shader_from_source);
-		BIND_FUNCTION(krom, "createFragmentShaderFromSource", krom_create_fragment_shader_from_source);
-		BIND_FUNCTION(krom, "deleteShader", krom_delete_shader);
-		BIND_FUNCTION(krom, "createPipeline", krom_create_pipeline);
-		BIND_FUNCTION(krom, "deletePipeline", krom_delete_pipeline);
-		BIND_FUNCTION(krom, "compilePipeline", krom_compile_pipeline);
-		BIND_FUNCTION(krom, "setPipeline", krom_set_pipeline);
-		BIND_FUNCTION(krom, "loadImage", krom_load_image);
-		BIND_FUNCTION(krom, "unloadImage", krom_unload_image);
+		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
+		BIND_FUNCTION(global, "krom_init", krom_init);
+		BIND_FUNCTION(global, "krom_set_app_name", krom_set_app_name);
+		BIND_FUNCTION(global, "krom_log", krom_log);
+		BIND_FUNCTION_FAST(global, "krom_g4_clear", krom_g4_clear);
+		BIND_FUNCTION(global, "krom_set_update_callback", krom_set_update_callback);
+		BIND_FUNCTION(global, "krom_set_drop_files_callback", krom_set_drop_files_callback);
+		BIND_FUNCTION(global, "krom_set_cut_copy_paste_callback", krom_set_cut_copy_paste_callback);
+		BIND_FUNCTION(global, "krom_set_application_state_callback", krom_set_application_state_callback);
+		BIND_FUNCTION(global, "krom_set_keyboard_down_callback", krom_set_keyboard_down_callback);
+		BIND_FUNCTION(global, "krom_set_keyboard_up_callback", krom_set_keyboard_up_callback);
+		BIND_FUNCTION(global, "krom_set_keyboard_press_callback", krom_set_keyboard_press_callback);
+		BIND_FUNCTION(global, "krom_set_mouse_down_callback", krom_set_mouse_down_callback);
+		BIND_FUNCTION(global, "krom_set_mouse_up_callback", krom_set_mouse_up_callback);
+		BIND_FUNCTION(global, "krom_set_mouse_move_callback", krom_set_mouse_move_callback);
+		BIND_FUNCTION(global, "krom_set_touch_down_callback", krom_set_touch_down_callback);
+		BIND_FUNCTION(global, "krom_set_touch_up_callback", krom_set_touch_up_callback);
+		BIND_FUNCTION(global, "krom_set_touch_move_callback", krom_set_touch_move_callback);
+		BIND_FUNCTION(global, "krom_set_mouse_wheel_callback", krom_set_mouse_wheel_callback);
+		BIND_FUNCTION(global, "krom_set_pen_down_callback", krom_set_pen_down_callback);
+		BIND_FUNCTION(global, "krom_set_pen_up_callback", krom_set_pen_up_callback);
+		BIND_FUNCTION(global, "krom_set_pen_move_callback", krom_set_pen_move_callback);
+		BIND_FUNCTION(global, "krom_set_gamepad_axis_callback", krom_set_gamepad_axis_callback);
+		BIND_FUNCTION(global, "krom_set_gamepad_button_callback", krom_set_gamepad_button_callback);
+		BIND_FUNCTION_FAST(global, "krom_lock_mouse", krom_lock_mouse);
+		BIND_FUNCTION_FAST(global, "krom_unlock_mouse", krom_unlock_mouse);
+		BIND_FUNCTION_FAST(global, "krom_can_lock_mouse", krom_can_lock_mouse);
+		BIND_FUNCTION_FAST(global, "krom_is_mouse_locked", krom_is_mouse_locked);
+		BIND_FUNCTION_FAST(global, "krom_set_mouse_position", krom_set_mouse_position);
+		BIND_FUNCTION_FAST(global, "krom_show_mouse", krom_show_mouse);
+		BIND_FUNCTION_FAST(global, "krom_show_keyboard", krom_show_keyboard);
+
+		BIND_FUNCTION(global, "krom_g4_create_index_buffer", krom_g4_create_index_buffer);
+		BIND_FUNCTION(global, "krom_g4_delete_index_buffer", krom_g4_delete_index_buffer);
+		BIND_FUNCTION(global, "krom_g4_lock_index_buffer", krom_g4_lock_index_buffer);
+		BIND_FUNCTION(global, "krom_g4_unlock_index_buffer", krom_g4_unlock_index_buffer);
+		BIND_FUNCTION(global, "krom_g4_set_index_buffer", krom_g4_set_index_buffer);
+		BIND_FUNCTION(global, "krom_g4_create_vertex_buffer", krom_g4_create_vertex_buffer);
+		BIND_FUNCTION(global, "krom_g4_delete_vertex_buffer", krom_g4_delete_vertex_buffer);
+		BIND_FUNCTION(global, "krom_g4_lock_vertex_buffer", krom_g4_lock_vertex_buffer);
+		BIND_FUNCTION(global, "krom_g4_unlock_vertex_buffer", krom_g4_unlock_vertex_buffer);
+		BIND_FUNCTION(global, "krom_g4_set_vertex_buffer", krom_g4_set_vertex_buffer);
+		BIND_FUNCTION(global, "krom_g4_set_vertex_buffers", krom_g4_set_vertex_buffers);
+		BIND_FUNCTION_FAST(global, "krom_g4_draw_indexed_vertices", krom_g4_draw_indexed_vertices);
+		BIND_FUNCTION_FAST(global, "krom_g4_draw_indexed_vertices_instanced", krom_g4_draw_indexed_vertices_instanced);
+		BIND_FUNCTION(global, "krom_g4_create_shader", krom_g4_create_shader);
+		BIND_FUNCTION(global, "krom_g4_create_vertex_shader_from_source", krom_g4_create_vertex_shader_from_source);
+		BIND_FUNCTION(global, "krom_g4_create_fragment_shader_from_source", krom_g4_create_fragment_shader_from_source);
+		BIND_FUNCTION(global, "krom_g4_delete_shader", krom_g4_delete_shader);
+		BIND_FUNCTION(global, "krom_g4_create_pipeline", krom_g4_create_pipeline);
+		BIND_FUNCTION(global, "krom_g4_delete_pipeline", krom_g4_delete_pipeline);
+		BIND_FUNCTION(global, "krom_g4_compile_pipeline", krom_g4_compile_pipeline);
+		BIND_FUNCTION(global, "krom_g4_set_pipeline", krom_g4_set_pipeline);
+		BIND_FUNCTION(global, "krom_load_image", krom_load_image);
+		BIND_FUNCTION(global, "krom_unload_image", krom_unload_image);
 		#ifdef WITH_AUDIO
-		BIND_FUNCTION(krom, "loadSound", krom_load_sound);
-		BIND_FUNCTION(krom, "unloadSound", krom_unload_sound);
-		BIND_FUNCTION(krom, "playSound", krom_play_sound);
-		BIND_FUNCTION(krom, "stopSound", krom_stop_sound);
+		BIND_FUNCTION(global, "krom_load_sound", krom_load_sound);
+		BIND_FUNCTION(global, "krom_unload_sound", krom_unload_sound);
+		BIND_FUNCTION(global, "krom_play_sound", krom_play_sound);
+		BIND_FUNCTION(global, "krom_stop_sound", krom_stop_sound);
 		#endif
-		BIND_FUNCTION(krom, "loadBlob", krom_load_blob);
-		BIND_FUNCTION(krom, "loadUrl", krom_load_url);
-		BIND_FUNCTION(krom, "copyToClipboard", krom_copy_to_clipboard);
-		BIND_FUNCTION(krom, "getConstantLocation", krom_get_constant_location);
-		BIND_FUNCTION(krom, "getTextureUnit", krom_get_texture_unit);
-		BIND_FUNCTION(krom, "setTexture", krom_set_texture);
-		BIND_FUNCTION(krom, "setRenderTarget", krom_set_render_target);
-		BIND_FUNCTION(krom, "setTextureDepth", krom_set_texture_depth);
-		BIND_FUNCTION(krom, "setImageTexture", krom_set_image_texture);
-		BIND_FUNCTION(krom, "setTextureParameters", krom_set_texture_parameters);
-		BIND_FUNCTION(krom, "setTexture3DParameters", krom_set_texture3d_parameters);
-		BIND_FUNCTION(krom, "setBool", krom_set_bool);
-		BIND_FUNCTION(krom, "setInt", krom_set_int);
-		BIND_FUNCTION(krom, "setFloat", krom_set_float);
-		BIND_FUNCTION(krom, "setFloat2", krom_set_float2);
-		BIND_FUNCTION(krom, "setFloat3", krom_set_float3);
-		BIND_FUNCTION(krom, "setFloat4", krom_set_float4);
-		BIND_FUNCTION(krom, "setFloats", krom_set_floats);
-		BIND_FUNCTION(krom, "setMatrix", krom_set_matrix);
-		BIND_FUNCTION(krom, "setMatrix3", krom_set_matrix3);
-		BIND_FUNCTION_FAST(krom, "getTime", krom_get_time);
-		BIND_FUNCTION_FAST(krom, "windowWidth", krom_window_width);
-		BIND_FUNCTION_FAST(krom, "windowHeight", krom_window_height);
-		BIND_FUNCTION(krom, "setWindowTitle", krom_set_window_title);
-		BIND_FUNCTION(krom, "getWindowMode", krom_get_window_mode);
-		BIND_FUNCTION(krom, "setWindowMode", krom_set_window_mode);
-		BIND_FUNCTION(krom, "resizeWindow", krom_resize_window);
-		BIND_FUNCTION(krom, "moveWindow", krom_move_window);
-		BIND_FUNCTION(krom, "screenDpi", krom_screen_dpi);
-		BIND_FUNCTION(krom, "systemId", krom_system_id);
-		BIND_FUNCTION(krom, "requestShutdown", krom_request_shutdown);
-		BIND_FUNCTION(krom, "displayCount", krom_display_count);
-		BIND_FUNCTION(krom, "displayWidth", krom_display_width);
-		BIND_FUNCTION(krom, "displayHeight", krom_display_height);
-		BIND_FUNCTION(krom, "displayX", krom_display_x);
-		BIND_FUNCTION(krom, "displayY", krom_display_y);
-		BIND_FUNCTION(krom, "displayFrequency", krom_display_frequency);
-		BIND_FUNCTION(krom, "displayIsPrimary", krom_display_is_primary);
-		BIND_FUNCTION(krom, "writeStorage", krom_write_storage);
-		BIND_FUNCTION(krom, "readStorage", krom_read_storage);
-		BIND_FUNCTION(krom, "createRenderTarget", krom_create_render_target);
-		BIND_FUNCTION(krom, "createTexture", krom_create_texture);
-		BIND_FUNCTION(krom, "createTexture3D", krom_create_texture3d);
-		BIND_FUNCTION(krom, "createTextureFromBytes", krom_create_texture_from_bytes);
-		BIND_FUNCTION(krom, "createTextureFromBytes3D", krom_create_texture_from_bytes3d);
-		BIND_FUNCTION(krom, "createTextureFromEncodedBytes", krom_create_texture_from_encoded_bytes);
-		BIND_FUNCTION(krom, "getTexturePixels", krom_get_texture_pixels);
-		BIND_FUNCTION(krom, "getRenderTargetPixels", krom_get_render_target_pixels);
-		BIND_FUNCTION(krom, "lockTexture", krom_lock_texture);
-		BIND_FUNCTION(krom, "unlockTexture", krom_unlock_texture);
-		BIND_FUNCTION(krom, "clearTexture", krom_clear_texture);
-		BIND_FUNCTION(krom, "generateTextureMipmaps", krom_generate_texture_mipmaps);
-		BIND_FUNCTION(krom, "generateRenderTargetMipmaps", krom_generate_render_target_mipmaps);
-		BIND_FUNCTION(krom, "setMipmaps", krom_set_mipmaps);
-		BIND_FUNCTION(krom, "setDepthStencilFrom", krom_set_depth_stencil_from);
-		BIND_FUNCTION_FAST(krom, "viewport", krom_viewport);
-		BIND_FUNCTION_FAST(krom, "scissor", krom_scissor);
-		BIND_FUNCTION_FAST(krom, "disableScissor", krom_disable_scissor);
-		BIND_FUNCTION_FAST(krom, "renderTargetsInvertedY", krom_render_targets_inverted_y);
-		BIND_FUNCTION(krom, "begin", krom_begin);
-		BIND_FUNCTION(krom, "end", krom_end);
-		BIND_FUNCTION(krom, "fileSaveBytes", krom_file_save_bytes);
-		BIND_FUNCTION(krom, "sysCommand", krom_sys_command);
-		BIND_FUNCTION(krom, "savePath", krom_save_path);
-		BIND_FUNCTION(krom, "getArgCount", krom_get_arg_count);
-		BIND_FUNCTION(krom, "getArg", krom_get_arg);
-		BIND_FUNCTION(krom, "getFilesLocation", krom_get_files_location);
-		BIND_FUNCTION(krom, "httpRequest", krom_http_request);
+		BIND_FUNCTION(global, "krom_load_blob", krom_load_blob);
+		BIND_FUNCTION(global, "krom_load_url", krom_load_url);
+		BIND_FUNCTION(global, "krom_copy_to_clipboard", krom_copy_to_clipboard);
+
+		BIND_FUNCTION(global, "krom_g4_get_constant_location", krom_g4_get_constant_location);
+		BIND_FUNCTION(global, "krom_g4_get_texture_unit", krom_g4_get_texture_unit);
+		BIND_FUNCTION(global, "krom_g4_set_texture", krom_g4_set_texture);
+		BIND_FUNCTION(global, "krom_g4_set_render_target", krom_g4_set_render_target);
+		BIND_FUNCTION(global, "krom_g4_set_texture_depth", krom_g4_set_texture_depth);
+		BIND_FUNCTION(global, "krom_g4_set_image_texture", krom_g4_set_image_texture);
+		BIND_FUNCTION(global, "krom_g4_set_texture_parameters", krom_g4_set_texture_parameters);
+		BIND_FUNCTION(global, "krom_g4_set_texture3d_parameters", krom_g4_set_texture3d_parameters);
+		BIND_FUNCTION(global, "krom_g4_set_bool", krom_g4_set_bool);
+		BIND_FUNCTION(global, "krom_g4_set_int", krom_g4_set_int);
+		BIND_FUNCTION(global, "krom_g4_set_float", krom_g4_set_float);
+		BIND_FUNCTION(global, "krom_g4_set_float2", krom_g4_set_float2);
+		BIND_FUNCTION(global, "krom_g4_set_float3", krom_g4_set_float3);
+		BIND_FUNCTION(global, "krom_g4_set_float4", krom_g4_set_float4);
+		BIND_FUNCTION(global, "krom_g4_set_floats", krom_g4_set_floats);
+		BIND_FUNCTION(global, "krom_g4_set_matrix4", krom_g4_set_matrix4);
+		BIND_FUNCTION(global, "krom_g4_set_matrix3", krom_g4_set_matrix3);
+
+		BIND_FUNCTION_FAST(global, "krom_get_time", krom_get_time);
+		BIND_FUNCTION_FAST(global, "krom_window_width", krom_window_width);
+		BIND_FUNCTION_FAST(global, "krom_window_height", krom_window_height);
+		BIND_FUNCTION(global, "krom_set_window_title", krom_set_window_title);
+		BIND_FUNCTION(global, "krom_get_window_mode", krom_get_window_mode);
+		BIND_FUNCTION(global, "krom_set_window_mode", krom_set_window_mode);
+		BIND_FUNCTION(global, "krom_resize_window", krom_resize_window);
+		BIND_FUNCTION(global, "krom_move_window", krom_move_window);
+		BIND_FUNCTION(global, "krom_screen_dpi", krom_screen_dpi);
+		BIND_FUNCTION(global, "krom_system_id", krom_system_id);
+		BIND_FUNCTION(global, "krom_request_shutdown", krom_request_shutdown);
+		BIND_FUNCTION(global, "krom_display_count", krom_display_count);
+		BIND_FUNCTION(global, "krom_display_width", krom_display_width);
+		BIND_FUNCTION(global, "krom_display_height", krom_display_height);
+		BIND_FUNCTION(global, "krom_display_x", krom_display_x);
+		BIND_FUNCTION(global, "krom_display_y", krom_display_y);
+		BIND_FUNCTION(global, "krom_display_frequency", krom_display_frequency);
+		BIND_FUNCTION(global, "krom_display_is_primary", krom_display_is_primary);
+		BIND_FUNCTION(global, "krom_write_storage", krom_write_storage);
+		BIND_FUNCTION(global, "krom_read_storage", krom_read_storage);
+
+		BIND_FUNCTION(global, "krom_g4_create_render_target", krom_g4_create_render_target);
+		BIND_FUNCTION(global, "krom_g4_create_texture", krom_g4_create_texture);
+		BIND_FUNCTION(global, "krom_g4_create_texture3d", krom_g4_create_texture3d);
+		BIND_FUNCTION(global, "krom_g4_create_texture_from_bytes", krom_g4_create_texture_from_bytes);
+		BIND_FUNCTION(global, "krom_g4_create_texture_from_bytes3d", krom_g4_create_texture_from_bytes3d);
+		BIND_FUNCTION(global, "krom_g4_create_texture_from_encoded_bytes", krom_g4_create_texture_from_encoded_bytes);
+		BIND_FUNCTION(global, "krom_g4_get_texture_pixels", krom_g4_get_texture_pixels);
+		BIND_FUNCTION(global, "krom_g4_get_render_target_pixels", krom_g4_get_render_target_pixels);
+		BIND_FUNCTION(global, "krom_g4_lock_texture", krom_g4_lock_texture);
+		BIND_FUNCTION(global, "krom_g4_unlock_texture", krom_g4_unlock_texture);
+		BIND_FUNCTION(global, "krom_g4_clear_texture", krom_g4_clear_texture);
+		BIND_FUNCTION(global, "krom_g4_generate_texture_mipmaps", krom_g4_generate_texture_mipmaps);
+		BIND_FUNCTION(global, "krom_g4_generate_render_target_mipmaps", krom_g4_generate_render_target_mipmaps);
+		BIND_FUNCTION(global, "krom_g4_set_mipmaps", krom_g4_set_mipmaps);
+		BIND_FUNCTION(global, "krom_g4_set_depth_from", krom_g4_set_depth_from);
+		BIND_FUNCTION_FAST(global, "krom_g4_viewport", krom_g4_viewport);
+		BIND_FUNCTION_FAST(global, "krom_g4_scissor", krom_g4_scissor);
+		BIND_FUNCTION_FAST(global, "krom_g4_disable_scissor", krom_g4_disable_scissor);
+		BIND_FUNCTION_FAST(global, "krom_g4_render_targets_inverted_y", krom_g4_render_targets_inverted_y);
+		BIND_FUNCTION(global, "krom_g4_begin", krom_g4_begin);
+		BIND_FUNCTION(global, "krom_g4_end", krom_g4_end);
+		BIND_FUNCTION(global, "krom_file_save_bytes", krom_file_save_bytes);
+		BIND_FUNCTION(global, "krom_sys_command", krom_sys_command);
+		BIND_FUNCTION(global, "krom_save_path", krom_save_path);
+		BIND_FUNCTION(global, "krom_get_arg_count", krom_get_arg_count);
+		BIND_FUNCTION(global, "krom_get_arg", krom_get_arg);
+		BIND_FUNCTION(global, "krom_get_files_location", krom_get_files_location);
+		BIND_FUNCTION(global, "krom_http_request", krom_http_request);
 		#ifdef WITH_G2
-		BIND_FUNCTION(krom, "g2_init", krom_g2_init);
-		BIND_FUNCTION(krom, "g2_begin", krom_g2_begin);
-		BIND_FUNCTION(krom, "g2_end", krom_g2_end);
-		BIND_FUNCTION(krom, "g2_draw_scaled_sub_image", krom_g2_draw_scaled_sub_image);
-		BIND_FUNCTION(krom, "g2_fill_triangle", krom_g2_fill_triangle);
-		BIND_FUNCTION(krom, "g2_fill_rect", krom_g2_fill_rect);
-		BIND_FUNCTION(krom, "g2_draw_rect", krom_g2_draw_rect);
-		BIND_FUNCTION(krom, "g2_draw_line", krom_g2_draw_line);
-		BIND_FUNCTION(krom, "g2_draw_string", krom_g2_draw_string);
-		BIND_FUNCTION(krom, "g2_set_font", krom_g2_set_font);
-		BIND_FUNCTION(krom, "g2_font_init", krom_g2_font_init);
-		BIND_FUNCTION(krom, "g2_font_13", krom_g2_font_13);
-		BIND_FUNCTION(krom, "g2_font_set_glyphs", krom_g2_font_set_glyphs);
-		BIND_FUNCTION(krom, "g2_font_count", krom_g2_font_count);
-		BIND_FUNCTION(krom, "g2_font_height", krom_g2_font_height);
-		BIND_FUNCTION(krom, "g2_string_width", krom_g2_string_width);
-		BIND_FUNCTION(krom, "g2_set_bilinear_filter", krom_g2_set_bilinear_filter);
-		BIND_FUNCTION(krom, "g2_restore_render_target", krom_g2_restore_render_target);
-		BIND_FUNCTION(krom, "g2_set_render_target", krom_g2_set_render_target);
-		BIND_FUNCTION(krom, "g2_set_color", krom_g2_set_color);
-		BIND_FUNCTION(krom, "g2_set_pipeline", krom_g2_set_pipeline);
-		BIND_FUNCTION(krom, "g2_set_transform", krom_g2_set_transform);
-		BIND_FUNCTION(krom, "g2_fill_circle", krom_g2_fill_circle);
-		BIND_FUNCTION(krom, "g2_draw_circle", krom_g2_draw_circle);
-		BIND_FUNCTION(krom, "g2_draw_cubic_bezier", krom_g2_draw_cubic_bezier);
+		BIND_FUNCTION(global, "krom_g2_init", krom_g2_init);
+		BIND_FUNCTION(global, "krom_g2_begin", krom_g2_begin);
+		BIND_FUNCTION(global, "krom_g2_end", krom_g2_end);
+		BIND_FUNCTION(global, "krom_g2_draw_scaled_sub_image", krom_g2_draw_scaled_sub_image);
+		BIND_FUNCTION(global, "krom_g2_fill_triangle", krom_g2_fill_triangle);
+		BIND_FUNCTION(global, "krom_g2_fill_rect", krom_g2_fill_rect);
+		BIND_FUNCTION(global, "krom_g2_draw_rect", krom_g2_draw_rect);
+		BIND_FUNCTION(global, "krom_g2_draw_line", krom_g2_draw_line);
+		BIND_FUNCTION(global, "krom_g2_draw_string", krom_g2_draw_string);
+		BIND_FUNCTION(global, "krom_g2_set_font", krom_g2_set_font);
+		BIND_FUNCTION(global, "krom_g2_font_init", krom_g2_font_init);
+		BIND_FUNCTION(global, "krom_g2_font_13", krom_g2_font_13);
+		BIND_FUNCTION(global, "krom_g2_font_set_glyphs", krom_g2_font_set_glyphs);
+		BIND_FUNCTION(global, "krom_g2_font_count", krom_g2_font_count);
+		BIND_FUNCTION(global, "krom_g2_font_height", krom_g2_font_height);
+		BIND_FUNCTION(global, "krom_g2_string_width", krom_g2_string_width);
+		BIND_FUNCTION(global, "krom_g2_set_bilinear_filter", krom_g2_set_bilinear_filter);
+		BIND_FUNCTION(global, "krom_g2_restore_render_target", krom_g2_restore_render_target);
+		BIND_FUNCTION(global, "krom_g2_set_render_target", krom_g2_set_render_target);
+		BIND_FUNCTION(global, "krom_g2_set_color", krom_g2_set_color);
+		BIND_FUNCTION(global, "krom_g2_set_pipeline", krom_g2_set_pipeline);
+		BIND_FUNCTION(global, "krom_g2_set_transform", krom_g2_set_transform);
+		BIND_FUNCTION(global, "krom_g2_fill_circle", krom_g2_fill_circle);
+		BIND_FUNCTION(global, "krom_g2_draw_circle", krom_g2_draw_circle);
+		BIND_FUNCTION(global, "krom_g2_draw_cubic_bezier", krom_g2_draw_cubic_bezier);
 		#endif
-		BIND_FUNCTION(krom, "setSaveAndQuitCallback", krom_set_save_and_quit_callback);
-		BIND_FUNCTION(krom, "setMouseCursor", krom_set_mouse_cursor);
-		BIND_FUNCTION_FAST(krom, "delayIdleSleep", krom_delay_idle_sleep);
+		BIND_FUNCTION(global, "krom_set_save_and_quit_callback", krom_set_save_and_quit_callback);
+		BIND_FUNCTION(global, "krom_set_mouse_cursor", krom_set_mouse_cursor);
+		BIND_FUNCTION_FAST(global, "krom_delay_idle_sleep", krom_delay_idle_sleep);
 		#if defined(WITH_NFD) || defined(KORE_IOS) || defined(KORE_ANDROID)
-		BIND_FUNCTION(krom, "openDialog", krom_open_dialog);
-		BIND_FUNCTION(krom, "saveDialog", krom_save_dialog);
+		BIND_FUNCTION(global, "krom_open_dialog", krom_open_dialog);
+		BIND_FUNCTION(global, "krom_save_dialog", krom_save_dialog);
 		#endif
 		#ifdef WITH_TINYDIR
-		BIND_FUNCTION(krom, "readDirectory", krom_read_directory);
+		BIND_FUNCTION(global, "krom_read_directory", krom_read_directory);
 		#endif
-		BIND_FUNCTION(krom, "fileExists", krom_file_exists);
-		BIND_FUNCTION(krom, "deleteFile", krom_delete_file);
+		BIND_FUNCTION(global, "krom_file_exists", krom_file_exists);
+		BIND_FUNCTION(global, "krom_delete_file", krom_delete_file);
 		#ifdef WITH_ZLIB
-		BIND_FUNCTION(krom, "inflate", krom_inflate);
-		BIND_FUNCTION(krom, "deflate", krom_deflate);
+		BIND_FUNCTION(global, "krom_inflate", krom_inflate);
+		BIND_FUNCTION(global, "krom_deflate", krom_deflate);
 		#endif
 		#ifdef WITH_STB_IMAGE_WRITE
-		BIND_FUNCTION(krom, "writeJpg", krom_write_jpg);
-		BIND_FUNCTION(krom, "writePng", krom_write_png);
-		BIND_FUNCTION(krom, "encodeJpg", krom_encode_jpg);
-		BIND_FUNCTION(krom, "encodePng", krom_encode_png);
+		BIND_FUNCTION(global, "krom_write_jpg", krom_write_jpg);
+		BIND_FUNCTION(global, "krom_write_png", krom_write_png);
+		BIND_FUNCTION(global, "krom_encode_jpg", krom_encode_jpg);
+		BIND_FUNCTION(global, "krom_encode_png", krom_encode_png);
 		#endif
 		#ifdef WITH_MPEG_WRITE
-		BIND_FUNCTION(krom, "writeMpeg", krom_write_mpeg);
+		BIND_FUNCTION(global, "krom_write_mpeg", krom_write_mpeg);
 		#endif
 		#ifdef WITH_ONNX
-		BIND_FUNCTION(krom, "mlInference", krom_ml_inference);
-		BIND_FUNCTION(krom, "mlUnload", krom_ml_unload);
-		#endif
-		#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
-		BIND_FUNCTION(krom, "raytraceSupported", krom_raytrace_supported);
-		BIND_FUNCTION(krom, "raytraceInit", krom_raytrace_init);
-		BIND_FUNCTION(krom, "raytraceSetTextures", krom_raytrace_set_textures);
-		BIND_FUNCTION(krom, "raytraceDispatchRays", krom_raytrace_dispatch_rays);
-		#endif
-		BIND_FUNCTION(krom, "windowX", krom_window_x);
-		BIND_FUNCTION(krom, "windowY", krom_window_y);
-		BIND_FUNCTION(krom, "language", krom_language);
-		#ifdef WITH_IRON
-		BIND_FUNCTION(krom, "io_obj_parse", krom_io_obj_parse);
-		#endif
-		#ifdef WITH_ZUI
-		BIND_FUNCTION(krom, "zui_init", krom_zui_init);
-		BIND_FUNCTION(krom, "zui_get_scale", krom_zui_get_scale);
-		BIND_FUNCTION(krom, "zui_set_scale", krom_zui_set_scale);
-		BIND_FUNCTION(krom, "zui_set_font", krom_zui_set_font);
-		BIND_FUNCTION(krom, "zui_begin", krom_zui_begin);
-		BIND_FUNCTION(krom, "zui_end", krom_zui_end);
-		BIND_FUNCTION(krom, "zui_begin_region", krom_zui_begin_region);
-		BIND_FUNCTION(krom, "zui_end_region", krom_zui_end_region);
-		BIND_FUNCTION(krom, "zui_begin_sticky", krom_zui_begin_sticky);
-		BIND_FUNCTION(krom, "zui_end_sticky", krom_zui_end_sticky);
-		BIND_FUNCTION(krom, "zui_end_input", krom_zui_end_input);
-		BIND_FUNCTION(krom, "zui_end_window", krom_zui_end_window);
-		BIND_FUNCTION(krom, "zui_end_element", krom_zui_end_element);
-		BIND_FUNCTION(krom, "zui_start_text_edit", krom_zui_start_text_edit);
-		BIND_FUNCTION(krom, "zui_input_in_rect", krom_zui_input_in_rect);
-		BIND_FUNCTION(krom, "zui_window", krom_zui_window);
-		BIND_FUNCTION(krom, "zui_button", krom_zui_button);
-		BIND_FUNCTION(krom, "zui_check", krom_zui_check);
-		BIND_FUNCTION(krom, "zui_radio", krom_zui_radio);
-		BIND_FUNCTION(krom, "zui_combo", krom_zui_combo);
-		BIND_FUNCTION(krom, "zui_slider", krom_zui_slider);
-		BIND_FUNCTION(krom, "zui_image", krom_zui_image);
-		BIND_FUNCTION(krom, "zui_text", krom_zui_text);
-		BIND_FUNCTION(krom, "zui_text_input", krom_zui_text_input);
-		BIND_FUNCTION(krom, "zui_tab", krom_zui_tab);
-		BIND_FUNCTION(krom, "zui_panel", krom_zui_panel);
-		BIND_FUNCTION(krom, "zui_handle", krom_zui_handle);
-		BIND_FUNCTION(krom, "zui_separator", krom_zui_separator);
-		BIND_FUNCTION(krom, "zui_tooltip", krom_zui_tooltip);
-		BIND_FUNCTION(krom, "zui_tooltip_image", krom_zui_tooltip_image);
-		BIND_FUNCTION(krom, "zui_row", krom_zui_row);
-		BIND_FUNCTION(krom, "zui_fill", krom_zui_fill);
-		BIND_FUNCTION(krom, "zui_rect", krom_zui_rect);
-		BIND_FUNCTION(krom, "zui_draw_rect", krom_zui_draw_rect);
-		BIND_FUNCTION(krom, "zui_draw_string", krom_zui_draw_string);
-		BIND_FUNCTION(krom, "zui_get_hovered_tab_name", krom_zui_get_hovered_tab_name);
-		BIND_FUNCTION(krom, "zui_set_hovered_tab_name", krom_zui_set_hovered_tab_name);
-		BIND_FUNCTION(krom, "zui_begin_menu", krom_zui_begin_menu);
-		BIND_FUNCTION(krom, "zui_end_menu", krom_zui_end_menu);
-		BIND_FUNCTION(krom, "zui_menu_button", krom_zui_menu_button);
-		BIND_FUNCTION(krom, "zui_float_input", krom_zui_float_input);
-		BIND_FUNCTION(krom, "zui_inline_radio", krom_zui_inline_radio);
-		BIND_FUNCTION(krom, "zui_color_wheel", krom_zui_color_wheel);
-		BIND_FUNCTION(krom, "zui_text_area", krom_zui_text_area);
-		BIND_FUNCTION(krom, "zui_text_area_coloring", krom_zui_text_area_coloring);
-		BIND_FUNCTION(krom, "zui_nodes_init", krom_zui_nodes_init);
-		BIND_FUNCTION(krom, "zui_node_canvas", krom_zui_node_canvas);
-		BIND_FUNCTION(krom, "zui_nodes_rgba_popup", krom_zui_nodes_rgba_popup);
-		BIND_FUNCTION(krom, "zui_nodes_scale", krom_zui_nodes_scale);
-		BIND_FUNCTION(krom, "zui_nodes_pan_x", krom_zui_nodes_pan_x);
-		BIND_FUNCTION(krom, "zui_nodes_pan_y", krom_zui_nodes_pan_y);
-		BIND_FUNCTION(krom, "zui_set", krom_zui_set);
-		BIND_FUNCTION(krom, "zui_get", krom_zui_get);
-		BIND_FUNCTION(krom, "zui_handle_get", krom_zui_handle_get);
-		BIND_FUNCTION(krom, "zui_handle_set", krom_zui_handle_set);
-		BIND_FUNCTION(krom, "zui_handle_ptr", krom_zui_handle_ptr);
-		BIND_FUNCTION(krom, "zui_theme_init", krom_zui_theme_init);
-		BIND_FUNCTION(krom, "zui_theme_get", krom_zui_theme_get);
-		BIND_FUNCTION(krom, "zui_theme_set", krom_zui_theme_set);
-		BIND_FUNCTION(krom, "zui_nodes_get", krom_zui_nodes_get);
-		BIND_FUNCTION(krom, "zui_nodes_set", krom_zui_nodes_set);
-		BIND_FUNCTION(krom, "zui_set_on_border_hover", krom_zui_set_on_border_hover);
-		BIND_FUNCTION(krom, "zui_set_on_text_hover", krom_zui_set_on_text_hover);
-		BIND_FUNCTION(krom, "zui_set_on_deselect_text", krom_zui_set_on_deselect_text);
-		BIND_FUNCTION(krom, "zui_set_on_tab_drop", krom_zui_set_on_tab_drop);
-		BIND_FUNCTION(krom, "zui_nodes_set_enum_texts", krom_zui_nodes_set_enum_texts);
-		BIND_FUNCTION(krom, "zui_nodes_set_on_custom_button", krom_zui_nodes_set_on_custom_button);
-		BIND_FUNCTION(krom, "zui_nodes_set_on_canvas_control", krom_zui_nodes_set_on_canvas_control);
-		BIND_FUNCTION(krom, "zui_nodes_set_on_canvas_released", krom_zui_nodes_set_on_canvas_released);
-		BIND_FUNCTION(krom, "zui_nodes_set_on_socket_released", krom_zui_nodes_set_on_socket_released);
-		BIND_FUNCTION(krom, "zui_nodes_set_on_link_drag", krom_zui_nodes_set_on_link_drag);
+		BIND_FUNCTION(global, "krom_ml_inference", krom_ml_inference);
+		BIND_FUNCTION(global, "krom_ml_unload", krom_ml_unload);
 		#endif
 
-		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
-		global->Set(TO_STR("Krom"), krom);
+		#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
+		BIND_FUNCTION(global, "krom_raytrace_supported", krom_raytrace_supported);
+		BIND_FUNCTION(global, "krom_raytrace_init", krom_raytrace_init);
+		BIND_FUNCTION(global, "krom_raytrace_set_textures", krom_raytrace_set_textures);
+		BIND_FUNCTION(global, "krom_raytrace_dispatch_rays", krom_raytrace_dispatch_rays);
+		#endif
+
+		BIND_FUNCTION(global, "krom_window_x", krom_window_x);
+		BIND_FUNCTION(global, "krom_window_y", krom_window_y);
+		BIND_FUNCTION(global, "krom_language", krom_language);
+		#ifdef WITH_IRON
+		BIND_FUNCTION(global, "krom_io_obj_parse", krom_io_obj_parse);
+		#endif
+
+		#ifdef WITH_ZUI
+		BIND_FUNCTION(global, "krom_zui_init", krom_zui_init);
+		BIND_FUNCTION(global, "krom_zui_get_scale", krom_zui_get_scale);
+		BIND_FUNCTION(global, "krom_zui_set_scale", krom_zui_set_scale);
+		BIND_FUNCTION(global, "krom_zui_set_font", krom_zui_set_font);
+		BIND_FUNCTION(global, "krom_zui_begin", krom_zui_begin);
+		BIND_FUNCTION(global, "krom_zui_end", krom_zui_end);
+		BIND_FUNCTION(global, "krom_zui_begin_region", krom_zui_begin_region);
+		BIND_FUNCTION(global, "krom_zui_end_region", krom_zui_end_region);
+		BIND_FUNCTION(global, "krom_zui_begin_sticky", krom_zui_begin_sticky);
+		BIND_FUNCTION(global, "krom_zui_end_sticky", krom_zui_end_sticky);
+		BIND_FUNCTION(global, "krom_zui_end_input", krom_zui_end_input);
+		BIND_FUNCTION(global, "krom_zui_end_window", krom_zui_end_window);
+		BIND_FUNCTION(global, "krom_zui_end_element", krom_zui_end_element);
+		BIND_FUNCTION(global, "krom_zui_start_text_edit", krom_zui_start_text_edit);
+		BIND_FUNCTION(global, "krom_zui_input_in_rect", krom_zui_input_in_rect);
+		BIND_FUNCTION(global, "krom_zui_window", krom_zui_window);
+		BIND_FUNCTION(global, "krom_zui_button", krom_zui_button);
+		BIND_FUNCTION(global, "krom_zui_check", krom_zui_check);
+		BIND_FUNCTION(global, "krom_zui_radio", krom_zui_radio);
+		BIND_FUNCTION(global, "krom_zui_combo", krom_zui_combo);
+		BIND_FUNCTION(global, "krom_zui_slider", krom_zui_slider);
+		BIND_FUNCTION(global, "krom_zui_image", krom_zui_image);
+		BIND_FUNCTION(global, "krom_zui_text", krom_zui_text);
+		BIND_FUNCTION(global, "krom_zui_text_input", krom_zui_text_input);
+		BIND_FUNCTION(global, "krom_zui_tab", krom_zui_tab);
+		BIND_FUNCTION(global, "krom_zui_panel", krom_zui_panel);
+		BIND_FUNCTION(global, "krom_zui_handle", krom_zui_handle);
+		BIND_FUNCTION(global, "krom_zui_separator", krom_zui_separator);
+		BIND_FUNCTION(global, "krom_zui_tooltip", krom_zui_tooltip);
+		BIND_FUNCTION(global, "krom_zui_tooltip_image", krom_zui_tooltip_image);
+		BIND_FUNCTION(global, "krom_zui_row", krom_zui_row);
+		BIND_FUNCTION(global, "krom_zui_fill", krom_zui_fill);
+		BIND_FUNCTION(global, "krom_zui_rect", krom_zui_rect);
+		BIND_FUNCTION(global, "krom_zui_draw_rect", krom_zui_draw_rect);
+		BIND_FUNCTION(global, "krom_zui_draw_string", krom_zui_draw_string);
+		BIND_FUNCTION(global, "krom_zui_get_hovered_tab_name", krom_zui_get_hovered_tab_name);
+		BIND_FUNCTION(global, "krom_zui_set_hovered_tab_name", krom_zui_set_hovered_tab_name);
+		BIND_FUNCTION(global, "krom_zui_begin_menu", krom_zui_begin_menu);
+		BIND_FUNCTION(global, "krom_zui_end_menu", krom_zui_end_menu);
+		BIND_FUNCTION(global, "krom_zui_menu_button", krom_zui_menu_button);
+		BIND_FUNCTION(global, "krom_zui_float_input", krom_zui_float_input);
+		BIND_FUNCTION(global, "krom_zui_inline_radio", krom_zui_inline_radio);
+		BIND_FUNCTION(global, "krom_zui_color_wheel", krom_zui_color_wheel);
+		BIND_FUNCTION(global, "krom_zui_text_area", krom_zui_text_area);
+		BIND_FUNCTION(global, "krom_zui_text_area_coloring", krom_zui_text_area_coloring);
+		BIND_FUNCTION(global, "krom_zui_nodes_init", krom_zui_nodes_init);
+		BIND_FUNCTION(global, "krom_zui_node_canvas", krom_zui_node_canvas);
+		BIND_FUNCTION(global, "krom_zui_nodes_rgba_popup", krom_zui_nodes_rgba_popup);
+		BIND_FUNCTION(global, "krom_zui_nodes_scale", krom_zui_nodes_scale);
+		BIND_FUNCTION(global, "krom_zui_nodes_pan_x", krom_zui_nodes_pan_x);
+		BIND_FUNCTION(global, "krom_zui_nodes_pan_y", krom_zui_nodes_pan_y);
+		BIND_FUNCTION(global, "krom_zui_set", krom_zui_set);
+		BIND_FUNCTION(global, "krom_zui_get", krom_zui_get);
+		BIND_FUNCTION(global, "krom_zui_handle_get", krom_zui_handle_get);
+		BIND_FUNCTION(global, "krom_zui_handle_set", krom_zui_handle_set);
+		BIND_FUNCTION(global, "krom_zui_handle_ptr", krom_zui_handle_ptr);
+		BIND_FUNCTION(global, "krom_zui_theme_init", krom_zui_theme_init);
+		BIND_FUNCTION(global, "krom_zui_theme_get", krom_zui_theme_get);
+		BIND_FUNCTION(global, "krom_zui_theme_set", krom_zui_theme_set);
+		BIND_FUNCTION(global, "krom_zui_nodes_get", krom_zui_nodes_get);
+		BIND_FUNCTION(global, "krom_zui_nodes_set", krom_zui_nodes_set);
+		BIND_FUNCTION(global, "krom_zui_set_on_border_hover", krom_zui_set_on_border_hover);
+		BIND_FUNCTION(global, "krom_zui_set_on_text_hover", krom_zui_set_on_text_hover);
+		BIND_FUNCTION(global, "krom_zui_set_on_deselect_text", krom_zui_set_on_deselect_text);
+		BIND_FUNCTION(global, "krom_zui_set_on_tab_drop", krom_zui_set_on_tab_drop);
+		BIND_FUNCTION(global, "krom_zui_nodes_set_enum_texts", krom_zui_nodes_set_enum_texts);
+		BIND_FUNCTION(global, "krom_zui_nodes_set_on_custom_button", krom_zui_nodes_set_on_custom_button);
+		BIND_FUNCTION(global, "krom_zui_nodes_set_on_canvas_control", krom_zui_nodes_set_on_canvas_control);
+		BIND_FUNCTION(global, "krom_zui_nodes_set_on_canvas_released", krom_zui_nodes_set_on_canvas_released);
+		BIND_FUNCTION(global, "krom_zui_nodes_set_on_socket_released", krom_zui_nodes_set_on_socket_released);
+		BIND_FUNCTION(global, "krom_zui_nodes_set_on_link_drag", krom_zui_nodes_set_on_link_drag);
+		#endif
 
 		#ifdef WITH_PLUGIN_EMBED
 		plugin_embed(isolate, global);

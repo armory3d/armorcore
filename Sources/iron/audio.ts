@@ -17,7 +17,7 @@ function audio_channel(sound: sound_t, loop = false, stream = false): audio_chan
 }
 
 function audio_play(channel: audio_channel_t) {
-	Krom.playSound(channel.sound.sound_, channel.loop);
+	krom_play_sound(channel.sound.sound_, channel.loop);
 }
 
 function audio_pause(channel: audio_channel_t) {
@@ -25,7 +25,7 @@ function audio_pause(channel: audio_channel_t) {
 }
 
 function audio_stop(channel: audio_channel_t) {
-	Krom.stopSound(channel.sound.sound_);
+	krom_stop_sound(channel.sound.sound_);
 }
 
 ///end

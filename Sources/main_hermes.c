@@ -162,7 +162,7 @@ void _krom_init(char *title, int width, int height, bool v_sync, int window_mode
 	#endif
 }
 
-void _krom_set_callback(char *callback) {
+void _krom_set_update_callback(char *callback) {
 
 }
 
@@ -503,15 +503,14 @@ kinc_g4_vertex_buffer_t *_krom_create_vertex_buffer(int count,
 	return buffer;
 }
 
-float *_krom_lock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer, int start, int count) {
-	float *vertices = kinc_g4_vertex_buffer_lock(buffer, start, count);
-	vertices[0] = 123.5;
-	js_array_buffer(shr, (uint8_t *)vertices, (count * kinc_g4_vertex_buffer_stride(buffer)));
+float *_krom_lock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
+	float *vertices = kinc_g4_vertex_buffer_lock_all(buffer);
+	js_array_buffer(shr, (uint8_t *)vertices, (kinc_g4_vertex_buffer_count(buffer) * kinc_g4_vertex_buffer_stride(buffer)));
 	return vertices;
 }
 
-void _krom_unlock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer, int count) {
-	kinc_g4_vertex_buffer_unlock(buffer, count);
+void _krom_unlock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
+	kinc_g4_vertex_buffer_unlock_all(buffer);
 }
 
 kinc_g4_index_buffer_t *_krom_create_index_buffer(int count) {

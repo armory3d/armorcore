@@ -1,13 +1,6 @@
 
-let _scene_ready: bool;
-let _scene_uid_counter = 0;
-let _scene_uid: i32;
-let _scene_raw: scene_t;
-let _scene_root: object_t;
-let _scene_scene_parent: object_t;
 let scene_camera: camera_object_t;
 let scene_world: world_data_t;
-
 let scene_meshes: mesh_object_t[];
 let scene_lights: light_object_t[];
 let scene_cameras: camera_object_t[];
@@ -20,6 +13,15 @@ let scene_animations: anim_raw_t[];
 let scene_armatures: armature_t[];
 ///end
 let scene_embedded: Map<string, image_t>;
+
+let _scene_ready: bool;
+let _scene_uid_counter = 0;
+let _scene_uid: i32;
+let _scene_raw: scene_t;
+let _scene_root: object_t;
+let _scene_scene_parent: object_t;
+let _scene_objects_traversed: i32;
+let _scene_objects_count: i32;
 
 function scene_create(format: scene_t, done: (o: object_t)=>void) {
 	_scene_uid = _scene_uid_counter++;
@@ -47,7 +49,7 @@ function scene_create(format: scene_t, done: (o: object_t)=>void) {
 		// Startup scene
 		scene_add_scene(format.name, null, function (scene_object: object_t) {
 			if (scene_cameras.length == 0) {
-				Krom.log('No camera found for scene "' + format.name + '"');
+				krom_log('No camera found for scene "' + format.name + '"');
 			}
 
 			scene_camera = scene_get_camera(format.camera_ref);
@@ -90,7 +92,7 @@ function scene_set_active(scene_name: string, done: (o: object_t)=>void = null) 
 				done(o);
 			}
 			///if arm_voxels // Revoxelize
-			render_path_voxelized = 0;
+			_render_path_voxelized = 0;
 			///end
 		});
 	});
@@ -203,43 +205,43 @@ function scene_add_speaker_object(data: speaker_data_t, parent: object_t = null)
 }
 ///end
 
+function scene_traverse_objects(format: scene_t, parent: object_t, objects: obj_t[], parent_object: obj_t, done: ()=>void) {
+	if (objects == null) {
+		return;
+	}
+	for (let i = 0; i < objects.length; ++i) {
+		let o = objects[i];
+		if (o.spawn != null && o.spawn == false) {
+			if (++_scene_objects_traversed == _scene_objects_count) {
+				done();
+			}
+			continue; // Do not auto-create Scene object
+		}
+
+		scene_create_object(o, format, parent, parent_object, function (object: object_t) {
+			scene_traverse_objects(format, object, o.children, o, done);
+			if (++_scene_objects_traversed == _scene_objects_count) {
+				done();
+			}
+		});
+	}
+}
+
 function scene_add_scene(scene_name: string, parent: object_t, done: (o: object_t)=>void) {
 	if (parent == null) {
 		parent = scene_add_object();
 		parent.name = scene_name;
 	}
 	data_get_scene_raw(scene_name, function (format: scene_t) {
-		scene_load_embedded_data(format.embedded_datas, function() { // Additional scene assets
-			let objects_traversed = 0;
-			let objects_count = scene_get_objects_count(format.objects);
-
-			function traverse_objects(parent: object_t, objects: obj_t[], parent_object: obj_t, done: ()=>void) {
-				if (objects == null) {
-					return;
-				}
-				for (let i = 0; i < objects.length; ++i) {
-					let o = objects[i];
-					if (o.spawn != null && o.spawn == false) {
-						if (++objects_traversed == objects_count) {
-							done();
-						}
-						continue; // Do not auto-create Scene object
-					}
-
-					scene_create_object(o, format, parent, parent_object, function (object: object_t) {
-						traverse_objects(object, o.children, o, done);
-						if (++objects_traversed == objects_count) {
-							done();
-						}
-					});
-				}
-			}
+		scene_load_embedded_data(format.embedded_datas, function () { // Additional scene assets
+			_scene_objects_traversed = 0;
+			_scene_objects_count = scene_get_objects_count(format.objects);
 
 			if (format.objects == null || format.objects.length == 0) {
 				done(parent);
 			}
 			else {
-				traverse_objects(parent, format.objects, null, function() { // Scene objects
+				scene_traverse_objects(format, parent, format.objects, null, function () { // Scene objects
 					done(parent);
 				});
 			}
@@ -502,7 +504,7 @@ function scene_load_embedded_data(datas: string[], done: ()=>void) {
 	}
 	let loaded = 0;
 	for (let file of datas) {
-		scene_embed_data(file, function() {
+		scene_embed_data(file, function () {
 			loaded++;
 			if (loaded == datas.length) {
 				done();

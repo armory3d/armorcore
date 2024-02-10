@@ -1,9 +1,4 @@
 
-let app_w = function(): i32 { return sys_width(); }
-let app_h = function(): i32 { return sys_height(); }
-let app_x = function(): i32 { return 0; }
-let app_y = function(): i32 { return 0; }
-
 let app_on_resets: (()=>void)[] = null;
 let app_on_end_frames: (()=>void)[] = null;
 let app_on_inits: (()=>void)[] = [];
@@ -15,6 +10,38 @@ let app_pause_updates = false;
 let app_lastw = -1;
 let app_lasth = -1;
 let app_on_resize: ()=>void = null;
+let app_on_w: ()=>i32 = null;
+let app_on_h: ()=>i32 = null;
+let app_on_x: ()=>i32 = null;
+let app_on_y: ()=>i32 = null;
+
+function app_w(): i32 {
+	if (app_on_w != null) {
+		return app_on_w();
+	}
+	return sys_width();
+}
+
+function app_h(): i32 {
+	if (app_on_h != null) {
+		return app_on_h();
+	}
+	return sys_height();
+}
+
+function app_x(): i32 {
+	if (app_on_x != null) {
+		return app_on_x();
+	}
+	return 0;
+}
+
+function app_y(): i32 {
+	if (app_on_y != null) {
+		return app_on_y();
+	}
+	return 0;
+}
 
 function app_init(done: ()=>void) {
 	done();
@@ -87,7 +114,7 @@ function app_update() {
 		}
 		else {
 			if (scene_camera != null) {
-				camera_object_build_projection(scene_camera);
+				camera_object_build_proj(scene_camera);
 			}
 		}
 	}

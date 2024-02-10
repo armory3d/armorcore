@@ -3,24 +3,28 @@ class object_t {
 	uid: i32;
 	urandom: f32;
 	raw: obj_t;
-	name: string = "";
+	name: string;
 	transform: transform_t;
 	parent: object_t;
-	children: object_t[] = [];
+	children: object_t[];
 	animation: anim_raw_t;
-	visible = true; // Skip render, keep updating
-	culled = false; // TBaseObject was culled last frame
-	is_empty = false;
+	visible: bool; // Skip render, keep updating
+	culled: bool; // TBaseObject was culled last frame
+	is_empty: bool;
 	ext: any; // mesh_object_t | camera_object_t | light_object_t | speaker_object_t
 }
 
-let object_uid_counter = 0;
+let _object_uid_counter = 0;
 
-function object_create(): object_t {
+function object_create(is_empty = true): object_t {
 	let raw = new object_t();
-	raw.uid = object_uid_counter++;
+	raw.name = "";
+	raw.children = [];
+	raw.visible = true;
+	raw.culled = false;
+	raw.uid = _object_uid_counter++;
 	raw.transform = transform_create(raw);
-	raw.is_empty = raw.constructor == object_t;
+	raw.is_empty = is_empty;
 	if (raw.is_empty && _scene_ready) {
 		scene_empties.push(raw);
 	}

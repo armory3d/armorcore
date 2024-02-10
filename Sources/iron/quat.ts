@@ -48,15 +48,15 @@ function quat_from_mat(self: quat_t, m: mat4_t): quat_t {
 
 function quat_from_rot_mat(self: quat_t, m: mat4_t): quat_t {
 	// Assumes the upper 3x3 is a pure rotation matrix
-	let m11 = m._00;
-	let m12 = m._10;
-	let m13 = m._20;
-	let m21 = m._01;
-	let m22 = m._11;
-	let m23 = m._21;
-	let m31 = m._02;
-	let m32 = m._12;
-	let m33 = m._22;
+	let m11 = m.m[0];
+	let m12 = m.m[4];
+	let m13 = m.m[8];
+	let m21 = m.m[1];
+	let m22 = m.m[5];
+	let m23 = m.m[9];
+	let m31 = m.m[2];
+	let m32 = m.m[6];
+	let m33 = m.m[10];
 	let tr = m11 + m22 + m33;
 	let s = 0.0;
 

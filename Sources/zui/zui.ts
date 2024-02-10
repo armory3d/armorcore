@@ -21,117 +21,117 @@ class zui_t {
 		this._t = theme;
 	}
 
-	font: font_t;
+	font: g2_font_t;
 	zui_: any;
 
-	get is_scrolling(): bool { return Krom.zui_get(this.zui_, "is_scrolling"); }
+	get is_scrolling(): bool { return krom_zui_get(this.zui_, "is_scrolling"); }
 
-	get is_typing(): bool { return Krom.zui_get(this.zui_, "is_typing"); }
+	get is_typing(): bool { return krom_zui_get(this.zui_, "is_typing"); }
 
-	get enabled(): bool { return Krom.zui_get(this.zui_, "enabled"); }
-	set enabled(a: bool) { Krom.zui_set(this.zui_, "enabled", a); }
+	get enabled(): bool { return krom_zui_get(this.zui_, "enabled"); }
+	set enabled(a: bool) { krom_zui_set(this.zui_, "enabled", a); }
 
-	get is_hovered(): bool { return Krom.zui_get(this.zui_, "is_hovered"); }
-	set is_hovered(a: bool) { Krom.zui_set(this.zui_, "is_hovered", a); }
+	get is_hovered(): bool { return krom_zui_get(this.zui_, "is_hovered"); }
+	set is_hovered(a: bool) { krom_zui_set(this.zui_, "is_hovered", a); }
 
-	get is_released(): bool { return Krom.zui_get(this.zui_, "is_released"); }
+	get is_released(): bool { return krom_zui_get(this.zui_, "is_released"); }
 
-	get changed(): bool { return Krom.zui_get(this.zui_, "changed"); }
-	set changed(a: bool) { Krom.zui_set(this.zui_, "changed", a); }
+	get changed(): bool { return krom_zui_get(this.zui_, "changed"); }
+	set changed(a: bool) { krom_zui_set(this.zui_, "changed", a); }
 
-	set image_invert_y(a: bool) { Krom.zui_set(this.zui_, "image_invert_y", a); }
+	set image_invert_y(a: bool) { krom_zui_set(this.zui_, "image_invert_y", a); }
 
-	set scroll_enabled(a: bool) { Krom.zui_set(this.zui_, "scroll_enabled", a); }
+	set scroll_enabled(a: bool) { krom_zui_set(this.zui_, "scroll_enabled", a); }
 
-	set window_border_top(a: i32) { Krom.zui_set(this.zui_, "window_border_top", a); }
+	set window_border_top(a: i32) { krom_zui_set(this.zui_, "window_border_top", a); }
 
-	set window_border_bottom(a: i32) { Krom.zui_set(this.zui_, "window_border_bottom", a); }
+	set window_border_bottom(a: i32) { krom_zui_set(this.zui_, "window_border_bottom", a); }
 
-	set window_border_right(a: i32) { Krom.zui_set(this.zui_, "window_border_right", a); }
+	set window_border_right(a: i32) { krom_zui_set(this.zui_, "window_border_right", a); }
 
-	get input_enabled(): bool { return Krom.zui_get(this.zui_, "input_enabled"); }
-	set input_enabled(a: bool) { Krom.zui_set(this.zui_, "input_enabled", a); }
+	get input_enabled(): bool { return krom_zui_get(this.zui_, "input_enabled"); }
+	set input_enabled(a: bool) { krom_zui_set(this.zui_, "input_enabled", a); }
 
-	get input_x(): f32 { return Krom.zui_get(this.zui_, "input_x"); }
-	set input_x(a: f32) { Krom.zui_set(this.zui_, "input_x", a); }
+	get input_x(): f32 { return krom_zui_get(this.zui_, "input_x"); }
+	set input_x(a: f32) { krom_zui_set(this.zui_, "input_x", a); }
 
-	get input_y(): f32 { return Krom.zui_get(this.zui_, "input_y"); }
-	set input_y(a: f32) { Krom.zui_set(this.zui_, "input_y", a); }
+	get input_y(): f32 { return krom_zui_get(this.zui_, "input_y"); }
+	set input_y(a: f32) { krom_zui_set(this.zui_, "input_y", a); }
 
-	get input_started_x(): f32 { return Krom.zui_get(this.zui_, "input_started_x"); }
+	get input_started_x(): f32 { return krom_zui_get(this.zui_, "input_started_x"); }
 
-	get input_started_y(): f32 { return Krom.zui_get(this.zui_, "input_started_y"); }
+	get input_started_y(): f32 { return krom_zui_get(this.zui_, "input_started_y"); }
 
-	get input_dx(): f32 { return Krom.zui_get(this.zui_, "input_dx"); }
+	get input_dx(): f32 { return krom_zui_get(this.zui_, "input_dx"); }
 
-	get input_dy(): f32 { return Krom.zui_get(this.zui_, "input_dy"); }
+	get input_dy(): f32 { return krom_zui_get(this.zui_, "input_dy"); }
 
-	get input_wheel_delta(): f32 { return Krom.zui_get(this.zui_, "input_wheel_delta"); }
+	get input_wheel_delta(): f32 { return krom_zui_get(this.zui_, "input_wheel_delta"); }
 
-	get input_started(): bool { return Krom.zui_get(this.zui_, "input_started"); }
-	set input_started(a: bool) { Krom.zui_set(this.zui_, "input_started", a); }
+	get input_started(): bool { return krom_zui_get(this.zui_, "input_started"); }
+	set input_started(a: bool) { krom_zui_set(this.zui_, "input_started", a); }
 
-	get input_started_r(): bool { return Krom.zui_get(this.zui_, "input_started_r"); }
+	get input_started_r(): bool { return krom_zui_get(this.zui_, "input_started_r"); }
 
-	get input_released(): bool { return Krom.zui_get(this.zui_, "input_released"); }
+	get input_released(): bool { return krom_zui_get(this.zui_, "input_released"); }
 
-	get input_released_r(): bool { return Krom.zui_get(this.zui_, "input_released_r"); }
+	get input_released_r(): bool { return krom_zui_get(this.zui_, "input_released_r"); }
 
-	get input_down(): bool { return Krom.zui_get(this.zui_, "input_down"); }
+	get input_down(): bool { return krom_zui_get(this.zui_, "input_down"); }
 
-	get input_down_r(): bool { return Krom.zui_get(this.zui_, "input_down_r"); }
+	get input_down_r(): bool { return krom_zui_get(this.zui_, "input_down_r"); }
 
-	get is_key_pressed(): bool { return Krom.zui_get(this.zui_, "is_key_pressed"); }
+	get is_key_pressed(): bool { return krom_zui_get(this.zui_, "is_key_pressed"); }
 
-	get is_ctrl_down(): bool { return Krom.zui_get(this.zui_, "is_ctrl_down"); }
+	get is_ctrl_down(): bool { return krom_zui_get(this.zui_, "is_ctrl_down"); }
 
-	get is_delete_down(): bool { return Krom.zui_get(this.zui_, "is_delete_down"); }
-	set is_delete_down(a: bool) { Krom.zui_set(this.zui_, "is_delete_down", a); }
+	get is_delete_down(): bool { return krom_zui_get(this.zui_, "is_delete_down"); }
+	set is_delete_down(a: bool) { krom_zui_set(this.zui_, "is_delete_down", a); }
 
-	get is_escape_down(): bool { return Krom.zui_get(this.zui_, "is_escape_down"); }
+	get is_escape_down(): bool { return krom_zui_get(this.zui_, "is_escape_down"); }
 
-	get is_return_down(): bool { return Krom.zui_get(this.zui_, "is_return_down"); }
+	get is_return_down(): bool { return krom_zui_get(this.zui_, "is_return_down"); }
 
-	get key(): key_code_t { return Krom.zui_get(this.zui_, "key_code"); }
+	get key(): key_code_t { return krom_zui_get(this.zui_, "key_code"); }
 
-	get cur_ratio(): i32 { return Krom.zui_get(this.zui_, "current_ratio"); }
-	set cur_ratio(a: i32) { Krom.zui_set(this.zui_, "current_ratio", a); }
+	get cur_ratio(): i32 { return krom_zui_get(this.zui_, "current_ratio"); }
+	set cur_ratio(a: i32) { krom_zui_set(this.zui_, "current_ratio", a); }
 
-	get font_size(): i32 { return Krom.zui_get(this.zui_, "font_size"); }
-	set font_size(a: i32) { Krom.zui_set(this.zui_, "font_size", a); }
+	get font_size(): i32 { return krom_zui_get(this.zui_, "font_size"); }
+	set font_size(a: i32) { krom_zui_set(this.zui_, "font_size", a); }
 
-	get font_offset_y(): f32 { return Krom.zui_get(this.zui_, "font_offset_y"); }
-	set font_offset_y(a: f32) { Krom.zui_set(this.zui_, "font_offset_y", a); }
+	get font_offset_y(): f32 { return krom_zui_get(this.zui_, "font_offset_y"); }
+	set font_offset_y(a: f32) { krom_zui_set(this.zui_, "font_offset_y", a); }
 
-	set image_scroll_align(a: bool) { Krom.zui_set(this.zui_, "image_scroll_align", a); }
+	set image_scroll_align(a: bool) { krom_zui_set(this.zui_, "image_scroll_align", a); }
 
-	get _x(): f32 { return Krom.zui_get(this.zui_, "_x"); }
-	set _x(a: f32) { Krom.zui_set(this.zui_, "_x", a); }
+	get _x(): f32 { return krom_zui_get(this.zui_, "_x"); }
+	set _x(a: f32) { krom_zui_set(this.zui_, "_x", a); }
 
-	get _y(): f32 { return Krom.zui_get(this.zui_, "_y"); }
-	set _y(a: f32) { Krom.zui_set(this.zui_, "_y", a); }
+	get _y(): f32 { return krom_zui_get(this.zui_, "_y"); }
+	set _y(a: f32) { krom_zui_set(this.zui_, "_y", a); }
 
-	get _w(): i32 { return Krom.zui_get(this.zui_, "_w"); }
-	set _w(a: i32) { Krom.zui_set(this.zui_, "_w", a); }
+	get _w(): i32 { return krom_zui_get(this.zui_, "_w"); }
+	set _w(a: i32) { krom_zui_set(this.zui_, "_w", a); }
 
-	get _window_x(): f32 { return Krom.zui_get(this.zui_, "_window_x"); }
+	get _window_x(): f32 { return krom_zui_get(this.zui_, "_window_x"); }
 
-	get _window_y(): f32 { return Krom.zui_get(this.zui_, "_window_y"); }
+	get _window_y(): f32 { return krom_zui_get(this.zui_, "_window_y"); }
 
-	get _window_w(): f32 { return Krom.zui_get(this.zui_, "_window_w"); }
+	get _window_w(): f32 { return krom_zui_get(this.zui_, "_window_w"); }
 
-	get _window_h(): f32 { return Krom.zui_get(this.zui_, "_window_h"); }
+	get _window_h(): f32 { return krom_zui_get(this.zui_, "_window_h"); }
 
-	get scissor(): bool { return Krom.zui_get(this.zui_, "scissor"); }
-	set scissor(a: bool) { Krom.zui_set(this.zui_, "scissor", a); }
+	get scissor(): bool { return krom_zui_get(this.zui_, "scissor"); }
+	set scissor(a: bool) { krom_zui_set(this.zui_, "scissor", a); }
 
-	set elements_baked(a: bool) { Krom.zui_set(this.zui_, "elements_baked", a); }
+	set elements_baked(a: bool) { krom_zui_set(this.zui_, "elements_baked", a); }
 
-	get text_selected_handle_ptr(): Null<i32> { let h = Krom.zui_get(this.zui_, "text_selected_handle"); return h == 0 ? null : h; }
+	get text_selected_handle_ptr(): Null<i32> { let h = krom_zui_get(this.zui_, "text_selected_handle"); return h == 0 ? null : h; }
 
-	get submit_text_handle_ptr(): Null<i32> { let h = Krom.zui_get(this.zui_, "submit_text_handle"); return h == 0 ? null : h; }
+	get submit_text_handle_ptr(): Null<i32> { let h = krom_zui_get(this.zui_, "submit_text_handle"); return h == 0 ? null : h; }
 
-	get combo_selected_handle_ptr(): Null<i32> { let h = Krom.zui_get(this.zui_, "combo_selected_handle"); return h == 0 ? null : h; }
+	get combo_selected_handle_ptr(): Null<i32> { let h = krom_zui_get(this.zui_, "combo_selected_handle"); return h == 0 ? null : h; }
 }
 
 let zui_current: zui_t = null;
@@ -156,31 +156,31 @@ function zui_nest(raw: zui_handle_t, i: i32, ops: zui_handle_ops_t = null): zui_
 	return c;
 }
 
-function zui_set_on_border_hover(f: (handle_ptr: any, side: i32)=>void) { Krom.zui_set_on_border_hover(f); }
-function zui_set_on_text_hover(f: ()=>void) { Krom.zui_set_on_text_hover(f); }
-function zui_set_on_deselect_text(f: ()=>void) { Krom.zui_set_on_deselect_text(f); }
-function zui_set_on_tab_drop(f: (to_ptr: any, to_pos: i32, from_ptr: any, from_pos: i32)=>void) { Krom.zui_set_on_tab_drop(f); }
-function zui_set_text_area_line_numbers(a: bool) { Krom.zui_set(null, "zui_text_area_line_numbers", a); }
-function zui_set_text_area_scroll_past_end(a: bool) { Krom.zui_set(null, "zui_text_area_scroll_past_end", a); }
+function zui_set_on_border_hover(f: (handle_ptr: any, side: i32)=>void) { krom_zui_set_on_border_hover(f); }
+function zui_set_on_text_hover(f: ()=>void) { krom_zui_set_on_text_hover(f); }
+function zui_set_on_deselect_text(f: ()=>void) { krom_zui_set_on_deselect_text(f); }
+function zui_set_on_tab_drop(f: (to_ptr: any, to_pos: i32, from_ptr: any, from_pos: i32)=>void) { krom_zui_set_on_tab_drop(f); }
+function zui_set_text_area_line_numbers(a: bool) { krom_zui_set(null, "zui_text_area_line_numbers", a); }
+function zui_set_text_area_scroll_past_end(a: bool) { krom_zui_set(null, "zui_text_area_scroll_past_end", a); }
 function zui_set_text_area_coloring(coloring: zui_text_coloring_t) {
-	Krom.zui_text_area_coloring(coloring == null ? null : armpack_encode(coloring));
+	krom_zui_text_area_coloring(coloring == null ? null : armpack_encode(coloring));
 }
-function zui_always_redraw_window(): bool { return Krom.zui_get(null, "zui_always_redraw_window"); }
-function zui_set_always_redraw_window(a: bool) { Krom.zui_set(null, "zui_always_redraw_window", a); }
-function zui_touch_scroll(): bool { return Krom.zui_get(null, "zui_touch_scroll"); }
-function zui_set_touch_scroll(a: bool) { Krom.zui_set(null, "zui_touch_scroll", a); }
-function zui_touch_hold(): bool { return Krom.zui_get(null, "zui_touch_hold"); }
-function zui_set_touch_hold(a: bool) { Krom.zui_set(null, "zui_touch_hold", a); }
-function zui_touch_tooltip(): bool { return Krom.zui_get(null, "zui_touch_tooltip"); }
-function zui_set_touch_tooltip(a: bool) { Krom.zui_set(null, "zui_touch_tooltip", a); }
-function zui_set_is_cut(a: bool) { Krom.zui_set(null, "zui_is_cut", a); }
-function zui_set_is_copy(a: bool) { Krom.zui_set(null, "zui_is_copy", a); }
-function zui_set_is_paste(a: bool) { Krom.zui_set(null, "zui_is_paste", a); }
-function zui_is_paste(): bool { return Krom.zui_get(null, "zui_is_paste"); }
+function zui_always_redraw_window(): bool { return krom_zui_get(null, "zui_always_redraw_window"); }
+function zui_set_always_redraw_window(a: bool) { krom_zui_set(null, "zui_always_redraw_window", a); }
+function zui_touch_scroll(): bool { return krom_zui_get(null, "zui_touch_scroll"); }
+function zui_set_touch_scroll(a: bool) { krom_zui_set(null, "zui_touch_scroll", a); }
+function zui_touch_hold(): bool { return krom_zui_get(null, "zui_touch_hold"); }
+function zui_set_touch_hold(a: bool) { krom_zui_set(null, "zui_touch_hold", a); }
+function zui_touch_tooltip(): bool { return krom_zui_get(null, "zui_touch_tooltip"); }
+function zui_set_touch_tooltip(a: bool) { krom_zui_set(null, "zui_touch_tooltip", a); }
+function zui_set_is_cut(a: bool) { krom_zui_set(null, "zui_is_cut", a); }
+function zui_set_is_copy(a: bool) { krom_zui_set(null, "zui_is_copy", a); }
+function zui_set_is_paste(a: bool) { krom_zui_set(null, "zui_is_paste", a); }
+function zui_is_paste(): bool { return krom_zui_get(null, "zui_is_paste"); }
 
 function zui_create(ops: zui_ops_t): zui_t {
 	let raw = new zui_t();
-	raw.zui_ = Krom.zui_init(
+	raw.zui_ = krom_zui_init(
 		{
 			font: ops.font.font_,
 			theme: ops.theme.theme_,
@@ -195,152 +195,152 @@ function zui_create(ops: zui_ops_t): zui_t {
 	return raw;
 }
 
-function zui_set_font(raw: zui_t, font: font_t) {
+function zui_set_font(raw: zui_t, font: g2_font_t) {
 	g2_font_init(font); // Make sure font_ is ready
 	raw.font = font;
-	Krom.zui_set_font(raw.zui_, font.font_);
+	krom_zui_set_font(raw.zui_, font.font_);
 }
 
 function zui_SCALE(raw: zui_t): f32 {
-	return Krom.zui_get_scale(raw.zui_);
+	return krom_zui_get_scale(raw.zui_);
 }
 
 function zui_set_scale(raw: zui_t, factor: f32) {
-	Krom.zui_set_scale(raw.zui_, factor);
+	krom_zui_set_scale(raw.zui_, factor);
 }
 
 function zui_begin(raw: zui_t) {
 	zui_current = raw;
-	Krom.zui_begin(raw.zui_);
+	krom_zui_begin(raw.zui_);
 }
 
 function zui_end(last = true) {
-	Krom.zui_end(last);
+	krom_zui_end(last);
 	_g2_current = null;
 }
 
 function zui_begin_region(raw: zui_t, x: i32, y: i32, w: i32) {
 	zui_current = raw;
-	Krom.zui_begin_region(raw.zui_, x, y, w);
+	krom_zui_begin_region(raw.zui_, x, y, w);
 }
 
 function zui_end_region(last = true) {
-	Krom.zui_end_region(last);
+	krom_zui_end_region(last);
 }
 
 function zui_begin_sticky() {
-	Krom.zui_begin_sticky();
+	krom_zui_begin_sticky();
 }
 
 function zui_end_sticky() {
-	Krom.zui_end_sticky();
+	krom_zui_end_sticky();
 }
 
 function zui_end_input() {
-	Krom.zui_end_input();
+	krom_zui_end_input();
 }
 
 function zui_window(handle: zui_handle_t, x: i32, y: i32, w: i32, h: i32, drag = false): bool {
 	let img = _image_create(null);
 	img.render_target_ = handle.texture;
 	_g2_current = img;
-	return Krom.zui_window(handle.handle_, x, y, w, h, drag);
+	return krom_zui_window(handle.handle_, x, y, w, h, drag);
 }
 
 function zui_end_window(bind_global_g = true) {
-	Krom.zui_end_window(bind_global_g);
+	krom_zui_end_window(bind_global_g);
 }
 
 function zui_tab(handle: zui_handle_t, text: string, vertical = false, color: i32 = -1): bool {
-	return Krom.zui_tab(handle.handle_, text, vertical, color);
+	return krom_zui_tab(handle.handle_, text, vertical, color);
 }
 
 function zui_panel(handle: zui_handle_t, text: string, is_tree = false, filled = true, pack = true): bool {
-	return Krom.zui_panel(handle.handle_, text, is_tree, filled, pack);
+	return krom_zui_panel(handle.handle_, text, is_tree, filled, pack);
 }
 
 function zui_image(image: image_t, tint = 0xffffffff, h: Null<f32> = null, sx = 0, sy = 0, sw = 0, sh = 0): State {
-	return Krom.zui_image(image, tint, h == null ? -1 : Math.floor(h), sx, sy, sw, sh);
+	return krom_zui_image(image, tint, h == null ? -1 : Math.floor(h), sx, sy, sw, sh);
 }
 
 function zui_text(text: string, align = Align.Left, bg = 0x00000000): State {
-	return Krom.zui_text(text, align, bg);
+	return krom_zui_text(text, align, bg);
 }
 
 function zui_text_input(handle: zui_handle_t, label = "", align = Align.Left, editable = true, live_update = false): string {
-	return Krom.zui_text_input(handle.handle_, label, align, editable, live_update);
+	return krom_zui_text_input(handle.handle_, label, align, editable, live_update);
 }
 
 function zui_button(text: string, align = Align.Center, label = "", icon: image_t = null, sx = 0, sy = 0, sw = 0, sh = 0): bool {
-	return Krom.zui_button(text, align, label);
+	return krom_zui_button(text, align, label);
 }
 
 function zui_check(handle: zui_handle_t, text: string, label: string = ""): bool {
-	return Krom.zui_check(handle.handle_, text, label);
+	return krom_zui_check(handle.handle_, text, label);
 }
 
 function zui_radio(handle: zui_handle_t, position: i32, text: string, label: string = ""): bool {
-	return Krom.zui_radio(handle.handle_, position, text, label);
+	return krom_zui_radio(handle.handle_, position, text, label);
 }
 
 function zui_combo(handle: zui_handle_t, texts: string[], label = "", show_label = false, align = Align.Left, search_bar = true): i32 {
-	return Krom.zui_combo(handle.handle_, texts, label, show_label, align, search_bar);
+	return krom_zui_combo(handle.handle_, texts, label, show_label, align, search_bar);
 }
 
 function zui_slider(handle: zui_handle_t, text: string, from = 0.0, to = 1.0, filled = false, precision = 100.0, display_value = true, align = Align.Right, text_edit = true): f32 {
-	return Krom.zui_slider(handle.handle_, text, from, to, filled, precision, display_value, align, text_edit);
+	return krom_zui_slider(handle.handle_, text, from, to, filled, precision, display_value, align, text_edit);
 }
 
 function zui_separator(h = 4, fill = true) {
-	Krom.zui_separator(h, fill);
+	krom_zui_separator(h, fill);
 }
 
 function zui_tooltip(text: string) {
-	Krom.zui_tooltip(text);
+	krom_zui_tooltip(text);
 }
 
 function zui_tooltip_image(image: image_t, max_width: Null<i32> = null) {
-	Krom.zui_tooltip_image(image, max_width == null ? 0 : max_width);
+	krom_zui_tooltip_image(image, max_width == null ? 0 : max_width);
 }
 
 function zui_row(ratios: f32[]) {
-	Krom.zui_row(ratios);
+	krom_zui_row(ratios);
 }
 
 function zui_fill(x: f32, y: f32, w: f32, h: f32, color: Color) {
-	Krom.zui_fill(x, y, w, h, color);
+	krom_zui_fill(x, y, w, h, color);
 }
 
 function zui_rect(x: f32, y: f32, w: f32, h: f32, color: Color, strength = 1.0) {
-	Krom.zui_rect(x, y, w, h, color, strength);
+	krom_zui_rect(x, y, w, h, color, strength);
 }
 
 function zui_draw_rect(fill: bool, x: f32, y: f32, w: f32, h: f32, strength = 0.0) {
-	Krom.zui_draw_rect(fill, x, y, w, h, strength);
+	krom_zui_draw_rect(fill, x, y, w, h, strength);
 }
 
 function zui_end_element(element_size: Null<f32> = null) {
-	Krom.zui_end_element(element_size == null ? -1 : element_size);
+	krom_zui_end_element(element_size == null ? -1 : element_size);
 }
 
 function zui_start_text_edit(handle: zui_handle_t, align = Align.Left) {
-	Krom.zui_start_text_edit(handle.handle_, align);
+	krom_zui_start_text_edit(handle.handle_, align);
 }
 
 function zui_get_input_in_rect(x: f32, y: f32, w: f32, h: f32): bool {
-	return Krom.zui_input_in_rect(x, y, w, h);
+	return krom_zui_input_in_rect(x, y, w, h);
 }
 
 function zui_draw_string(text: string, x_offset: Null<f32> = null, y_offset: f32 = 0, align = Align.Left, truncation = true) {
-	Krom.zui_draw_string(text, x_offset == null ? -1 : x_offset, y_offset, align, truncation);
+	krom_zui_draw_string(text, x_offset == null ? -1 : x_offset, y_offset, align, truncation);
 }
 
 function zui_get_hovered_tab_name(): string {
-	return Krom.zui_get_hovered_tab_name();
+	return krom_zui_get_hovered_tab_name();
 }
 
 function zui_set_hovered_tab_name(name: string) {
-	Krom.zui_set_hovered_tab_name(name);
+	krom_zui_set_hovered_tab_name(name);
 }
 
 function zui_ELEMENT_W(raw: zui_t): f32 {
@@ -356,31 +356,31 @@ function zui_ELEMENT_OFFSET(raw: zui_t): f32 {
 }
 
 function zui_float_input(handle: zui_handle_t, label = "", align = Align.Left, precision = 1000.0): f32 {
-	return Krom.zui_float_input(handle.handle_, label, align, precision);
+	return krom_zui_float_input(handle.handle_, label, align, precision);
 }
 
 function zui_inline_radio(handle: zui_handle_t, texts: string[], align = Align.Left): i32 {
-	return Krom.zui_inline_radio(handle.handle_, texts, align);
+	return krom_zui_inline_radio(handle.handle_, texts, align);
 }
 
 function zui_color_wheel(handle: zui_handle_t, alpha = false, w: Null<f32> = null, h: Null<f32> = null, color_preview = true, picker: ()=>void = null): Color {
-	return Krom.zui_color_wheel(handle.handle_, alpha, w != null ? w : -1, h != null ? h : -1, color_preview, picker);
+	return krom_zui_color_wheel(handle.handle_, alpha, w != null ? w : -1, h != null ? h : -1, color_preview, picker);
 }
 
 function zui_text_area(handle: zui_handle_t, align = Align.Left, editable = true, label = "", word_wrap = false): string {
-	return Krom.zui_text_area(handle.handle_, align, editable, label, word_wrap);
+	return krom_zui_text_area(handle.handle_, align, editable, label, word_wrap);
 }
 
 function zui_begin_menu() {
-	Krom.zui_begin_menu();
+	krom_zui_begin_menu();
 }
 
 function zui_end_menu() {
-	Krom.zui_end_menu();
+	krom_zui_end_menu();
 }
 
 function zui_menu_button(text: string): bool {
-	return Krom.zui_menu_button(text);
+	return krom_zui_menu_button(text);
 }
 
 function zui_MENUBAR_H(raw: zui_t): f32 {
@@ -392,7 +392,7 @@ class zui_handle_t {
 	handle__: any = null;
 	get handle_(): any {
 		if (this.handle__ == null) {
-			this.handle__ = Krom.zui_handle(this.ops);
+			this.handle__ = krom_zui_handle(this.ops);
 		}
 		return this.handle__;
 	}
@@ -400,37 +400,37 @@ class zui_handle_t {
 	ops: zui_handle_ops_t;
 	children: Map<i32, zui_handle_t>;
 
-	get selected(): bool { return Krom.zui_handle_get(this.handle_, "selected"); }
-	set selected(a: bool) { Krom.zui_handle_set(this.handle_, "selected", a); }
+	get selected(): bool { return krom_zui_handle_get(this.handle_, "selected"); }
+	set selected(a: bool) { krom_zui_handle_set(this.handle_, "selected", a); }
 
-	get position(): i32 { return Krom.zui_handle_get(this.handle_, "position"); }
-	set position(a: i32) { Krom.zui_handle_set(this.handle_, "position", a); }
+	get position(): i32 { return krom_zui_handle_get(this.handle_, "position"); }
+	set position(a: i32) { krom_zui_handle_set(this.handle_, "position", a); }
 
-	get color(): i32 { return Krom.zui_handle_get(this.handle_, "color"); }
-	set color(a: i32) { Krom.zui_handle_set(this.handle_, "color", a); }
+	get color(): i32 { return krom_zui_handle_get(this.handle_, "color"); }
+	set color(a: i32) { krom_zui_handle_set(this.handle_, "color", a); }
 
-	get value(): f32 { return Krom.zui_handle_get(this.handle_, "value"); }
-	set value(a: f32) { Krom.zui_handle_set(this.handle_, "value", a); }
+	get value(): f32 { return krom_zui_handle_get(this.handle_, "value"); }
+	set value(a: f32) { krom_zui_handle_set(this.handle_, "value", a); }
 
-	get text(): string { return Krom.zui_handle_get(this.handle_, "text"); }
-	set text(a: string) { Krom.zui_handle_set(this.handle_, "text", a); }
+	get text(): string { return krom_zui_handle_get(this.handle_, "text"); }
+	set text(a: string) { krom_zui_handle_set(this.handle_, "text", a); }
 
-	set redraws(a: i32) { Krom.zui_handle_set(this.handle_, "redraws", a); }
+	set redraws(a: i32) { krom_zui_handle_set(this.handle_, "redraws", a); }
 
-	get scroll_offset(): f32 { return Krom.zui_handle_get(this.handle_, "scroll_offset"); }
+	get scroll_offset(): f32 { return krom_zui_handle_get(this.handle_, "scroll_offset"); }
 
-	get drag_x(): i32 { return Krom.zui_handle_get(this.handle_, "drag_x"); }
-	set drag_x(a: i32) { Krom.zui_handle_set(this.handle_, "drag_x", a); }
+	get drag_x(): i32 { return krom_zui_handle_get(this.handle_, "drag_x"); }
+	set drag_x(a: i32) { krom_zui_handle_set(this.handle_, "drag_x", a); }
 
-	get drag_y(): i32 { return Krom.zui_handle_get(this.handle_, "drag_y"); }
-	set drag_y(a: i32) { Krom.zui_handle_set(this.handle_, "drag_y", a); }
+	get drag_y(): i32 { return krom_zui_handle_get(this.handle_, "drag_y"); }
+	set drag_y(a: i32) { krom_zui_handle_set(this.handle_, "drag_y", a); }
 
-	get changed(): bool { return Krom.zui_handle_get(this.handle_, "changed"); }
-	set changed(a: bool) { Krom.zui_handle_set(this.handle_, "changed", a); }
+	get changed(): bool { return krom_zui_handle_get(this.handle_, "changed"); }
+	set changed(a: bool) { krom_zui_handle_set(this.handle_, "changed", a); }
 
-	get texture(): any { return Krom.zui_handle_get(this.handle_, "texture"); }
+	get texture(): any { return krom_zui_handle_get(this.handle_, "texture"); }
 
-	get ptr(): Null<i32> { return Krom.zui_handle_ptr(this.handle_); }
+	get ptr(): Null<i32> { return krom_zui_handle_ptr(this.handle_); }
 }
 
 function zui_handle_create(ops: zui_handle_ops_t = null): zui_handle_t {
@@ -449,109 +449,109 @@ function zui_handle_create(ops: zui_handle_ops_t = null): zui_handle_t {
 class theme_t {
 	theme_: any;
 
-	get WINDOW_BG_COL(): i32 { return Krom.zui_theme_get(this.theme_, "WINDOW_BG_COL"); }
-	set WINDOW_BG_COL(a: i32) { Krom.zui_theme_set(this.theme_, "WINDOW_BG_COL", a); }
+	get WINDOW_BG_COL(): i32 { return krom_zui_theme_get(this.theme_, "WINDOW_BG_COL"); }
+	set WINDOW_BG_COL(a: i32) { krom_zui_theme_set(this.theme_, "WINDOW_BG_COL", a); }
 
-	get WINDOW_TINT_COL(): i32 { return Krom.zui_theme_get(this.theme_, "WINDOW_TINT_COL"); }
-	set WINDOW_TINT_COL(a: i32) { Krom.zui_theme_set(this.theme_, "WINDOW_TINT_COL", a); }
+	get WINDOW_TINT_COL(): i32 { return krom_zui_theme_get(this.theme_, "WINDOW_TINT_COL"); }
+	set WINDOW_TINT_COL(a: i32) { krom_zui_theme_set(this.theme_, "WINDOW_TINT_COL", a); }
 
-	get ACCENT_COL(): i32 { return Krom.zui_theme_get(this.theme_, "ACCENT_COL"); }
-	set ACCENT_COL(a: i32) { Krom.zui_theme_set(this.theme_, "ACCENT_COL", a); }
+	get ACCENT_COL(): i32 { return krom_zui_theme_get(this.theme_, "ACCENT_COL"); }
+	set ACCENT_COL(a: i32) { krom_zui_theme_set(this.theme_, "ACCENT_COL", a); }
 
-	get ACCENT_HOVER_COL(): i32 { return Krom.zui_theme_get(this.theme_, "ACCENT_HOVER_COL"); }
-	set ACCENT_HOVER_COL(a: i32) { Krom.zui_theme_set(this.theme_, "ACCENT_HOVER_COL", a); }
+	get ACCENT_HOVER_COL(): i32 { return krom_zui_theme_get(this.theme_, "ACCENT_HOVER_COL"); }
+	set ACCENT_HOVER_COL(a: i32) { krom_zui_theme_set(this.theme_, "ACCENT_HOVER_COL", a); }
 
-	get ACCENT_SELECT_COL(): i32 { return Krom.zui_theme_get(this.theme_, "ACCENT_SELECT_COL"); }
-	set ACCENT_SELECT_COL(a: i32) { Krom.zui_theme_set(this.theme_, "ACCENT_SELECT_COL", a); }
+	get ACCENT_SELECT_COL(): i32 { return krom_zui_theme_get(this.theme_, "ACCENT_SELECT_COL"); }
+	set ACCENT_SELECT_COL(a: i32) { krom_zui_theme_set(this.theme_, "ACCENT_SELECT_COL", a); }
 
-	get BUTTON_COL(): i32 { return Krom.zui_theme_get(this.theme_, "BUTTON_COL"); }
-	set BUTTON_COL(a: i32) { Krom.zui_theme_set(this.theme_, "BUTTON_COL", a); }
+	get BUTTON_COL(): i32 { return krom_zui_theme_get(this.theme_, "BUTTON_COL"); }
+	set BUTTON_COL(a: i32) { krom_zui_theme_set(this.theme_, "BUTTON_COL", a); }
 
-	get BUTTON_TEXT_COL(): i32 { return Krom.zui_theme_get(this.theme_, "BUTTON_TEXT_COL"); }
-	set BUTTON_TEXT_COL(a: i32) { Krom.zui_theme_set(this.theme_, "BUTTON_TEXT_COL", a); }
+	get BUTTON_TEXT_COL(): i32 { return krom_zui_theme_get(this.theme_, "BUTTON_TEXT_COL"); }
+	set BUTTON_TEXT_COL(a: i32) { krom_zui_theme_set(this.theme_, "BUTTON_TEXT_COL", a); }
 
-	get BUTTON_HOVER_COL(): i32 { return Krom.zui_theme_get(this.theme_, "BUTTON_HOVER_COL"); }
-	set BUTTON_HOVER_COL(a: i32) { Krom.zui_theme_set(this.theme_, "BUTTON_HOVER_COL", a); }
+	get BUTTON_HOVER_COL(): i32 { return krom_zui_theme_get(this.theme_, "BUTTON_HOVER_COL"); }
+	set BUTTON_HOVER_COL(a: i32) { krom_zui_theme_set(this.theme_, "BUTTON_HOVER_COL", a); }
 
-	get BUTTON_PRESSED_COL(): i32 { return Krom.zui_theme_get(this.theme_, "BUTTON_PRESSED_COL"); }
-	set BUTTON_PRESSED_COL(a: i32) { Krom.zui_theme_set(this.theme_, "BUTTON_PRESSED_COL", a); }
+	get BUTTON_PRESSED_COL(): i32 { return krom_zui_theme_get(this.theme_, "BUTTON_PRESSED_COL"); }
+	set BUTTON_PRESSED_COL(a: i32) { krom_zui_theme_set(this.theme_, "BUTTON_PRESSED_COL", a); }
 
-	get TEXT_COL(): i32 { return Krom.zui_theme_get(this.theme_, "TEXT_COL"); }
-	set TEXT_COL(a: i32) { Krom.zui_theme_set(this.theme_, "TEXT_COL", a); }
+	get TEXT_COL(): i32 { return krom_zui_theme_get(this.theme_, "TEXT_COL"); }
+	set TEXT_COL(a: i32) { krom_zui_theme_set(this.theme_, "TEXT_COL", a); }
 
-	get LABEL_COL(): i32 { return Krom.zui_theme_get(this.theme_, "LABEL_COL"); }
-	set LABEL_COL(a: i32) { Krom.zui_theme_set(this.theme_, "LABEL_COL", a); }
+	get LABEL_COL(): i32 { return krom_zui_theme_get(this.theme_, "LABEL_COL"); }
+	set LABEL_COL(a: i32) { krom_zui_theme_set(this.theme_, "LABEL_COL", a); }
 
-	get SEPARATOR_COL(): i32 { return Krom.zui_theme_get(this.theme_, "SEPARATOR_COL"); }
-	set SEPARATOR_COL(a: i32) { Krom.zui_theme_set(this.theme_, "SEPARATOR_COL", a); }
+	get SEPARATOR_COL(): i32 { return krom_zui_theme_get(this.theme_, "SEPARATOR_COL"); }
+	set SEPARATOR_COL(a: i32) { krom_zui_theme_set(this.theme_, "SEPARATOR_COL", a); }
 
-	get HIGHLIGHT_COL(): i32 { return Krom.zui_theme_get(this.theme_, "HIGHLIGHT_COL"); }
-	set HIGHLIGHT_COL(a: i32) { Krom.zui_theme_set(this.theme_, "HIGHLIGHT_COL", a); }
+	get HIGHLIGHT_COL(): i32 { return krom_zui_theme_get(this.theme_, "HIGHLIGHT_COL"); }
+	set HIGHLIGHT_COL(a: i32) { krom_zui_theme_set(this.theme_, "HIGHLIGHT_COL", a); }
 
-	get CONTEXT_COL(): i32 { return Krom.zui_theme_get(this.theme_, "CONTEXT_COL"); }
-	set CONTEXT_COL(a: i32) { Krom.zui_theme_set(this.theme_, "CONTEXT_COL", a); }
+	get CONTEXT_COL(): i32 { return krom_zui_theme_get(this.theme_, "CONTEXT_COL"); }
+	set CONTEXT_COL(a: i32) { krom_zui_theme_set(this.theme_, "CONTEXT_COL", a); }
 
-	get PANEL_BG_COL(): i32 { return Krom.zui_theme_get(this.theme_, "PANEL_BG_COL"); }
-	set PANEL_BG_COL(a: i32) { Krom.zui_theme_set(this.theme_, "PANEL_BG_COL", a); }
+	get PANEL_BG_COL(): i32 { return krom_zui_theme_get(this.theme_, "PANEL_BG_COL"); }
+	set PANEL_BG_COL(a: i32) { krom_zui_theme_set(this.theme_, "PANEL_BG_COL", a); }
 
-	get FONT_SIZE(): i32 { return Krom.zui_theme_get(this.theme_, "FONT_SIZE"); }
-	set FONT_SIZE(a: i32) { Krom.zui_theme_set(this.theme_, "FONT_SIZE", a); }
+	get FONT_SIZE(): i32 { return krom_zui_theme_get(this.theme_, "FONT_SIZE"); }
+	set FONT_SIZE(a: i32) { krom_zui_theme_set(this.theme_, "FONT_SIZE", a); }
 
-	get ELEMENT_W(): i32 { return Krom.zui_theme_get(this.theme_, "ELEMENT_W"); }
-	set ELEMENT_W(a: i32) { Krom.zui_theme_set(this.theme_, "ELEMENT_W", a); }
+	get ELEMENT_W(): i32 { return krom_zui_theme_get(this.theme_, "ELEMENT_W"); }
+	set ELEMENT_W(a: i32) { krom_zui_theme_set(this.theme_, "ELEMENT_W", a); }
 
-	get ELEMENT_H(): i32 { return Krom.zui_theme_get(this.theme_, "ELEMENT_H"); }
-	set ELEMENT_H(a: i32) { Krom.zui_theme_set(this.theme_, "ELEMENT_H", a); }
+	get ELEMENT_H(): i32 { return krom_zui_theme_get(this.theme_, "ELEMENT_H"); }
+	set ELEMENT_H(a: i32) { krom_zui_theme_set(this.theme_, "ELEMENT_H", a); }
 
-	get ELEMENT_OFFSET(): i32 { return Krom.zui_theme_get(this.theme_, "ELEMENT_OFFSET"); }
-	set ELEMENT_OFFSET(a: i32) { Krom.zui_theme_set(this.theme_, "ELEMENT_OFFSET", a); }
+	get ELEMENT_OFFSET(): i32 { return krom_zui_theme_get(this.theme_, "ELEMENT_OFFSET"); }
+	set ELEMENT_OFFSET(a: i32) { krom_zui_theme_set(this.theme_, "ELEMENT_OFFSET", a); }
 
-	get ARROW_SIZE(): i32 { return Krom.zui_theme_get(this.theme_, "ARROW_SIZE"); }
-	set ARROW_SIZE(a: i32) { Krom.zui_theme_set(this.theme_, "ARROW_SIZE", a); }
+	get ARROW_SIZE(): i32 { return krom_zui_theme_get(this.theme_, "ARROW_SIZE"); }
+	set ARROW_SIZE(a: i32) { krom_zui_theme_set(this.theme_, "ARROW_SIZE", a); }
 
-	get BUTTON_H(): i32 { return Krom.zui_theme_get(this.theme_, "BUTTON_H"); }
-	set BUTTON_H(a: i32) { Krom.zui_theme_set(this.theme_, "BUTTON_H", a); }
+	get BUTTON_H(): i32 { return krom_zui_theme_get(this.theme_, "BUTTON_H"); }
+	set BUTTON_H(a: i32) { krom_zui_theme_set(this.theme_, "BUTTON_H", a); }
 
-	get CHECK_SIZE(): i32 { return Krom.zui_theme_get(this.theme_, "CHECK_SIZE"); }
-	set CHECK_SIZE(a: i32) { Krom.zui_theme_set(this.theme_, "CHECK_SIZE", a); }
+	get CHECK_SIZE(): i32 { return krom_zui_theme_get(this.theme_, "CHECK_SIZE"); }
+	set CHECK_SIZE(a: i32) { krom_zui_theme_set(this.theme_, "CHECK_SIZE", a); }
 
-	get CHECK_SELECT_SIZE(): i32 { return Krom.zui_theme_get(this.theme_, "CHECK_SELECT_SIZE"); }
-	set CHECK_SELECT_SIZE(a: i32) { Krom.zui_theme_set(this.theme_, "CHECK_SELECT_SIZE", a); }
+	get CHECK_SELECT_SIZE(): i32 { return krom_zui_theme_get(this.theme_, "CHECK_SELECT_SIZE"); }
+	set CHECK_SELECT_SIZE(a: i32) { krom_zui_theme_set(this.theme_, "CHECK_SELECT_SIZE", a); }
 
-	get SCROLL_W(): i32 { return Krom.zui_theme_get(this.theme_, "SCROLL_W"); }
-	set SCROLL_W(a: i32) { Krom.zui_theme_set(this.theme_, "SCROLL_W", a); }
+	get SCROLL_W(): i32 { return krom_zui_theme_get(this.theme_, "SCROLL_W"); }
+	set SCROLL_W(a: i32) { krom_zui_theme_set(this.theme_, "SCROLL_W", a); }
 
-	get SCROLL_MINI_W(): i32 { return Krom.zui_theme_get(this.theme_, "SCROLL_MINI_W"); }
-	set SCROLL_MINI_W(a: i32) { Krom.zui_theme_set(this.theme_, "SCROLL_MINI_W", a); }
+	get SCROLL_MINI_W(): i32 { return krom_zui_theme_get(this.theme_, "SCROLL_MINI_W"); }
+	set SCROLL_MINI_W(a: i32) { krom_zui_theme_set(this.theme_, "SCROLL_MINI_W", a); }
 
-	get TEXT_OFFSET(): i32 { return Krom.zui_theme_get(this.theme_, "TEXT_OFFSET"); }
-	set TEXT_OFFSET(a: i32) { Krom.zui_theme_set(this.theme_, "TEXT_OFFSET", a); }
+	get TEXT_OFFSET(): i32 { return krom_zui_theme_get(this.theme_, "TEXT_OFFSET"); }
+	set TEXT_OFFSET(a: i32) { krom_zui_theme_set(this.theme_, "TEXT_OFFSET", a); }
 
-	get TAB_W(): i32 { return Krom.zui_theme_get(this.theme_, "TAB_W"); }
-	set TAB_W(a: i32) { Krom.zui_theme_set(this.theme_, "TAB_W", a); }
+	get TAB_W(): i32 { return krom_zui_theme_get(this.theme_, "TAB_W"); }
+	set TAB_W(a: i32) { krom_zui_theme_set(this.theme_, "TAB_W", a); }
 
-	get FILL_WINDOW_BG(): bool { return Krom.zui_theme_get(this.theme_, "FILL_WINDOW_BG") > 0; }
-	set FILL_WINDOW_BG(a: bool) { Krom.zui_theme_set(this.theme_, "FILL_WINDOW_BG", a); }
+	get FILL_WINDOW_BG(): bool { return krom_zui_theme_get(this.theme_, "FILL_WINDOW_BG") > 0; }
+	set FILL_WINDOW_BG(a: bool) { krom_zui_theme_set(this.theme_, "FILL_WINDOW_BG", a); }
 
-	get FILL_BUTTON_BG(): bool { return Krom.zui_theme_get(this.theme_, "FILL_BUTTON_BG") > 0; }
-	set FILL_BUTTON_BG(a: bool) { Krom.zui_theme_set(this.theme_, "FILL_BUTTON_BG", a); }
+	get FILL_BUTTON_BG(): bool { return krom_zui_theme_get(this.theme_, "FILL_BUTTON_BG") > 0; }
+	set FILL_BUTTON_BG(a: bool) { krom_zui_theme_set(this.theme_, "FILL_BUTTON_BG", a); }
 
-	get FILL_ACCENT_BG(): bool { return Krom.zui_theme_get(this.theme_, "FILL_ACCENT_BG") > 0; }
-	set FILL_ACCENT_BG(a: bool) { Krom.zui_theme_set(this.theme_, "FILL_ACCENT_BG", a); }
+	get FILL_ACCENT_BG(): bool { return krom_zui_theme_get(this.theme_, "FILL_ACCENT_BG") > 0; }
+	set FILL_ACCENT_BG(a: bool) { krom_zui_theme_set(this.theme_, "FILL_ACCENT_BG", a); }
 
-	get LINK_STYLE(): i32 { return Krom.zui_theme_get(this.theme_, "LINK_STYLE"); }
-	set LINK_STYLE(a: i32) { Krom.zui_theme_set(this.theme_, "LINK_STYLE", a); }
+	get LINK_STYLE(): i32 { return krom_zui_theme_get(this.theme_, "LINK_STYLE"); }
+	set LINK_STYLE(a: i32) { krom_zui_theme_set(this.theme_, "LINK_STYLE", a); }
 
-	get FULL_TABS(): bool { return Krom.zui_theme_get(this.theme_, "FULL_TABS") > 0; }
-	set FULL_TABS(a: bool) { Krom.zui_theme_set(this.theme_, "FULL_TABS", a); }
+	get FULL_TABS(): bool { return krom_zui_theme_get(this.theme_, "FULL_TABS") > 0; }
+	set FULL_TABS(a: bool) { krom_zui_theme_set(this.theme_, "FULL_TABS", a); }
 
-	get ROUND_CORNERS(): bool { return Krom.zui_theme_get(this.theme_, "ROUND_CORNERS") > 0; }
-	set ROUND_CORNERS(a: bool) { Krom.zui_theme_set(this.theme_, "ROUND_CORNERS", a); }
+	get ROUND_CORNERS(): bool { return krom_zui_theme_get(this.theme_, "ROUND_CORNERS") > 0; }
+	set ROUND_CORNERS(a: bool) { krom_zui_theme_set(this.theme_, "ROUND_CORNERS", a); }
 }
 
 function zui_theme_create(): theme_t {
 	let raw = new theme_t();
-	raw.theme_ = Krom.zui_theme_init();
+	raw.theme_ = krom_zui_theme_init();
 	return raw;
 }
 
@@ -559,23 +559,23 @@ class zui_nodes_t {
 	nodes_: any;
 	colorPickerCallback: (col: Color)=>void = null;
 
-	get nodesSelectedId(): i32[] { return Krom.zui_nodes_get(this.nodes_, "nodes_selected_id"); }
-	set nodesSelectedId(a: i32[]) { Krom.zui_nodes_set(this.nodes_, "nodes_selected_id", a); }
+	get nodesSelectedId(): i32[] { return krom_zui_nodes_get(this.nodes_, "nodes_selected_id"); }
+	set nodesSelectedId(a: i32[]) { krom_zui_nodes_set(this.nodes_, "nodes_selected_id", a); }
 
-	set _inputStarted(a: bool) { Krom.zui_nodes_set(this.nodes_, "_input_started", a); }
+	set _inputStarted(a: bool) { krom_zui_nodes_set(this.nodes_, "_input_started", a); }
 
-	set nodesDrag(a: bool) { Krom.zui_nodes_set(this.nodes_, "nodes_drag", a); }
+	set nodesDrag(a: bool) { krom_zui_nodes_set(this.nodes_, "nodes_drag", a); }
 
-	get panX(): f32 { return Krom.zui_nodes_get(this.nodes_, "pan_x"); }
-	set panX(a: f32) { Krom.zui_nodes_set(this.nodes_, "pan_x", a); }
+	get panX(): f32 { return krom_zui_nodes_get(this.nodes_, "pan_x"); }
+	set panX(a: f32) { krom_zui_nodes_set(this.nodes_, "pan_x", a); }
 
-	get panY(): f32 { return Krom.zui_nodes_get(this.nodes_, "pan_y"); }
-	set panY(a: f32) { Krom.zui_nodes_set(this.nodes_, "pan_y", a); }
+	get panY(): f32 { return krom_zui_nodes_get(this.nodes_, "pan_y"); }
+	set panY(a: f32) { krom_zui_nodes_set(this.nodes_, "pan_y", a); }
 
-	set zoom(a: f32) { Krom.zui_nodes_set(this.nodes_, "zoom", a); }
+	set zoom(a: f32) { krom_zui_nodes_set(this.nodes_, "zoom", a); }
 
-	get linkDragId(): i32 { return Krom.zui_nodes_get(this.nodes_, "link_drag_id"); }
-	set linkDragId(a: i32) { Krom.zui_nodes_set(this.nodes_, "link_drag_id", a); }
+	get linkDragId(): i32 { return krom_zui_nodes_get(this.nodes_, "link_drag_id"); }
+	set linkDragId(a: i32) { krom_zui_nodes_set(this.nodes_, "link_drag_id", a); }
 }
 
 let zui_nodes_current: zui_nodes_t;
@@ -588,19 +588,19 @@ let zui_exclude_remove: string[] = ["OUTPUT_MATERIAL_PBR", "GROUP_OUTPUT", "GROU
 let zui_node_replace: zui_node_t[] = [];
 let zui_nodes_eps = 0.00001;
 
-function zui_set_on_link_drag(f: (link_drag_id: i32, is_new_link: bool)=>void) { Krom.zui_nodes_set_on_link_drag(f); }
-function zui_set_on_socket_released(f: (socket_id: i32)=>void) { Krom.zui_nodes_set_on_socket_released(f); }
-function zui_set_on_canvas_released(f: ()=>void) { Krom.zui_nodes_set_on_canvas_released(f); }
-function zui_set_on_canvas_control(f: ()=>zui_canvas_control_t) { Krom.zui_nodes_set_on_canvas_control(f); }
-function zui_socket_released(): bool { return Krom.zui_nodes_get(null, "socket_released"); }
+function zui_set_on_link_drag(f: (link_drag_id: i32, is_new_link: bool)=>void) { krom_zui_nodes_set_on_link_drag(f); }
+function zui_set_on_socket_released(f: (socket_id: i32)=>void) { krom_zui_nodes_set_on_socket_released(f); }
+function zui_set_on_canvas_released(f: ()=>void) { krom_zui_nodes_set_on_canvas_released(f); }
+function zui_set_on_canvas_control(f: ()=>zui_canvas_control_t) { krom_zui_nodes_set_on_canvas_control(f); }
+function zui_socket_released(): bool { return krom_zui_nodes_get(null, "socket_released"); }
 
 let zui_enum_texts_js: (node_type: string)=>string[] = null;
-function zui_set_enum_texts(f: (node_type: string)=>string[]) { zui_enum_texts_js = f; Krom.zui_nodes_set_enum_texts(f); }
+function zui_set_enum_texts(f: (node_type: string)=>string[]) { zui_enum_texts_js = f; krom_zui_nodes_set_enum_texts(f); }
 
 function zui_nodes_create(): zui_nodes_t {
 	let raw = new zui_nodes_t();
-	raw.nodes_ = Krom.zui_nodes_init();
-	Krom.zui_nodes_set_on_custom_button(zui_nodes_on_custom_button);
+	raw.nodes_ = krom_zui_nodes_init();
+	krom_zui_nodes_set_on_custom_button(zui_nodes_on_custom_button);
 	return raw;
 }
 
@@ -727,7 +727,7 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 		canvas_.links.push({ id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
 	}
 
-	let packed = Krom.zui_node_canvas(raw.nodes_, armpack_encode(canvas_));
+	let packed = krom_zui_node_canvas(raw.nodes_, armpack_encode(canvas_));
 	canvas_ = armpack_decode(packed);
 	if (canvas_.nodes == null) canvas_.nodes = [];
 	if (canvas_.links == null) canvas_.links = [];
@@ -750,7 +750,7 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 	canvas.nodes = canvas_.nodes;
 	canvas.links = canvas_.links;
 
-	// Restore nodes modified in js while Krom.zui_node_canvas was running
+	// Restore nodes modified in js while zui_node_canvas was running
 	for (let n of zui_node_replace) {
 		for (let i = 0; i < canvas.nodes.length; ++i) {
 			if (canvas.nodes[i].id == n.id) {
@@ -765,7 +765,7 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 }
 
 function zui_nodes_rgba_popup(ui: zui_t, nhandle: zui_handle_t, val: Float32Array, x: i32, y: i32) {
-	Krom.zui_nodes_rgba_popup(nhandle.handle_, val.buffer, x, y);
+	krom_zui_nodes_rgba_popup(nhandle.handle_, val.buffer, x, y);
 }
 
 function zui_remove_node(n: zui_node_t, canvas: zui_node_canvas_t) {
@@ -782,15 +782,15 @@ function zui_remove_node(n: zui_node_t, canvas: zui_node_canvas_t) {
 }
 
 function zui_nodes_SCALE(): f32 {
-	return Krom.zui_nodes_scale();
+	return krom_zui_nodes_scale();
 }
 
 function zui_nodes_PAN_X(): f32 {
-	return Krom.zui_nodes_pan_x();
+	return krom_zui_nodes_pan_x();
 }
 
 function zui_nodes_PAN_Y(): f32 {
-	return Krom.zui_nodes_pan_y();
+	return krom_zui_nodes_pan_y();
 }
 
 function zui_nodes_NODE_H(canvas: zui_node_canvas_t, node: zui_node_t): i32 {
@@ -1024,7 +1024,7 @@ function zui_nodes_update_canvas_format(canvas: zui_node_canvas_t) {
 }
 
 type zui_ops_t = {
-	font: font_t;
+	font: g2_font_t;
 	theme: theme_t;
 	scaleFactor: f32;
 	color_wheel: image_t;

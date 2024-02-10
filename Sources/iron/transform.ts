@@ -1,12 +1,12 @@
 
 class transform_t {
 	world: mat4_t;
-	local_only = false;
+	local_only: bool;
 	local: mat4_t;
 	loc: vec4_t;
 	rot: quat_t;
 	scale: vec4_t;
-	scale_world: f32 = 1.0;
+	scale_world: f32;
 	world_unpack: mat4_t;
 	dirty: bool;
 	object: object_t;
@@ -35,6 +35,8 @@ let _transform_q = quat_create();
 
 function transform_create(object: object_t): transform_t {
 	let raw = new transform_t();
+	raw.local_only = false;
+	raw.scale_world = 1.0;
 	raw.object = object;
 	transform_reset(raw);
 	return raw;
@@ -83,18 +85,18 @@ function transform_build_matrix(raw: transform_t) {
 
 	mat4_set_from(raw.world_unpack, raw.world);
 	if (raw.scale_world != 1.0) {
-		raw.world_unpack._00 *= raw.scale_world;
-		raw.world_unpack._01 *= raw.scale_world;
-		raw.world_unpack._02 *= raw.scale_world;
-		raw.world_unpack._03 *= raw.scale_world;
-		raw.world_unpack._10 *= raw.scale_world;
-		raw.world_unpack._11 *= raw.scale_world;
-		raw.world_unpack._12 *= raw.scale_world;
-		raw.world_unpack._13 *= raw.scale_world;
-		raw.world_unpack._20 *= raw.scale_world;
-		raw.world_unpack._21 *= raw.scale_world;
-		raw.world_unpack._22 *= raw.scale_world;
-		raw.world_unpack._23 *= raw.scale_world;
+		raw.world_unpack.m[0] *= raw.scale_world;
+		raw.world_unpack.m[1] *= raw.scale_world;
+		raw.world_unpack.m[2] *= raw.scale_world;
+		raw.world_unpack.m[3] *= raw.scale_world;
+		raw.world_unpack.m[4] *= raw.scale_world;
+		raw.world_unpack.m[5] *= raw.scale_world;
+		raw.world_unpack.m[6] *= raw.scale_world;
+		raw.world_unpack.m[7] *= raw.scale_world;
+		raw.world_unpack.m[8] *= raw.scale_world;
+		raw.world_unpack.m[9] *= raw.scale_world;
+		raw.world_unpack.m[10] *= raw.scale_world;
+		raw.world_unpack.m[11] *= raw.scale_world;
 	}
 
 	transform_compute_dim(raw);
@@ -198,13 +200,13 @@ function transform_up(raw: transform_t): vec4_t {
 }
 
 function transform_world_x(raw: transform_t): f32 {
-	return raw.world._30;
+	return raw.world.m[12];
 }
 
 function transform_world_y(raw: transform_t): f32 {
-	return raw.world._31;
+	return raw.world.m[13];
 }
 
 function transform_world_z(raw: transform_t): f32 {
-	return raw.world._32;
+	return raw.world.m[14];
 }

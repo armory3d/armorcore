@@ -30,7 +30,7 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 	let ibuf = new Uint8Array(b);
 	let ilen = ibuf.length;
 	if (ilen >= 0x7e000000) {
-		Krom.log("LZ4 range error");
+		krom_log("LZ4 range error");
 		return null;
 	}
 

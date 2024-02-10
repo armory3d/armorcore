@@ -3,15 +3,15 @@
 
 class particle_sys_t {
 	data: particle_data_t;
-	speed = 1.0;
+	speed: f32;
 	particles: particle_t[];
 	ready: bool;
-	frame_rate = 24;
-	lifetime = 0.0;
-	animtime = 0.0;
-	time = 0.0;
-	spawn_rate = 0.0;
-	seed = 0;
+	frame_rate: i32;
+	lifetime: f32;
+	animtime: f32;
+	time: f32;
+	spawn_rate: f32;
+	seed: i32;
 
 	r: particle_data_t;
 	gx: f32;
@@ -23,27 +23,45 @@ class particle_sys_t {
 	dimx: f32;
 	dimy: f32;
 
-	count = 0;
-	lap = 0;
-	lap_time = 0.0;
-	m = mat4_identity();
+	count: i32;
+	lap: i32;
+	lap_time: f32;
+	m: mat4_t;
 
-	owner_loc = vec4_create();
-	owner_rot = quat_create();
-	owner_scale = vec4_create();
+	owner_loc: vec4_t;
+	owner_rot: quat_t;
+	owner_scale: vec4_t;
 }
 
 class particle_t {
 	i: i32;
-	x = 0.0;
-	y = 0.0;
-	z = 0.0;
+	x: f32;
+	y: f32;
+	z: f32;
 	camera_dist: f32;
+}
+
+function particle_create(): particle_t {
+	let raw = new particle_t();
+	raw.x = 0;
+	raw.y = 0;
+	raw.z = 0;
+	return raw;
 }
 
 function particle_sys_create(scene_name: string, ref: particle_ref_t): particle_sys_t {
 	let raw = new particle_sys_t();
+	raw.speed = 1.0;
+	raw.frame_rate = 24;
+	raw.time = 0.0;
 	raw.seed = ref.seed;
+	raw.count = 0;
+	raw.lap = 0;
+	raw.lap_time = 0.0;
+	raw.m = mat4_identity();
+	raw.owner_loc = vec4_create();
+	raw.owner_rot = quat_create();
+	raw.owner_scale = vec4_create();
 	raw.particles = [];
 	raw.ready = false;
 	data_get_particle(scene_name, ref.particle, function (b: particle_data_t) {
@@ -59,7 +77,7 @@ function particle_sys_create(scene_name: string, ref: particle_ref_t): particle_
 		raw.animtime = (raw.r.frame_end - raw.r.frame_start) / raw.frame_rate;
 		raw.spawn_rate = ((raw.r.frame_end - raw.r.frame_start) / raw.r.count) / raw.frame_rate;
 		for (let i = 0; i < raw.r.count; ++i) {
-			let p = new particle_t();
+			let p = particle_create();
 			p.i = i;
 			raw.particles.push(p);
 		}
@@ -107,22 +125,22 @@ function particle_sys_update(raw: particle_sys_t, object: mesh_object_t, owner: 
 
 function particle_sys_get_data(raw: particle_sys_t): mat4_t {
 	let hair = raw.r.type == 1;
-	raw.m._00 = raw.r.loop ? raw.animtime : -raw.animtime;
-	raw.m._01 = hair ? 1 / raw.particles.length : raw.spawn_rate;
-	raw.m._02 = hair ? 1 : raw.lifetime;
-	raw.m._03 = raw.particles.length;
-	raw.m._10 = hair ? 0 : raw.alignx;
-	raw.m._11 = hair ? 0 : raw.aligny;
-	raw.m._12 = hair ? 0 : raw.alignz;
-	raw.m._13 = hair ? 0 : raw.r.factor_random;
-	raw.m._20 = hair ? 0 : raw.gx * raw.r.mass;
-	raw.m._21 = hair ? 0 : raw.gy * raw.r.mass;
-	raw.m._22 = hair ? 0 : raw.gz * raw.r.mass;
-	raw.m._23 = hair ? 0 : raw.r.lifetime_random;
-	raw.m._30 = 1; // tilesx
-	raw.m._31 = 1; // tilesy
-	raw.m._32 = 1; // tilesframerate
-	raw.m._33 = hair ? 1 : raw.lap_time;
+	raw.m.m[0] = raw.r.loop ? raw.animtime : -raw.animtime;
+	raw.m.m[1] = hair ? 1 / raw.particles.length : raw.spawn_rate;
+	raw.m.m[2] = hair ? 1 : raw.lifetime;
+	raw.m.m[3] = raw.particles.length;
+	raw.m.m[4] = hair ? 0 : raw.alignx;
+	raw.m.m[5] = hair ? 0 : raw.aligny;
+	raw.m.m[6] = hair ? 0 : raw.alignz;
+	raw.m.m[7] = hair ? 0 : raw.r.factor_random;
+	raw.m.m[8] = hair ? 0 : raw.gx * raw.r.mass;
+	raw.m.m[9] = hair ? 0 : raw.gy * raw.r.mass;
+	raw.m.m[10] = hair ? 0 : raw.gz * raw.r.mass;
+	raw.m.m[11] = hair ? 0 : raw.r.lifetime_random;
+	raw.m.m[12] = 1; // tilesx
+	raw.m.m[13] = 1; // tilesy
+	raw.m.m[14] = 1; // tilesframerate
+	raw.m.m[15] = hair ? 1 : raw.lap_time;
 	return raw.m;
 }
 

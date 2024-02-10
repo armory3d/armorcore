@@ -12,33 +12,37 @@ class anim_bone_t {
 	skeleton_mats_blend: mat4_t[];
 	abs_mats: mat4_t[];
 	apply_parent: bool[];
-	mats_fast: mat4_t[] = [];
-	mats_fast_sort: i32[] = [];
-	mats_fast_blend: mat4_t[] = [];
-	mats_fast_blend_sort: i32[] = [];
+	mats_fast: mat4_t[];
+	mats_fast_sort: i32[];
+	mats_fast_blend: mat4_t[];
+	mats_fast_blend_sort: i32[];
 	bone_children: Map<string, object_t[]>; // Parented to bone
 	// Do inverse kinematics here
 	on_updates: (()=>void)[];
 }
 
-let anim_bone_skin_max_bones = 128;
-let anim_bone_m = mat4_identity(); // Skinning matrix
-let anim_bone_m1 = mat4_identity();
-let anim_bone_m2 = mat4_identity();
-let anim_bone_bm = mat4_identity(); // Absolute bone matrix
-let anim_bone_wm = mat4_identity();
-let anim_bone_vpos = vec4_create();
-let anim_bone_vscale = vec4_create();
-let anim_bone_q1 = quat_create();
-let anim_bone_q2 = quat_create();
-let anim_bone_q3 = quat_create();
-let anim_bone_vpos2 = vec4_create();
-let anim_bone_vscale2 = vec4_create();
-let anim_bone_v1 = vec4_create();
-let anim_bone_v2 = vec4_create();
+let _anim_bone_skin_max_bones = 128;
+let _anim_bone_m = mat4_identity(); // Skinning matrix
+let _anim_bone_m1 = mat4_identity();
+let _anim_bone_m2 = mat4_identity();
+let _anim_bone_bm = mat4_identity(); // Absolute bone matrix
+let _anim_bone_wm = mat4_identity();
+let _anim_bone_vpos = vec4_create();
+let _anim_bone_vscale = vec4_create();
+let _anim_bone_q1 = quat_create();
+let _anim_bone_q2 = quat_create();
+let _anim_bone_q3 = quat_create();
+let _anim_bone_vpos2 = vec4_create();
+let _anim_bone_vscale2 = vec4_create();
+let _anim_bone_v1 = vec4_create();
+let _anim_bone_v2 = vec4_create();
 
 function anim_bone_create(armature_name = ""): anim_bone_t {
 	let raw = new anim_bone_t();
+	raw.mats_fast = [];
+	raw.mats_fast_sort = [];
+	raw.mats_fast_blend = [];
+	raw.mats_fast_blend_sort = [];
 	raw.base = anim_create();
 	raw.base.ext = raw;
 
@@ -59,13 +63,20 @@ function anim_bone_get_num_bones(raw: anim_bone_t): i32 {
 	return raw.skeleton_bones.length;
 }
 
+let _anim_bone_set_skin_data: any;
+
+function anim_bone_set_skin_done(action: scene_t) {
+	let raw: anim_bone_t = _anim_bone_set_skin_data;
+	anim_bone_play(raw, action.name);
+}
+
 function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 	raw.object = mo;
 	raw.data = mo != null ? mo.data : null;
 	raw.base.is_skinned = raw.data != null ? raw.data.skin != null : false;
 	if (raw.base.is_skinned) {
 		let bone_size = 8; // Dual-quat skinning
-		raw.skin_buffer = new Float32Array(anim_bone_skin_max_bones * bone_size);
+		raw.skin_buffer = new Float32Array(_anim_bone_skin_max_bones * bone_size);
 		for (let i = 0; i < raw.skin_buffer.length; ++i) {
 			raw.skin_buffer[i] = 0;
 		}
@@ -75,9 +86,8 @@ function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 
 		let refs = mo.base.parent.raw.bone_actions;
 		if (refs != null && refs.length > 0) {
-			data_get_scene_raw(refs[0], function(action: scene_t) {
-				anim_bone_play(raw, action.name);
-			});
+			_anim_bone_set_skin_data = raw;
+			data_get_scene_raw(refs[0], anim_bone_set_skin_done);
 		}
 	}
 }
@@ -142,28 +152,30 @@ function anim_bone_num_parents(b: obj_t): i32 {
 	return i;
 }
 
+let _anim_bone_sort_data: any;
+
+function anim_bone_sort(a: i32, b: i32) {
+	let i = anim_bone_num_parents(_anim_bone_sort_data[a]);
+	let j = anim_bone_num_parents(_anim_bone_sort_data[b]);
+	return i < j ? -1 : i > j ? 1 : 0;
+}
+
 function anim_bone_set_mats(raw: anim_bone_t) {
 	while (raw.mats_fast.length < raw.skeleton_bones.length) {
 		raw.mats_fast.push(mat4_identity());
 		raw.mats_fast_sort.push(raw.mats_fast_sort.length);
 	}
 	// Calc bones with 0 parents first
-	raw.mats_fast_sort.sort(function(a: i32, b: i32) {
-		let i = anim_bone_num_parents(raw.skeleton_bones[a]);
-		let j = anim_bone_num_parents(raw.skeleton_bones[b]);
-		return i < j ? -1 : i > j ? 1 : 0;
-	});
+	_anim_bone_sort_data = raw.skeleton_bones;
+	raw.mats_fast_sort.sort(anim_bone_sort);
 
 	if (raw.skeleton_bones_blend != null) {
 		while (raw.mats_fast_blend.length < raw.skeleton_bones_blend.length) {
 			raw.mats_fast_blend.push(mat4_identity());
 			raw.mats_fast_blend_sort.push(raw.mats_fast_blend_sort.length);
 		}
-		raw.mats_fast_blend_sort.sort(function(a: i32, b: i32) {
-			let i = anim_bone_num_parents(raw.skeleton_bones_blend[a]);
-			let j = anim_bone_num_parents(raw.skeleton_bones_blend[b]);
-			return i < j ? -1 : i > j ? 1 : 0;
-		});
+		_anim_bone_sort_data = raw.skeleton_bones_blend;
+		raw.mats_fast_blend_sort.sort(anim_bone_sort);
 	}
 }
 
@@ -243,8 +255,8 @@ function anim_bone_update_bones_only(raw: anim_bone_t) {
 	if (raw.bone_children != null) {
 		for (let i = 0; i < raw.skeleton_bones.length; ++i) {
 			let b = raw.skeleton_bones[i]; // TODO: blend_time > 0
-			mat4_set_from(anim_bone_m, raw.mats_fast[i]);
-			anim_bone_update_bone_children(raw, b, anim_bone_m);
+			mat4_set_from(_anim_bone_m, raw.mats_fast[i]);
+			anim_bone_update_bone_children(raw, b, _anim_bone_m);
 		}
 	}
 }
@@ -260,53 +272,53 @@ function anim_bone_update_skin_gpu(raw: anim_bone_t) {
 
 	// Update skin buffer
 	for (let i = 0; i < bones.length; ++i) {
-		mat4_set_from(anim_bone_m, raw.mats_fast[i]);
+		mat4_set_from(_anim_bone_m, raw.mats_fast[i]);
 
 		if (raw.base.blend_time > 0 && raw.skeleton_bones_blend != null) {
 			// Decompose
-			mat4_set_from(anim_bone_m1, raw.mats_fast_blend[i]);
-			mat4_decompose(anim_bone_m1, anim_bone_vpos, anim_bone_q1, anim_bone_vscale);
-			mat4_decompose(anim_bone_m, anim_bone_vpos2, anim_bone_q2, anim_bone_vscale2);
+			mat4_set_from(_anim_bone_m1, raw.mats_fast_blend[i]);
+			mat4_decompose(_anim_bone_m1, _anim_bone_vpos, _anim_bone_q1, _anim_bone_vscale);
+			mat4_decompose(_anim_bone_m, _anim_bone_vpos2, _anim_bone_q2, _anim_bone_vscale2);
 
 			// Lerp
-			vec4_lerp(anim_bone_v1, anim_bone_vpos, anim_bone_vpos2, s);
-			vec4_lerp(anim_bone_v2, anim_bone_vscale, anim_bone_vscale2, s);
-			quat_lerp(anim_bone_q3, anim_bone_q1, anim_bone_q2, s);
+			vec4_lerp(_anim_bone_v1, _anim_bone_vpos, _anim_bone_vpos2, s);
+			vec4_lerp(_anim_bone_v2, _anim_bone_vscale, _anim_bone_vscale2, s);
+			quat_lerp(_anim_bone_q3, _anim_bone_q1, _anim_bone_q2, s);
 
 			// Compose
-			mat4_from_quat(anim_bone_m, anim_bone_q3);
-			mat4_scale(anim_bone_m, anim_bone_v2);
-			anim_bone_m._30 = anim_bone_v1.x;
-			anim_bone_m._31 = anim_bone_v1.y;
-			anim_bone_m._32 = anim_bone_v1.z;
+			mat4_from_quat(_anim_bone_m, _anim_bone_q3);
+			mat4_scale(_anim_bone_m, _anim_bone_v2);
+			_anim_bone_m.m[12] = _anim_bone_v1.x;
+			_anim_bone_m.m[13] = _anim_bone_v1.y;
+			_anim_bone_m.m[14] = _anim_bone_v1.z;
 		}
 
 		if (raw.abs_mats != null && i < raw.abs_mats.length) {
-			mat4_set_from(raw.abs_mats[i], anim_bone_m);
+			mat4_set_from(raw.abs_mats[i], _anim_bone_m);
 		}
 		if (raw.bone_children != null) {
-			anim_bone_update_bone_children(raw, bones[i], anim_bone_m);
+			anim_bone_update_bone_children(raw, bones[i], _anim_bone_m);
 		}
 
-		mat4_mult_mats(anim_bone_m, anim_bone_m, raw.data._skeleton_transforms_inv[i]);
-		anim_bone_update_skin_buffer(raw, anim_bone_m, i);
+		mat4_mult_mats(_anim_bone_m, _anim_bone_m, raw.data._skeleton_transforms_inv[i]);
+		anim_bone_update_skin_buffer(raw, _anim_bone_m, i);
 	}
 }
 
 function anim_bone_update_skin_buffer(raw: anim_bone_t, m: mat4_t, i: i32) {
 	// Dual quat skinning
-	mat4_decompose(m, anim_bone_vpos, anim_bone_q1, anim_bone_vscale);
-	quat_normalize(anim_bone_q1);
-	quat_set(anim_bone_q2, anim_bone_vpos.x, anim_bone_vpos.y, anim_bone_vpos.z, 0.0);
-	quat_mult_quats(anim_bone_q2, anim_bone_q2, anim_bone_q1);
-	raw.skin_buffer[i * 8] = anim_bone_q1.x; // Real
-	raw.skin_buffer[i * 8 + 1] = anim_bone_q1.y;
-	raw.skin_buffer[i * 8 + 2] = anim_bone_q1.z;
-	raw.skin_buffer[i * 8 + 3] = anim_bone_q1.w;
-	raw.skin_buffer[i * 8 + 4] = anim_bone_q2.x * 0.5; // Dual
-	raw.skin_buffer[i * 8 + 5] = anim_bone_q2.y * 0.5;
-	raw.skin_buffer[i * 8 + 6] = anim_bone_q2.z * 0.5;
-	raw.skin_buffer[i * 8 + 7] = anim_bone_q2.w * 0.5;
+	mat4_decompose(m, _anim_bone_vpos, _anim_bone_q1, _anim_bone_vscale);
+	quat_normalize(_anim_bone_q1);
+	quat_set(_anim_bone_q2, _anim_bone_vpos.x, _anim_bone_vpos.y, _anim_bone_vpos.z, 0.0);
+	quat_mult_quats(_anim_bone_q2, _anim_bone_q2, _anim_bone_q1);
+	raw.skin_buffer[i * 8] = _anim_bone_q1.x; // Real
+	raw.skin_buffer[i * 8 + 1] = _anim_bone_q1.y;
+	raw.skin_buffer[i * 8 + 2] = _anim_bone_q1.z;
+	raw.skin_buffer[i * 8 + 3] = _anim_bone_q1.w;
+	raw.skin_buffer[i * 8 + 4] = _anim_bone_q2.x * 0.5; // Dual
+	raw.skin_buffer[i * 8 + 5] = _anim_bone_q2.y * 0.5;
+	raw.skin_buffer[i * 8 + 6] = _anim_bone_q2.z * 0.5;
+	raw.skin_buffer[i * 8 + 7] = _anim_bone_q2.w * 0.5;
 }
 
 function anim_bone_get_bone(raw: anim_bone_t, name: string): obj_t {
@@ -368,10 +380,10 @@ function anim_bone_get_world_mat(raw: anim_bone_t, bone: obj_t): mat4_t {
 		}
 	}
 	let i = anim_bone_get_bone_index(raw, bone);
-	mat4_set_from(anim_bone_wm, raw.skeleton_mats[i]);
-	anim_bone_mult_parents(raw, anim_bone_wm, i, raw.skeleton_bones, raw.skeleton_mats);
+	mat4_set_from(_anim_bone_wm, raw.skeleton_mats[i]);
+	anim_bone_mult_parents(raw, _anim_bone_wm, i, raw.skeleton_bones, raw.skeleton_mats);
 	// mat4_set_from(anim_bone_wm, raw.mats_fast[i]); // TODO
-	return anim_bone_wm;
+	return _anim_bone_wm;
 }
 
 function anim_bone_get_bone_len(raw: anim_bone_t, bone: obj_t): f32 {

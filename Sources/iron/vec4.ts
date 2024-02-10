@@ -145,10 +145,10 @@ function vec4_apply_proj(self: vec4_t, m: mat4_t): vec4_t {
 	let x = self.x;
 	let y = self.y;
 	let z = self.z;
-	let d = 1.0 / (m._03 * x + m._13 * y + m._23 * z + m._33); // Perspective divide
-	self.x = (m._00 * x + m._10 * y + m._20 * z + m._30) * d;
-	self.y = (m._01 * x + m._11 * y + m._21 * z + m._31) * d;
-	self.z = (m._02 * x + m._12 * y + m._22 * z + m._32) * d;
+	let d = 1.0 / (m.m[3] * x + m.m[7] * y + m.m[11] * z + m.m[15]); // Perspective divide
+	self.x = (m.m[0] * x + m.m[4] * y + m.m[8] * z + m.m[12]) * d;
+	self.y = (m.m[1] * x + m.m[5] * y + m.m[9] * z + m.m[13]) * d;
+	self.z = (m.m[2] * x + m.m[6] * y + m.m[10] * z + m.m[14]) * d;
 	return self;
 }
 
@@ -156,9 +156,9 @@ function vec4_apply_mat(self: vec4_t, m: mat4_t): vec4_t {
 	let x = self.x;
 	let y = self.y;
 	let z = self.z;
-	self.x = m._00 * x + m._10 * y + m._20 * z + m._30;
-	self.y = m._01 * x + m._11 * y + m._21 * z + m._31;
-	self.z = m._02 * x + m._12 * y + m._22 * z + m._32;
+	self.x = m.m[0] * x + m.m[4] * y + m.m[8] * z + m.m[12];
+	self.y = m.m[1] * x + m.m[5] * y + m.m[9] * z + m.m[13];
+	self.z = m.m[2] * x + m.m[6] * y + m.m[10] * z + m.m[14];
 	return self;
 }
 
@@ -167,10 +167,10 @@ function vec4_apply_mat4(self: vec4_t, m: mat4_t): vec4_t {
 	let y = self.y;
 	let z = self.z;
 	let w = self.w;
-	self.x = m._00 * x + m._10 * y + m._20 * z + m._30 * w;
-	self.y = m._01 * x + m._11 * y + m._21 * z + m._31 * w;
-	self.z = m._02 * x + m._12 * y + m._22 * z + m._32 * w;
-	self.w = m._03 * x + m._13 * y + m._23 * z + m._33 * w;
+	self.x = m.m[0] * x + m.m[4] * y + m.m[8] * z + m.m[12] * w;
+	self.y = m.m[1] * x + m.m[5] * y + m.m[9] * z + m.m[13] * w;
+	self.z = m.m[2] * x + m.m[6] * y + m.m[10] * z + m.m[14] * w;
+	self.w = m.m[3] * x + m.m[7] * y + m.m[11] * z + m.m[15] * w;
 	return self;
 }
 

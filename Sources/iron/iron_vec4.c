@@ -89,27 +89,27 @@ kinc_vector4_t vec4_lerp(kinc_vector4_t from, kinc_vector4_t to, float s) {
 
 kinc_vector4_t vec4_apply_proj(kinc_vector4_t a, kinc_matrix4x4_t m) {
 	kinc_vector4_t v;
-	// float d = 1.0 / (m._03 * a.x + m._13 * a.y + m._23 * a.z + m._33); // Perspective divide
-	// v.x = (m._00 * a.x + m._10 * a.y + m._20 * a.z + m._30) * d;
-	// v.y = (m._01 * a.x + m._11 * a.y + m._21 * a.z + m._31) * d;
-	// v.z = (m._02 * a.x + m._12 * a.y + m._22 * a.z + m._32) * d;
+	// float d = 1.0 / (m.m[3] * a.x + m._13 * a.y + m._23 * a.z + m._33); // Perspective divide
+	// v.x = (m.m[0] * a.x + m.m[4] * a.y + m.m[8] * a.z + m._30) * d;
+	// v.y = (m.m[1] * a.x + m._11 * a.y + m._21 * a.z + m._31) * d;
+	// v.z = (m.m[2] * a.x + m._12 * a.y + m._22 * a.z + m._32) * d;
 	return v;
 }
 
 kinc_vector4_t vec4_apply_mat(kinc_vector4_t a, kinc_matrix4x4_t m) {
 	kinc_vector4_t v;
-	// v.x = m._00 * a.x + m._10 * a.y + m._20 * a.z + m._30;
-	// v.y = m._01 * a.x + m._11 * a.y + m._21 * a.z + m._31;
-	// v.z = m._02 * a.x + m._12 * a.y + m._22 * a.z + m._32;
+	// v.x = m.m[0] * a.x + m.m[4] * a.y + m.m[8] * a.z + m._30;
+	// v.y = m.m[1] * a.x + m._11 * a.y + m._21 * a.z + m._31;
+	// v.z = m.m[2] * a.x + m._12 * a.y + m._22 * a.z + m._32;
 	return v;
 }
 
 kinc_vector4_t vec4_apply_mat4(kinc_vector4_t a, kinc_matrix4x4_t m) {
 	kinc_vector4_t v;
-	// v.x = m._00 * a.x + m._10 * a.y + m._20 * a.z + m._30 * a.w;
-	// v.y = m._01 * a.x + m._11 * a.y + m._21 * a.z + m._31 * a.w;
-	// v.z = m._02 * a.x + m._12 * a.y + m._22 * a.z + m._32 * a.w;
-	// v.w = m._03 * a.x + m._13 * a.y + m._23 * a.z + m._33 * a.w;
+	// v.x = m.m[0] * a.x + m.m[4] * a.y + m.m[8] * a.z + m._30 * a.w;
+	// v.y = m.m[1] * a.x + m._11 * a.y + m._21 * a.z + m._31 * a.w;
+	// v.z = m.m[2] * a.x + m._12 * a.y + m._22 * a.z + m._32 * a.w;
+	// v.w = m.m[3] * a.x + m._13 * a.y + m._23 * a.z + m._33 * a.w;
 	return v;
 }
 

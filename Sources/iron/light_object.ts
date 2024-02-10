@@ -4,18 +4,17 @@
 class light_object_t {
 	base: object_t;
 	data: light_data_t;
-	v: mat4_t = mat4_identity();
+	v: mat4_t;
 	p: mat4_t;
-	vp: mat4_t = mat4_identity();
+	vp: mat4_t;
 	frustum_planes: frustum_plane_t[];
 }
 
-let light_object_m = mat4_identity();
-let light_object_eye = vec4_create();
-
 function light_object_create(data: light_data_t): light_object_t {
 	let raw = new light_object_t();
-	raw.base = object_create();
+	raw.v = mat4_identity();
+	raw.vp = mat4_identity();
+	raw.base = object_create(false);
 	raw.base.ext = raw;
 	raw.data = data;
 
@@ -79,13 +78,13 @@ function light_object_update_view_frustum(raw: light_object_t, camera: camera_ob
 }
 
 function light_object_right(raw: light_object_t): vec4_t {
-	return vec4_create(raw.v._00, raw.v._10, raw.v._20);
+	return vec4_create(raw.v.m[0], raw.v.m[4], raw.v.m[8]);
 }
 
 function light_object_up(raw: light_object_t): vec4_t {
-	return vec4_create(raw.v._01, raw.v._11, raw.v._21);
+	return vec4_create(raw.v.m[1], raw.v.m[5], raw.v.m[9]);
 }
 
 function light_object_look(raw: light_object_t): vec4_t {
-	return vec4_create(raw.v._02, raw.v._12, raw.v._22);
+	return vec4_create(raw.v.m[2], raw.v.m[6], raw.v.m[10]);
 }

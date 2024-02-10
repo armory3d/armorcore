@@ -3,7 +3,7 @@ function mesh_data_parse(name: string, id: string, done: (md: mesh_data_t)=>void
 	data_get_scene_raw(name, function (format: scene_t) {
 		let raw: mesh_data_t = data_get_mesh_raw_by_name(format.mesh_datas, id);
 		if (raw == null) {
-			Krom.log(`Mesh data "${id}" not found!`);
+			krom_log(`Mesh data "${id}" not found!`);
 			done(null);
 		}
 
@@ -90,17 +90,23 @@ function mesh_data_create(raw: mesh_data_t, done: (md: mesh_data_t)=>void) {
 }
 
 function mesh_data_get_vertex_struct(vertex_arrays: vertex_array_t[]): vertex_struct_t {
-	let structure = vertex_struct_create();
+	let structure = g4_vertex_struct_create();
 	for (let i = 0; i < vertex_arrays.length; ++i) {
-		vertex_struct_add(structure, vertex_arrays[i].attrib, mesh_data_get_vertex_data(vertex_arrays[i].data));
+		g4_vertex_struct_add(structure, vertex_arrays[i].attrib, mesh_data_get_vertex_data(vertex_arrays[i].data));
 	}
 	return structure;
 }
 
 function mesh_data_get_vertex_data(data: string): vertex_data_t {
-	if (data == "short4norm") return vertex_data_t.I16_4X_NORM;
-	else if (data == "short2norm") return vertex_data_t.I16_2X_NORM;
-	else return vertex_data_t.I16_4X_NORM;
+	if (data == "short4norm") {
+		return vertex_data_t.I16_4X_NORM;
+	}
+	else if (data == "short2norm") {
+		return vertex_data_t.I16_2X_NORM;
+	}
+	else {
+		return vertex_data_t.I16_4X_NORM;
+	}
 }
 
 function mesh_data_build_vertices(vertices: DataView, vertex_arrays: vertex_array_t[], offset = 0, fake_uvs = false, uvs_index = -1) {
@@ -128,9 +134,15 @@ function mesh_data_build_vertices(vertices: DataView, vertex_arrays: vertex_arra
 }
 
 function mesh_data_get_vertex_size(vertex_data: string, padding: i32 = 0): i32 {
-	if (vertex_data == "short4norm") return 4 - padding;
-	else if (vertex_data == "short2norm") return 2 - padding;
-	else return 0;
+	if (vertex_data == "short4norm") {
+		return 4 - padding;
+	}
+	else if (vertex_data == "short2norm") {
+		return 2 - padding;
+	}
+	else {
+		return 0;
+	}
 }
 
 function mesh_data_get_vertex_array(raw: mesh_data_t, name: string): vertex_array_t {
@@ -143,25 +155,25 @@ function mesh_data_get_vertex_array(raw: mesh_data_t, name: string): vertex_arra
 }
 
 function mesh_data_setup_inst(raw: mesh_data_t, data: Float32Array, inst_type: i32) {
-	let structure = vertex_struct_create();
+	let structure = g4_vertex_struct_create();
 	structure.instanced = true;
 	raw._instanced = true;
 	// pos, pos+rot, pos+scale, pos+rot+scale
-	vertex_struct_add(structure, "ipos", vertex_data_t.F32_3X);
+	g4_vertex_struct_add(structure, "ipos", vertex_data_t.F32_3X);
 	if (inst_type == 2 || inst_type == 4) {
-		vertex_struct_add(structure, "irot", vertex_data_t.F32_3X);
+		g4_vertex_struct_add(structure, "irot", vertex_data_t.F32_3X);
 	}
 	if (inst_type == 3 || inst_type == 4) {
-		vertex_struct_add(structure, "iscl", vertex_data_t.F32_3X);
+		g4_vertex_struct_add(structure, "iscl", vertex_data_t.F32_3X);
 	}
 
-	raw._instance_count = Math.floor(data.length / Math.floor(vertex_struct_byte_size(structure) / 4));
-	raw._instanced_vb = vertex_buffer_create(raw._instance_count, structure, usage_t.STATIC, 1);
-	let vertices = vertex_buffer_lock(raw._instanced_vb);
+	raw._instance_count = Math.floor(data.length / Math.floor(g4_vertex_struct_byte_size(structure) / 4));
+	raw._instanced_vb = g4_vertex_buffer_create(raw._instance_count, structure, usage_t.STATIC, 1);
+	let vertices = g4_vertex_buffer_lock(raw._instanced_vb);
 	for (let i = 0; i < Math.floor(vertices.byteLength / 4); ++i) {
 		vertices.setFloat32(i * 4, data[i], true);
 	}
-	vertex_buffer_unlock(raw._instanced_vb);
+	g4_vertex_buffer_unlock(raw._instanced_vb);
 }
 
 function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_t {
@@ -194,16 +206,16 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 		let uvs = mesh_data_get_vertex_array(raw, 'tex');
 		let cols = mesh_data_get_vertex_array(raw, 'col');
 		let struct = mesh_data_get_vertex_struct(vertex_arrays);
-		vb = vertex_buffer_create(Math.floor(positions.values.length / positions._size), struct, usage_t.STATIC);
-		raw._vertices = vertex_buffer_lock(vb);
+		vb = g4_vertex_buffer_create(Math.floor(positions.values.length / positions._size), struct, usage_t.STATIC);
+		raw._vertices = g4_vertex_buffer_lock(vb);
 		mesh_data_build_vertices(raw._vertices, vertex_arrays, 0, has_tex && uvs == null, tex_offset);
-		vertex_buffer_unlock(vb);
+		g4_vertex_buffer_unlock(vb);
 		raw._vertex_buffer_map.set(key, vb);
 		if (has_tex && uvs == null) {
-			Krom.log("Geometry " + raw.name + " is missing UV map");
+			krom_log("Geometry " + raw.name + " is missing UV map");
 		}
 		if (has_col && cols == null) {
-			Krom.log("Geometry " + raw.name + " is missing vertex colors");
+			krom_log("Geometry " + raw.name + " is missing vertex colors");
 		}
 	}
 	return vb;
@@ -215,10 +227,10 @@ function mesh_data_build(raw: mesh_data_t) {
 	}
 
 	let positions = mesh_data_get_vertex_array(raw, 'pos');
-	raw._vertex_buffer = vertex_buffer_create(Math.floor(positions.values.length / positions._size), raw._struct, usage_t.STATIC);
-	raw._vertices = vertex_buffer_lock(raw._vertex_buffer);
+	raw._vertex_buffer = g4_vertex_buffer_create(Math.floor(positions.values.length / positions._size), raw._struct, usage_t.STATIC);
+	raw._vertices = g4_vertex_buffer_lock(raw._vertex_buffer);
 	mesh_data_build_vertices(raw._vertices, raw.vertex_arrays);
-	vertex_buffer_unlock(raw._vertex_buffer);
+	g4_vertex_buffer_unlock(raw._vertex_buffer);
 
 	let struct_str = "";
 	for (let e of raw._struct.elements) {
@@ -231,14 +243,14 @@ function mesh_data_build(raw: mesh_data_t) {
 		if (id.length == 0) {
 			continue;
 		}
-		let index_buffer = index_buffer_create(id.length);
+		let index_buffer = g4_index_buffer_create(id.length);
 
-		let indices_array = index_buffer_lock(index_buffer);
+		let indices_array = g4_index_buffer_lock(index_buffer);
 		for (let i = 0; i < indices_array.length; ++i) {
 			indices_array[i] = id[i];
 		}
 
-		index_buffer_unlock(index_buffer);
+		g4_index_buffer_unlock(index_buffer);
 		raw._index_buffers.push(index_buffer);
 	}
 
@@ -332,10 +344,10 @@ function mesh_data_calculate_aabb(raw: mesh_data_t): vec4_t {
 function mesh_data_delete(raw: mesh_data_t) {
 	for (let buf of raw._vertex_buffer_map.values()) {
 		if (buf != null) {
-			vertex_buffer_delete(buf);
+			g4_vertex_buffer_delete(buf);
 		}
 	}
 	for (let buf of raw._index_buffers) {
-		index_buffer_delete(buf);
+		g4_index_buffer_delete(buf);
 	}
 }

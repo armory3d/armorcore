@@ -3,13 +3,15 @@ let _tween_default_overshoot: f32 = 1.70158;
 let _tween_anims: tween_anim_t[] = [];
 let _tween_registered = false;
 
+function tween_on_reset() {
+	app_notify_on_update(tween_update);
+	tween_reset();
+}
+
 function tween_register() {
 	_tween_registered = true;
 	app_notify_on_update(tween_update);
-	app_notify_on_reset(function() {
-		app_notify_on_update(tween_update);
-		tween_reset();
-	});
+	app_notify_on_reset(tween_on_reset);
 }
 
 function tween_to(anim: tween_anim_t): tween_anim_t {
@@ -220,7 +222,9 @@ function _tween_ease_elastic_in_out(k: f32): f32 {
 	else {
 		s = p * Math.asin(1 / a) / (2 * Math.PI);
 	}
-	if ((k *= 2) < 1) return - 0.5 * (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+	if ((k *= 2) < 1) {
+		return - 0.5 * (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+	}
 	return a * Math.pow(2, -10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p) * 0.5 + 1;
 }
 
