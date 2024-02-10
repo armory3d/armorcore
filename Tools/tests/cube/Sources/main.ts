@@ -1,7 +1,5 @@
 // ../../../Kinc/make --from ../../../ -g opengl --compiler clang --run
 
-"use strict";
-
 (function () {
 
     let raw: scene_t;
@@ -13,8 +11,8 @@
             height: 720,
             x: 0,
             y: 0,
-            features: WindowFeatures.FeatureNone,
-            mode: WindowMode.Windowed,
+            features: window_features_t.NONE,
+            mode: window_mode_t.WINDOWED,
             frequency: 60,
             vsync: true
         }, function() {
