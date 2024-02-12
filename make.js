@@ -841,14 +841,12 @@ function writeTSProject(projectdir, projectFiles, options) {
 
 	fs.writeFileSync(path.join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
 
-	// Hermes compiler
+	// MiniTS compiler
 	if (globalThis.flags.with_hermes) {
-		let shermes = __dirname + '/hermes/linux/shermes';
-		let include = __dirname + '/hermes/include';
+		let minits = __dirname + '/Tools/minits';
 
 		let out = "";
 		let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
-		file_paths.unshift(__dirname + '/Sources/hermes/Krom.ts');
 		for (let file_path of file_paths) {
 			if (file_path.endsWith('d.ts')) {
 				continue;
@@ -857,15 +855,6 @@ function writeTSProject(projectdir, projectFiles, options) {
 			out += file;
 		}
 		fs.writeFileSync('build/main.ts', out);
-
-		// '-parse-ts' '-emit-c'
-		let result = child_process.spawnSync(shermes, ['-c', '-typed', '-Wc,-I' + include, '-o', 'build/main.o', 'build/main.ts']);
-		if (result.status !== 0) {
-			console.log(result.stderr.toString());
-			process.exit();
-		}
-		child_process.spawnSync('ar', ['-rcs', 'build/libmain.a', 'build/main.o']);
-		child_process.spawnSync('objcopy', ['--redefine-sym', 'main=sh_main', 'build/libmain.a', 'build/libmain.a']);
 	}
 	// TS compiler
 	else {

@@ -16,7 +16,6 @@ globalThis.flags = {
 	with_g2: false,
 	with_iron: false,
 	with_zui: false,
-	with_hermes: false,
 	with_eval: true,
 	on_c_project_created: null,
 };
@@ -76,13 +75,8 @@ if (flags.with_eval) {
 	c_project.addDefine('WITH_EVAL');
 }
 
-if (flags.with_hermes) {
-	c_project.addFile('Sources/main_hermes.c');
-	c_project.addFile('Sources/main_hermes.cpp');
-	c_project.addIncludeDir('hermes/include');
-	c_project.addLib('main -L' + process.cwd() + '/build');
-	c_project.addLib('hermesvm_a -L' + __dirname + '/hermes/linux');
-	c_project.addLib('jsi');
+if (flags.with_minits) {
+	c_project.addFile('Sources/main.c');
 }
 else if (platform === Platform.Wasm) {
 	c_project.addFile('Sources/main_wasm.c');
@@ -141,7 +135,7 @@ if (platform === Platform.Windows) {
 	}
 }
 else if (platform === Platform.Linux) {
-	if (!flags.with_hermes) {
+	if (!flags.with_minits) {
 		c_project.addLib('v8_monolith -L' + libdir);
 	}
 	c_project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
