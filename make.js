@@ -842,7 +842,7 @@ function writeTSProject(projectdir, projectFiles, options) {
 	fs.writeFileSync(path.join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
 
 	// MiniTS compiler
-	if (globalThis.flags.with_hermes) {
+	if (globalThis.flags.with_minits) {
 		let minits = __dirname + '/Tools/minits';
 
 		let out = "";

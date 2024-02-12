@@ -1,6 +1,6 @@
 # armorcore
 
-3D engine core for C with JS scripting. JavaScript is executed via V8 or compiled ahead-of-time from TypeScript with Static Hermes. ArmorCore targets Direct3D12, Vulkan, Metal and WebGPU. Browser support is handled by compiling C sources into WebAssembly.
+3D engine core for C with JS scripting. ArmorCore targets Direct3D12, Vulkan, Metal and WebGPU. Browser support is handled by compiling C sources into WebAssembly.
 
 Powered by [Kinc](https://github.com/Kode/Kinc) - low-level hardware abstraction library.
 
