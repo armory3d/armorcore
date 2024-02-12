@@ -1,25 +1,25 @@
 
-class render_target_t {
-	name: string;
-	width: i32;
-	height: i32;
+type render_target_t = {
+	name?: string;
+	width?: i32;
+	height?: i32;
 	// Optional:
-	format: string;
-	scale: f32;
-	depth_buffer: string; // 2D texture
-	mipmaps: bool;
-	depth: i32; // 3D texture
-	is_image: bool; // Image
+	format?: string;
+	scale?: f32;
+	depth_buffer?: string; // 2D texture
+	mipmaps?: bool;
+	depth?: i32; // 3D texture
+	is_image?: bool; // Image
 	// Runtime:
-	depth_format: depth_format_t;
-	depth_from: string;
-	image: image_t; // RT or image
-	has_depth: bool;
-}
+	depth_format?: depth_format_t;
+	depth_from?: string;
+	image?: image_t; // RT or image
+	has_depth?: bool;
+};
 
-class cached_shader_context_t {
-	context: shader_context_t;
-}
+type cached_shader_context_t = {
+	context?: shader_context_t;
+};
 
 enum draw_order_t {
 	DIST, // Early-z
@@ -282,7 +282,7 @@ function render_path_load_shader(handle: string) {
 		return;
 	}
 
-	cc = new cached_shader_context_t();
+	cc = {};
 	_render_path_cached_shader_contexts.set(handle, cc);
 
 	// file/data_name/context
@@ -469,7 +469,7 @@ function render_path_get_depth_format(s: string): depth_format_t {
 }
 
 function render_target_create(): render_target_t {
-	let raw = new render_target_t();
+	let raw: render_target_t = {};
 	raw.scale = 1.0;
 	raw.mipmaps = false;
 	raw.depth = 1;

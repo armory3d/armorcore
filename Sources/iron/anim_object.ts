@@ -1,15 +1,16 @@
 
-class anim_object_t {
-	base: anim_raw_t;
-	object: object_t;
-	oactions: scene_t[];
-	oaction: obj_t;
-}
+type anim_object_t = {
+	base?: anim_raw_t;
+	object?: object_t;
+	oactions?: scene_t[];
+	oaction?: obj_t;
+};
 
 function anim_object_create(object: object_t, oactions: scene_t[]): anim_object_t {
-	let raw = new anim_object_t();
+	let raw: anim_object_t = {};
 	raw.base = anim_create();
 	raw.base.ext = raw;
+	raw.base.ext_type = "anim_bone_t";
 	raw.object = object;
 	raw.oactions = oactions;
 	raw.base.is_skinned = false;

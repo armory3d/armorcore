@@ -34,13 +34,13 @@ function tween_to(anim: tween_anim_t): tween_anim_t {
 		anim._normalize = [];
 		for (let p in anim.props) {
 			let val: any = anim.target[p];
-			if (val.constructor == vec4_t || val.constructor == quat_t) {
+			if (val.type == "vec4_t" || val.type == "quat_t") {
 				anim._comps.push(4);
 				anim._x.push(val.x);
 				anim._y.push(val.y);
 				anim._z.push(val.z);
 				anim._w.push(val.w);
-				anim._normalize.push(val.constructor == quat_t);
+				anim._normalize.push(val.type == "quat_t");
 			}
 			else {
 				anim._comps.push(1);
@@ -87,7 +87,7 @@ function tween_update() {
 
 		if (a.target != null) {
 
-			if (a.target.constructor == transform_t) {
+			if (a.target.type == "transform_t") {
 				a.target.dirty = true;
 			}
 

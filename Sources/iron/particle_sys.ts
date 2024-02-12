@@ -1,48 +1,48 @@
 
 ///if arm_particles
 
-class particle_sys_t {
-	data: particle_data_t;
-	speed: f32;
-	particles: particle_t[];
-	ready: bool;
-	frame_rate: i32;
-	lifetime: f32;
-	animtime: f32;
-	time: f32;
-	spawn_rate: f32;
-	seed: i32;
+type particle_sys_t = {
+	data?: particle_data_t;
+	speed?: f32;
+	particles?: particle_t[];
+	ready?: bool;
+	frame_rate?: i32;
+	lifetime?: f32;
+	animtime?: f32;
+	time?: f32;
+	spawn_rate?: f32;
+	seed?: i32;
 
-	r: particle_data_t;
-	gx: f32;
-	gy: f32;
-	gz: f32;
-	alignx: f32;
-	aligny: f32;
-	alignz: f32;
-	dimx: f32;
-	dimy: f32;
+	r?: particle_data_t;
+	gx?: f32;
+	gy?: f32;
+	gz?: f32;
+	alignx?: f32;
+	aligny?: f32;
+	alignz?: f32;
+	dimx?: f32;
+	dimy?: f32;
 
-	count: i32;
-	lap: i32;
-	lap_time: f32;
-	m: mat4_t;
+	count?: i32;
+	lap?: i32;
+	lap_time?: f32;
+	m?: mat4_t;
 
-	owner_loc: vec4_t;
-	owner_rot: quat_t;
-	owner_scale: vec4_t;
-}
+	owner_loc?: vec4_t;
+	owner_rot?: quat_t;
+	owner_scale?: vec4_t;
+};
 
-class particle_t {
-	i: i32;
-	x: f32;
-	y: f32;
-	z: f32;
-	camera_dist: f32;
-}
+type particle_t = {
+	i?: i32;
+	x?: f32;
+	y?: f32;
+	z?: f32;
+	camera_dist?: f32;
+};
 
 function particle_create(): particle_t {
-	let raw = new particle_t();
+	let raw: particle_t = {};
 	raw.x = 0;
 	raw.y = 0;
 	raw.z = 0;
@@ -50,7 +50,7 @@ function particle_create(): particle_t {
 }
 
 function particle_sys_create(scene_name: string, ref: particle_ref_t): particle_sys_t {
-	let raw = new particle_sys_t();
+	let raw: particle_sys_t = {}
 	raw.speed = 1.0;
 	raw.frame_rate = 24;
 	raw.time = 0.0;

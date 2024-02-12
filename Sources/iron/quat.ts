@@ -1,12 +1,13 @@
 /// <reference path='./vec4.ts'/>
 /// <reference path='./mat4.ts'/>
 
-class quat_t {
-	x: f32;
-	y: f32;
-	z: f32;
-	w: f32;
-}
+type quat_t = {
+	x?: f32;
+	y?: f32;
+	z?: f32;
+	w?: f32;
+	type?: string;
+};
 
 let _quat_vec = vec4_create();
 let _quat_mat = mat4_identity();
@@ -15,11 +16,12 @@ let _quat_y_axis = vec4_y_axis();
 let _quat_sqrt2: f32 = 1.4142135623730951;
 
 function quat_create(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): quat_t {
-	let self = new quat_t();
+	let self: quat_t = {};
 	self.x = x;
 	self.y = y;
 	self.z = z;
 	self.w = w;
+	self.type = "quat_t";
 	return self;
 }
 

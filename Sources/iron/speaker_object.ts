@@ -1,21 +1,22 @@
 
 ///if arm_audio
 
-class speaker_object_t {
-	base: object_t;
-	data: speaker_data_t;
-	paused: bool;
-	sound: sound_t;
-	channels: audio_channel_t[];
-	volume: f32;
-}
+type speaker_object_t = {
+	base?: object_t;
+	data?: speaker_data_t;
+	paused?: bool;
+	sound?: sound_t;
+	channels?: audio_channel_t[];
+	volume?: f32;
+};
 
 function speaker_object_create(data: speaker_data_t): speaker_object_t {
-	let raw = new speaker_object_t();
+	let raw: speaker_object_t = {};
 	raw.paused = false;
 	raw.channels = [];
 	raw.base = object_create(false);
 	raw.base.ext = raw;
+	raw.base.ext_type = "speaker_object_t";
 	raw.data = data;
 
 	scene_speakers.push(raw);

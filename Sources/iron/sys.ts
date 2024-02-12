@@ -391,7 +391,7 @@ function sys_get_shader(name: string): shader_t {
 function video_unload(self: video_t) {}
 
 function sound_create(sound_: any): sound_t {
-	let raw = new sound_t();
+	let raw: sound_t = {};
 	raw.sound_ = sound_;
 	return raw;
 }
@@ -402,13 +402,13 @@ function sound_unload(raw: sound_t) {
 
 type Color = i32;
 
-class video_t {
-	video_: any;
-}
+type video_t = {
+	video_?: any;
+};
 
-class sound_t {
-	sound_: any;
-}
+type sound_t = {
+	sound_?: any;
+};
 
 type kinc_sys_ops_t = {
 	title: string;
@@ -420,7 +420,7 @@ type kinc_sys_ops_t = {
 	mode: window_mode_t;
 	frequency: i32;
 	vsync: bool;
-}
+};
 
 enum window_features_t {
     NONE = 0,

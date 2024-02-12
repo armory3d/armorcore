@@ -1,23 +1,24 @@
 
-class object_t {
-	uid: i32;
-	urandom: f32;
-	raw: obj_t;
-	name: string;
-	transform: transform_t;
-	parent: object_t;
-	children: object_t[];
-	animation: anim_raw_t;
-	visible: bool; // Skip render, keep updating
-	culled: bool; // TBaseObject was culled last frame
-	is_empty: bool;
-	ext: any; // mesh_object_t | camera_object_t | light_object_t | speaker_object_t
-}
+type object_t = {
+	uid?: i32;
+	urandom?: f32;
+	raw?: obj_t;
+	name?: string;
+	transform?: transform_t;
+	parent?: object_t;
+	children?: object_t[];
+	animation?: anim_raw_t;
+	visible?: bool; // Skip render, keep updating
+	culled?: bool; // base_object_t was culled last frame
+	is_empty?: bool;
+	ext?: any; // mesh_object_t | camera_object_t | light_object_t | speaker_object_t
+	ext_type?: string;
+};
 
 let _object_uid_counter = 0;
 
 function object_create(is_empty = true): object_t {
-	let raw = new object_t();
+	let raw: object_t = {};
 	raw.name = "";
 	raw.children = [];
 	raw.visible = true;
@@ -72,22 +73,20 @@ function object_remove_super(raw: object_t) {
 }
 
 function object_remove(raw: object_t) {
-	if (raw.ext != null)  {
-		if (raw.ext.constructor == mesh_object_t) {
-			mesh_object_remove(raw.ext);
-		}
-		else if (raw.ext.constructor == camera_object_t) {
-			camera_object_remove(raw.ext);
-		}
-		else if (raw.ext.constructor == light_object_t) {
-			light_object_remove(raw.ext);
-		}
-		///if arm_audio
-		else if (raw.ext.constructor == speaker_object_t) {
-			speaker_object_remove(raw.ext);
-		}
-		///end
+	if (raw.ext_type == "mesh_object_t") {
+		mesh_object_remove(raw.ext);
 	}
+	else if (raw.ext_type == "camera_object_t") {
+		camera_object_remove(raw.ext);
+	}
+	else if (raw.ext_type == "light_object_t") {
+		light_object_remove(raw.ext);
+	}
+	///if arm_audio
+	else if (raw.ext_type == "speaker_object_t") {
+		speaker_object_remove(raw.ext);
+	}
+	///end
 	else {
 		object_remove_super(raw);
 	}
@@ -151,10 +150,8 @@ function object_setup_animation_super(raw: object_t, oactions: scene_t[] = null)
 }
 
 function object_setup_animation(raw: object_t, oactions: scene_t[] = null) {
-	if (raw.ext != null)  {
-		if (raw.ext.constructor == mesh_object_t) {
-			mesh_object_setup_animation(raw.ext, oactions);
-		}
+	if (raw.ext_type == "mesh_object_t") {
+		mesh_object_setup_animation(raw.ext, oactions);
 	}
 	else {
 		object_setup_animation_super(raw, oactions);

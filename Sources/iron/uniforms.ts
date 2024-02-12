@@ -55,7 +55,7 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 				g4_set_tex(context._tex_units[j], scene_embedded.get(tulink.substring(1)));
 				g4_set_tex_params(context._tex_units[j], tex_addressing.REPEAT, tex_addressing.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.NONE);
 			}
-			else if (tulink == "_envmapRadiance") {
+			else if (tulink == "_envmap_radiance") {
 				let w = scene_world;
 				if (w != null) {
 					g4_set_tex(context._tex_units[j], w._radiance);
@@ -180,26 +180,26 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 
 	if (c.type == "mat4") {
 		let m: mat4_t = null;
-		if (c.link == "_viewMatrix") {
+		if (c.link == "_view_matrix") {
 			m = camera.v;
 		}
-		else if (c.link == "_projectionMatrix") {
+		else if (c.link == "_proj_matrix") {
 			m = camera.p;
 		}
-		else if (c.link == "_inverseProjectionMatrix") {
+		else if (c.link == "_inv_proj_matrix") {
 			mat4_get_inv(_uniforms_mat, camera.p);
 			m = _uniforms_mat;
 		}
-		else if (c.link == "_viewProjectionMatrix") {
+		else if (c.link == "_view_proj_matrix") {
 			m = camera.vp;
 		}
-		else if (c.link == "_inverseViewProjectionMatrix") {
+		else if (c.link == "_inv_view_proj_matrix") {
 			mat4_set_from(_uniforms_mat, camera.v);
 			mat4_mult_mat(_uniforms_mat, camera.p);
 			mat4_get_inv(_uniforms_mat, _uniforms_mat);
 			m = _uniforms_mat;
 		}
-		else if (c.link == "_skydomeMatrix") {
+		else if (c.link == "_skydome_matrix") {
 			let tr = camera.base.transform;
 			vec4_set(_uniforms_vec, transform_world_x(tr), transform_world_y(tr), transform_world_z(tr) - 3.5); // Sky
 			let bounds = camera.data.far_plane * 0.95;
@@ -236,20 +236,20 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		let v: vec4_t = null;
 		vec4_set(_uniforms_vec, 0, 0, 0);
 
-		if (c.link == "_lightDirection") {
+		if (c.link == "_light_dir") {
 			if (light != null) {
 				_uniforms_vec = vec4_normalize(light_object_look(light));
 				v = _uniforms_vec;
 			}
 		}
-		else if (c.link == "_pointPosition") {
+		else if (c.link == "_point_pos") {
 			let point = _render_path_point;
 			if (point != null) {
 				vec4_set(_uniforms_vec, transform_world_x(point.base.transform), transform_world_y(point.base.transform), transform_world_z(point.base.transform));
 				v = _uniforms_vec;
 			}
 		}
-		else if (c.link == "_pointColor") {
+		else if (c.link == "_point_color") {
 			let point = _render_path_point;
 			if (point != null) {
 				let str = point.base.visible ? point.data.strength : 0.0;
@@ -257,7 +257,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				v = _uniforms_vec;
 			}
 		}
-		else if (c.link == "_lightArea0") {
+		else if (c.link == "_light_area0") {
 			if (light != null && light.data.size != null) {
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
@@ -267,7 +267,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				v = _uniforms_vec;
 			}
 		}
-		else if (c.link == "_lightArea1") {
+		else if (c.link == "_light_area1") {
 			if (light != null && light.data.size != null) {
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
@@ -277,7 +277,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				v = _uniforms_vec;
 			}
 		}
-		else if (c.link == "_lightArea2") {
+		else if (c.link == "_light_area2") {
 			if (light != null && light.data.size != null) {
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
@@ -287,7 +287,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				v = _uniforms_vec;
 			}
 		}
-		else if (c.link == "_lightArea3") {
+		else if (c.link == "_light_area3") {
 			if (light != null && light.data.size != null) {
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
@@ -297,11 +297,11 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				v = _uniforms_vec;
 			}
 		}
-		else if (c.link == "_cameraPosition") {
+		else if (c.link == "_camera_pos") {
 			vec4_set(_uniforms_vec, transform_world_x(camera.base.transform), transform_world_y(camera.base.transform), transform_world_z(camera.base.transform));
 			v = _uniforms_vec;
 		}
-		else if (c.link == "_cameraLook") {
+		else if (c.link == "_camera_look") {
 			_uniforms_vec = vec4_normalize(camera_object_look_world(camera));
 			v = _uniforms_vec;
 		}
@@ -326,7 +326,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			v.x = 1.0;
 			v.y = 0.0;
 		}
-		else if (c.link == "_vec2xInv") {
+		else if (c.link == "_vec2x_inv") {
 			v = _uniforms_vec;
 			v.x = 1.0 /render_path_current_w;
 			v.y = 0.0;
@@ -336,7 +336,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			v.x = 2.0;
 			v.y = 0.0;
 		}
-		else if (c.link == "_vec2x2Inv") {
+		else if (c.link == "_vec2x2_inv") {
 			v = _uniforms_vec;
 			v.x = 2.0 /render_path_current_w;
 			v.y = 0.0;
@@ -346,7 +346,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			v.x = 0.0;
 			v.y = 1.0;
 		}
-		else if (c.link == "_vec2yInv") {
+		else if (c.link == "_vec2y_inv") {
 			v = _uniforms_vec;
 			v.x = 0.0;
 			v.y = 1.0 /render_path_current_h;
@@ -356,7 +356,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			v.x = 0.0;
 			v.y = 2.0;
 		}
-		else if (c.link == "_vec2y2Inv") {
+		else if (c.link == "_vec2y2_inv") {
 			v = _uniforms_vec;
 			v.x = 0.0;
 			v.y = 2.0 /render_path_current_h;
@@ -366,22 +366,22 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			v.x = 0.0;
 			v.y = 3.0;
 		}
-		else if (c.link == "_vec2y3Inv") {
+		else if (c.link == "_vec2y3_inv") {
 			v = _uniforms_vec;
 			v.x = 0.0;
 			v.y = 3.0 /render_path_current_h;
 		}
-		else if (c.link == "_screenSize") {
+		else if (c.link == "_screen_size") {
 			v = _uniforms_vec;
 			v.x = render_path_current_w;
 			v.y = render_path_current_h;
 		}
-		else if (c.link == "_screenSizeInv") {
+		else if (c.link == "_screen_size_inv") {
 			v = _uniforms_vec;
 			v.x = 1.0 /render_path_current_w;
 			v.y = 1.0 /render_path_current_h;
 		}
-		else if (c.link == "_cameraPlaneProj") {
+		else if (c.link == "_camera_plane_proj") {
 			let near = camera.data.near_plane;
 			let far = camera.data.far_plane;
 			v = _uniforms_vec;
@@ -406,7 +406,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		if (c.link == "_time") {
 			f = time_time();
 		}
-		else if (c.link == "_aspectRatioWindowF") {
+		else if (c.link == "_aspect_ratio_window") {
 			f = app_w() / app_h();
 		}
 		else {
@@ -419,7 +419,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 	else if (c.type == "floats") {
 		let fa: Float32Array = null;
 
-		if (c.link == "_envmapIrradiance") {
+		if (c.link == "_envmap_irradiance") {
 			fa = scene_world == null ? world_data_get_empty_irradiance() : scene_world._irradiance;
 		}
 
@@ -431,7 +431,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 	else if (c.type == "int") {
 		let i: i32 = 0;
 
-		if (c.link == "_envmapNumMipmaps") {
+		if (c.link == "_envmap_num_mipmaps") {
 			let w = scene_world;
 			i = w != null ? w.radiance_mipmaps + 1 - 2 : 1; // Include basecolor and exclude 2 scaled mips
 		}
@@ -456,25 +456,25 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 	if (c.type == "mat4") {
 		let m: mat4_t = null;
 
-		if (c.link == "_worldMatrix") {
+		if (c.link == "_world_matrix") {
 			m = obj.transform.world_unpack;
 		}
-		else if (c.link == "_inverseWorldMatrix") {
+		else if (c.link == "_inv_world_matrix") {
 			mat4_get_inv(_uniforms_mat, obj.transform.world_unpack);
 			m = _uniforms_mat;
 		}
-		else if (c.link == "_worldViewProjectionMatrix") {
+		else if (c.link == "_world_view_proj_matrix") {
 			mat4_set_from(_uniforms_mat, obj.transform.world_unpack);
 			mat4_mult_mat(_uniforms_mat, camera.v);
 			mat4_mult_mat(_uniforms_mat, camera.p);
 			m = _uniforms_mat;
 		}
-		else if (c.link == "_worldViewMatrix") {
+		else if (c.link == "_world_wiew_matrix") {
 			mat4_set_from(_uniforms_mat, obj.transform.world_unpack);
 			mat4_mult_mat(_uniforms_mat, camera.v);
 			m = _uniforms_mat;
 		}
-		else if (c.link == "_prevWorldViewProjectionMatrix") {
+		else if (c.link == "_prev_world_view_proj_matrix") {
 			mat4_set_from(_uniforms_mat, obj.ext.prev_matrix);
 			mat4_mult_mat(_uniforms_mat, camera.prev_v);
 			// mat4_mult_mat(_uniforms_mat. camera.prev_p);
@@ -482,7 +482,7 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 			m = _uniforms_mat;
 		}
 		///if arm_particles
-		else if (c.link == "_particleData") {
+		else if (c.link == "_particle_data") {
 			let mo = obj.ext;
 			if (mo.particle_owner != null && mo.particle_owner.particle_dystems != null) {
 				m = particle_sys_get_data(mo.particle_owner.particle_dystems[mo.particle_index]);
@@ -501,13 +501,13 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 	else if (c.type == "mat3") {
 		let m: mat3_t = null;
 
-		if (c.link == "_normalMatrix") {
+		if (c.link == "_normal_matrix") {
 			mat4_get_inv(_uniforms_mat, obj.transform.world);
 			mat4_transpose3x3(_uniforms_mat);
 			mat3_set_from4(_uniforms_mat3, _uniforms_mat);
 			m = _uniforms_mat3;
 		}
-		else if (c.link == "_viewMatrix3") {
+		else if (c.link == "_view_matrix3") {
 			mat3_set_from4(_uniforms_mat3, camera.v);
 			m = _uniforms_mat3;
 		}
@@ -538,7 +538,7 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 			vec4_set(_uniforms_vec, (d.x / s.x), (d.y / s.y), (d.z / s.z));
 			v = _uniforms_vec;
 		}
-		else if (c.link == "_halfDim") { // Model space
+		else if (c.link == "_half_dim") { // Model space
 			let d = obj.transform.dim;
 			let s = obj.transform.scale;
 			vec4_set(_uniforms_vec, (d.x / s.x) / 2, (d.y / s.y) / 2, (d.z / s.z) / 2);
@@ -568,19 +568,19 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 	else if (c.type == "float") {
 		let f: f32 = 0.0;
 
-		if (c.link == "_objectInfoIndex") {
+		if (c.link == "_object_info_index") {
 			f = obj.uid;
 		}
-		else if (c.link == "_objectInfoMaterialIndex") {
+		else if (c.link == "_object_info_material_index") {
 			f = current_material(obj)._uid;
 		}
-		else if (c.link == "_objectInfoRandom") {
+		else if (c.link == "_object_info_random") {
 			f = obj.urandom;
 		}
-		else if (c.link == "_posUnpack") {
+		else if (c.link == "_pos_unpack") {
 			f = uniforms_pos_unpack;
 		}
-		else if (c.link == "_texUnpack") {
+		else if (c.link == "_tex_unpack") {
 			f = uniforms_tex_unpack;
 		}
 		else if (uniforms_f32_links != null) {
@@ -595,7 +595,7 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 	else if (c.type == "floats") {
 		let fa: Float32Array = null;
 
-		if (c.link == "_skinBones") {
+		if (c.link == "_skin_bones") {
 			///if arm_skin
 			if (obj.animation != null) {
 				fa = obj.animation.ext.skin_buffer;

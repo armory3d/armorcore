@@ -704,7 +704,7 @@ function gamepad_end_frame() {
 }
 
 function gamepad_stick_create(): gamepad_stick_t {
-	let raw = new gamepad_stick_t();
+	let raw: gamepad_stick_t = {};
 	raw.x = 0.0;
 	raw.y = 0.0;
 	raw.last_x = 0.0;
@@ -716,7 +716,7 @@ function gamepad_stick_create(): gamepad_stick_t {
 }
 
 function gamepad_create(): gamepad_t {
-	let raw = new gamepad_t();
+	let raw: gamepad_t = {};
 	raw.buttons_down = [];
 	raw.buttons_started = [];
 	raw.buttons_released = [];
@@ -794,24 +794,24 @@ function gamepad_button_listener(i: i32, button: i32, value: f32) {
 	}
 }
 
-class gamepad_stick_t {
-	x: f32;
-	y: f32;
-	last_x: f32;
-	last_y: f32;
-	moved: bool;
-	movement_x: f32;
-	movement_y: f32;
-}
+type gamepad_stick_t = {
+	x?: f32;
+	y?: f32;
+	last_x?: f32;
+	last_y?: f32;
+	moved?: bool;
+	movement_x?: f32;
+	movement_y?: f32;
+};
 
-class gamepad_t {
-	buttons_down: f32[]; // Intensity 0 - 1
-	buttons_started: bool[];
-	buttons_released: bool[];
-	buttons_frame: i32[];
-	left_stick: gamepad_stick_t;
-	right_stick: gamepad_stick_t;
-}
+type gamepad_t = {
+	buttons_down?: f32[]; // Intensity 0 - 1
+	buttons_started?: bool[];
+	buttons_released?: bool[];
+	buttons_frame?: i32[];
+	left_stick?: gamepad_stick_t;
+	right_stick?: gamepad_stick_t;
+};
 
 enum key_code_t {
 	UNKNOWN = 0,

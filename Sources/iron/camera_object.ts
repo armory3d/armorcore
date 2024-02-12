@@ -1,26 +1,27 @@
 /// <reference path='./vec4.ts'/>
 
-class camera_object_t {
-	base: object_t;
-	data: camera_data_t;
-	p: mat4_t;
-	no_jitter_p: mat4_t;
-	frame: i32;
-	v: mat4_t;
-	prev_v: mat4_t;
-	vp: mat4_t;
-	frustum_planes: frustum_plane_t[];
-}
+type camera_object_t = {
+	base?: object_t;
+	data?: camera_data_t;
+	p?: mat4_t;
+	no_jitter_p?: mat4_t;
+	frame?: i32;
+	v?: mat4_t;
+	prev_v?: mat4_t;
+	vp?: mat4_t;
+	frustum_planes?: frustum_plane_t[];
+};
 
 let _camera_object_v = vec4_create();
 let _camera_object_sphere_center = vec4_create();
 
 function camera_object_create(data: camera_data_t): camera_object_t {
-	let raw = new camera_object_t();
+	let raw: camera_object_t = {};
 	raw.no_jitter_p = mat4_identity();
 	raw.frame = 0;
 	raw.base = object_create(false);
 	raw.base.ext = raw;
+	raw.base.ext_type = "camera_object_t";
 	raw.data = data;
 
 	camera_object_build_proj(raw);
@@ -31,7 +32,7 @@ function camera_object_create(data: camera_data_t): camera_object_t {
 	if (data.frustum_culling) {
 		raw.frustum_planes = [];
 		for (let i = 0; i < 6; ++i) {
-			raw.frustum_planes.push(new frustum_plane_t());
+			raw.frustum_planes.push(frustum_plane_create());
 		}
 	}
 
@@ -165,9 +166,16 @@ function camera_object_sphere_in_frustum(frustum_planes: frustum_plane_t[], t: t
 	return true;
 }
 
-class frustum_plane_t {
-	normal = vec4_create(1.0, 0.0, 0.0);
-	constant = 0.0;
+type frustum_plane_t = {
+	normal?: vec4_t;
+	constant?: f32;
+};
+
+function frustum_plane_create(): frustum_plane_t {
+	let raw: frustum_plane_t = {};
+	raw.normal = vec4_create(1.0, 0.0, 0.0);
+	raw.constant = 0.0;
+	return raw;
 }
 
 function frustum_plane_normalize(raw: frustum_plane_t) {

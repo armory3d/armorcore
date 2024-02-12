@@ -1,16 +1,16 @@
 
 ///if arm_audio
 
-class audio_channel_t {
-	sound: sound_t;
-	loop: bool;
-	length: f32;
-	volume: f32;
-	finished: bool;
-}
+type audio_channel_t = {
+	sound?: sound_t;
+	loop?: bool;
+	length?: f32;
+	volume?: f32;
+	finished?: bool;
+};
 
 function audio_channel(sound: sound_t, loop = false, stream = false): audio_channel_t {
-	let channel = new audio_channel_t();
+	let channel: audio_channel_t = {};
 	channel.sound = sound;
 	channel.loop = loop;
 	return channel;

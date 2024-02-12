@@ -1,40 +1,43 @@
 
-class transform_t {
-	world: mat4_t;
-	local_only: bool;
-	local: mat4_t;
-	loc: vec4_t;
-	rot: quat_t;
-	scale: vec4_t;
-	scale_world: f32;
-	world_unpack: mat4_t;
-	dirty: bool;
-	object: object_t;
-	dim: vec4_t;
-	radius: f32;
+type transform_t = {
+	world?: mat4_t;
+	local_only?: bool;
+	local?: mat4_t;
+	loc?: vec4_t;
+	rot?: quat_t;
+	scale?: vec4_t;
+	scale_world?: f32;
+	world_unpack?: mat4_t;
+	dirty?: bool;
+	object?: object_t;
+	dim?: vec4_t;
+	radius?: f32;
 
-	bone_parent: mat4_t;
-	last_world: mat4_t;
+	bone_parent?: mat4_t;
+	last_world?: mat4_t;
 
 	// Wrong order returned from get_euler(), store last state for animation
-	_euler_x: f32;
-	_euler_y: f32;
-	_euler_z: f32;
+	_euler_x?: f32;
+	_euler_y?: f32;
+	_euler_z?: f32;
 
 	// Animated delta transform
-	dloc: vec4_t;
-	drot: quat_t;
-	dscale: vec4_t;
-	_deuler_x: f32;
-	_deuler_y: f32;
-	_deuler_z: f32;
-}
+	dloc?: vec4_t;
+	drot?: quat_t;
+	dscale?: vec4_t;
+	_deuler_x?: f32;
+	_deuler_y?: f32;
+	_deuler_z?: f32;
+
+	type?: string;
+};
 
 let _transform_tmp = mat4_identity();
 let _transform_q = quat_create();
 
 function transform_create(object: object_t): transform_t {
-	let raw = new transform_t();
+	let raw: transform_t = {};
+	raw.type = "transform_t";
 	raw.local_only = false;
 	raw.scale_world = 1.0;
 	raw.object = object;

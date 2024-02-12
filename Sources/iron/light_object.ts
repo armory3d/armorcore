@@ -1,21 +1,22 @@
 /// <reference path='./vec4.ts'/>
 /// <reference path='./mat4.ts'/>
 
-class light_object_t {
-	base: object_t;
-	data: light_data_t;
-	v: mat4_t;
-	p: mat4_t;
-	vp: mat4_t;
-	frustum_planes: frustum_plane_t[];
-}
+type light_object_t = {
+	base?: object_t;
+	data?: light_data_t;
+	v?: mat4_t;
+	p?: mat4_t;
+	vp?: mat4_t;
+	frustum_planes?: frustum_plane_t[];
+};
 
 function light_object_create(data: light_data_t): light_object_t {
-	let raw = new light_object_t();
+	let raw: light_object_t = {};
 	raw.v = mat4_identity();
 	raw.vp = mat4_identity();
 	raw.base = object_create(false);
 	raw.base.ext = raw;
+	raw.base.ext_type = "light_object_t";
 	raw.data = data;
 
 	let type = data.type;
@@ -70,7 +71,7 @@ function light_object_update_view_frustum(raw: light_object_t, camera: camera_ob
 		if (raw.frustum_planes == null) {
 			raw.frustum_planes = [];
 			for (let i = 0; i < 6; ++i) {
-				raw.frustum_planes.push(new frustum_plane_t());
+				raw.frustum_planes.push(frustum_plane_create());
 			}
 		}
 		camera_object_build_view_frustum(raw.vp, raw.frustum_planes);

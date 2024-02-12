@@ -57,7 +57,7 @@
 					cull_mode: "clockwise",
 					depth_write: true,
 					constants: [
-						{ name: "WVP", type: "mat4", link: "_worldViewProjectionMatrix" }
+						{ name: "WVP", type: "mat4", link: "_world_view_proj_matrix" }
 					],
 					texture_units: [
 						{ name: "myTexture" }

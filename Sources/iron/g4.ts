@@ -1,6 +1,6 @@
 
 function g4_shader_create(buffer: ArrayBuffer, type: shader_type_t): shader_t {
-	let raw = new shader_t();
+	let raw: shader_t = {};
 	if (buffer != null) {
 		raw.shader_ = krom_g4_create_shader(buffer, type);
 	}
@@ -23,7 +23,7 @@ function g4_shader_delete(raw: shader_t) {
 }
 
 function g4_pipeline_create(): pipeline_t {
-	let raw = new pipeline_t();
+	let raw: pipeline_t = {};
 	raw.cull_mode = cull_mode_t.NONE;
 	raw.depth_write = false;
 	raw.depth_mode = compare_mode_t.ALWAYS;
@@ -119,7 +119,7 @@ function g4_pipeline_get_tex_unit(raw: pipeline_t, name: string): kinc_tex_unit_
 }
 
 function g4_vertex_buffer_create(vertex_count: i32, structure: vertex_struct_t, usage: usage_t, inst_data_step_rate: i32 = 0): vertex_buffer_t {
-	let raw = new vertex_buffer_t();
+	let raw: vertex_buffer_t = {};
 	raw.vertex_count = vertex_count;
 	raw.buffer_ = krom_g4_create_vertex_buffer(vertex_count, structure.elements, usage, inst_data_step_rate);
 	return raw;
@@ -142,7 +142,7 @@ function g4_vertex_buffer_set(raw: vertex_buffer_t) {
 }
 
 function g4_vertex_struct_create(): vertex_struct_t {
-	let raw = new vertex_struct_t();
+	let raw: vertex_struct_t = {};
 	raw.elements = [];
 	raw.instanced = false;
 	return raw;
@@ -186,7 +186,7 @@ function g4_vertex_struct_data_byte_size(data: vertex_data_t): i32 {
 }
 
 function g4_index_buffer_create(index_count: i32): index_buffer_t {
-	let raw = new index_buffer_t();
+	let raw: index_buffer_t = {};
 	raw.buffer_ = krom_g4_create_index_buffer(index_count);
 	return raw;
 }
@@ -340,7 +340,7 @@ function g4_disable_scissor() {
 }
 
 function _image_create(tex: any): image_t {
-	let raw = new image_t();
+	let raw: image_t = {};
 	raw.texture_ = tex;
 	return raw;
 }
@@ -528,56 +528,56 @@ function image_clear(raw: image_t, x: i32, y: i32, z: i32, width: i32, height: i
 	krom_g4_clear_texture(raw.texture_, x, y, z, width, height, depth, color);
 }
 
-class image_t {
-	texture_: any;
-	render_target_: any;
-	format: tex_format_t;
-	readable: bool;
-	pixels: ArrayBuffer;
-	width: i32;
-	height: i32;
-	depth: i32;
-}
+type image_t = {
+	texture_?: any;
+	render_target_?: any;
+	format?: tex_format_t;
+	readable?: bool;
+	pixels?: ArrayBuffer;
+	width?: i32;
+	height?: i32;
+	depth?: i32;
+};
 
-class pipeline_t {
-	pipeline_: any;
-	input_layout: vertex_struct_t[];
-	vertex_shader: shader_t;
-	fragment_shader: shader_t;
-	geometry_shader: shader_t;
-	cull_mode: cull_mode_t;
-	depth_write: bool;
-	depth_mode: compare_mode_t;
-	blend_source: blend_factor_t;
-	blend_dest: blend_factor_t;
-	alpha_blend_source: blend_factor_t;
-	alpha_blend_dest: blend_factor_t;
-	color_write_masks_red: bool[];
-	color_write_masks_green: bool[];
-	color_write_masks_blue: bool[];
-	color_write_masks_alpha: bool[];
-	color_attachment_count: i32;
-	color_attachments: tex_format_t[];
-	depth_attachment: depth_format_t;
-}
+type pipeline_t = {
+	pipeline_?: any;
+	input_layout?: vertex_struct_t[];
+	vertex_shader?: shader_t;
+	fragment_shader?: shader_t;
+	geometry_shader?: shader_t;
+	cull_mode?: cull_mode_t;
+	depth_write?: bool;
+	depth_mode?: compare_mode_t;
+	blend_source?: blend_factor_t;
+	blend_dest?: blend_factor_t;
+	alpha_blend_source?: blend_factor_t;
+	alpha_blend_dest?: blend_factor_t;
+	color_write_masks_red?: bool[];
+	color_write_masks_green?: bool[];
+	color_write_masks_blue?: bool[];
+	color_write_masks_alpha?: bool[];
+	color_attachment_count?: i32;
+	color_attachments?: tex_format_t[];
+	depth_attachment?: depth_format_t;
+};
 
-class shader_t {
-	shader_: any;
-}
+type shader_t = {
+	shader_?: any;
+};
 
-class vertex_buffer_t {
-	buffer_: any;
-	vertex_count: i32;
-}
+type vertex_buffer_t = {
+	buffer_?: any;
+	vertex_count?: i32;
+};
 
-class vertex_struct_t {
-	elements: kinc_vertex_elem_t[];
-	instanced: bool;
-}
+type vertex_struct_t = {
+	elements?: kinc_vertex_elem_t[];
+	instanced?: bool;
+};
 
-class index_buffer_t {
-	buffer_: any;
-}
+type index_buffer_t = {
+	buffer_?: any;
+};
 
 type kinc_vertex_elem_t = {
 	name: string;

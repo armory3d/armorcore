@@ -1,27 +1,27 @@
 
-class mesh_object_t {
-	base: object_t;
-	data: mesh_data_t;
-	materials: material_data_t[];
-	material_index: i32;
+type mesh_object_t = {
+	base?: object_t;
+	data?: mesh_data_t;
+	materials?: material_data_t[];
+	material_index?: i32;
 	///if arm_particles
-	particle_systems: particle_sys_t[]; // Particle owner
-	particle_children: mesh_object_t[];
-	particle_owner: mesh_object_t; // Particle object
-	particle_index: i32;
+	particle_systems?: particle_sys_t[]; // Particle owner
+	particle_children?: mesh_object_t[];
+	particle_owner?: mesh_object_t; // Particle object
+	particle_index?: i32;
 	///end
-	camera_dist: f32;
-	screen_size: f32;
-	frustum_culling: bool;
-	skip_context: string; // Do not draw this context
-	force_context: string; // Draw only this context
-	prev_matrix: mat4_t;
-}
+	camera_dist?: f32;
+	screen_size?: f32;
+	frustum_culling?: bool;
+	skip_context?: string; // Do not draw this context
+	force_context?: string; // Draw only this context
+	prev_matrix?: mat4_t;
+};
 
 let _mesh_object_last_pipeline: pipeline_t = null;
 
 function mesh_object_create(data: mesh_data_t, materials: material_data_t[]): mesh_object_t {
-	let raw = new mesh_object_t();
+	let raw: mesh_object_t = {};
 	raw.material_index = 0;
 	///if arm_particles
 	raw.particle_index = -1;
@@ -31,6 +31,7 @@ function mesh_object_create(data: mesh_data_t, materials: material_data_t[]): me
 	raw.prev_matrix = mat4_identity();
 	raw.base = object_create(false);
 	raw.base.ext = raw;
+	raw.base.ext_type = "mesh_object_t";
 
 	raw.materials = materials;
 	mesh_object_set_data(raw, data);

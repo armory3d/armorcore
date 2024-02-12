@@ -1,12 +1,12 @@
 
-class ray_t {
-	origin: vec4_t;
-	dir: vec4_t;
-}
+type ray_t = {
+	origin?: vec4_t;
+	dir?: vec4_t;
+};
 
-class plane_t {
-	normal: vec4_t;
-	constant: f32;
+type plane_t = {
+	normal?: vec4_t;
+	constant?: f32;
 }
 
 let _raycast_vp_inv = mat4_identity();
@@ -85,7 +85,7 @@ function raycast_closest_box_intersect(transforms: transform_t[], input_x: f32, 
 }
 
 function plane_create(): plane_t {
-	let raw = new plane_t();
+	let raw: plane_t = {};
 	raw.normal = vec4_create(1.0, 0.0, 0.0);
 	raw.constant = 0.0;
 	return raw;
@@ -101,7 +101,7 @@ function raycast_plane_intersect(normal: vec4_t, a: vec4_t, input_x: f32, input_
 }
 
 function ray_create(origin: vec4_t = null, dir: vec4_t = null): ray_t {
-	let raw = new ray_t();
+	let raw: ray_t = {};
 	raw.origin = origin == null ? vec4_create() : origin;
 	raw.dir = dir == null ? vec4_create() : dir;
 	return raw;

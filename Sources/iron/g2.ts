@@ -199,7 +199,7 @@ function g2_font_init(raw: g2_font_t) {
 }
 
 function g2_font_create(blob: ArrayBuffer, index = 0): g2_font_t {
-	let raw = new g2_font_t();
+	let raw: g2_font_t = {};
 	raw.blob = blob;
 	raw.index = index;
 	return raw;
@@ -228,9 +228,9 @@ function g2_font_clone(raw: g2_font_t): g2_font_t {
 	return g2_font_create(raw.blob, raw.index);
 }
 
-class g2_font_t {
-	font_: any;
-	blob: ArrayBuffer;
-	glyphs: i32[];
-	index: i32;
-}
+type g2_font_t = {
+	font_?: any;
+	blob?: ArrayBuffer;
+	glyphs?: i32[];
+	index?: i32;
+};

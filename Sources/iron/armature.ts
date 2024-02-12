@@ -1,18 +1,18 @@
 
 ///if arm_skin
 
-class armature_t {
-	uid: i32;
-	name: string;
-	actions: armature_action_t[];
-	mats_ready: bool;
-}
+type armature_t = {
+	uid?: i32;
+	name?: string;
+	actions?: armature_action_t[];
+	mats_ready?: bool;
+};
 
 type armature_action_t = {
 	name: string;
 	bones: obj_t[];
 	mats: mat4_t[];
-}
+};
 
 let _armature_traverse_bones_data: any;
 
@@ -21,7 +21,7 @@ function armature_traverse_bones_done(object: obj_t) {
 }
 
 function armature_create(uid: i32, name: string, actions: scene_t[]): armature_t {
-	let raw = new armature_t();
+	let raw: armature_t = {};
 	raw.actions = [];
 	raw.mats_ready = false;
 	raw.uid = uid;

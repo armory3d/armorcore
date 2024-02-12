@@ -1,17 +1,19 @@
 
-class vec4_t {
-	x: f32;
-	y: f32;
-	z: f32;
-	w: f32;
-}
+type vec4_t = {
+	x?: f32;
+	y?: f32;
+	z?: f32;
+	w?: f32;
+	type?: string;
+};
 
 function vec4_create(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): vec4_t {
-	let self = new vec4_t();
+	let self: vec4_t = {};
 	self.x = x;
 	self.y = y;
 	self.z = z;
 	self.w = w;
+	self.type = "vec4_t";
 	return self;
 }
 

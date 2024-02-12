@@ -17,9 +17,9 @@
 // _32 = [14]
 // _33 = [15]
 
-class mat4_t {
-	m: Float32Array;
-}
+type mat4_t = {
+	m?: Float32Array;
+};
 
 let _mat4_vec = vec4_create();
 let _mat4_mat = mat4_identity();
@@ -28,7 +28,7 @@ function mat4_create(_00: f32, _10: f32, _20: f32, _30: f32,
 					 _01: f32, _11: f32, _21: f32, _31: f32,
 					 _02: f32, _12: f32, _22: f32, _32: f32,
 					 _03: f32, _13: f32, _23: f32, _33: f32): mat4_t {
-	let self = new mat4_t();
+	let self: mat4_t = {};
 	self.m = new Float32Array(16);
 	self.m[0] = _00;
 	self.m[4] = _10;

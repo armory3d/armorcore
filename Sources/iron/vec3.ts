@@ -1,15 +1,17 @@
 
-class vec3_t {
-	x: f32;
-	y: f32;
-	z: f32;
-}
+type vec3_t = {
+	x?: f32;
+	y?: f32;
+	z?: f32;
+	type?: string;
+};
 
 function vec3_create(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0): vec3_t {
-	let self = new vec3_t();
+	let self: vec3_t = {};
 	self.x = x;
 	self.y = y;
 	self.z = z;
+	self.type = "vec3_t";
 	return self;
 }
 

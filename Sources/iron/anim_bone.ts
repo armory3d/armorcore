@@ -1,25 +1,25 @@
 
 ///if arm_skin
 
-class anim_bone_t {
-	base: anim_raw_t;
-	object: mesh_object_t;
-	data: mesh_data_t;
-	skin_buffer: Float32Array;
-	skeleton_bones: obj_t[];
-	skeleton_mats: mat4_t[];
-	skeleton_bones_blend: obj_t[];
-	skeleton_mats_blend: mat4_t[];
-	abs_mats: mat4_t[];
-	apply_parent: bool[];
-	mats_fast: mat4_t[];
-	mats_fast_sort: i32[];
-	mats_fast_blend: mat4_t[];
-	mats_fast_blend_sort: i32[];
-	bone_children: Map<string, object_t[]>; // Parented to bone
+type anim_bone_t = {
+	base?: anim_raw_t;
+	object?: mesh_object_t;
+	data?: mesh_data_t;
+	skin_buffer?: Float32Array;
+	skeleton_bones?: obj_t[];
+	skeleton_mats?: mat4_t[];
+	skeleton_bones_blend?: obj_t[];
+	skeleton_mats_blend?: mat4_t[];
+	abs_mats?: mat4_t[];
+	apply_parent?: bool[];
+	mats_fast?: mat4_t[];
+	mats_fast_sort?: i32[];
+	mats_fast_blend?: mat4_t[];
+	mats_fast_blend_sort?: i32[];
+	bone_children?: Map<string, object_t[]>; // Parented to bone
 	// Do inverse kinematics here
-	on_updates: (()=>void)[];
-}
+	on_updates?: (()=>void)[];
+};
 
 let _anim_bone_skin_max_bones = 128;
 let _anim_bone_m = mat4_identity(); // Skinning matrix
@@ -38,13 +38,14 @@ let _anim_bone_v1 = vec4_create();
 let _anim_bone_v2 = vec4_create();
 
 function anim_bone_create(armature_name = ""): anim_bone_t {
-	let raw = new anim_bone_t();
+	let raw: anim_bone_t = {};
 	raw.mats_fast = [];
 	raw.mats_fast_sort = [];
 	raw.mats_fast_blend = [];
 	raw.mats_fast_blend_sort = [];
 	raw.base = anim_create();
 	raw.base.ext = raw;
+	raw.base.ext_type = "anim_bone_t";
 
 	raw.base.is_sampled = false;
 	for (let a of scene_armatures) {
