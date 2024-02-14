@@ -11,6 +11,4 @@ project.addShaders("Shaders/*.glsl");
 project.addShaders("../../../Shaders/*.glsl");
 project.addAssets("Assets/*", { destination: "data/{name}" });
 
-project.addDefine("arm_data_dir");
-
 resolve(project);
