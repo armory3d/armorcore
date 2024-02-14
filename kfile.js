@@ -17,6 +17,7 @@ globalThis.flags = {
 	with_iron: false,
 	with_zui: false,
 	with_eval: true,
+	with_minits: false,
 	on_c_project_created: null,
 };
 
@@ -76,7 +77,12 @@ if (flags.with_eval) {
 }
 
 if (flags.with_minits) {
+	c_project.addDefine('_GNU_SOURCE');
+	c_project.addDefine('CONFIG_VERSION=\"2024-01-13\"');
+	c_project.addIncludeDir('Tools/quickjs');
+	c_project.addFile('Tools/quickjs/*.c');
 	c_project.addFile('Sources/main.c');
+	c_project.addFile(__dirname + '/build/krom.c');
 }
 else if (platform === Platform.Wasm) {
 	c_project.addFile('Sources/main_wasm.c');

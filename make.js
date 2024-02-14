@@ -789,6 +789,64 @@ class ArmorCoreExporter {
 	}
 }
 
+function ts_preprocessor(file) {
+	let contains_define = (define) => {
+		let b = false;
+		for (let s of globalThis.options.defines) {
+			if (define.includes(s)) {
+				b = true;
+				break;
+			};
+		}
+		if (define.includes("!")) {
+			b = !b;
+		}
+		return b;
+	}
+
+	let stack = [];
+	let found = [];
+	let lines = file.split("\n");
+	for (let i = 0; i < lines.length; ++i) {
+		let line = lines[i].trimStart();
+		if (line.startsWith("///if")) {
+			let define = line.substr(6);
+			stack.push(contains_define(define));
+			found.push(stack[stack.length - 1]);
+		}
+		else if (line.startsWith("///elseif")) {
+			let define = line.substr(10);
+			if (!found[found.length - 1] && contains_define(define)) {
+				stack[stack.length - 1] = true;
+				found[found.length - 1] = true;
+			}
+			else {
+				stack[stack.length - 1] = false;
+			}
+		}
+		else if (line.startsWith("///else")) {
+			stack[stack.length - 1] = !found[found.length - 1];
+		}
+		else if (line.startsWith("///end")) {
+			stack.pop();
+			found.pop();
+		}
+		else if (stack.length > 0) {
+			let comment = false;
+			for (b of stack) {
+				if (!b) {
+					comment = true;
+					break;
+				}
+			}
+			if (comment) {
+				lines[i] = "///" + lines[i];
+			}
+		}
+	}
+	return lines.join("\n");
+}
+
 function writeTSProject(projectdir, projectFiles, options) {
 	let tsdata = {
 		include: [],
@@ -843,18 +901,27 @@ function writeTSProject(projectdir, projectFiles, options) {
 
 	// MiniTS compiler
 	if (globalThis.flags.with_minits) {
-		let minits = __dirname + '/Tools/minits';
+		globalThis.options = options;
 
-		let out = "";
 		let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
+		let stream = fs.createWriteStream('build/krom.ts');
+
 		for (let file_path of file_paths) {
 			if (file_path.endsWith('d.ts')) {
 				continue;
 			}
-			file = fs.readFileSync(file_path);
-			out += file;
+			file = fs.readFileSync(file_path) + '';
+			file = ts_preprocessor(file);
+			stream.write(file);
 		}
-		fs.writeFileSync('build/main.ts', out);
+		stream.close();
+
+		let minits = __dirname + '/Tools/minits/minits.js';
+		globalThis.require = require;
+		globalThis.flags.minits_input = process.cwd() + "/build/krom.ts";
+		// globalThis.flags.minits_output = process.cwd() + "/build/krom/krom.js";
+		globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
+		(1, eval)(fs.readFileSync(minits) + '');
 	}
 	// TS compiler
 	else {
@@ -862,57 +929,8 @@ function writeTSProject(projectdir, projectFiles, options) {
 		globalThis.require = require;
 		globalThis.module = {};
 		globalThis.__filename = tsc;
-
-		let containsDefine = (define) => {
-			let b = false;
-			for (let s of options.defines) if (define.includes(s)) { b = true; break; };
-			if (define.includes("!")) b = !b;
-			return b;
-		}
-
-		globalThis.ts_preprocessor = (file) => {
-			let stack = [];
-			let found = [];
-			let lines = file.split("\n");
-			for (let i = 0; i < lines.length; ++i) {
-				let line = lines[i].trimStart();
-				if (line.startsWith("///if")) {
-					let define = line.substr(6);
-					stack.push(containsDefine(define));
-					found.push(stack[stack.length - 1]);
-				}
-				else if (line.startsWith("///elseif")) {
-					let define = line.substr(10);
-					if (!found[found.length - 1] && containsDefine(define)) {
-						stack[stack.length - 1] = true;
-						found[found.length - 1] = true;
-					}
-					else {
-						stack[stack.length - 1] = false;
-					}
-				}
-				else if (line.startsWith("///else")) {
-					stack[stack.length - 1] = !found[found.length - 1];
-				}
-				else if (line.startsWith("///end")) {
-					stack.pop();
-					found.pop();
-				}
-				else if (stack.length > 0) {
-					let comment = false;
-					for (b of stack) {
-						if (!b) {
-							comment = true;
-							break;
-						}
-					}
-					if (comment) {
-						lines[i] = "///" + lines[i];
-					}
-				}
-			}
-			return lines.join("\n");
-		};
+		globalThis.options = options;
+		globalThis.ts_preprocessor = ts_preprocessor;
 
 		let _cwd = process.cwd();
 		process.chdir(projectdir + '/krom')
