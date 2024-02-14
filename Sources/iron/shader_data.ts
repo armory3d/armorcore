@@ -5,9 +5,9 @@ function shader_data_create(raw: shader_data_t, done: (sd: shader_data_t)=>void,
 		raw._contexts.push(null);
 	}
 
-	let contexts_loaded = 0;
-	for (let i = 0; i < raw.contexts.length; ++i) {
-		let c = raw.contexts[i];
+	let contexts_loaded: i32 = 0;
+	for (let i: i32 = 0; i < raw.contexts.length; ++i) {
+		let c: shader_context_t = raw.contexts[i];
 		shader_context_create(c, function (con: shader_context_t) {
 			raw._contexts[i] = con;
 			contexts_loaded++;
@@ -79,7 +79,7 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 	raw._tex_units = [];
 
 	if (raw._instancing_type > 0) { // Instancing
-		let inst_struct = g4_vertex_struct_create();
+		let inst_struct: vertex_struct_t = g4_vertex_struct_create();
 		g4_vertex_struct_add(inst_struct, "ipos", vertex_data_t.F32_3X);
 		if (raw._instancing_type == 2 || raw._instancing_type == 4) {
 			g4_vertex_struct_add(inst_struct, "irot", vertex_data_t.F32_3X);
@@ -117,22 +117,22 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 
 	// Per-target color write mask
 	if (raw.color_writes_red != null) {
-		for (let i = 0; i < raw.color_writes_red.length; ++i) {
+		for (let i: i32 = 0; i < raw.color_writes_red.length; ++i) {
 			raw._pipe_state.color_write_masks_red[i] = raw.color_writes_red[i];
 		}
 	}
 	if (raw.color_writes_green != null) {
-		for (let i = 0; i < raw.color_writes_green.length; ++i) {
+		for (let i: i32 = 0; i < raw.color_writes_green.length; ++i) {
 			raw._pipe_state.color_write_masks_green[i] = raw.color_writes_green[i];
 		}
 	}
 	if (raw.color_writes_blue != null) {
-		for (let i = 0; i < raw.color_writes_blue.length; ++i) {
+		for (let i: i32 = 0; i < raw.color_writes_blue.length; ++i) {
 			raw._pipe_state.color_write_masks_blue[i] = raw.color_writes_blue[i];
 		}
 	}
 	if (raw.color_writes_alpha != null) {
-		for (let i = 0; i < raw.color_writes_alpha.length; ++i) {
+		for (let i: i32 = 0; i < raw.color_writes_alpha.length; ++i) {
 			raw._pipe_state.color_write_masks_alpha[i] = raw.color_writes_alpha[i];
 		}
 	}
@@ -140,7 +140,7 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 	// Color attachment format
 	if (raw.color_attachments != null) {
 		raw._pipe_state.color_attachment_count = raw.color_attachments.length;
-		for (let i = 0; i < raw.color_attachments.length; ++i) {
+		for (let i: i32 = 0; i < raw.color_attachments.length; ++i) {
 			raw._pipe_state.color_attachments[i] = shader_context_get_tex_format(raw.color_attachments[i]);
 		}
 	}
@@ -166,14 +166,14 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 
 		///if arm_noembed // Load shaders manually
 
-		let shaders_loaded = 0;
-		let num_shaders = 2;
+		let shaders_loaded: i32 = 0;
+		let num_shaders: i32 = 2;
 		if (raw.geometry_shader != null) {
 			num_shaders++;
 		}
 
 		function load_shader(file: string, type: i32) {
-			let path = file + shader_data_ext();
+			let path: string = file + shader_data_ext();
 			data_get_blob(path, function (b: ArrayBuffer) {
 				if (type == 0) {
 					raw._pipe_state.vertex_shader = g4_shader_create(b, shader_type_t.VERTEX);
@@ -258,9 +258,9 @@ function shader_context_parse_data(data: string): vertex_data_t {
 
 function shader_context_parse_vertex_struct(raw: shader_context_t) {
 	raw._structure = g4_vertex_struct_create();
-	let ipos = false;
-	let irot = false;
-	let iscl = false;
+	let ipos: bool = false;
+	let irot: bool = false;
+	let iscl: bool = false;
 	for (let elem of raw.vertex_elements) {
 		if (elem.name == "ipos") {
 			ipos = true;
@@ -375,14 +375,14 @@ function shader_context_get_blend_fac(s: string): blend_factor_t {
 	return blend_factor_t.BLEND_ONE;
 }
 
-function shader_context_get_tex_addresing(s: string): tex_addressing {
+function shader_context_get_tex_addresing(s: string): tex_addressing_t {
 	if (s == "repeat") {
-		return tex_addressing.REPEAT;
+		return tex_addressing_t.REPEAT;
 	}
 	if (s == "mirror") {
-		return tex_addressing.MIRROR;
+		return tex_addressing_t.MIRROR;
 	}
-	return tex_addressing.CLAMP;
+	return tex_addressing_t.CLAMP;
 }
 
 function shader_context_get_tex_filter(s: string): tex_filter_t {
@@ -451,10 +451,10 @@ function shader_context_add_tex(raw: shader_context_t, tu: tex_unit_t) {
 
 function shader_context_set_tex_params(raw: shader_context_t, unit_index: i32, tex: bind_tex_t) {
 	// This function is called for samplers set using material context
-	let unit = raw._tex_units[unit_index];
+	let unit: any = raw._tex_units[unit_index];
 	g4_set_tex_params(unit,
-		tex.u_addressing == null ? tex_addressing.REPEAT : shader_context_get_tex_addresing(tex.u_addressing),
-		tex.v_addressing == null ? tex_addressing.REPEAT : shader_context_get_tex_addresing(tex.v_addressing),
+		tex.u_addressing == null ? tex_addressing_t.REPEAT : shader_context_get_tex_addresing(tex.u_addressing),
+		tex.v_addressing == null ? tex_addressing_t.REPEAT : shader_context_get_tex_addresing(tex.v_addressing),
 		tex.min_filter == null ? tex_filter_t.LINEAR : shader_context_get_tex_filter(tex.min_filter),
 		tex.mag_filter == null ? tex_filter_t.LINEAR : shader_context_get_tex_filter(tex.mag_filter),
 		tex.mipmap_filter == null ? mip_map_filter_t.NONE : shader_context_get_mipmap_filter(tex.mipmap_filter));

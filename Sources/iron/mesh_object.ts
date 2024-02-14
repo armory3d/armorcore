@@ -71,9 +71,9 @@ function mesh_object_remove(raw: mesh_object_t) {
 
 function mesh_object_setup_animation(raw: mesh_object_t, oactions: scene_t[] = null) {
 	///if arm_skin
-	let has_action = raw.base.parent != null && raw.base.parent.raw != null && raw.base.parent.raw.bone_actions != null;
+	let has_action: bool = raw.base.parent != null && raw.base.parent.raw != null && raw.base.parent.raw.bone_actions != null;
 	if (has_action) {
-		let armature_name = raw.base.parent.name;
+		let armature_name: string = raw.base.parent.name;
 		raw.base.animation = object_get_parent_armature(raw.base, armature_name).base;
 		if (raw.base.animation == null) {
 			raw.base.animation = anim_bone_create(armature_name).base;
@@ -92,7 +92,7 @@ function mesh_object_setup_particle_system(raw: mesh_object_t, scene_name: strin
 	if (raw.particle_systems == null) {
 		raw.particle_systems = [];
 	}
-	let psys = particle_sys_create(scene_name, pref);
+	let psys: particle_sys_t = particle_sys_create(scene_name, pref);
 	raw.particle_systems.push(psys);
 }
 ///end
@@ -104,8 +104,7 @@ function mesh_object_set_culled(raw: mesh_object_t, b: bool): bool {
 
 function mesh_object_cull_material(raw: mesh_object_t, context: string): bool {
 	// Skip render if material does not contain current context
-	let mats = raw.materials;
-	if (!mesh_object_valid_context(raw, mats, context)) {
+	if (!mesh_object_valid_context(raw, raw.materials, context)) {
 		return true;
 	}
 
@@ -132,7 +131,7 @@ function mesh_object_cull_mesh(raw: mesh_object_t, context: string, camera: came
 	if (camera.data.frustum_culling && raw.frustum_culling) {
 		// Scale radius for skinned mesh and particle system
 		// TODO: define skin & particle bounds
-		let radius_scale = raw.data.skin != null ? 2.0 : 1.0;
+		let radius_scale: f32 = raw.data.skin != null ? 2.0 : 1.0;
 		///if arm_particles
 		// particleSystems for update, particleOwner for render
 		if (raw.particle_systems != null || raw.particle_owner != null) {
@@ -146,7 +145,7 @@ function mesh_object_cull_mesh(raw: mesh_object_t, context: string, camera: came
 			radius_scale *= 100;
 		}
 
-		let frustum_planes = camera.frustum_planes;
+		let frustum_planes: frustum_plane_t[] = camera.frustum_planes;
 		if (!camera_object_sphere_in_frustum(frustum_planes, raw.base.transform, radius_scale)) {
 			return mesh_object_set_culled(raw, true);
 		}
@@ -165,8 +164,8 @@ function mesh_object_skip_context(raw: mesh_object_t, context: string, mat: mate
 
 function mesh_object_get_contexts(raw: mesh_object_t, context: string, materials: material_data_t[], material_contexts: material_context_t[], shader_contexts: shader_context_t[]) {
 	for (let mat of materials) {
-		let found = false;
-		for (let i = 0; i < mat.contexts.length; ++i) {
+		let found: bool = false;
+		for (let i: i32 = 0; i < mat.contexts.length; ++i) {
 			if (mat.contexts[i].name.substring(0, context.length) == context) {
 				material_contexts.push(mat._contexts[i]);
 				shader_contexts.push(shader_data_get_context(mat._shader, context));
@@ -191,7 +190,7 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 	if (mesh_object_cull_mesh(raw, context, scene_camera,_render_path_light)) {
 		return;
 	}
-	let mesh_context = raw.base.raw != null ? context == "mesh" : false;
+	let mesh_context: bool = raw.base.raw != null ? context == "mesh" : false;
 
 	///if arm_particles
 	if (raw.base.raw != null && raw.base.raw.is_particle && raw.particle_owner == null) {
@@ -212,7 +211,7 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 				});
 			}
 		}
-		for (let i = 0; i < raw.particle_systems.length; ++i) {
+		for (let i: i32 = 0; i < raw.particle_systems.length; ++i) {
 			particle_sys_update(raw.particle_systems[i], raw.particle_children[i], raw);
 		}
 	}
@@ -235,9 +234,9 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 	transform_update(raw.base.transform);
 
 	// Render mesh
-	for (let i = 0; i < raw.data._index_buffers.length; ++i) {
+	for (let i: i32 = 0; i < raw.data._index_buffers.length; ++i) {
 
-		let mi = raw.data._material_indices[i];
+		let mi: i32 = raw.data._material_indices[i];
 		if (shader_contexts.length <= mi || shader_contexts[mi] == null) {
 			continue;
 		}
@@ -248,11 +247,11 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 			continue;
 		}
 
-		let scontext = shader_contexts[mi];
+		let scontext: shader_context_t = shader_contexts[mi];
 		if (scontext == null) {
 			continue;
 		}
-		let elems = scontext.vertex_elements;
+		let elems: vertex_element_t[] = scontext.vertex_elements;
 
 		// Uniforms
 		if (scontext._pipe_state != _mesh_object_last_pipeline) {
@@ -306,8 +305,8 @@ function mesh_object_compute_screen_size(raw: mesh_object_t, camera: camera_obje
 	// Approx..
 	// let rp = camera_render_path;
 	// let screen_volume = rp.current_w * rp.current_h;
-	let tr = raw.base.transform;
-	let volume = tr.dim.x * tr.dim.y * tr.dim.z;
+	let tr: transform_t = raw.base.transform;
+	let volume: f32 = tr.dim.x * tr.dim.y * tr.dim.z;
 	raw.screen_size = volume * (1.0 / raw.camera_dist);
 	raw.screen_size = raw.screen_size > 1.0 ? 1.0 : raw.screen_size;
 }

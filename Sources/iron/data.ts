@@ -17,7 +17,7 @@ let data_cached_fonts: Map<string, g2_font_t> = new Map();
 let data_cached_sounds: Map<string, sound_t> = new Map();
 ///end
 
-let data_assets_loaded = 0;
+let data_assets_loaded: i32 = 0;
 let _data_loading_meshes: Map<string, ((d: mesh_data_t)=>void)[]> = new Map();
 let _data_loading_lights: Map<string, ((d: light_data_t)=>void)[]> = new Map();
 let _data_loading_cameras: Map<string, ((d: camera_data_t)=>void)[]> = new Map();
@@ -89,14 +89,14 @@ function data_delete_all() {
 }
 
 function data_get_mesh(file: string, name: string, done: (md: mesh_data_t)=>void) {
-	let handle = file + name;
-	let cached = data_cached_meshes.get(handle);
+	let handle: string = file + name;
+	let cached: mesh_data_t = data_cached_meshes.get(handle);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_meshes.get(handle);
+	let loading: ((d: mesh_data_t)=>void)[] = _data_loading_meshes.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -116,7 +116,7 @@ function data_get_mesh(file: string, name: string, done: (md: mesh_data_t)=>void
 
 function data_delete_mesh(handle: string) {
 	// Remove cached mesh
-	let mesh = data_cached_meshes.get(handle);
+	let mesh: mesh_data_t = data_cached_meshes.get(handle);
 	if (mesh == null) {
 		return;
 	}
@@ -125,14 +125,14 @@ function data_delete_mesh(handle: string) {
 }
 
 function data_get_light(file: string, name: string, done: (ld: light_data_t)=>void) {
-	let handle = file + name;
-	let cached = data_cached_lights.get(handle);
+	let handle: string = file + name;
+	let cached: light_data_t = data_cached_lights.get(handle);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_lights.get(handle);
+	let loading: ((d: light_data_t)=>void)[] = _data_loading_lights.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -150,14 +150,14 @@ function data_get_light(file: string, name: string, done: (ld: light_data_t)=>vo
 }
 
 function data_get_camera(file: string, name: string, done: (cd: camera_data_t)=>void) {
-	let handle = file + name;
-	let cached = data_cached_cameras.get(handle);
+	let handle: string = file + name;
+	let cached: camera_data_t = data_cached_cameras.get(handle);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_cameras.get(handle);
+	let loading: ((d: camera_data_t)=>void)[] = _data_loading_cameras.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -175,14 +175,14 @@ function data_get_camera(file: string, name: string, done: (cd: camera_data_t)=>
 }
 
 function data_get_material(file: string, name: string, done: (md: material_data_t)=>void) {
-	let handle = file + name;
-	let cached = data_cached_materials.get(handle);
+	let handle: string = file + name;
+	let cached: material_data_t = data_cached_materials.get(handle);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_materials.get(handle);
+	let loading: ((d: material_data_t)=>void)[] = _data_loading_materials.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -200,14 +200,14 @@ function data_get_material(file: string, name: string, done: (md: material_data_
 }
 
 function data_get_particle(file: string, name: string, done: (pd: particle_data_t)=>void) {
-	let handle = file + name;
-	let cached = data_cached_particles.get(handle);
+	let handle: string = file + name;
+	let cached: particle_data_t = data_cached_particles.get(handle);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_particles.get(handle);
+	let loading: ((d: particle_data_t)=>void)[] = _data_loading_particles.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -230,14 +230,14 @@ function data_get_world(file: string, name: string, done: (wd: world_data_t)=>vo
 		return;
 	}
 
-	let handle = file + name;
-	let cached = data_cached_worlds.get(handle);
+	let handle: string = file + name;
+	let cached: world_data_t = data_cached_worlds.get(handle);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_worlds.get(handle);
+	let loading: ((d: world_data_t)=>void)[] = _data_loading_worlds.get(handle);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -256,17 +256,17 @@ function data_get_world(file: string, name: string, done: (wd: world_data_t)=>vo
 
 function data_get_shader(file: string, name: string, done: (sd: shader_data_t)=>void, override_context: shader_override_t = null) {
 	// Only one context override per shader data for now
-	let cache_name = name;
+	let cache_name: string = name;
 	if (override_context != null) {
 		cache_name += "2";
 	}
-	let cached = data_cached_shaders.get(cache_name); // Shader must have unique name
+	let cached: shader_data_t = data_cached_shaders.get(cache_name); // Shader must have unique name
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_shaders.get(cache_name);
+	let loading: ((d: shader_data_t)=>void)[] = _data_loading_shaders.get(cache_name);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -284,13 +284,13 @@ function data_get_shader(file: string, name: string, done: (sd: shader_data_t)=>
 }
 
 function data_get_scene_raw(file: string, done: (fmt: scene_t)=>void) {
-	let cached = data_cached_scene_raws.get(file);
+	let cached: scene_t = data_cached_scene_raws.get(file);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_scene_raws.get(file);
+	let loading: ((fmt: scene_t)=>void)[] = _data_loading_scene_raws.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -299,7 +299,7 @@ function data_get_scene_raw(file: string, done: (fmt: scene_t)=>void) {
 	_data_loading_scene_raws.set(file, [done]);
 
 	// If no extension specified, set to .arm
-	let ext = file.endsWith(".arm") ? "" : ".arm";
+	let ext: string = file.endsWith(".arm") ? "" : ".arm";
 
 	data_get_blob(file + ext, function (b: ArrayBuffer) {
 		let parsed: scene_t = null;
@@ -416,13 +416,13 @@ function data_get_speaker_raw_by_name(datas: speaker_data_t[], name: string): sp
 
 // Raw assets
 function data_get_blob(file: string, done: (ab: ArrayBuffer)=>void) {
-	let cached = data_cached_blobs.get(file); // Is already cached
+	let cached: ArrayBuffer = data_cached_blobs.get(file); // Is already cached
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_blobs.get(file); // Is already being loaded
+	let loading: ((ab: ArrayBuffer)=>void)[] = _data_loading_blobs.get(file); // Is already being loaded
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -431,7 +431,7 @@ function data_get_blob(file: string, done: (ab: ArrayBuffer)=>void) {
 	_data_loading_blobs.set(file, [done]); // Start loading
 
 	// krom_load_blob(resolvePath(file), function (b: ArrayBuffer) {
-		let b = krom_load_blob(data_resolve_path(file));
+		let b: ArrayBuffer = krom_load_blob(data_resolve_path(file));
 		data_cached_blobs.set(file, b);
 		for (let f of _data_loading_blobs.get(file)) {
 			f(b);
@@ -442,21 +442,21 @@ function data_get_blob(file: string, done: (ab: ArrayBuffer)=>void) {
 }
 
 function data_delete_blob(handle: string) {
-	let blob = data_cached_blobs.get(handle);
+	let blob: ArrayBuffer = data_cached_blobs.get(handle);
 	if (blob == null) {
 		return;
 	}
 	data_cached_blobs.delete(handle);
 }
 
-function data_get_image(file: string, done: (img: image_t)=>void, readable = false, format = "RGBA32") {
-	let cached = data_cached_images.get(file);
+function data_get_image(file: string, done: (img: image_t)=>void, readable: bool = false, format: string = "RGBA32") {
+	let cached: image_t = data_cached_images.get(file);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_images.get(file);
+	let loading: ((img: image_t)=>void)[] = _data_loading_images.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -465,7 +465,7 @@ function data_get_image(file: string, done: (img: image_t)=>void, readable = fal
 	_data_loading_images.set(file, [done]);
 
 	///if arm_image_embed
-	let image_blob = data_cached_blobs.get(file);
+	let image_blob: ArrayBuffer = data_cached_blobs.get(file);
 	if (image_blob != null) {
 		image_from_encoded_bytes(image_blob, ".k", function (b: image_t) {
 			data_cached_images.set(file, b);
@@ -480,9 +480,9 @@ function data_get_image(file: string, done: (img: image_t)=>void, readable = fal
 	///end
 
 	// krom_load_image(resolvePath(file), readable, function (b: image_t) {
-		let image_ = krom_load_image(data_resolve_path(file), readable);
+		let image_: any = krom_load_image(data_resolve_path(file), readable);
 		if (image_ != null) {
-			let b = image_from_texture(image_);
+			let b: image_t = image_from_texture(image_);
 			data_cached_images.set(file, b);
 			for (let f of _data_loading_images.get(file)) {
 				f(b);
@@ -494,7 +494,7 @@ function data_get_image(file: string, done: (img: image_t)=>void, readable = fal
 }
 
 function data_delete_image(handle: string) {
-	let image = data_cached_images.get(handle);
+	let image: image_t = data_cached_images.get(handle);
 	if (image == null) {
 		return;
 	}
@@ -504,13 +504,13 @@ function data_delete_image(handle: string) {
 
 ///if arm_audio
 function data_get_sound(file: string, done: (snd: sound_t)=>void) {
-	let cached = data_cached_sounds.get(file);
+	let cached: sound_t = data_cached_sounds.get(file);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_sounds.get(file);
+	let loading: ((snd: sound_t)=>void)[] = _data_loading_sounds.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -519,7 +519,7 @@ function data_get_sound(file: string, done: (snd: sound_t)=>void) {
 	_data_loading_sounds.set(file, [done]);
 
 	// krom_load_sound(data_resolve_path(file), function (b: sound_t) {
-		let b = sound_create(krom_load_sound(data_resolve_path(file)));
+		let b: sound_t = sound_create(krom_load_sound(data_resolve_path(file)));
 		data_cached_sounds.set(file, b);
 		for (let f of _data_loading_sounds.get(file)) {
 			f(b);
@@ -530,7 +530,7 @@ function data_get_sound(file: string, done: (snd: sound_t)=>void) {
 }
 
 function data_delete_sound(handle: string) {
-	let sound = data_cached_sounds.get(handle);
+	let sound: sound_t = data_cached_sounds.get(handle);
 	if (sound == null) {
 		return;
 	}
@@ -541,13 +541,13 @@ function data_delete_sound(handle: string) {
 
 function data_get_video(file: string, done: (vid: video_t)=>void) {
 	file = file.substring(0, file.length - 4) + ".webm";
-	let cached = data_cached_videos.get(file);
+	let cached: video_t = data_cached_videos.get(file);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_videos.get(file);
+	let loading: ((vid: video_t)=>void)[] = _data_loading_videos.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -566,7 +566,7 @@ function data_get_video(file: string, done: (vid: video_t)=>void) {
 }
 
 function data_delete_video(handle: string) {
-	let video = data_cached_videos.get(handle);
+	let video: video_t = data_cached_videos.get(handle);
 	if (video == null) {
 		return;
 	}
@@ -575,13 +575,13 @@ function data_delete_video(handle: string) {
 }
 
 function data_get_font(file: string, done: (f: g2_font_t)=>void) {
-	let cached = data_cached_fonts.get(file);
+	let cached: g2_font_t = data_cached_fonts.get(file);
 	if (cached != null) {
 		done(cached);
 		return;
 	}
 
-	let loading = _data_loading_fonts.get(file);
+	let loading: ((f: g2_font_t)=>void)[] = _data_loading_fonts.get(file);
 	if (loading != null) {
 		loading.push(done);
 		return;
@@ -590,8 +590,8 @@ function data_get_font(file: string, done: (f: g2_font_t)=>void) {
 	_data_loading_fonts.set(file, [done]);
 
 	// krom_load_blob(resolvePath(file), function (blob: ArrayBuffer) {
-		let blob = krom_load_blob(data_resolve_path(file));
-		let b = g2_font_create(blob);
+		let blob: ArrayBuffer = krom_load_blob(data_resolve_path(file));
+		let b: g2_font_t = g2_font_create(blob);
 		data_cached_fonts.set(file, b);
 		for (let f of _data_loading_fonts.get(file)) {
 			f(b);
@@ -602,7 +602,7 @@ function data_get_font(file: string, done: (f: g2_font_t)=>void) {
 }
 
 function data_delete_font(handle: string) {
-	let font = data_cached_fonts.get(handle);
+	let font: g2_font_t = data_cached_fonts.get(handle);
 	if (font == null) {
 		return;
 	}
@@ -619,7 +619,7 @@ function data_is_up(file: string): bool {
 }
 
 function data_base_name(path: string): string {
-	let slash = path.lastIndexOf(data_sep());
+	let slash: i32 = path.lastIndexOf(data_sep());
 	return slash >= 0 ? path.substring(slash + 1) : path;
 }
 

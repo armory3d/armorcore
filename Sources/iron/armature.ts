@@ -76,7 +76,7 @@ function armature_set_parents(object: obj_t) {
 }
 
 function armature_traverse_bones(objects: obj_t[], callback: (o: obj_t)=>void) {
-	for (let i = 0; i < objects.length; ++i) {
+	for (let i: i32 = 0; i < objects.length; ++i) {
 		armature_traverse_bones_step(objects[i], callback);
 	}
 }
@@ -88,7 +88,7 @@ function armature_traverse_bones_step(object: obj_t, callback: (o: obj_t)=>void)
 	if (object.children == null) {
 		return;
 	}
-	for (let i = 0; i < object.children.length; ++i) {
+	for (let i: i32 = 0; i < object.children.length; ++i) {
 		armature_traverse_bones_step(object.children[i], callback);
 	}
 }

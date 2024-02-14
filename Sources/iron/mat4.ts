@@ -1,4 +1,3 @@
-/// <reference path='./vec4.ts'/>
 
 // _00 = [0]
 // _01 = [1]
@@ -21,8 +20,8 @@ type mat4_t = {
 	m?: Float32Array;
 };
 
-let _mat4_vec = vec4_create();
-let _mat4_mat = mat4_identity();
+let _mat4_vec: vec4_t = vec4_create();
+let _mat4_mat: mat4_t = mat4_identity();
 
 function mat4_create(_00: f32, _10: f32, _20: f32, _30: f32,
 					 _01: f32, _11: f32, _21: f32, _31: f32,
@@ -58,7 +57,7 @@ function mat4_identity(): mat4_t {
 	);
 }
 
-function mat4_from_f32_array(a: Float32Array, offset = 0): mat4_t {
+function mat4_from_f32_array(a: Float32Array, offset: i32 = 0): mat4_t {
 	return mat4_create(
 		a[0 + offset], a[1 + offset], a[2 + offset], a[3 + offset],
 		a[4 + offset], a[5 + offset], a[6 + offset], a[7 + offset],
@@ -68,8 +67,8 @@ function mat4_from_f32_array(a: Float32Array, offset = 0): mat4_t {
 }
 
 function mat4_persp(fov_y: f32, aspect: f32, zn: f32, zf: f32): mat4_t {
-	let uh = 1.0 / Math.tan(fov_y / 2);
-	let uw = uh / aspect;
+	let uh: f32 = 1.0 / Math.tan(fov_y / 2);
+	let uw: f32 = uh / aspect;
 	return mat4_create(
 		uw, 0, 0, 0,
 		0, uh, 0, 0,
@@ -79,12 +78,12 @@ function mat4_persp(fov_y: f32, aspect: f32, zn: f32, zf: f32): mat4_t {
 }
 
 function mat4_ortho(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32): mat4_t {
-	let rl = right - left;
-	let tb = top - bottom;
-	let fn = far - near;
-	let tx = -(right + left) / (rl);
-	let ty = -(top + bottom) / (tb);
-	let tz = -(far + near) / (fn);
+	let rl: f32 = right - left;
+	let tb: f32 = top - bottom;
+	let fn: f32 = far - near;
+	let tx: f32 = -(right + left) / (rl);
+	let ty: f32 = -(top + bottom) / (tb);
+	let tz: f32 = -(far + near) / (fn);
 	return mat4_create(
 		2 / rl,	0,		0,		 tx,
 		0,		2 / tb,	0,		 ty,
@@ -94,8 +93,8 @@ function mat4_ortho(left: f32, right: f32, bottom: f32, top: f32, near: f32, far
 }
 
 function mat4_rot_z(alpha: f32): mat4_t {
-	let ca = Math.cos(alpha);
-	let sa = Math.sin(alpha);
+	let ca: f32 = Math.cos(alpha);
+	let sa: f32 = Math.sin(alpha);
 	return mat4_create(
 		ca, -sa, 0, 0,
 		sa,  ca, 0, 0,
@@ -121,7 +120,7 @@ function mat4_decompose(self: mat4_t, loc: vec4_t, quat: quat_t, scale: vec4_t):
 	if (mat4_determinant(self) < 0.0) {
 		scale.x = -scale.x;
 	}
-	let invs = 1.0 / scale.x; // Scale the rotation part
+	let invs: f32 = 1.0 / scale.x; // Scale the rotation part
 	_mat4_mat.m[0] = self.m[0] * invs;
 	_mat4_mat.m[1] = self.m[1] * invs;
 	_mat4_mat.m[2] = self.m[2] * invs;
@@ -145,22 +144,22 @@ function mat4_set_loc(self: mat4_t, v: vec4_t): mat4_t {
 }
 
 function mat4_from_quat(self: mat4_t, q: quat_t): mat4_t {
-	let x = q.x;
-	let y = q.y;
-	let z = q.z;
-	let w = q.w;
-	let x2 = x + x;
-	let y2 = y + y;
-	let z2 = z + z;
-	let xx = x * x2;
-	let xy = x * y2;
-	let xz = x * z2;
-	let yy = y * y2;
-	let yz = y * z2;
-	let zz = z * z2;
-	let wx = w * x2;
-	let wy = w * y2;
-	let wz = w * z2;
+	let x: f32 = q.x;
+	let y: f32 = q.y;
+	let z: f32 = q.z;
+	let w: f32 = q.w;
+	let x2: f32 = x + x;
+	let y2: f32 = y + y;
+	let z2: f32 = z + z;
+	let xx: f32 = x * x2;
+	let xy: f32 = x * y2;
+	let xz: f32 = x * z2;
+	let yy: f32 = y * y2;
+	let yz: f32 = y * z2;
+	let zz: f32 = z * z2;
+	let wx: f32 = w * x2;
+	let wy: f32 = w * y2;
+	let wz: f32 = w * z2;
 
 	self.m[0] = 1.0 - (yy + zz);
 	self.m[4] = xy - wz;
@@ -242,9 +241,9 @@ function mat4_translate(self: mat4_t, x: f32, y: f32, z: f32): mat4_t {
 }
 
 function mat4_scale(self: mat4_t, v: vec4_t): mat4_t {
-	let x = v.x;
-	let y = v.y;
-	let z = v.z;
+	let x: f32 = v.x;
+	let y: f32 = v.y;
+	let z: f32 = v.z;
 	self.m[0] *= x;
 	self.m[1] *= x;
 	self.m[2] *= x;
@@ -261,27 +260,27 @@ function mat4_scale(self: mat4_t, v: vec4_t): mat4_t {
 }
 
 function mat4_mult_mats3x4(self: mat4_t, a: mat4_t, b: mat4_t): mat4_t {
-	let a00 = a.m[0];
-	let a01 = a.m[1];
-	let a02 = a.m[2];
-	let a03 = a.m[3];
-	let a10 = a.m[4];
-	let a11 = a.m[5];
-	let a12 = a.m[6];
-	let a13 = a.m[7];
-	let a20 = a.m[8];
-	let a21 = a.m[9];
-	let a22 = a.m[10];
-	let a23 = a.m[11];
-	let a30 = a.m[12];
-	let a31 = a.m[13];
-	let a32 = a.m[14];
-	let a33 = a.m[15];
+	let a00: f32 = a.m[0];
+	let a01: f32 = a.m[1];
+	let a02: f32 = a.m[2];
+	let a03: f32 = a.m[3];
+	let a10: f32 = a.m[4];
+	let a11: f32 = a.m[5];
+	let a12: f32 = a.m[6];
+	let a13: f32 = a.m[7];
+	let a20: f32 = a.m[8];
+	let a21: f32 = a.m[9];
+	let a22: f32 = a.m[10];
+	let a23: f32 = a.m[11];
+	let a30: f32 = a.m[12];
+	let a31: f32 = a.m[13];
+	let a32: f32 = a.m[14];
+	let a33: f32 = a.m[15];
 
-	let b0 = b.m[0];
-	let b1 = b.m[4];
-	let b2 = b.m[8];
-	let b3 = b.m[12];
+	let b0: f32 = b.m[0];
+	let b1: f32 = b.m[4];
+	let b2: f32 = b.m[8];
+	let b3: f32 = b.m[12];
 	self.m[0] = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self.m[4] = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self.m[8] = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
@@ -313,27 +312,27 @@ function mat4_mult_mats3x4(self: mat4_t, a: mat4_t, b: mat4_t): mat4_t {
 }
 
 function mat4_mult_mats(self: mat4_t, b: mat4_t, a: mat4_t): mat4_t {
-	let a00 = a.m[0];
-	let a01 = a.m[1];
-	let a02 = a.m[2];
-	let a03 = a.m[3];
-	let a10 = a.m[4];
-	let a11 = a.m[5];
-	let a12 = a.m[6];
-	let a13 = a.m[7];
-	let a20 = a.m[8];
-	let a21 = a.m[9];
-	let a22 = a.m[10];
-	let a23 = a.m[11];
-	let a30 = a.m[12];
-	let a31 = a.m[13];
-	let a32 = a.m[14];
-	let a33 = a.m[15];
+	let a00: f32 = a.m[0];
+	let a01: f32 = a.m[1];
+	let a02: f32 = a.m[2];
+	let a03: f32 = a.m[3];
+	let a10: f32 = a.m[4];
+	let a11: f32 = a.m[5];
+	let a12: f32 = a.m[6];
+	let a13: f32 = a.m[7];
+	let a20: f32 = a.m[8];
+	let a21: f32 = a.m[9];
+	let a22: f32 = a.m[10];
+	let a23: f32 = a.m[11];
+	let a30: f32 = a.m[12];
+	let a31: f32 = a.m[13];
+	let a32: f32 = a.m[14];
+	let a33: f32 = a.m[15];
 
-	let b0 = b.m[0];
-	let b1 = b.m[4];
-	let b2 = b.m[8];
-	let b3 = b.m[12];
+	let b0: f32 = b.m[0];
+	let b1: f32 = b.m[4];
+	let b2: f32 = b.m[8];
+	let b3: f32 = b.m[12];
 	self.m[0] = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self.m[4] = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self.m[8] = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
@@ -370,27 +369,27 @@ function mat4_mult_mats(self: mat4_t, b: mat4_t, a: mat4_t): mat4_t {
 }
 
 function mat4_mult_mat(self: mat4_t, m: mat4_t): mat4_t {
-	let a00 = self.m[0];
-	let a01 = self.m[1];
-	let a02 = self.m[2];
-	let a03 = self.m[3];
-	let a10 = self.m[4];
-	let a11 = self.m[5];
-	let a12 = self.m[6];
-	let a13 = self.m[7];
-	let a20 = self.m[8];
-	let a21 = self.m[9];
-	let a22 = self.m[10];
-	let a23 = self.m[11];
-	let a30 = self.m[12];
-	let a31 = self.m[13];
-	let a32 = self.m[14];
-	let a33 = self.m[15];
+	let a00: f32 = self.m[0];
+	let a01: f32 = self.m[1];
+	let a02: f32 = self.m[2];
+	let a03: f32 = self.m[3];
+	let a10: f32 = self.m[4];
+	let a11: f32 = self.m[5];
+	let a12: f32 = self.m[6];
+	let a13: f32 = self.m[7];
+	let a20: f32 = self.m[8];
+	let a21: f32 = self.m[9];
+	let a22: f32 = self.m[10];
+	let a23: f32 = self.m[11];
+	let a30: f32 = self.m[12];
+	let a31: f32 = self.m[13];
+	let a32: f32 = self.m[14];
+	let a33: f32 = self.m[15];
 
-	let b0 = m.m[0];
-	let b1 = m.m[4];
-	let b2 = m.m[8];
-	let b3 = m.m[12];
+	let b0: f32 = m.m[0];
+	let b1: f32 = m.m[4];
+	let b2: f32 = m.m[8];
+	let b3: f32 = m.m[12];
 	self.m[0] = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
 	self.m[4] = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
 	self.m[8] = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
@@ -427,36 +426,36 @@ function mat4_mult_mat(self: mat4_t, m: mat4_t): mat4_t {
 }
 
 function mat4_get_inv(self: mat4_t, m: mat4_t): mat4_t {
-	let a00 = m.m[0];
-	let a01 = m.m[1];
-	let a02 = m.m[2];
-	let a03 = m.m[3];
-	let a10 = m.m[4];
-	let a11 = m.m[5];
-	let a12 = m.m[6];
-	let a13 = m.m[7];
-	let a20 = m.m[8];
-	let a21 = m.m[9];
-	let a22 = m.m[10];
-	let a23 = m.m[11];
-	let a30 = m.m[12];
-	let a31 = m.m[13];
-	let a32 = m.m[14];
-	let a33 = m.m[15];
-	let b00 = a00 * a11 - a01 * a10;
-	let b01 = a00 * a12 - a02 * a10;
-	let b02 = a00 * a13 - a03 * a10;
-	let b03 = a01 * a12 - a02 * a11;
-	let b04 = a01 * a13 - a03 * a11;
-	let b05 = a02 * a13 - a03 * a12;
-	let b06 = a20 * a31 - a21 * a30;
-	let b07 = a20 * a32 - a22 * a30;
-	let b08 = a20 * a33 - a23 * a30;
-	let b09 = a21 * a32 - a22 * a31;
-	let b10 = a21 * a33 - a23 * a31;
-	let b11 = a22 * a33 - a23 * a32;
+	let a00: f32 = m.m[0];
+	let a01: f32 = m.m[1];
+	let a02: f32 = m.m[2];
+	let a03: f32 = m.m[3];
+	let a10: f32 = m.m[4];
+	let a11: f32 = m.m[5];
+	let a12: f32 = m.m[6];
+	let a13: f32 = m.m[7];
+	let a20: f32 = m.m[8];
+	let a21: f32 = m.m[9];
+	let a22: f32 = m.m[10];
+	let a23: f32 = m.m[11];
+	let a30: f32 = m.m[12];
+	let a31: f32 = m.m[13];
+	let a32: f32 = m.m[14];
+	let a33: f32 = m.m[15];
+	let b00: f32 = a00 * a11 - a01 * a10;
+	let b01: f32 = a00 * a12 - a02 * a10;
+	let b02: f32 = a00 * a13 - a03 * a10;
+	let b03: f32 = a01 * a12 - a02 * a11;
+	let b04: f32 = a01 * a13 - a03 * a11;
+	let b05: f32 = a02 * a13 - a03 * a12;
+	let b06: f32 = a20 * a31 - a21 * a30;
+	let b07: f32 = a20 * a32 - a22 * a30;
+	let b08: f32 = a20 * a33 - a23 * a30;
+	let b09: f32 = a21 * a32 - a22 * a31;
+	let b10: f32 = a21 * a33 - a23 * a31;
+	let b11: f32 = a22 * a33 - a23 * a32;
 
-	let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+	let det: f32 = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
 	if (det == 0.0) {
 		return mat4_set_identity(self);
 	}
@@ -483,7 +482,7 @@ function mat4_get_inv(self: mat4_t, m: mat4_t): mat4_t {
 }
 
 function mat4_transpose(self: mat4_t): mat4_t {
-	let f = self.m[1];
+	let f: f32 = self.m[1];
 	self.m[1] = self.m[4];
 	self.m[4] = f;
 
@@ -511,7 +510,7 @@ function mat4_transpose(self: mat4_t): mat4_t {
 }
 
 function mat4_transpose3x3(self: mat4_t): mat4_t {
-	let f = self.m[1];
+	let f: f32 = self.m[1];
 	self.m[1] = self.m[4];
 	self.m[4] = f;
 
@@ -608,7 +607,7 @@ function mat4_mult(self: mat4_t, s: f32): mat4_t {
 }
 
 function mat4_to_rot(self: mat4_t): mat4_t {
-	let scale = 1.0 / vec4_len(vec4_set(_mat4_vec, self.m[0], self.m[1], self.m[2]));
+	let scale: f32 = 1.0 / vec4_len(vec4_set(_mat4_vec, self.m[0], self.m[1], self.m[2]));
 	self.m[0] = self.m[0] * scale;
 	self.m[1] = self.m[1] * scale;
 	self.m[2] = self.m[2] * scale;
@@ -643,7 +642,7 @@ function mat4_up(self: mat4_t): vec4_t {
 }
 
 function mat4_to_f32_array(self: mat4_t): Float32Array {
-	let array = new Float32Array(16);
+	let array: Float32Array = new Float32Array(16);
 	array[0] = self.m[0];
 	array[1] = self.m[4];
 	array[2] = self.m[8];
@@ -671,9 +670,9 @@ function mat4_cofactor(self: mat4_t,
 }
 
 function mat4_determinant(self: mat4_t): f32 {
-	let c00 = mat4_cofactor(self, self.m[5], self.m[9], self.m[13], self.m[6], self.m[10], self.m[14], self.m[7], self.m[11], self.m[15]);
-	let c01 = mat4_cofactor(self, self.m[4], self.m[8], self.m[12], self.m[6], self.m[10], self.m[14], self.m[7], self.m[11], self.m[15]);
-	let c02 = mat4_cofactor(self, self.m[4], self.m[8], self.m[12], self.m[5], self.m[9], self.m[13], self.m[7], self.m[11], self.m[15]);
-	let c03 = mat4_cofactor(self, self.m[4], self.m[8], self.m[12], self.m[5], self.m[9], self.m[13], self.m[6], self.m[10], self.m[14]);
+	let c00: f32 = mat4_cofactor(self, self.m[5], self.m[9], self.m[13], self.m[6], self.m[10], self.m[14], self.m[7], self.m[11], self.m[15]);
+	let c01: f32 = mat4_cofactor(self, self.m[4], self.m[8], self.m[12], self.m[6], self.m[10], self.m[14], self.m[7], self.m[11], self.m[15]);
+	let c02: f32 = mat4_cofactor(self, self.m[4], self.m[8], self.m[12], self.m[5], self.m[9], self.m[13], self.m[7], self.m[11], self.m[15]);
+	let c03: f32 = mat4_cofactor(self, self.m[4], self.m[8], self.m[12], self.m[5], self.m[9], self.m[13], self.m[6], self.m[10], self.m[14]);
 	return self.m[0] * c00 - self.m[1] * c01 + self.m[2] * c02 - self.m[3] * c03;
 }

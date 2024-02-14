@@ -32,8 +32,8 @@ type transform_t = {
 	type?: string;
 };
 
-let _transform_tmp = mat4_identity();
-let _transform_q = quat_create();
+let _transform_tmp: mat4_t = mat4_identity();
+let _transform_q: quat_t = quat_create();
 
 function transform_create(object: object_t): transform_t {
 	let raw: transform_t = {};
@@ -163,7 +163,7 @@ function transform_compute_dim(raw: transform_t) {
 		transform_compute_radius(raw);
 		return;
 	}
-	let d = raw.object.raw.dimensions;
+	let d: Float32Array = raw.object.raw.dimensions;
 	if (d == null) {
 		vec4_set(raw.dim, 2 * raw.scale.x, 2 * raw.scale.y, 2 * raw.scale.z);
 	}
@@ -174,7 +174,7 @@ function transform_compute_dim(raw: transform_t) {
 }
 
 function transform_apply_parent_inv(raw: transform_t) {
-	let pt = raw.object.parent.transform;
+	let pt: transform_t = raw.object.parent.transform;
 	transform_build_matrix(pt);
 	mat4_get_inv(_transform_tmp, pt.world);
 	mat4_mult_mat(raw.local, _transform_tmp);
@@ -183,7 +183,7 @@ function transform_apply_parent_inv(raw: transform_t) {
 }
 
 function transform_apply_parent(raw: transform_t) {
-	let pt = raw.object.parent.transform;
+	let pt: transform_t = raw.object.parent.transform;
 	transform_build_matrix(pt);
 	mat4_mult_mat(raw.local, pt.world);
 	transform_decompose(raw);

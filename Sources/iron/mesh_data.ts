@@ -42,35 +42,33 @@ function mesh_data_create(raw: mesh_data_t, done: (md: mesh_data_t)=>void) {
 
 	// Skinning
 	// Prepare vertex array for skinning and fill size data
-	let vertex_arrays = raw.vertex_arrays;
+	let vertex_arrays: vertex_array_t[] = raw.vertex_arrays;
 	if (raw.skin != null) {
 		vertex_arrays.push({ attrib: "bone", values: null, data: "short4norm" });
 		vertex_arrays.push({ attrib: "weight", values: null, data: "short4norm" });
 	}
-	for (let i = 0; i < vertex_arrays.length; ++i) {
-		let padding = vertex_arrays[i].padding != null ? vertex_arrays[i].padding : 0;
+	for (let i: i32 = 0; i < vertex_arrays.length; ++i) {
+		let padding: i32 = vertex_arrays[i].padding != null ? vertex_arrays[i].padding : 0;
 		vertex_arrays[i]._size = mesh_data_get_vertex_size(vertex_arrays[i].data, padding);
 	}
 
 	if (raw.skin != null) {
-		let bonea = null;
-		let weighta = null;
-		let vertex_length = Math.floor(vertex_arrays[0].values.length / vertex_arrays[0]._size);
-		let l = vertex_length * 4;
-		bonea = new Int16Array(l);
-		weighta = new Int16Array(l);
+		let vertex_length: i32 = Math.floor(vertex_arrays[0].values.length / vertex_arrays[0]._size);
+		let l: i32 = vertex_length * 4;
+		let bonea: Int16Array = new Int16Array(l);
+		let weighta: Int16Array = new Int16Array(l);
 
-		let index = 0;
-		let ai = 0;
-		for (let i = 0; i < vertex_length; ++i) {
-			let bone_count = raw.skin.bone_count_array[i];
-			for (let j = index; j < index + bone_count; ++j) {
+		let index: i32 = 0;
+		let ai: i32 = 0;
+		for (let i: i32 = 0; i < vertex_length; ++i) {
+			let bone_count: i32 = raw.skin.bone_count_array[i];
+			for (let j: i32 = index; j < index + bone_count; ++j) {
 				bonea[ai] = raw.skin.bone_index_array[j];
 				weighta[ai] = raw.skin.bone_weight_array[j];
 				ai++;
 			}
 			// Fill unused weights
-			for (let j = bone_count; j < 4; ++j) {
+			for (let j: i32 = bone_count; j < 4; ++j) {
 				bonea[ai] = 0;
 				weighta[ai] = 0;
 				ai++;
@@ -90,8 +88,8 @@ function mesh_data_create(raw: mesh_data_t, done: (md: mesh_data_t)=>void) {
 }
 
 function mesh_data_get_vertex_struct(vertex_arrays: vertex_array_t[]): vertex_struct_t {
-	let structure = g4_vertex_struct_create();
-	for (let i = 0; i < vertex_arrays.length; ++i) {
+	let structure: vertex_struct_t = g4_vertex_struct_create();
+	for (let i: i32 = 0; i < vertex_arrays.length; ++i) {
 		g4_vertex_struct_add(structure, vertex_arrays[i].attrib, mesh_data_get_vertex_data(vertex_arrays[i].data));
 	}
 	return structure;
@@ -109,19 +107,19 @@ function mesh_data_get_vertex_data(data: string): vertex_data_t {
 	}
 }
 
-function mesh_data_build_vertices(vertices: DataView, vertex_arrays: vertex_array_t[], offset = 0, fake_uvs = false, uvs_index = -1) {
-	let num_verts = vertex_arrays[0].values.length / vertex_arrays[0]._size;
-	let di = -1 + offset;
-	for (let i = 0; i < num_verts; ++i) {
-		for (let va = 0; va < vertex_arrays.length; ++va) {
-			let l = vertex_arrays[va]._size;
+function mesh_data_build_vertices(vertices: DataView, vertex_arrays: vertex_array_t[], offset: i32 = 0, fake_uvs: bool = false, uvs_index: i32 = -1) {
+	let num_verts: i32 = vertex_arrays[0].values.length / vertex_arrays[0]._size;
+	let di: i32 = -1 + offset;
+	for (let i: i32 = 0; i < num_verts; ++i) {
+		for (let va: i32 = 0; va < vertex_arrays.length; ++va) {
+			let l: i32 = vertex_arrays[va]._size;
 			if (fake_uvs && va == uvs_index) { // Add fake uvs if uvs where "asked" for but not found
-				for (let j = 0; j < l; ++j) {
+				for (let j: i32 = 0; j < l; ++j) {
 					vertices.setInt16(++di * 2, 0, true);
 				}
 				continue;
 			}
-			for (let o  = 0; o < l; ++o) {
+			for (let o: i32 = 0; o < l; ++o) {
 				vertices.setInt16(++di * 2, vertex_arrays[va].values[i * l + o], true);
 			}
 			if (vertex_arrays[va].padding != null) {
@@ -155,7 +153,7 @@ function mesh_data_get_vertex_array(raw: mesh_data_t, name: string): vertex_arra
 }
 
 function mesh_data_setup_inst(raw: mesh_data_t, data: Float32Array, inst_type: i32) {
-	let structure = g4_vertex_struct_create();
+	let structure: vertex_struct_t = g4_vertex_struct_create();
 	structure.instanced = true;
 	raw._instanced = true;
 	// pos, pos+rot, pos+scale, pos+rot+scale
@@ -169,24 +167,24 @@ function mesh_data_setup_inst(raw: mesh_data_t, data: Float32Array, inst_type: i
 
 	raw._instance_count = Math.floor(data.length / Math.floor(g4_vertex_struct_byte_size(structure) / 4));
 	raw._instanced_vb = g4_vertex_buffer_create(raw._instance_count, structure, usage_t.STATIC, 1);
-	let vertices = g4_vertex_buffer_lock(raw._instanced_vb);
-	for (let i = 0; i < Math.floor(vertices.byteLength / 4); ++i) {
+	let vertices: DataView = g4_vertex_buffer_lock(raw._instanced_vb);
+	for (let i: i32 = 0; i < Math.floor(vertices.byteLength / 4); ++i) {
 		vertices.setFloat32(i * 4, data[i], true);
 	}
 	g4_vertex_buffer_unlock(raw._instanced_vb);
 }
 
 function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_t {
-	let key = "";
+	let key: string = "";
 	for (let e of vs) {
 		key += e.name;
 	}
-	let vb = raw._vertex_buffer_map.get(key);
+	let vb: vertex_buffer_t = raw._vertex_buffer_map.get(key);
 	if (vb == null) {
-		let vertex_arrays = [];
-		let has_tex = false;
-		let tex_offset = -1;
-		let has_col = false;
+		let vertex_arrays: vertex_array_t[] = [];
+		let has_tex: bool = false;
+		let tex_offset: i32 = -1;
+		let has_col: bool = false;
 		for (let e = 0; e < vs.length; ++e) {
 			if (vs[e].name == "tex") {
 				has_tex = true;
@@ -202,10 +200,10 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 			}
 		}
 		// Multi-mat mesh with different vertex structures
-		let positions = mesh_data_get_vertex_array(raw, 'pos');
-		let uvs = mesh_data_get_vertex_array(raw, 'tex');
-		let cols = mesh_data_get_vertex_array(raw, 'col');
-		let struct = mesh_data_get_vertex_struct(vertex_arrays);
+		let positions: vertex_array_t = mesh_data_get_vertex_array(raw, 'pos');
+		let uvs: vertex_array_t = mesh_data_get_vertex_array(raw, 'tex');
+		let cols: vertex_array_t = mesh_data_get_vertex_array(raw, 'col');
+		let struct: vertex_struct_t = mesh_data_get_vertex_struct(vertex_arrays);
 		vb = g4_vertex_buffer_create(Math.floor(positions.values.length / positions._size), struct, usage_t.STATIC);
 		raw._vertices = g4_vertex_buffer_lock(vb);
 		mesh_data_build_vertices(raw._vertices, vertex_arrays, 0, has_tex && uvs == null, tex_offset);
@@ -226,13 +224,13 @@ function mesh_data_build(raw: mesh_data_t) {
 		return;
 	}
 
-	let positions = mesh_data_get_vertex_array(raw, 'pos');
+	let positions: vertex_array_t = mesh_data_get_vertex_array(raw, 'pos');
 	raw._vertex_buffer = g4_vertex_buffer_create(Math.floor(positions.values.length / positions._size), raw._struct, usage_t.STATIC);
 	raw._vertices = g4_vertex_buffer_lock(raw._vertex_buffer);
 	mesh_data_build_vertices(raw._vertices, raw.vertex_arrays);
 	g4_vertex_buffer_unlock(raw._vertex_buffer);
 
-	let struct_str = "";
+	let struct_str: string = "";
 	for (let e of raw._struct.elements) {
 		struct_str += e.name;
 	}
@@ -243,10 +241,10 @@ function mesh_data_build(raw: mesh_data_t) {
 		if (id.length == 0) {
 			continue;
 		}
-		let index_buffer = g4_index_buffer_create(id.length);
+		let index_buffer: index_buffer_t = g4_index_buffer_create(id.length);
 
-		let indices_array = g4_index_buffer_lock(index_buffer);
-		for (let i = 0; i < indices_array.length; ++i) {
+		let indices_array: Uint32Array = g4_index_buffer_lock(index_buffer);
+		for (let i: i32 = 0; i < indices_array.length; ++i) {
 			indices_array[i] = id[i];
 		}
 
@@ -309,11 +307,11 @@ function mesh_data_init_skeleton_transforms(raw: mesh_data_t, transforms_inv: Fl
 ///end
 
 function mesh_data_calculate_aabb(raw: mesh_data_t): vec4_t {
-	let aabb_min = vec4_create(-0.01, -0.01, -0.01);
-	let aabb_max = vec4_create(0.01, 0.01, 0.01);
-	let aabb = vec4_create();
-	let i = 0;
-	let positions = mesh_data_get_vertex_array(raw, 'pos');
+	let aabb_min: vec4_t = vec4_create(-0.01, -0.01, -0.01);
+	let aabb_max: vec4_t = vec4_create(0.01, 0.01, 0.01);
+	let aabb: vec4_t = vec4_create();
+	let i: i32 = 0;
+	let positions: vertex_array_t = mesh_data_get_vertex_array(raw, 'pos');
 	while (i < positions.values.length) {
 		if (positions.values[i] > aabb_max.x) {
 			aabb_max.x = positions.values[i];

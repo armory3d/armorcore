@@ -76,8 +76,8 @@ function particle_sys_create(scene_name: string, ref: particle_ref_t): particle_
 		raw.lifetime = raw.r.lifetime / raw.frame_rate;
 		raw.animtime = (raw.r.frame_end - raw.r.frame_start) / raw.frame_rate;
 		raw.spawn_rate = ((raw.r.frame_end - raw.r.frame_start) / raw.r.count) / raw.frame_rate;
-		for (let i = 0; i < raw.r.count; ++i) {
-			let p = particle_create();
+		for (let i: i32 = 0; i < raw.r.count; ++i) {
+			let p: particle_t = particle_create();
 			p.i = i;
 			raw.particles.push(p);
 		}
@@ -124,7 +124,7 @@ function particle_sys_update(raw: particle_sys_t, object: mesh_object_t, owner: 
 }
 
 function particle_sys_get_data(raw: particle_sys_t): mat4_t {
-	let hair = raw.r.type == 1;
+	let hair: bool = raw.r.type == 1;
 	raw.m.m[0] = raw.r.loop ? raw.animtime : -raw.animtime;
 	raw.m.m[1] = hair ? 1 / raw.particles.length : raw.spawn_rate;
 	raw.m.m[2] = hair ? 1 : raw.lifetime;
@@ -156,43 +156,43 @@ function particle_sys_rand(max: i32): i32 {
 }
 
 function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, owner: mesh_object_t) {
-	let instanced_data = new Float32Array(raw.particles.length * 3);
-	let i = 0;
+	let instanced_data: Float32Array = new Float32Array(raw.particles.length * 3);
+	let i: i32 = 0;
 
-	let norm_fac = 1 / 32767; // pa.values are not normalized
-	let scale_pos_owner = owner.data.scale_pos;
-	let scale_pos_particle = object.data.scale_pos;
-	let particle_size = raw.r.particle_size;
-	let scale_fac = vec4_set_from(vec4_create(), owner.base.transform.scale);
+	let norm_fac: f32 = 1 / 32767; // pa.values are not normalized
+	let scale_pos_owner: f32 = owner.data.scale_pos;
+	let scale_pos_particle: f32 = object.data.scale_pos;
+	let particle_size: f32 = raw.r.particle_size;
+	let scale_fac: vec4_t = vec4_set_from(vec4_create(), owner.base.transform.scale);
 	vec4_mult(scale_fac, scale_pos_owner / (particle_size * scale_pos_particle));
 
 	if (raw.r.emit_from == 0) { // Vert
-		let pa = mesh_data_get_vertex_array(owner.data, 'pos');
+		let pa: vertex_array_t = mesh_data_get_vertex_array(owner.data, 'pos');
 
 		for (let p of raw.particles) {
-			let j = Math.floor(particle_sys_fhash(i) * (pa.values.length / pa._size));
+			let j: i32 = Math.floor(particle_sys_fhash(i) * (pa.values.length / pa._size));
 			instanced_data[i] = pa.values[j * pa._size    ] * norm_fac * scale_fac.x; i++;
 			instanced_data[i] = pa.values[j * pa._size + 1] * norm_fac * scale_fac.y; i++;
 			instanced_data[i] = pa.values[j * pa._size + 2] * norm_fac * scale_fac.z; i++;
 		}
 	}
 	else if (raw.r.emit_from == 1) { // Face
-		let positions = mesh_data_get_vertex_array(owner.data, 'pos').values;
+		let positions: Int16Array = mesh_data_get_vertex_array(owner.data, 'pos').values;
 
 		for (let p of raw.particles) {
 			// Choose random index array (there is one per material) and random face
-			let ia = owner.data._indices[particle_sys_rand(owner.data._indices.length)];
-			let face_index = particle_sys_rand(Math.floor(ia.length / 3));
+			let ia: Uint32Array = owner.data._indices[particle_sys_rand(owner.data._indices.length)];
+			let face_index: i32 = particle_sys_rand(Math.floor(ia.length / 3));
 
-			let i0 = ia[face_index * 3 + 0];
-			let i1 = ia[face_index * 3 + 1];
-			let i2 = ia[face_index * 3 + 2];
+			let i0: i32 = ia[face_index * 3 + 0];
+			let i1: i32 = ia[face_index * 3 + 1];
+			let i2: i32 = ia[face_index * 3 + 2];
 
-			let v0 = vec3_create(positions[i0 * 4], positions[i0 * 4 + 1], positions[i0 * 4 + 2]);
-			let v1 = vec3_create(positions[i1 * 4], positions[i1 * 4 + 1], positions[i1 * 4 + 2]);
-			let v2 = vec3_create(positions[i2 * 4], positions[i2 * 4 + 1], positions[i2 * 4 + 2]);
+			let v0: vec3_t = vec3_create(positions[i0 * 4], positions[i0 * 4 + 1], positions[i0 * 4 + 2]);
+			let v1: vec3_t = vec3_create(positions[i1 * 4], positions[i1 * 4 + 1], positions[i1 * 4 + 2]);
+			let v2: vec3_t = vec3_create(positions[i2 * 4], positions[i2 * 4 + 1], positions[i2 * 4 + 2]);
 
-			let pos = particle_sys_random_point_in_triangle(v0, v1, v2);
+			let pos: vec3_t = particle_sys_random_point_in_triangle(v0, v1, v2);
 
 			instanced_data[i] = pos.x * norm_fac * scale_fac.x; i++;
 			instanced_data[i] = pos.y * norm_fac * scale_fac.y; i++;
@@ -200,10 +200,10 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 		}
 	}
 	else if (raw.r.emit_from == 2) { // Volume
-		let scale_factor_volume = vec4_set_from(vec4_create(), object.base.transform.dim);
+		let scale_factor_volume: vec4_t = vec4_set_from(vec4_create(), object.base.transform.dim);
 		vec4_mult(scale_factor_volume, 0.5 / (particle_size * scale_pos_particle));
 
-		for (let p in raw.particles) {
+		for (let p of raw.particles) {
 			instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.x; i++;
 			instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.y; i++;
 			instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.z; i++;
@@ -214,7 +214,7 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 }
 
 function particle_sys_fhash(n: i32): f32 {
-	let s = n + 1.0;
+	let s: f32 = n + 1.0;
 	s *= 9301.0 % s;
 	s = (s * 9301.0 + 49297.0) % 233280.0;
 	return s / 233280.0;
@@ -224,8 +224,8 @@ function particle_sys_remove(raw: particle_sys_t) {}
 
 function particle_sys_random_point_in_triangle(a: vec3_t, b: vec3_t, c: vec3_t): vec3_t {
 	// Generate a random point in a square where (0, 0) <= (x, y) < (1, 1)
-	let x = Math.random();
-	let y = Math.random();
+	let x: f32 = Math.random();
+	let y: f32 = Math.random();
 
 	if (x + y > 1) {
 		// We're in the upper right triangle in the square, mirror to lower left
@@ -234,8 +234,8 @@ function particle_sys_random_point_in_triangle(a: vec3_t, b: vec3_t, c: vec3_t):
 	}
 
 	// Transform the point to the triangle abc
-	let u = vec3_sub(b, a);
-	let v = vec3_sub(c, a);
+	let u: vec3_t = vec3_sub(b, a);
+	let v: vec3_t = vec3_sub(c, a);
 	return vec3_add(a, vec3_add(vec3_mult(u, x), vec3_mult(v, y)));
 }
 

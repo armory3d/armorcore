@@ -9,9 +9,9 @@ let _g2_render_target: image_t;
 let _g2_current: image_t = null;
 let _g2_font_glyphs: i32[] = _g2_make_glyphs(32, 127);
 let _g2_font_glyphs_last: i32[] = _g2_font_glyphs;
-let _g2_thrown = false;
+let _g2_thrown: bool = false;
 let _g2_mat = new Float32Array(9);
-let _g2_initialized = false;
+let _g2_initialized: bool = false;
 
 function g2_set_color(c: Color) {
 	krom_g2_set_color(c);
@@ -66,7 +66,7 @@ function g2_set_transformation(m: mat3_t) {
 
 function _g2_make_glyphs(start: i32, end: i32): i32[] {
 	let ar: i32[] = [];
-	for (let i = start; i < end; ++i) {
+	for (let i: i32 = start; i < end; ++i) {
 		ar.push(i);
 	}
 	return ar;
@@ -132,7 +132,7 @@ function g2_disable_scissor() {
 	g4_disable_scissor();
 }
 
-function g2_begin(render_target: image_t = null, clear = true, clear_color: Color = null) {
+function g2_begin(render_target: image_t = null, clear: bool = true, clear_color: Color = null) {
 	if (_g2_current == null) {
 		_g2_current = render_target;
 	}
@@ -198,7 +198,7 @@ function g2_font_init(raw: g2_font_t) {
 	}
 }
 
-function g2_font_create(blob: ArrayBuffer, index = 0): g2_font_t {
+function g2_font_create(blob: ArrayBuffer, index: i32 = 0): g2_font_t {
 	let raw: g2_font_t = {};
 	raw.blob = blob;
 	raw.index = index;

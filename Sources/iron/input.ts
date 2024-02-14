@@ -1,6 +1,6 @@
 
-let _input_occupied = false;
-let _input_registered = false;
+let _input_occupied: bool = false;
+let _input_registered: bool = false;
 
 function input_reset() {
 	// _input_occupied = false;
@@ -30,21 +30,21 @@ function input_register() {
 	gamepad_reset();
 }
 
-let _mouse_buttons = ["left", "right", "middle", "side1", "side2"];
-let _mouse_buttons_down = [false, false, false, false, false];
-let _mouse_buttons_started = [false, false, false, false, false];
-let _mouse_buttons_released = [false, false, false, false, false];
+let _mouse_buttons: string[] = ["left", "right", "middle", "side1", "side2"];
+let _mouse_buttons_down: bool[] = [false, false, false, false, false];
+let _mouse_buttons_started: bool[] = [false, false, false, false, false];
+let _mouse_buttons_released: bool[] = [false, false, false, false, false];
 
-let mouse_x = 0.0;
-let mouse_y = 0.0;
-let mouse_moved = false;
-let mouse_movement_x = 0.0;
-let mouse_movement_y = 0.0;
-let mouse_wheel_delta = 0.0;
-let mouse_locked = false;
-let mouse_hidden = false;
-let mouse_last_x = -1.0;
-let mouse_last_y = -1.0;
+let mouse_x: f32 = 0.0;
+let mouse_y: f32 = 0.0;
+let mouse_moved: bool = false;
+let mouse_movement_x: f32 = 0.0;
+let mouse_movement_y: f32 = 0.0;
+let mouse_wheel_delta: f32 = 0.0;
+let mouse_locked: bool = false;
+let mouse_hidden: bool = false;
+let mouse_last_x: f32 = -1.0;
+let mouse_last_y: f32 = -1.0;
 
 function mouse_end_frame() {
 	_mouse_buttons_started[0] = _mouse_buttons_started[1] = _mouse_buttons_started[2] = _mouse_buttons_started[3] = _mouse_buttons_started[4] = false;
@@ -61,7 +61,7 @@ function mouse_reset() {
 }
 
 function mouse_button_index(button: string): i32 {
-	for (let i = 0; i < _mouse_buttons.length; ++i) {
+	for (let i: i32 = 0; i < _mouse_buttons.length; ++i) {
 		if (_mouse_buttons[i] == button) {
 			return i;
 		}
@@ -69,7 +69,7 @@ function mouse_button_index(button: string): i32 {
 	return 0;
 }
 
-function mouse_down(button = "left"): bool {
+function mouse_down(button: string = "left"): bool {
 	return _mouse_buttons_down[mouse_button_index(button)];
 }
 
@@ -77,7 +77,7 @@ function mouse_down_any(): bool {
 	return _mouse_buttons_down[0] || _mouse_buttons_down[1] || _mouse_buttons_down[2] || _mouse_buttons_down[3] || _mouse_buttons_down[4];
 }
 
-function mouse_started(button = "left"): bool {
+function mouse_started(button: string = "left"): bool {
 	return _mouse_buttons_started[mouse_button_index(button)];
 }
 
@@ -85,7 +85,7 @@ function mouse_started_any(): bool {
 	return _mouse_buttons_started[0] || _mouse_buttons_started[1] || _mouse_buttons_started[2] || _mouse_buttons_started[3] || _mouse_buttons_started[4];
 }
 
-function mouse_released(button = "left"): bool {
+function mouse_released(button: string = "left"): bool {
 	return _mouse_buttons_released[mouse_button_index(button)];
 }
 
@@ -192,16 +192,16 @@ function mouse_on_touch_up(index: i32, x: i32, y: i32) {
 	}
 }
 
-let mouse_pinch_dist = 0.0;
-let mouse_pinch_total = 0.0;
-let mouse_pinch_started = false;
+let mouse_pinch_dist: f32 = 0.0;
+let mouse_pinch_total: f32 = 0.0;
+let mouse_pinch_started: bool = false;
 
 function mouse_on_touch_move(index: i32, x: i32, y: i32) {
 	// Pinch to zoom - mouse wheel
 	if (index == 1) {
-		let last_dist = mouse_pinch_dist;
-		let dx = mouse_x - x;
-		let dy = mouse_y - y;
+		let last_dist: f32 = mouse_pinch_dist;
+		let dx: f32 = mouse_x - x;
+		let dy: f32 = mouse_y - y;
 		mouse_pinch_dist = Math.sqrt(dx * dx + dy * dy);
 		mouse_pinch_total += last_dist != 0 ? last_dist - mouse_pinch_dist : 0;
 		if (!mouse_pinch_started) {
@@ -223,21 +223,21 @@ function mouse_view_y(): f32 {
 	return mouse_y - app_y();
 }
 
-let pen_buttons = ["tip"];
-let pen_buttons_down = [false];
-let pen_buttons_started = [false];
-let pen_buttons_released = [false];
+let pen_buttons: string[] = ["tip"];
+let pen_buttons_down: bool[] = [false];
+let pen_buttons_started: bool[] = [false];
+let pen_buttons_released: bool[] = [false];
 
-let pen_x = 0.0;
-let pen_y = 0.0;
-let pen_moved = false;
-let pen_movement_x = 0.0;
-let pen_movement_y = 0.0;
-let pen_pressure = 0.0;
-let pen_connected = false;
-let pen_in_use = false;
-let pen_last_x = -1.0;
-let pen_last_y = -1.0;
+let pen_x: f32 = 0.0;
+let pen_y: f32 = 0.0;
+let pen_moved: bool = false;
+let pen_movement_x: f32 = 0.0;
+let pen_movement_y: f32 = 0.0;
+let pen_pressure: f32 = 0.0;
+let pen_connected: bool = false;
+let pen_in_use: bool = false;
+let pen_last_x: f32 = -1.0;
+let pen_last_y: f32 = -1.0;
 
 function pen_end_frame() {
 	pen_buttons_started[0] = false;
@@ -257,15 +257,15 @@ function pen_button_index(button: string): i32 {
 	return 0;
 }
 
-function pen_down(button = "tip"): bool {
+function pen_down(button: string = "tip"): bool {
 	return pen_buttons_down[pen_button_index(button)];
 }
 
-function pen_started(button = "tip"): bool {
+function pen_started(button: string = "tip"): bool {
 	return pen_buttons_started[pen_button_index(button)];
 }
 
-function pen_released(button = "tip"): bool {
+function pen_released(button: string = "tip"): bool {
 	return pen_buttons_released[pen_button_index(button)];
 }
 
@@ -336,13 +336,13 @@ function pen_view_y(): f32 {
 	return pen_y - app_y();
 }
 
-let keyboard_keys = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "space", "backspace", "tab", "enter", "shift", "control", "alt", "win", "escape", "delete", "up", "down", "left", "right", "back", ",", ".", ":", ";", "<", "=", ">", "?", "!", '"', "#", "$", "%", "&", "_", "(", ")", "*", "|", "{", "}", "[", "]", "~", "`", "/", "\\", "@", "+", "-", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"];
-let keyboard_keys_down = new Map<string, bool>();
-let keyboard_keys_started = new Map<string, bool>();
-let keyboard_keys_released = new Map<string, bool>();
+let keyboard_keys: string[] = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "space", "backspace", "tab", "enter", "shift", "control", "alt", "win", "escape", "delete", "up", "down", "left", "right", "back", ",", ".", ":", ";", "<", "=", ">", "?", "!", "\"", "#", "$", "%", "&", "_", "(", ")", "*", "|", "{", "}", "[", "]", "~", "`", "/", "\\", "@", "+", "-", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"];
+let keyboard_keys_down: Map<string, bool> = new Map();
+let keyboard_keys_started: Map<string, bool> = new Map();
+let keyboard_keys_released: Map<string, bool> = new Map();
 let keyboard_keys_frame: string[] = [];
-let keyboard_repeat_key = false;
-let keyboard_repeat_time = 0.0;
+let keyboard_repeat_key: bool = false;
+let keyboard_repeat_time: f32 = 0.0;
 
 function keyboard_end_frame() {
 	if (keyboard_keys_frame.length > 0) {
@@ -471,7 +471,7 @@ function keyboard_key_code(key: key_code_t): string {
 		return "!";
 	}
 	else if (key == key_code_t.DOUBLE_QUOTE) {
-		return '"';
+		return "\"";
 	}
 	else if (key == key_code_t.HASH) {
 		return "#";
@@ -650,7 +650,7 @@ function keyboard_key_code(key: key_code_t): string {
 }
 
 function keyboard_down_listener(code: key_code_t) {
-	let s = keyboard_key_code(code);
+	let s: string = keyboard_key_code(code);
 	keyboard_keys_frame.push(s);
 	keyboard_keys_started.set(s, true);
 	keyboard_keys_down.set(s, true);
@@ -666,7 +666,7 @@ function keyboard_down_listener(code: key_code_t) {
 }
 
 function keyboard_up_listener(code: key_code_t) {
-	let s = keyboard_key_code(code);
+	let s: string = keyboard_key_code(code);
 	keyboard_keys_frame.push(s);
 	keyboard_keys_released.set(s, true);
 	keyboard_keys_down.set(s, false);
@@ -678,11 +678,11 @@ function keyboard_up_listener(code: key_code_t) {
 	///end
 }
 
-function keyboard_press_listener(char: string) {}
+function keyboard_press_listener(c: string) {}
 
-let gamepad_buttons_ps = ["cross", "circle", "square", "triangle", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
-let gamepad_buttons_xbox = ["a", "b", "x", "y", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
-let gamepad_buttons = gamepad_buttons_ps;
+let gamepad_buttons_ps: string[] = ["cross", "circle", "square", "triangle", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
+let gamepad_buttons_xbox: string[] = ["a", "b", "x", "y", "l1", "r1", "l2", "r2", "share", "options", "l3", "r3", "up", "down", "left", "right", "home", "touchpad"];
+let gamepad_buttons: string[] = gamepad_buttons_ps;
 let gamepad_raws: gamepad_t[];
 
 function gamepad_end_frame() {
@@ -728,7 +728,7 @@ function gamepad_create(): gamepad_t {
 
 function gamepad_reset() {
 	gamepad_raws = [];
-	for (let i = 0; i < 4; ++i) {
+	for (let i: i32 = 0; i < 4; ++i) {
 		let g = gamepad_create();
 		gamepad_raws.push(g);
 		for (let s of gamepad_buttons) {
@@ -746,7 +746,7 @@ function gamepad_key_code(button: i32): string {
 }
 
 function gamepad_button_index(button: string): i32 {
-	for (let i = 0; i < gamepad_buttons.length; ++i) {
+	for (let i: i32 = 0; i < gamepad_buttons.length; ++i) {
 		if (gamepad_buttons[i] == button) {
 			return i;
 		}
@@ -767,7 +767,7 @@ function gamepad_released(i: i32, button: string): bool {
 }
 
 function gamepad_axis_listener(i: i32, axis: i32, value: f32) {
-	let stick = axis <= 1 ? gamepad_raws[i].left_stick : gamepad_raws[i].right_stick;
+	let stick: gamepad_stick_t = axis <= 1 ? gamepad_raws[i].left_stick : gamepad_raws[i].right_stick;
 
 	if (axis == 0 || axis == 2) { // X
 		stick.last_x = stick.x;

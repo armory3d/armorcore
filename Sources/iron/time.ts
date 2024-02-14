@@ -1,6 +1,6 @@
 
-let _time_last = 0.0;
-let _time_real_delta = 0.0;
+let _time_last: f32 = 0.0;
+let _time_real_delta: f32 = 0.0;
 let _time_frequency: i32 = -1;
 
 function time_delta(): f32 {

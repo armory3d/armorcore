@@ -6,9 +6,9 @@ let app_on_updates: (()=>void)[] = [];
 let app_on_late_updates: (()=>void)[] = [];
 let app_on_renders: (()=>void)[] = [];
 let app_on_renders_2d: (()=>void)[] = [];
-let app_pause_updates = false;
-let app_lastw = -1;
-let app_lasth = -1;
+let app_pause_updates: bool = false;
+let app_lastw: i32 = -1;
+let app_lasth: i32 = -1;
 let app_on_resize: ()=>void = null;
 let app_on_w: ()=>i32 = null;
 let app_on_h: ()=>i32 = null;
@@ -71,8 +71,8 @@ function app_update() {
 
 	scene_update_frame();
 
-	let i = 0;
-	let l = app_on_updates.length;
+	let i: i32 = 0;
+	let l: i32 = app_on_updates.length;
 	while (i < l) {
 		if (app_on_inits.length > 0) {
 			for (let f of app_on_inits) {

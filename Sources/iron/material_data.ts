@@ -1,12 +1,12 @@
 
 let _material_data_uid_counter = 0;
 
-function material_data_create(raw: material_data_t, done: (data: material_data_t)=>void, file = "") {
+function material_data_create(raw: material_data_t, done: (data: material_data_t)=>void, file: string = "") {
 	raw._uid = ++_material_data_uid_counter; // Start from 1
 
-	let ref = raw.shader.split("/");
-	let object_file = "";
-	let data_ref = "";
+	let ref: string[] = raw.shader.split("/");
+	let object_file: string = "";
+	let data_ref: string = "";
 	if (ref.length == 2) { // File reference
 		object_file = ref[0];
 		data_ref = ref[1];
@@ -24,10 +24,10 @@ function material_data_create(raw: material_data_t, done: (data: material_data_t
 		while (raw._contexts.length < raw.contexts.length) {
 			raw._contexts.push(null);
 		}
-		let contexts_loaded = 0;
+		let contexts_loaded: i32 = 0;
 
-		for (let i = 0; i < raw.contexts.length; ++i) {
-			let c = raw.contexts[i];
+		for (let i: i32 = 0; i < raw.contexts.length; ++i) {
+			let c: material_context_t = raw.contexts[i];
 			material_context_create(c, function (self: material_context_t) {
 				raw._contexts[i] = self;
 				contexts_loaded++;
@@ -65,10 +65,10 @@ function material_context_create(raw: material_context_t, done: (context: materi
 	if (raw.bind_textures != null && raw.bind_textures.length > 0) {
 
 		raw._textures = [];
-		let textures_loaded = 0;
+		let textures_loaded: i32 = 0;
 
 		for (let i = 0; i < raw.bind_textures.length; ++i) {
-			let tex = raw.bind_textures[i];
+			let tex: bind_tex_t = raw.bind_textures[i];
 
 			if (tex.file == "" || tex.source == "movie") { // Empty texture
 				textures_loaded++;
@@ -88,10 +88,10 @@ function material_context_create(raw: material_context_t, done: (context: materi
 					while (mipmaps.length < tex.mipmaps.length) {
 						mipmaps.push(null);
 					}
-					let mipmaps_loaded = 0;
+					let mipmaps_loaded: i32 = 0;
 
-					for (let j = 0; j < tex.mipmaps.length; ++j) {
-						let name = tex.mipmaps[j];
+					for (let j: i32 = 0; j < tex.mipmaps.length; ++j) {
+						let name: string = tex.mipmaps[j];
 
 						data_get_image(name, function (mipimg: image_t) {
 							mipmaps[j] = mipimg;

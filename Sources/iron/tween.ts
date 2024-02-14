@@ -1,7 +1,7 @@
 
 let _tween_default_overshoot: f32 = 1.70158;
 let _tween_anims: tween_anim_t[] = [];
-let _tween_registered = false;
+let _tween_registered: bool = false;
 
 function tween_on_reset() {
 	app_notify_on_update(tween_update);
@@ -32,7 +32,7 @@ function tween_to(anim: tween_anim_t): tween_anim_t {
 		anim._z = [];
 		anim._w = [];
 		anim._normalize = [];
-		for (let p in anim.props) {
+		for (let p of anim.props.keys()) {
 			let val: any = anim.target[p];
 			if (val.type == "vec4_t" || val.type == "quat_t") {
 				anim._comps.push(4);
@@ -70,10 +70,10 @@ function tween_reset() {
 }
 
 function tween_update() {
-	let d = time_delta();
-	let i = _tween_anims.length;
+	let d: f32 = time_delta();
+	let i: i32 = _tween_anims.length;
 	while (i-- > 0 && _tween_anims.length > 0) {
-		let a = _tween_anims[i];
+		let a: tween_anim_t = _tween_anims[i];
 
 		if (a.delay > 0) { // Delay
 			a.delay -= d;
@@ -92,10 +92,10 @@ function tween_update() {
 			}
 
 			// Way too much Reflect trickery..
-			let ps = Object.keys(a.props);
-			for (let i = 0; i < ps.length; ++i) {
-				let p = ps[i];
-				let k = a._time / a.duration;
+			let ps: string[] = Object.keys(a.props);
+			for (let i: i32 = 0; i < ps.length; ++i) {
+				let p: string = ps[i];
+				let k: f32 = a._time / a.duration;
 				if (k > 1) {
 					k = 1;
 				}
@@ -107,7 +107,7 @@ function tween_update() {
 					a.target[p] = val;
 				}
 				else { // _comps[i] == 4
-					let obj = a.props[p];
+					let obj: any = a.props[p];
 					let to_x: f32 = obj["x"];
 					let to_y: f32 = obj["y"];
 					let to_z: f32 = obj["z"];
@@ -123,13 +123,13 @@ function tween_update() {
 					let z: f32 = a._z[i] + (to_z - a._z[i]) * _tween_eases[a.ease](k);
 					let w: f32 = a._w[i] + (to_w - a._w[i]) * _tween_eases[a.ease](k);
 					if (a._normalize[i]) {
-						let l = Math.sqrt(x * x + y * y + z * z + w * w);
+						let l: i32 = Math.sqrt(x * x + y * y + z * z + w * w);
 						if (l > 0.0) {
 							l = 1.0 / l;
 							x *= l; y *= l; z *= l; w *= l;
 						}
 					}
-					let t = a.target[p];
+					let t: any = a.target[p];
 					t["x"] = x;
 					t["y"] = y;
 					t["z"] = z;
@@ -167,8 +167,8 @@ function _tween_ease_bounce_in_out(k: f32): f32 { return (k < 0.5) ? _tween_ease
 
 function _tween_ease_elastic_in(k: f32): f32 {
 	let s: f32;
-	let a = 0.1;
-	let p = 0.4;
+	let a: i32 = 0.1;
+	let p: i32 = 0.4;
 	if (k == 0) {
 		return 0;
 	}
@@ -187,8 +187,8 @@ function _tween_ease_elastic_in(k: f32): f32 {
 
 function _tween_ease_elastic_out(k: f32): f32 {
 	let s: f32;
-	let a = 0.1;
-	let p = 0.4;
+	let a: i32 = 0.1;
+	let p: i32 = 0.4;
 	if (k == 0) {
 		return 0;
 	}
@@ -206,9 +206,9 @@ function _tween_ease_elastic_out(k: f32): f32 {
 }
 
 function _tween_ease_elastic_in_out(k: f32): f32 {
-	let s;
-	let a = 0.1;
-	let p = 0.4;
+	let s: i32;
+	let a: i32 = 0.1;
+	let p: i32 = 0.4;
 	if (k == 0) {
 		return 0;
 	}
@@ -253,7 +253,7 @@ type tween_anim_t = {
 	_z?: f32[];
 	_w?: f32[];
 	_normalize?: bool[];
-}
+};
 
 enum ease_t {
 	LINEAR,

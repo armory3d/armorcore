@@ -47,7 +47,7 @@ function speaker_object_play(raw: speaker_object_t) {
 		raw.paused = false;
 		return;
 	}
-	let channel = audio_channel(raw.sound, raw.data.loop, raw.data.stream);
+	let channel: audio_channel_t = audio_channel(raw.sound, raw.data.loop, raw.data.stream);
 	if (channel != null) {
 		raw.channels.push(channel);
 		if (raw.data.attenuation > 0 && raw.channels.length == 1) {
@@ -89,7 +89,7 @@ function speaker_object_update(raw: speaker_object_t) {
 	}
 
 	if (raw.data.attenuation > 0) {
-		let distance = vec4_dist(mat4_get_loc(scene_camera.base.transform.world), mat4_get_loc(raw.base.transform.world));
+		let distance: f32 = vec4_dist(mat4_get_loc(scene_camera.base.transform.world), mat4_get_loc(raw.base.transform.world));
 		raw.volume = 1.0 / (1.0 + raw.data.attenuation * (distance - 1.0));
 		raw.volume *= raw.data.volume;
 	}

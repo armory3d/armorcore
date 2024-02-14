@@ -21,6 +21,11 @@ type cached_shader_context_t = {
 	context?: shader_context_t;
 };
 
+type depth_buffer_desc_t = {
+	name?: string;
+	format?: string;
+};
+
 enum draw_order_t {
 	DIST, // Early-z
 	SHADER, // Less state changes
@@ -31,32 +36,32 @@ let render_path_render_targets: Map<string, render_target_t> = new Map();
 let render_path_current_w: i32;
 let render_path_current_h: i32;
 let render_path_current_d: i32;
-let _render_path_frame_time = 0.0;
-let _render_path_frame = 0;
+let _render_path_frame_time: f32 = 0.0;
+let _render_path_frame: i32 = 0;
 let _render_path_current_target: render_target_t = null;
 let _render_path_light: light_object_t = null;
 let _render_path_sun: light_object_t = null;
 let _render_path_point: light_object_t = null;
 let _render_path_current_image: image_t = null;
 let _render_path_draw_order = draw_order_t.DIST;
-let _render_path_paused = false;
+let _render_path_paused: bool = false;
 let _render_path_depth_to_render_target: Map<string, render_target_t> = new Map();
-let _render_path_last_w = 0;
-let _render_path_last_h = 0;
+let _render_path_last_w: i32 = 0;
+let _render_path_last_h: i32 = 0;
 let _render_path_bind_params: string[];
 let _render_path_meshes_sorted: bool;
-let _render_path_scissor_set = false;
-let _render_path_last_frame_time = 0.0;
-let _render_path_loading = 0;
+let _render_path_scissor_set: bool = false;
+let _render_path_last_frame_time: f32 = 0.0;
+let _render_path_loading: i32 = 0;
 let _render_path_cached_shader_contexts: Map<string, cached_shader_context_t> = new Map();
-let _render_path_depth_buffers: { name: string, format: string }[] = [];
+let _render_path_depth_buffers: depth_buffer_desc_t[] = [];
 
 function render_path_ready(): bool {
 	return _render_path_loading == 0;
 }
 
 ///if arm_voxels
-let _render_path_voxelized = 0;
+let _render_path_voxelized: i32 = 0;
 function render_path_voxelize() { // Returns true if scene should be voxelized
 	return ++_render_path_voxelized > 2 ? false : true;
 }
@@ -110,13 +115,13 @@ function render_path_set_target(target: string, additional: string[] = null) {
 		render_path_set_current_scissor(app_w(), app_h());
 	}
 	else { // Render target
-		let rt = render_path_render_targets.get(target);
+		let rt: render_target_t = render_path_render_targets.get(target);
 		_render_path_current_target = rt;
 		let additional_images: image_t[] = null;
 		if (additional != null) {
 			additional_images = [];
 			for (let s of additional) {
-				let t = render_path_render_targets.get(s);
+				let t: render_target_t = render_path_render_targets.get(s);
 				additional_images.push(t.image);
 			}
 		}
@@ -131,7 +136,7 @@ function render_path_set_target(target: string, additional: string[] = null) {
 }
 
 function render_path_set_depth_from(target: string, from: string) {
-	let rt = render_path_render_targets.get(target);
+	let rt: render_target_t = render_path_render_targets.get(target);
 	image_set_depth_from(rt.image,render_path_render_targets.get(from).image);
 }
 
@@ -167,13 +172,13 @@ function render_path_set_viewport(view_w: i32, view_h: i32) {
 	render_path_set_current_scissor(view_w, view_h);
 }
 
-function render_path_clear_target(color_flag?: i32, depth_flag?: f32) {
+function render_path_clear_target(color_flag: i32 = null, depth_flag: f32 = null) {
 	if (color_flag == -1) { // -1 == 0xffffffff
 		if (scene_world != null) {
 			color_flag = scene_world.background_color;
 		}
 		else if (scene_camera != null) {
-			let cc = scene_camera.data.clear_color;
+			let cc: Float32Array = scene_camera.data.clear_color;
 			if (cc != null) {
 				color_flag = color_from_floats(cc[0], cc[1], cc[2]);
 			}
@@ -183,12 +188,12 @@ function render_path_clear_target(color_flag?: i32, depth_flag?: f32) {
 }
 
 function render_path_clear_image(target: string, color: i32) {
-	let rt = render_path_render_targets.get(target);
+	let rt: render_target_t = render_path_render_targets.get(target);
 	image_clear(rt.image, 0, 0, 0, rt.image.width, rt.image.height, rt.image.depth, color);
 }
 
 function render_path_gen_mipmaps(target: string) {
-	let rt = render_path_render_targets.get(target);
+	let rt: render_target_t = render_path_render_targets.get(target);
 	image_gen_mipmaps(rt.image, 1000);
 }
 
@@ -210,18 +215,23 @@ function render_path_draw_meshes(context: string) {
 }
 
 function render_path_submit_draw(context: string) {
-	let camera = scene_camera;
-	let meshes = scene_meshes;
+	let camera: camera_object_t = scene_camera;
+	let meshes: mesh_object_t[] = scene_meshes;
 	_mesh_object_last_pipeline = null;
 
 	if (!_render_path_meshes_sorted && camera != null) { // Order max once per frame for now
-		let cam_x = transform_world_x(camera.base.transform);
-		let cam_y = transform_world_y(camera.base.transform);
-		let cam_z = transform_world_z(camera.base.transform);
+		let cam_x: f32 = transform_world_x(camera.base.transform);
+		let cam_y: f32 = transform_world_y(camera.base.transform);
+		let cam_z: f32 = transform_world_z(camera.base.transform);
 		for (let mesh of meshes) {
 			mesh_object_compute_camera_dist(mesh, cam_x, cam_y, cam_z);
 		}
-		_render_path_draw_order == draw_order_t.SHADER ? render_path_sort_meshes_shader(meshes) : render_path_sort_meshes_dist(meshes);
+		if (_render_path_draw_order == draw_order_t.SHADER) {
+			render_path_sort_meshes_shader(meshes);
+		}
+		else {
+			render_path_sort_meshes_dist(meshes);
+		}
 		_render_path_meshes_sorted = true;
 	}
 
@@ -286,7 +296,7 @@ function render_path_load_shader(handle: string) {
 	_render_path_cached_shader_contexts.set(handle, cc);
 
 	// file/data_name/context
-	let shader_path = handle.split("/");
+	let shader_path: string[] = handle.split("/");
 
 	data_get_shader(shader_path[0], shader_path[1], function (res: shader_data_t) {
 		cc.context = shader_data_get_context(res, shader_path[2]);
@@ -298,7 +308,7 @@ function render_path_unload_shader(handle: string) {
 	_render_path_cached_shader_contexts.delete(handle);
 
 	// file/data_name/context
-	let shader_path = handle.split("/");
+	let shader_path: string[] = handle.split("/");
 	// Todo: Handle context overrides (see data_get_shader())
 	data_cached_shaders.delete(shader_path[1]);
 }
@@ -338,7 +348,7 @@ function render_path_resize() {
 	// Resize textures
 	for (let rt of render_path_render_targets.values()) {
 		if (rt != null && rt.width == 0) {
-			let _image = rt.image;
+			let _image: image_t = rt.image;
 			app_notify_on_init(function () {
 				image_unload(_image);
 			});
@@ -368,7 +378,7 @@ function render_path_create_target(t: render_target_t): render_target_t {
 	// With depth buffer
 	if (t.depth_buffer != null) {
 		t.has_depth = true;
-		let depth_target = _render_path_depth_to_render_target.get(t.depth_buffer);
+		let depth_target: render_target_t = _render_path_depth_to_render_target.get(t.depth_buffer);
 
 		if (depth_target == null) { // Create new one
 			for (let db of _render_path_depth_buffers) {
@@ -396,9 +406,9 @@ function render_path_create_target(t: render_target_t): render_target_t {
 }
 
 function render_path_create_image(t: render_target_t, depth_format: depth_format_t): image_t {
-	let width = t.width == 0 ? app_w() : t.width;
-	let height = t.height == 0 ? app_h() : t.height;
-	let depth = t.depth;
+	let width: i32 = t.width == 0 ? app_w() : t.width;
+	let height: i32 = t.height == 0 ? app_h() : t.height;
+	let depth: i32 = t.depth;
 	width = Math.floor(width * t.scale);
 	height = Math.floor(height * t.scale);
 	depth = Math.floor(depth * t.scale);
@@ -410,7 +420,7 @@ function render_path_create_image(t: render_target_t, depth_format: depth_format
 	}
 	if (t.depth > 1) { // 3D texture
 		// Image only
-		let img = image_create_3d(width, height, depth,
+		let img: image_t = image_create_3d(width, height, depth,
 			t.format != null ?render_path_get_tex_format(t.format) : tex_format_t.RGBA32);
 		if (t.mipmaps) {
 			image_gen_mipmaps(img, 1000); // Allocate mipmaps

@@ -1,5 +1,3 @@
-/// <reference path='./vec4.ts'/>
-/// <reference path='./mat4.ts'/>
 
 type light_object_t = {
 	base?: object_t;
@@ -19,8 +17,8 @@ function light_object_create(data: light_data_t): light_object_t {
 	raw.base.ext_type = "light_object_t";
 	raw.data = data;
 
-	let type = data.type;
-	let fov = data.fov;
+	let type: string = data.type;
+	let fov: f32 = data.fov;
 
 	if (type == "sun") {
 		raw.p = mat4_ortho(-1, 1, -1, 1, data.near_plane, data.far_plane);
@@ -70,7 +68,7 @@ function light_object_update_view_frustum(raw: light_object_t, camera: camera_ob
 	if (camera.data.frustum_culling) {
 		if (raw.frustum_planes == null) {
 			raw.frustum_planes = [];
-			for (let i = 0; i < 6; ++i) {
+			for (let i: i32 = 0; i < 6; ++i) {
 				raw.frustum_planes.push(frustum_plane_create());
 			}
 		}

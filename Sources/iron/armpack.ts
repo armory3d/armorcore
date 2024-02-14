@@ -1,5 +1,5 @@
 
-let _armpack_pos = 0;
+let _armpack_pos: i32 = 0;
 
 function armpack_decode(b: ArrayBuffer): any {
 	_armpack_pos = 0;
@@ -7,57 +7,57 @@ function armpack_decode(b: ArrayBuffer): any {
 }
 
 function armpack_read_u8(v: DataView): i32 {
-	let i = v.getUint8(_armpack_pos);
+	let i: i32 = v.getUint8(_armpack_pos);
 	_armpack_pos += 1;
 	return i;
 }
 
 function armpack_read_i8(v: DataView): i32 {
-	let i = v.getInt8(_armpack_pos);
+	let i: i32 = v.getInt8(_armpack_pos);
 	_armpack_pos += 1;
 	return i;
 }
 
 function armpack_read_u16(v: DataView): i32 {
-	let i = v.getUint16(_armpack_pos, true);
+	let i: i32 = v.getUint16(_armpack_pos, true);
 	_armpack_pos += 2;
 	return i;
 }
 
 function armpack_read_i16(v: DataView): i32 {
-	let i = v.getInt16(_armpack_pos, true);
+	let i: i32 = v.getInt16(_armpack_pos, true);
 	_armpack_pos += 2;
 	return i;
 }
 
 function armpack_read_i32(v: DataView): i32 {
-	let i = v.getInt32(_armpack_pos, true);
+	let i: i32 = v.getInt32(_armpack_pos, true);
 	_armpack_pos += 4;
 	return i;
 }
 
 function armpack_read_f32(v: DataView): f32 {
-	let f = v.getFloat32(_armpack_pos, true);
+	let f: f32 = v.getFloat32(_armpack_pos, true);
 	_armpack_pos += 4;
 	return f;
 }
 
 function armpack_read_string(v: DataView, len: i32): string {
-	let s = "";
-	for (let i = 0; i < len; ++i) {
+	let s: string = "";
+	for (let i: i32 = 0; i < len; ++i) {
 		s += String.fromCharCode(armpack_read_u8(v));
 	}
 	return s;
 }
 
 function armpack_read_buffer(v: DataView, len: i32): ArrayBuffer {
-	let b = v.buffer.slice(_armpack_pos, _armpack_pos + len);
+	let b: ArrayBuffer = v.buffer.slice(_armpack_pos, _armpack_pos + len);
 	_armpack_pos += len;
 	return b;
 }
 
 function armpack_read(v: DataView): any {
-	let b = armpack_read_u8(v);
+	let b: i32 = armpack_read_u8(v);
 	if (b == 0xc0) {
 		return null;
 	}
@@ -139,32 +139,32 @@ function armpack_read(v: DataView): any {
 }
 
 function armpack_read_array(v: DataView, length: i32): any {
-	let b = armpack_read_u8(v);
+	let b: i32 = armpack_read_u8(v);
 
 	if (b == 0xca) { // Typed float32
-		let a = new Float32Array(length);
-		for (let x = 0; x < length; ++x) {
+		let a: Float32Array = new Float32Array(length);
+		for (let x: i32 = 0; x < length; ++x) {
 			a[x] = armpack_read_f32(v);
 		}
 		return a;
 	}
 	else if (b == 0xd2) { // Typed int32
-		let a = new Uint32Array(length);
-		for (let x = 0; x < length; ++x) {
+		let a: Uint32Array = new Uint32Array(length);
+		for (let x: i32 = 0; x < length; ++x) {
 			a[x] = armpack_read_i32(v);
 		}
 		return a;
 	}
 	else if (b == 0xd1) { // Typed int16
-		let a = new Int16Array(length);
-		for (let x = 0; x < length; ++x) {
+		let a: Int16Array = new Int16Array(length);
+		for (let x: i32 = 0; x < length; ++x) {
 			a[x] = armpack_read_i16(v);
 		}
 		return a;
 	}
 	else if (b == 0xc4) { // Typed uint8
-		let a = new Uint8Array(length);
-		for (let x = 0; x < length; ++x) {
+		let a: Uint8Array = new Uint8Array(length);
+		for (let x: i32 = 0; x < length; ++x) {
 			a[x] = armpack_read_u8(v);
 		}
 		return a;
@@ -172,7 +172,7 @@ function armpack_read_array(v: DataView, length: i32): any {
 	else { // any type-value
 		_armpack_pos--;
 		let a: any[] = [];
-		for (let x = 0; x < length; ++x) {
+		for (let x: i32 = 0; x < length; ++x) {
 			a.push(armpack_read(v));
 		}
 		return a;
@@ -181,9 +181,9 @@ function armpack_read_array(v: DataView, length: i32): any {
 
 function armpack_read_map(v: DataView, length: i32): any {
 	let out: any = {};
-	for (let n = 0; n < length; ++n) {
-		let k = String(armpack_read(v));
-		let val = armpack_read(v);
+	for (let n: i32 = 0; n < length; ++n) {
+		let k: string = String(armpack_read(v));
+		let val: any = armpack_read(v);
 		out[k] = val;
 	}
 	return out;
@@ -192,8 +192,8 @@ function armpack_read_map(v: DataView, length: i32): any {
 function armpack_encode(d: any): ArrayBuffer {
 	_armpack_pos = 0;
 	armpack_write_dummy(d);
-	let b = new ArrayBuffer(_armpack_pos);
-	let v = new DataView(b);
+	let b: ArrayBuffer = new ArrayBuffer(_armpack_pos);
+	let v: DataView = new DataView(b);
 	_armpack_pos = 0;
 	armpack_write(v, d);
 	return b;
@@ -220,14 +220,14 @@ function armpack_write_f32(v: DataView, f: f32) {
 }
 
 function armpack_write_string(v: DataView, str: string) {
-	for (let i = 0; i < str.length; ++i) {
+	for (let i: i32 = 0; i < str.length; ++i) {
 		armpack_write_u8(v, str.charCodeAt(i));
 	}
 }
 
 function armpack_write_buffer(v: DataView, b: ArrayBuffer) {
-	let u8 = new Uint8Array(b);
-	for (let i = 0; i < b.byteLength; ++i) {
+	let u8: Uint8Array = new Uint8Array(b);
+	for (let i: i32 = 0; i < b.byteLength; ++i) {
 		armpack_write_u8(v, u8[i]);
 	}
 }
@@ -264,25 +264,25 @@ function armpack_write(v: DataView, d: any) {
 		armpack_write_i32(v, (d as any).length);
 		if (d.constructor == Uint8Array) {
 			armpack_write_u8(v, 0xc4);
-			for (let i = 0; i < (d as Uint8Array).length; ++i) {
+			for (let i: i32 = 0; i < (d as Uint8Array).length; ++i) {
 				armpack_write_u8(v, d[i]);
 			}
 		}
 		else if (d.constructor == Int16Array) {
 			armpack_write_u8(v, 0xd1);
-			for (let i = 0; i < (d as Int16Array).length; ++i) {
+			for (let i: i32 = 0; i < (d as Int16Array).length; ++i) {
 				armpack_write_i16(v, d[i]);
 			}
 		}
 		else if (d.constructor == Float32Array) {
 			armpack_write_u8(v, 0xca);
-			for (let i = 0; i < (d as Float32Array).length; ++i) {
+			for (let i: i32 = 0; i < (d as Float32Array).length; ++i) {
 				armpack_write_f32(v, d[i]);
 			}
 		}
 		else if (d.constructor == Uint32Array) {
 			armpack_write_u8(v, 0xd2);
-			for (let i = 0; i < (d as Uint32Array).length; ++i) {
+			for (let i: i32 = 0; i < (d as Uint32Array).length; ++i) {
 				armpack_write_i32(v, d[i]);
 			}
 		}
@@ -290,7 +290,7 @@ function armpack_write(v: DataView, d: any) {
 	else if (Array.isArray(d)) {
 		armpack_write_u8(v, 0xdd);
 		armpack_write_i32(v, d.length);
-		for (let i = 0; i < d.length; ++i) {
+		for (let i: i32 = 0; i < d.length; ++i) {
 			armpack_write(v, d[i]);
 		}
 	}
@@ -337,25 +337,25 @@ function armpack_write_dummy(d: any) {
 		_armpack_pos += 4;
 		if (d.constructor == Uint8Array) {
 			_armpack_pos += 1;
-			for (let i = 0; i < (d as Uint8Array).length; ++i) {
+			for (let i: i32 = 0; i < (d as Uint8Array).length; ++i) {
 				_armpack_pos += 1;
 			}
 		}
 		else if (d.constructor == Int16Array) {
 			_armpack_pos += 1;
-			for (let i = 0; i < (d as Int16Array).length; ++i) {
+			for (let i: i32 = 0; i < (d as Int16Array).length; ++i) {
 				_armpack_pos += 2;
 			}
 		}
 		else if (d.constructor == Float32Array) {
 			_armpack_pos += 1;
-			for (let i = 0; i < (d as Float32Array).length; ++i) {
+			for (let i: i32 = 0; i < (d as Float32Array).length; ++i) {
 				_armpack_pos += 4;
 			}
 		}
 		else if (d.constructor == Uint32Array) {
 			_armpack_pos += 1;
-			for (let i = 0; i < (d as Uint32Array).length; ++i) {
+			for (let i: i32 = 0; i < (d as Uint32Array).length; ++i) {
 				_armpack_pos += 4;
 			}
 		}
@@ -363,7 +363,7 @@ function armpack_write_dummy(d: any) {
 	else if (Array.isArray(d)) {
 		_armpack_pos += 1;
 		_armpack_pos += 4;
-		for (let i = 0; i < d.length; ++i) {
+		for (let i: i32 = 0; i < d.length; ++i) {
 			armpack_write_dummy(d[i]);
 		}
 	}

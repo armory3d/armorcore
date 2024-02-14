@@ -317,7 +317,7 @@ function sys_title_set(value: string) {
 }
 
 function sys_display_primary_id(): i32 {
-	for (let i = 0; i < krom_display_count(); ++i) {
+	for (let i: i32 = 0; i < krom_display_count(); ++i) {
 		if (krom_display_is_primary(i)) {
 			return i;
 		}
@@ -338,17 +338,17 @@ function sys_display_frequency(): i32 {
 }
 
 function sys_buffer_to_string(b: ArrayBuffer): string {
-	let str = "";
-	let u8a = new Uint8Array(b);
-	for (let i = 0; i < u8a.length; ++i) {
+	let str: string = "";
+	let u8a: Uint8Array = new Uint8Array(b);
+	for (let i: i32 = 0; i < u8a.length; ++i) {
 		str += String.fromCharCode(u8a[i]);
 	}
 	return str;
 }
 
 function sys_string_to_buffer(str: string): ArrayBuffer {
-	let u8a = new Uint8Array(str.length);
-	for (let i = 0; i < str.length; ++i) {
+	let u8a: Uint8Array = new Uint8Array(str.length);
+	for (let i: i32 = 0; i < str.length; ++i) {
 		u8a[i] = str.charCodeAt(i);
 	}
 	return u8a.buffer;
@@ -378,7 +378,7 @@ function sys_get_shader_buffer(name: string): ArrayBuffer {
 }
 
 function sys_get_shader(name: string): shader_t {
-	let shader = _sys_shaders.get(name);
+	let shader: shader_t = _sys_shaders.get(name);
 	if (shader == null) {
 		shader = g4_shader_create(
 			sys_get_shader_buffer(name),

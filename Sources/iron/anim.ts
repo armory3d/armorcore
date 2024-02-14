@@ -1,5 +1,4 @@
-/// <reference path='./vec4.ts'/>
-/// <reference path='./quat.ts'/>
+
 
 type anim_raw_t = {
 	ext?: any; // anim_bone_t | anim_object_t
@@ -26,17 +25,17 @@ type anim_raw_t = {
 };
 
 // Lerp
-let _anim_m1 = mat4_identity();
-let _anim_m2 = mat4_identity();
-let _anim_vpos = vec4_create();
-let _anim_vpos2 = vec4_create();
-let _anim_vscale = vec4_create();
-let _anim_vscale2 = vec4_create();
-let _anim_q1 = quat_create();
-let _anim_q2 = quat_create();
-let _anim_q3 = quat_create();
-let _anim_vp = vec4_create();
-let _anim_vs = vec4_create();
+let _anim_m1: mat4_t = mat4_identity();
+let _anim_m2: mat4_t = mat4_identity();
+let _anim_vpos: vec4_t = vec4_create();
+let _anim_vpos2: vec4_t = vec4_create();
+let _anim_vscale: vec4_t = vec4_create();
+let _anim_vscale2: vec4_t = vec4_create();
+let _anim_q1: quat_t = quat_create();
+let _anim_q2: quat_t = quat_create();
+let _anim_q3: quat_t = quat_create();
+let _anim_vp: vec4_t = vec4_create();
+let _anim_vs: vec4_t = vec4_create();
 
 function anim_create(): anim_raw_t {
 	let raw: anim_raw_t = {};
@@ -56,7 +55,7 @@ function anim_create(): anim_raw_t {
 	return raw;
 }
 
-function anim_play_super(raw: anim_raw_t, action = "", on_complete: ()=>void = null, blend_time = 0.0, speed = 1.0, loop = true) {
+function anim_play_super(raw: anim_raw_t, action: string = "", on_complete: ()=>void = null, blend_time: f32 = 0.0, speed: f32 = 1.0, loop: bool = true) {
 	if (blend_time > 0) {
 		raw.blend_time = blend_time;
 		raw.blend_current = 0.0;
@@ -74,7 +73,7 @@ function anim_play_super(raw: anim_raw_t, action = "", on_complete: ()=>void = n
 	raw.paused = false;
 }
 
-function anim_play(raw: anim_raw_t, action = "", on_complete: ()=>void = null, blend_time = 0.0, speed = 1.0, loop = true) {
+function anim_play(raw: anim_raw_t, action: string = "", on_complete: ()=>void = null, blend_time: f32 = 0.0, speed: f32 = 1.0, loop: bool = true) {
 	if (raw.ext_type == "anim_object_t") {
 		anim_object_play(raw.ext, action, on_complete, blend_time, speed, loop);
 	}
@@ -168,23 +167,23 @@ function anim_update_track(raw: anim_raw_t, anim: anim_t) {
 		return;
 	}
 
-	let track = anim.tracks[0];
+	let track: track_t = anim.tracks[0];
 
 	if (raw.frame_index == -1) {
 		anim_rewind(raw, track);
 	}
 
 	// Move keyframe
-	let sign = raw.speed > 0 ? 1 : -1;
+	let sign: i32 = raw.speed > 0 ? 1 : -1;
 	while (anim_check_frame_index(raw, track.frames)) {
 		raw.frame_index += sign;
 	}
 
 	// Marker events
 	if (raw.marker_events != null && anim.marker_names != null && raw.frame_index != raw.last_frame_index) {
-		for (let i = 0; i < anim.marker_frames.length; ++i) {
+		for (let i: i32 = 0; i < anim.marker_frames.length; ++i) {
 			if (raw.frame_index == anim.marker_frames[i]) {
-				let ar = raw.marker_events.get(anim.marker_names[i]);
+				let ar: (()=>void)[] = raw.marker_events.get(anim.marker_names[i]);
 				if (ar != null) {
 					for (let f of ar) {
 						f();
@@ -214,13 +213,13 @@ function anim_update_anim_sampled(raw: anim_raw_t, anim: anim_t, m: mat4_t) {
 	if (anim == null) {
 		return;
 	}
-	let track = anim.tracks[0];
-	let sign = raw.speed > 0 ? 1 : -1;
+	let track: track_t = anim.tracks[0];
+	let sign: i32 = raw.speed > 0 ? 1 : -1;
 
-	let t = raw.time;
-	let ti = raw.frame_index;
-	let t1 = track.frames[ti] * raw.frame_time;
-	let t2 = track.frames[ti + sign] * raw.frame_time;
+	let t: i32 = raw.time;
+	let ti: f32 = raw.frame_index;
+	let t1: f32 = track.frames[ti] * raw.frame_time;
+	let t2: f32 = track.frames[ti + sign] * raw.frame_time;
 	let s: f32 = (t - t1) / (t2 - t1); // Linear
 
 	mat4_set_from_f32_array(_anim_m1, track.values, ti * 16); // Offset to 4x4 matrix array
@@ -253,7 +252,7 @@ function anim_notify_on_marker(raw: anim_raw_t, name: string, on_marker: ()=>voi
 	if (raw.marker_events == null) {
 		raw.marker_events = new Map();
 	}
-	let ar = raw.marker_events.get(name);
+	let ar: (()=>void)[] = raw.marker_events.get(name);
 	if (ar == null) {
 		ar = [];
 		raw.marker_events.set(name, ar);

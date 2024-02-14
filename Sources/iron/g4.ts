@@ -8,7 +8,7 @@ function g4_shader_create(buffer: ArrayBuffer, type: shader_type_t): shader_t {
 }
 
 function g4_shader_from_source(source: string, type: shader_type_t): shader_t {
-	let shader = g4_shader_create(null, 0);
+	let shader: shader_t = g4_shader_create(null, 0);
 	if (type == shader_type_t.VERTEX) {
 		shader.shader_ = krom_g4_create_vertex_shader_from_source(source);
 	}
@@ -37,22 +37,22 @@ function g4_pipeline_create(): pipeline_t {
 	raw.color_write_masks_green = [];
 	raw.color_write_masks_blue = [];
 	raw.color_write_masks_alpha = [];
-	for (let i = 0; i < 8; ++i) {
+	for (let i: i32 = 0; i < 8; ++i) {
 		raw.color_write_masks_red.push(true);
 	}
-	for (let i = 0; i < 8; ++i) {
+	for (let i: i32 = 0; i < 8; ++i) {
 		raw.color_write_masks_green.push(true);
 	}
-	for (let i = 0; i < 8; ++i) {
+	for (let i: i32 = 0; i < 8; ++i) {
 		raw.color_write_masks_blue.push(true);
 	}
-	for (let i = 0; i < 8; ++i) {
+	for (let i: i32 = 0; i < 8; ++i) {
 		raw.color_write_masks_alpha.push(true);
 	}
 
 	raw.color_attachment_count = 1;
 	raw.color_attachments = [];
-	for (let i = 0; i < 8; ++i) {
+	for (let i: i32 = 0; i < 8; ++i) {
 		raw.color_attachments.push(tex_format_t.RGBA32);
 	}
 	raw.depth_attachment = depth_format_t.NO_DEPTH;
@@ -79,11 +79,11 @@ function g4_pipeline_delete(raw: pipeline_t) {
 }
 
 function g4_pipeline_compile(raw: pipeline_t) {
-	let structure0 = raw.input_layout.length > 0 ? raw.input_layout[0] : null;
-	let structure1 = raw.input_layout.length > 1 ? raw.input_layout[1] : null;
-	let structure2 = raw.input_layout.length > 2 ? raw.input_layout[2] : null;
-	let structure3 = raw.input_layout.length > 3 ? raw.input_layout[3] : null;
-	let gs = raw.geometry_shader != null ? raw.geometry_shader.shader_ : null;
+	let structure0: vertex_struct_t = raw.input_layout.length > 0 ? raw.input_layout[0] : null;
+	let structure1: vertex_struct_t = raw.input_layout.length > 1 ? raw.input_layout[1] : null;
+	let structure2: vertex_struct_t = raw.input_layout.length > 2 ? raw.input_layout[2] : null;
+	let structure3: vertex_struct_t = raw.input_layout.length > 3 ? raw.input_layout[3] : null;
+	let gs: any = raw.geometry_shader != null ? raw.geometry_shader.shader_ : null;
 	let color_attachments: i32[] = [];
 	for (let i = 0; i < 8; ++i) {
 		color_attachments.push(raw.color_attachments[i]);
@@ -154,7 +154,7 @@ function g4_vertex_struct_add(raw: vertex_struct_t, name: string, data: vertex_d
 
 function g4_vertex_struct_byte_size(raw: vertex_struct_t): i32 {
 	let byte_size = 0;
-	for (let i = 0; i < raw.elements.length; ++i) {
+	for (let i: i32 = 0; i < raw.elements.length; ++i) {
 		byte_size += g4_vertex_struct_data_byte_size(raw.elements[i].data);
 	}
 	return byte_size;
@@ -215,7 +215,7 @@ function g4_end() {
 	krom_g4_end();
 }
 
-function g4_clear(color?: Color, depth?: f32) {
+function g4_clear(color: Color = null, depth: f32 = null) {
 	let flags: i32 = 0;
 	if (color != null) {
 		flags |= 1;
@@ -263,11 +263,11 @@ function g4_set_image_tex(unit: kinc_tex_unit_t, tex: image_t) {
 	krom_g4_set_image_texture(unit, tex.texture_);
 }
 
-function g4_set_tex_params(tex_unit: kinc_tex_unit_t, u_addressing: tex_addressing, v_addressing: tex_addressing, minification_filter: tex_filter_t, magnification_filter: tex_filter_t, mipmap_filter: mip_map_filter_t) {
+function g4_set_tex_params(tex_unit: kinc_tex_unit_t, u_addressing: tex_addressing_t, v_addressing: tex_addressing_t, minification_filter: tex_filter_t, magnification_filter: tex_filter_t, mipmap_filter: mip_map_filter_t) {
 	krom_g4_set_texture_parameters(tex_unit, u_addressing, v_addressing, minification_filter, magnification_filter, mipmap_filter);
 }
 
-function g4_set_tex_3d_params(tex_unit: kinc_tex_unit_t, u_addressing: tex_addressing, v_addressing: tex_addressing, w_addressing: tex_addressing, minification_filter: tex_filter_t, magnification_filter: tex_filter_t, mipmap_filter: mip_map_filter_t) {
+function g4_set_tex_3d_params(tex_unit: kinc_tex_unit_t, u_addressing: tex_addressing_t, v_addressing: tex_addressing_t, w_addressing: tex_addressing_t, minification_filter: tex_filter_t, magnification_filter: tex_filter_t, mipmap_filter: mip_map_filter_t) {
 	krom_g4_set_texture3d_parameters(tex_unit, u_addressing, v_addressing, w_addressing, minification_filter, magnification_filter, mipmap_filter);
 }
 
@@ -384,7 +384,7 @@ function image_get_tex_format(format: tex_format_t): i32 {
 }
 
 function image_from_texture(tex: any): image_t {
-	let image = _image_create(tex);
+	let image: image_t = _image_create(tex);
 	_image_set_size(image, tex);
 	return image;
 }
@@ -393,8 +393,8 @@ function image_from_bytes(buffer: ArrayBuffer, width: i32, height: i32, format: 
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
-	let readable = true;
-	let image = _image_create(null);
+	let readable: bool = true;
+	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture_from_bytes(buffer, width, height, image_get_tex_format(format), readable);
 	_image_set_size(image, image.texture_);
@@ -405,8 +405,8 @@ function image_from_bytes_3d(buffer: ArrayBuffer, width: i32, height: i32, depth
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
-	let readable = true;
-	let image = _image_create(null);
+	let readable: bool = true;
+	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture_from_bytes3d(buffer, width, height, depth, image_get_tex_format(format), readable);
 	_image_set_size(image, image.texture_);
@@ -414,7 +414,7 @@ function image_from_bytes_3d(buffer: ArrayBuffer, width: i32, height: i32, depth
 }
 
 function image_from_encoded_bytes(buffer: ArrayBuffer, format: string, done: (img: image_t)=>void, readable: bool = false) {
-	let image = _image_create(null);
+	let image: image_t = _image_create(null);
 	image.texture_ = krom_g4_create_texture_from_encoded_bytes(buffer, format, readable);
 	_image_set_size(image, image.texture_);
 	done(image);
@@ -424,7 +424,7 @@ function image_create(width: i32, height: i32, format: tex_format_t = null, usag
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
-	let image = _image_create(null);
+	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture(width, height, image_get_tex_format(format));
 	_image_set_size(image, image.texture_);
@@ -435,7 +435,7 @@ function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
-	let image = _image_create(null);
+	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture3d(width, height, depth, image_get_tex_format(format));
 	_image_set_size(image, image.texture_);
@@ -446,7 +446,7 @@ function image_create_render_target(width: i32, height: i32, format: tex_format_
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
-	let image = _image_create(null);
+	let image: image_t = _image_create(null);
 	image.format = format;
 	image.render_target_ = krom_g4_create_render_target(width, height, format, image_get_depth_buffer_bits(depth_format), 0);
 	_image_set_size(image, image.render_target_);
@@ -499,8 +499,8 @@ function image_unlock(raw: image_t) {
 function image_get_pixels(raw: image_t): ArrayBuffer {
 	if (raw.render_target_ != null) {
 		// Minimum size of 32x32 required after https://github.com/Kode/Kinc/commit/3797ebce5f6d7d360db3331eba28a17d1be87833
-		let pixels_w = raw.width < 32 ? 32 : raw.width;
-		let pixels_h = raw.height < 32 ? 32 : raw.height;
+		let pixels_w: i32 = raw.width < 32 ? 32 : raw.width;
+		let pixels_h: i32 = raw.height < 32 ? 32 : raw.height;
 		if (raw.pixels == null) {
 			raw.pixels = new ArrayBuffer(image_format_byte_size(raw.format) * pixels_w * pixels_h);
 		}
@@ -582,7 +582,7 @@ type index_buffer_t = {
 type kinc_vertex_elem_t = {
 	name: string;
 	data: vertex_data_t;
-}
+};
 
 type kinc_const_loc_t = any;
 type kinc_tex_unit_t = any;
@@ -599,7 +599,7 @@ enum mip_map_filter_t {
 	LINEAR,
 }
 
-enum tex_addressing {
+enum tex_addressing_t {
 	REPEAT,
 	MIRROR,
 	CLAMP,

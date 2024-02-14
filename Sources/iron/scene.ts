@@ -15,7 +15,7 @@ let scene_armatures: armature_t[];
 let scene_embedded: Map<string, image_t>;
 
 let _scene_ready: bool;
-let _scene_uid_counter = 0;
+let _scene_uid_counter: i32 = 0;
 let _scene_uid: i32;
 let _scene_raw: scene_t;
 let _scene_root: object_t;
@@ -49,7 +49,7 @@ function scene_create(format: scene_t, done: (o: object_t)=>void) {
 		// Startup scene
 		scene_add_scene(format.name, null, function (scene_object: object_t) {
 			if (scene_cameras.length == 0) {
-				krom_log('No camera found for scene "' + format.name + '"');
+				krom_log("No camera found for scene '" + format.name + "'");
 			}
 
 			scene_camera = scene_get_camera(format.camera_ref);
@@ -123,7 +123,7 @@ function scene_render_frame() {
 
 // Objects
 function scene_add_object(parent: object_t = null): object_t {
-	let object = object_create();
+	let object: object_t = object_create();
 	parent != null ? object_set_parent(object, parent) : object_set_parent(object, _scene_root);
 	return object;
 }
@@ -180,26 +180,26 @@ function scene_get_empty(name: string): object_t {
 }
 
 function scene_add_mesh_object(data: mesh_data_t, materials: material_data_t[], parent: object_t = null): mesh_object_t {
-	let object = mesh_object_create(data, materials);
+	let object: mesh_object_t = mesh_object_create(data, materials);
 	parent != null ? object_set_parent(object.base, parent) : object_set_parent(object.base, _scene_root);
 	return object;
 }
 
 function scene_add_light_object(data: light_data_t, parent: object_t = null): light_object_t {
-	let object = light_object_create(data);
+	let object: light_object_t = light_object_create(data);
 	parent != null ? object_set_parent(object.base, parent) : object_set_parent(object.base, _scene_root);
 	return object;
 }
 
 function scene_add_camera_object(data: camera_data_t, parent: object_t = null): camera_object_t {
-	let object = camera_object_create(data);
+	let object: camera_object_t = camera_object_create(data);
 	parent != null ? object_set_parent(object.base, parent) : object_set_parent(object.base, _scene_root);
 	return object;
 }
 
 ///if arm_audio
 function scene_add_speaker_object(data: speaker_data_t, parent: object_t = null): speaker_object_t {
-	let object = speaker_object_create(data);
+	let object: speaker_object_t = speaker_object_create(data);
 	parent != null ? object_set_parent(object.base, parent) : object_set_parent(object.base, _scene_root);
 	return object;
 }
@@ -209,8 +209,8 @@ function scene_traverse_objects(format: scene_t, parent: object_t, objects: obj_
 	if (objects == null) {
 		return;
 	}
-	for (let i = 0; i < objects.length; ++i) {
-		let o = objects[i];
+	for (let i: i32 = 0; i < objects.length; ++i) {
+		let o: obj_t = objects[i];
 		if (o.spawn != null && o.spawn == false) {
 			if (++_scene_objects_traversed == _scene_objects_count) {
 				done();
@@ -249,11 +249,11 @@ function scene_add_scene(scene_name: string, parent: object_t, done: (o: object_
 	});
 }
 
-function scene_get_objects_count(objects: obj_t[], discard_no_spawn = true): i32 {
+function scene_get_objects_count(objects: obj_t[], discard_no_spawn: bool = true): i32 {
 	if (objects == null) {
 		return 0;
 	}
-	let result = objects.length;
+	let result: i32 = objects.length;
 	for (let o of objects) {
 		if (discard_no_spawn && o.spawn != null && o.spawn == false) {
 			continue; // Do not count children of non-spawned objects
@@ -265,14 +265,14 @@ function scene_get_objects_count(objects: obj_t[], discard_no_spawn = true): i32
 	return result;
 }
 
-function scene_spawn_object(name: string, parent: object_t, done: (o: object_t)=>void, spawn_children = true, src_raw: scene_t = null) {
+function scene_spawn_object(name: string, parent: object_t, done: (o: object_t)=>void, spawn_children: bool = true, src_raw: scene_t = null) {
 	if (src_raw == null) {
 		src_raw = _scene_raw;
 	}
-	let objects_traversed = 0;
-	let obj = scene_get_raw_object_by_name(src_raw, name);
-	let objects_count = spawn_children ? scene_get_objects_count([obj], false) : 1;
-	let root_id = -1;
+	let objects_traversed: i32 = 0;
+	let obj: obj_t = scene_get_raw_object_by_name(src_raw, name);
+	let objects_count: i32 = spawn_children ? scene_get_objects_count([obj], false) : 1;
+	let root_id: i32 = -1;
 	function spawn_object_tree(obj: obj_t, parent: object_t, parent_object: obj_t, done: (o: object_t)=>void) {
 		scene_create_object(obj, src_raw, parent, parent_object, function (object: object_t) {
 			if (root_id == -1) {
@@ -317,17 +317,17 @@ function scene_traverse_objs(children: obj_t[], name: string): obj_t {
 }
 
 function scene_create_object(o: obj_t, format: scene_t, parent: object_t, parent_object: obj_t, done: (o: object_t)=>void) {
-	let scene_name = format.name;
+	let scene_name: string = format.name;
 
 	if (o.type == "camera_object") {
 		data_get_camera(scene_name, o.data_ref, function (b: camera_data_t) {
-			let object = scene_add_camera_object(b, parent);
+			let object: camera_object_t = scene_add_camera_object(b, parent);
 			scene_return_object(object.base, o, done);
 		});
 	}
 	else if (o.type == "light_object") {
 		data_get_light(scene_name, o.data_ref, function (b: light_data_t) {
-			let object = scene_add_light_object(b, parent);
+			let object: light_object_t = scene_add_light_object(b, parent);
 			scene_return_object(object.base, o, done);
 		});
 	}
@@ -338,9 +338,9 @@ function scene_create_object(o: obj_t, format: scene_t, parent: object_t, parent
 		else {
 			// Materials
 			let materials: material_data_t[] = [];
-			let materials_loaded = 0;
+			let materials_loaded: i32 = 0;
 			for (let i = 0; i < o.material_refs.length; ++i) {
-				let ref = o.material_refs[i];
+				let ref: string = o.material_refs[i];
 				data_get_material(scene_name, ref, function (mat: material_data_t) {
 					materials[i] = mat;
 					materials_loaded++;
@@ -353,12 +353,12 @@ function scene_create_object(o: obj_t, format: scene_t, parent: object_t, parent
 	}
 	///if arm_audio
 	else if (o.type == "speaker_object") {
-		let object = scene_add_speaker_object(data_get_speaker_raw_by_name(format.speaker_datas, o.data_ref), parent);
+		let object: speaker_object_t = scene_add_speaker_object(data_get_speaker_raw_by_name(format.speaker_datas, o.data_ref), parent);
 		scene_return_object(object.base, o, done);
 	}
 	///end
 	else if (o.type == "object") {
-		let object = scene_add_object(parent);
+		let object: object_t = scene_add_object(parent);
 		scene_return_object(object, o, function (ro: object_t) {
 			done(ro);
 		});
@@ -370,10 +370,10 @@ function scene_create_object(o: obj_t, format: scene_t, parent: object_t, parent
 
 function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, parent_object: obj_t, materials: material_data_t[], done: (o: object_t)=>void) {
 	// Mesh reference
-	let ref = o.data_ref.split("/");
-	let object_file = "";
-	let data_ref = "";
-	let scene_name = format.name;
+	let ref: string[] = o.data_ref.split("/");
+	let object_file: string = "";
+	let data_ref: string = "";
+	let scene_name: string = format.name;
 	if (ref.length == 2) { // File reference
 		object_file = ref[0];
 		data_ref = ref[1];
@@ -432,7 +432,7 @@ function scene_return_mesh_object(object_file: string, data_ref: string, scene_n
 			armature != null ? mesh_data_add_armature(mesh, armature) : mesh_data_add_action(mesh, _scene_raw.objects, "none");
 		}
 		///end
-		let object = scene_add_mesh_object(mesh, materials, parent);
+		let object: mesh_object_t = scene_add_mesh_object(mesh, materials, parent);
 
 		// Attach particle systems
 		///if arm_particles
@@ -453,9 +453,9 @@ function scene_return_object(object: object_t, o: obj_t, done: (o: object_t)=>vo
 		while (oactions.length < o.object_actions.length) {
 			oactions.push(null);
 		}
-		let actions_loaded = 0;
-		for (let i = 0; i < o.object_actions.length; ++i) {
-			let ref = o.object_actions[i];
+		let actions_loaded: i32 = 0;
+		for (let i: i32 = 0; i < o.object_actions.length; ++i) {
+			let ref: string = o.object_actions[i];
 			if (ref == "null") { // No startup action set
 				actions_loaded++;
 				continue;
@@ -502,7 +502,7 @@ function scene_load_embedded_data(datas: string[], done: ()=>void) {
 		done();
 		return;
 	}
-	let loaded = 0;
+	let loaded: i32 = 0;
 	for (let file of datas) {
 		scene_embed_data(file, function () {
 			loaded++;
@@ -517,8 +517,8 @@ function scene_embed_data(file: string, done: ()=>void) {
 	if (file.endsWith(".raw")) {
 		data_get_blob(file, function (b: ArrayBuffer) {
 			// Raw 3D texture bytes
-			let w = Math.floor(Math.pow(b.byteLength, 1 / 3)) + 1;
-			let image = image_from_bytes_3d(b, w, w, w, tex_format_t.R8);
+			let w: i32 = Math.floor(Math.pow(b.byteLength, 1 / 3)) + 1;
+			let image: image_t = image_from_bytes_3d(b, w, w, w, tex_format_t.R8);
 			scene_embedded.set(file, image);
 			done();
 		});

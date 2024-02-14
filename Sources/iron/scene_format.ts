@@ -13,7 +13,7 @@ type scene_t = {
 	world_ref?: string;
 	objects?: obj_t[];
 	embedded_datas?: string[]; // Preload for this scene, images only for now
-}
+};
 
 type mesh_data_t = {
 	name: string;
@@ -43,7 +43,7 @@ type mesh_data_t = {
 	_actions?: Map<string, obj_t[]>;
 	_mats?: Map<string, mat4_t[]>;
 	///end
-}
+};
 
 type skin_t = {
 	transform: transform_values_t;
@@ -53,7 +53,7 @@ type skin_t = {
 	bone_count_array: Int16Array;
 	bone_index_array: Int16Array;
 	bone_weight_array: Int16Array;
-}
+};
 
 type vertex_array_t = {
 	attrib: string;
@@ -62,12 +62,12 @@ type vertex_array_t = {
 	padding?: i32;
 	// Runtime:
 	_size?: i32;
-}
+};
 
 type index_array_t = {
 	values: Uint32Array; // size = 3
 	material: i32;
-}
+};
 
 type light_data_t = {
 	name: string;
@@ -79,7 +79,7 @@ type light_data_t = {
 	fov?: f32;
 	size?: f32; // Area light
 	size_y?: f32;
-}
+};
 
 type camera_data_t = {
 	name: string;
@@ -90,7 +90,7 @@ type camera_data_t = {
 	aspect?: f32;
 	frustum_culling?: bool;
 	ortho?: Float32Array; // Indicates ortho camera, left, right, bottom, top
-}
+};
 
 type material_data_t = {
 	name: string;
@@ -102,14 +102,14 @@ type material_data_t = {
 	_uid?: f32;
 	_shader?: shader_data_t;
 	_contexts?: material_context_t[];
-}
+};
 
 type shader_override_t = {
 	cull_mode?: string;
 	addressing?: string;
 	filter?: string;
 	shared_sampler?: string;
-}
+};
 
 type material_context_t = {
 	name: string;
@@ -117,7 +117,7 @@ type material_context_t = {
 	bind_textures?: bind_tex_t[];
 	// Runtime:
 	_textures?: image_t[];
-}
+};
 
 type bind_const_t = {
 	name: string;
@@ -127,7 +127,7 @@ type bind_const_t = {
 	float?: f32;
 	bool?: bool;
 	int?: i32;
-}
+};
 
 type bind_tex_t = {
 	name: string;
@@ -141,14 +141,14 @@ type bind_tex_t = {
 	mag_filter?: string;
 	mipmap_filter?: string;
 	source?: string; // file, movie
-}
+};
 
 type shader_data_t = {
 	name: string;
 	contexts: shader_context_t[];
 	// Runtime:
 	_contexts?: shader_context_t[];
-}
+};
 
 type shader_context_t = {
 	name: string;
@@ -181,12 +181,12 @@ type shader_context_t = {
 	_override_context?: shader_override_t;
 	_structure?: vertex_struct_t;
 	_instancing_type?: i32;
-}
+};
 
 type vertex_element_t = {
 	name: string;
 	data: string; // "short4norm", "short2norm"
-}
+};
 
 type shader_const_t = {
 	name: string;
@@ -198,7 +198,7 @@ type shader_const_t = {
 	float?: f32;
 	bool?: bool;
 	int?: i32;
-}
+};
 
 type tex_unit_t = {
 	name: string;
@@ -209,7 +209,7 @@ type tex_unit_t = {
 	filter_min?: string;
 	filter_mag?: string;
 	mipmap_filter?: string;
-}
+};
 
 type speaker_data_t = {
 	name: string;
@@ -220,7 +220,7 @@ type speaker_data_t = {
 	volume: f32;
 	attenuation: f32;
 	play_on_start: bool;
-}
+};
 
 type world_data_t = {
 	name: string;
@@ -235,11 +235,11 @@ type world_data_t = {
 	_radiance?: image_t;
 	_radiance_mipmaps?: image_t[];
 	_irradiance?: Float32Array;
-}
+};
 
 type irradiance_t = {
 	irradiance: Float32Array; // Blob with spherical harmonics, bands 0,1,2
-}
+};
 
 type particle_data_t = {
 	name: string;
@@ -259,13 +259,13 @@ type particle_data_t = {
 	mass: f32;
 	instance_object: string; // Object reference
 	weight_gravity: f32;
-}
+};
 
 type particle_ref_t = {
 	name: string;
 	particle: string;
 	seed: i32;
-}
+};
 
 type obj_t = {
 	type: string; // object, mesh_object, light_object, camera_object, speaker_object, decal_object
@@ -291,12 +291,12 @@ type obj_t = {
 	local_only?: bool; // Apply parent matrix
 	sampled?: bool; // Object action
 	is_ik_fk_only?: bool; // Bone IK or FK only
-}
+};
 
 type transform_values_t = {
 	target?: string;
 	values: Float32Array;
-}
+};
 
 type anim_t = {
 	tracks: track_t[];
@@ -305,10 +305,10 @@ type anim_t = {
 	has_delta?: bool; // Delta transform
 	marker_frames?: Uint32Array;
 	marker_names?: string[];
-}
+};
 
 type track_t = {
 	target: string;
 	frames: Uint32Array;
 	values: Float32Array; // sampled - full matrix transforms, non-sampled - values
-}
+};

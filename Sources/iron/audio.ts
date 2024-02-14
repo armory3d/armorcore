@@ -9,7 +9,7 @@ type audio_channel_t = {
 	finished?: bool;
 };
 
-function audio_channel(sound: sound_t, loop = false, stream = false): audio_channel_t {
+function audio_channel(sound: sound_t, loop: bool = false, stream: bool = false): audio_channel_t {
 	let channel: audio_channel_t = {};
 	channel.sound = sound;
 	channel.loop = loop;

@@ -33,7 +33,7 @@ function anim_object_update_object_anim(raw: anim_object_t) {
 }
 
 function anim_object_interpolate_linear(t: f32, t1: f32, t2: f32, v1: f32, v2: f32): f32 {
-	let s = (t - t1) / (t2 - t1);
+	let s: f32 = (t - t1) / (t2 - t1);
 	return (1.0 - s) * v1 + s * v2;
 }
 
@@ -48,10 +48,10 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 		return;
 	}
 
-	let total = anim.end * raw.base.frame_time - anim.begin * raw.base.frame_time;
+	let total: i32 = anim.end * raw.base.frame_time - anim.begin * raw.base.frame_time;
 
 	if (anim.has_delta) {
-		let t = transform;
+		let t: transform_t = transform;
 		if (t.dloc == null) {
 			t.dloc = vec4_create();
 			t.drot = quat_create();
@@ -67,10 +67,10 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 		if (raw.base.frame_index == -1) {
 			anim_rewind(raw.base, track);
 		}
-		let sign = raw.base.speed > 0 ? 1 : -1;
+		let sign: i32 = raw.base.speed > 0 ? 1 : -1;
 
 		// End of current time range
-		let t = raw.base.time + anim.begin * raw.base.frame_time;
+		let t: f32 = raw.base.time + anim.begin * raw.base.frame_time;
 		while (anim_object_check_frame_index_t(raw, track.frames, t)) {
 			raw.base.frame_index += sign;
 		}
@@ -95,98 +95,98 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 			return;
 		}
 
-		let ti = raw.base.frame_index;
-		let t1 = track.frames[ti] * raw.base.frame_time;
-		let t2 = track.frames[ti + sign] * raw.base.frame_time;
-		let v1 = track.values[ti];
-		let v2 = track.values[ti + sign];
+		let ti: i32 = raw.base.frame_index;
+		let t1: f32 = track.frames[ti] * raw.base.frame_time;
+		let t2: f32 = track.frames[ti + sign] * raw.base.frame_time;
+		let v1: f32 = track.values[ti];
+		let v2: f32 = track.values[ti + sign];
 
-		let value = anim_object_interpolate_linear(t, t1, t2, v1, v2);
+		let value: f32 = anim_object_interpolate_linear(t, t1, t2, v1, v2);
 
-		let tt = track.target;
-		if (tt == "xloc") {
+		let target: string = track.target;
+		if (target == "xloc") {
 			transform.loc.x = value;
 		}
-		else if (tt == "yloc") {
+		else if (target == "yloc") {
 			transform.loc.y = value;
 		}
-		else if (tt == "zloc") {
+		else if (target == "zloc") {
 			transform.loc.z = value;
 		}
-		else if (tt == "xrot") {
+		else if (target == "xrot") {
 			transform_set_rot(transform, value, transform._euler_y, transform._euler_z);
 		}
-		else if (tt == "yrot") {
+		else if (target == "yrot") {
 			transform_set_rot(transform, transform._euler_x, value, transform._euler_z);
 		}
-		else if (tt == "zrot") {
+		else if (target == "zrot") {
 			transform_set_rot(transform, transform._euler_x, transform._euler_y, value);
 		}
-		else if (tt == "qwrot") {
+		else if (target == "qwrot") {
 			transform.rot.w = value;
 		}
-		else if (tt == "qxrot") {
+		else if (target == "qxrot") {
 			transform.rot.x = value;
 		}
-		else if (tt == "qyrot") {
+		else if (target == "qyrot") {
 			transform.rot.y = value;
 		}
-		else if (tt == "qzrot") {
+		else if (target == "qzrot") {
 			transform.rot.z = value;
 		}
-		else if (tt == "xscl") {
+		else if (target == "xscl") {
 			transform.scale.x = value;
 		}
-		else if (tt == "yscl") {
+		else if (target == "yscl") {
 			transform.scale.y = value;
 		}
-		else if (tt == "zscl") {
+		else if (target == "zscl") {
 			transform.scale.z = value;
 		}
 		// Delta
-		else if (tt == "dxloc") {
+		else if (target == "dxloc") {
 			transform.dloc.x = value;
 		}
-		else if (tt == "dyloc") {
+		else if (target == "dyloc") {
 			transform.dloc.y = value;
 		}
-		else if (tt == "dzloc") {
+		else if (target == "dzloc") {
 			transform.dloc.z = value;
 		}
-		else if (tt == "dxrot") {
+		else if (target == "dxrot") {
 			transform._deuler_x = value;
 		}
-		else if (tt == "dyrot") {
+		else if (target == "dyrot") {
 			transform._deuler_y = value;
 		}
-		else if (tt == "dzrot") {
+		else if (target == "dzrot") {
 			transform._deuler_z = value;
 		}
-		else if (tt == "dqwrot") {
+		else if (target == "dqwrot") {
 			transform.drot.w = value;
 		}
-		else if (tt == "dqxrot") {
+		else if (target == "dqxrot") {
 			transform.drot.x = value;
 		}
-		else if (tt == "dqyrot") {
+		else if (target == "dqyrot") {
 			transform.drot.y = value;
 		}
-		else if (tt == "dqzrot") {
+		else if (target == "dqzrot") {
 			transform.drot.z = value;
 		}
-		else if (tt == "dxscl") {
+		else if (target == "dxscl") {
 			transform.dscale.x = value;
 		}
-		else if (tt == "dyscl") {
+		else if (target == "dyscl") {
 			transform.dscale.y = value;
 		}
-		else if (tt == "dzscl") {
+		else if (target == "dzscl") {
 			transform.dscale.z = value;
 		}
 	}
 }
 
-function anim_object_play(raw: anim_object_t, action = "", on_complete: ()=>void = null, blend_time = 0.0, speed = 1.0, loop = true) {
+function anim_object_play(raw: anim_object_t, action: string = "", on_complete: ()=>void = null, blend_time: f32 = 0.0, speed: f32 = 1.0, loop: bool = true) {
 	anim_play_super(raw.base, action, on_complete, blend_time, speed, loop);
 
 	if (raw.base.action == "" && raw.oactions[0] != null) {

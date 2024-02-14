@@ -27,42 +27,42 @@ function lz4_encode_bound(size: i32): i32 {
 }
 
 function lz4_encode(b: ArrayBuffer): ArrayBuffer {
-	let ibuf = new Uint8Array(b);
-	let ilen = ibuf.length;
+	let ibuf: Uint8Array = new Uint8Array(b);
+	let ilen: i32 = ibuf.length;
 	if (ilen >= 0x7e000000) {
 		krom_log("LZ4 range error");
 		return null;
 	}
 
 	// "The last match must start at least 12 bytes before end of block"
-	let last_match_pos = ilen - 12;
+	let last_match_pos: i32 = ilen - 12;
 
 	// "The last 5 bytes are always literals"
-	let last_literal_pos = ilen - 5;
+	let last_literal_pos: i32 = ilen - 5;
 
 	if (_lz4_hash_table == null) {
 		_lz4_hash_table = new Int32Array(65536);
 	}
-	for (let i = 0; i < _lz4_hash_table.length; ++i) {
+	for (let i: i32 = 0; i < _lz4_hash_table.length; ++i) {
 		_lz4_hash_table[i] = -65536;
 	}
 
-	let olen = lz4_encode_bound(ilen);
-	let obuf = new Uint8Array(olen);
-	let ipos = 0;
-	let opos = 0;
-	let anchor_pos = 0;
+	let olen: i32 = lz4_encode_bound(ilen);
+	let obuf: Uint8Array = new Uint8Array(olen);
+	let ipos: i32 = 0;
+	let opos: i32 = 0;
+	let anchor_pos: i32 = 0;
 
 	// Sequence-finding loop
 	while (true) {
-		let ref_pos = 0;
-		let moffset = 0;
-		let sequence = ibuf[ipos] << 8 | ibuf[ipos + 1] << 16 | ibuf[ipos + 2] << 24;
+		let ref_pos: i32 = 0;
+		let moffset: i32 = 0;
+		let sequence: i32 = ibuf[ipos] << 8 | ibuf[ipos + 1] << 16 | ibuf[ipos + 2] << 24;
 
 		// Match-finding loop
 		while (ipos <= last_match_pos) {
 			sequence = sequence >>> 8 | ibuf[ipos + 3] << 24;
-			let hash = (sequence * 0x9e37 & 0xffff) + (sequence * 0x79b1 >>> 16) & 0xffff;
+			let hash: i32 = (sequence * 0x9e37 & 0xffff) + (sequence * 0x79b1 >>> 16) & 0xffff;
 			ref_pos = _lz4_hash_table[hash];
 			_lz4_hash_table[hash] = ipos;
 			moffset = ipos - ref_pos;
@@ -83,19 +83,19 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 		}
 
 		// Match found
-		let llen = ipos - anchor_pos;
-		let mlen = ipos;
+		let llen: i32 = ipos - anchor_pos;
+		let mlen: i32 = ipos;
 		ipos += 4; ref_pos += 4;
 		while (ipos < last_literal_pos && ibuf[ipos] == ibuf[ref_pos]) {
 			ipos += 1; ref_pos += 1;
 		}
 		mlen = ipos - mlen;
-		let token = mlen < 19 ? mlen - 4 : 15;
+		let token: i32 = mlen < 19 ? mlen - 4 : 15;
 
 		// Write token, length of literals if needed
 		if (llen >= 15) {
 			obuf[opos++] = 0xf0 | token;
-			let l = llen - 15;
+			let l: i32 = llen - 15;
 			while (l >= 255) {
 				obuf[opos++] = 255;
 				l -= 255;
@@ -122,7 +122,7 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 
 		// Write length of match if needed
 		if (mlen >= 19) {
-			let l = mlen - 19;
+			let l: i32 = mlen - 19;
 			while (l >= 255) {
 				obuf[opos++] = 255;
 				l -= 255;
@@ -134,10 +134,10 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 	}
 
 	// Last sequence is literals only
-	let llen = ilen - anchor_pos;
+	let llen: i32 = ilen - anchor_pos;
 	if (llen >= 15) {
 		obuf[opos++] = 0xf0;
-		let l = llen - 15;
+		let l: i32 = llen - 15;
 		while (l >= 255) {
 			obuf[opos++] = 255;
 			l -= 255;
@@ -155,22 +155,22 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 }
 
 function lz4_decode(b: ArrayBuffer, olen: i32): ArrayBuffer {
-	let ibuf = new Uint8Array(b);
-	let ilen = ibuf.length;
-	let obuf = new Uint8Array(olen);
-	let ipos = 0;
-	let opos = 0;
+	let ibuf: Uint8Array = new Uint8Array(b);
+	let ilen: i32 = ibuf.length;
+	let obuf: Uint8Array = new Uint8Array(olen);
+	let ipos: i32 = 0;
+	let opos: i32 = 0;
 
 	while (ipos < ilen) {
-		let token = ibuf[ipos++];
+		let token: i32 = ibuf[ipos++];
 
 		// Literals
-		let clen = token >>> 4;
+		let clen: i32 = token >>> 4;
 
 		// Length of literals
 		if (clen != 0) {
 			if (clen == 15) {
-				let l = 0;
+				let l: i32 = 0;
 				while (true) {
 					l = ibuf[ipos++];
 					if (l != 255) {
@@ -182,7 +182,7 @@ function lz4_decode(b: ArrayBuffer, olen: i32): ArrayBuffer {
 			}
 
 			// Copy literals
-			let end = ipos + clen;
+			let end: i32 = ipos + clen;
 			while (ipos < end) {
 				obuf[opos++] = ibuf[ipos++];
 			}
@@ -192,7 +192,7 @@ function lz4_decode(b: ArrayBuffer, olen: i32): ArrayBuffer {
 		}
 
 		// Match
-		let moffset = ibuf[ipos + 0] | (ibuf[ipos + 1] << 8);
+		let moffset: i32 = ibuf[ipos + 0] | (ibuf[ipos + 1] << 8);
 		if (moffset == 0 || moffset > opos) {
 			return null;
 		}
@@ -201,7 +201,7 @@ function lz4_decode(b: ArrayBuffer, olen: i32): ArrayBuffer {
 		// Length of match
 		clen = (token & 0x0f) + 4;
 		if (clen == 19) {
-			let l = 0;
+			let l: i32 = 0;
 			while (true) {
 				l = ibuf[ipos++];
 				if (l != 255) {
@@ -213,8 +213,8 @@ function lz4_decode(b: ArrayBuffer, olen: i32): ArrayBuffer {
 		}
 
 		// Copy match
-		let mpos = opos - moffset;
-		let end = opos + clen;
+		let mpos: i32 = opos - moffset;
+		let end: i32 = opos + clen;
 		while (opos < end) {
 			obuf[opos++] = obuf[mpos++];
 		}

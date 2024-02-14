@@ -1,5 +1,3 @@
-/// <reference path='./vec4.ts'/>
-/// <reference path='./mat4.ts'/>
 
 type quat_t = {
 	x?: f32;
@@ -9,10 +7,10 @@ type quat_t = {
 	type?: string;
 };
 
-let _quat_vec = vec4_create();
-let _quat_mat = mat4_identity();
-let _quat_x_axis = vec4_x_axis();
-let _quat_y_axis = vec4_y_axis();
+let _quat_vec: vec4_t = vec4_create();
+let _quat_mat: mat4_t = mat4_identity();
+let _quat_x_axis: vec4_t = vec4_x_axis();
+let _quat_y_axis: vec4_t = vec4_y_axis();
 let _quat_sqrt2: f32 = 1.4142135623730951;
 
 function quat_create(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): quat_t {
@@ -50,17 +48,17 @@ function quat_from_mat(self: quat_t, m: mat4_t): quat_t {
 
 function quat_from_rot_mat(self: quat_t, m: mat4_t): quat_t {
 	// Assumes the upper 3x3 is a pure rotation matrix
-	let m11 = m.m[0];
-	let m12 = m.m[4];
-	let m13 = m.m[8];
-	let m21 = m.m[1];
-	let m22 = m.m[5];
-	let m23 = m.m[9];
-	let m31 = m.m[2];
-	let m32 = m.m[6];
-	let m33 = m.m[10];
-	let tr = m11 + m22 + m33;
-	let s = 0.0;
+	let m11: f32 = m.m[0];
+	let m12: f32 = m.m[4];
+	let m13: f32 = m.m[8];
+	let m21: f32 = m.m[1];
+	let m22: f32 = m.m[5];
+	let m23: f32 = m.m[9];
+	let m31: f32 = m.m[2];
+	let m32: f32 = m.m[6];
+	let m33: f32 = m.m[10];
+	let tr: f32 = m11 + m22 + m33;
+	let s: f32 = 0.0;
 
 	if (tr > 0) {
 		s = 0.5 / Math.sqrt(tr + 1.0);
@@ -98,14 +96,14 @@ function quat_mult(self: quat_t, q: quat_t): quat_t {
 }
 
 function quat_mult_quats(self: quat_t, q1: quat_t, q2: quat_t): quat_t {
-	let q1x = q1.x;
-	let q1y = q1.y;
-	let q1z = q1.z;
-	let q1w = q1.w;
-	let q2x = q2.x;
-	let q2y = q2.y;
-	let q2z = q2.z;
-	let q2w = q2.w;
+	let q1x: f32 = q1.x;
+	let q1y: f32 = q1.y;
+	let q1z: f32 = q1.z;
+	let q1w: f32 = q1.w;
+	let q2x: f32 = q2.x;
+	let q2y: f32 = q2.y;
+	let q2z: f32 = q2.z;
+	let q2w: f32 = q2.w;
 	self.x = q1x * q2w + q1w * q2x + q1y * q2z - q1z * q2y;
 	self.y = q1w * q2y - q1x * q2z + q1y * q2w + q1z * q2x;
 	self.z = q1w * q2z + q1x * q2y - q1y * q2x + q1z * q2w;
@@ -114,7 +112,7 @@ function quat_mult_quats(self: quat_t, q1: quat_t, q2: quat_t): quat_t {
 }
 
 function quat_normalize(self: quat_t): quat_t {
-	let l = Math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w);
+	let l: f32 = Math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w);
 	if (l == 0.0) {
 		self.x = 0;
 		self.y = 0;
@@ -140,24 +138,24 @@ function quat_set_from(self: quat_t, q: quat_t): quat_t {
 }
 
 function quat_get_euler(self: quat_t): vec4_t {
-	let a = -2 * (self.x * self.z - self.w * self.y);
-	let b =  self.w *  self.w + self.x * self.x - self.y * self.y - self.z * self.z;
-	let c =  2 * (self.x * self.y + self.w * self.z);
-	let d = -2 * (self.y * self.z - self.w * self.x);
-	let e =  self.w *  self.w - self.x * self.x + self.y * self.y - self.z * self.z;
+	let a: f32 = -2 * (self.x * self.z - self.w * self.y);
+	let b: f32 =  self.w *  self.w + self.x * self.x - self.y * self.y - self.z * self.z;
+	let c: f32 =  2 * (self.x * self.y + self.w * self.z);
+	let d: f32 = -2 * (self.y * self.z - self.w * self.x);
+	let e: f32 =  self.w *  self.w - self.x * self.x + self.y * self.y - self.z * self.z;
 	return vec4_create(Math.atan2(d, e), Math.atan2(a, b), Math.asin(c));
 }
 
 function quat_from_euler(self: quat_t, x: f32, y: f32, z: f32): quat_t {
-	let f = x / 2;
-	let c1 = Math.cos(f);
-	let s1 = Math.sin(f);
+	let f: f32 = x / 2;
+	let c1: f32 = Math.cos(f);
+	let s1: f32 = Math.sin(f);
 	f = y / 2;
-	let c2 = Math.cos(f);
-	let s2 = Math.sin(f);
+	let c2: f32 = Math.cos(f);
+	let s2: f32 = Math.sin(f);
 	f = z / 2;
-	let c3 = Math.cos(f);
-	let s3 = Math.sin(f);
+	let c3: f32 = Math.cos(f);
+	let s3: f32 = Math.sin(f);
 	// YZX
 	self.x = s1 * c2 * c3 + c1 * s2 * s3;
 	self.y = c1 * s2 * c3 + s1 * c2 * s3;
@@ -167,10 +165,10 @@ function quat_from_euler(self: quat_t, x: f32, y: f32, z: f32): quat_t {
 }
 
 function quat_lerp(self: quat_t, from: quat_t, to: quat_t, s: f32): quat_t {
-	let fromx = from.x;
-	let fromy = from.y;
-	let fromz = from.z;
-	let fromw = from.w;
+	let fromx: f32 = from.x;
+	let fromy: f32 = from.y;
+	let fromz: f32 = from.z;
+	let fromw: f32 = from.w;
 	let dot: f32 = quat_dot(from, to);
 	if (dot < 0.0) {
 		fromx = -fromx;
@@ -192,8 +190,8 @@ function quat_dot(self: quat_t, q: quat_t): f32 {
 function quat_from_to(self: quat_t, v1: vec4_t, v2: vec4_t): quat_t {
 	// Rotation formed by direction vectors
 	// v1 and v2 should be normalized first
-	let a = _quat_vec;
-	let dot = vec4_dot(v1, v2);
+	let a: vec4_t = _quat_vec;
+	let dot: f32 = vec4_dot(v1, v2);
 	if (dot < -0.999999) {
 		vec4_cross_vecs(a, _quat_x_axis, v1);
 		if (vec4_len(a) < 0.000001) {

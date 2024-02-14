@@ -15,7 +15,7 @@ type object_t = {
 	ext_type?: string;
 };
 
-let _object_uid_counter = 0;
+let _object_uid_counter: i32 = 0;
 
 function object_create(is_empty = true): object_t {
 	let raw: object_t = {};
@@ -32,7 +32,7 @@ function object_create(is_empty = true): object_t {
 	return raw;
 }
 
-function object_set_parent(raw: object_t, parent_object: object_t, parent_inv = false, keep_transform = false) {
+function object_set_parent(raw: object_t, parent_object: object_t, parent_inv: bool = false, keep_transform: bool = false) {
 	if (parent_object == raw || parent_object == raw.parent) {
 		return;
 	}
@@ -98,7 +98,7 @@ function object_get_child(raw: object_t, name: string): object_t {
 	}
 	else {
 		for (let c of raw.children) {
-			let r = object_get_child(c, name);
+			let r: object_t = object_get_child(c, name);
 			if (r != null) {
 				return r;
 			}
@@ -107,12 +107,12 @@ function object_get_child(raw: object_t, name: string): object_t {
 	return null;
 }
 
-function object_get_children(raw: object_t, recursive = false): object_t[] {
+function object_get_children(raw: object_t, recursive: bool = false): object_t[] {
 	if (!recursive) {
 		return raw.children;
 	}
 
-	let ret_children = raw.children.slice();
+	let ret_children: object_t[] = raw.children.slice();
 	for (let child of raw.children) {
 		ret_children = ret_children.concat(object_get_children(child, recursive));
 	}
@@ -135,7 +135,7 @@ function object_setup_animation_super(raw: object_t, oactions: scene_t[] = null)
 	///if arm_skin
 	if (raw.raw.parent_bone != null) {
 		app_notify_on_init(function () {
-			let banim = object_get_parent_armature(raw, raw.parent.name);
+			let banim: anim_bone_t = object_get_parent_armature(raw, raw.parent.name);
 			if (banim != null) {
 				anim_bone_add_bone_child(banim, raw.raw.parent_bone, raw);
 			}
