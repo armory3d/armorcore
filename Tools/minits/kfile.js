@@ -5,7 +5,7 @@ project.setDebugDir('Deployment');
 
 project.addIncludeDir('../../Sources');
 project.addFile('../../Sources/iron/*.c');
-project.addFile('main.c');
+project.addFile('test.c');
 
 project.flatten();
 resolve(project);

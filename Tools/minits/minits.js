@@ -2,20 +2,17 @@
 // minits transpiler
 // ../../Kinc/make --kfile minits.js
 // js:
-// ../../Kinc/make --kfile main.js
+// ../../Kinc/make --kfile test.js
 // c:
 // ../../Kinc/make --run
 
 const fs = require("fs");
 
-let flags = {};
-// flags.target = "js";
-flags.target = "c";
-flags.remove_comments = true;
-flags.js_remove_types = true;
-flags.input = "./main.ts";
-// flags.output = "./main.js";
-flags.output = "./main.c";
+let flags = globalThis.flags;
+if (flags == null) {
+	flags.minits_input = "./test.ts";
+	flags.minits_output = "./test.c";
+}
 
 // let ts_header = `
 // declare type i8 = number;
@@ -36,22 +33,27 @@ function krom_log(s) { console.log(s); }
 function array_f32_push(ar, e) { ar.push(e); }
 `;
 
-let js_footer = `\nkickstart();\n`;
+// let js_footer = `\nkickstart();\n`;
+let js_footer = `\n`;
 
 let c_header = `
 #include <kinc/log.h>
 #include <iron/iron_string.h>
 #include <iron/iron_array.h>
 #define krom_log(str) kinc_log(KINC_LOG_LEVEL_INFO, "%f", str)
-#define i32 int
+#define i32 int32_t
 #define f32 float
+#define u8 uint8_t
 #define ARGV char *
 `;
 
 // Parsing
-let specials = [":", ";", ",", "(", ")", "[", "]", "{", "}"];
+let specials = [":", ";", ",", "(", ")", "[", "]", "{", "}", "<", ">", "!"];
 let is_comment = false;
 let is_string = false;
+let is_func_declaration = false;
+let new_line = false;
+let tabs = 0;
 let pos = 0;
 let file = "";
 let tokens = [];
@@ -62,6 +64,10 @@ let is_for_loop_header = false;
 // Parsing
 function is_alpha_numeric(code) {
 	return (code > 47 && code < 58) || // 0-9
+		   (code == 45) 			|| // -
+		   (code == 43) 			|| // +
+		   (code == 95) 			|| // _
+		   (code == 46) 			|| // .
 		   (code > 64 && code < 91) || // A-Z
 		   (code > 96 && code < 123);  // a-z
 }
@@ -81,7 +87,6 @@ function read_token() {
 	let token = "";
 
 	while (pos < file.length) {
-
 		let c = file.charAt(pos);
 
 		// Comment start
@@ -96,6 +101,7 @@ function read_token() {
 			// Comment end
 			if (c == "\n") {
 				is_comment = false;
+				token = null; // Remove comments
 				break;
 			}
 
@@ -105,7 +111,19 @@ function read_token() {
 
 		// String start / end
 		if (c == "\"") {
-			is_string = !is_string;
+			// Escaped \"
+			let is_escaped = token == "\"\\";
+
+			if (!is_escaped) {
+				is_string = !is_string;
+			}
+
+			// Token end - string end
+			if (!is_string) {
+				token += c;
+				pos++;
+				break;
+			}
 		}
 
 		if (is_string) {
@@ -149,7 +167,10 @@ function parse() {
 
 	while (true) {
 		let token = read_token();
-		if (token == "") {
+		if (token == null) { // Throw away this token
+			continue;
+		}
+		if (token == "") { // No more tokens
 			break;
 		}
 		tokens.push(token);
@@ -166,56 +187,147 @@ function get_token(i) {
 	return "";
 }
 
-function write_js() {
-	let out = "";
-	let tabs = 0;
+function write_js(stream) {
+	let is_let_declaration = false;
+
+	stream.write(js_header);
 
 	for (let i = 0; i < tokens.length; ++i) {
 		let token = get_token(i);
 		let next = get_token(i + 1);
+		let next_next = get_token(i + 2);
 
 		// Skip comment tokens
-		if (flags.remove_comments) {
-			if (token.startsWith("//")) {
-				continue;
-			}
+		if (token.startsWith("//")) {
+			continue;
 		}
 
-		// Skip "type = {}" and ": type" info
-		if (flags.js_remove_types) {
-			if (token == ":") {
-				while (true) {
-					i++;
-					let token = get_token(i);
+		if (token == "let") {
+			is_let_declaration = true;
+		}
+		else if (token == "function") {
+			is_func_declaration = true;
+		}
 
-					// Type token is over
-					if (token == "=" ||
-						token == ";" ||
-						token == ")" ||
-						token == "{") {
-						i--;
-						break;
-					}
-				}
+		if (is_let_declaration && (token == "=" || token == ";")) {
+			is_let_declaration = false;
+		}
+		else if (is_func_declaration && token == "{") {
+			is_func_declaration = false;
+		}
 
-				// Skip writing ":"
-				continue;
-			}
+		let is_declaration = is_let_declaration || is_func_declaration;
 
-			if (token == "type") {
-				while (true) {
-					i++;
-					let token = get_token(i);
-					// type struct ending
-					if (token == "}") {
+		// Skip ": type" info
+		if (token == ":" && is_declaration) {
+			while (true) {
+				i++;
+				let token = get_token(i);
+				let next = get_token(i + 1);
+
+				// Skip Map "<a,b>" info
+				if (token == "<") {
+					while (true) {
 						i++;
-						break;
+						let token = get_token(i);
+						// Map block ending
+						if (token == ">") {
+							break;
+						}
 					}
+					continue;
 				}
 
-				// Skip writing "type"
+				// Type token is over
+				if (is_let_declaration) {
+					if (token == "=" ||
+						token == ";") {
+							i--;
+							break;
+					}
+				}
+				else if (is_func_declaration) {
+					if (token == "," ||
+						(token == ")" &&
+							next != "=>" && next != "[") || // ()=>, (()=>x)[]
+						token == "{" ||
+						token == "=") {
+							i--;
+							break;
+						}
+				}
+			}
+
+			// Skip writing ":"
+			continue;
+		}
+
+		// Skip "type = {};" and "type = x;" info
+		if (token == "type" && next_next == "=") {
+
+			// "type = x;"
+			let next_next_next_next = get_token(i + 4);
+			if (next_next_next_next == ";") {
+				i += 4;
 				continue;
 			}
+
+			// "type = {};"
+			while (true) {
+				i++;
+				let token = get_token(i);
+				// type struct ending
+				if (token == "}") {
+					i++;
+					break;
+				}
+			}
+
+			// Skip writing "type"
+			continue;
+		}
+
+		// Turn enum {} into let {} structure
+		if (token == "enum") {
+			stream.write("let " + next + "={");
+			i++;
+			i++;
+
+			let counter = 0;
+			while (true) {
+				i++; // Item name
+				let token = get_token(i);
+				stream.write(token);
+
+				if (token == "}") { // Enum end
+					stream.write(";");
+					stream.write("\n");
+					break;
+				}
+
+				i++; // = or ,
+				token = get_token(i);
+
+				if (token == "=") {
+					stream.write(":");
+
+					i++; // n
+					token = get_token(i);
+					stream.write(token);
+
+					i++; // ,
+				}
+				else { // Enum with no numbers
+					stream.write(":");
+
+					stream.write(counter + "");
+					counter++;
+				}
+
+				stream.write(",");
+			}
+
+			continue;
 		}
 
 		// Entering for loop header
@@ -237,27 +349,32 @@ function write_js() {
 		}
 
 		// New line, add tabs
-		if (out.charAt(out.length - 1) == "\n") {
+		if (new_line) {
 			for (let i = 0; i < tabs; ++i) {
-				out += "\t";
+				stream.write("\t");
 			}
 		}
 
 		// Write token
-		out += token;
+		stream.write(token);
 
 		// Add space to separate keywords
-		let space =
-			token == "let" ||
+		if (token == "let" ||
+			(token == "else" && next != "{") || // else if
 			token == "function" ||
-			token == "return" ||
-			token == "type";
-		if (space) {
-			out += " ";
+			// token == "type" ||
+			token == "new" || //// tmp
+			token == "of" || //// tmp
+			token == "in" || //// tmp
+			token == "typeof" || //// tmp
+			next == "of" || //// tmp
+			next == "in" || //// tmp
+			token == "return") {
+			stream.write(" ");
 		}
 
 		// Insert new line after each ";", but skip "for (;;)"
-		let new_line = token == ";" && !is_for_loop_header;
+		new_line = token == ";" && !is_for_loop_header;
 
 		// Insert new line after each "{", but skip "{}"
 		if (token == "{" && next != "}") {
@@ -270,14 +387,14 @@ function write_js() {
 		}
 
 		if (new_line) {
-			out += "\n";
+			stream.write("\n");
 		}
 	}
 
-	fs.writeFileSync(flags.output, js_header + out + js_footer);
+	stream.write(js_footer);
 }
 
-function get_function_return_type(i) {
+function c_get_function_return_type(i) {
 	while (true) {
 		// Continue until ")" is found
 		if (get_token(i) == ")") {
@@ -294,15 +411,13 @@ function get_function_return_type(i) {
 	}
 }
 
-function write_c() {
-	let out = "";
-	let tabs = 0;
-
-	let is_function_header = false;
+function write_c(stream) {
 	let is_struct = false;
 	let struct_name = "";
 	let struct_list = []; // Pass with &
 	let pointer_list = []; // Access with ->
+
+	stream.write(c_header);
 
 	for (let i = 0; i < tokens.length; ++i) {
 		let token = get_token(i);
@@ -311,16 +426,14 @@ function write_c() {
 		let next_next_next = get_token(i + 3);
 
 		// Skip comment tokens
-		if (flags.remove_comments) {
-			if (token.startsWith("//")) {
-				continue;
-			}
+		if (token.startsWith("//")) {
+			continue;
 		}
 
 		// Turn "type = {}" into "typedef struct {}"
 		if (token == "type") {
 			token = "typedef struct";
-			out += token;
+			stream.write(token);
 
 			// Read type name
 			i++;
@@ -328,7 +441,7 @@ function write_c() {
 			// Strip _t
 			struct_name = token.substring(0, token.length - 2);
 			// Write struct name
-			out += " " + struct_name;
+			stream.write(" " + struct_name);
 
 			// Skip =
 			i++;
@@ -345,10 +458,9 @@ function write_c() {
 				is_struct = false;
 
 				// Append struct name after "}"
-				out += "}" + struct_name + "_t;\n";
+				stream.write("}" + struct_name + "_t;\n");
 
-				// "}" parsed
-				i++;
+				i++; // "}" parsed
 				tabs--;
 				continue;
 			}
@@ -373,28 +485,34 @@ function write_c() {
 		}
 
 		// New line, add tabs
-		if (out.charAt(out.length - 1) == "\n") {
+		if (new_line) {
 			for (let i = 0; i < tabs; ++i) {
-				out += "\t";
+				stream.write("\t");
 			}
+			new_line = false;
 		}
 
 		// Function declaration start
 		if (token == "function") {
-			is_function_header = true;
+			is_func_declaration = true;
 
 			// Replace "function" with actual function return type
-			token = get_function_return_type(i) + " ";
+			token = c_get_function_return_type(i) + " ";
+
+			// Turn string type into string_t
+			if (token == "string ") {
+				token = "string_t ";
+			}
 		}
 
 		// Function declaration end
 		if (token == ")") {
-			is_function_header = false;
+			is_func_declaration = false;
 		}
 
 		// Skip function return type, as it's already written
-		if (token == ")" && next == ":") {
-			out += token;
+		if (is_func_declaration && token == ")" && next == ":") {
+			stream.write(token);
 			i++; // ":" token
 			i++; // "i32" token
 			continue;
@@ -402,12 +520,11 @@ function write_c() {
 
 		// Variable type
 		if (next == ":") {
-
 			let is_array = false;
 			if (next_next_next == "[") {
 				is_array = true;
 				// Map arrays to iron arrays
-				out += "array_";
+				stream.write("array_");
 			}
 
 			// Turn string type into string_t
@@ -415,31 +532,42 @@ function write_c() {
 				next_next = "string_t";
 			}
 
+			// Turn any type into void *
+			if (next_next == "any") {
+				next_next = "void *";
+			}
+
 			// This variable is a structure
 			if (next_next != "i32" &&
-				next_next != "f32") {
+				next_next != "f32" &&
+				next_next != "u8") {
 				struct_list.push(token);
 			}
 
 			// Write variable type
-			out += next_next;
+			stream.write(next_next);
 
 			if (is_array) {
 				// Map arrays to iron arrays
-				out += "_t";
+				stream.write("_t");
 			}
 
-			out += " ";
+			stream.write(" ");
 
 			// Structure passed as a param, take a pointer
-			if (is_function_header &&
+			if (is_func_declaration &&
 				struct_list.indexOf(token) > -1) {
-				out += "*";
+				stream.write("*");
 				pointer_list.push(token);
 			}
 
+			// val?: i32
+			if (token.endsWith("?")) {
+				token = token.substring(0, token.length - 1);
+			}
+
 			// Write variable name
-			out += token;
+			stream.write(token);
 
 			i++; // :
 			i++; // i32
@@ -447,12 +575,13 @@ function write_c() {
 				i++; // [
 				i++; // ]
 			}
+
 			continue;
 		}
 
 		// Turn ar = [] into ar = {}
 		if (token == "[" && next == "]") {
-			out += "{}";
+			stream.write("{}");
 			i++; // ]
 			continue;
 		}
@@ -464,8 +593,8 @@ function write_c() {
 
 		// Structure passed into a function, add &
 		if (struct_list.indexOf(token) > -1) {
-			// if (!is_function_header) {
-				out += "&";
+			// if (!is_func_declaration) {
+				stream.write("&");
 			// }
 		}
 
@@ -479,17 +608,17 @@ function write_c() {
 		}
 
 		// Write token
-		out += token;
+		stream.write(token);
 
 		// Add space to separate keywords
 		let space =
 			token == "return";
 		if (space) {
-			out += " ";
+			stream.write(" ");
 		}
 
 		// Insert new line after each ";", but skip "for (;;)"
-		let new_line = token == ";" && !is_for_loop_header;
+		new_line = token == ";" && !is_for_loop_header;
 
 		// Insert new line after each "{", but skip "{}"
 		if (token == "{" && next != "}") {
@@ -502,27 +631,29 @@ function write_c() {
 		}
 
 		if (new_line) {
-			out += "\n";
+			stream.write("\n");
 		}
 	}
-
-	fs.writeFileSync(flags.output, c_header + out);
 }
 
 function kickstart() {
-	if (!fs.existsSync(flags.input)) {
+	if (!fs.existsSync(flags.minits_input)) {
 		return;
 	}
 
-	file = fs.readFileSync(flags.input).toString();
+	file = fs.readFileSync(flags.minits_input).toString();
 	tokens = parse(file);
 
-	if (flags.target == "js") {
-		write_js();
+	let stream = fs.createWriteStream(flags.minits_output);
+
+	if (flags.minits_output.endsWith(".js")) {
+		write_js(stream);
 	}
-	else if (flags.target == "c") {
-		write_c();
+	else if (flags.minits_output.endsWith(".c")) {
+		write_c(stream);
 	}
+
+	stream.close();
 }
 
 kickstart();
