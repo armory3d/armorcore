@@ -185,8 +185,8 @@ function anim_update_track(raw: anim_raw_t, anim: anim_t) {
 			if (raw.frame_index == anim.marker_frames[i]) {
 				let ar: (()=>void)[] = raw.marker_events.get(anim.marker_names[i]);
 				if (ar != null) {
-					for (let f of ar) {
-						f();
+					for (let i: i32; i < ar.length; ++i) {
+						ar[i]();
 					}
 				}
 			}

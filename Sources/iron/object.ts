@@ -97,7 +97,8 @@ function object_get_child(raw: object_t, name: string): object_t {
 		return raw;
 	}
 	else {
-		for (let c of raw.children) {
+		for (let i: i32 = 0; i < raw.children.length; ++i) {
+			let c: object_t = raw.children[i];
 			let r: object_t = object_get_child(c, name);
 			if (r != null) {
 				return r;
@@ -113,15 +114,17 @@ function object_get_children(raw: object_t, recursive: bool = false): object_t[]
 	}
 
 	let ret_children: object_t[] = raw.children.slice();
-	for (let child of raw.children) {
-		ret_children = ret_children.concat(object_get_children(child, recursive));
+	for (let i: i32 = 0; i < raw.children.length; ++i) {
+		let c: object_t = raw.children[i];
+		ret_children = ret_children.concat(object_get_children(c, recursive));
 	}
 	return ret_children;
 }
 
 ///if arm_skin
 function object_get_parent_armature(raw: object_t, name: string): anim_bone_t {
-	for (let a of scene_animations) {
+	for (let i: i32 = 0; i < scene_animations.length; ++i) {
+		let a: anim_raw_t = scene_animations[i];
 		if (a.armature != null && a.armature.name == name) {
 			return a.ext;
 		}

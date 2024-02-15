@@ -51,13 +51,15 @@ function mesh_object_set_data(raw: mesh_object_t, data: mesh_data_t) {
 function mesh_object_remove(raw: mesh_object_t) {
 	///if arm_particles
 	if (raw.particle_children != null) {
-		for (let c of raw.particle_children) {
+		for (let i: i32 = 0; i < raw.particle_children.length; ++i) {
+			let c: mesh_object_t = raw.particle_children[i];
 			mesh_object_remove(c);
 		}
 		raw.particle_children = null;
 	}
 	if (raw.particle_systems != null) {
-		for (let psys of raw.particle_systems) {
+		for (let i: i32 = 0; i < raw.particle_systems.length; ++i) {
+			let psys: particle_sys_t = raw.particle_systems[i];
 			particle_sys_remove(psys);
 		}
 		raw.particle_systems = null;
@@ -163,11 +165,12 @@ function mesh_object_skip_context(raw: mesh_object_t, context: string, mat: mate
 }
 
 function mesh_object_get_contexts(raw: mesh_object_t, context: string, materials: material_data_t[], material_contexts: material_context_t[], shader_contexts: shader_context_t[]) {
-	for (let mat of materials) {
+	for (let i = 0; i < materials.length; ++i) {
+		let mat: material_data_t = materials[i];
 		let found: bool = false;
-		for (let i: i32 = 0; i < mat.contexts.length; ++i) {
-			if (mat.contexts[i].name.substring(0, context.length) == context) {
-				material_contexts.push(mat._contexts[i]);
+		for (let j: i32 = 0; j < mat.contexts.length; ++j) {
+			if (mat.contexts[j].name.substring(0, context.length) == context) {
+				material_contexts.push(mat._contexts[j]);
 				shader_contexts.push(shader_data_get_context(mat._shader, context));
 				found = true;
 				break;
@@ -199,7 +202,8 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 	if (raw.particle_systems != null && mesh_context) {
 		if (raw.particle_children == null) {
 			raw.particle_children = [];
-			for (let psys of raw.particle_systems) {
+			for (let i: i32 = 0; i < raw.particle_systems.length; ++i) {
+				let psys: particle_sys_t = raw.particle_systems[i];
 				// let c: mesh_object_t = scene_get_child(psys.data.raw.instance_object);
 				scene_spawn_object(psys.data.instance_object, null, function (o: object_t) {
 					if (o != null) {
@@ -288,7 +292,8 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 }
 
 function mesh_object_valid_context(raw: mesh_object_t, mats: material_data_t[], context: string): bool {
-	for (let mat of mats) {
+	for (let i: i32 = 0; i < mats.length; ++i) {
+		let mat: material_data_t = mats[i];
 		if (material_data_get_context(mat, context) != null) {
 			return true;
 		}

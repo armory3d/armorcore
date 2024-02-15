@@ -35,7 +35,9 @@ function mesh_data_create(raw: mesh_data_t, done: (md: mesh_data_t)=>void) {
 	// Mesh data
 	let indices: Uint32Array[] = [];
 	let material_indices: i32[] = [];
-	for (let ind of raw.index_arrays) {
+
+	for (let i: i32 = 0; i < raw.index_arrays.length; ++i) {
+		let ind: index_array_t = raw.index_arrays[i];
 		indices.push(ind.values);
 		material_indices.push(ind.material);
 	}
@@ -176,7 +178,8 @@ function mesh_data_setup_inst(raw: mesh_data_t, data: Float32Array, inst_type: i
 
 function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_t {
 	let key: string = "";
-	for (let e of vs) {
+	for (let i: i32 = 0; i < vs.length; ++i) {
+		let e: vertex_element_t = vs[i];
 		key += e.name;
 	}
 	let vb: vertex_buffer_t = raw._vertex_buffer_map.get(key);
@@ -231,13 +234,16 @@ function mesh_data_build(raw: mesh_data_t) {
 	g4_vertex_buffer_unlock(raw._vertex_buffer);
 
 	let struct_str: string = "";
-	for (let e of raw._struct.elements) {
+	for (let i: i32 = 0; i < raw._struct.elements.length; ++i) {
+		let e: kinc_vertex_elem_t = raw._struct.elements[i];
 		struct_str += e.name;
 	}
 	raw._vertex_buffer_map.set(struct_str, raw._vertex_buffer);
 
 	raw._index_buffers = [];
-	for (let id of raw._indices) {
+
+	for (let i: i32 = 0; i < raw._indices.length; ++i) {
+		let id: Uint32Array = raw._indices[i];
 		if (id.length == 0) {
 			continue;
 		}
@@ -262,7 +268,8 @@ function mesh_data_build(raw: mesh_data_t) {
 
 ///if arm_skin
 function mesh_data_add_armature(raw: mesh_data_t, armature: armature_t) {
-	for (let a of armature.actions) {
+	for (let i: i32 = 0; i < armature.actions.length; ++i) {
+		let a: armature_action_t = armature.actions[i];
 		mesh_data_add_action(raw, a.bones, a.name);
 	}
 }
@@ -281,8 +288,10 @@ function mesh_data_add_action(raw: mesh_data_t, bones: obj_t[], name: string) {
 	let action_bones: obj_t[] = [];
 
 	// Set bone references
-	for (let s of raw.skin.bone_ref_array) {
-		for (let b of bones) {
+	for (let i: i32 = 0; i < raw.skin.bone_ref_array.length; ++i) {
+		let s: string = raw.skin.bone_ref_array[i];
+		for (let j: i32 = 0; j < bones.length; ++j) {
+			let b: obj_t = bones[j];
 			if (b.name == s) {
 				action_bones.push(b);
 			}
@@ -291,7 +300,8 @@ function mesh_data_add_action(raw: mesh_data_t, bones: obj_t[], name: string) {
 	raw._actions.set(name, action_bones);
 
 	let action_mats: mat4_t[] = [];
-	for (let b of action_bones) {
+	for (let i: i32 = 0; i < action_bones.length; ++i) {
+		let b: obj_t = action_bones[i];
 		action_mats.push(mat4_from_f32_array(b.transform.values));
 	}
 	raw._mats.set(name, action_mats);
@@ -299,7 +309,8 @@ function mesh_data_add_action(raw: mesh_data_t, bones: obj_t[], name: string) {
 
 function mesh_data_init_skeleton_transforms(raw: mesh_data_t, transforms_inv: Float32Array[]) {
 	raw._skeleton_transforms_inv = [];
-	for (let t of transforms_inv) {
+	for (let i: i32 = 0; i < transforms_inv.length; ++i) {
+		let t: Float32Array = transforms_inv[i];
 		let mi = mat4_from_f32_array(t);
 		raw._skeleton_transforms_inv.push(mi);
 	}
@@ -340,12 +351,15 @@ function mesh_data_calculate_aabb(raw: mesh_data_t): vec4_t {
 }
 
 function mesh_data_delete(raw: mesh_data_t) {
-	for (let buf of raw._vertex_buffer_map.values()) {
+	let buffer_map: vertex_buffer_t[] = Array.from(raw._vertex_buffer_map.values());
+	for (let i: i32 = 0; i < buffer_map.length; ++i) {
+		let buf = buffer_map[i];
 		if (buf != null) {
 			g4_vertex_buffer_delete(buf);
 		}
 	}
-	for (let buf of raw._index_buffers) {
+	for (let i: i32 = 0; i < raw._index_buffers.length; ++i) {
+		let buf: index_buffer_t = raw._index_buffers[i];
 		g4_index_buffer_delete(buf);
 	}
 }

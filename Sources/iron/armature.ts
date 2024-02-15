@@ -27,8 +27,10 @@ function armature_create(uid: i32, name: string, actions: scene_t[]): armature_t
 	raw.uid = uid;
 	raw.name = name;
 
-	for (let a of actions) {
-		for (let o of a.objects) {
+	for (let i: i32 = 0; i < actions.length; ++i) {
+		let a: scene_t = actions[i];
+		for (let i: i32 = 0; i < a.objects.length; ++i) {
+			let o: obj_t = a.objects[i];
 			armature_set_parents(o);
 		}
 		let bones: obj_t[] = [];
@@ -45,19 +47,22 @@ function armature_init_mats(raw: armature_t) {
 	}
 	raw.mats_ready = true;
 
-	for (let a of raw.actions) {
+	for (let i: i32 = 0; i < raw.actions.length; ++i) {
+		let a: armature_action_t = raw.actions[i];
 		if (a.mats != null) {
 			continue;
 		}
 		a.mats = [];
-		for (let b of a.bones) {
+		for (let i: i32 = 0; i < a.bones.length; ++i) {
+			let b: obj_t = a.bones[i];
 			a.mats.push(mat4_from_f32_array(b.transform.values));
 		}
 	}
 }
 
 function armature_get_action(raw: armature_t, name: string): armature_action_t {
-	for (let a of raw.actions) {
+	for (let i: i32 = 0; i < raw.actions.length; ++i) {
+		let a: armature_action_t = raw.actions[i];
 		if (a.name == name) {
 			return a;
 		}
@@ -69,7 +74,9 @@ function armature_set_parents(object: obj_t) {
 	if (object.children == null) {
 		return;
 	}
-	for (let o of object.children) {
+
+	for (let i: i32 = 0; i < object.children.length; ++i) {
+		let o: obj_t = object.children[i];
 		o.parent = object;
 		armature_set_parents(o);
 	}

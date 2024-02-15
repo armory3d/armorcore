@@ -32,7 +32,9 @@ function tween_to(anim: tween_anim_t): tween_anim_t {
 		anim._z = [];
 		anim._w = [];
 		anim._normalize = [];
-		for (let p of anim.props.keys()) {
+		let keys: any[] = anim.props.keys();
+		for (let i: i32 = 0; i < keys.length; ++i) {
+			let p: any = keys[i];
 			let val: any = anim.target[p];
 			if (val.type == "vec4_t" || val.type == "quat_t") {
 				anim._comps.push(4);

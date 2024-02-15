@@ -86,7 +86,8 @@ function render_path_render_frame() {
 	render_path_current_d = 1;
 	_render_path_meshes_sorted = false;
 
-	for (let l of scene_lights) {
+	for (let i: i32 = 0; i < scene_lights.length; ++i) {
+		let l: light_object_t = scene_lights[i];
 		if (l.base.visible) {
 			light_object_build_mat(l, scene_camera);
 		}
@@ -120,7 +121,8 @@ function render_path_set_target(target: string, additional: string[] = null) {
 		let additional_images: image_t[] = null;
 		if (additional != null) {
 			additional_images = [];
-			for (let s of additional) {
+			for (let i: i32 = 0; i < additional.length; ++i) {
+				let s: string = additional[i];
 				let t: render_target_t = render_path_render_targets.get(s);
 				additional_images.push(t.image);
 			}
@@ -223,7 +225,8 @@ function render_path_submit_draw(context: string) {
 		let cam_x: f32 = transform_world_x(camera.base.transform);
 		let cam_y: f32 = transform_world_y(camera.base.transform);
 		let cam_z: f32 = transform_world_z(camera.base.transform);
-		for (let mesh of meshes) {
+		for (let i: i32 = 0; i < meshes.length; ++i) {
+			let mesh: mesh_object_t = meshes[i];
 			mesh_object_compute_camera_dist(mesh, cam_x, cam_y, cam_z);
 		}
 		if (_render_path_draw_order == draw_order_t.SHADER) {
@@ -235,8 +238,9 @@ function render_path_submit_draw(context: string) {
 		_render_path_meshes_sorted = true;
 	}
 
-	for (let m of meshes) {
-		mesh_object_render(m, context, _render_path_bind_params);
+	for (let i: i32 = 0; i < meshes.length; ++i) {
+		let mesh: mesh_object_t = meshes[i];
+		mesh_object_render(mesh, context, _render_path_bind_params);
 	}
 }
 
@@ -314,7 +318,9 @@ function render_path_unload_shader(handle: string) {
 }
 
 function render_path_unload() {
-	for (let rt of render_path_render_targets.values()) {
+	let rtargets: render_target_t[] = Array.from(render_path_render_targets.values());
+	for (let i: i32 = 0; i < rtargets.length; ++i) {
+		let rt: render_target_t = rtargets[i];
 		render_target_unload(rt);
 	}
 }
@@ -325,13 +331,16 @@ function render_path_resize() {
 	}
 
 	// Make sure depth buffer is attached to single target only and gets released once
-	for (let rt of render_path_render_targets.values()) {
+	let rtargets: render_target_t[] = Array.from(render_path_render_targets.values());
+	for (let i: i32 = 0; i < rtargets.length; ++i) {
+		let rt: render_target_t = rtargets[i];
 		if (rt == null || rt.width > 0 || rt.depth_from == "" || rt == _render_path_depth_to_render_target.get(rt.depth_from)) {
 			continue;
 		}
 
 		let nodepth: render_target_t = null;
-		for (let rt2 of render_path_render_targets.values()) {
+		for (let j: i32 = 0; j < rtargets.length; ++j) {
+			let rt2: render_target_t = rtargets[j];
 			if (rt2 == null || rt2.width > 0 || rt2.depth_from != "" || _render_path_depth_to_render_target.get(rt2.depth_buffer) != null) {
 				continue;
 			}
@@ -346,7 +355,8 @@ function render_path_resize() {
 	}
 
 	// Resize textures
-	for (let rt of render_path_render_targets.values()) {
+	for (let i: i32 = 0; i < rtargets.length; ++i) {
+		let rt: render_target_t = rtargets[i];
 		if (rt != null && rt.width == 0) {
 			let _image: image_t = rt.image;
 			app_notify_on_init(function () {
@@ -357,7 +367,8 @@ function render_path_resize() {
 	}
 
 	// Attach depth buffers
-	for (let rt of render_path_render_targets.values()) {
+	for (let i: i32 = 0; i < rtargets.length; ++i) {
+		let rt: render_target_t = rtargets[i];
 		if (rt != null && rt.depth_from != "") {
 			image_set_depth_from(rt.image,_render_path_depth_to_render_target.get(rt.depth_from).image);
 		}
@@ -381,7 +392,8 @@ function render_path_create_target(t: render_target_t): render_target_t {
 		let depth_target: render_target_t = _render_path_depth_to_render_target.get(t.depth_buffer);
 
 		if (depth_target == null) { // Create new one
-			for (let db of _render_path_depth_buffers) {
+			for (let i: i32 = 0; i < _render_path_depth_buffers.length; ++i) {
+				let db: depth_buffer_desc_t = _render_path_depth_buffers[i];
 				if (db.name == t.depth_buffer) {
 					_render_path_depth_to_render_target.set(db.name, t);
 					t.depth_format = render_path_get_depth_format(db.format);

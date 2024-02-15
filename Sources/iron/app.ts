@@ -55,8 +55,8 @@ function app_reset() {
 	app_on_renders = [];
 	app_on_renders_2d = [];
 	if (app_on_resets != null) {
-		for (let f of app_on_resets) {
-			f();
+		for (let i: i32 = 0; i < app_on_resets.length; ++i) {
+			app_on_resets[i]();
 		}
 	}
 }
@@ -75,9 +75,9 @@ function app_update() {
 	let l: i32 = app_on_updates.length;
 	while (i < l) {
 		if (app_on_inits.length > 0) {
-			for (let f of app_on_inits) {
+			for (let j: i32 = 0; j < app_on_inits.length; ++j) {
 				if (app_on_inits.length > 0) {
-					f();
+					app_on_inits[j]();
 				}
 				else {
 					break;
@@ -98,8 +98,8 @@ function app_update() {
 	}
 
 	if (app_on_end_frames != null) {
-		for (let f of app_on_end_frames) {
-			f();
+		for (let i: i32 = 0; i < app_on_end_frames.length; ++i) {
+			app_on_end_frames[i]();
 		}
 	}
 
@@ -133,9 +133,9 @@ function app_render() {
 	}
 
 	if (app_on_inits.length > 0) {
-		for (let f of app_on_inits) {
+		for (let i: i32 = 0; i < app_on_inits.length; ++i) {
 			if (app_on_inits.length > 0) {
-				f();
+				app_on_inits[i]();
 			}
 			else {
 				break;
@@ -146,9 +146,9 @@ function app_render() {
 
 	scene_render_frame();
 
-	for (let f of app_on_renders) {
+	for (let i: i32 = 0; i < app_on_renders.length; ++i) {
 		if (app_on_renders.length > 0) {
-			f();
+			app_on_renders[i]();
 		}
 		else {
 			break;
@@ -161,9 +161,9 @@ function app_render() {
 function app_render_2d() {
 	if (app_on_renders_2d.length > 0) {
 		g2_begin();
-		for (let f of app_on_renders_2d) {
+		for (let i: i32 = 0; i < app_on_renders_2d.length; ++i) {
 			if (app_on_renders_2d.length > 0) {
-				f();
+				app_on_renders_2d[i]();
 			}
 			else {
 				break;

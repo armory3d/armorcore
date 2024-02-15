@@ -300,10 +300,11 @@ function armpack_write(v: DataView, d: any) {
 }
 
 function armpack_write_object(v: DataView, d: any) {
-	let f = Object.keys(d);
+	let f: string[] = Object.keys(d);
 	armpack_write_u8(v, 0xdf);
-	armpack_write_i32(v, f.length );
-	for (let k of f) {
+	armpack_write_i32(v, f.length);
+	for (let i: i32 = 0; i < f.length; ++i) {
+		let k: string = f[i];
 		armpack_write_u8(v, 0xdb);
 		armpack_write_i32(v, k.length);
 		armpack_write_string(v, k);
@@ -373,10 +374,11 @@ function armpack_write_dummy(d: any) {
 }
 
 function armpack_write_object_dummy(d: any) {
-	let f = Object.keys(d);
+	let f: string[] = Object.keys(d);
 	_armpack_pos += 1;
 	_armpack_pos += 4;
-	for (let k of f) {
+	for (let i: i32 = 0; i < f.length; ++i) {
+		let k: string = f[i];
 		_armpack_pos += 1;
 		_armpack_pos += 4;
 		_armpack_pos += k.length;

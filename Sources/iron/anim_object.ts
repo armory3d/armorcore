@@ -19,7 +19,8 @@ function anim_object_create(object: object_t, oactions: scene_t[]): anim_object_
 }
 
 function anim_object_get_action(raw: anim_object_t, action: string): obj_t {
-	for (let a of raw.oactions) {
+	for (let i: i32 = 0; i < raw.oactions.length; ++i) {
+		let a: scene_t = raw.oactions[i];
 		if (a != null && a.objects[0].name == action) {
 			return a.objects[0];
 		}
@@ -62,7 +63,8 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 		t._deuler_x = t._deuler_y = t._deuler_z = 0.0;
 	}
 
-	for (let track of anim.tracks) {
+	for (let i: i32 = 0; i < anim.tracks.length; ++i) {
+		let track: track_t = anim.tracks[i];
 
 		if (raw.base.frame_index == -1) {
 			anim_rewind(raw.base, track);

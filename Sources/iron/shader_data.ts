@@ -1,7 +1,7 @@
 
 function shader_data_create(raw: shader_data_t, done: (sd: shader_data_t)=>void, override_context: shader_override_t = null) {
 	raw._contexts = [];
-	for (let c of raw.contexts) {
+	for (let i: i32 = 0; i < raw.contexts.length; ++i) {
 		raw._contexts.push(null);
 	}
 
@@ -44,13 +44,15 @@ function shader_data_parse(file: string, name: string, done: (sd: shader_data_t)
 }
 
 function shader_data_delete(raw: shader_data_t) {
-	for (let c of raw._contexts) {
+	for (let i: i32 = 0; i < raw._contexts.length; ++i) {
+		let c: shader_context_t = raw._contexts[i];
 		shader_context_delete(c);
 	}
 }
 
 function shader_data_get_context(raw: shader_data_t, name: string): shader_context_t {
-	for (let c of raw._contexts) {
+	for (let i: i32 = 0; i < raw._contexts.length; ++i) {
+		let c: shader_context_t = raw._contexts[i];
 		if (c.name == name) {
 			return c;
 		}
@@ -220,13 +222,15 @@ function shader_context_finish_compile(raw: shader_context_t, done: (sc: shader_
 	g4_pipeline_compile(raw._pipe_state);
 
 	if (raw.constants != null) {
-		for (let c of raw.constants) {
+		for (let i: i32 = 0; i < raw.constants.length; ++i) {
+			let c: shader_const_t = raw.constants[i];
 			shader_context_add_const(raw, c);
 		}
 	}
 
 	if (raw.texture_units != null) {
-		for (let tu of raw.texture_units) {
+		for (let i: i32 = 0; i < raw.texture_units.length; ++i) {
+			let tu: tex_unit_t = raw.texture_units[i];
 			shader_context_add_tex(raw, tu);
 		}
 	}
@@ -261,7 +265,8 @@ function shader_context_parse_vertex_struct(raw: shader_context_t) {
 	let ipos: bool = false;
 	let irot: bool = false;
 	let iscl: bool = false;
-	for (let elem of raw.vertex_elements) {
+	for (let i: i32 = 0; i < raw.vertex_elements.length; ++i) {
+		let elem: vertex_element_t = raw.vertex_elements[i];
 		if (elem.name == "ipos") {
 			ipos = true;
 			continue;

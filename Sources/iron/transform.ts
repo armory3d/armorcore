@@ -105,7 +105,8 @@ function transform_build_matrix(raw: transform_t) {
 	transform_compute_dim(raw);
 
 	// Update children
-	for (let n of raw.object.children) {
+	for (let i: i32 = 0; i < raw.object.children.length; ++i) {
+		let n: object_t = raw.object.children[i];
 		transform_build_matrix(n.transform);
 	}
 

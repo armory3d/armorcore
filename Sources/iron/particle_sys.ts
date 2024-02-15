@@ -169,17 +169,20 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 	if (raw.r.emit_from == 0) { // Vert
 		let pa: vertex_array_t = mesh_data_get_vertex_array(owner.data, 'pos');
 
-		for (let p of raw.particles) {
+		for (let x: i32 = 0; x < raw.particles.length; ++x) {
 			let j: i32 = Math.floor(particle_sys_fhash(i) * (pa.values.length / pa._size));
-			instanced_data[i] = pa.values[j * pa._size    ] * norm_fac * scale_fac.x; i++;
-			instanced_data[i] = pa.values[j * pa._size + 1] * norm_fac * scale_fac.y; i++;
-			instanced_data[i] = pa.values[j * pa._size + 2] * norm_fac * scale_fac.z; i++;
+			instanced_data[i] = pa.values[j * pa._size    ] * norm_fac * scale_fac.x;
+			i++;
+			instanced_data[i] = pa.values[j * pa._size + 1] * norm_fac * scale_fac.y;
+			i++;
+			instanced_data[i] = pa.values[j * pa._size + 2] * norm_fac * scale_fac.z;
+			i++;
 		}
 	}
 	else if (raw.r.emit_from == 1) { // Face
 		let positions: Int16Array = mesh_data_get_vertex_array(owner.data, 'pos').values;
 
-		for (let p of raw.particles) {
+		for (let x: i32 = 0; x < raw.particles.length; ++x) {
 			// Choose random index array (there is one per material) and random face
 			let ia: Uint32Array = owner.data._indices[particle_sys_rand(owner.data._indices.length)];
 			let face_index: i32 = particle_sys_rand(Math.floor(ia.length / 3));
@@ -194,19 +197,25 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 
 			let pos: vec3_t = particle_sys_random_point_in_triangle(v0, v1, v2);
 
-			instanced_data[i] = pos.x * norm_fac * scale_fac.x; i++;
-			instanced_data[i] = pos.y * norm_fac * scale_fac.y; i++;
-			instanced_data[i] = pos.z * norm_fac * scale_fac.z; i++;
+			instanced_data[i] = pos.x * norm_fac * scale_fac.x;
+			i++;
+			instanced_data[i] = pos.y * norm_fac * scale_fac.y;
+			i++;
+			instanced_data[i] = pos.z * norm_fac * scale_fac.z;
+			i++;
 		}
 	}
 	else if (raw.r.emit_from == 2) { // Volume
 		let scale_factor_volume: vec4_t = vec4_set_from(vec4_create(), object.base.transform.dim);
 		vec4_mult(scale_factor_volume, 0.5 / (particle_size * scale_pos_particle));
 
-		for (let p of raw.particles) {
-			instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.x; i++;
-			instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.y; i++;
-			instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.z; i++;
+		for (let x: i32 = 0; x < raw.particles.length; ++x) {
+			instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.x;
+			i++;
+			instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.y;
+			i++;
+			instanced_data[i] = (Math.random() * 2.0 - 1.0) * scale_factor_volume.z;
+			i++;
 		}
 	}
 

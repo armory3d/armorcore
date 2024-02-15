@@ -41,7 +41,8 @@ function speaker_object_play(raw: speaker_object_t) {
 		return;
 	}
 	if (raw.paused) {
-		for (let c of raw.channels) {
+		for (let i: i32 = 0; i < raw.channels.length; ++i) {
+			let c: audio_channel_t = raw.channels[i];
 			audio_play(c);
 		}
 		raw.paused = false;
@@ -61,14 +62,16 @@ function speaker_object_play(raw: speaker_object_t) {
 }
 
 function speaker_object_pause(raw: speaker_object_t) {
-	for (let c of raw.channels) {
+	for (let i: i32 = 0; i < raw.channels.length; ++i) {
+		let c: audio_channel_t = raw.channels[i];
 		audio_pause(c);
 	}
 	raw.paused = true;
 }
 
 function speaker_object_stop(raw: speaker_object_t) {
-	for (let c of raw.channels) {
+	for (let i: i32 = 0; i < raw.channels.length; ++i) {
+		let c: audio_channel_t = raw.channels[i];
 		audio_stop(c);
 	}
 	raw.channels.splice(0, raw.channels.length);
@@ -78,7 +81,8 @@ function speaker_object_update(raw: speaker_object_t) {
 	if (raw.paused) {
 		return;
 	}
-	for (let c of raw.channels) {
+	for (let i: i32 = 0; i < raw.channels.length; ++i) {
+		let c: audio_channel_t = raw.channels[i];
 		if (c.finished) {
 			array_remove(raw.channels, c);
 		}
@@ -97,7 +101,8 @@ function speaker_object_update(raw: speaker_object_t) {
 		raw.volume = raw.data.volume;
 	}
 
-	for (let c of raw.channels) {
+	for (let i: i32 = 0; i < raw.channels.length; ++i) {
+		let c: audio_channel_t = raw.channels[i];
 		c.volume = raw.volume;
 	}
 }

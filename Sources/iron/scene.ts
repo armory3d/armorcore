@@ -61,21 +61,26 @@ function scene_create(format: scene_t, done: (o: object_t)=>void) {
 }
 
 function scene_remove() {
-	for (let o of scene_meshes) {
+	for (let i: i32 = 0; i < scene_meshes.length; ++i) {
+		let o: mesh_object_t = scene_meshes[i];
 		mesh_object_remove(o);
 	}
-	for (let o of scene_lights) {
+	for (let i: i32 = 0; i < scene_lights.length; ++i) {
+		let o: light_object_t = scene_lights[i];
 		light_object_remove(o);
 	}
-	for (let o of scene_cameras) {
+	for (let i: i32 = 0; i < scene_cameras.length; ++i) {
+		let o: camera_object_t = scene_cameras[i];
 		camera_object_remove(o);
 	}
 	///if arm_audio
-	for (let o of scene_speakers) {
+	for (let i: i32 = 0; i < scene_speakers.length; ++i) {
+		let o: speaker_object_t = scene_speakers[i];
 		speaker_object_remove(o);
 	}
 	///end
-	for (let o of scene_empties) {
+	for (let i: i32 = 0; i < scene_empties.length; ++i) {
+		let o: object_t = scene_empties[i];
 		object_remove(o);
 	}
 	object_remove(_scene_root);
@@ -102,10 +107,12 @@ function scene_update_frame() {
 	if (!_scene_ready) {
 		return;
 	}
-	for (let anim of scene_animations) {
+	for (let i: i32 = 0; i < scene_animations.length; ++i) {
+		let anim: anim_raw_t = scene_animations[i];
 		anim_update(anim, time_delta());
 	}
-	for (let e of scene_empties) {
+	for (let i: i32 = 0; i < scene_empties.length; ++i) {
+		let e: object_t = scene_empties[i];
 		if (e != null && e.parent != null) {
 			transform_update(e.transform);
 		}
@@ -133,7 +140,8 @@ function scene_get_child(name: string): object_t {
 }
 
 function scene_get_mesh(name: string): mesh_object_t {
-	for (let m of scene_meshes) {
+	for (let i: i32 = 0; i < scene_meshes.length; ++i) {
+		let m: mesh_object_t = scene_meshes[i];
 		if (m.base.name == name) {
 			return m;
 		}
@@ -142,7 +150,8 @@ function scene_get_mesh(name: string): mesh_object_t {
 }
 
 function scene_get_light(name: string): light_object_t {
-	for (let l of scene_lights) {
+	for (let i: i32 = 0; i < scene_lights.length; ++i) {
+		let l: light_object_t = scene_lights[i];
 		if (l.base.name == name) {
 			return l;
 		}
@@ -151,7 +160,8 @@ function scene_get_light(name: string): light_object_t {
 }
 
 function scene_get_camera(name: string): camera_object_t {
-	for (let c of scene_cameras) {
+	for (let i: i32 = 0; i < scene_cameras.length; ++i) {
+		let c: camera_object_t = scene_cameras[i];
 		if (c.base.name == name) {
 			return c;
 		}
@@ -161,7 +171,8 @@ function scene_get_camera(name: string): camera_object_t {
 
 ///if arm_audio
 function scene_get_speaker(name: string): speaker_object_t {
-	for (let s of scene_speakers) {
+	for (let i: i32 = 0; i < scene_speakers.length; ++i) {
+		let s: speaker_object_t = scene_speakers[i];
 		if (s.base.name == name) {
 			return s;
 		}
@@ -171,7 +182,8 @@ function scene_get_speaker(name: string): speaker_object_t {
 ///end
 
 function scene_get_empty(name: string): object_t {
-	for (let e of scene_empties) {
+	for (let i: i32 = 0; i < scene_empties.length; ++i) {
+		let e: object_t = scene_empties[i];
 		if (e.name == name) {
 			return e;
 		}
@@ -254,7 +266,8 @@ function scene_get_objects_count(objects: obj_t[], discard_no_spawn: bool = true
 		return 0;
 	}
 	let result: i32 = objects.length;
-	for (let o of objects) {
+	for (let i: i32 = 0; i < objects.length; ++i) {
+		let o: obj_t = objects[i];
 		if (discard_no_spawn && o.spawn != null && o.spawn == false) {
 			continue; // Do not count children of non-spawned objects
 		}
@@ -279,7 +292,8 @@ function scene_spawn_object(name: string, parent: object_t, done: (o: object_t)=
 				root_id = object.uid;
 			}
 			if (spawn_children && obj.children != null) {
-				for (let child of obj.children) {
+				for (let i: i32 = 0; i < obj.children.length; ++i) {
+					let child: obj_t = obj.children[i];
 					spawn_object_tree(child, object, obj, done);
 				}
 			}
@@ -302,7 +316,8 @@ function scene_get_raw_object_by_name(format: scene_t, name: string): obj_t {
 }
 
 function scene_traverse_objs(children: obj_t[], name: string): obj_t {
-	for (let o of children) {
+	for (let i: i32 = 0; i < children.length; ++i) {
+		let o: obj_t = children[i];
 		if (o.name == name) {
 			return o;
 		}
@@ -387,13 +402,15 @@ function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, p
 	///if arm_skin
 	if (parent_object != null && parent_object.bone_actions != null) {
 		let bactions: scene_t[] = [];
-		for (let ref of parent_object.bone_actions) {
+		for (let i: i32 = 0; i < parent_object.bone_actions.length; ++i) {
+			let ref: string = parent_object.bone_actions[i];
 			data_get_scene_raw(ref, function (action: scene_t) {
 				bactions.push(action);
 				if (bactions.length == parent_object.bone_actions.length) {
 					let armature: armature_t = null;
 					// Check if armature exists
-					for (let a of scene_armatures) {
+					for (let j: i32 = 0; j < scene_armatures.length; ++j) {
+						let a: armature_t = scene_armatures[j];
 						if (a.uid == parent.uid) {
 							armature = a;
 							break;
@@ -402,7 +419,8 @@ function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, p
 					// Create new one
 					if (armature == null) {
 						// Unique name if armature was already instantiated for different object
-						for (let a of scene_armatures) {
+						for (let j: i32 = 0; j < scene_armatures.length; ++j) {
+							let a: armature_t = scene_armatures[j];
 							if (a.name == parent.name) {
 								parent.name += "." + parent.uid;
 								break;
@@ -437,7 +455,8 @@ function scene_return_mesh_object(object_file: string, data_ref: string, scene_n
 		// Attach particle systems
 		///if arm_particles
 		if (o.particle_refs != null) {
-			for (let ref of o.particle_refs) {
+			for (let i: i32 = 0; i < o.particle_refs.length; ++i) {
+				let ref: particle_ref_t = o.particle_refs[i];
 				mesh_object_setup_particle_system(object, scene_name, ref);
 			}
 		}
@@ -503,7 +522,8 @@ function scene_load_embedded_data(datas: string[], done: ()=>void) {
 		return;
 	}
 	let loaded: i32 = 0;
-	for (let file of datas) {
+	for (let i: i32 = 0; i < datas.length; ++i) {
+		let file: string = datas[i];
 		scene_embed_data(file, function () {
 			loaded++;
 			if (loaded == datas.length) {

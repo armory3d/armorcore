@@ -76,38 +76,38 @@ function sys_notify_on_cut_copy_paste(on_cut: ()=>string, on_copy: ()=>string, o
 }
 
 function sys_foreground() {
-	for (let listener of _sys_foreground_listeners) {
-		listener();
+	for (let i: i32 = 0; i < _sys_foreground_listeners.length; ++i) {
+		_sys_foreground_listeners[i]();
 	}
 }
 
 function sys_resume() {
-	for (let listener of _sys_resume_listeners) {
-		listener();
+	for (let i: i32 = 0; i < _sys_resume_listeners.length; ++i) {
+		_sys_resume_listeners[i]();
 	}
 }
 
 function sys_pause() {
-	for (let listener of _sys_pause_listeners) {
-		listener();
+	for (let i: i32 = 0; i < _sys_pause_listeners.length; ++i) {
+		_sys_pause_listeners[i]();
 	}
 }
 
 function sys_background() {
-	for (let listener of _sys_background_listeners) {
-		listener();
+	for (let i: i32 = 0; i < _sys_background_listeners.length; ++i) {
+		_sys_background_listeners[i]();
 	}
 }
 
 function sys_shutdown() {
-	for (let listener of _sys_shutdown_listeners) {
-		listener();
+	for (let i: i32 = 0; i < _sys_shutdown_listeners.length; ++i) {
+		_sys_shutdown_listeners[i]();
 	}
 }
 
 function sys_drop_files(file_path: string) {
-	for (let listener of _sys_drop_files_listeners) {
-		listener(file_path);
+	for (let i: i32 = 0; i < _sys_drop_files_listeners.length; ++i) {
+		_sys_drop_files_listeners[i](file_path);
 	}
 }
 
@@ -132,8 +132,8 @@ function sys_load_url(url: string) {
 }
 
 function sys_render_callback() {
-	for (let listener of _sys_render_listeners) {
-		listener();
+	for (let i: i32 = 0; i < _sys_render_listeners.length; ++i) {
+		_sys_render_listeners[i]();
 	}
 }
 

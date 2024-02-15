@@ -147,7 +147,8 @@ function camera_object_build_view_frustum(vp: mat4_t, frustum_planes: frustum_pl
 	// Far plane
 	frustum_plane_set_components(frustum_planes[5], vp.m[3] - vp.m[2], vp.m[7] - vp.m[6], vp.m[11] - vp.m[10], vp.m[15] - vp.m[14]);
 	// Normalize planes
-	for (let plane of frustum_planes) {
+	for (let i: i32 = 0; i < frustum_planes.length; ++i) {
+		let plane: frustum_plane_t = frustum_planes[i];
 		frustum_plane_normalize(plane);
 	}
 }
@@ -155,7 +156,8 @@ function camera_object_build_view_frustum(vp: mat4_t, frustum_planes: frustum_pl
 function camera_object_sphere_in_frustum(frustum_planes: frustum_plane_t[], t: transform_t, radius_scale: f32 = 1.0, offset_x: f32 = 0.0, offset_y: f32 = 0.0, offset_z: f32 = 0.0): bool {
 	// Use scale when radius is changing
 	let radius: f32 = t.radius * radius_scale;
-	for (let plane of frustum_planes) {
+	for (let i: i32 = 0; i < frustum_planes.length; ++i) {
+		let plane: frustum_plane_t = frustum_planes[i];
 		vec4_set(_camera_object_sphere_center, transform_world_x(t) + offset_x, transform_world_y(t) + offset_y, transform_world_z(t) + offset_z);
 		// Outside the frustum
 		if (frustum_plane_dist_to_sphere(plane, _camera_object_sphere_center, radius) + radius * 2 < 0) {

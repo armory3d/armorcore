@@ -346,7 +346,8 @@ let keyboard_repeat_time: f32 = 0.0;
 
 function keyboard_end_frame() {
 	if (keyboard_keys_frame.length > 0) {
-		for (let s of keyboard_keys_frame) {
+		for (let i: i32 = 0; i < keyboard_keys_frame.length; ++i) {
+			let s = keyboard_keys_frame[i];
 			keyboard_keys_started.set(s, false);
 			keyboard_keys_released.set(s, false);
 		}
@@ -364,7 +365,8 @@ function keyboard_end_frame() {
 
 function keyboard_reset() {
 	// Use Map for now..
-	for (let s of keyboard_keys) {
+	for (let i: i32 = 0; i < keyboard_keys.length; ++i) {
+		let s = keyboard_keys[i];
 		keyboard_keys_down.set(s, false);
 		keyboard_keys_started.set(s, false);
 		keyboard_keys_released.set(s, false);
@@ -686,11 +688,13 @@ let gamepad_buttons: string[] = gamepad_buttons_ps;
 let gamepad_raws: gamepad_t[];
 
 function gamepad_end_frame() {
-	for (let g of gamepad_raws) {
+	for (let i: i32 = 0; i < gamepad_raws.length; ++i) {
+		let g = gamepad_raws[i];
 		if (g.buttons_frame.length > 0) {
-			for (let i of g.buttons_frame) {
-				g.buttons_started[i] = false;
-				g.buttons_released[i] = false;
+			for (let j: i32 = 0; j < g.buttons_frame.length; ++j) {
+				let b: i32 = g.buttons_frame[j];
+				g.buttons_started[b] = false;
+				g.buttons_released[b] = false;
 			}
 			g.buttons_frame.splice(0, g.buttons_frame.length);
 		}
@@ -731,7 +735,7 @@ function gamepad_reset() {
 	for (let i: i32 = 0; i < 4; ++i) {
 		let g = gamepad_create();
 		gamepad_raws.push(g);
-		for (let s of gamepad_buttons) {
+		for (let i: i32 = 0; i < gamepad_buttons.length; ++i) {
 			g.buttons_down.push(0.0);
 			g.buttons_started.push(false);
 			g.buttons_released.push(false);
