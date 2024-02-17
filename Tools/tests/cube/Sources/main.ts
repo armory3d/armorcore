@@ -87,10 +87,12 @@ function app_ready() {
 	};
 	raw.material_datas.push(md);
 
-	material_data_parse(raw.name, md.name, data_ready);
+	material_data_parse(raw.name, md.name);
+
+	data_ready();
 }
 
-function data_ready(_: any) {
+function data_ready() {
 	// Camera object
 	let co: obj_t = {
 		name: "Camera",
@@ -111,10 +113,12 @@ function data_ready(_: any) {
 	raw.objects.push(o);
 
 	// Instantiate scene
-	scene_create(raw, scene_ready);
+	scene_create(raw);
+
+	scene_ready();
 }
 
-function scene_ready(o: object_t) {
+function scene_ready() {
 	// Set camera
 	let t: transform_t = scene_camera.base.transform;
 	vec4_set(t.loc, 0, -6, 0);
