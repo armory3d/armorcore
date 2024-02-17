@@ -205,14 +205,13 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 			for (let i: i32 = 0; i < raw.particle_systems.length; ++i) {
 				let psys: particle_sys_t = raw.particle_systems[i];
 				// let c: mesh_object_t = scene_get_child(psys.data.raw.instance_object);
-				scene_spawn_object(psys.data.instance_object, null, function (o: object_t) {
-					if (o != null) {
-						let c: mesh_object_t = o.ext;
-						raw.particle_children.push(c);
-						c.particle_owner = raw;
-						c.particle_index = raw.particle_children.length - 1;
-					}
-				});
+				let o: object_t = scene_spawn_object(psys.data.instance_object);
+				if (o != null) {
+					let c: mesh_object_t = o.ext;
+					raw.particle_children.push(c);
+					c.particle_owner = raw;
+					c.particle_index = raw.particle_children.length - 1;
+				}
 			}
 		}
 		for (let i: i32 = 0; i < raw.particle_systems.length; ++i) {

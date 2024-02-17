@@ -17,6 +17,10 @@ function input_end_frame() {
 	gamepad_end_frame();
 }
 
+function _input_on_foreground() {
+	mouse_reset();
+}
+
 function input_register() {
 	if (_input_registered) {
 		return;
@@ -25,7 +29,7 @@ function input_register() {
 	app_notify_on_end_frame(input_end_frame);
 	app_notify_on_reset(input_reset);
 	// Reset mouse delta on foreground
-	sys_notify_on_app_state(function () { mouse_reset(); }, null, null, null, null);
+	sys_notify_on_app_state(_input_on_foreground, null, null, null, null);
 	keyboard_reset();
 	gamepad_reset();
 }

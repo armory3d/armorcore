@@ -1,21 +1,12 @@
 
-function shader_data_create(raw: shader_data_t, done: (sd: shader_data_t)=>void, override_context: shader_override_t = null) {
+function shader_data_create(raw: shader_data_t, override_context: shader_override_t = null): shader_data_t {
 	raw._contexts = [];
 	for (let i: i32 = 0; i < raw.contexts.length; ++i) {
-		raw._contexts.push(null);
-	}
-
-	let contexts_loaded: i32 = 0;
-	for (let i: i32 = 0; i < raw.contexts.length; ++i) {
 		let c: shader_context_t = raw.contexts[i];
-		shader_context_create(c, function (con: shader_context_t) {
-			raw._contexts[i] = con;
-			contexts_loaded++;
-			if (contexts_loaded == raw.contexts.length) {
-				done(raw);
-			}
-		}, override_context);
+		let con: shader_context_t = shader_context_create(c, override_context);
+		raw._contexts.push(con);
 	}
+	return raw;
 }
 
 function shader_data_ext(): string {
@@ -32,15 +23,26 @@ function shader_data_ext(): string {
 	///end
 }
 
-function shader_data_parse(file: string, name: string, done: (sd: shader_data_t)=>void, override_context: shader_override_t = null) {
-	data_get_scene_raw(file, function (format: scene_t) {
-		let raw: shader_data_t = data_get_shader_raw_by_name(format.shader_datas, name);
-		if (raw == null) {
-			krom_log(`Shader data "${name}" not found!`);
-			done(null);
+function shader_data_parse(file: string, name: string, override_context: shader_override_t = null): shader_data_t {
+	let format: scene_t = data_get_scene_raw(file);
+	let raw: shader_data_t = shader_data_get_raw_by_name(format.shader_datas, name);
+	if (raw == null) {
+		krom_log("Shader data '" + name + "' not found!");
+		return null;
+	}
+	return shader_data_create(raw, override_context);
+}
+
+function shader_data_get_raw_by_name(datas: shader_data_t[], name: string): shader_data_t {
+	if (name == "") {
+		return datas[0];
+	}
+	for (let i: i32 = 0; i < datas.length; ++i) {
+		if (datas[i].name == name) {
+			return datas[i];
 		}
-		shader_data_create(raw, done, override_context);
-	});
+	}
+	return null;
 }
 
 function shader_data_delete(raw: shader_data_t) {
@@ -60,19 +62,18 @@ function shader_data_get_context(raw: shader_data_t, name: string): shader_conte
 	return null;
 }
 
-function shader_context_create(raw: shader_context_t, done: (sc: shader_context_t)=>void, override_context: shader_override_t = null) {
+function shader_context_create(raw: shader_context_t, override_context: shader_override_t = null): shader_context_t {
 	///if (!arm_voxels)
 	if (raw.name == "voxel") {
-		done(raw);
-		return;
+		return raw;
 	}
 	///end
 	raw._override_context = override_context;
 	shader_context_parse_vertex_struct(raw);
-	shader_context_compile(raw, done);
+	return shader_context_compile(raw);
 }
 
-function shader_context_compile(raw: shader_context_t, done: (sc: shader_context_t)=>void) {
+function shader_context_compile(raw: shader_context_t): shader_context_t {
 	if (raw._pipe_state != null) {
 		g4_pipeline_delete(raw._pipe_state);
 	}
@@ -159,43 +160,20 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 
 		// Shader compile error
 		if (raw._pipe_state.vertex_shader.shader_ == null || raw._pipe_state.fragment_shader.shader_ == null) {
-			done(null);
-			return;
+			return null;
 		}
-		shader_context_finish_compile(raw, done);
 	}
 	else {
 
 		///if arm_noembed // Load shaders manually
 
-		let shaders_loaded: i32 = 0;
-		let num_shaders: i32 = 2;
+		let vs_buffer: ArrayBuffer = data_get_blob(raw.vertex_shader + shader_data_ext());
+		raw._pipe_state.vertex_shader = g4_shader_create(vs_buffer, shader_type_t.VERTEX);
+		let fs_buffer: ArrayBuffer = data_get_blob(raw.fragment_shader + shader_data_ext());
+		raw._pipe_state.fragment_shader = g4_shader_create(fs_buffer, shader_type_t.FRAGMENT);
 		if (raw.geometry_shader != null) {
-			num_shaders++;
-		}
-
-		function load_shader(file: string, type: i32) {
-			let path: string = file + shader_data_ext();
-			data_get_blob(path, function (b: ArrayBuffer) {
-				if (type == 0) {
-					raw._pipe_state.vertex_shader = g4_shader_create(b, shader_type_t.VERTEX);
-				}
-				else if (type == 1) {
-					raw._pipe_state.fragment_shader = g4_shader_create(b, shader_type_t.FRAGMENT);
-				}
-				else if (type == 2) {
-					raw._pipe_state.geometry_shader = g4_shader_create(b, shader_type_t.GEOMETRY);
-				}
-				shaders_loaded++;
-				if (shaders_loaded >= num_shaders) {
-					shader_context_finish_compile(raw, done);
-				}
-			});
-		}
-		load_shader(raw.vertex_shader, 0);
-		load_shader(raw.fragment_shader, 1);
-		if (raw.geometry_shader != null) {
-			load_shader(raw.geometry_shader, 2);
+			let gs_buffer: ArrayBuffer = data_get_blob(raw.geometry_shader + shader_data_ext());
+			raw._pipe_state.geometry_shader = g4_shader_create(gs_buffer, shader_type_t.GEOMETRY);
 		}
 
 		///else
@@ -205,13 +183,14 @@ function shader_context_compile(raw: shader_context_t, done: (sc: shader_context
 		if (raw.geometry_shader != null) {
 			raw._pipe_state.geometry_shader = sys_get_shader(raw.geometry_shader);
 		}
-		shader_context_finish_compile(raw, done);
 
 		///end
 	}
+
+	return shader_context_finish_compile(raw);
 }
 
-function shader_context_finish_compile(raw: shader_context_t, done: (sc: shader_context_t)=>void) {
+function shader_context_finish_compile(raw: shader_context_t): shader_context_t {
 	// Override specified values
 	if (raw._override_context != null) {
 		if (raw._override_context.cull_mode != null) {
@@ -235,7 +214,7 @@ function shader_context_finish_compile(raw: shader_context_t, done: (sc: shader_
 		}
 	}
 
-	done(raw);
+	return raw;
 }
 
 function shader_context_parse_data(data: string): vertex_data_t {

@@ -23,7 +23,7 @@ let _scene_scene_parent: object_t;
 let _scene_objects_traversed: i32;
 let _scene_objects_count: i32;
 
-function scene_create(format: scene_t, done: (o: object_t)=>void) {
+function scene_create(format: scene_t): object_t {
 	_scene_uid = _scene_uid_counter++;
 	scene_meshes = [];
 	scene_lights = [];
@@ -43,21 +43,18 @@ function scene_create(format: scene_t, done: (o: object_t)=>void) {
 	_scene_ready = false;
 	_scene_raw = format;
 
-	data_get_world(format.name, format.world_ref, function (world: world_data_t) {
-		scene_world = world;
+	scene_world = data_get_world(format.name, format.world_ref);
 
-		// Startup scene
-		scene_add_scene(format.name, null, function (scene_object: object_t) {
-			if (scene_cameras.length == 0) {
-				krom_log("No camera found for scene '" + format.name + "'");
-			}
+	// Startup scene
+	let scene_object: object_t = scene_add_scene(format.name, null);
+	if (scene_cameras.length == 0) {
+		krom_log("No camera found for scene '" + format.name + "'");
+	}
 
-			scene_camera = scene_get_camera(format.camera_ref);
-			_scene_scene_parent = scene_object;
-			_scene_ready = true;
-			done(scene_object);
-		});
-	});
+	scene_camera = scene_get_camera(format.camera_ref);
+	_scene_scene_parent = scene_object;
+	_scene_ready = true;
+	return scene_object;
 }
 
 function scene_remove() {
@@ -86,21 +83,18 @@ function scene_remove() {
 	object_remove(_scene_root);
 }
 
-function scene_set_active(scene_name: string, done: (o: object_t)=>void = null) {
+function scene_set_active(scene_name: string): object_t {
 	if (_scene_root != null) {
 		scene_remove();
 	}
 
-	data_get_scene_raw(scene_name, function (format: scene_t) {
-		scene_create(format, function (o: object_t) {
-			if (done != null) {
-				done(o);
-			}
-			///if arm_voxels // Revoxelize
-			_render_path_voxelized = 0;
-			///end
-		});
-	});
+	///if arm_voxels // Revoxelize
+	_render_path_voxelized = 0;
+	///end
+
+	let format: scene_t = data_get_scene_raw(scene_name);
+	let o: object_t = scene_create(format);
+	return o;
 }
 
 function scene_update_frame() {
@@ -120,7 +114,7 @@ function scene_update_frame() {
 }
 
 function scene_render_frame() {
-	if (!_scene_ready ||render_path_commands == null) {
+	if (!_scene_ready || render_path_commands == null) {
 		return;
 	}
 
@@ -217,58 +211,45 @@ function scene_add_speaker_object(data: speaker_data_t, parent: object_t = null)
 }
 ///end
 
-function scene_traverse_objects(format: scene_t, parent: object_t, objects: obj_t[], parent_object: obj_t, done: ()=>void) {
+function scene_traverse_objects(format: scene_t, parent: object_t, objects: obj_t[], parent_object: obj_t) {
 	if (objects == null) {
 		return;
 	}
 	for (let i: i32 = 0; i < objects.length; ++i) {
 		let o: obj_t = objects[i];
 		if (o.spawn != null && o.spawn == false) {
-			if (++_scene_objects_traversed == _scene_objects_count) {
-				done();
-			}
 			continue; // Do not auto-create Scene object
 		}
 
-		scene_create_object(o, format, parent, parent_object, function (object: object_t) {
-			scene_traverse_objects(format, object, o.children, o, done);
-			if (++_scene_objects_traversed == _scene_objects_count) {
-				done();
-			}
-		});
+		let object: object_t = scene_create_object(o, format, parent, parent_object);
+		scene_traverse_objects(format, object, o.children, o);
 	}
 }
 
-function scene_add_scene(scene_name: string, parent: object_t, done: (o: object_t)=>void) {
+function scene_add_scene(scene_name: string, parent: object_t): object_t {
 	if (parent == null) {
 		parent = scene_add_object();
 		parent.name = scene_name;
 	}
-	data_get_scene_raw(scene_name, function (format: scene_t) {
-		scene_load_embedded_data(format.embedded_datas, function () { // Additional scene assets
-			_scene_objects_traversed = 0;
-			_scene_objects_count = scene_get_objects_count(format.objects);
+	let format: scene_t = data_get_scene_raw(scene_name);
+	scene_load_embedded_data(format.embedded_datas); // Additional scene assets
+	_scene_objects_traversed = 0;
+	_scene_objects_count = scene_get_objects_count(format.objects);
 
-			if (format.objects == null || format.objects.length == 0) {
-				done(parent);
-			}
-			else {
-				scene_traverse_objects(format, parent, format.objects, null, function () { // Scene objects
-					done(parent);
-				});
-			}
-		});
-	});
+	if (format.objects != null && format.objects.length > 0) {
+		scene_traverse_objects(format, parent, format.objects, null); // Scene objects
+	}
+	return parent;
 }
 
-function scene_get_objects_count(objects: obj_t[], discard_no_spawn: bool = true): i32 {
+function scene_get_objects_count(objects: obj_t[]): i32 {
 	if (objects == null) {
 		return 0;
 	}
 	let result: i32 = objects.length;
 	for (let i: i32 = 0; i < objects.length; ++i) {
 		let o: obj_t = objects[i];
-		if (discard_no_spawn && o.spawn != null && o.spawn == false) {
+		if (o.spawn != null && o.spawn == false) {
 			continue; // Do not count children of non-spawned objects
 		}
 		if (o.children != null) {
@@ -278,37 +259,20 @@ function scene_get_objects_count(objects: obj_t[], discard_no_spawn: bool = true
 	return result;
 }
 
-function scene_spawn_object(name: string, parent: object_t, done: (o: object_t)=>void, spawn_children: bool = true, src_raw: scene_t = null) {
-	if (src_raw == null) {
-		src_raw = _scene_raw;
+function _scene_spawn_object_tree(obj: obj_t, parent: object_t, parent_object: obj_t, spawn_children: bool): object_t {
+	let object: object_t = scene_create_object(obj, _scene_raw, parent, parent_object);
+	if (spawn_children && obj.children != null) {
+		for (let i: i32 = 0; i < obj.children.length; ++i) {
+			let child: obj_t = obj.children[i];
+			_scene_spawn_object_tree(child, object, obj, spawn_children);
+		}
 	}
-	let objects_traversed: i32 = 0;
-	let obj: obj_t = scene_get_raw_object_by_name(src_raw, name);
-	let objects_count: i32 = spawn_children ? scene_get_objects_count([obj], false) : 1;
-	let root_id: i32 = -1;
-	function spawn_object_tree(obj: obj_t, parent: object_t, parent_object: obj_t, done: (o: object_t)=>void) {
-		scene_create_object(obj, src_raw, parent, parent_object, function (object: object_t) {
-			if (root_id == -1) {
-				root_id = object.uid;
-			}
-			if (spawn_children && obj.children != null) {
-				for (let i: i32 = 0; i < obj.children.length; ++i) {
-					let child: obj_t = obj.children[i];
-					spawn_object_tree(child, object, obj, done);
-				}
-			}
-			if (++objects_traversed == objects_count && done != null) {
-				// Retrieve the originally spawned object from the current
-				// child object to ensure done() is called with the right
-				// object
-				while (object.uid != root_id) {
-					object = object.parent;
-				}
-				done(object);
-			}
-		});
-	}
-	spawn_object_tree(obj, parent, null, done);
+	return object;
+}
+
+function scene_spawn_object(name: string, parent: object_t = null, spawn_children: bool = true): object_t {
+	let obj: obj_t = scene_get_raw_object_by_name(_scene_raw, name);
+	return _scene_spawn_object_tree(obj, parent, null, spawn_children);
 }
 
 function scene_get_raw_object_by_name(format: scene_t, name: string): obj_t {
@@ -331,59 +295,50 @@ function scene_traverse_objs(children: obj_t[], name: string): obj_t {
 	return null;
 }
 
-function scene_create_object(o: obj_t, format: scene_t, parent: object_t, parent_object: obj_t, done: (o: object_t)=>void) {
+function scene_create_object(o: obj_t, format: scene_t, parent: object_t, parent_object: obj_t): object_t {
 	let scene_name: string = format.name;
 
 	if (o.type == "camera_object") {
-		data_get_camera(scene_name, o.data_ref, function (b: camera_data_t) {
-			let object: camera_object_t = scene_add_camera_object(b, parent);
-			scene_return_object(object.base, o, done);
-		});
+		let b: camera_data_t = data_get_camera(scene_name, o.data_ref);
+		let object: camera_object_t = scene_add_camera_object(b, parent);
+		return scene_return_object(object.base, o);
 	}
 	else if (o.type == "light_object") {
-		data_get_light(scene_name, o.data_ref, function (b: light_data_t) {
-			let object: light_object_t = scene_add_light_object(b, parent);
-			scene_return_object(object.base, o, done);
-		});
+		let b: light_data_t = data_get_light(scene_name, o.data_ref);
+		let object: light_object_t = scene_add_light_object(b, parent);
+		return scene_return_object(object.base, o);
 	}
 	else if (o.type == "mesh_object") {
 		if (o.material_refs == null || o.material_refs.length == 0) {
-			scene_create_mesh_object(o, format, parent, parent_object, null, done);
+			return scene_create_mesh_object(o, format, parent, parent_object, null);
 		}
 		else {
 			// Materials
 			let materials: material_data_t[] = [];
-			let materials_loaded: i32 = 0;
 			for (let i = 0; i < o.material_refs.length; ++i) {
 				let ref: string = o.material_refs[i];
-				data_get_material(scene_name, ref, function (mat: material_data_t) {
-					materials[i] = mat;
-					materials_loaded++;
-					if (materials_loaded == o.material_refs.length) {
-						scene_create_mesh_object(o, format, parent, parent_object, materials, done);
-					}
-				});
+				let mat: material_data_t = data_get_material(scene_name, ref);
+				materials[i] = mat;
 			}
+			return scene_create_mesh_object(o, format, parent, parent_object, materials);
 		}
 	}
 	///if arm_audio
 	else if (o.type == "speaker_object") {
-		let object: speaker_object_t = scene_add_speaker_object(data_get_speaker_raw_by_name(format.speaker_datas, o.data_ref), parent);
-		scene_return_object(object.base, o, done);
+		let object: speaker_object_t = scene_add_speaker_object(speaker_data_get_raw_by_name(format.speaker_datas, o.data_ref), parent);
+		return scene_return_object(object.base, o);
 	}
 	///end
 	else if (o.type == "object") {
 		let object: object_t = scene_add_object(parent);
-		scene_return_object(object, o, function (ro: object_t) {
-			done(ro);
-		});
+		return scene_return_object(object, o);
 	}
 	else {
-		done(null);
+		return null;
 	}
 }
 
-function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, parent_object: obj_t, materials: material_data_t[], done: (o: object_t)=>void) {
+function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, parent_object: obj_t, materials: material_data_t[]): object_t {
 	// Mesh reference
 	let ref: string[] = o.data_ref.split("/");
 	let object_file: string = "";
@@ -404,94 +359,86 @@ function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, p
 		let bactions: scene_t[] = [];
 		for (let i: i32 = 0; i < parent_object.bone_actions.length; ++i) {
 			let ref: string = parent_object.bone_actions[i];
-			data_get_scene_raw(ref, function (action: scene_t) {
-				bactions.push(action);
-				if (bactions.length == parent_object.bone_actions.length) {
-					let armature: armature_t = null;
-					// Check if armature exists
-					for (let j: i32 = 0; j < scene_armatures.length; ++j) {
-						let a: armature_t = scene_armatures[j];
-						if (a.uid == parent.uid) {
-							armature = a;
-							break;
-						}
-					}
-					// Create new one
-					if (armature == null) {
-						// Unique name if armature was already instantiated for different object
-						for (let j: i32 = 0; j < scene_armatures.length; ++j) {
-							let a: armature_t = scene_armatures[j];
-							if (a.name == parent.name) {
-								parent.name += "." + parent.uid;
-								break;
-							}
-						}
-						armature = armature_create(parent.uid, parent.name, bactions);
-						scene_armatures.push(armature);
-					}
-					scene_return_mesh_object(
-						object_file, data_ref, scene_name, armature, materials, parent, parent_object, o, done);
-				}
-			});
+			let action: scene_t = data_get_scene_raw(ref);
+			bactions.push(action);
 		}
-		return;
+		let armature: armature_t = null;
+		// Check if armature exists
+		for (let j: i32 = 0; j < scene_armatures.length; ++j) {
+			let a: armature_t = scene_armatures[j];
+			if (a.uid == parent.uid) {
+				armature = a;
+				break;
+			}
+		}
+		// Create new one
+		if (armature == null) {
+			// Unique name if armature was already instantiated for different object
+			for (let j: i32 = 0; j < scene_armatures.length; ++j) {
+				let a: armature_t = scene_armatures[j];
+				if (a.name == parent.name) {
+					parent.name += "." + parent.uid;
+					break;
+				}
+			}
+			armature = armature_create(parent.uid, parent.name, bactions);
+			scene_armatures.push(armature);
+		}
+		return scene_return_mesh_object(
+			object_file, data_ref, scene_name, armature, materials, parent, parent_object, o);
 	}
 	///end
 
-	scene_return_mesh_object(object_file, data_ref, scene_name, null, materials, parent, parent_object, o, done);
+	return scene_return_mesh_object(object_file, data_ref, scene_name, null, materials, parent, parent_object, o);
 }
 
 function scene_return_mesh_object(object_file: string, data_ref: string, scene_name: string, armature: any, // armature_t
-	materials: material_data_t[], parent: object_t, parentObject: obj_t, o: obj_t, done: (o: object_t)=>void) {
+	materials: material_data_t[], parent: object_t, parentObject: obj_t, o: obj_t): object_t {
 
-		data_get_mesh(object_file, data_ref, function (mesh: mesh_data_t) {
-		///if arm_skin
-		if (mesh.skin != null) {
-			armature != null ? mesh_data_add_armature(mesh, armature) : mesh_data_add_action(mesh, _scene_raw.objects, "none");
-		}
-		///end
-		let object: mesh_object_t = scene_add_mesh_object(mesh, materials, parent);
+	let mesh: mesh_data_t = data_get_mesh(object_file, data_ref);
+	///if arm_skin
+	if (mesh.skin != null) {
+		armature != null ? mesh_data_add_armature(mesh, armature) : mesh_data_add_action(mesh, _scene_raw.objects, "none");
+	}
+	///end
+	let object: mesh_object_t = scene_add_mesh_object(mesh, materials, parent);
 
-		// Attach particle systems
-		///if arm_particles
-		if (o.particle_refs != null) {
-			for (let i: i32 = 0; i < o.particle_refs.length; ++i) {
-				let ref: particle_ref_t = o.particle_refs[i];
-				mesh_object_setup_particle_system(object, scene_name, ref);
-			}
+	// Attach particle systems
+	///if arm_particles
+	if (o.particle_refs != null) {
+		for (let i: i32 = 0; i < o.particle_refs.length; ++i) {
+			let ref: particle_ref_t = o.particle_refs[i];
+			mesh_object_setup_particle_system(object, scene_name, ref);
 		}
-		///end
-		scene_return_object(object.base, o, done);
-	});
+	}
+	///end
+	return scene_return_object(object.base, o);
 }
 
-function scene_return_object(object: object_t, o: obj_t, done: (o: object_t)=>void) {
+function scene_return_object(object: object_t, o: obj_t): object_t {
 	// Load object actions
 	if (object != null && o.object_actions != null) {
 		let oactions: scene_t[] = [];
 		while (oactions.length < o.object_actions.length) {
 			oactions.push(null);
 		}
-		let actions_loaded: i32 = 0;
+
 		for (let i: i32 = 0; i < o.object_actions.length; ++i) {
 			let ref: string = o.object_actions[i];
 			if (ref == "null") { // No startup action set
-				actions_loaded++;
 				continue;
 			}
-			data_get_scene_raw(ref, function (action: scene_t) {
-				oactions[i] = action;
-				actions_loaded++;
-				if (actions_loaded == o.object_actions.length) {
-					scene_return_object_loaded(object, o, oactions, done);
-				}
-			});
+			let action: scene_t = data_get_scene_raw(ref);
+			oactions[i] = action;
 		}
+		return scene_return_object_loaded(object, o, oactions);
 	}
-	else scene_return_object_loaded(object, o, null, done);
+	else {
+		return scene_return_object_loaded(object, o, null);
+	}
 }
 
-function scene_return_object_loaded(object: object_t, o: obj_t, oactions: scene_t[], done: (o: object_t)=>void) {
+function scene_return_object_loaded(object: object_t, o: obj_t, oactions: scene_t[]): object_t {
 	if (object != null) {
 		object.raw = o;
 		object.name = o.name;
@@ -501,7 +448,7 @@ function scene_return_object_loaded(object: object_t, o: obj_t, oactions: scene_
 		scene_gen_transform(o, object.transform);
 		object_setup_animation(object, oactions);
 	}
-	done(object);
+	return object;
 }
 
 function scene_gen_transform(object: obj_t, transform: transform_t) {
@@ -516,37 +463,26 @@ function scene_gen_transform(object: obj_t, transform: transform_t) {
 	}
 }
 
-function scene_load_embedded_data(datas: string[], done: ()=>void) {
+function scene_load_embedded_data(datas: string[]) {
 	if (datas == null) {
-		done();
 		return;
 	}
-	let loaded: i32 = 0;
 	for (let i: i32 = 0; i < datas.length; ++i) {
 		let file: string = datas[i];
-		scene_embed_data(file, function () {
-			loaded++;
-			if (loaded == datas.length) {
-				done();
-			}
-		});
+		scene_embed_data(file);
 	}
 }
 
-function scene_embed_data(file: string, done: ()=>void) {
+function scene_embed_data(file: string) {
 	if (file.endsWith(".raw")) {
-		data_get_blob(file, function (b: ArrayBuffer) {
-			// Raw 3D texture bytes
-			let w: i32 = Math.floor(Math.pow(b.byteLength, 1 / 3)) + 1;
-			let image: image_t = image_from_bytes_3d(b, w, w, w, tex_format_t.R8);
-			scene_embedded.set(file, image);
-			done();
-		});
+		let b: ArrayBuffer = data_get_blob(file);
+		// Raw 3D texture bytes
+		let w: i32 = Math.floor(Math.pow(b.byteLength, 1 / 3)) + 1;
+		let image: image_t = image_from_bytes_3d(b, w, w, w, tex_format_t.R8);
+		scene_embedded.set(file, image);
 	}
 	else {
-		data_get_image(file, function (image: image_t) {
-			scene_embedded.set(file, image);
-			done();
-		});
+		let image: image_t = data_get_image(file);
+		scene_embedded.set(file, image);
 	}
 }

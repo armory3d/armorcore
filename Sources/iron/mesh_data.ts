@@ -1,24 +1,34 @@
 
-function mesh_data_parse(name: string, id: string, done: (md: mesh_data_t)=>void) {
-	data_get_scene_raw(name, function (format: scene_t) {
-		let raw: mesh_data_t = data_get_mesh_raw_by_name(format.mesh_datas, id);
-		if (raw == null) {
-			krom_log(`Mesh data "${id}" not found!`);
-			done(null);
-		}
+function mesh_data_parse(name: string, id: string): mesh_data_t {
+	let format: scene_t = data_get_scene_raw(name);
+	let raw: mesh_data_t = mesh_data_get_raw_by_name(format.mesh_datas, id);
+	if (raw == null) {
+		krom_log("Mesh data '" + id + "' not found!");
+		return null;
+	}
 
-		mesh_data_create(raw, function (dat: mesh_data_t) {
-			///if arm_skin
-			if (raw.skin != null) {
-				mesh_data_init_skeleton_transforms(dat, raw.skin.transforms_inv);
-			}
-			///end
-			done(dat);
-		});
-	});
+	let dat: mesh_data_t = mesh_data_create(raw);
+	///if arm_skin
+	if (raw.skin != null) {
+		mesh_data_init_skeleton_transforms(dat, raw.skin.transforms_inv);
+	}
+	///end
+	return dat;
 }
 
-function mesh_data_create(raw: mesh_data_t, done: (md: mesh_data_t)=>void) {
+function mesh_data_get_raw_by_name(datas: mesh_data_t[], name: string): mesh_data_t {
+	if (name == "") {
+		return datas[0];
+	}
+	for (let i: i32 = 0; i < datas.length; ++i) {
+		if (datas[i].name == name) {
+			return datas[i];
+		}
+	}
+	return null;
+}
+
+function mesh_data_create(raw: mesh_data_t): mesh_data_t {
 	if (raw.scale_pos == null) {
 		raw.scale_pos = 1.0;
 	}
@@ -86,7 +96,7 @@ function mesh_data_create(raw: mesh_data_t, done: (md: mesh_data_t)=>void) {
 	raw._material_indices = material_indices;
 	raw._struct = mesh_data_get_vertex_struct(raw.vertex_arrays);
 
-	done(raw);
+	return raw;
 }
 
 function mesh_data_get_vertex_struct(vertex_arrays: vertex_array_t[]): vertex_struct_t {

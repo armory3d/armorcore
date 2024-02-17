@@ -25,15 +25,15 @@ function speaker_object_create(data: speaker_data_t): speaker_object_t {
 		return raw;
 	}
 
-	data_get_sound(data.sound, function (sound: sound_t) {
-		raw.sound = sound;
-		app_notify_on_init(function () {
-			if (raw.base.visible && raw.data.play_on_start) {
-				speaker_object_play(raw);
-			}
-		});
-	});
+	raw.sound = data_get_sound(data.sound);
+	app_notify_on_init(_speaker_object_create_on_init, raw);
 	return raw;
+}
+
+function _speaker_object_create_on_init(raw: speaker_object_t) {
+	if (raw.base.visible && raw.data.play_on_start) {
+		speaker_object_play(raw);
+	}
 }
 
 function speaker_object_play(raw: speaker_object_t) {
@@ -111,6 +111,18 @@ function speaker_object_remove(raw: speaker_object_t) {
 	speaker_object_stop(raw);
 	array_remove(scene_speakers, raw);
 	object_remove_super(raw.base);
+}
+
+function speaker_data_get_raw_by_name(datas: speaker_data_t[], name: string): speaker_data_t {
+	if (name == "") {
+		return datas[0];
+	}
+	for (let i: i32 = 0; i < datas.length; ++i) {
+		if (datas[i].name == name) {
+			return datas[i];
+		}
+	}
+	return null;
 }
 
 ///end

@@ -413,11 +413,11 @@ function image_from_bytes_3d(buffer: ArrayBuffer, width: i32, height: i32, depth
 	return image;
 }
 
-function image_from_encoded_bytes(buffer: ArrayBuffer, format: string, done: (img: image_t)=>void, readable: bool = false) {
+function image_from_encoded_bytes(buffer: ArrayBuffer, format: string, readable: bool = false): image_t {
 	let image: image_t = _image_create(null);
 	image.texture_ = krom_g4_create_texture_from_encoded_bytes(buffer, format, readable);
 	_image_set_size(image, image.texture_);
-	done(image);
+	return image;
 }
 
 function image_create(width: i32, height: i32, format: tex_format_t = null, usage: usage_t = null): image_t {

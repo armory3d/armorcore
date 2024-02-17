@@ -65,13 +65,6 @@ function anim_bone_get_num_bones(raw: anim_bone_t): i32 {
 	return raw.skeleton_bones.length;
 }
 
-let _anim_bone_set_skin_data: any;
-
-function anim_bone_set_skin_done(action: scene_t) {
-	let raw: anim_bone_t = _anim_bone_set_skin_data;
-	anim_bone_play(raw, action.name);
-}
-
 function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 	raw.object = mo;
 	raw.data = mo != null ? mo.data : null;
@@ -88,8 +81,8 @@ function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 
 		let refs: string[] = mo.base.parent.raw.bone_actions;
 		if (refs != null && refs.length > 0) {
-			_anim_bone_set_skin_data = raw;
-			data_get_scene_raw(refs[0], anim_bone_set_skin_done);
+			let action: scene_t = data_get_scene_raw(refs[0]);
+			anim_bone_play(raw, action.name);
 		}
 	}
 }

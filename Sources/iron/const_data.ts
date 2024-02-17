@@ -67,10 +67,8 @@ let const_data_ltc_mag_tex: image_t = null;
 function const_data_init_ltc() {
 	// Real-Time Polygonal-Light Shading with Linearly Transformed Cosines
 	// https://eheitzresearch.wordpress.com/415-2/
-	data_get_blob("ltc_mat.arm", function (ltc_mat: ArrayBuffer) {
-		data_get_blob("ltc_mag.arm", function (ltc_mag: ArrayBuffer) {
-			const_data_ltc_mat_tex = image_from_bytes(armpack_decode(ltc_mat), 64, 64, tex_format_t.RGBA128);
-			const_data_ltc_mag_tex = image_from_bytes(armpack_decode(ltc_mag), 64, 64, tex_format_t.R32);
-		});
-	});
+	let ltc_mat: ArrayBuffer = data_get_blob("ltc_mat.arm");
+	let ltc_mag: ArrayBuffer = data_get_blob("ltc_mag.arm");
+	const_data_ltc_mat_tex = image_from_bytes(armpack_decode(ltc_mat), 64, 64, tex_format_t.RGBA128);
+	const_data_ltc_mag_tex = image_from_bytes(armpack_decode(ltc_mag), 64, 64, tex_format_t.R32);
 }

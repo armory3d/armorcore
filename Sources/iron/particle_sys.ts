@@ -64,25 +64,24 @@ function particle_sys_create(scene_name: string, ref: particle_ref_t): particle_
 	raw.owner_scale = vec4_create();
 	raw.particles = [];
 	raw.ready = false;
-	data_get_particle(scene_name, ref.particle, function (b: particle_data_t) {
-		raw.data = b;
-		raw.r = raw.data;
-		raw.gx = 0;
-		raw.gy = 0;
-		raw.gz = -9.81 * raw.r.weight_gravity;
-		raw.alignx = raw.r.object_align_factor[0] / 2;
-		raw.aligny = raw.r.object_align_factor[1] / 2;
-		raw.alignz = raw.r.object_align_factor[2] / 2;
-		raw.lifetime = raw.r.lifetime / raw.frame_rate;
-		raw.animtime = (raw.r.frame_end - raw.r.frame_start) / raw.frame_rate;
-		raw.spawn_rate = ((raw.r.frame_end - raw.r.frame_start) / raw.r.count) / raw.frame_rate;
-		for (let i: i32 = 0; i < raw.r.count; ++i) {
-			let p: particle_t = particle_create();
-			p.i = i;
-			raw.particles.push(p);
-		}
-		raw.ready = true;
-	});
+	let b: particle_data_t = data_get_particle(scene_name, ref.particle);
+	raw.data = b;
+	raw.r = raw.data;
+	raw.gx = 0;
+	raw.gy = 0;
+	raw.gz = -9.81 * raw.r.weight_gravity;
+	raw.alignx = raw.r.object_align_factor[0] / 2;
+	raw.aligny = raw.r.object_align_factor[1] / 2;
+	raw.alignz = raw.r.object_align_factor[2] / 2;
+	raw.lifetime = raw.r.lifetime / raw.frame_rate;
+	raw.animtime = (raw.r.frame_end - raw.r.frame_start) / raw.frame_rate;
+	raw.spawn_rate = ((raw.r.frame_end - raw.r.frame_start) / raw.r.count) / raw.frame_rate;
+	for (let i: i32 = 0; i < raw.r.count; ++i) {
+		let p: particle_t = particle_create();
+		p.i = i;
+		raw.particles.push(p);
+	}
+	raw.ready = true;
 	return raw;
 }
 

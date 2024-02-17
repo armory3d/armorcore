@@ -121,7 +121,27 @@ function object_get_children(raw: object_t, recursive: bool = false): object_t[]
 	return ret_children;
 }
 
+function object_setup_animation_super(raw: object_t, oactions: scene_t[] = null) {
+	// Parented to bone
+	///if arm_skin
+	if (raw.raw.parent_bone != null) {
+		app_notify_on_init(_object_setup_animation_on_init, raw);
+	}
+	///end
+	// object_t actions
+	if (oactions == null) {
+		return;
+	}
+	raw.animation = anim_object_create(raw, oactions).base;
+}
+
 ///if arm_skin
+function _object_setup_animation_on_init(raw: object_t) {
+	let banim: anim_bone_t = object_get_parent_armature(raw, raw.parent.name);
+	if (banim != null) {
+		anim_bone_add_bone_child(banim, raw.raw.parent_bone, raw);
+	}
+}
 function object_get_parent_armature(raw: object_t, name: string): anim_bone_t {
 	for (let i: i32 = 0; i < scene_animations.length; ++i) {
 		let a: anim_raw_t = scene_animations[i];
@@ -132,25 +152,6 @@ function object_get_parent_armature(raw: object_t, name: string): anim_bone_t {
 	return null;
 }
 ///end
-
-function object_setup_animation_super(raw: object_t, oactions: scene_t[] = null) {
-	// Parented to bone
-	///if arm_skin
-	if (raw.raw.parent_bone != null) {
-		app_notify_on_init(function () {
-			let banim: anim_bone_t = object_get_parent_armature(raw, raw.parent.name);
-			if (banim != null) {
-				anim_bone_add_bone_child(banim, raw.raw.parent_bone, raw);
-			}
-		});
-	}
-	///end
-	// TBaseObject actions
-	if (oactions == null) {
-		return;
-	}
-	raw.animation = anim_object_create(raw, oactions).base;
-}
 
 function object_setup_animation(raw: object_t, oactions: scene_t[] = null) {
 	if (raw.ext_type == "mesh_object_t") {

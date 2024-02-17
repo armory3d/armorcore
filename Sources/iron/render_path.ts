@@ -199,16 +199,20 @@ function render_path_gen_mipmaps(target: string) {
 	image_gen_mipmaps(rt.image, 1000);
 }
 
+function _render_path_sort_dist(a: mesh_object_t, b: mesh_object_t): i32 {
+	return a.camera_dist >= b.camera_dist ? 1 : -1;
+}
+
 function render_path_sort_meshes_dist(meshes: mesh_object_t[]) {
-	meshes.sort(function (a: mesh_object_t, b: mesh_object_t): i32 {
-		return a.camera_dist >= b.camera_dist ? 1 : -1;
-	});
+	meshes.sort(_render_path_sort_dist);
+}
+
+function _render_path_sort_shader(a: mesh_object_t, b: mesh_object_t): i32 {
+	return a.materials[0].name >= b.materials[0].name ? 1 : -1;
 }
 
 function render_path_sort_meshes_shader(meshes: mesh_object_t[]) {
-	meshes.sort(function (a: mesh_object_t, b: mesh_object_t): i32 {
-		return a.materials[0].name >= b.materials[0].name ? 1 : -1;
-	});
+	meshes.sort(_render_path_sort_shader);
 }
 
 function render_path_draw_meshes(context: string) {
@@ -302,10 +306,9 @@ function render_path_load_shader(handle: string) {
 	// file/data_name/context
 	let shader_path: string[] = handle.split("/");
 
-	data_get_shader(shader_path[0], shader_path[1], function (res: shader_data_t) {
-		cc.context = shader_data_get_context(res, shader_path[2]);
-		_render_path_loading--;
-	});
+	let res: shader_data_t = data_get_shader(shader_path[0], shader_path[1]);
+	cc.context = shader_data_get_context(res, shader_path[2]);
+	_render_path_loading--;
 }
 
 function render_path_unload_shader(handle: string) {
@@ -323,6 +326,10 @@ function render_path_unload() {
 		let rt: render_target_t = rtargets[i];
 		render_target_unload(rt);
 	}
+}
+
+function _render_path_resize_on_init(_image: image_t) {
+	image_unload(_image);
 }
 
 function render_path_resize() {
@@ -359,9 +366,7 @@ function render_path_resize() {
 		let rt: render_target_t = rtargets[i];
 		if (rt != null && rt.width == 0) {
 			let _image: image_t = rt.image;
-			app_notify_on_init(function () {
-				image_unload(_image);
-			});
+			app_notify_on_init(_render_path_resize_on_init, _image);
 			rt.image = render_path_create_image(rt, rt.depth_format);
 		}
 	}
