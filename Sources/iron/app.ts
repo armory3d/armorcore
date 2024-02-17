@@ -7,7 +7,7 @@ type callback_t = {
 };
 
 let app_on_resets: callback_t[] = [];
-let app_on_end_frames: callback_t[] = []
+let app_on_end_frames: callback_t[] = [];
 let app_on_inits: callback_t[] = [];
 let app_on_updates: callback_t[] = [];
 let app_on_renders: callback_t[] = [];
