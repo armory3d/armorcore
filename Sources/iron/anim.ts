@@ -21,7 +21,7 @@ type anim_raw_t = {
 	blend_action?: string;
 	blend_factor?: f32;
 	last_frame_index?: i32;
-	marker_events?: Map<string, (()=>void)[]>;
+	marker_events?: map_t<string, (()=>void)[]>;
 };
 
 // Lerp
@@ -151,7 +151,7 @@ function anim_is_track_end(raw: anim_raw_t, track: track_t): bool {
 		raw.frame_index <= 0;
 }
 
-function anim_check_frame_index(raw: anim_raw_t, frame_values: Uint32Array): bool {
+function anim_check_frame_index(raw: anim_raw_t, frame_values: u32_array_t): bool {
 	return raw.speed > 0 ?
 		((raw.frame_index + 1) < frame_values.length && raw.time > frame_values[raw.frame_index + 1] * raw.frame_time) :
 		((raw.frame_index - 1) > -1 && raw.time < frame_values[raw.frame_index - 1] * raw.frame_time);
@@ -250,7 +250,7 @@ function anim_set_frame(raw: anim_raw_t, frame: i32) {
 
 function anim_notify_on_marker(raw: anim_raw_t, name: string, on_marker: ()=>void) {
 	if (raw.marker_events == null) {
-		raw.marker_events = new Map();
+		raw.marker_events = new map_t();
 	}
 	let ar: (()=>void)[] = raw.marker_events.get(name);
 	if (ar == null) {
@@ -265,7 +265,7 @@ function anim_remove_marker(raw: anim_raw_t, name: string, on_marker: ()=>void) 
 }
 
 function anim_current_frame(raw: anim_raw_t): i32 {
-	return Math.floor(raw.time / raw.frame_time);
+	return math_floor(raw.time / raw.frame_time);
 }
 
 function anim_total_frames(raw: anim_raw_t): i32 {

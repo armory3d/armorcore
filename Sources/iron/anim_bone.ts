@@ -5,7 +5,7 @@ type anim_bone_t = {
 	base?: anim_raw_t;
 	object?: mesh_object_t;
 	data?: mesh_data_t;
-	skin_buffer?: Float32Array;
+	skin_buffer?: f32_array_t;
 	skeleton_bones?: obj_t[];
 	skeleton_mats?: mat4_t[];
 	skeleton_bones_blend?: obj_t[];
@@ -16,7 +16,7 @@ type anim_bone_t = {
 	mats_fast_sort?: i32[];
 	mats_fast_blend?: mat4_t[];
 	mats_fast_blend_sort?: i32[];
-	bone_children?: Map<string, object_t[]>; // Parented to bone
+	bone_children?: map_t<string, object_t[]>; // Parented to bone
 	// Do inverse kinematics here
 	on_updates?: (()=>void)[];
 };
@@ -71,7 +71,7 @@ function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 	raw.base.is_skinned = raw.data != null ? raw.data.skin != null : false;
 	if (raw.base.is_skinned) {
 		let bone_size: i32 = 8; // Dual-quat skinning
-		raw.skin_buffer = new Float32Array(_anim_bone_skin_max_bones * bone_size);
+		raw.skin_buffer = new f32_array_t(_anim_bone_skin_max_bones * bone_size);
 		for (let i: i32 = 0; i < raw.skin_buffer.length; ++i) {
 			raw.skin_buffer[i] = 0;
 		}
@@ -89,7 +89,7 @@ function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 
 function anim_bone_add_bone_child(raw: anim_bone_t, bone: string, o: object_t) {
 	if (raw.bone_children == null) {
-		raw.bone_children = new Map();
+		raw.bone_children = new map_t();
 	}
 	let ar: object_t[] = raw.bone_children.get(bone);
 	if (ar == null) {
@@ -121,12 +121,12 @@ function anim_bone_update_bone_children(raw: anim_bone_t, bone: obj_t, bm: mat4_
 		}
 		if (o.raw.parent_bone_tail != null) {
 			if (o.raw.parent_bone_connected || raw.base.is_skinned) {
-				let v: Float32Array = o.raw.parent_bone_tail;
+				let v: f32_array_t = o.raw.parent_bone_tail;
 				mat4_init_translate(t.bone_parent, v[0], v[1], v[2]);
 				mat4_mult_mat(t.bone_parent, bm);
 			}
 			else {
-				let v: Float32Array = o.raw.parent_bone_tail_pose;
+				let v: f32_array_t = o.raw.parent_bone_tail_pose;
 				mat4_set_from(t.bone_parent, bm);
 				mat4_translate(t.bone_parent, v[0], v[1], v[2]);
 			}
@@ -385,7 +385,7 @@ function anim_bone_get_world_mat(raw: anim_bone_t, bone: obj_t): mat4_t {
 
 function anim_bone_get_bone_len(raw: anim_bone_t, bone: obj_t): f32 {
 	let refs: string[] = raw.data.skin.bone_ref_array;
-	let lens: Float32Array = raw.data.skin.bone_len_array;
+	let lens: f32_array_t = raw.data.skin.bone_len_array;
 	for (let i: i32 = 0; i < refs.length; ++i) {
 		if (refs[i] == bone.name) {
 			return lens[i];
@@ -397,7 +397,7 @@ function anim_bone_get_bone_len(raw: anim_bone_t, bone: obj_t): f32 {
 // Returns bone length with scale applied
 function anim_bone_get_bone_abs_len(raw: anim_bone_t, bone: obj_t): f32 {
 	let refs: string[] = raw.data.skin.bone_ref_array;
-	let lens: Float32Array = raw.data.skin.bone_len_array;
+	let lens: f32_array_t = raw.data.skin.bone_len_array;
 	let scale: f32 = mat4_get_scale(raw.object.base.parent.transform.world).z;
 	for (let i = 0; i < refs.length; ++i) {
 		if (refs[i] == bone.name) {
@@ -722,7 +722,7 @@ function anim_bone_total_frames(raw: anim_bone_t): i32 {
 		return 0;
 	}
 	let track: track_t = raw.skeleton_bones[0].anim.tracks[0];
-	return Math.floor(track.frames[track.frames.length - 1] - track.frames[0]);
+	return math_floor(track.frames[track.frames.length - 1] - track.frames[0]);
 }
 
 ///end

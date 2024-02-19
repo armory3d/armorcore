@@ -167,12 +167,12 @@ function shader_context_compile(raw: shader_context_t): shader_context_t {
 
 		///if arm_noembed // Load shaders manually
 
-		let vs_buffer: ArrayBuffer = data_get_blob(raw.vertex_shader + shader_data_ext());
+		let vs_buffer: buffer_t = data_get_blob(raw.vertex_shader + shader_data_ext());
 		raw._pipe_state.vertex_shader = g4_shader_create(vs_buffer, shader_type_t.VERTEX);
-		let fs_buffer: ArrayBuffer = data_get_blob(raw.fragment_shader + shader_data_ext());
+		let fs_buffer: buffer_t = data_get_blob(raw.fragment_shader + shader_data_ext());
 		raw._pipe_state.fragment_shader = g4_shader_create(fs_buffer, shader_type_t.FRAGMENT);
 		if (raw.geometry_shader != null) {
-			let gs_buffer: ArrayBuffer = data_get_blob(raw.geometry_shader + shader_data_ext());
+			let gs_buffer: buffer_t = data_get_blob(raw.geometry_shader + shader_data_ext());
 			raw._pipe_state.geometry_shader = g4_shader_create(gs_buffer, shader_type_t.GEOMETRY);
 		}
 

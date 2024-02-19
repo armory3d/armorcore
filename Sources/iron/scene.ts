@@ -12,7 +12,7 @@ let scene_animations: anim_raw_t[];
 ///if arm_skin
 let scene_armatures: armature_t[];
 ///end
-let scene_embedded: Map<string, image_t>;
+let scene_embedded: map_t<string, image_t>;
 
 let _scene_ready: bool;
 let _scene_uid_counter: i32 = 0;
@@ -36,7 +36,7 @@ function scene_create(format: scene_t): object_t {
 	///if arm_skin
 	scene_armatures = [];
 	///end
-	scene_embedded = new Map();
+	scene_embedded = new map_t();
 	_scene_root = object_create();
 	_scene_root.name = "Root";
 
@@ -340,7 +340,7 @@ function scene_create_object(o: obj_t, format: scene_t, parent: object_t, parent
 
 function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, parent_object: obj_t, materials: material_data_t[]): object_t {
 	// Mesh reference
-	let ref: string[] = o.data_ref.split("/");
+	let ref: string[] = string_split(o.data_ref, "/");
 	let object_file: string = "";
 	let data_ref: string = "";
 	let scene_name: string = format.name;
@@ -393,7 +393,7 @@ function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, p
 }
 
 function scene_return_mesh_object(object_file: string, data_ref: string, scene_name: string, armature: any, // armature_t
-	materials: material_data_t[], parent: object_t, parentObject: obj_t, o: obj_t): object_t {
+	materials: material_data_t[], parent: object_t, parent_object: obj_t, o: obj_t): object_t {
 
 	let mesh: mesh_data_t = data_get_mesh(object_file, data_ref);
 	///if arm_skin
@@ -474,10 +474,10 @@ function scene_load_embedded_data(datas: string[]) {
 }
 
 function scene_embed_data(file: string) {
-	if (file.endsWith(".raw")) {
-		let b: ArrayBuffer = data_get_blob(file);
+	if (ends_with(file, ".raw")) {
+		let b: buffer_t = data_get_blob(file);
 		// Raw 3D texture bytes
-		let w: i32 = Math.floor(Math.pow(b.byteLength, 1 / 3)) + 1;
+		let w: i32 = math_floor(math_pow(buffer_size(b), 1 / 3)) + 1;
 		let image: image_t = image_from_bytes_3d(b, w, w, w, tex_format_t.R8);
 		scene_embedded.set(file, image);
 	}

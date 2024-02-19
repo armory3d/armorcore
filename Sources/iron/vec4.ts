@@ -25,7 +25,7 @@ function vec4_dist_f(v1x: f32, v1y: f32, v1z: f32, v2x: f32, v2y: f32, v2z: f32)
 	let vx: f32 = v1x - v2x;
 	let vy: f32 = v1y - v2y;
 	let vz: f32 = v1z - v2z;
-	return Math.sqrt(vx * vx + vy * vy + vz * vz);
+	return math_sqrt(vx * vx + vy * vy + vz * vz);
 }
 
 function vec4_x_axis(): vec4_t {
@@ -188,7 +188,7 @@ function vec4_apply_quat(self: vec4_t, q: quat_t): vec4_t {
 }
 
 function vec4_len(self: vec4_t): f32 {
-	return Math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z);
+	return math_sqrt(self.x * self.x + self.y * self.y + self.z * self.z);
 }
 
 function vec4_sub(self: vec4_t, v: vec4_t): vec4_t {
@@ -199,7 +199,7 @@ function vec4_sub(self: vec4_t, v: vec4_t): vec4_t {
 }
 
 function vec4_dist_to(self: vec4_t, p: vec4_t): f32 {
-	return Math.sqrt((p.x - self.x) * (p.x - self.x) + (p.y - self.y) * (p.y - self.y) + (p.z - self.z) * (p.z - self.z));
+	return math_sqrt((p.x - self.x) * (p.x - self.x) + (p.y - self.y) * (p.y - self.y) + (p.z - self.z) * (p.z - self.z));
 }
 
 function vec4_reflect(self: vec4_t, n: vec4_t): vec4_t {

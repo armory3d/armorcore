@@ -37,13 +37,13 @@ function mesh_data_create(raw: mesh_data_t): mesh_data_t {
 	}
 
 	raw._refcount = 0;
-	raw._vertex_buffer_map = new Map();
+	raw._vertex_buffer_map = new map_t();
 	raw._ready = false;
 	raw._instanced = false;
 	raw._instance_count = 0;
 
 	// Mesh data
-	let indices: Uint32Array[] = [];
+	let indices: u32_array_t[] = [];
 	let material_indices: i32[] = [];
 
 	for (let i: i32 = 0; i < raw.index_arrays.length; ++i) {
@@ -65,10 +65,10 @@ function mesh_data_create(raw: mesh_data_t): mesh_data_t {
 	}
 
 	if (raw.skin != null) {
-		let vertex_length: i32 = Math.floor(vertex_arrays[0].values.length / vertex_arrays[0]._size);
+		let vertex_length: i32 = math_floor(vertex_arrays[0].values.length / vertex_arrays[0]._size);
 		let l: i32 = vertex_length * 4;
-		let bonea: Int16Array = new Int16Array(l);
-		let weighta: Int16Array = new Int16Array(l);
+		let bonea: i16_array_t = new i16_array_t(l);
+		let weighta: i16_array_t = new i16_array_t(l);
 
 		let index: i32 = 0;
 		let ai: i32 = 0;
@@ -119,7 +119,7 @@ function mesh_data_get_vertex_data(data: string): vertex_data_t {
 	}
 }
 
-function mesh_data_build_vertices(vertices: DataView, vertex_arrays: vertex_array_t[], offset: i32 = 0, fake_uvs: bool = false, uvs_index: i32 = -1) {
+function mesh_data_build_vertices(vertices: buffer_view_t, vertex_arrays: vertex_array_t[], offset: i32 = 0, fake_uvs: bool = false, uvs_index: i32 = -1) {
 	let num_verts: i32 = vertex_arrays[0].values.length / vertex_arrays[0]._size;
 	let di: i32 = -1 + offset;
 	for (let i: i32 = 0; i < num_verts; ++i) {
@@ -127,16 +127,16 @@ function mesh_data_build_vertices(vertices: DataView, vertex_arrays: vertex_arra
 			let l: i32 = vertex_arrays[va]._size;
 			if (fake_uvs && va == uvs_index) { // Add fake uvs if uvs where "asked" for but not found
 				for (let j: i32 = 0; j < l; ++j) {
-					vertices.setInt16(++di * 2, 0, true);
+					buffer_view_set_i16(vertices, ++di * 2, 0);
 				}
 				continue;
 			}
 			for (let o: i32 = 0; o < l; ++o) {
-				vertices.setInt16(++di * 2, vertex_arrays[va].values[i * l + o], true);
+				buffer_view_set_i16(vertices, ++di * 2, vertex_arrays[va].values[i * l + o]);
 			}
 			if (vertex_arrays[va].padding != null) {
 				if (vertex_arrays[va].padding == 1) {
-					vertices.setInt16(++di * 2, 0, true);
+					buffer_view_set_i16(vertices, ++di * 2, 0);
 				}
 			}
 		}
@@ -164,7 +164,7 @@ function mesh_data_get_vertex_array(raw: mesh_data_t, name: string): vertex_arra
 	return null;
 }
 
-function mesh_data_setup_inst(raw: mesh_data_t, data: Float32Array, inst_type: i32) {
+function mesh_data_setup_inst(raw: mesh_data_t, data: f32_array_t, inst_type: i32) {
 	let structure: vertex_struct_t = g4_vertex_struct_create();
 	structure.instanced = true;
 	raw._instanced = true;
@@ -177,11 +177,11 @@ function mesh_data_setup_inst(raw: mesh_data_t, data: Float32Array, inst_type: i
 		g4_vertex_struct_add(structure, "iscl", vertex_data_t.F32_3X);
 	}
 
-	raw._instance_count = Math.floor(data.length / Math.floor(g4_vertex_struct_byte_size(structure) / 4));
+	raw._instance_count = math_floor(data.length / math_floor(g4_vertex_struct_byte_size(structure) / 4));
 	raw._instanced_vb = g4_vertex_buffer_create(raw._instance_count, structure, usage_t.STATIC, 1);
-	let vertices: DataView = g4_vertex_buffer_lock(raw._instanced_vb);
-	for (let i: i32 = 0; i < Math.floor(vertices.byteLength / 4); ++i) {
-		vertices.setFloat32(i * 4, data[i], true);
+	let vertices: buffer_view_t = g4_vertex_buffer_lock(raw._instanced_vb);
+	for (let i: i32 = 0; i < math_floor(buffer_view_size(vertices) / 4); ++i) {
+		buffer_view_set_f32(vertices, i * 4, data[i]);
 	}
 	g4_vertex_buffer_unlock(raw._instanced_vb);
 }
@@ -217,7 +217,7 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 		let uvs: vertex_array_t = mesh_data_get_vertex_array(raw, 'tex');
 		let cols: vertex_array_t = mesh_data_get_vertex_array(raw, 'col');
 		let struct: vertex_struct_t = mesh_data_get_vertex_struct(vertex_arrays);
-		vb = g4_vertex_buffer_create(Math.floor(positions.values.length / positions._size), struct, usage_t.STATIC);
+		vb = g4_vertex_buffer_create(math_floor(positions.values.length / positions._size), struct, usage_t.STATIC);
 		raw._vertices = g4_vertex_buffer_lock(vb);
 		mesh_data_build_vertices(raw._vertices, vertex_arrays, 0, has_tex && uvs == null, tex_offset);
 		g4_vertex_buffer_unlock(vb);
@@ -238,7 +238,7 @@ function mesh_data_build(raw: mesh_data_t) {
 	}
 
 	let positions: vertex_array_t = mesh_data_get_vertex_array(raw, 'pos');
-	raw._vertex_buffer = g4_vertex_buffer_create(Math.floor(positions.values.length / positions._size), raw._struct, usage_t.STATIC);
+	raw._vertex_buffer = g4_vertex_buffer_create(math_floor(positions.values.length / positions._size), raw._struct, usage_t.STATIC);
 	raw._vertices = g4_vertex_buffer_lock(raw._vertex_buffer);
 	mesh_data_build_vertices(raw._vertices, raw.vertex_arrays);
 	g4_vertex_buffer_unlock(raw._vertex_buffer);
@@ -253,13 +253,13 @@ function mesh_data_build(raw: mesh_data_t) {
 	raw._index_buffers = [];
 
 	for (let i: i32 = 0; i < raw._indices.length; ++i) {
-		let id: Uint32Array = raw._indices[i];
+		let id: u32_array_t = raw._indices[i];
 		if (id.length == 0) {
 			continue;
 		}
 		let index_buffer: index_buffer_t = g4_index_buffer_create(id.length);
 
-		let indices_array: Uint32Array = g4_index_buffer_lock(index_buffer);
+		let indices_array: u32_array_t = g4_index_buffer_lock(index_buffer);
 		for (let i: i32 = 0; i < indices_array.length; ++i) {
 			indices_array[i] = id[i];
 		}
@@ -289,8 +289,8 @@ function mesh_data_add_action(raw: mesh_data_t, bones: obj_t[], name: string) {
 		return;
 	}
 	if (raw._actions == null) {
-		raw._actions = new Map();
-		raw._mats = new Map();
+		raw._actions = new map_t();
+		raw._mats = new map_t();
 	}
 	if (raw._actions.get(name) != null) {
 		return;
@@ -317,10 +317,10 @@ function mesh_data_add_action(raw: mesh_data_t, bones: obj_t[], name: string) {
 	raw._mats.set(name, action_mats);
 }
 
-function mesh_data_init_skeleton_transforms(raw: mesh_data_t, transforms_inv: Float32Array[]) {
+function mesh_data_init_skeleton_transforms(raw: mesh_data_t, transforms_inv: f32_array_t[]) {
 	raw._skeleton_transforms_inv = [];
 	for (let i: i32 = 0; i < transforms_inv.length; ++i) {
-		let t: Float32Array = transforms_inv[i];
+		let t: f32_array_t = transforms_inv[i];
 		let mi = mat4_from_f32_array(t);
 		raw._skeleton_transforms_inv.push(mi);
 	}
@@ -354,14 +354,14 @@ function mesh_data_calculate_aabb(raw: mesh_data_t): vec4_t {
 		}
 		i += 4;
 	}
-	aabb.x = (Math.abs(aabb_min.x) + Math.abs(aabb_max.x)) / 32767 * raw.scale_pos;
-	aabb.y = (Math.abs(aabb_min.y) + Math.abs(aabb_max.y)) / 32767 * raw.scale_pos;
-	aabb.z = (Math.abs(aabb_min.z) + Math.abs(aabb_max.z)) / 32767 * raw.scale_pos;
+	aabb.x = (math_abs(aabb_min.x) + math_abs(aabb_max.x)) / 32767 * raw.scale_pos;
+	aabb.y = (math_abs(aabb_min.y) + math_abs(aabb_max.y)) / 32767 * raw.scale_pos;
+	aabb.z = (math_abs(aabb_min.z) + math_abs(aabb_max.z)) / 32767 * raw.scale_pos;
 	return aabb;
 }
 
 function mesh_data_delete(raw: mesh_data_t) {
-	let buffer_map: vertex_buffer_t[] = Array.from(raw._vertex_buffer_map.values());
+	let buffer_map: vertex_buffer_t[] = map_to_array(raw._vertex_buffer_map);
 	for (let i: i32 = 0; i < buffer_map.length; ++i) {
 		let buf = buffer_map[i];
 		if (buf != null) {

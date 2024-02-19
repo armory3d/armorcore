@@ -12,7 +12,7 @@ let _sys_paste_listener: (data: string)=>void = null;
 
 let _sys_start_time: f32;
 let _sys_window_title: string;
-let _sys_shaders: Map<string, shader_t> = new Map();
+let _sys_shaders: map_t<string, shader_t> = new map_t();
 
 function sys_start(ops: kinc_sys_ops_t, callback: ()=>void) {
 	krom_init(ops.title, ops.width, ops.height, ops.vsync, ops.mode, ops.features, ops.x, ops.y, ops.frequency);
@@ -65,8 +65,8 @@ function sys_notify_on_app_state(on_foreground: ()=>void, on_resume: ()=>void, o
 	}
 }
 
-function sys_notify_on_drop_files(dropFilesListener: (s: string)=>void) {
-	_sys_drop_files_listeners.push(dropFilesListener);
+function sys_notify_on_drop_files(drop_files_listener: (s: string)=>void) {
+	_sys_drop_files_listeners.push(drop_files_listener);
 }
 
 function sys_notify_on_cut_copy_paste(on_cut: ()=>string, on_copy: ()=>string, on_paste: (data: string)=>void) {
@@ -189,8 +189,8 @@ function sys_keyboard_up_callback(code: i32) {
 	keyboard_up_listener(code);
 }
 
-function sys_keyboard_press_callback(charCode: i32) {
-	keyboard_press_listener(String.fromCharCode(charCode));
+function sys_keyboard_press_callback(char_code: i32) {
+	keyboard_press_listener(string_from_char_code(char_code));
 }
 
 function sys_mouse_down_callback(button: i32, x: i32, y: i32) {
@@ -337,19 +337,19 @@ function sys_display_frequency(): i32 {
 	return krom_display_frequency(sys_display_primary_id());
 }
 
-function sys_buffer_to_string(b: ArrayBuffer): string {
+function sys_buffer_to_string(b: buffer_t): string {
 	let str: string = "";
-	let u8a: Uint8Array = new Uint8Array(b);
+	let u8a: u8_array_t = new u8_array_t(b);
 	for (let i: i32 = 0; i < u8a.length; ++i) {
-		str += String.fromCharCode(u8a[i]);
+		str += string_from_char_code(u8a[i]);
 	}
 	return str;
 }
 
-function sys_string_to_buffer(str: string): ArrayBuffer {
-	let u8a: Uint8Array = new Uint8Array(str.length);
+function sys_string_to_buffer(str: string): buffer_t {
+	let u8a: u8_array_t = new u8_array_t(str.length);
 	for (let i: i32 = 0; i < str.length; ++i) {
-		u8a[i] = str.charCodeAt(i);
+		u8a[i] = char_code_at(str, i);
 	}
 	return u8a.buffer;
 }
@@ -368,7 +368,7 @@ function sys_shader_ext(): string {
 	///end
 }
 
-function sys_get_shader_buffer(name: string): ArrayBuffer {
+function sys_get_shader_buffer(name: string): buffer_t {
 	///if arm_shader_embed
 	let global: any = globalThis;
 	return global["data/" + name + sys_shader_ext()];
@@ -382,7 +382,7 @@ function sys_get_shader(name: string): shader_t {
 	if (shader == null) {
 		shader = g4_shader_create(
 			sys_get_shader_buffer(name),
-			name.endsWith(".frag") ? shader_type_t.FRAGMENT : name.endsWith(".vert") ? shader_type_t.VERTEX : shader_type_t.GEOMETRY);
+			ends_with(name, ".frag") ? shader_type_t.FRAGMENT : ends_with(name, ".vert") ? shader_type_t.VERTEX : shader_type_t.GEOMETRY);
 		_sys_shaders.set(name, shader);
 	}
 	return shader;
@@ -400,7 +400,7 @@ function sound_unload(raw: sound_t) {
 	krom_unload_sound(raw.sound_);
 }
 
-type Color = i32;
+type color_t = i32;
 
 type video_t = {
 	video_?: any;

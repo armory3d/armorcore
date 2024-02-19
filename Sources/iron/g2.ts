@@ -1,5 +1,5 @@
 
-let _g2_color: Color;
+let _g2_color: color_t;
 let _g2_font: g2_font_t;
 let _g2_font_size: i32 = 0;
 let _g2_pipeline: pipeline_t;
@@ -10,10 +10,10 @@ let _g2_current: image_t = null;
 let _g2_font_glyphs: i32[] = _g2_make_glyphs(32, 127);
 let _g2_font_glyphs_last: i32[] = _g2_font_glyphs;
 let _g2_thrown: bool = false;
-let _g2_mat = new Float32Array(9);
+let _g2_mat = new f32_array_t(9);
 let _g2_initialized: bool = false;
 
-function g2_set_color(c: Color) {
+function g2_set_color(c: color_t) {
 	krom_g2_set_color(c);
 	_g2_color = c;
 }
@@ -132,14 +132,14 @@ function g2_disable_scissor() {
 	g4_disable_scissor();
 }
 
-function g2_begin(render_target: image_t = null, clear: bool = true, clear_color: Color = null) {
+function g2_begin(render_target: image_t = null, clear: bool = true, clear_color: color_t = null) {
 	if (_g2_current == null) {
 		_g2_current = render_target;
 	}
 	else {
 		if (!_g2_thrown) {
 			_g2_thrown = true;
-			throw "End before you begin";
+			krom_log("End before you begin");
 		}
 	}
 
@@ -170,7 +170,7 @@ function g2_end() {
 	else {
 		if (!_g2_thrown) {
 			_g2_thrown = true;
-			throw "Begin before you end";
+			krom_log("Begin before you end");
 		}
 	}
 }
@@ -198,7 +198,7 @@ function g2_font_init(raw: g2_font_t) {
 	}
 }
 
-function g2_font_create(blob: ArrayBuffer, index: i32 = 0): g2_font_t {
+function g2_font_create(blob: buffer_t, index: i32 = 0): g2_font_t {
 	let raw: g2_font_t = {};
 	raw.blob = blob;
 	raw.index = index;
@@ -221,7 +221,7 @@ function g2_font_unload(raw: g2_font_t) {
 
 function g2_font_set_font_index(raw: g2_font_t, index: i32) {
 	raw.index = index;
-	_g2_font_glyphs = _g2_font_glyphs.slice(); // Trigger atlas update
+	_g2_font_glyphs = array_slice(_g2_font_glyphs, 0, _g2_font_glyphs.length); // Trigger atlas update
 }
 
 function g2_font_clone(raw: g2_font_t): g2_font_t {
@@ -230,7 +230,7 @@ function g2_font_clone(raw: g2_font_t): g2_font_t {
 
 type g2_font_t = {
 	font_?: any;
-	blob?: ArrayBuffer;
+	blob?: buffer_t;
 	glyphs?: i32[];
 	index?: i32;
 };

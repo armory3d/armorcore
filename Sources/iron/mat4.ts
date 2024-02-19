@@ -17,7 +17,7 @@
 // _33 = [15]
 
 type mat4_t = {
-	m?: Float32Array;
+	m?: f32_array_t;
 };
 
 let _mat4_vec: vec4_t = vec4_create();
@@ -28,7 +28,7 @@ function mat4_create(_00: f32, _10: f32, _20: f32, _30: f32,
 					 _02: f32, _12: f32, _22: f32, _32: f32,
 					 _03: f32, _13: f32, _23: f32, _33: f32): mat4_t {
 	let self: mat4_t = {};
-	self.m = new Float32Array(16);
+	self.m = new f32_array_t(16);
 	self.m[0] = _00;
 	self.m[4] = _10;
 	self.m[8] = _20;
@@ -57,7 +57,7 @@ function mat4_identity(): mat4_t {
 	);
 }
 
-function mat4_from_f32_array(a: Float32Array, offset: i32 = 0): mat4_t {
+function mat4_from_f32_array(a: f32_array_t, offset: i32 = 0): mat4_t {
 	return mat4_create(
 		a[0 + offset], a[1 + offset], a[2 + offset], a[3 + offset],
 		a[4 + offset], a[5 + offset], a[6 + offset], a[7 + offset],
@@ -67,7 +67,7 @@ function mat4_from_f32_array(a: Float32Array, offset: i32 = 0): mat4_t {
 }
 
 function mat4_persp(fov_y: f32, aspect: f32, zn: f32, zf: f32): mat4_t {
-	let uh: f32 = 1.0 / Math.tan(fov_y / 2);
+	let uh: f32 = 1.0 / math_tan(fov_y / 2);
 	let uw: f32 = uh / aspect;
 	return mat4_create(
 		uw, 0, 0, 0,
@@ -93,8 +93,8 @@ function mat4_ortho(left: f32, right: f32, bottom: f32, top: f32, near: f32, far
 }
 
 function mat4_rot_z(alpha: f32): mat4_t {
-	let ca: f32 = Math.cos(alpha);
-	let sa: f32 = Math.sin(alpha);
+	let ca: f32 = math_cos(alpha);
+	let sa: f32 = math_sin(alpha);
 	return mat4_create(
 		ca, -sa, 0, 0,
 		sa,  ca, 0, 0,
@@ -534,7 +534,7 @@ function mat4_clone(self: mat4_t): mat4_t {
 	);
 }
 
-function mat4_set_from_f32_array(self: mat4_t, a: Float32Array, offset = 0): mat4_t {
+function mat4_set_from_f32_array(self: mat4_t, a: f32_array_t, offset = 0): mat4_t {
 	self.m[0] = a[0 + offset];
 	self.m[4] = a[1 + offset];
 	self.m[8] = a[2 + offset];
@@ -580,9 +580,9 @@ function mat4_get_loc(self: mat4_t): vec4_t {
 
 function mat4_get_scale(self: mat4_t): vec4_t {
 	return vec4_create(
-		Math.sqrt(self.m[0] * self.m[0] + self.m[4] * self.m[4] + self.m[8] * self.m[8]),
-		Math.sqrt(self.m[1] * self.m[1] + self.m[5] * self.m[5] + self.m[9] * self.m[9]),
-		Math.sqrt(self.m[2] * self.m[2] + self.m[6] * self.m[6] + self.m[10] * self.m[10])
+		math_sqrt(self.m[0] * self.m[0] + self.m[4] * self.m[4] + self.m[8] * self.m[8]),
+		math_sqrt(self.m[1] * self.m[1] + self.m[5] * self.m[5] + self.m[9] * self.m[9]),
+		math_sqrt(self.m[2] * self.m[2] + self.m[6] * self.m[6] + self.m[10] * self.m[10])
 	);
 }
 
@@ -641,8 +641,8 @@ function mat4_up(self: mat4_t): vec4_t {
 	return vec4_create(self.m[8], self.m[9], self.m[10]);
 }
 
-function mat4_to_f32_array(self: mat4_t): Float32Array {
-	let array: Float32Array = new Float32Array(16);
+function mat4_to_f32_array(self: mat4_t): f32_array_t {
+	let array: f32_array_t = new f32_array_t(16);
 	array[0] = self.m[0];
 	array[1] = self.m[4];
 	array[2] = self.m[8];

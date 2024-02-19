@@ -135,7 +135,7 @@ function mesh_object_cull_mesh(raw: mesh_object_t, context: string, camera: came
 		// TODO: define skin & particle bounds
 		let radius_scale: f32 = raw.data.skin != null ? 2.0 : 1.0;
 		///if arm_particles
-		// particleSystems for update, particleOwner for render
+		// particle_systems for update, particle_owner for render
 		if (raw.particle_systems != null || raw.particle_owner != null) {
 			radius_scale *= 1000;
 		}

@@ -4,7 +4,7 @@ let _material_data_uid_counter = 0;
 function material_data_create(raw: material_data_t, file: string = ""): material_data_t {
 	raw._uid = ++_material_data_uid_counter; // Start from 1
 
-	let ref: string[] = raw.shader.split("/");
+	let ref: string[] = string_split(raw.shader, "/");
 	let object_file: string = "";
 	let data_ref: string = "";
 	if (ref.length == 2) { // File reference

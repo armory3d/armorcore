@@ -32,11 +32,11 @@ function quat_set(self: quat_t, x: f32, y: f32, z: f32, w: f32): quat_t {
 }
 
 function quat_from_axis_angle(self: quat_t, axis: vec4_t, angle: f32): quat_t {
-	let s: f32 = Math.sin(angle * 0.5);
+	let s: f32 = math_sin(angle * 0.5);
 	self.x = axis.x * s;
 	self.y = axis.y * s;
 	self.z = axis.z * s;
-	self.w = Math.cos(angle * 0.5);
+	self.w = math_cos(angle * 0.5);
 	return quat_normalize(self);
 }
 
@@ -61,28 +61,28 @@ function quat_from_rot_mat(self: quat_t, m: mat4_t): quat_t {
 	let s: f32 = 0.0;
 
 	if (tr > 0) {
-		s = 0.5 / Math.sqrt(tr + 1.0);
+		s = 0.5 / math_sqrt(tr + 1.0);
 		self.w = 0.25 / s;
 		self.x = (m32 - m23) * s;
 		self.y = (m13 - m31) * s;
 		self.z = (m21 - m12) * s;
 	}
 	else if (m11 > m22 && m11 > m33) {
-		s = 2.0 * Math.sqrt(1.0 + m11 - m22 - m33);
+		s = 2.0 * math_sqrt(1.0 + m11 - m22 - m33);
 		self.w = (m32 - m23) / s;
 		self.x = 0.25 * s;
 		self.y = (m12 + m21) / s;
 		self.z = (m13 + m31) / s;
 	}
 	else if (m22 > m33) {
-		s = 2.0 * Math.sqrt(1.0 + m22 - m11 - m33);
+		s = 2.0 * math_sqrt(1.0 + m22 - m11 - m33);
 		self.w = (m13 - m31) / s;
 		self.x = (m12 + m21) / s;
 		self.y = 0.25 * s;
 		self.z = (m23 + m32) / s;
 	}
 	else {
-		s = 2.0 * Math.sqrt(1.0 + m33 - m11 - m22);
+		s = 2.0 * math_sqrt(1.0 + m33 - m11 - m22);
 		self.w = (m21 - m12) / s;
 		self.x = (m13 + m31) / s;
 		self.y = (m23 + m32) / s;
@@ -112,7 +112,7 @@ function quat_mult_quats(self: quat_t, q1: quat_t, q2: quat_t): quat_t {
 }
 
 function quat_normalize(self: quat_t): quat_t {
-	let l: f32 = Math.sqrt(self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w);
+	let l: f32 = math_sqrt(self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w);
 	if (l == 0.0) {
 		self.x = 0;
 		self.y = 0;
@@ -143,19 +143,19 @@ function quat_get_euler(self: quat_t): vec4_t {
 	let c: f32 =  2 * (self.x * self.y + self.w * self.z);
 	let d: f32 = -2 * (self.y * self.z - self.w * self.x);
 	let e: f32 =  self.w *  self.w - self.x * self.x + self.y * self.y - self.z * self.z;
-	return vec4_create(Math.atan2(d, e), Math.atan2(a, b), Math.asin(c));
+	return vec4_create(math_atan2(d, e), math_atan2(a, b), math_asin(c));
 }
 
 function quat_from_euler(self: quat_t, x: f32, y: f32, z: f32): quat_t {
 	let f: f32 = x / 2;
-	let c1: f32 = Math.cos(f);
-	let s1: f32 = Math.sin(f);
+	let c1: f32 = math_cos(f);
+	let s1: f32 = math_sin(f);
 	f = y / 2;
-	let c2: f32 = Math.cos(f);
-	let s2: f32 = Math.sin(f);
+	let c2: f32 = math_cos(f);
+	let s2: f32 = math_sin(f);
 	f = z / 2;
-	let c3: f32 = Math.cos(f);
-	let s3: f32 = Math.sin(f);
+	let c3: f32 = math_cos(f);
+	let s3: f32 = math_sin(f);
 	// YZX
 	self.x = s1 * c2 * c3 + c1 * s2 * s3;
 	self.y = c1 * s2 * c3 + s1 * c2 * s3;
@@ -198,7 +198,7 @@ function quat_from_to(self: quat_t, v1: vec4_t, v2: vec4_t): quat_t {
 			vec4_cross_vecs(a, _quat_y_axis, v1);
 		}
 		vec4_normalize(a);
-		quat_from_axis_angle(self, a, Math.PI);
+		quat_from_axis_angle(self, a, math_pi());
 	}
 	else if (dot > 0.999999) {
 		quat_set(self, 0, 0, 0, 1);

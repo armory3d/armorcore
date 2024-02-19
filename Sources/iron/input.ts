@@ -176,23 +176,23 @@ function mouse_wheel_listener(delta: i32) {
 function mouse_on_touch_down(index: i32, x: i32, y: i32) {
 	if (index == 1) { // Two fingers down - right mouse button
 		_mouse_buttons_down[0] = false;
-		mouse_down_listener(1, Math.floor(mouse_x), Math.floor(mouse_y));
+		mouse_down_listener(1, math_floor(mouse_x), math_floor(mouse_y));
 		mouse_pinch_started = true;
 		mouse_pinch_total = 0.0;
 		mouse_pinch_dist = 0.0;
 	}
 	else if (index == 2) { // Three fingers down - middle mouse button
 		_mouse_buttons_down[1] = false;
-		mouse_down_listener(2, Math.floor(mouse_x), Math.floor(mouse_y));
+		mouse_down_listener(2, math_floor(mouse_x), math_floor(mouse_y));
 	}
 }
 
 function mouse_on_touch_up(index: i32, x: i32, y: i32) {
 	if (index == 1) {
-		mouse_up_listener(1, Math.floor(mouse_x), Math.floor(mouse_y));
+		mouse_up_listener(1, math_floor(mouse_x), math_floor(mouse_y));
 	}
 	else if (index == 2) {
-		mouse_up_listener(2, Math.floor(mouse_x), Math.floor(mouse_y));
+		mouse_up_listener(2, math_floor(mouse_x), math_floor(mouse_y));
 	}
 }
 
@@ -206,7 +206,7 @@ function mouse_on_touch_move(index: i32, x: i32, y: i32) {
 		let last_dist: f32 = mouse_pinch_dist;
 		let dx: f32 = mouse_x - x;
 		let dy: f32 = mouse_y - y;
-		mouse_pinch_dist = Math.sqrt(dx * dx + dy * dy);
+		mouse_pinch_dist = math_sqrt(dx * dx + dy * dy);
 		mouse_pinch_total += last_dist != 0 ? last_dist - mouse_pinch_dist : 0;
 		if (!mouse_pinch_started) {
 			mouse_wheel_delta = mouse_pinch_total / 10;
@@ -341,9 +341,9 @@ function pen_view_y(): f32 {
 }
 
 let keyboard_keys: string[] = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "space", "backspace", "tab", "enter", "shift", "control", "alt", "win", "escape", "delete", "up", "down", "left", "right", "back", ",", ".", ":", ";", "<", "=", ">", "?", "!", "\"", "#", "$", "%", "&", "_", "(", ")", "*", "|", "{", "}", "[", "]", "~", "`", "/", "\\", "@", "+", "-", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"];
-let keyboard_keys_down: Map<string, bool> = new Map();
-let keyboard_keys_started: Map<string, bool> = new Map();
-let keyboard_keys_released: Map<string, bool> = new Map();
+let keyboard_keys_down: map_t<string, bool> = new map_t();
+let keyboard_keys_started: map_t<string, bool> = new map_t();
+let keyboard_keys_released: map_t<string, bool> = new map_t();
 let keyboard_keys_frame: string[] = [];
 let keyboard_repeat_key: bool = false;
 let keyboard_repeat_time: f32 = 0.0;
@@ -368,7 +368,7 @@ function keyboard_end_frame() {
 }
 
 function keyboard_reset() {
-	// Use Map for now..
+	// Use map_t for now..
 	for (let i: i32 = 0; i < keyboard_keys.length; ++i) {
 		let s = keyboard_keys[i];
 		keyboard_keys_down.set(s, false);
@@ -651,7 +651,7 @@ function keyboard_key_code(key: key_code_t): string {
 		return "f12";
 	}
 	else {
-		return String.fromCharCode(key).toLowerCase();
+		return to_lower_case(string_from_char_code(key));
 	}
 }
 
@@ -665,7 +665,7 @@ function keyboard_down_listener(code: key_code_t) {
 	///if krom_android_rmb // Detect right mouse button on Android..
 	if (code == key_code_t.BACK) {
 		if (!_mouse_buttons_down[1]) {
-			mouse_down_listener(1, Math.floor(mouse_x), Math.floor(mouse_y));
+			mouse_down_listener(1, math_floor(mouse_x), math_floor(mouse_y));
 		}
 	}
 	///end
@@ -679,7 +679,7 @@ function keyboard_up_listener(code: key_code_t) {
 
 	///if krom_android_rmb
 	if (code == key_code_t.BACK) {
-		mouse_up_listener(1, Math.floor(mouse_x), Math.floor(mouse_y));
+		mouse_up_listener(1, math_floor(mouse_x), math_floor(mouse_y));
 	}
 	///end
 }

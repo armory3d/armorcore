@@ -113,7 +113,7 @@ function object_get_children(raw: object_t, recursive: bool = false): object_t[]
 		return raw.children;
 	}
 
-	let ret_children: object_t[] = raw.children.slice();
+	let ret_children: object_t[] = array_slice(raw.children, 0, raw.children.length);
 	for (let i: i32 = 0; i < raw.children.length; ++i) {
 		let c: object_t = raw.children[i];
 		ret_children = ret_children.concat(object_get_children(c, recursive));

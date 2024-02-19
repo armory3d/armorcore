@@ -156,7 +156,7 @@ function transform_set_rot(raw: transform_t, x: f32, y: f32, z: f32) {
 }
 
 function transform_compute_radius(raw: transform_t) {
-	raw.radius = Math.sqrt(raw.dim.x * raw.dim.x + raw.dim.y * raw.dim.y + raw.dim.z * raw.dim.z);
+	raw.radius = math_sqrt(raw.dim.x * raw.dim.x + raw.dim.y * raw.dim.y + raw.dim.z * raw.dim.z);
 }
 
 function transform_compute_dim(raw: transform_t) {
@@ -164,7 +164,7 @@ function transform_compute_dim(raw: transform_t) {
 		transform_compute_radius(raw);
 		return;
 	}
-	let d: Float32Array = raw.object.raw.dimensions;
+	let d: f32_array_t = raw.object.raw.dimensions;
 	if (d == null) {
 		vec4_set(raw.dim, 2 * raw.scale.x, 2 * raw.scale.y, 2 * raw.scale.z);
 	}

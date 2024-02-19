@@ -1,5 +1,5 @@
 
-function g4_shader_create(buffer: ArrayBuffer, type: shader_type_t): shader_t {
+function g4_shader_create(buffer: buffer_t, type: shader_type_t): shader_t {
 	let raw: shader_t = {};
 	if (buffer != null) {
 		raw.shader_ = krom_g4_create_shader(buffer, type);
@@ -129,8 +129,8 @@ function g4_vertex_buffer_delete(raw: vertex_buffer_t) {
 	krom_g4_delete_vertex_buffer(raw.buffer_);
 }
 
-function g4_vertex_buffer_lock(raw: vertex_buffer_t): DataView {
-	return new DataView(krom_g4_lock_vertex_buffer(raw.buffer_));
+function g4_vertex_buffer_lock(raw: vertex_buffer_t): buffer_view_t {
+	return new buffer_view_t(krom_g4_lock_vertex_buffer(raw.buffer_));
 }
 
 function g4_vertex_buffer_unlock(raw: vertex_buffer_t) {
@@ -195,7 +195,7 @@ function g4_index_buffer_delete(raw: index_buffer_t) {
 	krom_g4_delete_index_buffer(raw.buffer_);
 }
 
-function g4_index_buffer_lock(raw: index_buffer_t): Uint32Array {
+function g4_index_buffer_lock(raw: index_buffer_t): u32_array_t {
 	return krom_g4_lock_index_buffer(raw.buffer_);
 }
 
@@ -215,7 +215,7 @@ function g4_end() {
 	krom_g4_end();
 }
 
-function g4_clear(color: Color = null, depth: f32 = null) {
+function g4_clear(color: color_t = null, depth: f32 = null) {
 	let flags: i32 = 0;
 	if (color != null) {
 		flags |= 1;
@@ -299,7 +299,7 @@ function g4_set_float4(loc: kinc_const_loc_t, value1: f32, value2: f32, value3: 
 	krom_g4_set_float4(loc, value1, value2, value3, value4);
 }
 
-function g4_set_floats(loc: kinc_const_loc_t, values: Float32Array) {
+function g4_set_floats(loc: kinc_const_loc_t, values: f32_array_t) {
 	krom_g4_set_floats(loc, values.buffer);
 }
 
@@ -389,7 +389,7 @@ function image_from_texture(tex: any): image_t {
 	return image;
 }
 
-function image_from_bytes(buffer: ArrayBuffer, width: i32, height: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
+function image_from_bytes(buffer: buffer_t, width: i32, height: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
@@ -401,7 +401,7 @@ function image_from_bytes(buffer: ArrayBuffer, width: i32, height: i32, format: 
 	return image;
 }
 
-function image_from_bytes_3d(buffer: ArrayBuffer, width: i32, height: i32, depth: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
+function image_from_bytes_3d(buffer: buffer_t, width: i32, height: i32, depth: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
@@ -413,7 +413,7 @@ function image_from_bytes_3d(buffer: ArrayBuffer, width: i32, height: i32, depth
 	return image;
 }
 
-function image_from_encoded_bytes(buffer: ArrayBuffer, format: string, readable: bool = false): image_t {
+function image_from_encoded_bytes(buffer: buffer_t, format: string, readable: bool = false): image_t {
 	let image: image_t = _image_create(null);
 	image.texture_ = krom_g4_create_texture_from_encoded_bytes(buffer, format, readable);
 	_image_set_size(image, image.texture_);
@@ -488,7 +488,7 @@ function image_unload(raw: image_t) {
 	raw.render_target_ = null;
 }
 
-function image_lock(raw: image_t, level: i32 = 0): ArrayBuffer {
+function image_lock(raw: image_t, level: i32 = 0): buffer_t {
 	return krom_g4_lock_texture(raw.texture_, level);
 }
 
@@ -496,13 +496,13 @@ function image_unlock(raw: image_t) {
 	krom_g4_unlock_texture(raw.texture_);
 }
 
-function image_get_pixels(raw: image_t): ArrayBuffer {
+function image_get_pixels(raw: image_t): buffer_t {
 	if (raw.render_target_ != null) {
 		// Minimum size of 32x32 required after https://github.com/Kode/Kinc/commit/3797ebce5f6d7d360db3331eba28a17d1be87833
 		let pixels_w: i32 = raw.width < 32 ? 32 : raw.width;
 		let pixels_h: i32 = raw.height < 32 ? 32 : raw.height;
 		if (raw.pixels == null) {
-			raw.pixels = new ArrayBuffer(image_format_byte_size(raw.format) * pixels_w * pixels_h);
+			raw.pixels = new buffer_t(image_format_byte_size(raw.format) * pixels_w * pixels_h);
 		}
 		krom_g4_get_render_target_pixels(raw.render_target_, raw.pixels);
 		return raw.pixels;
@@ -524,7 +524,7 @@ function image_set_depth_from(raw: image_t, image: image_t) {
 	krom_g4_set_depth_from(raw.render_target_, image.render_target_);
 }
 
-function image_clear(raw: image_t, x: i32, y: i32, z: i32, width: i32, height: i32, depth: i32, color: Color) {
+function image_clear(raw: image_t, x: i32, y: i32, z: i32, width: i32, height: i32, depth: i32, color: color_t) {
 	krom_g4_clear_texture(raw.texture_, x, y, z, width, height, depth, color);
 }
 
@@ -533,7 +533,7 @@ type image_t = {
 	render_target_?: any;
 	format?: tex_format_t;
 	readable?: bool;
-	pixels?: ArrayBuffer;
+	pixels?: buffer_t;
 	width?: i32;
 	height?: i32;
 	depth?: i32;

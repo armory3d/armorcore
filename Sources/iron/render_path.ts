@@ -32,7 +32,7 @@ enum draw_order_t {
 }
 
 let render_path_commands: ()=>void = null;
-let render_path_render_targets: Map<string, render_target_t> = new Map();
+let render_path_render_targets: map_t<string, render_target_t> = new map_t();
 let render_path_current_w: i32;
 let render_path_current_h: i32;
 let render_path_current_d: i32;
@@ -45,7 +45,7 @@ let _render_path_point: light_object_t = null;
 let _render_path_current_image: image_t = null;
 let _render_path_draw_order = draw_order_t.DIST;
 let _render_path_paused: bool = false;
-let _render_path_depth_to_render_target: Map<string, render_target_t> = new Map();
+let _render_path_depth_to_render_target: map_t<string, render_target_t> = new map_t();
 let _render_path_last_w: i32 = 0;
 let _render_path_last_h: i32 = 0;
 let _render_path_bind_params: string[];
@@ -53,7 +53,7 @@ let _render_path_meshes_sorted: bool;
 let _render_path_scissor_set: bool = false;
 let _render_path_last_frame_time: f32 = 0.0;
 let _render_path_loading: i32 = 0;
-let _render_path_cached_shader_contexts: Map<string, cached_shader_context_t> = new Map();
+let _render_path_cached_shader_contexts: map_t<string, cached_shader_context_t> = new map_t();
 let _render_path_depth_buffers: depth_buffer_desc_t[] = [];
 
 function render_path_ready(): bool {
@@ -180,7 +180,7 @@ function render_path_clear_target(color_flag: i32 = null, depth_flag: f32 = null
 			color_flag = scene_world.background_color;
 		}
 		else if (scene_camera != null) {
-			let cc: Float32Array = scene_camera.data.clear_color;
+			let cc: f32_array_t = scene_camera.data.clear_color;
 			if (cc != null) {
 				color_flag = color_from_floats(cc[0], cc[1], cc[2]);
 			}
@@ -304,7 +304,7 @@ function render_path_load_shader(handle: string) {
 	_render_path_cached_shader_contexts.set(handle, cc);
 
 	// file/data_name/context
-	let shader_path: string[] = handle.split("/");
+	let shader_path: string[] = string_split(handle, "/");
 
 	let res: shader_data_t = data_get_shader(shader_path[0], shader_path[1]);
 	cc.context = shader_data_get_context(res, shader_path[2]);
@@ -315,13 +315,13 @@ function render_path_unload_shader(handle: string) {
 	_render_path_cached_shader_contexts.delete(handle);
 
 	// file/data_name/context
-	let shader_path: string[] = handle.split("/");
+	let shader_path: string[] = string_split(handle, "/");
 	// Todo: Handle context overrides (see data_get_shader())
 	data_cached_shaders.delete(shader_path[1]);
 }
 
 function render_path_unload() {
-	let rtargets: render_target_t[] = Array.from(render_path_render_targets.values());
+	let rtargets: render_target_t[] = map_to_array(render_path_render_targets);
 	for (let i: i32 = 0; i < rtargets.length; ++i) {
 		let rt: render_target_t = rtargets[i];
 		render_target_unload(rt);
@@ -338,7 +338,7 @@ function render_path_resize() {
 	}
 
 	// Make sure depth buffer is attached to single target only and gets released once
-	let rtargets: render_target_t[] = Array.from(render_path_render_targets.values());
+	let rtargets: render_target_t[] = map_to_array(render_path_render_targets);
 	for (let i: i32 = 0; i < rtargets.length; ++i) {
 		let rt: render_target_t = rtargets[i];
 		if (rt == null || rt.width > 0 || rt.depth_from == "" || rt == _render_path_depth_to_render_target.get(rt.depth_from)) {
@@ -426,9 +426,9 @@ function render_path_create_image(t: render_target_t, depth_format: depth_format
 	let width: i32 = t.width == 0 ? app_w() : t.width;
 	let height: i32 = t.height == 0 ? app_h() : t.height;
 	let depth: i32 = t.depth;
-	width = Math.floor(width * t.scale);
-	height = Math.floor(height * t.scale);
-	depth = Math.floor(depth * t.scale);
+	width = math_floor(width * t.scale);
+	height = math_floor(height * t.scale);
+	depth = math_floor(depth * t.scale);
 	if (width < 1) {
 		width = 1;
 	}

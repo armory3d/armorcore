@@ -1,20 +1,20 @@
 
 // Global data list
-let data_cached_scene_raws: Map<string, scene_t> = new Map();
-let data_cached_meshes: Map<string, mesh_data_t> = new Map();
-let data_cached_lights: Map<string, light_data_t> = new Map();
-let data_cached_cameras: Map<string, camera_data_t> = new Map();
-let data_cached_materials: Map<string, material_data_t> = new Map();
-let data_cached_particles: Map<string, particle_data_t> = new Map();
-let data_cached_worlds: Map<string, world_data_t> = new Map();
-let data_cached_shaders: Map<string, shader_data_t> = new Map();
+let data_cached_scene_raws: map_t<string, scene_t> = new map_t();
+let data_cached_meshes: map_t<string, mesh_data_t> = new map_t();
+let data_cached_lights: map_t<string, light_data_t> = new map_t();
+let data_cached_cameras: map_t<string, camera_data_t> = new map_t();
+let data_cached_materials: map_t<string, material_data_t> = new map_t();
+let data_cached_particles: map_t<string, particle_data_t> = new map_t();
+let data_cached_worlds: map_t<string, world_data_t> = new map_t();
+let data_cached_shaders: map_t<string, shader_data_t> = new map_t();
 
-let data_cached_blobs: Map<string, ArrayBuffer> = new Map();
-let data_cached_images: Map<string, image_t> = new Map();
-let data_cached_videos: Map<string, video_t> = new Map();
-let data_cached_fonts: Map<string, g2_font_t> = new Map();
+let data_cached_blobs: map_t<string, buffer_t> = new map_t();
+let data_cached_images: map_t<string, image_t> = new map_t();
+let data_cached_videos: map_t<string, video_t> = new map_t();
+let data_cached_fonts: map_t<string, g2_font_t> = new map_t();
 ///if arm_audio
-let data_cached_sounds: Map<string, sound_t> = new Map();
+let data_cached_sounds: map_t<string, sound_t> = new map_t();
 ///end
 let data_assets_loaded: i32 = 0;
 
@@ -118,8 +118,8 @@ function data_get_scene_raw(file: string): scene_t {
 	}
 
 	// If no extension specified, set to .arm
-	let ext: string = file.endsWith(".arm") ? "" : ".arm";
-	let b: ArrayBuffer = data_get_blob(file + ext);
+	let ext: string = ends_with(file, ".arm") ? "" : ".arm";
+	let b: buffer_t = data_get_blob(file + ext);
 	let parsed: scene_t = null;
 	parsed = armpack_decode(b);
 	data_cached_scene_raws.set(file, parsed);
@@ -127,13 +127,13 @@ function data_get_scene_raw(file: string): scene_t {
 }
 
 // Raw assets
-function data_get_blob(file: string): ArrayBuffer {
-	let cached: ArrayBuffer = data_cached_blobs.get(file);
+function data_get_blob(file: string): buffer_t {
+	let cached: buffer_t = data_cached_blobs.get(file);
 	if (cached != null) {
 		return cached;
 	}
 
-	let b: ArrayBuffer = krom_load_blob(data_resolve_path(file));
+	let b: buffer_t = krom_load_blob(data_resolve_path(file));
 	data_cached_blobs.set(file, b);
 	data_assets_loaded++;
 	return b;
@@ -146,7 +146,7 @@ function data_get_image(file: string, readable: bool = false): image_t {
 	}
 
 	///if arm_image_embed
-	let image_blob: ArrayBuffer = data_cached_blobs.get(file);
+	let image_blob: buffer_t = data_cached_blobs.get(file);
 	if (image_blob != null) {
 		let b: image_t = image_from_encoded_bytes(image_blob, ".k", readable);
 		data_cached_images.set(file, b);
@@ -186,7 +186,7 @@ function data_get_font(file: string): g2_font_t {
 		return cached;
 	}
 
-	let blob: ArrayBuffer = krom_load_blob(data_resolve_path(file));
+	let blob: buffer_t = krom_load_blob(data_resolve_path(file));
 	let b: g2_font_t = g2_font_create(blob);
 	data_cached_fonts.set(file, b);
 	data_assets_loaded++;
@@ -217,7 +217,7 @@ function data_delete_mesh(handle: string) {
 }
 
 function data_delete_blob(handle: string) {
-	let blob: ArrayBuffer = data_cached_blobs.get(handle);
+	let blob: buffer_t = data_cached_blobs.get(handle);
 	if (blob == null) {
 		return;
 	}
@@ -263,58 +263,58 @@ function data_delete_sound(handle: string) {
 ///end
 
 function data_delete_all() {
-	let cached_meshes: mesh_data_t[] = Array.from(data_cached_meshes.values());
+	let cached_meshes: mesh_data_t[] = map_to_array(data_cached_meshes);
 	for (let i: i32 = 0; i < cached_meshes.length; ++i) {
 		let c: mesh_data_t = cached_meshes[i];
 		mesh_data_delete(c);
 	}
-	data_cached_meshes = new Map();
+	data_cached_meshes = new map_t();
 
-	let cached_shaders: shader_data_t[] = Array.from(data_cached_shaders.values());
+	let cached_shaders: shader_data_t[] = map_to_array(data_cached_shaders);
 	for (let i: i32 = 0; i < cached_shaders.length; ++i) {
 		let c: shader_data_t = cached_shaders[i];
 		shader_data_delete(c);
 	}
-	data_cached_shaders = new Map();
+	data_cached_shaders = new map_t();
 
-	data_cached_scene_raws = new Map();
-	data_cached_lights = new Map();
-	data_cached_cameras = new Map();
-	data_cached_materials = new Map();
-	data_cached_particles = new Map();
-	data_cached_worlds = new Map();
+	data_cached_scene_raws = new map_t();
+	data_cached_lights = new map_t();
+	data_cached_cameras = new map_t();
+	data_cached_materials = new map_t();
+	data_cached_particles = new map_t();
+	data_cached_worlds = new map_t();
 	render_path_unload();
-	data_cached_blobs = new Map();
+	data_cached_blobs = new map_t();
 
-	let cached_images: image_t[] = Array.from(data_cached_images.values());
+	let cached_images: image_t[] = map_to_array(data_cached_images);
 	for (let i: i32 = 0; i < cached_images.length; ++i) {
 		let c: image_t = cached_images[i];
 		image_unload(c);
 	}
-	data_cached_images = new Map();
+	data_cached_images = new map_t();
 
 	///if arm_audio
-	let cached_sounds: sound_t[] = Array.from(data_cached_sounds.values());
+	let cached_sounds: sound_t[] = map_to_array(data_cached_sounds);
 	for (let i: i32 = 0; i < cached_sounds.length; ++i) {
 		let c = cached_sounds[i];
 		sound_unload(c);
 	}
-	data_cached_sounds = new Map();
+	data_cached_sounds = new map_t();
 	///end
 
-	let cached_videos: video_t[] = Array.from(data_cached_videos.values());
+	let cached_videos: video_t[] = map_to_array(data_cached_videos);
 	for (let i: i32 = 0; i < cached_videos.length; ++i) {
 		let c: video_t = cached_videos[i];
 		video_unload(c);
 	}
-	data_cached_videos = new Map();
+	data_cached_videos = new map_t();
 
-	let cached_fonts: g2_font_t[] = Array.from(data_cached_fonts.values());
+	let cached_fonts: g2_font_t[] = map_to_array(data_cached_fonts);
 	for (let i: i32 = 0; i < cached_fonts.length; ++i) {
 		let c: g2_font_t = cached_fonts[i];
 		g2_font_unload(c);
 	}
-	data_cached_fonts = new Map();
+	data_cached_fonts = new map_t();
 }
 
 function data_sep(): string {
@@ -334,15 +334,15 @@ function data_path(): string {
 }
 
 function data_is_abs(file: string): bool {
-	return file.charAt(0) == "/" || file.charAt(1) == ":" || (file.charAt(0) == "\\" && file.charAt(1) == "\\");
+	return char_at(file, 0) == "/" || char_at(file, 1) == ":" || (char_at(file, 0) == "\\" && char_at(file, 1) == "\\");
 }
 
 function data_is_up(file: string): bool {
-	return file.charAt(0) == "." && file.charAt(1) == ".";
+	return char_at(file, 0) == "." && char_at(file, 1) == ".";
 }
 
 function data_base_name(path: string): string {
-	let slash: i32 = path.lastIndexOf(data_sep());
+	let slash: i32 = string_last_index_of(path, data_sep());
 	return slash >= 0 ? path.substring(slash + 1) : path;
 }
 

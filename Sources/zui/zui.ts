@@ -307,11 +307,11 @@ function zui_row(ratios: f32[]) {
 	krom_zui_row(ratios);
 }
 
-function zui_fill(x: f32, y: f32, w: f32, h: f32, color: Color) {
+function zui_fill(x: f32, y: f32, w: f32, h: f32, color: color_t) {
 	krom_zui_fill(x, y, w, h, color);
 }
 
-function zui_rect(x: f32, y: f32, w: f32, h: f32, color: Color, strength = 1.0) {
+function zui_rect(x: f32, y: f32, w: f32, h: f32, color: color_t, strength = 1.0) {
 	krom_zui_rect(x, y, w, h, color, strength);
 }
 
@@ -363,7 +363,7 @@ function zui_inline_radio(handle: zui_handle_t, texts: string[], align = Align.L
 	return krom_zui_inline_radio(handle.handle_, texts, align);
 }
 
-function zui_color_wheel(handle: zui_handle_t, alpha = false, w: Null<f32> = null, h: Null<f32> = null, color_preview = true, picker: ()=>void = null): Color {
+function zui_color_wheel(handle: zui_handle_t, alpha = false, w: Null<f32> = null, h: Null<f32> = null, color_preview = true, picker: ()=>void = null): color_t {
 	return krom_zui_color_wheel(handle.handle_, alpha, w != null ? w : -1, h != null ? h : -1, color_preview, picker);
 }
 
@@ -557,7 +557,7 @@ function zui_theme_create(): theme_t {
 
 class zui_nodes_t {
 	nodes_: any;
-	colorPickerCallback: (col: Color)=>void = null;
+	colorPickerCallback: (col: color_t)=>void = null;
 
 	get nodesSelectedId(): i32[] { return krom_zui_nodes_get(this.nodes_, "nodes_selected_id"); }
 	set nodesSelectedId(a: i32[]) { krom_zui_nodes_set(this.nodes_, "nodes_selected_id", a); }
@@ -1036,7 +1036,7 @@ type zui_handle_ops_t = {
 	position?: i32,
 	value?: f32,
 	text?: string,
-	color?: Color,
+	color?: color_t,
 	layout?: Layout
 }
 

@@ -32,7 +32,7 @@ function tween_to(anim: tween_anim_t): tween_anim_t {
 		anim._z = [];
 		anim._w = [];
 		anim._normalize = [];
-		let keys: any[] = anim.props.keys();
+		let keys: any[] = Object.keys(anim.props);
 		for (let i: i32 = 0; i < keys.length; ++i) {
 			let p: any = keys[i];
 			let val: any = anim.target[p];
@@ -93,7 +93,6 @@ function tween_update() {
 				a.target.dirty = true;
 			}
 
-			// Way too much Reflect trickery..
 			let ps: string[] = Object.keys(a.props);
 			for (let i: i32 = 0; i < ps.length; ++i) {
 				let p: string = ps[i];
@@ -125,7 +124,7 @@ function tween_update() {
 					let z: f32 = a._z[i] + (to_z - a._z[i]) * _tween_eases[a.ease](k);
 					let w: f32 = a._w[i] + (to_w - a._w[i]) * _tween_eases[a.ease](k);
 					if (a._normalize[i]) {
-						let l: i32 = Math.sqrt(x * x + y * y + z * z + w * w);
+						let l: i32 = math_sqrt(x * x + y * y + z * z + w * w);
 						if (l > 0.0) {
 							l = 1.0 / l;
 							x *= l; y *= l; z *= l; w *= l;
@@ -160,9 +159,9 @@ function _tween_ease_linear(k: f32): f32 { return k; }
 function _tween_ease_quad_in(k: f32): f32 { return k * k; }
 function _tween_ease_quad_out(k: f32): f32 { return -k * (k - 2); }
 function _tween_ease_quad_in_out(k: f32): f32 { return (k < 0.5) ? 2 * k * k : -2 * ((k -= 1) * k) + 1; }
-function _tween_ease_expo_in(k: f32): f32 { return k == 0 ? 0 : Math.pow(2, 10 * (k - 1)); }
-function _tween_ease_expo_out(k: f32): f32 { return k == 1 ? 1 : (1 - Math.pow(2, -10 * k)); }
-function _tween_ease_expo_in_out(k: f32): f32 { if (k == 0) { return 0; } if (k == 1) { return 1; } if ((k /= 1 / 2.0) < 1.0) { return 0.5 * Math.pow(2, 10 * (k - 1)); } return 0.5 * (2 - Math.pow(2, -10 * --k)); }
+function _tween_ease_expo_in(k: f32): f32 { return k == 0 ? 0 : math_pow(2, 10 * (k - 1)); }
+function _tween_ease_expo_out(k: f32): f32 { return k == 1 ? 1 : (1 - math_pow(2, -10 * k)); }
+function _tween_ease_expo_in_out(k: f32): f32 { if (k == 0) { return 0; } if (k == 1) { return 1; } if ((k /= 1 / 2.0) < 1.0) { return 0.5 * math_pow(2, 10 * (k - 1)); } return 0.5 * (2 - math_pow(2, -10 * --k)); }
 function _tween_ease_bounce_in(k: f32): f32 { return 1 - _tween_ease_bounce_out(1 - k); }
 function _tween_ease_bounce_out(k: f32): f32 { if (k < (1 / 2.75)) { return 7.5625 * k * k; } else if (k < (2 / 2.75)) { return 7.5625 * (k -= (1.5 / 2.75)) * k + 0.75; } else if (k < (2.5 / 2.75)) { return 7.5625 * (k -= (2.25 / 2.75)) * k + 0.9375; } else { return 7.5625 * (k -= (2.625 / 2.75)) * k + 0.984375; } }
 function _tween_ease_bounce_in_out(k: f32): f32 { return (k < 0.5) ? _tween_ease_bounce_in(k * 2) * 0.5 : _tween_ease_bounce_out(k * 2 - 1) * 0.5 + 0.5; }
@@ -182,9 +181,9 @@ function _tween_ease_elastic_in(k: f32): f32 {
 		s = p / 4;
 	}
 	else {
-		s = p * Math.asin(1 / a) / (2 * Math.PI);
+		s = p * math_asin(1 / a) / (2 * math_pi());
 	}
-	return -(a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+	return -(a * math_pow(2, 10 * (k -= 1)) * math_sin((k - s) * (2 * math_pi()) / p));
 }
 
 function _tween_ease_elastic_out(k: f32): f32 {
@@ -202,9 +201,9 @@ function _tween_ease_elastic_out(k: f32): f32 {
 		s = p / 4;
 	}
 	else {
-		s = p * Math.asin(1 / a) / (2 * Math.PI);
+		s = p * math_asin(1 / a) / (2 * math_pi());
 	}
-	return (a * Math.pow(2, -10 * k) * Math.sin((k - s) * (2 * Math.PI) / p) + 1);
+	return (a * math_pow(2, -10 * k) * math_sin((k - s) * (2 * math_pi()) / p) + 1);
 }
 
 function _tween_ease_elastic_in_out(k: f32): f32 {
@@ -222,12 +221,12 @@ function _tween_ease_elastic_in_out(k: f32): f32 {
 		s = p / 4;
 	}
 	else {
-		s = p * Math.asin(1 / a) / (2 * Math.PI);
+		s = p * math_asin(1 / a) / (2 * math_pi());
 	}
 	if ((k *= 2) < 1) {
-		return - 0.5 * (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+		return - 0.5 * (a * math_pow(2, 10 * (k -= 1)) * math_sin((k - s) * (2 * math_pi()) / p));
 	}
-	return a * Math.pow(2, -10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p) * 0.5 + 1;
+	return a * math_pow(2, -10 * (k -= 1)) * math_sin((k - s) * (2 * math_pi()) / p) * 0.5 + 1;
 }
 
 let _tween_eases: ((f: f32)=>f32)[] = [

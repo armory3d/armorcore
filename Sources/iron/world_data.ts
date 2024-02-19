@@ -1,5 +1,5 @@
 
-let _world_data_empty_irr: Float32Array = null;
+let _world_data_empty_irr: f32_array_t = null;
 
 function world_data_parse(name: string, id: string): world_data_t {
 	let format: scene_t = data_get_scene_raw(name);
@@ -11,7 +11,7 @@ function world_data_parse(name: string, id: string): world_data_t {
 
 	raw._radiance_mipmaps = [];
 
-	let irr: Float32Array = world_data_set_irradiance(raw);
+	let irr: f32_array_t = world_data_set_irradiance(raw);
 	raw._irradiance = irr;
 	if (raw.radiance != null) {
 		let rad: image_t = data_get_image(raw.radiance);
@@ -19,7 +19,7 @@ function world_data_parse(name: string, id: string): world_data_t {
 		while (raw._radiance_mipmaps.length < raw.radiance_mipmaps) {
 			raw._radiance_mipmaps.push(null);
 		}
-		let dot: i32 = raw.radiance.lastIndexOf(".");
+		let dot: i32 = string_last_index_of(raw.radiance, ".");
 		let ext: string = raw.radiance.substring(dot);
 		let base: string = raw.radiance.substring(0, dot);
 
@@ -45,9 +45,9 @@ function world_data_get_raw_by_name(datas: world_data_t[], name: string): world_
 	return null;
 }
 
-function world_data_get_empty_irradiance(): Float32Array {
+function world_data_get_empty_irradiance(): f32_array_t {
 	if (_world_data_empty_irr == null) {
-		_world_data_empty_irr = new Float32Array(28);
+		_world_data_empty_irr = new f32_array_t(28);
 		for (let i: i32 = 0; i < _world_data_empty_irr.length; ++i) {
 			_world_data_empty_irr[i] = 0.0;
 		}
@@ -55,14 +55,14 @@ function world_data_get_empty_irradiance(): Float32Array {
 	return _world_data_empty_irr;
 }
 
-function world_data_set_irradiance(raw: world_data_t): Float32Array {
+function world_data_set_irradiance(raw: world_data_t): f32_array_t {
 	if (raw.irradiance == null) {
 		return world_data_get_empty_irradiance();
 	}
 	else {
-		let b: ArrayBuffer = data_get_blob(raw.irradiance + ".arm");
+		let b: buffer_t = data_get_blob(raw.irradiance + ".arm");
 		let irradiance_parsed: irradiance_t = armpack_decode(b);
-		let irr = new Float32Array(28); // Align to mult of 4 - 27->28
+		let irr = new f32_array_t(28); // Align to mult of 4 - 27->28
 		for (let i: i32 = 0; i < 27; ++i) {
 			irr[i] = irradiance_parsed.irradiance[i];
 		}

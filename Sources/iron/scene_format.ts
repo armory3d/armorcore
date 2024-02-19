@@ -20,7 +20,7 @@ type mesh_data_t = {
 	vertex_arrays: vertex_array_t[];
 	index_arrays: index_array_t[];
 	skin?: skin_t;
-	instanced_data?: Float32Array;
+	instanced_data?: f32_array_t;
 	instanced_type?: i32; // off, loc, loc+rot, loc+scale, loc+rot+scale
 	scale_pos?: f32; // Unpack pos from (-1,1) coords
 	scale_tex?: f32; // Unpack tex from (-1,1) coords
@@ -28,11 +28,11 @@ type mesh_data_t = {
 	_refcount?: i32; // Number of users
 	_handle?: string; // Handle used to retrieve this object in Data
 	_vertex_buffer?: vertex_buffer_t;
-	_vertex_buffer_map?: Map<string, vertex_buffer_t>;
+	_vertex_buffer_map?: map_t<string, vertex_buffer_t>;
 	_index_buffers?: index_buffer_t[];
 	_ready?: bool;
-	_vertices?: DataView;
-	_indices?: Uint32Array[];
+	_vertices?: buffer_view_t;
+	_indices?: u32_array_t[];
 	_material_indices?: i32[];
 	_struct?: vertex_struct_t;
 	_instanced_vb?: vertex_buffer_t;
@@ -40,24 +40,24 @@ type mesh_data_t = {
 	_instance_count?: i32;
 	///if arm_skin
 	_skeleton_transforms_inv?: mat4_t[];
-	_actions?: Map<string, obj_t[]>;
-	_mats?: Map<string, mat4_t[]>;
+	_actions?: map_t<string, obj_t[]>;
+	_mats?: map_t<string, mat4_t[]>;
 	///end
 };
 
 type skin_t = {
 	transform: transform_values_t;
 	bone_ref_array: string[];
-	bone_len_array: Float32Array;
-	transforms_inv: Float32Array[]; // per-bone, size = 16, with skin.transform, pre-inverted
-	bone_count_array: Int16Array;
-	bone_index_array: Int16Array;
-	bone_weight_array: Int16Array;
+	bone_len_array: f32_array_t;
+	transforms_inv: f32_array_t[]; // per-bone, size = 16, with skin.transform, pre-inverted
+	bone_count_array: i16_array_t;
+	bone_index_array: i16_array_t;
+	bone_weight_array: i16_array_t;
 };
 
 type vertex_array_t = {
 	attrib: string;
-	values: Int16Array;
+	values: i16_array_t;
 	data: string; // short4norm, short2norm
 	padding?: i32;
 	// Runtime:
@@ -65,14 +65,14 @@ type vertex_array_t = {
 };
 
 type index_array_t = {
-	values: Uint32Array; // size = 3
+	values: u32_array_t; // size = 3
 	material: i32;
 };
 
 type light_data_t = {
 	name: string;
 	type: string; // sun, point, spot
-	color: Float32Array;
+	color: f32_array_t;
 	strength: f32;
 	near_plane?: f32;
 	far_plane?: f32;
@@ -86,10 +86,10 @@ type camera_data_t = {
 	near_plane: f32;
 	far_plane: f32;
 	fov: f32;
-	clear_color?: Float32Array;
+	clear_color?: f32_array_t;
 	aspect?: f32;
 	frustum_culling?: bool;
-	ortho?: Float32Array; // Indicates ortho camera, left, right, bottom, top
+	ortho?: f32_array_t; // Indicates ortho camera, left, right, bottom, top
 };
 
 type material_data_t = {
@@ -121,9 +121,9 @@ type material_context_t = {
 
 type bind_const_t = {
 	name: string;
-	vec4?: Float32Array;
-	vec3?: Float32Array;
-	vec2?: Float32Array;
+	vec4?: f32_array_t;
+	vec3?: f32_array_t;
+	vec2?: f32_array_t;
 	float?: f32;
 	bool?: bool;
 	int?: i32;
@@ -192,9 +192,9 @@ type shader_const_t = {
 	name: string;
 	type: string;
 	link?: string;
-	vec4?: Float32Array;
-	vec3?: Float32Array;
-	vec2?: Float32Array;
+	vec4?: f32_array_t;
+	vec3?: f32_array_t;
+	vec2?: f32_array_t;
 	float?: f32;
 	bool?: bool;
 	int?: i32;
@@ -226,7 +226,7 @@ type world_data_t = {
 	name: string;
 	background_color: i32;
 	strength: f32;
-	irradiance?: string; // Reference to TIrradiance blob
+	irradiance?: string; // Reference to irradiance_t blob
 	radiance?: string;
 	radiance_mipmaps?: i32;
 	envmap?: string;
@@ -234,11 +234,11 @@ type world_data_t = {
 	_envmap?: image_t;
 	_radiance?: image_t;
 	_radiance_mipmaps?: image_t[];
-	_irradiance?: Float32Array;
+	_irradiance?: f32_array_t;
 };
 
 type irradiance_t = {
-	irradiance: Float32Array; // Blob with spherical harmonics, bands 0,1,2
+	irradiance: f32_array_t; // Blob with spherical harmonics, bands 0,1,2
 };
 
 type particle_data_t = {
@@ -251,7 +251,7 @@ type particle_data_t = {
 	lifetime: f32;
 	lifetime_random: f32;
 	emit_from: i32; // 0 - Vert, 1 - Face, 2 - Volume
-	object_align_factor: Float32Array;
+	object_align_factor: f32_array_t;
 	factor_random: f32;
 	physics_type: i32; // 0 - No, 1 - Newton
 	particle_size: f32; // Object scale
@@ -277,14 +277,14 @@ type obj_t = {
 	render_emitter?: bool;
 	is_particle?: bool; // This object is used as a particle object
 	children?: obj_t[];
-	dimensions?: Float32Array; // Geometry objects
+	dimensions?: f32_array_t; // Geometry objects
 	object_actions?: string[];
 	bone_actions?: string[];
 	anim?: anim_t; // Bone/object animation
 	parent?: obj_t;
 	parent_bone?: string;
-	parent_bone_tail?: Float32Array; // Translate from head to tail
-	parent_bone_tail_pose?: Float32Array;
+	parent_bone_tail?: f32_array_t; // Translate from head to tail
+	parent_bone_tail_pose?: f32_array_t;
 	parent_bone_connected?: bool;
 	visible?: bool;
 	spawn?: bool; // Auto add object when creating scene
@@ -295,7 +295,7 @@ type obj_t = {
 
 type transform_values_t = {
 	target?: string;
-	values: Float32Array;
+	values: f32_array_t;
 };
 
 type anim_t = {
@@ -303,12 +303,12 @@ type anim_t = {
 	begin?: i32; // Frames, for non-sampled
 	end?: i32;
 	has_delta?: bool; // Delta transform
-	marker_frames?: Uint32Array;
+	marker_frames?: u32_array_t;
 	marker_names?: string[];
 };
 
 type track_t = {
 	target: string;
-	frames: Uint32Array;
-	values: Float32Array; // sampled - full matrix transforms, non-sampled - values
+	frames: u32_array_t;
+	values: f32_array_t; // sampled - full matrix transforms, non-sampled - values
 };

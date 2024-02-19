@@ -38,7 +38,7 @@ function anim_object_interpolate_linear(t: f32, t1: f32, t2: f32, v1: f32, v2: f
 	return (1.0 - s) * v1 + s * v2;
 }
 
-function anim_object_check_frame_index_t(raw: anim_object_t, frame_values: Uint32Array, t: f32): bool {
+function anim_object_check_frame_index_t(raw: anim_object_t, frame_values: u32_array_t, t: f32): bool {
 	return raw.base.speed > 0 ?
 		raw.base.frame_index < frame_values.length - 2 && t > frame_values[raw.base.frame_index + 1] * raw.base.frame_time :
 		raw.base.frame_index > 1 && t > frame_values[raw.base.frame_index - 1] * raw.base.frame_time;

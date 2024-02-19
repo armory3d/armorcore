@@ -12,7 +12,7 @@ let uniforms_vec4_links: (o: object_t, md: material_data_t, s: string)=>vec4_t =
 let uniforms_vec3_links: (o: object_t, md: material_data_t, s: string)=>vec3_t = null;
 let uniforms_vec2_links: (o: object_t, md: material_data_t, s: string)=>vec2_t = null;
 let uniforms_f32_links: (o: object_t, md: material_data_t, s: string)=>f32 = null;
-let uniforms_f32_array_links: (o: object_t, md: material_data_t, s: string)=>Float32Array = null;
+let uniforms_f32_array_links: (o: object_t, md: material_data_t, s: string)=>f32_array_t = null;
 let uniforms_i32_links: (o: object_t, md: material_data_t, s: string)=>i32 = null;
 let uniforms_pos_unpack: f32 = 1.0;
 let uniforms_tex_unpack: f32 = 1.0;
@@ -27,12 +27,12 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 
 	// Texture context constants
 	if (bind_params != null) { // Bind targets
-		for (let i = 0; i < Math.floor(bind_params.length / 2); ++i) {
+		for (let i = 0; i < math_floor(bind_params.length / 2); ++i) {
 			let pos: i32 = i * 2; // bind params = [texture, sampler_id]
 			let rt_id: string = bind_params[pos];
 			let sampler_id: string = bind_params[pos + 1];
 			let attach_depth: bool = false; // Attach texture depth if '_' is prepended
-			let c: string = rt_id.charAt(0);
+			let c: string = char_at(rt_id, 0);
 			if (c == "_") {
 				attach_depth = true;
 				rt_id = rt_id.substring(1);
@@ -50,7 +50,7 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 				continue;
 			}
 
-			if (tulink.charAt(0) == "$") { // Link to embedded data
+			if (char_at(tulink, 0) == "$") { // Link to embedded data
 				g4_set_tex(context._tex_units[j], scene_embedded.get(tulink.substring(1)));
 				g4_set_tex_params(context._tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.NONE);
 			}
@@ -97,7 +97,7 @@ function uniforms_set_obj_consts(context: shader_context_t, object: object_t) {
 
 				let image: image_t = uniforms_tex_links(object, current_material(object), tu.link);
 				if (image != null) {
-					tu.link.endsWith("_depth") ?
+					ends_with(tu.link, "_depth") ?
 						g4_set_tex_depth(context._tex_units[j], image) :
 						g4_set_tex(context._tex_units[j], image);
 					g4_set_tex_params(context._tex_units[j], tu_addr_u, tu_addr_v, tu_filter_min, tu_filter_mag, tu_mip_map_filter);
@@ -143,7 +143,7 @@ function uniforms_bind_render_target(rt: render_target_t, context: shader_contex
 			}
 
 			if (!params_set) {
-				if (rt.name.startsWith("bloom")) {
+				if (starts_with(rt.name, "bloom")) {
 					// Use bilinear filter for bloom mips to get correct blur
 					g4_set_tex_params(context._tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
 					params_set = true;
@@ -416,7 +416,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		return true;
 	}
 	else if (c.type == "floats") {
-		let fa: Float32Array = null;
+		let fa: f32_array_t = null;
 
 		if (c.link == "_envmap_irradiance") {
 			fa = scene_world == null ? world_data_get_empty_irradiance() : scene_world._irradiance;
@@ -592,7 +592,7 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 		g4_set_float(loc, f);
 	}
 	else if (c.type == "floats") {
-		let fa: Float32Array = null;
+		let fa: f32_array_t = null;
 
 		if (c.link == "_skin_bones") {
 			///if arm_skin

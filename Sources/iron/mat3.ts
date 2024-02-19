@@ -10,14 +10,14 @@
 // _22 = [8]
 
 type mat3_t = {
-	m?: Float32Array;
+	m?: f32_array_t;
 };
 
 function mat3_create(_00: f32, _10: f32, _20: f32,
 					 _01: f32, _11: f32, _21: f32,
 					 _02: f32, _12: f32, _22: f32): mat3_t {
 	let self: mat3_t = {};
-	self.m = new Float32Array(9);
+	self.m = new f32_array_t(9);
 	self.m[0] = _00;
 	self.m[3] = _10;
 	self.m[6] = _20;
@@ -48,8 +48,8 @@ function mat3_translation(x: f32, y: f32): mat3_t {
 
 function mat3_rotation(alpha: f32): mat3_t {
 	return mat3_create(
-		Math.cos(alpha), -Math.sin(alpha), 0,
-		Math.sin(alpha), Math.cos(alpha), 0,
+		math_cos(alpha), -math_sin(alpha), 0,
+		math_sin(alpha), math_cos(alpha), 0,
 		0, 0, 1
 	);
 }

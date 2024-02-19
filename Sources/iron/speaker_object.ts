@@ -52,11 +52,7 @@ function speaker_object_play(raw: speaker_object_t) {
 	if (channel != null) {
 		raw.channels.push(channel);
 		if (raw.data.attenuation > 0 && raw.channels.length == 1) {
-			function _update() {
-				speaker_object_update(raw);
-			}
-			(raw as any).update = _update;
-			app_notify_on_update(_update);
+			app_notify_on_update(speaker_object_update, raw);
 		}
 	}
 }
@@ -88,7 +84,7 @@ function speaker_object_update(raw: speaker_object_t) {
 		}
 	}
 	if (raw.channels.length == 0) {
-		app_remove_update((raw as any).update);
+		app_remove_update(speaker_object_update);
 		return;
 	}
 

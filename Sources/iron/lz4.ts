@@ -20,14 +20,14 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-let _lz4_hash_table: Int32Array = null;
+let _lz4_hash_table: i32_array_t = null;
 
 function lz4_encode_bound(size: i32): i32 {
 	return size > 0x7e000000 ? 0 : size + (size / 255 | 0) + 16;
 }
 
-function lz4_encode(b: ArrayBuffer): ArrayBuffer {
-	let ibuf: Uint8Array = new Uint8Array(b);
+function lz4_encode(b: buffer_t): buffer_t {
+	let ibuf: u8_array_t = new u8_array_t(b);
 	let ilen: i32 = ibuf.length;
 	if (ilen >= 0x7e000000) {
 		krom_log("LZ4 range error");
@@ -41,14 +41,14 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 	let last_literal_pos: i32 = ilen - 5;
 
 	if (_lz4_hash_table == null) {
-		_lz4_hash_table = new Int32Array(65536);
+		_lz4_hash_table = new i32_array_t(65536);
 	}
 	for (let i: i32 = 0; i < _lz4_hash_table.length; ++i) {
 		_lz4_hash_table[i] = -65536;
 	}
 
 	let olen: i32 = lz4_encode_bound(ilen);
-	let obuf: Uint8Array = new Uint8Array(olen);
+	let obuf: u8_array_t = new u8_array_t(olen);
 	let ipos: i32 = 0;
 	let opos: i32 = 0;
 	let anchor_pos: i32 = 0;
@@ -151,13 +151,13 @@ function lz4_encode(b: ArrayBuffer): ArrayBuffer {
 		obuf[opos++] = ibuf[anchor_pos++];
 	}
 
-	return obuf.buffer.slice(0, opos);
+	return buffer_slice(obuf.buffer, 0, opos);
 }
 
-function lz4_decode(b: ArrayBuffer, olen: i32): ArrayBuffer {
-	let ibuf: Uint8Array = new Uint8Array(b);
+function lz4_decode(b: buffer_t, olen: i32): buffer_t {
+	let ibuf: u8_array_t = new u8_array_t(b);
 	let ilen: i32 = ibuf.length;
-	let obuf: Uint8Array = new Uint8Array(olen);
+	let obuf: u8_array_t = new u8_array_t(olen);
 	let ipos: i32 = 0;
 	let opos: i32 = 0;
 

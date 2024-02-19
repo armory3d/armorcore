@@ -73,7 +73,8 @@ function raycast_closest_box_intersect(transforms: transform_t[], input_x: f32, 
 
 	// Get closest intersect
 	let closest: transform_t = null;
-	let min_dist: f32 = Infinity;
+	let inf = 100000;
+	let min_dist: f32 = inf;
 	for (let i: i32 = 0; i < intersects.length; ++i) {
 		let t: transform_t = intersects[i];
 		let dist: f32 = vec4_dist(t.loc, camera.base.transform.loc);
@@ -220,8 +221,8 @@ function ray_intersect_box(raw: ray_t, center: vec4_t, dim: vec4_t): vec4_t {
 		return null;
 	}
 
-	// These lines also handle the case where tmin or tmax is NaN
-	// (result of 0 * Infinity). x !== x returns true if x is NaN
+	// These lines also handle the case where tmin or tmax is nan
+	// (result of 0 * inf). x !== x returns true if x is nan
 	if (tymin > tmin || tmin != tmin) {
 		tmin = tymin;
 	}
