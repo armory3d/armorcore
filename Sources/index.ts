@@ -5,8 +5,10 @@ class buffer_view_t extends DataView {}
 class f32_array_t extends Float32Array {}
 class u32_array_t extends Uint32Array {}
 class i32_array_t extends Int32Array {}
+class u16_array_t extends Uint16Array {}
 class i16_array_t extends Int16Array {}
 class u8_array_t extends Uint8Array {}
+class i8_array_t extends Int8Array {}
 
 function math_floor(x: f32): f32 { return Math.floor(x); }
 function math_cos(x: f32): f32 { return Math.cos(x); }
