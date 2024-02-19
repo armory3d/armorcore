@@ -169,7 +169,7 @@ function mesh_object_get_contexts(raw: mesh_object_t, context: string, materials
 		let mat: material_data_t = materials[i];
 		let found: bool = false;
 		for (let j: i32 = 0; j < mat.contexts.length; ++j) {
-			if (mat.contexts[j].name.substring(0, context.length) == context) {
+			if (substring(mat.contexts[j].name, 0, context.length) == context) {
 				material_contexts.push(mat._contexts[j]);
 				shader_contexts.push(shader_data_get_context(mat._shader, context));
 				found = true;

@@ -35,7 +35,7 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 			let c: string = char_at(rt_id, 0);
 			if (c == "_") {
 				attach_depth = true;
-				rt_id = rt_id.substring(1);
+				rt_id = substring(rt_id, 1, rt_id.length);
 			}
 			let rt: render_target_t = attach_depth ? _render_path_depth_to_render_target.get(rt_id) : render_path_render_targets.get(rt_id);
 			uniforms_bind_render_target(rt, context, sampler_id, attach_depth);
@@ -51,7 +51,7 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 			}
 
 			if (char_at(tulink, 0) == "$") { // Link to embedded data
-				g4_set_tex(context._tex_units[j], scene_embedded.get(tulink.substring(1)));
+				g4_set_tex(context._tex_units[j], scene_embedded.get(substring(tulink, 1, tulink.length)));
 				g4_set_tex_params(context._tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.NONE);
 			}
 			else if (tulink == "_envmap_radiance") {

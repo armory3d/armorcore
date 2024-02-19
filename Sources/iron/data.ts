@@ -167,7 +167,7 @@ function data_get_image(file: string, readable: bool = false): image_t {
 }
 
 function data_get_video(file: string): video_t {
-	file = file.substring(0, file.length - 4) + ".webm";
+	file = substring(file, 0, file.length - 4) + ".webm";
 	let cached: video_t = data_cached_videos.get(file);
 	if (cached != null) {
 		return cached;
@@ -343,7 +343,7 @@ function data_is_up(file: string): bool {
 
 function data_base_name(path: string): string {
 	let slash: i32 = string_last_index_of(path, data_sep());
-	return slash >= 0 ? path.substring(slash + 1) : path;
+	return slash >= 0 ? substring(path, slash + 1, path.length) : path;
 }
 
 function data_resolve_path(file: string): string {

@@ -20,8 +20,8 @@ function world_data_parse(name: string, id: string): world_data_t {
 			raw._radiance_mipmaps.push(null);
 		}
 		let dot: i32 = string_last_index_of(raw.radiance, ".");
-		let ext: string = raw.radiance.substring(dot);
-		let base: string = raw.radiance.substring(0, dot);
+		let ext: string = substring(raw.radiance, dot, raw.radiance.length);
+		let base: string = substring(raw.radiance, 0, dot);
 
 		for (let i: i32 = 0; i < raw.radiance_mipmaps; ++i) {
 			let mipimg: image_t = data_get_image(base + "_" + i + ext, true);

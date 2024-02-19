@@ -59,7 +59,7 @@ function material_data_get_context(raw: material_data_t, name: string): material
 	for (let i: i32 = 0; i < raw._contexts.length; ++i) {
 		let c: material_context_t = raw._contexts[i];
 		// 'mesh' will fetch both 'mesh' and 'meshheight' contexts
-		if (c.name.substring(0, name.length) == name) {
+		if (substring(c.name, 0, name.length) == name) {
 			return c;
 		}
 	}

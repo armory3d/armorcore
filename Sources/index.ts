@@ -25,6 +25,7 @@ function math_pow(x: f32, y: f32): f32 { return Math.pow(x, y); }
 function string_index_of(s: string, search: string): i32 { return s.indexOf(search); }
 function string_last_index_of(s: string, search: string): i32 { return s.lastIndexOf(search); }
 function string_split(s: string, sep: string): string[] { return s.split(sep); }
+function substring(s: string, start: i32, end: i32): string { return s.substring(start, end); };
 function string_from_char_code(c: i32): string { return String.fromCharCode(c); }
 function char_code_at(s: string, i: i32): i32 { return s.charCodeAt(i); }
 function char_at(s: string, i: i32): string { return s.charAt(i); }
@@ -55,6 +56,7 @@ function is_view(a: any): bool { return ArrayBuffer.isView(a); } // armpack
 function is_array(a: any): bool { return Array.isArray(a); } // armpack
 function any_to_string(a: any): string { return String(a); } // armpack
 // Object.keys() // armpack, tween
+// .constructor // armpack
 // globalThis // arm_shader_embed
 
 function array_remove(ar: any[], e: any) {
@@ -68,7 +70,7 @@ function trim_end(str: string): string {
     return str;
 }
 
-function color_from_floats(r: f32, g: f32, b: f32, a: f32 = 1): i32 {
+function color_from_floats(r: f32, g: f32, b: f32, a: f32 = 1.0): i32 {
     return (Math.round(a * 255) << 24) | (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255);
 }
 
