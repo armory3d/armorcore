@@ -96,7 +96,7 @@ else if (platform === Platform.Wasm) {
 	c_project.addFile('Shaders/**');
 }
 else {
-	c_project.addFile('Sources/main.cpp');
+	c_project.addFile('Sources/main_v8.cpp');
 }
 
 if (flags.with_g2) {
