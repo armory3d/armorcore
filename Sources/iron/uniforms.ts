@@ -31,13 +31,13 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 			let pos: i32 = i * 2; // bind params = [texture, sampler_id]
 			let rt_id: string = bind_params[pos];
 			let sampler_id: string = bind_params[pos + 1];
-			let attach_depth: bool = false; // Attach texture depth if '_' is prepended
+			let attach_depth: bool = false; // Attach texture depth if "_" is prepended
 			let c: string = char_at(rt_id, 0);
 			if (c == "_") {
 				attach_depth = true;
 				rt_id = substring(rt_id, 1, rt_id.length);
 			}
-			let rt: render_target_t = attach_depth ? _render_path_depth_to_render_target.get(rt_id) : render_path_render_targets.get(rt_id);
+			let rt: render_target_t = attach_depth ? map_get(_render_path_depth_to_render_target, rt_id) : map_get(render_path_render_targets, rt_id);
 			uniforms_bind_render_target(rt, context, sampler_id, attach_depth);
 		}
 	}
@@ -51,7 +51,7 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 			}
 
 			if (char_at(tulink, 0) == "$") { // Link to embedded data
-				g4_set_tex(context._tex_units[j], scene_embedded.get(substring(tulink, 1, tulink.length)));
+				g4_set_tex(context._tex_units[j], map_get(scene_embedded, substring(tulink, 1, tulink.length)));
 				g4_set_tex_params(context._tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.NONE);
 			}
 			else if (tulink == "_envmap_radiance") {
@@ -683,13 +683,13 @@ function uniforms_set_material_const(location: kinc_const_loc_t, shader_const: s
 		g4_set_float2(location, material_const.vec2[0], material_const.vec2[1]);
 	}
 	else if (shader_const.type == "float") {
-		g4_set_float(location,  material_const.float);
+		g4_set_float(location,  material_const.vec1);
 	}
 	else if (shader_const.type == "bool") {
-		g4_set_bool(location, material_const.bool);
+		g4_set_bool(location, material_const.vec1 > 0.0);
 	}
 	else if (shader_const.type == "int") {
-		g4_set_int(location, material_const.int);
+		g4_set_int(location, math_floor(material_const.vec1));
 	}
 }
 

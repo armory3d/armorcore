@@ -10,6 +10,18 @@ class i16_array_t extends Int16Array {}
 class u8_array_t extends Uint8Array {}
 class i8_array_t extends Int8Array {}
 
+function map_create<K, V>(): map_t<K, V> { return new map_t(); }
+function buffer_create(length: i32): buffer_t { return new buffer_t(length); }
+function buffer_view_create(b: buffer_t): buffer_view_t { return new buffer_view_t(b); }
+function f32_array_create(length: i32): f32_array_t { return new f32_array_t(length); }
+function u32_array_create(length: i32): u32_array_t { return new u32_array_t(length); }
+function i32_array_create(length: i32): i32_array_t { return new i32_array_t(length); }
+function u16_array_create(length: i32): u16_array_t { return new u16_array_t(length); }
+function i16_array_create(length: i32): i16_array_t { return new i16_array_t(length); }
+function u8_array_create(length: i32): u8_array_t { return new u8_array_t(length); }
+function u8_array_create_from_buffer(b: buffer_t): u8_array_t { return new u8_array_t(b); }
+function i8_array_create(length: i32): i8_array_t { return new i8_array_t(length); }
+
 function math_floor(x: f32): f32 { return Math.floor(x); }
 function math_cos(x: f32): f32 { return Math.cos(x); }
 function math_sin(x: f32): f32 { return Math.sin(x); }
@@ -22,9 +34,16 @@ function math_asin(x: f32): f32 { return Math.asin(x); }
 function math_pi(): f32 { return Math.PI; }
 function math_pow(x: f32, y: f32): f32 { return Math.pow(x, y); }
 
+function map_get<K, V>(m: map_t<K, V>, k: any): any { return m.get(k); }
+function map_set<K, V>(m: map_t<K, V>, k: any, v: any) { m.set(k, v); }
+function map_delete<K, V>(m: map_t<K, V>, k: any) { m.delete(k); }
+function array_sort(ar: any[], fn: (a: any, b: any)=>i32) { ar.sort(fn); }
+function array_push(ar: any[], e: any) { ar.push(e); }
+function array_splice(ar: any[], start: i32, delete_count: i32) { ar.splice(start, delete_count); }
 function string_index_of(s: string, search: string): i32 { return s.indexOf(search); }
 function string_last_index_of(s: string, search: string): i32 { return s.lastIndexOf(search); }
 function string_split(s: string, sep: string): string[] { return s.split(sep); }
+function string_replace_all(s: string, search: string, replace: string) { s.replaceAll(search, replace); }
 function substring(s: string, start: i32, end: i32): string { return s.substring(start, end); };
 function string_from_char_code(c: i32): string { return String.fromCharCode(c); }
 function char_code_at(s: string, i: i32): i32 { return s.charCodeAt(i); }
@@ -35,7 +54,7 @@ function to_lower_case(s: string): string { return s.toLowerCase(); }
 function map_to_array(m: any): any[] { return Array.from(m.values()); }
 function array_slice(a: any[], begin: i32, end: i32): any[] { return a.slice(begin, end); }
 function buffer_slice(a: ArrayBuffer, begin: i32, end: i32): ArrayBuffer { return a.slice(begin, end); }
-function buffer_size(b: buffer_t): i32 { return b.byteLength; }
+function buffer_size(b: ArrayBuffer): i32 { return b.byteLength; }
 function buffer_view_size(v: buffer_view_t): i32 { return v.byteLength; }
 function buffer_view_get_u8(v: buffer_view_t, p: i32): u8 { return v.getUint8(p); }
 function buffer_view_get_i8(v: buffer_view_t, p: i32): i8 { return v.getInt8(p); }

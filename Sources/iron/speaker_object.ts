@@ -19,7 +19,7 @@ function speaker_object_create(data: speaker_data_t): speaker_object_t {
 	raw.base.ext_type = "speaker_object_t";
 	raw.data = data;
 
-	scene_speakers.push(raw);
+	array_push(scene_speakers, raw);
 
 	if (data.sound == "") {
 		return raw;
@@ -50,7 +50,7 @@ function speaker_object_play(raw: speaker_object_t) {
 	}
 	let channel: audio_channel_t = audio_channel(raw.sound, raw.data.loop, raw.data.stream);
 	if (channel != null) {
-		raw.channels.push(channel);
+		array_push(raw.channels, channel);
 		if (raw.data.attenuation > 0 && raw.channels.length == 1) {
 			app_notify_on_update(speaker_object_update, raw);
 		}
@@ -70,7 +70,7 @@ function speaker_object_stop(raw: speaker_object_t) {
 		let c: audio_channel_t = raw.channels[i];
 		audio_stop(c);
 	}
-	raw.channels.splice(0, raw.channels.length);
+	array_splice(raw.channels, 0, raw.channels.length);
 }
 
 function speaker_object_update(raw: speaker_object_t) {

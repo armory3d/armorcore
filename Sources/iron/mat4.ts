@@ -28,7 +28,7 @@ function mat4_create(_00: f32, _10: f32, _20: f32, _30: f32,
 					 _02: f32, _12: f32, _22: f32, _32: f32,
 					 _03: f32, _13: f32, _23: f32, _33: f32): mat4_t {
 	let self: mat4_t = {};
-	self.m = new f32_array_t(16);
+	self.m = f32_array_create(16);
 	self.m[0] = _00;
 	self.m[4] = _10;
 	self.m[8] = _20;
@@ -534,7 +534,7 @@ function mat4_clone(self: mat4_t): mat4_t {
 	);
 }
 
-function mat4_set_from_f32_array(self: mat4_t, a: f32_array_t, offset = 0): mat4_t {
+function mat4_set_from_f32_array(self: mat4_t, a: f32_array_t, offset: i32 = 0): mat4_t {
 	self.m[0] = a[0 + offset];
 	self.m[4] = a[1 + offset];
 	self.m[8] = a[2 + offset];
@@ -642,7 +642,7 @@ function mat4_up(self: mat4_t): vec4_t {
 }
 
 function mat4_to_f32_array(self: mat4_t): f32_array_t {
-	let array: f32_array_t = new f32_array_t(16);
+	let array: f32_array_t = f32_array_create(16);
 	array[0] = self.m[0];
 	array[1] = self.m[4];
 	array[2] = self.m[8];

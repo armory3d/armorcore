@@ -8,7 +8,7 @@ function tween_on_reset() {
 	tween_reset();
 }
 
-function tween_register() {
+function _tween_register() {
 	_tween_registered = true;
 	app_notify_on_update(tween_update);
 	app_notify_on_reset(tween_on_reset);
@@ -16,7 +16,7 @@ function tween_register() {
 
 function tween_to(anim: tween_anim_t): tween_anim_t {
 	if (!_tween_registered) {
-		tween_register();
+		_tween_register();
 	}
 	anim._time = 0;
 	anim.is_playing = (anim.delay != null && anim.delay > 0.0) ? false : true;
@@ -37,24 +37,24 @@ function tween_to(anim: tween_anim_t): tween_anim_t {
 			let p: any = keys[i];
 			let val: any = anim.target[p];
 			if (val.type == "vec4_t" || val.type == "quat_t") {
-				anim._comps.push(4);
-				anim._x.push(val.x);
-				anim._y.push(val.y);
-				anim._z.push(val.z);
-				anim._w.push(val.w);
-				anim._normalize.push(val.type == "quat_t");
+				array_push(anim._comps, 4);
+				array_push(anim._x, val.x);
+				array_push(anim._y, val.y);
+				array_push(anim._z, val.z);
+				array_push(anim._w, val.w);
+				array_push(anim._normalize, val.type == "quat_t");
 			}
 			else {
-				anim._comps.push(1);
-				anim._x.push(val);
-				anim._y.push(0);
-				anim._z.push(0);
-				anim._w.push(0);
+				array_push(anim._comps, 1);
+				array_push(anim._x, val);
+				array_push(anim._y, 0);
+				array_push(anim._z, 0);
+				array_push(anim._w, 0);
 			}
 		}
 	}
 
-	_tween_anims.push(anim);
+	array_push(_tween_anims, anim);
 	return anim;
 }
 
@@ -145,7 +145,7 @@ function tween_update() {
 			}
 		}
 		else {
-			_tween_anims.splice(i, 1);
+			array_splice(_tween_anims, i, 1);
 			i--;
 			a.is_playing = false;
 			if (a.done != null) {

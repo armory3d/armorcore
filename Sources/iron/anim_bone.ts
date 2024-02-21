@@ -71,7 +71,7 @@ function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 	raw.base.is_skinned = raw.data != null ? raw.data.skin != null : false;
 	if (raw.base.is_skinned) {
 		let bone_size: i32 = 8; // Dual-quat skinning
-		raw.skin_buffer = new f32_array_t(_anim_bone_skin_max_bones * bone_size);
+		raw.skin_buffer = f32_array_create(_anim_bone_skin_max_bones * bone_size);
 		for (let i: i32 = 0; i < raw.skin_buffer.length; ++i) {
 			raw.skin_buffer[i] = 0;
 		}
@@ -89,19 +89,19 @@ function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 
 function anim_bone_add_bone_child(raw: anim_bone_t, bone: string, o: object_t) {
 	if (raw.bone_children == null) {
-		raw.bone_children = new map_t();
+		raw.bone_children = map_create();
 	}
-	let ar: object_t[] = raw.bone_children.get(bone);
+	let ar: object_t[] = map_get(raw.bone_children, bone);
 	if (ar == null) {
 		ar = [];
-		raw.bone_children.set(bone, ar);
+		map_set(raw.bone_children, bone, ar);
 	}
-	ar.push(o);
+	array_push(ar, o);
 }
 
 function anim_bone_remove_bone_child(raw: anim_bone_t, bone: string, o: object_t) {
 	if (raw.bone_children != null) {
-		let ar: object_t[] = raw.bone_children.get(bone);
+		let ar: object_t[] = map_get(raw.bone_children, bone);
 		if (ar != null) {
 			array_remove(ar, o);
 		}
@@ -109,7 +109,7 @@ function anim_bone_remove_bone_child(raw: anim_bone_t, bone: string, o: object_t
 }
 
 function anim_bone_update_bone_children(raw: anim_bone_t, bone: obj_t, bm: mat4_t) {
-	let ar: object_t[] = raw.bone_children.get(bone.name);
+	let ar: object_t[] = map_get(raw.bone_children, bone.name);
 	if (ar == null) {
 		return;
 	}
@@ -158,27 +158,27 @@ function anim_bone_sort(a: i32, b: i32) {
 
 function anim_bone_set_mats(raw: anim_bone_t) {
 	while (raw.mats_fast.length < raw.skeleton_bones.length) {
-		raw.mats_fast.push(mat4_identity());
-		raw.mats_fast_sort.push(raw.mats_fast_sort.length);
+		array_push(raw.mats_fast, mat4_identity());
+		array_push(raw.mats_fast_sort, raw.mats_fast_sort.length);
 	}
 	// Calc bones with 0 parents first
 	_anim_bone_sort_data = raw.skeleton_bones;
-	raw.mats_fast_sort.sort(anim_bone_sort);
+	array_sort(raw.mats_fast_sort, anim_bone_sort);
 
 	if (raw.skeleton_bones_blend != null) {
 		while (raw.mats_fast_blend.length < raw.skeleton_bones_blend.length) {
-			raw.mats_fast_blend.push(mat4_identity());
-			raw.mats_fast_blend_sort.push(raw.mats_fast_blend_sort.length);
+			array_push(raw.mats_fast_blend, mat4_identity());
+			array_push(raw.mats_fast_blend_sort, raw.mats_fast_blend_sort.length);
 		}
 		_anim_bone_sort_data = raw.skeleton_bones_blend;
-		raw.mats_fast_blend_sort.sort(anim_bone_sort);
+		array_sort(raw.mats_fast_blend_sort, anim_bone_sort);
 	}
 }
 
 function anim_bone_set_action(raw: anim_bone_t, action: string) {
 	if (raw.base.is_skinned) {
-		raw.skeleton_bones = raw.data._actions.get(action);
-		raw.skeleton_mats = raw.data._mats.get(action);
+		raw.skeleton_bones = map_get(raw.data._actions, action);
+		raw.skeleton_mats = map_get(raw.data._mats, action);
 		raw.skeleton_bones_blend = null;
 		raw.skeleton_mats_blend = null;
 	}
@@ -195,8 +195,8 @@ function anim_bone_set_action_blend(raw: anim_bone_t, action: string) {
 	if (raw.base.is_skinned) {
 		raw.skeleton_bones_blend = raw.skeleton_bones;
 		raw.skeleton_mats_blend = raw.skeleton_mats;
-		raw.skeleton_bones = raw.data._actions.get(action);
-		raw.skeleton_mats = raw.data._mats.get(action);
+		raw.skeleton_bones = map_get(raw.data._actions, action);
+		raw.skeleton_mats = map_get(raw.data._mats, action);
 	}
 	else {
 		armature_init_mats(raw.base.armature);
@@ -240,7 +240,7 @@ function anim_bone_notify_on_update(raw: anim_bone_t, f: ()=>void) {
 	if (raw.on_updates == null) {
 		raw.on_updates = [];
 	}
-	raw.on_updates.push(f);
+	array_push(raw.on_updates, f);
 }
 
 function anim_bone_remove_update(raw: anim_bone_t, f: ()=>void) {
@@ -360,7 +360,7 @@ function anim_bone_get_abs_mat(raw: anim_bone_t, bone: obj_t): mat4_t {
 	if (raw.abs_mats == null) {
 		raw.abs_mats = [];
 		while (raw.abs_mats.length < raw.skeleton_mats.length) {
-			raw.abs_mats.push(mat4_identity());
+			array_push(raw.abs_mats, mat4_identity());
 		}
 	}
 	return raw.abs_mats[anim_bone_get_bone_index(raw, bone)];
@@ -373,7 +373,7 @@ function anim_bone_get_world_mat(raw: anim_bone_t, bone: obj_t): mat4_t {
 	if (raw.apply_parent == null) {
 		raw.apply_parent = [];
 		for (let i = 0; i < raw.skeleton_mats.length; ++i) {
-			raw.apply_parent.push(true);
+			array_push(raw.apply_parent, true);
 		}
 	}
 	let i: i32 = anim_bone_get_bone_index(raw, bone);
@@ -432,16 +432,16 @@ function anim_bone_solve_ik(raw: anim_bone_t, effector: obj_t, goal: vec4_t, pre
 
 	// Store all bones and lengths in array
 	let tip: obj_t = effector;
-	bones.push(tip);
-	lengths.push(anim_bone_get_bone_abs_len(raw, tip));
+	array_push(bones, tip);
+	array_push(lengths, anim_bone_get_bone_abs_len(raw, tip));
 	let root: obj_t = tip;
 
 	while (root.parent != null) {
 		if (bones.length > chain_lenght - 1) {
 			break;
 		}
-		bones.push(root.parent);
-		lengths.push(anim_bone_get_bone_abs_len(raw, root.parent));
+		array_push(bones, root.parent);
+		array_push(lengths, anim_bone_get_bone_abs_len(raw, root.parent));
 		root = root.parent;
 	}
 
@@ -496,7 +496,7 @@ function anim_bone_solve_ik(raw: anim_bone_t, effector: obj_t, goal: vec4_t, pre
 	let bone_world_locs: vec4_t[] = [];
 	for (let i = 0; i < bone_world_mats.length; ++i) {
 		let b: mat4_t = bone_world_mats[i];
-		bone_world_locs.push(mat4_get_loc(b));
+		array_push(bone_world_locs, mat4_get_loc(b));
 	}
 
 	// Solve FABRIK
@@ -609,7 +609,7 @@ function anim_bone_set_bone_mat_from_world_mat(raw: anim_bone_t, wm: mat4_t, bon
 	let bones: obj_t[] = [];
 	let p_bone: obj_t = bone;
 	while (p_bone.parent != null) {
-		bones.push(p_bone.parent);
+		array_push(bones, p_bone.parent);
 		p_bone = p_bone.parent;
 	}
 

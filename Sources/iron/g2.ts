@@ -10,7 +10,7 @@ let _g2_current: image_t = null;
 let _g2_font_glyphs: i32[] = _g2_make_glyphs(32, 127);
 let _g2_font_glyphs_last: i32[] = _g2_font_glyphs;
 let _g2_thrown: bool = false;
-let _g2_mat = new f32_array_t(9);
+let _g2_mat: f32_array_t = f32_array_create(9);
 let _g2_initialized: bool = false;
 
 function g2_set_color(c: color_t) {
@@ -67,7 +67,7 @@ function g2_set_transformation(m: mat3_t) {
 function _g2_make_glyphs(start: i32, end: i32): i32[] {
 	let ar: i32[] = [];
 	for (let i: i32 = start; i < end; ++i) {
-		ar.push(i);
+		array_push(ar, i);
 	}
 	return ar;
 }
@@ -157,7 +157,7 @@ function g2_begin(render_target: image_t = null, clear: bool = true, clear_color
 	}
 }
 
-function g2_clear(color = 0x00000000) {
+function g2_clear(color: color_t = 0x00000000) {
 	g4_clear(color);
 }
 

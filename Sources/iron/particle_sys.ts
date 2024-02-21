@@ -79,7 +79,7 @@ function particle_sys_create(scene_name: string, ref: particle_ref_t): particle_
 	for (let i: i32 = 0; i < raw.r.count; ++i) {
 		let p: particle_t = particle_create();
 		p.i = i;
-		raw.particles.push(p);
+		array_push(raw.particles, p);
 	}
 	raw.ready = true;
 	return raw;
@@ -155,7 +155,7 @@ function particle_sys_rand(max: i32): i32 {
 }
 
 function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, owner: mesh_object_t) {
-	let instanced_data: f32_array_t = new f32_array_t(raw.particles.length * 3);
+	let instanced_data: f32_array_t = f32_array_create(raw.particles.length * 3);
 	let i: i32 = 0;
 
 	let norm_fac: f32 = 1 / 32767; // pa.values are not normalized
@@ -166,7 +166,7 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 	vec4_mult(scale_fac, scale_pos_owner / (particle_size * scale_pos_particle));
 
 	if (raw.r.emit_from == 0) { // Vert
-		let pa: vertex_array_t = mesh_data_get_vertex_array(owner.data, 'pos');
+		let pa: vertex_array_t = mesh_data_get_vertex_array(owner.data, "pos");
 
 		for (let x: i32 = 0; x < raw.particles.length; ++x) {
 			let j: i32 = math_floor(particle_sys_fhash(i) * (pa.values.length / pa._size));
@@ -179,7 +179,7 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 		}
 	}
 	else if (raw.r.emit_from == 1) { // Face
-		let positions: i16_array_t = mesh_data_get_vertex_array(owner.data, 'pos').values;
+		let positions: i16_array_t = mesh_data_get_vertex_array(owner.data, "pos").values;
 
 		for (let x: i32 = 0; x < raw.particles.length; ++x) {
 			// Choose random index array (there is one per material) and random face
@@ -236,7 +236,7 @@ function particle_sys_random_point_in_triangle(a: vec3_t, b: vec3_t, c: vec3_t):
 	let y: f32 = math_random();
 
 	if (x + y > 1) {
-		// We're in the upper right triangle in the square, mirror to lower left
+		// We are in the upper right triangle in the square, mirror to lower left
 		x = 1 - x;
 		y = 1 - y;
 	}

@@ -35,7 +35,7 @@ function mesh_object_create(data: mesh_data_t, materials: material_data_t[]): me
 
 	raw.materials = materials;
 	mesh_object_set_data(raw, data);
-	scene_meshes.push(raw);
+	array_push(scene_meshes, raw);
 	return raw;
 }
 
@@ -95,7 +95,7 @@ function mesh_object_setup_particle_system(raw: mesh_object_t, scene_name: strin
 		raw.particle_systems = [];
 	}
 	let psys: particle_sys_t = particle_sys_create(scene_name, pref);
-	raw.particle_systems.push(psys);
+	array_push(raw.particle_systems, psys);
 }
 ///end
 
@@ -170,15 +170,15 @@ function mesh_object_get_contexts(raw: mesh_object_t, context: string, materials
 		let found: bool = false;
 		for (let j: i32 = 0; j < mat.contexts.length; ++j) {
 			if (substring(mat.contexts[j].name, 0, context.length) == context) {
-				material_contexts.push(mat._contexts[j]);
-				shader_contexts.push(shader_data_get_context(mat._shader, context));
+				array_push(material_contexts, mat._contexts[j]);
+				array_push(shader_contexts, shader_data_get_context(mat._shader, context));
 				found = true;
 				break;
 			}
 		}
 		if (!found) {
-			material_contexts.push(null);
-			shader_contexts.push(null);
+			array_push(material_contexts, null);
+			array_push(shader_contexts, null);
 		}
 	}
 }
@@ -190,7 +190,7 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 	if (!raw.base.visible) {
 		return; // Skip render if object is hidden
 	}
-	if (mesh_object_cull_mesh(raw, context, scene_camera,_render_path_light)) {
+	if (mesh_object_cull_mesh(raw, context, scene_camera, _render_path_light)) {
 		return;
 	}
 	let mesh_context: bool = raw.base.raw != null ? context == "mesh" : false;
@@ -208,7 +208,7 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 				let o: object_t = scene_spawn_object(psys.data.instance_object);
 				if (o != null) {
 					let c: mesh_object_t = o.ext;
-					raw.particle_children.push(c);
+					array_push(raw.particle_children, c);
 					c.particle_owner = raw;
 					c.particle_index = raw.particle_children.length - 1;
 				}

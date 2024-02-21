@@ -124,9 +124,7 @@ type bind_const_t = {
 	vec4?: f32_array_t;
 	vec3?: f32_array_t;
 	vec2?: f32_array_t;
-	float?: f32;
-	bool?: bool;
-	int?: i32;
+	vec1?: f32; // bool (vec1 > 0) | i32 | f32
 };
 
 type bind_tex_t = {
@@ -195,9 +193,7 @@ type shader_const_t = {
 	vec4?: f32_array_t;
 	vec3?: f32_array_t;
 	vec2?: f32_array_t;
-	float?: f32;
-	bool?: bool;
-	int?: i32;
+	vec1?: f32; // bool (vec1 > 0) | i32 | f32
 };
 
 type tex_unit_t = {

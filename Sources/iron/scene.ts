@@ -36,7 +36,7 @@ function scene_create(format: scene_t): object_t {
 	///if arm_skin
 	scene_armatures = [];
 	///end
-	scene_embedded = new map_t();
+	scene_embedded = map_create();
 	_scene_root = object_create();
 	_scene_root.name = "Root";
 
@@ -360,7 +360,7 @@ function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, p
 		for (let i: i32 = 0; i < parent_object.bone_actions.length; ++i) {
 			let ref: string = parent_object.bone_actions[i];
 			let action: scene_t = data_get_scene_raw(ref);
-			bactions.push(action);
+			array_push(bactions, action);
 		}
 		let armature: armature_t = null;
 		// Check if armature exists
@@ -382,7 +382,7 @@ function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, p
 				}
 			}
 			armature = armature_create(parent.uid, parent.name, bactions);
-			scene_armatures.push(armature);
+			array_push(scene_armatures, armature);
 		}
 		return scene_return_mesh_object(
 			object_file, data_ref, scene_name, armature, materials, parent, parent_object, o);
@@ -420,7 +420,7 @@ function scene_return_object(object: object_t, o: obj_t): object_t {
 	if (object != null && o.object_actions != null) {
 		let oactions: scene_t[] = [];
 		while (oactions.length < o.object_actions.length) {
-			oactions.push(null);
+			array_push(oactions, null);
 		}
 
 		for (let i: i32 = 0; i < o.object_actions.length; ++i) {
@@ -479,10 +479,10 @@ function scene_embed_data(file: string) {
 		// Raw 3D texture bytes
 		let w: i32 = math_floor(math_pow(buffer_size(b), 1 / 3)) + 1;
 		let image: image_t = image_from_bytes_3d(b, w, w, w, tex_format_t.R8);
-		scene_embedded.set(file, image);
+		map_set(scene_embedded, file, image);
 	}
 	else {
 		let image: image_t = data_get_image(file);
-		scene_embedded.set(file, image);
+		map_set(scene_embedded, file, image);
 	}
 }

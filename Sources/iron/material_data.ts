@@ -1,5 +1,5 @@
 
-let _material_data_uid_counter = 0;
+let _material_data_uid_counter: i32 = 0;
 
 function material_data_create(raw: material_data_t, file: string = ""): material_data_t {
 	raw._uid = ++_material_data_uid_counter; // Start from 1
@@ -22,7 +22,7 @@ function material_data_create(raw: material_data_t, file: string = ""): material
 	// Contexts have to be in the same order as in raw data for now
 	raw._contexts = [];
 	while (raw._contexts.length < raw.contexts.length) {
-		raw._contexts.push(null);
+		array_push(raw._contexts, null);
 	}
 
 	for (let i: i32 = 0; i < raw.contexts.length; ++i) {
@@ -58,7 +58,7 @@ function material_data_get_raw_by_name(datas: material_data_t[], name: string): 
 function material_data_get_context(raw: material_data_t, name: string): material_context_t {
 	for (let i: i32 = 0; i < raw._contexts.length; ++i) {
 		let c: material_context_t = raw._contexts[i];
-		// 'mesh' will fetch both 'mesh' and 'meshheight' contexts
+		// "mesh" will fetch both "mesh" and "meshheight" contexts
 		if (substring(c.name, 0, name.length) == name) {
 			return c;
 		}
@@ -84,7 +84,7 @@ function material_context_create(raw: material_context_t): material_context_t {
 			if (tex.mipmaps != null) {
 				let mipmaps: image_t[] = [];
 				while (mipmaps.length < tex.mipmaps.length) {
-					mipmaps.push(null);
+					array_push(mipmaps, null);
 				}
 
 				for (let j: i32 = 0; j < tex.mipmaps.length; ++j) {

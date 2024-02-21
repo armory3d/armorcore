@@ -62,7 +62,7 @@ function raycast_closest_box_intersect(transforms: transform_t[], input_x: f32, 
 		let t: transform_t = transforms[i];
 		let intersect = raycast_box_intersect(t, input_x, input_y, camera);
 		if (intersect != null) {
-			intersects.push(t);
+			array_push(intersects, t);
 		}
 	}
 

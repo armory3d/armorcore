@@ -4,7 +4,7 @@ function shader_data_create(raw: shader_data_t, override_context: shader_overrid
 	for (let i: i32 = 0; i < raw.contexts.length; ++i) {
 		let c: shader_context_t = raw.contexts[i];
 		let con: shader_context_t = shader_context_create(c, override_context);
-		raw._contexts.push(con);
+		array_push(raw._contexts, con);
 	}
 	return raw;
 }
@@ -425,12 +425,12 @@ function shader_context_get_depth_format(s: string): depth_format_t {
 }
 
 function shader_context_add_const(raw: shader_context_t, c: shader_const_t) {
-	raw._constants.push(g4_pipeline_get_const_loc(raw._pipe_state, c.name));
+	array_push(raw._constants, g4_pipeline_get_const_loc(raw._pipe_state, c.name));
 }
 
 function shader_context_add_tex(raw: shader_context_t, tu: tex_unit_t) {
 	let unit = g4_pipeline_get_tex_unit(raw._pipe_state, tu.name);
-	raw._tex_units.push(unit);
+	array_push(raw._tex_units, unit);
 }
 
 function shader_context_set_tex_params(raw: shader_context_t, unit_index: i32, tex: bind_tex_t) {

@@ -142,7 +142,7 @@ function transform_rotate(raw: transform_t, axis: vec4_t, f: f32) {
 	transform_build_matrix(raw);
 }
 
-function transform_move(raw: transform_t, axis: vec4_t, f = 1.0) {
+function transform_move(raw: transform_t, axis: vec4_t, f: f32 = 1.0) {
 	vec4_add_f(raw.loc, axis.x * f, axis.y * f, axis.z * f);
 	transform_build_matrix(raw);
 }

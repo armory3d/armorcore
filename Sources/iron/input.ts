@@ -341,9 +341,9 @@ function pen_view_y(): f32 {
 }
 
 let keyboard_keys: string[] = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "space", "backspace", "tab", "enter", "shift", "control", "alt", "win", "escape", "delete", "up", "down", "left", "right", "back", ",", ".", ":", ";", "<", "=", ">", "?", "!", "\"", "#", "$", "%", "&", "_", "(", ")", "*", "|", "{", "}", "[", "]", "~", "`", "/", "\\", "@", "+", "-", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12"];
-let keyboard_keys_down: map_t<string, bool> = new map_t();
-let keyboard_keys_started: map_t<string, bool> = new map_t();
-let keyboard_keys_released: map_t<string, bool> = new map_t();
+let keyboard_keys_down: map_t<string, bool> = map_create();
+let keyboard_keys_started: map_t<string, bool> = map_create();
+let keyboard_keys_released: map_t<string, bool> = map_create();
 let keyboard_keys_frame: string[] = [];
 let keyboard_repeat_key: bool = false;
 let keyboard_repeat_time: f32 = 0.0;
@@ -352,10 +352,10 @@ function keyboard_end_frame() {
 	if (keyboard_keys_frame.length > 0) {
 		for (let i: i32 = 0; i < keyboard_keys_frame.length; ++i) {
 			let s = keyboard_keys_frame[i];
-			keyboard_keys_started.set(s, false);
-			keyboard_keys_released.set(s, false);
+			map_set(keyboard_keys_started, s, false);
+			map_set(keyboard_keys_released, s, false);
 		}
-		keyboard_keys_frame.splice(0, keyboard_keys_frame.length);
+		array_splice(keyboard_keys_frame, 0, keyboard_keys_frame.length);
 	}
 
 	if (time_time() - keyboard_repeat_time > 0.05) {
@@ -371,19 +371,19 @@ function keyboard_reset() {
 	// Use map_t for now..
 	for (let i: i32 = 0; i < keyboard_keys.length; ++i) {
 		let s = keyboard_keys[i];
-		keyboard_keys_down.set(s, false);
-		keyboard_keys_started.set(s, false);
-		keyboard_keys_released.set(s, false);
+		map_set(keyboard_keys_down, s, false);
+		map_set(keyboard_keys_started, s, false);
+		map_set(keyboard_keys_released, s, false);
 	}
 	keyboard_end_frame();
 }
 
 function keyboard_down(key: string): bool {
-	return keyboard_keys_down.get(key);
+	return map_get(keyboard_keys_down, key);
 }
 
 function keyboard_started(key: string): bool {
-	return keyboard_keys_started.get(key);
+	return map_get(keyboard_keys_started, key);
 }
 
 function keyboard_started_any(): bool {
@@ -391,11 +391,11 @@ function keyboard_started_any(): bool {
 }
 
 function keyboard_released(key: string): bool {
-	return keyboard_keys_released.get(key);
+	return map_get(keyboard_keys_released, key);
 }
 
 function keyboard_repeat(key: string): bool {
-	return keyboard_keys_started.get(key) || (keyboard_repeat_key && keyboard_keys_down.get(key));
+	return map_get(keyboard_keys_started, key) || (keyboard_repeat_key && map_get(keyboard_keys_down, key));
 }
 
 function keyboard_key_code(key: key_code_t): string {
@@ -657,9 +657,9 @@ function keyboard_key_code(key: key_code_t): string {
 
 function keyboard_down_listener(code: key_code_t) {
 	let s: string = keyboard_key_code(code);
-	keyboard_keys_frame.push(s);
-	keyboard_keys_started.set(s, true);
-	keyboard_keys_down.set(s, true);
+	array_push(keyboard_keys_frame, s);
+	map_set(keyboard_keys_started, s, true);
+	map_set(keyboard_keys_down, s, true);
 	keyboard_repeat_time = time_time() + 0.4;
 
 	///if krom_android_rmb // Detect right mouse button on Android..
@@ -673,9 +673,9 @@ function keyboard_down_listener(code: key_code_t) {
 
 function keyboard_up_listener(code: key_code_t) {
 	let s: string = keyboard_key_code(code);
-	keyboard_keys_frame.push(s);
-	keyboard_keys_released.set(s, true);
-	keyboard_keys_down.set(s, false);
+	array_push(keyboard_keys_frame, s);
+	map_set(keyboard_keys_released, s, true);
+	map_set(keyboard_keys_down, s, false);
 
 	///if krom_android_rmb
 	if (code == key_code_t.BACK) {
@@ -700,7 +700,7 @@ function gamepad_end_frame() {
 				g.buttons_started[b] = false;
 				g.buttons_released[b] = false;
 			}
-			g.buttons_frame.splice(0, g.buttons_frame.length);
+			array_splice(g.buttons_frame, 0, g.buttons_frame.length);
 		}
 		g.left_stick.moved = false;
 		g.left_stick.movement_x = 0;
@@ -738,11 +738,11 @@ function gamepad_reset() {
 	gamepad_raws = [];
 	for (let i: i32 = 0; i < 4; ++i) {
 		let g = gamepad_create();
-		gamepad_raws.push(g);
+		array_push(gamepad_raws, g);
 		for (let i: i32 = 0; i < gamepad_buttons.length; ++i) {
-			g.buttons_down.push(0.0);
-			g.buttons_started.push(false);
-			g.buttons_released.push(false);
+			array_push(g.buttons_down, 0.0);
+			array_push(g.buttons_started, false);
+			array_push(g.buttons_released, false);
 		}
 	}
 
@@ -791,7 +791,7 @@ function gamepad_axis_listener(i: i32, axis: i32, value: f32) {
 }
 
 function gamepad_button_listener(i: i32, button: i32, value: f32) {
-	gamepad_raws[i].buttons_frame.push(button);
+	array_push(gamepad_raws[i].buttons_frame, button);
 
 	gamepad_raws[i].buttons_down[button] = value;
 	if (value > 0) {

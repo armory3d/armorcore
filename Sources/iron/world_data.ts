@@ -17,7 +17,7 @@ function world_data_parse(name: string, id: string): world_data_t {
 		let rad: image_t = data_get_image(raw.radiance);
 		raw._radiance = rad;
 		while (raw._radiance_mipmaps.length < raw.radiance_mipmaps) {
-			raw._radiance_mipmaps.push(null);
+			array_push(raw._radiance_mipmaps, null);
 		}
 		let dot: i32 = string_last_index_of(raw.radiance, ".");
 		let ext: string = substring(raw.radiance, dot, raw.radiance.length);
@@ -47,7 +47,7 @@ function world_data_get_raw_by_name(datas: world_data_t[], name: string): world_
 
 function world_data_get_empty_irradiance(): f32_array_t {
 	if (_world_data_empty_irr == null) {
-		_world_data_empty_irr = new f32_array_t(28);
+		_world_data_empty_irr = f32_array_create(28);
 		for (let i: i32 = 0; i < _world_data_empty_irr.length; ++i) {
 			_world_data_empty_irr[i] = 0.0;
 		}
@@ -62,7 +62,7 @@ function world_data_set_irradiance(raw: world_data_t): f32_array_t {
 	else {
 		let b: buffer_t = data_get_blob(raw.irradiance + ".arm");
 		let irradiance_parsed: irradiance_t = armpack_decode(b);
-		let irr = new f32_array_t(28); // Align to mult of 4 - 27->28
+		let irr = f32_array_create(28); // Align to mult of 4 - 27->28
 		for (let i: i32 = 0; i < 27; ++i) {
 			irr[i] = irradiance_parsed.irradiance[i];
 		}

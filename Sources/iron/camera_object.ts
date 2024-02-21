@@ -31,11 +31,11 @@ function camera_object_create(data: camera_data_t): camera_object_t {
 	if (data.frustum_culling) {
 		raw.frustum_planes = [];
 		for (let i: i32 = 0; i < 6; ++i) {
-			raw.frustum_planes.push(frustum_plane_create());
+			array_push(raw.frustum_planes, frustum_plane_create());
 		}
 	}
 
-	scene_cameras.push(raw);
+	array_push(scene_cameras, raw);
 	return raw;
 }
 

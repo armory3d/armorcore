@@ -17,7 +17,7 @@ type armature_action_t = {
 let _armature_traverse_bones_data: any;
 
 function armature_traverse_bones_done(object: obj_t) {
-	_armature_traverse_bones_data.push(object);
+	array_push(_armature_traverse_bones_data, object);
 }
 
 function armature_create(uid: i32, name: string, actions: scene_t[]): armature_t {
@@ -36,7 +36,7 @@ function armature_create(uid: i32, name: string, actions: scene_t[]): armature_t
 		let bones: obj_t[] = [];
 		_armature_traverse_bones_data = bones;
 		armature_traverse_bones(a.objects, armature_traverse_bones_done);
-		raw.actions.push({ name: a.name, bones: bones, mats: null });
+		array_push(raw.actions, { name: a.name, bones: bones, mats: null });
 	}
 	return raw;
 }
@@ -55,7 +55,7 @@ function armature_init_mats(raw: armature_t) {
 		a.mats = [];
 		for (let i: i32 = 0; i < a.bones.length; ++i) {
 			let b: obj_t = a.bones[i];
-			a.mats.push(mat4_from_f32_array(b.transform.values));
+			array_push(a.mats, mat4_from_f32_array(b.transform.values));
 		}
 	}
 }

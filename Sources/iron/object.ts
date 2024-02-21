@@ -17,7 +17,7 @@ type object_t = {
 
 let _object_uid_counter: i32 = 0;
 
-function object_create(is_empty = true): object_t {
+function object_create(is_empty: bool = true): object_t {
 	let raw: object_t = {};
 	raw.name = "";
 	raw.children = [];
@@ -27,7 +27,7 @@ function object_create(is_empty = true): object_t {
 	raw.transform = transform_create(raw);
 	raw.is_empty = is_empty;
 	if (raw.is_empty && _scene_ready) {
-		scene_empties.push(raw);
+		array_push(scene_empties, raw);
 	}
 	return raw;
 }
@@ -50,7 +50,7 @@ function object_set_parent(raw: object_t, parent_object: object_t, parent_inv: b
 		parent_object = _scene_scene_parent;
 	}
 	raw.parent = parent_object;
-	raw.parent.children.push(raw);
+	array_push(raw.parent.children, raw);
 	if (parent_inv) {
 		transform_apply_parent_inv(raw.transform);
 	}

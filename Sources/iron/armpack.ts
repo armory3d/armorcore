@@ -3,7 +3,7 @@ let _armpack_pos: i32 = 0;
 
 function armpack_decode(b: buffer_t): any {
 	_armpack_pos = 0;
-	return armpack_read(new buffer_view_t(b));
+	return armpack_read(buffer_view_create(b));
 }
 
 function armpack_read_u8(v: buffer_view_t): i32 {
@@ -142,28 +142,28 @@ function armpack_read_array(v: buffer_view_t, length: i32): any {
 	let b: i32 = armpack_read_u8(v);
 
 	if (b == 0xca) { // Typed float32
-		let a: f32_array_t = new f32_array_t(length);
+		let a: f32_array_t = f32_array_create(length);
 		for (let x: i32 = 0; x < length; ++x) {
 			a[x] = armpack_read_f32(v);
 		}
 		return a;
 	}
 	else if (b == 0xd2) { // Typed int32
-		let a: u32_array_t = new u32_array_t(length);
+		let a: u32_array_t = u32_array_create(length);
 		for (let x: i32 = 0; x < length; ++x) {
 			a[x] = armpack_read_i32(v);
 		}
 		return a;
 	}
 	else if (b == 0xd1) { // Typed int16
-		let a: i16_array_t = new i16_array_t(length);
+		let a: i16_array_t = i16_array_create(length);
 		for (let x: i32 = 0; x < length; ++x) {
 			a[x] = armpack_read_i16(v);
 		}
 		return a;
 	}
 	else if (b == 0xc4) { // Typed uint8
-		let a: u8_array_t = new u8_array_t(length);
+		let a: u8_array_t = u8_array_create(length);
 		for (let x: i32 = 0; x < length; ++x) {
 			a[x] = armpack_read_u8(v);
 		}
@@ -173,7 +173,7 @@ function armpack_read_array(v: buffer_view_t, length: i32): any {
 		_armpack_pos--;
 		let a: any[] = [];
 		for (let x: i32 = 0; x < length; ++x) {
-			a.push(armpack_read(v));
+			array_push(a, armpack_read(v));
 		}
 		return a;
 	}
@@ -192,8 +192,8 @@ function armpack_read_map(v: buffer_view_t, length: i32): any {
 function armpack_encode(d: any): buffer_t {
 	_armpack_pos = 0;
 	armpack_write_dummy(d);
-	let b: buffer_t = new buffer_t(_armpack_pos);
-	let v: buffer_view_t = new buffer_view_t(b);
+	let b: buffer_t = buffer_create(_armpack_pos);
+	let v: buffer_view_t = buffer_view_create(b);
 	_armpack_pos = 0;
 	armpack_write(v, d);
 	return b;
@@ -226,7 +226,7 @@ function armpack_write_string(v: buffer_view_t, str: string) {
 }
 
 function armpack_write_buffer(v: buffer_view_t, b: buffer_t) {
-	let u8: u8_array_t = new u8_array_t(b);
+	let u8: u8_array_t = u8_array_create_from_buffer(b);
 	for (let i: i32 = 0; i < buffer_size(b); ++i) {
 		armpack_write_u8(v, u8[i]);
 	}

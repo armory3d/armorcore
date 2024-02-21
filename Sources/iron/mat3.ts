@@ -17,7 +17,7 @@ function mat3_create(_00: f32, _10: f32, _20: f32,
 					 _01: f32, _11: f32, _21: f32,
 					 _02: f32, _12: f32, _22: f32): mat3_t {
 	let self: mat3_t = {};
-	self.m = new f32_array_t(9);
+	self.m = f32_array_create(9);
 	self.m[0] = _00;
 	self.m[3] = _10;
 	self.m[6] = _20;

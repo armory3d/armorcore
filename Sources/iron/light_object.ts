@@ -30,7 +30,7 @@ function light_object_create(data: light_data_t): light_object_t {
 		raw.p = mat4_persp(fov, 1, data.near_plane, data.far_plane);
 	}
 
-	scene_lights.push(raw);
+	array_push(scene_lights, raw);
 	return raw;
 }
 
@@ -69,7 +69,7 @@ function light_object_update_view_frustum(raw: light_object_t, camera: camera_ob
 		if (raw.frustum_planes == null) {
 			raw.frustum_planes = [];
 			for (let i: i32 = 0; i < 6; ++i) {
-				raw.frustum_planes.push(frustum_plane_create());
+				array_push(raw.frustum_planes, frustum_plane_create());
 			}
 		}
 		camera_object_build_view_frustum(raw.vp, raw.frustum_planes);

@@ -38,22 +38,22 @@ function g4_pipeline_create(): pipeline_t {
 	raw.color_write_masks_blue = [];
 	raw.color_write_masks_alpha = [];
 	for (let i: i32 = 0; i < 8; ++i) {
-		raw.color_write_masks_red.push(true);
+		array_push(raw.color_write_masks_red, true);
 	}
 	for (let i: i32 = 0; i < 8; ++i) {
-		raw.color_write_masks_green.push(true);
+		array_push(raw.color_write_masks_green, true);
 	}
 	for (let i: i32 = 0; i < 8; ++i) {
-		raw.color_write_masks_blue.push(true);
+		array_push(raw.color_write_masks_blue, true);
 	}
 	for (let i: i32 = 0; i < 8; ++i) {
-		raw.color_write_masks_alpha.push(true);
+		array_push(raw.color_write_masks_alpha, true);
 	}
 
 	raw.color_attachment_count = 1;
 	raw.color_attachments = [];
 	for (let i: i32 = 0; i < 8; ++i) {
-		raw.color_attachments.push(tex_format_t.RGBA32);
+		array_push(raw.color_attachments, tex_format_t.RGBA32);
 	}
 	raw.depth_attachment = depth_format_t.NO_DEPTH;
 
@@ -86,7 +86,7 @@ function g4_pipeline_compile(raw: pipeline_t) {
 	let gs: any = raw.geometry_shader != null ? raw.geometry_shader.shader_ : null;
 	let color_attachments: i32[] = [];
 	for (let i = 0; i < 8; ++i) {
-		color_attachments.push(raw.color_attachments[i]);
+		array_push(color_attachments, raw.color_attachments[i]);
 	}
 	krom_g4_compile_pipeline(raw.pipeline_, structure0, structure1, structure2, structure3, raw.input_layout.length, raw.vertex_shader.shader_, raw.fragment_shader.shader_, gs, {
 		cull_mode: raw.cull_mode,
@@ -130,7 +130,7 @@ function g4_vertex_buffer_delete(raw: vertex_buffer_t) {
 }
 
 function g4_vertex_buffer_lock(raw: vertex_buffer_t): buffer_view_t {
-	return new buffer_view_t(krom_g4_lock_vertex_buffer(raw.buffer_));
+	return buffer_view_create(krom_g4_lock_vertex_buffer(raw.buffer_));
 }
 
 function g4_vertex_buffer_unlock(raw: vertex_buffer_t) {
@@ -149,7 +149,7 @@ function g4_vertex_struct_create(): vertex_struct_t {
 }
 
 function g4_vertex_struct_add(raw: vertex_struct_t, name: string, data: vertex_data_t) {
-	raw.elements.push({ name: name, data: data });
+	array_push(raw.elements, { name: name, data: data });
 }
 
 function g4_vertex_struct_byte_size(raw: vertex_struct_t): i32 {
@@ -502,7 +502,7 @@ function image_get_pixels(raw: image_t): buffer_t {
 		let pixels_w: i32 = raw.width < 32 ? 32 : raw.width;
 		let pixels_h: i32 = raw.height < 32 ? 32 : raw.height;
 		if (raw.pixels == null) {
-			raw.pixels = new buffer_t(image_format_byte_size(raw.format) * pixels_w * pixels_h);
+			raw.pixels = buffer_create(image_format_byte_size(raw.format) * pixels_w * pixels_h);
 		}
 		krom_g4_get_render_target_pixels(raw.render_target_, raw.pixels);
 		return raw.pixels;

@@ -88,7 +88,7 @@ function app_update() {
 					break;
 				}
 			}
-			app_on_inits.splice(0, app_on_inits.length);
+			array_splice(app_on_inits, 0, app_on_inits.length);
 		}
 
 		let cb: callback_t = app_on_updates[i];
@@ -141,7 +141,7 @@ function app_render() {
 				break;
 			}
 		}
-		app_on_inits.splice(0, app_on_inits.length);
+		array_splice(app_on_inits, 0, app_on_inits.length);
 	}
 
 	scene_render_frame();
@@ -177,33 +177,33 @@ function app_render_2d() {
 
 // Hooks
 function app_notify_on_init(f: callback_function_t, data: any = null) {
-	app_on_inits.push({ f: f, data: data });
+	array_push(app_on_inits, { f: f, data: data });
 }
 
 function app_notify_on_update(f: callback_function_t, data: any = null) {
-	app_on_updates.push({ f: f, data: data });
+	array_push(app_on_updates, { f: f, data: data });
 }
 
 function app_notify_on_render(f: callback_function_t, data: any = null) {
-	app_on_renders.push({ f: f, data: data });
+	array_push(app_on_renders, { f: f, data: data });
 }
 
 function app_notify_on_render_2d(f: callback_function_t, data: any = null) {
-	app_on_renders_2d.push({ f: f, data: data });
+	array_push(app_on_renders_2d, { f: f, data: data });
 }
 
 function app_notify_on_reset(f: callback_function_t, data: any = null) {
-	app_on_resets.push({ f: f, data: data });
+	array_push(app_on_resets, { f: f, data: data });
 }
 
 function app_notify_on_end_frame(f: callback_function_t, data: any = null) {
-	app_on_end_frames.push({ f: f, data: data });
+	array_push(app_on_end_frames, { f: f, data: data });
 }
 
 function _app_remove_callback(ar: callback_t[], f: callback_function_t) {
 	for (let i: i32 = 0; i < ar.length; ++i) {
 		if (ar[i].f == f) {
-			ar.splice(i, 1);
+			array_splice(ar, i, 1);
 			break;
 		}
 	}
