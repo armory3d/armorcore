@@ -438,7 +438,7 @@ function render_path_create_image(t: render_target_t, depth_format: depth_format
 	if (t.depth > 1) { // 3D texture
 		// Image only
 		let img: image_t = image_create_3d(width, height, depth,
-			t.format != null ?render_path_get_tex_format(t.format) : tex_format_t.RGBA32);
+			t.format != null ? render_path_get_tex_format(t.format) : tex_format_t.RGBA32);
 		if (t.mipmaps) {
 			image_gen_mipmaps(img, 1000); // Allocate mipmaps
 		}
@@ -447,11 +447,11 @@ function render_path_create_image(t: render_target_t, depth_format: depth_format
 	else { // 2D texture
 		if (t.is_image) { // Image
 			return image_create(width, height,
-				t.format != null ?render_path_get_tex_format(t.format) : tex_format_t.RGBA32);
+				t.format != null ? render_path_get_tex_format(t.format) : tex_format_t.RGBA32);
 		}
 		else { // Render target
 			return image_create_render_target(width, height,
-				t.format != null ?render_path_get_tex_format(t.format) : tex_format_t.RGBA32,
+				t.format != null ? render_path_get_tex_format(t.format) : tex_format_t.RGBA32,
 				depth_format);
 		}
 	}
