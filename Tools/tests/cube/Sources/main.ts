@@ -2,7 +2,7 @@
 
 let raw: scene_t;
 
-function main() {
+function start() {
 	sys_start({
 		title: "Empty",
 		width: 1280,
@@ -133,5 +133,3 @@ function spin_cube() {
 	let cube: object_t = scene_get_child("Cube");
 	transform_rotate(cube.transform, vec4_create(0, 0, 1), 0.01);
 }
-
-main();

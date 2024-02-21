@@ -910,6 +910,9 @@ function writeTSProject(projectdir, projectFiles, options) {
 			if (file_path.endsWith('d.ts')) {
 				continue;
 			}
+			if (file_path.endsWith('/krom.ts')) {
+				continue;
+			}
 			file = fs.readFileSync(file_path) + '';
 			file = ts_preprocessor(file);
 			stream.write(file);

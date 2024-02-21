@@ -12,7 +12,7 @@ function get_five(): i32 {
 	return 5;
 }
 
-function kickstart(argc: i32, argv: ARGV): i32 {
+function start() {
 	let p: point_t = {};
 	p.x = 1.5;
 	p.y = 3.0;
@@ -38,8 +38,5 @@ function kickstart(argc: i32, argv: ARGV): i32 {
 	}
 
 	// Print out result: 13.5
-	// let result: string = "Result: " + ar.data[0];
 	krom_log(ar.data[0]);
-
-	return 0;
 }

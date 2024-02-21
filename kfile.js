@@ -81,8 +81,15 @@ if (flags.with_minits) {
 	c_project.addDefine('CONFIG_VERSION=\"2024-01-13\"');
 	c_project.addIncludeDir('Tools/quickjs');
 	c_project.addFile('Tools/quickjs/*.c');
-	c_project.addFile('Sources/main.c');
-	c_project.addFile(__dirname + '/build/krom.c');
+	c_project.addIncludeDir('Sources');
+	c_project.addFile(process.cwd() + '/build/krom.c');
+
+	////
+	flags.with_iron = false;
+	c_project.addFile('Sources/iron/iron_map.c');
+	c_project.addFile('Sources/iron/iron_array.c');
+	c_project.addFile('Sources/iron/iron_string.c');
+	////
 }
 else if (platform === Platform.Wasm) {
 	c_project.addFile('Sources/main_wasm.c');
