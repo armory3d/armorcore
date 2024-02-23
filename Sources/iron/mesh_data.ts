@@ -156,7 +156,7 @@ function mesh_data_get_vertex_size(vertex_data: string, padding: i32 = 0): i32 {
 }
 
 function mesh_data_get_vertex_array(raw: mesh_data_t, name: string): vertex_array_t {
-	for (let i = 0; i < raw.vertex_arrays.length; ++i) {
+	for (let i: i32 = 0; i < raw.vertex_arrays.length; ++i) {
 		if (raw.vertex_arrays[i].attrib == name) {
 			return raw.vertex_arrays[i];
 		}
@@ -363,7 +363,7 @@ function mesh_data_calculate_aabb(raw: mesh_data_t): vec4_t {
 function mesh_data_delete(raw: mesh_data_t) {
 	let buffer_map: vertex_buffer_t[] = map_to_array(raw._vertex_buffer_map);
 	for (let i: i32 = 0; i < buffer_map.length; ++i) {
-		let buf = buffer_map[i];
+		let buf: vertex_buffer_t = buffer_map[i];
 		if (buf != null) {
 			g4_vertex_buffer_delete(buf);
 		}

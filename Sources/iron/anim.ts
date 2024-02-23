@@ -185,7 +185,7 @@ function anim_update_track(raw: anim_raw_t, anim: anim_t) {
 			if (raw.frame_index == anim.marker_frames[i]) {
 				let ar: (()=>void)[] = map_get(raw.marker_events, anim.marker_names[i]);
 				if (ar != null) {
-					for (let i: i32; i < ar.length; ++i) {
+					for (let i: i32 = 0; i < ar.length; ++i) {
 						ar[i]();
 					}
 				}
@@ -217,7 +217,7 @@ function anim_update_anim_sampled(raw: anim_raw_t, anim: anim_t, m: mat4_t) {
 	let sign: i32 = raw.speed > 0 ? 1 : -1;
 
 	let t: i32 = raw.time;
-	let ti: f32 = raw.frame_index;
+	let ti: i32 = raw.frame_index;
 	let t1: f32 = track.frames[ti] * raw.frame_time;
 	let t2: f32 = track.frames[ti + sign] * raw.frame_time;
 	let s: f32 = (t - t1) / (t2 - t1); // Linear

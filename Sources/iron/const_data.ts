@@ -28,8 +28,8 @@ function const_data_create_screen_aligned_data() {
 }
 
 function const_data_create_skydome_data() {
-	let pos = _const_data_skydome_pos;
-	let nor = _const_data_skydome_nor;
+	let pos: f32[] = _const_data_skydome_pos;
+	let nor: f32[] = _const_data_skydome_nor;
 
 	let structure: vertex_struct_t = g4_vertex_struct_create();
 	g4_vertex_struct_add(structure, "pos", vertex_data_t.F32_3X);

@@ -1,9 +1,7 @@
 
-type callback_function_t = (data?: any)=>void;
-
 type callback_t = {
-	f: callback_function_t;
-	data: any;
+	f?: (data?: any)=>void;
+	data?: any;
 };
 
 let app_on_resets: callback_t[] = [];
@@ -175,32 +173,39 @@ function app_render_2d() {
 	}
 }
 
+function _callback_create(f: (data?: any)=>void, data: any): callback_t {
+	let cb: callback_t = {};
+	cb.f = f;
+	cb.data = data;
+	return cb;
+}
+
 // Hooks
-function app_notify_on_init(f: callback_function_t, data: any = null) {
-	array_push(app_on_inits, { f: f, data: data });
+function app_notify_on_init(f: (data?: any)=>void, data: any = null) {
+	array_push(app_on_inits, _callback_create(f, data));
 }
 
-function app_notify_on_update(f: callback_function_t, data: any = null) {
-	array_push(app_on_updates, { f: f, data: data });
+function app_notify_on_update(f: (data?: any)=>void, data: any = null) {
+	array_push(app_on_updates, _callback_create(f, data));
 }
 
-function app_notify_on_render(f: callback_function_t, data: any = null) {
-	array_push(app_on_renders, { f: f, data: data });
+function app_notify_on_render(f: (data?: any)=>void, data: any = null) {
+	array_push(app_on_renders, _callback_create(f, data));
 }
 
-function app_notify_on_render_2d(f: callback_function_t, data: any = null) {
-	array_push(app_on_renders_2d, { f: f, data: data });
+function app_notify_on_render_2d(f: (data?: any)=>void, data: any = null) {
+	array_push(app_on_renders_2d, _callback_create(f, data));
 }
 
-function app_notify_on_reset(f: callback_function_t, data: any = null) {
-	array_push(app_on_resets, { f: f, data: data });
+function app_notify_on_reset(f: (data?: any)=>void, data: any = null) {
+	array_push(app_on_resets, _callback_create(f, data));
 }
 
-function app_notify_on_end_frame(f: callback_function_t, data: any = null) {
-	array_push(app_on_end_frames, { f: f, data: data });
+function app_notify_on_end_frame(f: (data?: any)=>void, data: any = null) {
+	array_push(app_on_end_frames, _callback_create(f, data));
 }
 
-function _app_remove_callback(ar: callback_t[], f: callback_function_t) {
+function _app_remove_callback(ar: callback_t[], f: (data?: any)=>void) {
 	for (let i: i32 = 0; i < ar.length; ++i) {
 		if (ar[i].f == f) {
 			array_splice(ar, i, 1);
@@ -209,26 +214,26 @@ function _app_remove_callback(ar: callback_t[], f: callback_function_t) {
 	}
 }
 
-function app_remove_init(f: callback_function_t) {
+function app_remove_init(f: (data?: any)=>void) {
 	_app_remove_callback(app_on_inits, f);
 }
 
-function app_remove_update(f: callback_function_t) {
+function app_remove_update(f: (data?: any)=>void) {
 	_app_remove_callback(app_on_updates, f);
 }
 
-function app_remove_render(f: callback_function_t) {
+function app_remove_render(f: (data?: any)=>void) {
 	_app_remove_callback(app_on_renders, f);
 }
 
-function app_remove_render_2d(f: callback_function_t) {
+function app_remove_render_2d(f: (data?: any)=>void) {
 	_app_remove_callback(app_on_renders_2d, f);
 }
 
-function app_remove_reset(f: callback_function_t) {
+function app_remove_reset(f: (data?: any)=>void) {
 	_app_remove_callback(app_on_resets, f);
 }
 
-function app_remove_end_frame(f: callback_function_t) {
+function app_remove_end_frame(f: (data?: any)=>void) {
 	_app_remove_callback(app_on_end_frames, f);
 }

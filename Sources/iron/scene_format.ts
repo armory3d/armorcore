@@ -1,5 +1,6 @@
 
 type scene_t = {
+	// Opt
 	name?: string;
 	mesh_datas?: mesh_data_t[];
 	light_datas?: light_data_t[];
@@ -16,9 +17,11 @@ type scene_t = {
 };
 
 type mesh_data_t = {
-	name: string;
-	vertex_arrays: vertex_array_t[];
-	index_arrays: index_array_t[];
+	// Base
+	name?: string;
+	vertex_arrays?: vertex_array_t[];
+	index_arrays?: index_array_t[];
+	// Opt
 	skin?: skin_t;
 	instanced_data?: f32_array_t;
 	instanced_type?: i32; // off, loc, loc+rot, loc+scale, loc+rot+scale
@@ -46,34 +49,40 @@ type mesh_data_t = {
 };
 
 type skin_t = {
-	transform: transform_values_t;
-	bone_ref_array: string[];
-	bone_len_array: f32_array_t;
-	transforms_inv: f32_array_t[]; // per-bone, size = 16, with skin.transform, pre-inverted
-	bone_count_array: i16_array_t;
-	bone_index_array: i16_array_t;
-	bone_weight_array: i16_array_t;
+	// Base
+	transform?: transform_values_t;
+	bone_ref_array?: string[];
+	bone_len_array?: f32_array_t;
+	transforms_inv?: f32_array_t[]; // per-bone, size = 16, with skin.transform, pre-inverted
+	bone_count_array?: i16_array_t;
+	bone_index_array?: i16_array_t;
+	bone_weight_array?: i16_array_t;
 };
 
 type vertex_array_t = {
-	attrib: string;
-	values: i16_array_t;
-	data: string; // short4norm, short2norm
+	// Base
+	attrib?: string;
+	values?: i16_array_t;
+	data?: string; // short4norm, short2norm
+	// Opt
 	padding?: i32;
 	// Runtime:
 	_size?: i32;
 };
 
 type index_array_t = {
-	values: u32_array_t; // size = 3
-	material: i32;
+	// Base
+	values?: u32_array_t; // size = 3
+	material?: i32;
 };
 
 type light_data_t = {
-	name: string;
-	type: string; // sun, point, spot
-	color: f32_array_t;
-	strength: f32;
+	// Base
+	name?: string;
+	type?: string; // sun, point, spot
+	color?: f32_array_t;
+	strength?: f32;
+	// Opt
 	near_plane?: f32;
 	far_plane?: f32;
 	fov?: f32;
@@ -82,10 +91,12 @@ type light_data_t = {
 };
 
 type camera_data_t = {
-	name: string;
-	near_plane: f32;
-	far_plane: f32;
-	fov: f32;
+	// Base
+	name?: string;
+	near_plane?: f32;
+	far_plane?: f32;
+	fov?: f32;
+	// Opt
 	clear_color?: f32_array_t;
 	aspect?: f32;
 	frustum_culling?: bool;
@@ -93,9 +104,11 @@ type camera_data_t = {
 };
 
 type material_data_t = {
-	name: string;
-	shader: string;
-	contexts: material_context_t[];
+	// Base
+	name?: string;
+	shader?: string;
+	contexts?: material_context_t[];
+	// Opt
 	skip_context?: string;
 	override_context?: shader_override_t;
 	// Runtime:
@@ -105,6 +118,7 @@ type material_data_t = {
 };
 
 type shader_override_t = {
+	// Opt
 	cull_mode?: string;
 	addressing?: string;
 	filter?: string;
@@ -112,7 +126,9 @@ type shader_override_t = {
 };
 
 type material_context_t = {
-	name: string;
+	// Base
+	name?: string;
+	// Opt
 	bind_constants?: bind_const_t[];
 	bind_textures?: bind_tex_t[];
 	// Runtime:
@@ -120,7 +136,9 @@ type material_context_t = {
 };
 
 type bind_const_t = {
-	name: string;
+	// Base
+	name?: string;
+	// Opt
 	vec4?: f32_array_t;
 	vec3?: f32_array_t;
 	vec2?: f32_array_t;
@@ -128,8 +146,10 @@ type bind_const_t = {
 };
 
 type bind_tex_t = {
-	name: string;
-	file: string;
+	// Base
+	name?: string;
+	file?: string;
+	// Opt
 	format?: string; // RGBA32, RGBA64, R8
 	generate_mipmaps?: bool;
 	mipmaps?: string[]; // Reference image names
@@ -142,20 +162,23 @@ type bind_tex_t = {
 };
 
 type shader_data_t = {
-	name: string;
-	contexts: shader_context_t[];
+	// Base
+	name?: string;
+	contexts?: shader_context_t[];
 	// Runtime:
 	_contexts?: shader_context_t[];
 };
 
 type shader_context_t = {
-	name: string;
-	depth_write: bool;
-	compare_mode: string;
-	cull_mode: string;
-	vertex_elements: vertex_element_t[];
-	vertex_shader: string;
-	fragment_shader: string;
+	// Base
+	name?: string;
+	depth_write?: bool;
+	compare_mode?: string;
+	cull_mode?: string;
+	vertex_elements?: vertex_element_t[];
+	vertex_shader?: string;
+	fragment_shader?: string;
+	// Opt
 	geometry_shader?: string;
 	constants?: shader_const_t[];
 	texture_units?: tex_unit_t[];
@@ -182,13 +205,16 @@ type shader_context_t = {
 };
 
 type vertex_element_t = {
-	name: string;
-	data: string; // "short4norm", "short2norm"
+	// Base
+	name?: string;
+	data?: string; // "short4norm", "short2norm"
 };
 
 type shader_const_t = {
-	name: string;
-	type: string;
+	// Base
+	name?: string;
+	type?: string;
+	// Opt
 	link?: string;
 	vec4?: f32_array_t;
 	vec3?: f32_array_t;
@@ -197,7 +223,9 @@ type shader_const_t = {
 };
 
 type tex_unit_t = {
-	name: string;
+	// Base
+	name?: string;
+	// Opt
 	is_image?: bool; // image2D
 	link?: string;
 	addressing_u?: string;
@@ -208,20 +236,23 @@ type tex_unit_t = {
 };
 
 type speaker_data_t = {
-	name: string;
-	sound: string;
-	muted: bool;
-	loop: bool;
-	stream: bool;
-	volume: f32;
-	attenuation: f32;
-	play_on_start: bool;
+	// Base
+	name?: string;
+	sound?: string;
+	muted?: bool;
+	loop?: bool;
+	stream?: bool;
+	volume?: f32;
+	attenuation?: f32;
+	play_on_start?: bool;
 };
 
 type world_data_t = {
-	name: string;
-	background_color: i32;
-	strength: f32;
+	// Base
+	name?: string;
+	background_color?: i32;
+	strength?: f32;
+	// Opt
 	irradiance?: string; // Reference to irradiance_t blob
 	radiance?: string;
 	radiance_mipmaps?: i32;
@@ -234,40 +265,45 @@ type world_data_t = {
 };
 
 type irradiance_t = {
-	irradiance: f32_array_t; // Blob with spherical harmonics, bands 0,1,2
+	// Base
+	irradiance?: f32_array_t; // Blob with spherical harmonics, bands 0,1,2
 };
 
 type particle_data_t = {
-	name: string;
-	type: i32; // 0 - Emitter, Hair
-	loop: bool;
-	count: i32;
-	frame_start: f32;
-	frame_end: f32;
-	lifetime: f32;
-	lifetime_random: f32;
-	emit_from: i32; // 0 - Vert, 1 - Face, 2 - Volume
-	object_align_factor: f32_array_t;
-	factor_random: f32;
-	physics_type: i32; // 0 - No, 1 - Newton
-	particle_size: f32; // Object scale
-	size_random: f32; // Random scale
-	mass: f32;
-	instance_object: string; // Object reference
-	weight_gravity: f32;
+	// Base
+	name?: string;
+	type?: i32; // 0 - Emitter, Hair
+	loop?: bool;
+	count?: i32;
+	frame_start?: f32;
+	frame_end?: f32;
+	lifetime?: f32;
+	lifetime_random?: f32;
+	emit_from?: i32; // 0 - Vert, 1 - Face, 2 - Volume
+	object_align_factor?: f32_array_t;
+	factor_random?: f32;
+	physics_type?: i32; // 0 - No, 1 - Newton
+	particle_size?: f32; // Object scale
+	size_random?: f32; // Random scale
+	mass?: f32;
+	instance_object?: string; // Object reference
+	weight_gravity?: f32;
 };
 
 type particle_ref_t = {
-	name: string;
-	particle: string;
-	seed: i32;
+	// Base
+	name?: string;
+	particle?: string;
+	seed?: i32;
 };
 
 type obj_t = {
-	type: string; // object, mesh_object, light_object, camera_object, speaker_object, decal_object
-	name: string;
-	data_ref: string;
-	transform: transform_values_t;
+	// Base
+	type?: string; // object, mesh_object, light_object, camera_object, speaker_object, decal_object
+	name?: string;
+	data_ref?: string;
+	transform?: transform_values_t;
+	// Opt
 	material_refs?: string[];
 	particle_refs?: particle_ref_t[];
 	render_emitter?: bool;
@@ -290,12 +326,16 @@ type obj_t = {
 };
 
 type transform_values_t = {
+	// Base
+	values?: f32_array_t;
+	// Opt
 	target?: string;
-	values: f32_array_t;
 };
 
 type anim_t = {
-	tracks: track_t[];
+	// Base
+	tracks?: track_t[];
+	// Opt
 	begin?: i32; // Frames, for non-sampled
 	end?: i32;
 	has_delta?: bool; // Delta transform
@@ -304,7 +344,8 @@ type anim_t = {
 };
 
 type track_t = {
-	target: string;
-	frames: u32_array_t;
-	values: f32_array_t; // sampled - full matrix transforms, non-sampled - values
+	// Base
+	target?: string;
+	frames?: u32_array_t;
+	values?: f32_array_t; // sampled - full matrix transforms, non-sampled - values
 };

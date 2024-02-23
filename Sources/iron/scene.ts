@@ -286,7 +286,7 @@ function scene_traverse_objs(children: obj_t[], name: string): obj_t {
 			return o;
 		}
 		if (o.children != null) {
-			let res = scene_traverse_objs(o.children, name);
+			let res: obj_t = scene_traverse_objs(o.children, name);
 			if (res != null) {
 				return res;
 			}
@@ -315,7 +315,7 @@ function scene_create_object(o: obj_t, format: scene_t, parent: object_t, parent
 		else {
 			// Materials
 			let materials: material_data_t[] = [];
-			for (let i = 0; i < o.material_refs.length; ++i) {
+			for (let i: i32 = 0; i < o.material_refs.length; ++i) {
 				let ref: string = o.material_refs[i];
 				let mat: material_data_t = data_get_material(scene_name, ref);
 				materials[i] = mat;

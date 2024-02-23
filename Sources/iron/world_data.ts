@@ -62,7 +62,7 @@ function world_data_set_irradiance(raw: world_data_t): f32_array_t {
 	else {
 		let b: buffer_t = data_get_blob(raw.irradiance + ".arm");
 		let irradiance_parsed: irradiance_t = armpack_decode(b);
-		let irr = f32_array_create(28); // Align to mult of 4 - 27->28
+		let irr: f32_array_t = f32_array_create(28); // Align to mult of 4 - 27->28
 		for (let i: i32 = 0; i < 27; ++i) {
 			irr[i] = irradiance_parsed.irradiance[i];
 		}

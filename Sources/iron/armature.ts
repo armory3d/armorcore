@@ -9,9 +9,9 @@ type armature_t = {
 };
 
 type armature_action_t = {
-	name: string;
-	bones: obj_t[];
-	mats: mat4_t[];
+	name?: string;
+	bones?: obj_t[];
+	mats?: mat4_t[];
 };
 
 let _armature_traverse_bones_data: any;

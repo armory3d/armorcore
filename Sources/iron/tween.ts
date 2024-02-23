@@ -114,7 +114,7 @@ function tween_update() {
 					let to_z: f32 = obj["z"];
 					let to_w: f32 = obj["w"];
 					if (a._normalize[i]) {
-						let qdot = (a._x[i] * to_x) + (a._y[i] * to_y) + (a._z[i] * to_z) + (a._w[i] * to_w);
+						let qdot: f32 = (a._x[i] * to_x) + (a._y[i] * to_y) + (a._z[i] * to_z) + (a._w[i] * to_w);
 						if (qdot < 0.0) {
 							to_x = -to_x; to_y = -to_y; to_z = -to_z; to_w = -to_w;
 						}
@@ -238,9 +238,11 @@ let _tween_eases: ((f: f32)=>f32)[] = [
 ];
 
 type tween_anim_t = {
-	target: any;
-	props: any;
-	duration: f32;
+	// Base
+	target?: any;
+	props?: any;
+	duration?: f32;
+	// Opt
 	is_playing?: bool;
 	done?: ()=>void;
 	tick?: ()=>void;

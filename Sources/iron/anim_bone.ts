@@ -151,8 +151,8 @@ function anim_bone_num_parents(b: obj_t): i32 {
 let _anim_bone_sort_data: any;
 
 function anim_bone_sort(a: i32, b: i32) {
-	let i = anim_bone_num_parents(_anim_bone_sort_data[a]);
-	let j = anim_bone_num_parents(_anim_bone_sort_data[b]);
+	let i: i32 = anim_bone_num_parents(_anim_bone_sort_data[a]);
+	let j: i32 = anim_bone_num_parents(_anim_bone_sort_data[b]);
 	return i < j ? -1 : i > j ? 1 : 0;
 }
 
@@ -372,7 +372,7 @@ function anim_bone_get_world_mat(raw: anim_bone_t, bone: obj_t): mat4_t {
 	}
 	if (raw.apply_parent == null) {
 		raw.apply_parent = [];
-		for (let i = 0; i < raw.skeleton_mats.length; ++i) {
+		for (let i: i32 = 0; i < raw.skeleton_mats.length; ++i) {
 			array_push(raw.apply_parent, true);
 		}
 	}
@@ -399,7 +399,7 @@ function anim_bone_get_bone_abs_len(raw: anim_bone_t, bone: obj_t): f32 {
 	let refs: string[] = raw.data.skin.bone_ref_array;
 	let lens: f32_array_t = raw.data.skin.bone_len_array;
 	let scale: f32 = mat4_get_scale(raw.object.base.parent.transform.world).z;
-	for (let i = 0; i < refs.length; ++i) {
+	for (let i: i32 = 0; i < refs.length; ++i) {
 		if (refs[i] == bone.name) {
 			return lens[i] * scale;
 		}
@@ -459,7 +459,7 @@ function anim_bone_solve_ik(raw: anim_bone_t, effector: obj_t, goal: vec4_t, pre
 
 	// Total bones length
 	let total_length: f32 = 0.0;
-	for (let i = 0; i < lengths.length; ++i) {
+	for (let i: i32 = 0; i < lengths.length; ++i) {
 		let l: f32 = lengths[i];
 		total_length += l;
 	}
@@ -494,7 +494,7 @@ function anim_bone_solve_ik(raw: anim_bone_t, effector: obj_t, goal: vec4_t, pre
 
 	// Array of bone locations in world space, root location at [0]
 	let bone_world_locs: vec4_t[] = [];
-	for (let i = 0; i < bone_world_mats.length; ++i) {
+	for (let i: i32 = 0; i < bone_world_mats.length; ++i) {
 		let b: mat4_t = bone_world_mats[i];
 		array_push(bone_world_locs, mat4_get_loc(b));
 	}
@@ -658,7 +658,7 @@ function anim_bone_update(raw: anim_bone_t, delta: f32) {
 	}
 
 	let last_bones: obj_t[] = raw.skeleton_bones;
-	for (let i = 0; i < raw.skeleton_bones.length; ++i) {
+	for (let i: i32 = 0; i < raw.skeleton_bones.length; ++i) {
 		let b: obj_t = raw.skeleton_bones[i];
 		if (b.anim != null) {
 			anim_update_track(raw.base, b.anim);
@@ -676,7 +676,7 @@ function anim_bone_update(raw: anim_bone_t, delta: f32) {
 		}
 	}
 	if (raw.base.blend_time > 0 && raw.skeleton_bones_blend != null) {
-		for (let i = 0; i < raw.skeleton_bones_blend.length; ++i) {
+		for (let i: i32 = 0; i < raw.skeleton_bones_blend.length; ++i) {
 			let b: obj_t = raw.skeleton_bones_blend[i];
 			if (b.anim != null) {
 				anim_update_track(raw.base, b.anim);

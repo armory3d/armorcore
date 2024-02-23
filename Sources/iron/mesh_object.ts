@@ -165,7 +165,7 @@ function mesh_object_skip_context(raw: mesh_object_t, context: string, mat: mate
 }
 
 function mesh_object_get_contexts(raw: mesh_object_t, context: string, materials: material_data_t[], material_contexts: material_context_t[], shader_contexts: shader_context_t[]) {
-	for (let i = 0; i < materials.length; ++i) {
+	for (let i: i32 = 0; i < materials.length; ++i) {
 		let mat: material_data_t = materials[i];
 		let found: bool = false;
 		for (let j: i32 = 0; j < mat.contexts.length; ++j) {

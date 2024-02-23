@@ -411,15 +411,15 @@ type sound_t = {
 };
 
 type kinc_sys_ops_t = {
-	title: string;
-	x: i32;
-	y: i32;
-	width: i32;
-	height: i32;
-	features: window_features_t;
-	mode: window_mode_t;
-	frequency: i32;
-	vsync: bool;
+	title?: string;
+	x?: i32;
+	y?: i32;
+	width?: i32;
+	height?: i32;
+	features?: window_features_t;
+	mode?: window_mode_t;
+	frequency?: i32;
+	vsync?: bool;
 };
 
 enum window_features_t {

@@ -70,7 +70,7 @@ function material_context_create(raw: material_context_t): material_context_t {
 	if (raw.bind_textures != null && raw.bind_textures.length > 0) {
 		raw._textures = [];
 
-		for (let i = 0; i < raw.bind_textures.length; ++i) {
+		for (let i: i32 = 0; i < raw.bind_textures.length; ++i) {
 			let tex: bind_tex_t = raw.bind_textures[i];
 
 			if (tex.file == "" || tex.source == "movie") { // Empty texture

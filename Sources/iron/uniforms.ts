@@ -27,7 +27,7 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 
 	// Texture context constants
 	if (bind_params != null) { // Bind targets
-		for (let i = 0; i < math_floor(bind_params.length / 2); ++i) {
+		for (let i: i32 = 0; i < math_floor(bind_params.length / 2); ++i) {
 			let pos: i32 = i * 2; // bind params = [texture, sampler_id]
 			let rt_id: string = bind_params[pos];
 			let sampler_id: string = bind_params[pos + 1];
@@ -649,10 +649,10 @@ function uniforms_set_material_consts(context: shader_context_t, material_contex
 
 	if (material_context._textures != null) {
 		for (let i: i32 = 0; i < material_context._textures.length; ++i) {
-			let mname = material_context.bind_textures[i].name;
+			let mname: string = material_context.bind_textures[i].name;
 
 			for (let j: i32 = 0; j < context._tex_units.length; ++j) {
-				let sname = context.texture_units[j].name;
+				let sname: string = context.texture_units[j].name;
 				if (mname == sname) {
 					g4_set_tex(context._tex_units[j], material_context._textures[i]);
 					// After texture sampler have been assigned, set texture parameters

@@ -351,7 +351,7 @@ let keyboard_repeat_time: f32 = 0.0;
 function keyboard_end_frame() {
 	if (keyboard_keys_frame.length > 0) {
 		for (let i: i32 = 0; i < keyboard_keys_frame.length; ++i) {
-			let s = keyboard_keys_frame[i];
+			let s: string = keyboard_keys_frame[i];
 			map_set(keyboard_keys_started, s, false);
 			map_set(keyboard_keys_released, s, false);
 		}
@@ -370,7 +370,7 @@ function keyboard_end_frame() {
 function keyboard_reset() {
 	// Use map_t for now..
 	for (let i: i32 = 0; i < keyboard_keys.length; ++i) {
-		let s = keyboard_keys[i];
+		let s: string = keyboard_keys[i];
 		map_set(keyboard_keys_down, s, false);
 		map_set(keyboard_keys_started, s, false);
 		map_set(keyboard_keys_released, s, false);
@@ -693,7 +693,7 @@ let gamepad_raws: gamepad_t[];
 
 function gamepad_end_frame() {
 	for (let i: i32 = 0; i < gamepad_raws.length; ++i) {
-		let g = gamepad_raws[i];
+		let g: gamepad_t = gamepad_raws[i];
 		if (g.buttons_frame.length > 0) {
 			for (let j: i32 = 0; j < g.buttons_frame.length; ++j) {
 				let b: i32 = g.buttons_frame[j];
@@ -737,7 +737,7 @@ function gamepad_create(): gamepad_t {
 function gamepad_reset() {
 	gamepad_raws = [];
 	for (let i: i32 = 0; i < 4; ++i) {
-		let g = gamepad_create();
+		let g: gamepad_t = gamepad_create();
 		array_push(gamepad_raws, g);
 		for (let i: i32 = 0; i < gamepad_buttons.length; ++i) {
 			array_push(g.buttons_down, 0.0);

@@ -85,7 +85,7 @@ function g4_pipeline_compile(raw: pipeline_t) {
 	let structure3: vertex_struct_t = raw.input_layout.length > 3 ? raw.input_layout[3] : null;
 	let gs: any = raw.geometry_shader != null ? raw.geometry_shader.shader_ : null;
 	let color_attachments: i32[] = [];
-	for (let i = 0; i < 8; ++i) {
+	for (let i: i32 = 0; i < 8; ++i) {
 		array_push(color_attachments, raw.color_attachments[i]);
 	}
 	krom_g4_compile_pipeline(raw.pipeline_, structure0, structure1, structure2, structure3, raw.input_layout.length, raw.vertex_shader.shader_, raw.fragment_shader.shader_, gs, {
@@ -153,7 +153,7 @@ function g4_vertex_struct_add(raw: vertex_struct_t, name: string, data: vertex_d
 }
 
 function g4_vertex_struct_byte_size(raw: vertex_struct_t): i32 {
-	let byte_size = 0;
+	let byte_size: i32 = 0;
 	for (let i: i32 = 0; i < raw.elements.length; ++i) {
 		byte_size += g4_vertex_struct_data_byte_size(raw.elements[i].data);
 	}
@@ -580,8 +580,8 @@ type index_buffer_t = {
 };
 
 type kinc_vertex_elem_t = {
-	name: string;
-	data: vertex_data_t;
+	name?: string;
+	data?: vertex_data_t;
 };
 
 type kinc_const_loc_t = any;
