@@ -919,12 +919,14 @@ function writeTSProject(projectdir, projectFiles, options) {
 		}
 		stream.close();
 
-		let minits = __dirname + '/Tools/minits/minits.js';
-		globalThis.require = require;
-		globalThis.flags.minits_input = process.cwd() + "/build/krom.ts";
-		// globalThis.flags.minits_output = process.cwd() + "/build/krom/krom.js";
-		globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
-		(1, eval)(fs.readFileSync(minits) + '');
+		// stream.on('close', function() {
+			let minits = __dirname + '/Tools/minits/minits.js';
+			globalThis.require = require;
+			globalThis.flags.minits_input = process.cwd() + "/build/krom.ts";
+			// globalThis.flags.minits_output = process.cwd() + "/build/krom/krom.js";
+			globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
+			(1, eval)(fs.readFileSync(minits) + '');
+		// });
 	}
 	// TS compiler
 	else {

@@ -89,6 +89,7 @@ if (flags.with_minits) {
 	c_project.addFile('Sources/iron/iron_map.c');
 	c_project.addFile('Sources/iron/iron_array.c');
 	c_project.addFile('Sources/iron/iron_string.c');
+	c_project.addIncludeDir("Libraries/stb"); // iron_map.c -> stb_ds.h
 	////
 }
 else if (platform === Platform.Wasm) {
