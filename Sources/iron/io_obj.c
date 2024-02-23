@@ -7,9 +7,9 @@
 #include "iron_vec4.h"
 
 static obj_part_t *part = NULL;
-static array_f32_t pos_temp;
-static array_f32_t uv_temp;
-static array_f32_t nor_temp;
+static f32_array_t pos_temp;
+static f32_array_t uv_temp;
+static f32_array_t nor_temp;
 static uint32_t va[512];
 static uint32_t ua[512];
 static uint32_t na[512];
@@ -24,9 +24,9 @@ static int tind_off = 0;
 static int nind_off = 0;
 static uint8_t *bytes = NULL;
 static size_t bytes_length = 0;
-static array_f32_t *pos_first;
-static array_f32_t *uv_first;
-static array_f32_t *nor_first;
+static f32_array_t *pos_first;
+static f32_array_t *uv_first;
+static f32_array_t *nor_first;
 
 static int read_int() {
 	int bi = 0;
@@ -147,7 +147,7 @@ static void next_line() {
 	}
 }
 
-static int get_tile(int i1, int i2, int i3, array_i32_t *uv_indices, int tiles_u) {
+static int get_tile(int i1, int i2, int i3, i32_array_t *uv_indices, int tiles_u) {
 	float u1 = uv_temp.data[uv_indices->data[i1] * 2    ];
 	float v1 = uv_temp.data[uv_indices->data[i1] * 2 + 1];
 	float u2 = uv_temp.data[uv_indices->data[i2] * 2    ];
@@ -192,9 +192,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	part->texa = NULL;
 	part->name = str;
 
-	array_i32_t pos_indices = {0};
-	array_i32_t uv_indices = {0};
-	array_i32_t nor_indices = {0};
+	i32_array_t pos_indices = {0};
+	i32_array_t uv_indices = {0};
+	i32_array_t nor_indices = {0};
 
 	bool reading_faces = false;
 	bool reading_object = false;
@@ -227,26 +227,26 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 			char c1 = bytes[part->pos++];
 			if (c1 == ' ') {
 				if (bytes[part->pos] == ' ') part->pos++; // Some exporters put additional space directly after "v"
-				array_f32_push(&pos_temp, read_float());
+				f32_array_push(&pos_temp, read_float());
 				part->pos++; // Space
-				array_f32_push(&pos_temp, read_float());
+				f32_array_push(&pos_temp, read_float());
 				part->pos++; // Space
-				array_f32_push(&pos_temp, read_float());
+				f32_array_push(&pos_temp, read_float());
 			}
 			else if (c1 == 't') {
 				part->pos++; // Space
-				array_f32_push(&uv_temp, read_float());
+				f32_array_push(&uv_temp, read_float());
 				part->pos++; // Space
-				array_f32_push(&uv_temp, read_float());
+				f32_array_push(&uv_temp, read_float());
 				if (nor_temp.length > 0) full_attrib = true;
 			}
 			else if (c1 == 'n') {
 				part->pos++; // Space
-				array_f32_push(&nor_temp, read_float());
+				f32_array_push(&nor_temp, read_float());
 				part->pos++; // Space
-				array_f32_push(&nor_temp, read_float());
+				f32_array_push(&nor_temp, read_float());
 				part->pos++; // Space
-				array_f32_push(&nor_temp, read_float());
+				f32_array_push(&nor_temp, read_float());
 				if (uv_temp.length > 0) full_attrib = true;
 			}
 		}
@@ -258,32 +258,32 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 			full_attrib ? read_face_fast() : read_face();
 
 			if (vi <= 4) { // Convex, fan triangulation
-				array_i32_push(&pos_indices, va[0]);
-				array_i32_push(&pos_indices, va[1]);
-				array_i32_push(&pos_indices, va[2]);
+				i32_array_push(&pos_indices, va[0]);
+				i32_array_push(&pos_indices, va[1]);
+				i32_array_push(&pos_indices, va[2]);
 				for (int i = 3; i < vi; ++i) {
-					array_i32_push(&pos_indices, va[0]);
-					array_i32_push(&pos_indices, va[i - 1]);
-					array_i32_push(&pos_indices, va[i]);
+					i32_array_push(&pos_indices, va[0]);
+					i32_array_push(&pos_indices, va[i - 1]);
+					i32_array_push(&pos_indices, va[i]);
 				}
 				if (uv_temp.length > 0) {
-					array_i32_push(&uv_indices, ua[0]);
-					array_i32_push(&uv_indices, ua[1]);
-					array_i32_push(&uv_indices, ua[2]);
+					i32_array_push(&uv_indices, ua[0]);
+					i32_array_push(&uv_indices, ua[1]);
+					i32_array_push(&uv_indices, ua[2]);
 					for (int i = 3; i < ui; ++i) {
-						array_i32_push(&uv_indices, ua[0]);
-						array_i32_push(&uv_indices, ua[i - 1]);
-						array_i32_push(&uv_indices, ua[i]);
+						i32_array_push(&uv_indices, ua[0]);
+						i32_array_push(&uv_indices, ua[i - 1]);
+						i32_array_push(&uv_indices, ua[i]);
 					}
 				}
 				if (nor_temp.length > 0) {
-					array_i32_push(&nor_indices, na[0]);
-					array_i32_push(&nor_indices, na[1]);
-					array_i32_push(&nor_indices, na[2]);
+					i32_array_push(&nor_indices, na[0]);
+					i32_array_push(&nor_indices, na[1]);
+					i32_array_push(&nor_indices, na[2]);
 					for (int i = 3; i < ni; ++i) {
-						array_i32_push(&nor_indices, na[0]);
-						array_i32_push(&nor_indices, na[i - 1]);
-						array_i32_push(&nor_indices, na[i]);
+						i32_array_push(&nor_indices, na[0]);
+						i32_array_push(&nor_indices, na[i - 1]);
+						i32_array_push(&nor_indices, na[i]);
 					}
 				}
 			}
@@ -351,18 +351,18 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 					}
 					if (overlap) continue;
 
-					array_i32_push(&pos_indices, va[i ]); // Found ear
-					array_i32_push(&pos_indices, va[i1]);
-					array_i32_push(&pos_indices, va[i2]);
+					i32_array_push(&pos_indices, va[i ]); // Found ear
+					i32_array_push(&pos_indices, va[i1]);
+					i32_array_push(&pos_indices, va[i2]);
 					if (uv_temp.length > 0) {
-						array_i32_push(&uv_indices, ua[i ]);
-						array_i32_push(&uv_indices, ua[i1]);
-						array_i32_push(&uv_indices, ua[i2]);
+						i32_array_push(&uv_indices, ua[i ]);
+						i32_array_push(&uv_indices, ua[i1]);
+						i32_array_push(&uv_indices, ua[i2]);
 					}
 					if (nor_temp.length > 0) {
-						array_i32_push(&nor_indices, na[i ]);
-						array_i32_push(&nor_indices, na[i1]);
-						array_i32_push(&nor_indices, na[i2]);
+						i32_array_push(&nor_indices, na[i ]);
+						i32_array_push(&nor_indices, na[i1]);
+						i32_array_push(&nor_indices, na[i2]);
 					}
 
 					for (int j = ((i + 1) % vi); j < vi - 1; ++j) { // Consume vertex
@@ -374,18 +374,18 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 					i--;
 					loops = 0;
 				}
-				array_i32_push(&pos_indices, va[0]); // Last one
-				array_i32_push(&pos_indices, va[1]);
-				array_i32_push(&pos_indices, va[2]);
+				i32_array_push(&pos_indices, va[0]); // Last one
+				i32_array_push(&pos_indices, va[1]);
+				i32_array_push(&pos_indices, va[2]);
 				if (uv_temp.length > 0) {
-					array_i32_push(&uv_indices, ua[0]);
-					array_i32_push(&uv_indices, ua[1]);
-					array_i32_push(&uv_indices, ua[2]);
+					i32_array_push(&uv_indices, ua[0]);
+					i32_array_push(&uv_indices, ua[1]);
+					i32_array_push(&uv_indices, ua[2]);
 				}
 				if (nor_temp.length > 0) {
-					array_i32_push(&nor_indices, na[0]);
-					array_i32_push(&nor_indices, na[1]);
-					array_i32_push(&nor_indices, na[2]);
+					i32_array_push(&nor_indices, na[0]);
+					i32_array_push(&nor_indices, na[1]);
+					i32_array_push(&nor_indices, na[2]);
 				}
 			}
 		}
@@ -540,14 +540,14 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	bytes = NULL;
 	if (!part->has_next) {
 		pos_first = nor_first = uv_first = NULL;
-		array_f32_free(&pos_temp);
-		array_f32_free(&uv_temp);
-		array_f32_free(&nor_temp);
+		array_free(&pos_temp);
+		array_free(&uv_temp);
+		array_free(&nor_temp);
 	}
 
-	array_i32_free(&pos_indices);
-	array_i32_free(&uv_indices);
-	array_i32_free(&nor_indices);
+	array_free(&pos_indices);
+	array_free(&uv_indices);
+	array_free(&nor_indices);
 
 	return part;
 }

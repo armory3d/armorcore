@@ -1,11 +1,19 @@
 
-let _sys_render_listeners: (()=>void)[] = [];
-let _sys_foreground_listeners: (()=>void)[] = [];
-let _sys_resume_listeners: (()=>void)[] = [];
-let _sys_pause_listeners: (()=>void)[] = [];
-let _sys_background_listeners: (()=>void)[] = [];
-let _sys_shutdown_listeners: (()=>void)[] = [];
-let _sys_drop_files_listeners: ((s: string)=>void)[] = [];
+type sys_callback_t = {
+	f?: ()=>void;
+};
+
+type sys_string_callback_t = {
+	f?: (s: string)=>void;
+};
+
+let _sys_render_listeners: sys_callback_t[] = [];
+let _sys_foreground_listeners: sys_callback_t[] = [];
+let _sys_resume_listeners: sys_callback_t[] = [];
+let _sys_pause_listeners: sys_callback_t[] = [];
+let _sys_background_listeners: sys_callback_t[] = [];
+let _sys_shutdown_listeners: sys_callback_t[] = [];
+let _sys_drop_files_listeners: sys_string_callback_t[] = [];
 let _sys_cut_listener: ()=>string = null;
 let _sys_copy_listener: ()=>string = null;
 let _sys_paste_listener: (data: string)=>void = null;
@@ -43,30 +51,38 @@ function sys_start(ops: kinc_sys_ops_t, callback: ()=>void) {
 	callback();
 }
 
+function _sys_callback_create(f: ()=>void): sys_callback_t {
+	let cb: sys_callback_t = {};
+	cb.f = f;
+	return cb;
+}
+
 function sys_notify_on_frames(listener: ()=>void) {
-	array_push(_sys_render_listeners, listener);
+	array_push(_sys_render_listeners, _sys_callback_create(listener));
 }
 
 function sys_notify_on_app_state(on_foreground: ()=>void, on_resume: ()=>void, on_pause: ()=>void, on_background: ()=>void, on_shutdown: ()=>void) {
 	if (on_foreground != null) {
-		array_push(_sys_foreground_listeners, on_foreground);
+		array_push(_sys_foreground_listeners, _sys_callback_create(on_foreground));
 	}
 	if (on_resume != null) {
-		array_push(_sys_resume_listeners, on_resume);
+		array_push(_sys_resume_listeners, _sys_callback_create(on_resume));
 	}
 	if (on_pause != null) {
-		array_push(_sys_pause_listeners, on_pause);
+		array_push(_sys_pause_listeners, _sys_callback_create(on_pause));
 	}
 	if (on_background != null) {
-		array_push(_sys_background_listeners, on_background);
+		array_push(_sys_background_listeners, _sys_callback_create(on_background));
 	}
 	if (on_shutdown != null) {
-		array_push(_sys_shutdown_listeners, on_shutdown);
+		array_push(_sys_shutdown_listeners, _sys_callback_create(on_shutdown));
 	}
 }
 
 function sys_notify_on_drop_files(drop_files_listener: (s: string)=>void) {
-	array_push(_sys_drop_files_listeners, drop_files_listener);
+	let cb: sys_string_callback_t = {};
+	cb.f = drop_files_listener;
+	array_push(_sys_drop_files_listeners, cb);
 }
 
 function sys_notify_on_cut_copy_paste(on_cut: ()=>string, on_copy: ()=>string, on_paste: (data: string)=>void) {
@@ -77,37 +93,37 @@ function sys_notify_on_cut_copy_paste(on_cut: ()=>string, on_copy: ()=>string, o
 
 function sys_foreground() {
 	for (let i: i32 = 0; i < _sys_foreground_listeners.length; ++i) {
-		_sys_foreground_listeners[i]();
+		_sys_foreground_listeners[i].f();
 	}
 }
 
 function sys_resume() {
 	for (let i: i32 = 0; i < _sys_resume_listeners.length; ++i) {
-		_sys_resume_listeners[i]();
+		_sys_resume_listeners[i].f();
 	}
 }
 
 function sys_pause() {
 	for (let i: i32 = 0; i < _sys_pause_listeners.length; ++i) {
-		_sys_pause_listeners[i]();
+		_sys_pause_listeners[i].f();
 	}
 }
 
 function sys_background() {
 	for (let i: i32 = 0; i < _sys_background_listeners.length; ++i) {
-		_sys_background_listeners[i]();
+		_sys_background_listeners[i].f();
 	}
 }
 
 function sys_shutdown() {
 	for (let i: i32 = 0; i < _sys_shutdown_listeners.length; ++i) {
-		_sys_shutdown_listeners[i]();
+		_sys_shutdown_listeners[i].f();
 	}
 }
 
 function sys_drop_files(file_path: string) {
 	for (let i: i32 = 0; i < _sys_drop_files_listeners.length; ++i) {
-		_sys_drop_files_listeners[i](file_path);
+		_sys_drop_files_listeners[i].f(file_path);
 	}
 }
 
@@ -133,7 +149,7 @@ function sys_load_url(url: string) {
 
 function sys_render_callback() {
 	for (let i: i32 = 0; i < _sys_render_listeners.length; ++i) {
-		_sys_render_listeners[i]();
+		_sys_render_listeners[i].f();
 	}
 }
 

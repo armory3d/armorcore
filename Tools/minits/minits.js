@@ -364,6 +364,7 @@ function write_js() {
 //  ╚══╝╚══╝     ╚═╝  ╚═╝    ╚═╝       ╚═╝       ╚══════╝         ╚═════╝
 
 let enums = [];
+let value_types = new Map();
 
 function skip_until(s) {
 	while (true) {
@@ -395,8 +396,10 @@ function skip_block() { // {}
 
 function function_return_type() {
 	let _pos = pos;
-	// Continue until "{" is found
 	skip_until("{");
+	if (get_token(-1) == "]") { // ): i32[]
+		pos -= 2;
+	}
 	pos -= 2; // ): i32 {
 	let result = get_token() == ":" ? read_type() : "void";
 	pos = _pos;
@@ -404,6 +407,7 @@ function function_return_type() {
 }
 
 function join_type_name(type, name) {
+	value_types.set(name, type);
 	if (type.indexOf("(*NAME)(") > 0) { // Function pointer
 		return type.replace("NAME", name);
 	}
@@ -438,6 +442,9 @@ function read_type() { // Cursor at ":"
 				params += ",";
 			}
 		}
+		else {
+			params += "void";
+		}
 
 		params += ")";
 		skip_until("=>");
@@ -445,13 +452,21 @@ function read_type() { // Cursor at ":"
 		type = ret + "(*NAME)" + params;
 	}
 
-	if (get_token(1) == "[") { // Array
-		pos++; // Skip "["
-		pos++; // Skip "]"
-	}
-
 	if (type == "string") {
 		type = "string_t";
+	}
+
+	if (get_token(1) == "[") { // Array
+		if (is_struct(type)) {
+			type = "any_array_t";
+		}
+		else if (type == "bool") {
+			type = "u8_array_t";
+		}
+		else {
+			type = type + "_array_t";
+		}
+		pos += 2; // Skip "[]"
 	}
 
 	if (is_struct(type)) {
@@ -476,6 +491,54 @@ function struct_access(s) {
 		s = s.replaceAll(".", "->");
 	}
 	return s;
+}
+
+function struct_malloc(token, malloc_type) {
+	// Turn "= {}" into malloc()
+	if (get_token(-1) == "=" && token == "{" && get_token(1) == "}") {
+		if (malloc_type.endsWith(" *")) { // mystruct * -> mystruct
+			malloc_type = malloc_type.substring(0, malloc_type.length - 2);
+		}
+		token = "malloc(sizeof(" + malloc_type + "))";
+		pos++; // }
+		tabs--;
+	}
+	return token;
+}
+
+function array_create(token, name) {
+	if (get_token(-1) == "=" && token == "[") {
+		// "= []" -> _array_create
+		if (get_token(1) == "]") {
+			let type = value_types.get(name);
+			if (type == null) {
+				type = "any";
+			}
+			if (type.endsWith("_t *")) {
+				token = "any_array_create()";
+			}
+			else {
+				token = type + "_array_create()"; // i32_array_create
+			}
+			pos++;
+		}
+		// [1, 2, ..]
+		else {
+			let contents = [];
+			while (true) {
+				pos++;
+				let token = get_token();
+				if (token == "]") {
+					break;
+				}
+				if (token == ",") {
+					continue;
+				}
+				contents.push(token);
+			}
+		}
+	}
+	return token;
 }
 
 function is_struct(type) {
@@ -722,6 +785,9 @@ function write_c() {
 						}
 					}
 
+					// [] -> _array_create
+					token = array_create(token, name);
+
 					init += token;
 				}
 				global_inits.push(init);
@@ -776,9 +842,10 @@ function write_c() {
 				handle_tabs(token);
 
 				// Write type and name
+				let name = "";
 				if (token == "let") {
 					pos++;
-					let name = get_token();
+					name = get_token();
 
 					pos++; // :
 					let type = read_type();
@@ -796,14 +863,14 @@ function write_c() {
 				token = struct_access(token);
 
 				// Turn "= {}" into malloc()
-				if (get_token(-1) == "=" && token == "{" && get_token(1) == "}") {
-					if (malloc_type.endsWith(" *")) { // mystruct * -> mystruct
-						malloc_type = malloc_type.substring(0, malloc_type.length - 2);
-					}
-					token = "malloc(sizeof(" + malloc_type + "))"
-					pos++; // }
-					tabs--;
+				token = struct_malloc(token, malloc_type);
+
+				if (name == "") { // todo: raw.frustum_planes = []
+					name = get_token(-2);
 				}
+
+				// [] -> _array_create
+				token = array_create(token, name);
 
 				// Write token
 				stream.write(token);

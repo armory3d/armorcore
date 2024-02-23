@@ -11,6 +11,7 @@
 //     return 0;
 // }
 
+#include <math.h>
 #include <stdlib.h>
 // #include <string.h> // strcmp
 #include <kinc/log.h>
@@ -37,40 +38,29 @@ int kickstart(int argc, char **argv) {
 #define any void *
 #define null NULL
 
-typedef struct map {} map_t;
-typedef struct buffer {} buffer_t;
-typedef struct buffer_view {} buffer_view_t;
-typedef struct f32_array {} f32_array_t;
-typedef struct u32_array {} u32_array_t;
-typedef struct i32_array {} i32_array_t;
-typedef struct u16_array {} u16_array_t;
-typedef struct i16_array {} i16_array_t;
-typedef struct u8_array {} u8_array_t;
-typedef struct i8_array {} i8_array_t;
+map_t *map_create() { return malloc(sizeof(map_t)); }
+buffer_t *buffer_create(i32 length) { return malloc(sizeof(buffer_t)); }
+buffer_view_t *buffer_view_create(buffer_t *b) { return malloc(sizeof(buffer_view_t)); }
+f32_array_t *f32_array_create(i32 length) { return malloc(sizeof(f32_array_t)); }
+u32_array_t *u32_array_create(i32 length) { return malloc(sizeof(u32_array_t)); }
+i32_array_t *i32_array_create(i32 length) { return malloc(sizeof(i32_array_t)); }
+u16_array_t *u16_array_create(i32 length) { return malloc(sizeof(u16_array_t)); }
+i16_array_t *i16_array_create(i32 length) { return malloc(sizeof(i16_array_t)); }
+u8_array_t *u8_array_create(i32 length) { return malloc(sizeof(u8_array_t)); }
+u8_array_t *u8_array_create_from_buffer(buffer_t *b) { return malloc(sizeof(u8_array_t)); }
+i8_array_t *i8_array_create(i32 length) { return malloc(sizeof(i8_array_t)); }
 
-map_t *map_create() { return NULL; }
-buffer_t *buffer_create(i32 length) { return NULL; }
-buffer_view_t *buffer_view_create(buffer_t *b) { return NULL; }
-f32_array_t *f32_array_create(i32 length) { return NULL; }
-u32_array_t *u32_array_create(i32 length) { return NULL; }
-i32_array_t *i32_array_create(i32 length) { return NULL; }
-u16_array_t *u16_array_create(i32 length) { return NULL; }
-i16_array_t *i16_array_create(i32 length) { return NULL; }
-u8_array_t *u8_array_create(i32 length) { return NULL; }
-u8_array_t *u8_array_create_from_buffer(buffer_t *b) { return NULL; }
-i8_array_t *i8_array_create(i32 length) { return NULL; }
-
-f32 math_floor(f32 x) { return 0.0; }
-f32 math_cos(f32 x) { return 0.0; }
-f32 math_sin(f32 x) { return 0.0; }
-f32 math_tan(f32 x) { return 0.0; }
-f32 math_sqrt(f32 x) { return 0.0; }
-f32 math_abs(f32 x) { return 0.0; }
-f32 math_random() { return 0.0; }
-f32 math_atan2(f32 y, f32 x) { return 0.0; }
-f32 math_asin(f32 x) { return 0.0; }
-f32 math_pi() { return 0.0; }
-f32 math_pow(f32 x, f32 y) { return 0.0; }
+f32 math_floor(f32 x) { return floorf(x); }
+f32 math_cos(f32 x) { return cosf(x); }
+f32 math_sin(f32 x) { return sinf(x); }
+f32 math_tan(f32 x) { return tanf(x); }
+f32 math_sqrt(f32 x) { return sqrtf(x); }
+f32 math_abs(f32 x) { return fabsf(x); }
+f32 math_random() { return rand() / RAND_MAX; }
+f32 math_atan2(f32 y, f32 x) { return atan2f(y, x); }
+f32 math_asin(f32 x) { return asinf(x); }
+f32 math_pi() { return 3.14159265358979323846; }
+f32 math_pow(f32 x, f32 y) { return powf(x, y); }
 
 // str == str
 // str != str
@@ -123,37 +113,37 @@ string_t *trim_end(string_t *str) {
 }
 
 i32 color_from_floats(f32 r, f32 g, f32 b, f32 a) {
-    return 0;
+    return ((int)(a * 255) << 24) | ((int)(r * 255) << 16) | ((int)(g * 255) << 8) | (int)(b * 255);
 }
 
 u8 color_get_rb(i32 c) {
-    return 0;
+    return (c & 0x00ff0000) >> 16;
 }
 
 u8 color_get_gb(i32 c) {
-    return 0;
+    return (c & 0x0000ff00) >> 8;
 }
 
 u8 color_get_bb(i32 c) {
-    return 0;
+    return c & 0x000000ff;
 }
 
 u8 color_get_ab(i32 c) {
-    return 0;
+    return c & 0x000000ff;
 }
 
 i32 color_set_rb(i32 c, u8 i) {
-    return 0;
+    return (color_get_ab(c) << 24) | (i << 16) | (color_get_gb(c) << 8) | color_get_bb(c);
 }
 
 i32 color_set_gb(i32 c, u8 i) {
-    return 0;
+    return (color_get_ab(c) << 24) | (color_get_rb(c) << 16) | (i << 8) | color_get_bb(c);
 }
 
 i32 color_set_bb(i32 c, u8 i) {
-    return 0;
+    return (color_get_ab(c) << 24) | (color_get_rb(c) << 16) | (color_get_gb(c) << 8) | i;
 }
 
 i32 color_set_ab(i32 c, u8 i) {
-    return 0;
+    return (i << 24) | (color_get_rb(c) << 16) | (color_get_gb(c) << 8) | color_get_bb(c);
 }
