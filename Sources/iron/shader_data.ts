@@ -429,7 +429,7 @@ function shader_context_add_const(raw: shader_context_t, c: shader_const_t) {
 }
 
 function shader_context_add_tex(raw: shader_context_t, tu: tex_unit_t) {
-	let unit = g4_pipeline_get_tex_unit(raw._pipe_state, tu.name);
+	let unit: any = g4_pipeline_get_tex_unit(raw._pipe_state, tu.name);
 	array_push(raw._tex_units, unit);
 }
 

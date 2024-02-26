@@ -1,4 +1,7 @@
 
+///if arm_minits
+///else
+
 let _armpack_pos: i32 = 0;
 
 function armpack_decode(b: buffer_t): any {
@@ -385,3 +388,5 @@ function armpack_write_object_dummy(d: any) {
 		armpack_write_dummy(d[k]);
 	}
 }
+
+///end

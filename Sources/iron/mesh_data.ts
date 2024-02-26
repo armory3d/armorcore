@@ -29,10 +29,10 @@ function mesh_data_get_raw_by_name(datas: mesh_data_t[], name: string): mesh_dat
 }
 
 function mesh_data_create(raw: mesh_data_t): mesh_data_t {
-	if (raw.scale_pos == null) {
+	if (!raw.scale_pos) {
 		raw.scale_pos = 1.0;
 	}
-	if (raw.scale_tex == null) {
+	if (!raw.scale_tex) {
 		raw.scale_tex = 1.0;
 	}
 
@@ -56,12 +56,19 @@ function mesh_data_create(raw: mesh_data_t): mesh_data_t {
 	// Prepare vertex array for skinning and fill size data
 	let vertex_arrays: vertex_array_t[] = raw.vertex_arrays;
 	if (raw.skin != null) {
-		array_push(vertex_arrays, { attrib: "bone", values: null, data: "short4norm" });
-		array_push(vertex_arrays, { attrib: "weight", values: null, data: "short4norm" });
+		let va_bone: vertex_array_t = {};
+		va_bone.attrib = "bone";
+		va_bone.values = null;
+		va_bone.data = "short4norm";
+		let va_weight: vertex_array_t = {};
+		va_weight.attrib = "weight";
+		va_weight.values = null;
+		va_weight.data = "short4norm";
+		array_push(vertex_arrays, va_bone);
+		array_push(vertex_arrays, va_weight);
 	}
 	for (let i: i32 = 0; i < vertex_arrays.length; ++i) {
-		let padding: i32 = vertex_arrays[i].padding != null ? vertex_arrays[i].padding : 0;
-		vertex_arrays[i]._size = mesh_data_get_vertex_size(vertex_arrays[i].data, padding);
+		vertex_arrays[i]._size = mesh_data_get_vertex_size(vertex_arrays[i].data);
 	}
 
 	if (raw.skin != null) {
@@ -134,21 +141,16 @@ function mesh_data_build_vertices(vertices: buffer_view_t, vertex_arrays: vertex
 			for (let o: i32 = 0; o < l; ++o) {
 				buffer_view_set_i16(vertices, ++di * 2, vertex_arrays[va].values[i * l + o]);
 			}
-			if (vertex_arrays[va].padding != null) {
-				if (vertex_arrays[va].padding == 1) {
-					buffer_view_set_i16(vertices, ++di * 2, 0);
-				}
-			}
 		}
 	}
 }
 
-function mesh_data_get_vertex_size(vertex_data: string, padding: i32 = 0): i32 {
+function mesh_data_get_vertex_size(vertex_data: string): i32 {
 	if (vertex_data == "short4norm") {
-		return 4 - padding;
+		return 4;
 	}
 	else if (vertex_data == "short2norm") {
-		return 2 - padding;
+		return 2;
 	}
 	else {
 		return 0;
@@ -198,7 +200,7 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 		let has_tex: bool = false;
 		let tex_offset: i32 = -1;
 		let has_col: bool = false;
-		for (let e = 0; e < vs.length; ++e) {
+		for (let e: i32 = 0; e < vs.length; ++e) {
 			if (vs[e].name == "tex") {
 				has_tex = true;
 				tex_offset = e;
@@ -206,7 +208,7 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 			if (vs[e].name == "col") {
 				has_col = true;
 			}
-			for (let va = 0; va < raw.vertex_arrays.length; ++va) {
+			for (let va: i32 = 0; va < raw.vertex_arrays.length; ++va) {
 				if (vs[e].name == raw.vertex_arrays[va].attrib) {
 					array_push(vertex_arrays, raw.vertex_arrays[va]);
 				}
@@ -216,8 +218,8 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 		let positions: vertex_array_t = mesh_data_get_vertex_array(raw, "pos");
 		let uvs: vertex_array_t = mesh_data_get_vertex_array(raw, "tex");
 		let cols: vertex_array_t = mesh_data_get_vertex_array(raw, "col");
-		let struct: vertex_struct_t = mesh_data_get_vertex_struct(vertex_arrays);
-		vb = g4_vertex_buffer_create(math_floor(positions.values.length / positions._size), struct, usage_t.STATIC);
+		let vstruct: vertex_struct_t = mesh_data_get_vertex_struct(vertex_arrays);
+		vb = g4_vertex_buffer_create(math_floor(positions.values.length / positions._size), vstruct, usage_t.STATIC);
 		raw._vertices = g4_vertex_buffer_lock(vb);
 		mesh_data_build_vertices(raw._vertices, vertex_arrays, 0, has_tex && uvs == null, tex_offset);
 		g4_vertex_buffer_unlock(vb);

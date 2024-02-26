@@ -22,11 +22,11 @@ type mesh_data_t = {
 	vertex_arrays?: vertex_array_t[];
 	index_arrays?: index_array_t[];
 	// Opt
-	skin?: skin_t;
-	instanced_data?: f32_array_t;
-	instanced_type?: i32; // off, loc, loc+rot, loc+scale, loc+rot+scale
 	scale_pos?: f32; // Unpack pos from (-1,1) coords
 	scale_tex?: f32; // Unpack tex from (-1,1) coords
+	instanced_type?: i32; // off, loc, loc+rot, loc+scale, loc+rot+scale
+	instanced_data?: f32_array_t;
+	skin?: skin_t;
 	// Runtime:
 	_refcount?: i32; // Number of users
 	_handle?: string; // Handle used to retrieve this object in Data
@@ -64,8 +64,6 @@ type vertex_array_t = {
 	attrib?: string;
 	values?: i16_array_t;
 	data?: string; // short4norm, short2norm
-	// Opt
-	padding?: i32;
 	// Runtime:
 	_size?: i32;
 };

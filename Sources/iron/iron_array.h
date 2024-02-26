@@ -3,49 +3,49 @@
 #include <stdint.h>
 
 typedef struct i8_array {
-	int8_t *data;
+	int8_t *buffer;
 	int length;
 	int capacity;
 } i8_array_t;
 
 typedef struct u8_array {
-	uint8_t *data;
+	uint8_t *buffer;
 	int length;
 	int capacity;
 } u8_array_t;
 
 typedef struct i16_array {
-	int16_t *data;
+	int16_t *buffer;
 	int length;
 	int capacity;
 } i16_array_t;
 
 typedef struct u16_array {
-	uint16_t *data;
+	uint16_t *buffer;
 	int length;
 	int capacity;
 } u16_array_t;
 
 typedef struct i32_array {
-	int32_t *data;
+	int32_t *buffer;
 	int length;
 	int capacity;
 } i32_array_t;
 
 typedef struct u32_array {
-	uint32_t *data;
+	uint32_t *buffer;
 	int length;
 	int capacity;
 } u32_array_t;
 
 typedef struct f32_array {
-	float *data;
+	float *buffer;
 	int length;
 	int capacity;
 } f32_array_t;
 
 typedef struct any_array {
-	uintptr_t *data;
+	uintptr_t *buffer;
 	int length;
 	int capacity;
 } any_array_t;

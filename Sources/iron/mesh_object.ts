@@ -270,7 +270,9 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 
 		// VB / IB
 		if (raw.data._instanced_vb != null) {
-			g4_set_vertex_buffers([mesh_data_get(raw.data, elems), raw.data._instanced_vb]);
+			let vb: vertex_buffer_t = mesh_data_get(raw.data, elems);
+			let vbs: vertex_buffer_t[] = [vb, raw.data._instanced_vb];
+			g4_set_vertex_buffers(vbs);
 		}
 		else {
 			g4_set_vertex_buffer(mesh_data_get(raw.data, elems));

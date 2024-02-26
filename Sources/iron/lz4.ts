@@ -20,6 +20,9 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+///if arm_minits
+///else
+
 let _lz4_hash_table: i32_array_t = null;
 
 function lz4_encode_bound(size: i32): i32 {
@@ -222,3 +225,5 @@ function lz4_decode(b: buffer_t, olen: i32): buffer_t {
 
 	return obuf.buffer;
 }
+
+///end

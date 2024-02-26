@@ -139,7 +139,8 @@ function render_path_set_target(target: string, additional: string[] = null) {
 
 function render_path_set_depth_from(target: string, from: string) {
 	let rt: render_target_t = map_get(render_path_render_targets, target);
-	image_set_depth_from(rt.image, map_get(render_path_render_targets, from).image);
+	let rt_from: render_target_t = map_get(render_path_render_targets, from);
+	image_set_depth_from(rt.image, rt_from.image);
 }
 
 function render_path_begin(render_target: image_t = null, additional_targets: image_t[] = null) {
@@ -174,19 +175,19 @@ function render_path_set_viewport(view_w: i32, view_h: i32) {
 	render_path_set_current_scissor(view_w, view_h);
 }
 
-function render_path_clear_target(color_flag: i32 = null, depth_flag: f32 = null) {
-	if (color_flag == -1) { // -1 == 0xffffffff
+function render_path_clear_target(color: color_t = 0x00000000, depth: f32 = 0.0, flags: i32 = clear_flag_t.COLOR) {
+	if (color == -1) { // 0xffffffff
 		if (scene_world != null) {
-			color_flag = scene_world.background_color;
+			color = scene_world.background_color;
 		}
 		else if (scene_camera != null) {
 			let cc: f32_array_t = scene_camera.data.clear_color;
 			if (cc != null) {
-				color_flag = color_from_floats(cc[0], cc[1], cc[2]);
+				color = color_from_floats(cc[0], cc[1], cc[2], 1.0);
 			}
 		}
 	}
-	g4_clear(color_flag, depth_flag);
+	g4_clear(color, depth, flags);
 }
 
 function render_path_clear_image(target: string, color: i32) {
@@ -375,7 +376,8 @@ function render_path_resize() {
 	for (let i: i32 = 0; i < rtargets.length; ++i) {
 		let rt: render_target_t = rtargets[i];
 		if (rt != null && rt.depth_from != "") {
-			image_set_depth_from(rt.image, map_get(_render_path_depth_to_render_target, rt.depth_from).image);
+			let depth_from: render_target_t = map_get(_render_path_depth_to_render_target, rt.depth_from);
+			image_set_depth_from(rt.image, depth_from.image);
 		}
 	}
 }
@@ -387,7 +389,10 @@ function render_path_create_render_target(t: render_target_t): render_target_t {
 }
 
 function render_path_create_depth_buffer(name: string, format: string = null) {
-	array_push(_render_path_depth_buffers, { name: name, format: format });
+	let desc: depth_buffer_desc_t = {};
+	desc.name = name;
+	desc.format = format;
+	array_push(_render_path_depth_buffers, desc);
 }
 
 function render_path_create_target(t: render_target_t): render_target_t {

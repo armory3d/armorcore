@@ -132,7 +132,7 @@ function g2_disable_scissor() {
 	g4_disable_scissor();
 }
 
-function g2_begin(render_target: image_t = null, clear: bool = true, clear_color: color_t = null) {
+function g2_begin(render_target: image_t = null) {
 	if (_g2_current == null) {
 		_g2_current = render_target;
 	}
@@ -150,10 +150,6 @@ function g2_begin(render_target: image_t = null, clear: bool = true, clear_color
 	}
 	else {
 		krom_g2_restore_render_target();
-	}
-
-	if (clear) {
-		g2_clear(clear_color);
 	}
 }
 

@@ -88,22 +88,24 @@ function g4_pipeline_compile(raw: pipeline_t) {
 	for (let i: i32 = 0; i < 8; ++i) {
 		array_push(color_attachments, raw.color_attachments[i]);
 	}
-	krom_g4_compile_pipeline(raw.pipeline_, structure0, structure1, structure2, structure3, raw.input_layout.length, raw.vertex_shader.shader_, raw.fragment_shader.shader_, gs, {
-		cull_mode: raw.cull_mode,
-		depth_write: raw.depth_write,
-		depth_mode: raw.depth_mode,
-		blend_source: raw.blend_source,
-		blend_dest: raw.blend_dest,
-		alpha_blend_source: raw.alpha_blend_source,
-		alpha_blend_dest: raw.alpha_blend_dest,
-		color_write_masks_red: raw.color_write_masks_red,
-		color_write_masks_green: raw.color_write_masks_green,
-		color_write_masks_blue: raw.color_write_masks_blue,
-		color_write_masks_alpha: raw.color_write_masks_alpha,
-		color_attachment_count: raw.color_attachment_count,
-		color_attachments: raw.color_attachments,
-		depth_attachment_bits: g4_pipeline_get_depth_buffer_bits(raw.depth_attachment)
-	});
+
+	let state: krom_pipeline_state_t = {};
+	state.cull_mode = raw.cull_mode;
+	state.depth_write = raw.depth_write;
+	state.depth_mode = raw.depth_mode;
+	state.blend_source = raw.blend_source;
+	state.blend_dest = raw.blend_dest;
+	state.alpha_blend_source = raw.alpha_blend_source;
+	state.alpha_blend_dest = raw.alpha_blend_dest;
+	state.color_write_masks_red = raw.color_write_masks_red;
+	state.color_write_masks_green = raw.color_write_masks_green;
+	state.color_write_masks_blue = raw.color_write_masks_blue;
+	state.color_write_masks_alpha = raw.color_write_masks_alpha;
+	state.color_attachment_count = raw.color_attachment_count;
+	state.color_attachments = raw.color_attachments;
+	state.depth_attachment_bits = g4_pipeline_get_depth_buffer_bits(raw.depth_attachment);
+
+	krom_g4_compile_pipeline(raw.pipeline_, structure0, structure1, structure2, structure3, raw.input_layout.length, raw.vertex_shader.shader_, raw.fragment_shader.shader_, gs, state);
 }
 
 function g4_pipeline_set(raw: pipeline_t) {
@@ -149,7 +151,10 @@ function g4_vertex_struct_create(): vertex_struct_t {
 }
 
 function g4_vertex_struct_add(raw: vertex_struct_t, name: string, data: vertex_data_t) {
-	array_push(raw.elements, { name: name, data: data });
+	let elem: kinc_vertex_elem_t = {};
+	elem.name = name;
+	elem.data = data;
+	array_push(raw.elements, elem);
 }
 
 function g4_vertex_struct_byte_size(raw: vertex_struct_t): i32 {
@@ -215,15 +220,8 @@ function g4_end() {
 	krom_g4_end();
 }
 
-function g4_clear(color: color_t = null, depth: f32 = null) {
-	let flags: i32 = 0;
-	if (color != null) {
-		flags |= 1;
-	}
-	if (depth != null) {
-		flags |= 2;
-	}
-	krom_g4_clear(flags, color == null ? 0 : color, depth);
+function g4_clear(color: color_t = 0x00000000, depth: f32 = 0.0, flags: i32 = clear_flag_t.COLOR) {
+	krom_g4_clear(flags, color, depth);
 }
 
 function g4_viewport(x: i32, y: i32, width: i32, height: i32) {
@@ -345,7 +343,7 @@ function _image_create(tex: any): image_t {
 	return raw;
 }
 
-function _image_set_size(image: image_t, tex: any) {
+function _image_set_size(image: image_t, tex: krom_texture_t) {
 	image.width = tex.width;
 	image.height = tex.height;
 	image.depth = tex.depth;
@@ -586,6 +584,34 @@ type kinc_vertex_elem_t = {
 
 type kinc_const_loc_t = any;
 type kinc_tex_unit_t = any;
+
+type krom_pipeline_state_t = {
+	cull_mode?: cull_mode_t;
+	depth_write?: bool;
+	depth_mode?: compare_mode_t;
+	blend_source?: blend_factor_t;
+	blend_dest?: blend_factor_t;
+	alpha_blend_source?: blend_factor_t;
+	alpha_blend_dest?: blend_factor_t;
+	color_write_masks_red?: bool[];
+	color_write_masks_green?: bool[];
+	color_write_masks_blue?: bool[];
+	color_write_masks_alpha?: bool[];
+	color_attachment_count?: i32;
+	color_attachments?: tex_format_t[];
+	depth_attachment_bits?: i32;
+};
+
+type krom_texture_t = {
+	width? :i32;
+	height? :i32;
+	depth? :i32;
+};
+
+enum clear_flag_t {
+	COLOR = 1,
+	DEPTH = 2,
+}
 
 enum tex_filter_t {
 	POINT,

@@ -112,7 +112,7 @@ function uniforms_bind_render_target(rt: render_target_t, context: shader_contex
 		return;
 	}
 
-	let tus = context.texture_units;
+	let tus: tex_unit_t[] = context.texture_units;
 
 	for (let j: i32 = 0; j < tus.length; ++j) { // Set texture
 		if (sampler_id == tus[j].name) {
@@ -257,7 +257,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			}
 		}
 		else if (c.link == "_light_area0") {
-			if (light != null && light.data.size != null) {
+			if (light != null && light.data.size) {
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
@@ -267,7 +267,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			}
 		}
 		else if (c.link == "_light_area1") {
-			if (light != null && light.data.size != null) {
+			if (light != null && light.data.size) {
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
@@ -277,7 +277,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			}
 		}
 		else if (c.link == "_light_area2") {
-			if (light != null && light.data.size != null) {
+			if (light != null && light.data.size) {
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
@@ -287,7 +287,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			}
 		}
 		else if (c.link == "_light_area3") {
-			if (light != null && light.data.size != null) {
+			if (light != null && light.data.size) {
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
@@ -474,7 +474,8 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 			m = _uniforms_mat;
 		}
 		else if (c.link == "_prev_world_view_proj_matrix") {
-			mat4_set_from(_uniforms_mat, obj.ext.prev_matrix);
+			let mo: mesh_object_t = obj.ext;
+			mat4_set_from(_uniforms_mat, mo.prev_matrix);
 			mat4_mult_mat(_uniforms_mat, camera.prev_v);
 			// mat4_mult_mat(_uniforms_mat. camera.prev_p);
 			mat4_mult_mat(_uniforms_mat, camera.p);
@@ -585,10 +586,10 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 		else if (uniforms_f32_links != null) {
 			f = uniforms_f32_links(obj, current_material(obj), c.link);
 		}
-
-		if (f == null) {
+		else {
 			return;
 		}
+
 		g4_set_float(loc, f);
 	}
 	else if (c.type == "floats") {
@@ -665,9 +666,11 @@ function uniforms_set_material_consts(context: shader_context_t, material_contex
 }
 
 function current_material(object: object_t): material_data_t {
-	if (object != null && object.ext != null && object.ext.materials != null) {
-		let mo: any = object.ext;
-		return mo.materials[mo.material_index];
+	if (object != null && object.ext != null) {
+		let mo: mesh_object_t = object.ext;
+		if (mo.materials != null) {
+			return mo.materials[mo.material_index];
+		}
 	}
 	return null;
 }

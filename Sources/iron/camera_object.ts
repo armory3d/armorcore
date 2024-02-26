@@ -47,7 +47,7 @@ function camera_object_build_proj(raw: camera_object_t, screen_aspect: f32 = -1.
 		if (screen_aspect < 0) {
 			screen_aspect = app_w() / app_h();
 		}
-		let aspect: f32 = raw.data.aspect != null ? raw.data.aspect : screen_aspect;
+		let aspect: f32 = raw.data.aspect ? raw.data.aspect : screen_aspect;
 		raw.p = mat4_persp(raw.data.fov, aspect, raw.data.near_plane, raw.data.far_plane);
 	}
 	mat4_set_from(raw.no_jitter_p, raw.p);

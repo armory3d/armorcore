@@ -148,12 +148,12 @@ static void next_line() {
 }
 
 static int get_tile(int i1, int i2, int i3, i32_array_t *uv_indices, int tiles_u) {
-	float u1 = uv_temp.data[uv_indices->data[i1] * 2    ];
-	float v1 = uv_temp.data[uv_indices->data[i1] * 2 + 1];
-	float u2 = uv_temp.data[uv_indices->data[i2] * 2    ];
-	float v2 = uv_temp.data[uv_indices->data[i2] * 2 + 1];
-	float u3 = uv_temp.data[uv_indices->data[i3] * 2    ];
-	float v3 = uv_temp.data[uv_indices->data[i3] * 2 + 1];
+	float u1 = uv_temp.buffer[uv_indices->buffer[i1] * 2    ];
+	float v1 = uv_temp.buffer[uv_indices->buffer[i1] * 2 + 1];
+	float u2 = uv_temp.buffer[uv_indices->buffer[i2] * 2    ];
+	float v2 = uv_temp.buffer[uv_indices->buffer[i2] * 2 + 1];
+	float u3 = uv_temp.buffer[uv_indices->buffer[i3] * 2    ];
+	float v3 = uv_temp.buffer[uv_indices->buffer[i3] * 2 + 1];
 	int tile_u = (int)((u1 + u2 + u3) / 3);
 	int tile_v = (int)((v1 + v2 + v3) / 3);
 	return tile_u + tile_v * tiles_u;
@@ -294,15 +294,15 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 				float ny = 0.0;
 				float nz = 0.0;
 				if (nor_temp.length > 0) {
-					nx = nor_temp.data[(na[0] - _nind_off) * 3    ];
-					ny = nor_temp.data[(na[0] - _nind_off) * 3 + 1];
-					nz = nor_temp.data[(na[0] - _nind_off) * 3 + 2];
+					nx = nor_temp.buffer[(na[0] - _nind_off) * 3    ];
+					ny = nor_temp.buffer[(na[0] - _nind_off) * 3 + 1];
+					nz = nor_temp.buffer[(na[0] - _nind_off) * 3 + 2];
 				}
 				else {
 					kinc_vector4_t n = calc_normal(
-						vec4_new(pos_temp.data[(va[0] - _vind_off) * 3], pos_temp.data[(va[0] - _vind_off) * 3 + 1], pos_temp.data[(va[0] - _vind_off) * 3 + 2], 1.0f),
-						vec4_new(pos_temp.data[(va[1] - _vind_off) * 3], pos_temp.data[(va[1] - _vind_off) * 3 + 1], pos_temp.data[(va[1] - _vind_off) * 3 + 2], 1.0f),
-						vec4_new(pos_temp.data[(va[2] - _vind_off) * 3], pos_temp.data[(va[2] - _vind_off) * 3 + 1], pos_temp.data[(va[2] - _vind_off) * 3 + 2], 1.0f)
+						vec4_new(pos_temp.buffer[(va[0] - _vind_off) * 3], pos_temp.buffer[(va[0] - _vind_off) * 3 + 1], pos_temp.buffer[(va[0] - _vind_off) * 3 + 2], 1.0f),
+						vec4_new(pos_temp.buffer[(va[1] - _vind_off) * 3], pos_temp.buffer[(va[1] - _vind_off) * 3 + 1], pos_temp.buffer[(va[1] - _vind_off) * 3 + 2], 1.0f),
+						vec4_new(pos_temp.buffer[(va[2] - _vind_off) * 3], pos_temp.buffer[(va[2] - _vind_off) * 3 + 1], pos_temp.buffer[(va[2] - _vind_off) * 3 + 2], 1.0f)
 					);
 					nx = n.x;
 					ny = n.y;
@@ -325,12 +325,12 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 					int vi0 = (va[i ] - _vind_off) * 3;
 					int vi1 = (va[i1] - _vind_off) * 3;
 					int vi2 = (va[i2] - _vind_off) * 3;
-					float v0x = pos_temp.data[vi0 + axis0];
-					float v0y = pos_temp.data[vi0 + axis1];
-					float v1x = pos_temp.data[vi1 + axis0];
-					float v1y = pos_temp.data[vi1 + axis1];
-					float v2x = pos_temp.data[vi2 + axis0];
-					float v2y = pos_temp.data[vi2 + axis1];
+					float v0x = pos_temp.buffer[vi0 + axis0];
+					float v0y = pos_temp.buffer[vi0 + axis1];
+					float v1x = pos_temp.buffer[vi1 + axis0];
+					float v1y = pos_temp.buffer[vi1 + axis1];
+					float v2x = pos_temp.buffer[vi2 + axis0];
+					float v2y = pos_temp.buffer[vi2 + axis1];
 
 					float e0x = v0x - v1x; // Not an interior vertex
 					float e0y = v0y - v1y;
@@ -342,8 +342,8 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 					bool overlap = false; // Other vertex found inside this triangle
 					for (int j = 0; j < vi - 3; ++j) {
 						int j0 = (va[(i + 3 + j) % vi] - _vind_off) * 3;
-						float px = pos_temp.data[j0 + axis0];
-						float py = pos_temp.data[j0 + axis1];
+						float px = pos_temp.buffer[j0 + axis0];
+						float py = pos_temp.buffer[j0 + axis1];
 						if (pnpoly(v0x, v0y, v1x, v1y, v2x, v2y, px, py)) {
 							overlap = true;
 							break;
@@ -400,9 +400,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 
 	if (start_pos > 0) {
 		if (split_code != 'u') {
-			for (int i = 0; i < pos_indices.length; ++i) pos_indices.data[i] -= vind_off;
-			for (int i = 0; i < uv_indices.length; ++i) uv_indices.data[i] -= tind_off;
-			for (int i = 0; i < nor_indices.length; ++i) nor_indices.data[i] -= nind_off;
+			for (int i = 0; i < pos_indices.length; ++i) pos_indices.buffer[i] -= vind_off;
+			for (int i = 0; i < uv_indices.length; ++i) uv_indices.buffer[i] -= tind_off;
+			for (int i = 0; i < nor_indices.length; ++i) nor_indices.buffer[i] -= nind_off;
 		}
 	}
 	else {
@@ -419,7 +419,7 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	// Pack positions to (-1, 1) range
 	part->scale_pos = 0.0;
 	for (int i = 0; i < pos_temp.length; ++i) {
-		float f = (float)fabs(pos_temp.data[i]);
+		float f = (float)fabs(pos_temp.buffer[i]);
 		if (part->scale_pos < f) part->scale_pos = f;
 	}
 	float inv = 32767 * (1 / part->scale_pos);
@@ -430,18 +430,18 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	part->index_count = pos_indices.length;
 	int inda_length = pos_indices.length;
 	for (int i = 0; i < pos_indices.length; ++i) {
-		part->posa[i * 4    ] = (int)( pos_temp.data[pos_indices.data[i] * 3    ] * inv);
-		part->posa[i * 4 + 1] = (int)(-pos_temp.data[pos_indices.data[i] * 3 + 2] * inv);
-		part->posa[i * 4 + 2] = (int)( pos_temp.data[pos_indices.data[i] * 3 + 1] * inv);
+		part->posa[i * 4    ] = (int)( pos_temp.buffer[pos_indices.buffer[i] * 3    ] * inv);
+		part->posa[i * 4 + 1] = (int)(-pos_temp.buffer[pos_indices.buffer[i] * 3 + 2] * inv);
+		part->posa[i * 4 + 2] = (int)( pos_temp.buffer[pos_indices.buffer[i] * 3 + 1] * inv);
 		part->inda[i] = i;
 	}
 
 	if (nor_indices.length > 0) {
 		part->nora = (int16_t *)malloc(nor_indices.length * 2 * sizeof(int16_t));
 		for (int i = 0; i < pos_indices.length; ++i) {
-			part->nora[i * 2    ] = (int)( nor_temp.data[nor_indices.data[i] * 3    ] * 32767);
-			part->nora[i * 2 + 1] = (int)(-nor_temp.data[nor_indices.data[i] * 3 + 2] * 32767);
-			part->posa[i * 4 + 3] = (int)( nor_temp.data[nor_indices.data[i] * 3 + 1] * 32767);
+			part->nora[i * 2    ] = (int)( nor_temp.buffer[nor_indices.buffer[i] * 3    ] * 32767);
+			part->nora[i * 2 + 1] = (int)(-nor_temp.buffer[nor_indices.buffer[i] * 3 + 2] * 32767);
+			part->posa[i * 4 + 3] = (int)( nor_temp.buffer[nor_indices.buffer[i] * 3 + 1] * 32767);
 		}
 	}
 	else {
@@ -474,8 +474,8 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 			int tiles_u = 1;
 			int tiles_v = 1;
 			for (int i = 0; i < (int)(uv_temp.length / 2); ++i) {
-				while (uv_temp.data[i * 2    ] > tiles_u) tiles_u++;
-				while (uv_temp.data[i * 2 + 1] > tiles_v) tiles_v++;
+				while (uv_temp.buffer[i * 2    ] > tiles_u) tiles_u++;
+				while (uv_temp.buffer[i * 2 + 1] > tiles_v) tiles_v++;
 			}
 
 			// Amount of indices pre tile
@@ -516,22 +516,22 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 				int tile = get_tile(i1, i2, i3, &uv_indices, tiles_u);
 				int tile_u = tile % tiles_u;
 				int tile_v = (int)(tile / tiles_u);
-				uvtiles[uv_indices.data[i1] * 2    ] = tile_u;
-				uvtiles[uv_indices.data[i1] * 2 + 1] = tile_v;
-				uvtiles[uv_indices.data[i2] * 2    ] = tile_u;
-				uvtiles[uv_indices.data[i2] * 2 + 1] = tile_v;
-				uvtiles[uv_indices.data[i3] * 2    ] = tile_u;
-				uvtiles[uv_indices.data[i3] * 2 + 1] = tile_v;
+				uvtiles[uv_indices.buffer[i1] * 2    ] = tile_u;
+				uvtiles[uv_indices.buffer[i1] * 2 + 1] = tile_v;
+				uvtiles[uv_indices.buffer[i2] * 2    ] = tile_u;
+				uvtiles[uv_indices.buffer[i2] * 2 + 1] = tile_v;
+				uvtiles[uv_indices.buffer[i3] * 2    ] = tile_u;
+				uvtiles[uv_indices.buffer[i3] * 2 + 1] = tile_v;
 			}
-			for (int i = 0; i < uv_temp.length; ++i) uv_temp.data[i] -= uvtiles[i];
+			for (int i = 0; i < uv_temp.length; ++i) uv_temp.buffer[i] -= uvtiles[i];
 			free(uvtiles);
 		}
 
 		part->texa = (int16_t *)malloc(uv_indices.length * 2 * sizeof(int16_t));
 		for (int i = 0; i < pos_indices.length; ++i) {
-			float uvx = uv_temp.data[uv_indices.data[i] * 2];
+			float uvx = uv_temp.buffer[uv_indices.buffer[i] * 2];
 			if (uvx > 1.0) uvx = uvx - (int)(uvx);
-			float uvy = uv_temp.data[uv_indices.data[i] * 2 + 1];
+			float uvy = uv_temp.buffer[uv_indices.buffer[i] * 2 + 1];
 			if (uvy > 1.0) uvy = uvy - (int)(uvy);
 			part->texa[i * 2    ] = (int)(       uvx  * 32767);
 			part->texa[i * 2 + 1] = (int)((1.0 - uvy) * 32767);

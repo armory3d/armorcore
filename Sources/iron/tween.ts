@@ -1,4 +1,7 @@
 
+///if arm_minits
+///else
+
 let _tween_default_overshoot: f32 = 1.70158;
 let _tween_anims: tween_anim_t[] = [];
 let _tween_registered: bool = false;
@@ -104,7 +107,7 @@ function tween_update() {
 				if (a._comps[i] == 1) {
 					let from_val: f32 = a._x[i];
 					let to_val: f32 = a.props[p];
-					let val: f32 = from_val + (to_val - from_val) * _tween_eases[a.ease](k);
+					let val: f32 = from_val + (to_val - from_val) * _tween_ease(a.ease, k);
 					a.target[p] = val;
 				}
 				else { // _comps[i] == 4
@@ -119,10 +122,10 @@ function tween_update() {
 							to_x = -to_x; to_y = -to_y; to_z = -to_z; to_w = -to_w;
 						}
 					}
-					let x: f32 = a._x[i] + (to_x - a._x[i]) * _tween_eases[a.ease](k);
-					let y: f32 = a._y[i] + (to_y - a._y[i]) * _tween_eases[a.ease](k);
-					let z: f32 = a._z[i] + (to_z - a._z[i]) * _tween_eases[a.ease](k);
-					let w: f32 = a._w[i] + (to_w - a._w[i]) * _tween_eases[a.ease](k);
+					let x: f32 = a._x[i] + (to_x - a._x[i]) * _tween_ease(a.ease, k);
+					let y: f32 = a._y[i] + (to_y - a._y[i]) * _tween_ease(a.ease, k);
+					let z: f32 = a._z[i] + (to_z - a._z[i]) * _tween_ease(a.ease, k);
+					let w: f32 = a._w[i] + (to_w - a._w[i]) * _tween_ease(a.ease, k);
 					if (a._normalize[i]) {
 						let l: i32 = math_sqrt(x * x + y * y + z * z + w * w);
 						if (l > 0.0) {
@@ -229,13 +232,48 @@ function _tween_ease_elastic_in_out(k: f32): f32 {
 	return a * math_pow(2, -10 * (k -= 1)) * math_sin((k - s) * (2 * math_pi()) / p) * 0.5 + 1;
 }
 
-let _tween_eases: ((f: f32)=>f32)[] = [
-	_tween_ease_linear,
-	_tween_ease_quad_in, _tween_ease_quad_out, _tween_ease_quad_in_out,
-	_tween_ease_expo_in, _tween_ease_expo_out, _tween_ease_expo_in_out,
-	_tween_ease_bounce_in, _tween_ease_bounce_out, _tween_ease_bounce_in_out,
-	_tween_ease_elastic_in, _tween_ease_elastic_out, _tween_ease_elastic_in_out
-];
+function _tween_ease(ease: ease_t, k: f32): f32 {
+	if (ease == ease_t.LINEAR) {
+		return _tween_ease_linear(k);
+	}
+	if (ease == ease_t.QUAD_IN) {
+		return _tween_ease_quad_in(k);
+	}
+	if (ease == ease_t.QUAD_OUT) {
+		return _tween_ease_quad_out(k);
+	}
+	if (ease == ease_t.QUAD_IN_OUT) {
+		return _tween_ease_quad_in_out(k);
+	}
+	if (ease == ease_t.EXPO_IN) {
+		return _tween_ease_expo_in(k);
+	}
+	if (ease == ease_t.EXPO_OUT) {
+		return _tween_ease_expo_out(k);
+	}
+	if (ease == ease_t.EXPO_IN_OUT) {
+		return _tween_ease_expo_in_out(k);
+	}
+	if (ease == ease_t.BOUNCE_IN) {
+		return _tween_ease_bounce_in(k);
+	}
+	if (ease == ease_t.BOUNCE_OUT) {
+		return _tween_ease_bounce_out(k);
+	}
+	if (ease == ease_t.BOUNCE_IN_OUT) {
+		return _tween_ease_bounce_in_out(k);
+	}
+	if (ease == ease_t.ELASTIC_IN) {
+		return _tween_ease_elastic_in(k);
+	}
+	if (ease == ease_t.ELASTIC_OUT) {
+		return _tween_ease_elastic_out(k);
+	}
+	if (ease == ease_t.ELASTIC_IN_OUT) {
+		return _tween_ease_elastic_in_out(k);
+	}
+	return 0.0;
+}
 
 type tween_anim_t = {
 	// Base
@@ -273,3 +311,5 @@ enum ease_t {
 	ELASTIC_OUT,
 	ELASTIC_IN_OUT,
 }
+
+///end

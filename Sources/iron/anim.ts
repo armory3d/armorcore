@@ -180,19 +180,19 @@ function anim_update_track(raw: anim_raw_t, anim: anim_t) {
 	}
 
 	// Marker events
-	if (raw.marker_events != null && anim.marker_names != null && raw.frame_index != raw.last_frame_index) {
-		for (let i: i32 = 0; i < anim.marker_frames.length; ++i) {
-			if (raw.frame_index == anim.marker_frames[i]) {
-				let ar: (()=>void)[] = map_get(raw.marker_events, anim.marker_names[i]);
-				if (ar != null) {
-					for (let i: i32 = 0; i < ar.length; ++i) {
-						ar[i]();
-					}
-				}
-			}
-		}
-		raw.last_frame_index = raw.frame_index;
-	}
+	// if (raw.marker_events != null && anim.marker_names != null && raw.frame_index != raw.last_frame_index) {
+	// 	for (let i: i32 = 0; i < anim.marker_frames.length; ++i) {
+	// 		if (raw.frame_index == anim.marker_frames[i]) {
+	// 			let ar: (()=>void)[] = map_get(raw.marker_events, anim.marker_names[i]);
+	// 			if (ar != null) {
+	// 				for (let i: i32 = 0; i < ar.length; ++i) {
+	// 					ar[i]();
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// 	raw.last_frame_index = raw.frame_index;
+	// }
 
 	// End of track
 	if (anim_is_track_end(raw, track)) {
@@ -249,15 +249,15 @@ function anim_set_frame(raw: anim_raw_t, frame: i32) {
 }
 
 function anim_notify_on_marker(raw: anim_raw_t, name: string, on_marker: ()=>void) {
-	if (raw.marker_events == null) {
-		raw.marker_events = map_create();
-	}
-	let ar: (()=>void)[] = map_get(raw.marker_events, name);
-	if (ar == null) {
-		ar = [];
-		map_set(raw.marker_events, name, ar);
-	}
-	array_push(ar, on_marker);
+	// if (raw.marker_events == null) {
+	// 	raw.marker_events = map_create();
+	// }
+	// let ar: (()=>void)[] = map_get(raw.marker_events, name);
+	// if (ar == null) {
+	// 	ar = [];
+	// 	map_set(raw.marker_events, name, ar);
+	// }
+	// array_push(ar, on_marker);
 }
 
 function anim_remove_marker(raw: anim_raw_t, name: string, on_marker: ()=>void) {
