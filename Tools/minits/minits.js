@@ -42,6 +42,20 @@ function is_alpha(code) {
 		   (code == 95);				// _
 }
 
+function is_numeric(code) {
+	return (code > 47 && code < 58); // 0-9
+}
+
+function is_number(s) {
+	if (is_numeric(s.charCodeAt(0))) {
+		return true;
+	}
+	if (s.charAt(0) == "-" && is_numeric(s.charCodeAt(1))) {
+		return true;
+	}
+	return false;
+}
+
 function is_white_space(code) {
 	return code == 32 || // " "
 		   code == 9  || // "\t"
@@ -365,6 +379,9 @@ function write_js() {
 
 let enums = [];
 let value_types = new Map();
+let fn_default_params = new Map();
+let fn_call_stack = [];
+let param_pos_stack = [];
 
 function skip_until(s) {
 	while (true) {
@@ -458,7 +475,7 @@ function read_type() { // Cursor at ":"
 
 	if (get_token(1) == "[") { // Array
 		if (is_struct(type)) {
-			type = "any_array_t";
+			type = type + "_array_t";
 		}
 		else if (type == "bool") {
 			type = "u8_array_t";
@@ -487,7 +504,7 @@ function enum_access(s) {
 }
 
 function struct_access(s) {
-	if (s.indexOf(".") > -1 && is_alpha(s.charCodeAt(0))) {
+	if (s.indexOf(".") > -1 && !is_number(s) && s.charAt(0) != "\"") {
 		s = s.replaceAll(".", "->");
 	}
 	return s;
@@ -499,44 +516,85 @@ function struct_malloc(token, malloc_type) {
 		if (malloc_type.endsWith(" *")) { // mystruct * -> mystruct
 			malloc_type = malloc_type.substring(0, malloc_type.length - 2);
 		}
-		token = "malloc(sizeof(" + malloc_type + "))";
+		token = "gc_alloc(sizeof(" + malloc_type + "))";
 		pos++; // }
 		tabs--;
 	}
 	return token;
 }
 
+function array_type(name) {
+	let type = value_types.get(name);
+	if (type == null) {
+		return "any";
+	}
+	if (type.startsWith("struct ")) { // struct u8_array *
+		return type.substring(7, type.length - 8);
+	}
+	return type.substring(0, type.length - 10); // Strip _array_t *
+}
+
+function array_contents() {
+	let contents = [];
+	while (true) {
+		pos++;
+		let token = get_token();
+		if (token == "]") {
+			break;
+		}
+		if (token == ",") {
+			continue;
+		}
+		token = struct_access(token);
+		contents.push(token);
+	}
+	return contents;
+}
+
 function array_create(token, name) {
 	if (get_token(-1) == "=" && token == "[") {
+		if (name == "]") {
+			name = get_token(-6);
+		}
+		let base = name;
+		if (base.lastIndexOf(".") > -1) {
+			base = base.substring(base.lastIndexOf(".") + 1, base.length);
+		}
+		let type = array_type(base);
+
 		// "= []" -> _array_create
 		if (get_token(1) == "]") {
-			let type = value_types.get(name);
-			if (type == null) {
-				type = "any";
-			}
-			if (type.endsWith("_t *")) {
-				token = "any_array_create()";
-			}
-			else {
-				token = type + "_array_create()"; // i32_array_create
-			}
+			token = type + "_array_create(0)"; // any/i32/.._array_create
 			pos++;
 		}
 		// [1, 2, ..]
 		else {
-			let contents = [];
-			while (true) {
-				pos++;
-				let token = get_token();
-				if (token == "]") {
-					break;
-				}
-				if (token == ",") {
-					continue;
-				}
-				contents.push(token);
+			let contents = array_contents();
+
+			// todo:
+			token = type + "_array_create(0);\n";
+			for (let i = 0; i < tabs; ++i) {
+				token += "\t";
 			}
+			token += type + " _" + name.replaceAll(".", "_") + "[]={";
+			for (let e of contents) {
+				token += e;
+				token += ",";
+			}
+			token += "};\n";
+			for (let i = 0; i < tabs; ++i) {
+				token += "\t";
+			}
+			token += "for (i32 i = 0; i < " + contents.length + "; ++i) { " + type + "_array_push(" + struct_access(name) + ", _" + name.replaceAll(".", "_") + "[i]); }";
 		}
+	}
+	return token;
+}
+
+function array_access(token) {
+	// array[0] -> array->buffer[0]
+	if (get_token(-1) != "=" && token == "[") {
+		token = "->buffer["
 	}
 	return token;
 }
@@ -559,6 +617,55 @@ function strip_optional(name) {
 		name = name.substring(0, name.length - 1); // Strip "?" in "val?"
 	}
 	return name;
+}
+
+function param_pos() {
+	return param_pos_stack[param_pos_stack.length - 1];
+}
+
+function param_pos_add() {
+	param_pos_stack[param_pos_stack.length - 1]++;
+}
+
+function fn_call() {
+	return fn_call_stack[fn_call_stack.length - 1];
+}
+
+function get_filled_fn_params(token) {
+	let res = "";
+
+	if (token == "(") {
+		// Function is being called to init this variable
+		fn_call_stack.push(get_token(-1));
+		param_pos_stack.push(0);
+	}
+
+	if (token == ",") {
+		// Param has beed passed manually
+		param_pos_add();
+	}
+
+	if (token == ")") {
+		// Fill in default parameters if needed
+		if (get_token(-1) != "(") {
+			// Param has beed passed manually
+			param_pos_add();
+		}
+
+		// If default param exists, fill it
+		while (fn_default_params.has(fn_call() + param_pos())) {
+			if (param_pos() > 0) {
+				res += ",";
+			}
+			res += fn_default_params.get(fn_call() + param_pos());
+			param_pos_add();
+		}
+
+		fn_call_stack.pop();
+		param_pos_stack.pop();
+	}
+
+	return res;
 }
 
 function write_c() {
@@ -660,8 +767,16 @@ function write_c() {
 
 				// type_t * -> struct type *
 				if (type.endsWith("_t *")) {
-					let token_type_short = strip_t_star(type);
-					type = "struct " + token_type_short + " *";
+					let type_short = strip_t_star(type);
+					if (type_short.endsWith("_array")) { // tex_format_t_array -> i32_array
+						for (let e of enums) {
+							if (type_short.startsWith(e)) {
+								type_short = "i32_array";
+								break;
+							}
+						}
+					}
+					type = "struct " + type_short + " *";
 				}
 
 				skip_until(";");
@@ -674,9 +789,38 @@ function write_c() {
 		}
 	}
 
+	// Array structs (any_array_t -> scene_t_array_t)
+	let array_structs = new Map();
+	for (pos = 0; pos < tokens.length; ++pos) {
+		let token = get_token();
+		if (get_token(1) == "[") {
+			let type = token;
+			if (type == "string") {
+				type = "string_t";
+			}
+			if (is_struct(type)) {
+				if (!array_structs.has(type)) {
+					let as = "typedef struct " + type + "_array{" +
+						type + "**buffer;int length;int capacity;}" +
+						type + "_array_t;\n" +
+						type + "_array_t*" +
+						type + "_array_create(i32 length) {return malloc(sizeof(" + type + "_array_t));}";
+					array_structs.set(type, as);
+				}
+			}
+			pos += 2; // Skip "[]"
+		}
+	}
+
+	for (let as of array_structs.values()) {
+		stream.write(as);
+		stream.write("\n")
+	}
+	stream.write("\n")
+
 	// Function declarations
 	let fn_declarations = new Map();
-	let fn_default_params = new Map();
+	fn_default_params = new Map();
 	for (pos = 0; pos < tokens.length; ++pos) {
 		let token = get_token();
 
@@ -687,7 +831,7 @@ function write_c() {
 			let ret = function_return_type();
 
 			// Params
-			let param_pos = 0;
+			let _param_pos = 0;
 			let params = "(";
 			pos++; // (
 			while (true) {
@@ -700,7 +844,7 @@ function write_c() {
 
 				if (token == ",") { // Next param
 					params += ",";
-					param_pos++;
+					_param_pos++;
 					continue;
 				}
 
@@ -713,7 +857,9 @@ function write_c() {
 
 				// Store param default
 				if (get_token(1) == "=") {
-					fn_default_params.set(fn_name + param_pos, get_token(2));
+					let param = get_token(2);
+					param = enum_access(param);
+					fn_default_params.set(fn_name + _param_pos, param);
 					pos += 2;
 				}
 			}
@@ -746,44 +892,20 @@ function write_c() {
 			let is_initialized = get_token(1) == "=";
 			if (is_initialized) {
 				let init = name;
-				let fn_call = "";
-				let param_pos = 0;
+				tabs = 1;
 				while (true) {
 					pos++;
 					token = get_token();
 
 					token = enum_access(token);
+					token = array_access(token);
+					token = struct_malloc(token, type);
 
 					if (token == ";") {
 						break;
 					}
 
-					if (token == "(") {
-						// Function is being called to init this variable
-						fn_call = get_token(-1);
-					}
-
-					if (token == ",") {
-						// Param has already beed passed manually
-						param_pos++;
-					}
-
-					if (token == ")") {
-						// Fill in default parameters if needed
-						if (get_token(-1) != "(") {
-							// Param has beed passed manually
-							param_pos++;
-						}
-
-						// If default param exists, fill it
-						while (fn_default_params.has(fn_call + param_pos)) {
-							if (param_pos > 0) {
-								init += ",";
-							}
-							init += fn_default_params.get(fn_call + param_pos);
-							param_pos++;
-						}
-					}
+					init += get_filled_fn_params(token);
 
 					// [] -> _array_create
 					token = array_create(token, name);
@@ -805,7 +927,7 @@ function write_c() {
 
 	// Globals init
 	stream.write("\nvoid _globals_init() {\n");
-	for (val of global_inits) {
+	for (let val of global_inits) {
 		stream.write("\t");
 		stream.write(val);
 		stream.write(";\n");
@@ -827,7 +949,7 @@ function write_c() {
 			skip_until("{");
 			tabs = 1;
 			new_line = true;
-			malloc_type = "";
+			let malloc_type = "";
 
 			while (true) {
 				pos++;
@@ -842,10 +964,9 @@ function write_c() {
 				handle_tabs(token);
 
 				// Write type and name
-				let name = "";
 				if (token == "let") {
 					pos++;
-					name = get_token();
+					let name = get_token();
 
 					pos++; // :
 					let type = read_type();
@@ -862,15 +983,20 @@ function write_c() {
 				token = enum_access(token);
 				token = struct_access(token);
 
+				// array[0] -> array->buffer[0]
+				token = array_access(token);
+
 				// Turn "= {}" into malloc()
 				token = struct_malloc(token, malloc_type);
 
-				if (name == "") { // todo: raw.frustum_planes = []
-					name = get_token(-2);
-				}
-
 				// [] -> _array_create
-				token = array_create(token, name);
+				token = array_create(token, get_token(-2));
+
+				// a(1) -> a(1, 2) // a(x: i32, y: i32 = 2)
+				let filled_fn_params = get_filled_fn_params(token);
+				if (token == ")") {
+					token = filled_fn_params + ")";
+				}
 
 				// Write token
 				stream.write(token);

@@ -40,6 +40,7 @@ function map_delete<K, V>(m: map_t<K, V>, k: any) { m.delete(k); }
 function array_sort(ar: any[], fn: (a: any, b: any)=>i32) { ar.sort(fn); }
 function array_push(ar: any[], e: any) { ar.push(e); }
 function array_splice(ar: any[], start: i32, delete_count: i32) { ar.splice(start, delete_count); }
+function array_concat(a: any[], b: any[]): any[] { return a.concat(b); }
 function string_index_of(s: string, search: string): i32 { return s.indexOf(search); }
 function string_last_index_of(s: string, search: string): i32 { return s.lastIndexOf(search); }
 function string_split(s: string, sep: string): string[] { return s.split(sep); }
@@ -89,7 +90,7 @@ function trim_end(str: string): string {
     return str;
 }
 
-function color_from_floats(r: f32, g: f32, b: f32, a: f32 = 1.0): i32 {
+function color_from_floats(r: f32, g: f32, b: f32, a: f32): i32 {
     return (Math.round(a * 255) << 24) | (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255);
 }
 

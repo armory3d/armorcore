@@ -28,6 +28,14 @@ int kickstart(int argc, char **argv) {
     return 0;
 }
 
+void *gc_alloc (size_t size) {
+    return calloc(size, sizeof(uint8_t));
+}
+
+void gc_free() {
+
+}
+
 #define f32 float
 #define i32 int32_t
 #define u32 uint32_t
@@ -72,6 +80,7 @@ void map_delete(map_t *m, any k) { }
 void array_sort(any ar, void *fn) { }
 void array_push(any ar, any e) { }
 void array_splice(any ar, i32 start, i32 delete_count) { }
+void *array_concat(any a, any b) { return NULL; }
 i32 string_index_of(string_t *s, string_t *search) { return 0; }
 i32 string_last_index_of(string_t *s, string_t *search) { return 0; }
 void *string_split(string_t *s, string_t *sep) { return NULL; }

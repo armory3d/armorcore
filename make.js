@@ -710,6 +710,9 @@ class ArmorCoreExporter {
 		else if (process.platform === 'darwin') {
 			defines.push('krom_darwin');
 		}
+		if (globalThis.flags.with_minits) {
+			defines.push('arm_minits');
+		}
 		return {
 			from: this.options.from.toString(),
 			to: path.join(this.sysdir(), 'krom.js.temp'),

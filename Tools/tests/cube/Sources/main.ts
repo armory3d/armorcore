@@ -1,6 +1,6 @@
 // ../../../Kinc/make --from ../../../ -g opengl --compiler clang --run
 
-let raw: scene_t;
+let raw: scene_t = {};
 
 function start() {
 	let ops: kinc_sys_ops_t = {};
@@ -22,14 +22,14 @@ function sys_started() {
 
 function render_commands() {
 	render_path_set_target("");
-	render_path_clear_target(0xff6495ed, 1.0);
+	render_path_clear_target(0xff6495ed, 1.0, clear_flag_t.COLOR | clear_flag_t.DEPTH);
 	render_path_draw_meshes("mesh");
 }
 
 function app_ready() {
 	render_path_commands = render_commands;
 
-	raw = {};
+	// raw = {};
 	raw.name = "Scene";
 	raw.shader_datas = [];
 	raw.material_datas = [];
