@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "iron_array.h"
 
 #ifdef __GNUC__
 #define PACK(__Declaration__) __Declaration__ __attribute__((__packed__))
@@ -15,6 +16,7 @@
 #endif
 
 void *armpack_decode(void *encoded, uint32_t len);
+void *armpack_decodeb(buffer_t *b);
 
 void armpack_encode_start(void *encoded);
 void armpack_encode_map(uint32_t count);
@@ -42,20 +44,20 @@ int armpack_size_f32();
 	};
 */
 
-/*	C struct:
+/* C struct:
 
-	typedef struct point {
+	typedef PACK(struct point {
 		int x;
 		int y;
-	}__attribute__((packed)) point_t;
+	}) point_t;
 
-	typedef struct test {
+	typedef PACK(struct test {
 		char *name;
 		point_t point;
-		int *array;
-		int array_count;
-	}__attribute__((packed)) test_t;
-
+		int32_array_t *array;
+		// Optional pointer for storing runtime data
+		void *_;
+	}) test_t;
 */
 
 /*
@@ -74,7 +76,9 @@ int armpack_size_f32();
 		void *encoded = malloc(size);
 		armpack_encode_start(encoded);
 		armpack_encode_map(2);
+		armpack_encode_string("x");
 		armpack_encode_i32(a.x);
+		armpack_encode_string("y");
 		armpack_encode_i32(a.y);
 
 		point_t *decoded = armpack_decode(encoded, size);

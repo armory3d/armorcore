@@ -98,14 +98,11 @@ static char *read_string() {
 static uint32_t traverse() {
 	uint8_t flag = read_u8();
 	switch (flag) {
-	// case 0xc0: // NULL
-	// 	ei += 1;
-	// 	return PTR_SIZE;
+	case 0xc0: // NULL
+		return PTR_SIZE;
 	case 0xc2: // false
-		ei += 1;
 		return 1;
 	case 0xc3: // true
-		ei += 1;
 		return 1;
 	case 0xca: // f32
 		ei += 4;
@@ -121,6 +118,7 @@ static uint32_t traverse() {
 			read_string(); // key
 			len += traverse(); // value
 		}
+		len += PTR_SIZE; // void *_
 		return len;
 	}
 	case 0xdd: { // array
@@ -140,12 +138,13 @@ static uint32_t traverse() {
 			ei += count;
 			break;
 		default: // Dynamic type-value
-			ei -= 1;
+			ei -= 1; // Undo flag2 read
 			for (int j = 0; j < count; ++j) {
 				traverse();
 			}
 		}
-		return PTR_SIZE + 4; // ptr + u32 element count
+		// ptr (to array_t)
+		return PTR_SIZE;
 	}
 	case 0xdb: // string
 		ei += read_u32(); // string_length
@@ -171,6 +170,7 @@ static void read_store_map(int count) {
 		read_string(); // key
 		read_store(); // value
 	}
+	di += PTR_SIZE; // void *_ for runtime storage
 }
 
 static bool is_typed_array(uint8_t flag) {
@@ -192,25 +192,27 @@ static void store_typed_array(uint8_t flag, uint32_t count) {
 	di += size;
 }
 
-static void read_store_array(int count) {
-	// if (count == 0) {
-	// 	store_ptr(0);
-	// 	store_i32(0);
-	// 	return;
-	// }
-
+static void read_store_array(int count) { // Store in any/i32/../_array_t format
+	// Store pointer to array_t struct
 	// Put array contents at the bottom
-	// Store pointers to array elements
-	// Store element count
+	// - pointer to array_t buffer
+	// - element count
+	// - capacity (same as count)
+	// - buffer
 	store_ptr(bottom);
-	store_i32(count);
-
-	if (count == 0) {
-		return;
-	}
 
 	uint32_t _di = di;
 	di = bottom;
+
+	store_ptr(di + PTR_SIZE + 4 + 4); // Pointer to buffer contents
+	store_i32(count); // Element count
+	store_i32(count); // Capacity
+	bottom = di;
+
+	if (count == 0) {
+		di = _di;
+		return;
+	}
 
 	uint8_t flag = read_u8();
 	if (is_typed_array(flag)) {
@@ -219,7 +221,7 @@ static void read_store_array(int count) {
 	}
 	// Dynamic (type - value)
 	else {
-		ei -= 1;
+		ei -= 1; // Undo flag read
 		array_count = count;
 
 		// Strings
@@ -249,10 +251,12 @@ static void read_store_array(int count) {
 		// Structs
 		else {
 			uint32_t size = get_struct_length();
+			// Struct pointers
 			for (int i = 0; i < count; ++i) {
 				store_ptr(bottom + count * PTR_SIZE + i * size);
 			}
 
+			// Struct contents
 			bottom = di;
 			for (int i = 0; i < count; ++i) {
 				read_store();
@@ -268,9 +272,10 @@ static void read_store_array(int count) {
 static void read_store() {
 	uint8_t flag = read_u8();
 	switch (flag) {
-	// case 0xc0:
-	// 	store_i32(0); // NULL
-	// 	break;
+	case 0xc0:
+		store_i32(0); // NULL
+		store_i32(0);
+		break;
 	case 0xc2:
 		store_u8(false);
 		break;
@@ -307,6 +312,10 @@ void *armpack_decode(void *_encoded, uint32_t len) {
 	return decoded;
 }
 
+void *armpack_decodeb(buffer_t *b) {
+	return armpack_decode(b->data, b->length);
+}
+
 void armpack_encode_start(void *_encoded) {
 	encoded = _encoded;
 	ei = 0;
@@ -332,7 +341,7 @@ void armpack_encode_map(uint32_t count) {
 	armpack_write_i32(count);
 }
 
-void armpack_encode_array(uint32_t count) {
+void armpack_encode_array(uint32_t count) { // any
 	armpack_write_u8(0xdd);
 	armpack_write_i32(count);
 }
