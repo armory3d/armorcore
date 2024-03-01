@@ -15,8 +15,7 @@ typedef PACK(struct zui_node_socket {
 	char *name;
 	char *type;
 	uint32_t color;
-	void *default_value;
-	int default_value_count; // Byte length
+	any_array_t *default_value;
 	float min;
 	float max;
 	float precision;
@@ -27,15 +26,25 @@ typedef PACK(struct zui_node_button {
 	char *name;
 	char *type;
 	int output;
-	void *default_value;
-	int default_value_count; // Byte length
-	void *data;
-	int data_count; // Byte length
+	any_array_t *default_value;
+	any_array_t *data;
 	float min;
 	float max;
 	float precision;
 	float height;
 }) zui_node_button_t;
+
+typedef struct zui_node_socket_array {
+	zui_node_socket_t **buffer;
+	int length;
+	int capacity;
+} zui_node_socket_array_t;
+
+typedef struct zui_node_button_array {
+	zui_node_button_t **buffer;
+	int length;
+	int capacity;
+} zui_node_button_array_t;
 
 typedef PACK(struct zui_node {
 	int id;
@@ -44,12 +53,9 @@ typedef PACK(struct zui_node {
 	int x; // float x;
 	int y; // float y;
 	uint32_t color;
-	zui_node_socket_t **inputs;
-	int inputs_count;
-	zui_node_socket_t **outputs;
-	int outputs_count;
-	zui_node_button_t **buttons;
-	int buttons_count;
+	zui_node_socket_array_t *inputs;
+	zui_node_socket_array_t *outputs;
+	zui_node_button_array_t *buttons;
 	int width; // float width
 }) zui_node_t;
 
@@ -61,13 +67,23 @@ typedef PACK(struct zui_node_link {
 	int to_socket;
 }) zui_node_link_t;
 
+typedef struct zui_node_array {
+	zui_node_t **buffer;
+	int length;
+	int capacity;
+} zui_node_array_t;
+
+typedef struct zui_node_link_array {
+	zui_node_link_t **buffer;
+	int length;
+	int capacity;
+} zui_node_link_array_t;
+
 typedef PACK(struct zui_node_canvas {
 	char *name;
-	zui_node_t **nodes;
-	int nodes_capacity; // 128
+	zui_node_array_t *nodes; // 128
 	int nodes_count;
-	zui_node_link_t **links;
-	int links_capacity; // 256
+	zui_node_link_array_t *links; // 256
 	int links_count;
 }) zui_node_canvas_t;
 

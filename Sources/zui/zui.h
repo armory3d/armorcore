@@ -100,15 +100,19 @@ typedef struct zui_text_extract {
 
 typedef PACK(struct zui_coloring {
 	uint32_t color;
-	char **start;
-	int start_count;
+	char_ptr_array_t *start;
 	char *end;
 	bool separated;
 }) zui_coloring_t;
 
+typedef struct zui_coloring_array {
+	zui_coloring_t **buffer;
+	int length;
+	int capacity;
+} zui_coloring_array_t;
+
 typedef PACK(struct zui_text_coloring {
-	zui_coloring_t **colorings;
-	int colorings_count;
+	zui_coloring_array_t *colorings;
 	uint32_t default_color;
 }) zui_text_coloring_t;
 

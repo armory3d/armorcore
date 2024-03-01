@@ -211,7 +211,7 @@ zui_text_extract_t zui_extract_coloring(char *text, zui_coloring_t *col) {
 	for (int i = 0; i < strlen(text); ++i) {
 		bool skip_first = false;
 		// Check if upcoming text should be colored
-		int length = zui_check_start(i, text, col->start, col->start_count);
+		int length = zui_check_start(i, text, col->start->buffer, col->start->length);
 		// Not touching another character
 		bool separated_left = i == 0 || !zui_is_char(text[i - 1]);
 		bool separated_right = i + length >= strlen(text) || !zui_is_char(text[i + length]);
@@ -297,8 +297,8 @@ void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool
 		// Monospace fonts only for now
 		char tmp[512];
 		strcpy(tmp, text);
-		for (int i = 0; i < current->text_coloring->colorings_count; ++i) {
-			zui_coloring_t *coloring = current->text_coloring->colorings[i];
+		for (int i = 0; i < current->text_coloring->colorings->length; ++i) {
+			zui_coloring_t *coloring = current->text_coloring->colorings->buffer[i];
 			zui_text_extract_t result = zui_extract_coloring(tmp, coloring);
 			if (result.colored[0] != '\0') {
 				g2_set_color(coloring->color);
