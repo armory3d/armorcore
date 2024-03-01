@@ -377,11 +377,21 @@ function write_js() {
 // ╚███╔███╔╝    ██║  ██║    ██║       ██║       ███████╗        ╚██████╗
 //  ╚══╝╚══╝     ╚═╝  ╚═╝    ╚═╝       ╚═╝       ╚══════╝         ╚═════╝
 
+let basic_types = ["i8", "u8", "i16", "u16", "i32", "u32", "f32", "bool"];
 let enums = [];
 let value_types = new Map();
+let struct_types = new Map();
 let fn_default_params = new Map();
 let fn_call_stack = [];
 let param_pos_stack = [];
+
+function get_token_after_piece() {
+	let _pos = pos;
+	read_piece();
+	let t = get_token(1);
+	pos = _pos;
+	return t;
+}
 
 function skip_until(s) {
 	while (true) {
@@ -469,6 +479,10 @@ function read_type() { // Cursor at ":"
 		type = ret + "(*NAME)" + params;
 	}
 
+	if (type == "color_t") {
+		type = "i32";
+	}
+
 	if (type == "string") {
 		type = "string_t";
 	}
@@ -488,6 +502,17 @@ function read_type() { // Cursor at ":"
 
 	if (is_struct(type)) {
 		type += " *";
+	}
+
+	if (type == "map_t *" && get_token(1) == "<") {
+		let t = get_token(4);
+		if (basic_types.indexOf(t) > -1) {
+			type = "i32_" + type;
+		}
+		else {
+			type = "any_" + type;
+		}
+		pos += 5; // Skip <a, b>
 	}
 
 	return type;
@@ -524,14 +549,20 @@ function struct_malloc(token, malloc_type) {
 }
 
 function array_type(name) {
-	let type = value_types.get(name);
+	let type = value_type(name);
 	if (type == null) {
 		return "any";
 	}
 	if (type.startsWith("struct ")) { // struct u8_array *
-		return type.substring(7, type.length - 8);
+		type = type.substring(7, type.length - 2) + "_t *";
 	}
-	return type.substring(0, type.length - 10); // Strip _array_t *
+	type = strip(type, 10); // _array_t *
+	if (basic_types.indexOf(type) > -1) {
+		return type;
+	}
+	else {
+		return "any";
+	}
 }
 
 function array_contents() {
@@ -585,7 +616,9 @@ function array_create(token, name) {
 			for (let i = 0; i < tabs; ++i) {
 				token += "\t";
 			}
-			token += "for (i32 i = 0; i < " + contents.length + "; ++i) { " + type + "_array_push(" + struct_access(name) + ", _" + name.replaceAll(".", "_") + "[i]); }";
+			let push_type = type;
+			token += "for (i32 i = 0; i < " + contents.length + "; ++i) { " +
+				type + "_array_push(" + struct_access(name) + ", _" + name.replaceAll(".", "_") + "[i]); }";
 		}
 	}
 	return token;
@@ -604,17 +637,13 @@ function is_struct(type) {
 	return type.endsWith("_t") && enums.indexOf(type) == -1;
 }
 
-function strip_t(type) {
-	return type.substring(0, type.length - 2); // Strip "_t"
-}
-
-function strip_t_star(type) {
-	return type.substring(0, type.length - 4); // Strip "_t *"
+function strip(name, len) {
+	return name.substring(0, name.length - len);
 }
 
 function strip_optional(name) {
 	if (name.endsWith("?")) {
-		name = name.substring(0, name.length - 1); // Strip "?" in "val?"
+		name = strip(name, 1); // :val? -> :val
 	}
 	return name;
 }
@@ -666,6 +695,76 @@ function get_filled_fn_params(token) {
 	}
 
 	return res;
+}
+
+function get_token_c() {
+	let t = get_token();
+	t = enum_access(t);
+	t = struct_access(t);
+	t = array_access(t);
+	return t;
+}
+
+function read_piece(nested = 0) {
+	let piece = get_token_c();
+	piece = enum_access(piece);
+	piece = struct_access(piece);
+	piece = array_access(piece);
+
+	piece = string_length(piece);
+
+	if (get_token(1) == "(" || get_token(1) == "[") {
+		nested++;
+		pos++;
+		return piece + read_piece(nested);
+	}
+
+	if (get_token(1) == ")" || get_token(1) == "]") {
+		nested--;
+		if (nested < 0) {
+			return piece;
+		}
+		pos++;
+		return piece + read_piece(nested);
+	}
+
+	if (nested > 0) {
+		pos++;
+		return piece + read_piece(nested);
+	}
+
+	if (get_token(1).startsWith(".")) {
+		pos++;
+		return piece + read_piece();
+	}
+
+	return piece;
+}
+
+function string_length(token) {
+	let base = strip(token, 8); // ->length
+	base = value_type(base);
+	if (base == "struct string *") {
+		base = "string_t *";
+	}
+
+	if (token.endsWith("->length") && base == "string_t *") {
+		token = "string_length(" + strip(token, 8) + ")";
+	}
+	return token;
+}
+
+function value_type(value) {
+	if (value.indexOf("->") > -1) {
+		base = value.substring(0, value.indexOf("->"));
+		let type = value_types.get(base);
+		let struct_value_types = struct_types.get(type);
+		if (struct_value_types != null) {
+			let struct_value = value.substring(value.indexOf("->") + 2, value.length);
+			return struct_value_types.get(struct_value);
+		}
+	}
+	return value_types.get(value);
 }
 
 function write_c() {
@@ -724,7 +823,7 @@ function write_c() {
 		if (token == "type") {
 			pos++;
 			let struct_name = get_token();
-			let stuct_name_short = strip_t(struct_name);
+			let stuct_name_short = strip(struct_name, 2); // _t
 
 			pos++;
 			token = get_token(); // =
@@ -746,7 +845,11 @@ function write_c() {
 			}
 
 			// "type x = {};"
-			stream.write("typedef struct " + stuct_name_short + "{\n");
+			// Use PACK() for armpack support (use only when " _: " is present?)
+			stream.write("typedef PACK(struct " + stuct_name_short + "{\n");
+
+			let struct_value_types = new Map();
+			struct_types.set(struct_name + " *", struct_value_types);
 
 			while (true) {
 				// Struct contents
@@ -754,7 +857,7 @@ function write_c() {
 				let name = get_token();
 
 				if (name == "}") { // Struct end
-					stream.write("}" + struct_name + ";\n");
+					stream.write("})" + struct_name + ";\n");
 					break;
 				}
 
@@ -767,7 +870,7 @@ function write_c() {
 
 				// type_t * -> struct type *
 				if (type.endsWith("_t *")) {
-					let type_short = strip_t_star(type);
+					let type_short = strip(type, 4); // _t *
 					if (type_short.endsWith("_array")) { // tex_format_t_array -> i32_array
 						for (let e of enums) {
 							if (type_short.startsWith(e)) {
@@ -782,6 +885,7 @@ function write_c() {
 				skip_until(";");
 
 				stream.write("\t" + join_type_name(type, name) + ";\n");
+				struct_value_types.set(name, type);
 			}
 
 			stream.write("\n");
@@ -802,9 +906,7 @@ function write_c() {
 				if (!array_structs.has(type)) {
 					let as = "typedef struct " + type + "_array{" +
 						type + "**buffer;int length;int capacity;}" +
-						type + "_array_t;\n" +
-						type + "_array_t*" +
-						type + "_array_create(i32 length) {return malloc(sizeof(" + type + "_array_t));}";
+						type + "_array_t;";
 					array_structs.set(type, as);
 				}
 			}
@@ -910,6 +1012,16 @@ function write_c() {
 					// [] -> _array_create
 					token = array_create(token, name);
 
+					if (token == "map_create") {
+						let t = value_type(name);
+						if (t == "i32_map_t *") {
+							token = "i32_map_create";
+						}
+						else {
+							token = "any_map_create";
+						}
+					}
+
 					init += token;
 				}
 				global_inits.push(init);
@@ -946,7 +1058,34 @@ function write_c() {
 			stream.write(fn_decl + "{\n");
 
 			// Function body
+
+			//// Re-set function param types into value_types map
+			pos++; // (
+			while (true) {
+				pos++;
+				let t = get_token(); // Param name, ) or ,
+
+				if (t == ")") { // Params end
+					break;
+				}
+
+				if (t == ",") { // Next param
+					continue;
+				}
+
+				let name = t;
+				pos++; // :
+				let type = read_type();
+
+				value_types.set(name, type);
+
+				if (get_token(1) == "=") {
+					pos += 2;
+				}
+			}
+			////
 			skip_until("{");
+
 			tabs = 1;
 			new_line = true;
 			let malloc_type = "";
@@ -987,10 +1126,138 @@ function write_c() {
 				token = array_access(token);
 
 				// Turn "= {}" into malloc()
+				if (get_token(-1) == "=" && token == "{" && get_token(1) == "}") {
+					let t = struct_access(get_token(-2));
+					let type = value_type(t);
+					if (type != null) {
+						malloc_type = type;
+					}
+				}
 				token = struct_malloc(token, malloc_type);
 
 				// [] -> _array_create
 				token = array_create(token, get_token(-2));
+
+				// array_push -> i32_array_push/any_array_push
+				if (token == "array_push") {
+					let value = get_token(2);
+
+					if (get_token(3) == "[") { // raws[i].value
+						value = get_token(6).substring(1); // .value
+					}
+
+					if (value.lastIndexOf(".") > -1) {
+						value = value.substring(value.lastIndexOf(".") + 1, value.length);
+					}
+					let type = array_type(value);
+					token = type + "_array_push";
+				}
+
+				// Maps
+				if (token == "map_create") {
+					let t = value_type(get_token(-2));
+					if (t == "i32_map_t *") {
+						token = "i32_map_create";
+					}
+					else {
+						token = "any_map_create";
+					}
+				}
+
+				if (token == "map_set") {
+					let t = value_type(get_token(2));
+					if (t == "i32_map_t *") {
+						token = "i32_map_set";
+					}
+					else {
+						token = "any_map_set";
+					}
+				}
+
+				if (token == "map_get") {
+					let t = value_type(get_token(2));
+					if (t == "i32_map_t *") {
+						token = "i32_map_get";
+					}
+					else {
+						token = "any_map_get";
+					}
+				}
+
+				// Strings
+				let is_string = token.startsWith("\"") || value_type(token) == "string_t *";
+
+				if (!is_string) {
+					let _pos = pos;
+					read_piece();
+					if (get_token(1) == "+" || get_token(1) == "+=" || get_token(1) == "==" || get_token(1) == "!=") {
+						if (get_token(2).startsWith("\"") || value_type(get_token(2)) == "string_t *") {
+							is_string = true;
+						}
+					}
+					pos = _pos;
+				}
+
+				if (is_string && get_token(2) == "null") {
+					is_string = false;
+				}
+
+				if (is_string) {
+					// "str" + str
+					while (get_token_after_piece() == "+") {
+						token = read_piece();
+						pos++;
+
+						if (value_type(token) == "i32") {
+							token = "i32_to_string(" + token + ")";
+						}
+
+						token = "string_join(" + token + ",";
+						pos++;
+						token += read_piece();
+						token += ")";
+					}
+
+					// "str" += str
+					if (get_token_after_piece(1) == "+=") {
+						token = read_piece();
+						pos++;
+
+						token = token + "=string_join(" + token + ",";
+						pos++;
+						token += read_piece();
+						token += ")";
+					}
+
+					// "str" == str
+					if (get_token_after_piece(1) == "==") {
+						token = read_piece();
+						pos++;
+
+						token = "string_equals(" + token + ",";
+						pos++;
+						token += read_piece();
+						token += ")";
+					}
+
+					// "str" != str
+					if (get_token_after_piece(1) == "!=") {
+						token = read_piece();
+						pos++;
+
+						token = "!string_equals(" + token + ",";
+						pos++;
+						token += read_piece();
+						token += ")";
+					}
+				}
+
+				// str->length -> string_length(str)
+				token = string_length(token);
+
+				if (token == "armpack_decode") {
+					token = "armpack_decodeb"; // todo
+				}
 
 				// a(1) -> a(1, 2) // a(x: i32, y: i32 = 2)
 				let filled_fn_params = get_filled_fn_params(token);

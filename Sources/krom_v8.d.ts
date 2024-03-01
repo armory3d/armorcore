@@ -31,12 +31,12 @@ declare function krom_show_mouse(show: bool): void;
 declare function krom_show_keyboard(show: bool): void;
 
 declare function krom_g4_create_index_buffer(count: i32): any;
-declare function krom_g4_delete_index_buffer(buffer: any): any;
+declare function krom_g4_delete_index_buffer(buffer: any): void;
 declare function krom_g4_lock_index_buffer(buffer: any): Uint32Array;
 declare function krom_g4_unlock_index_buffer(buffer: any): void;
 declare function krom_g4_set_index_buffer(buffer: any): void;
 declare function krom_g4_create_vertex_buffer(count: i32, structure: kinc_vertex_elem_t[], usage: i32, inst_data_step_rate: i32): any;
-declare function krom_g4_delete_vertex_buffer(buffer: any): any;
+declare function krom_g4_delete_vertex_buffer(buffer: any): void;
 declare function krom_g4_lock_vertex_buffer(buffer: any): ArrayBuffer;
 declare function krom_g4_unlock_vertex_buffer(buffer: any): void;
 declare function krom_g4_set_vertex_buffer(buffer: any): void;
@@ -46,9 +46,9 @@ declare function krom_g4_draw_indexed_vertices_instanced(inst_count: i32, start:
 declare function krom_g4_create_shader(data: ArrayBuffer, type: i32): any;
 declare function krom_g4_create_vertex_shader_from_source(source: string): any;
 declare function krom_g4_create_fragment_shader_from_source(source: string): any;
-declare function krom_g4_delete_shader(shader: any): any;
+declare function krom_g4_delete_shader(shader: any): void;
 declare function krom_g4_create_pipeline(): any;
-declare function krom_g4_delete_pipeline(pipeline: any): any;
+declare function krom_g4_delete_pipeline(pipeline: any): void;
 declare function krom_g4_compile_pipeline(pipeline: any, structure0: any, structure1: any, structure2: any, structure3: any, length: i32, vertex_shader: any, fragment_shader: any, geometry_shader: any, state: any): void;
 declare function krom_g4_set_pipeline(pipeline: any): void;
 declare function krom_load_image(file: string, readable: bool): any;
