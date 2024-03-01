@@ -4,7 +4,6 @@ type anim_raw_t = {
 	ext?: any; // anim_bone_t | anim_object_t
 	ext_type?: string;
 	is_skinned?: bool;
-	is_sampled?: bool;
 	action?: string;
 	///if arm_skin
 	armature?: armature_t; // Bone

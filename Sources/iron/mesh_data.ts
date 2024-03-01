@@ -29,6 +29,8 @@ function mesh_data_get_raw_by_name(datas: mesh_data_t[], name: string): mesh_dat
 }
 
 function mesh_data_create(raw: mesh_data_t): mesh_data_t {
+	raw._ = {};
+
 	if (!raw.scale_pos) {
 		raw.scale_pos = 1.0;
 	}
@@ -36,11 +38,11 @@ function mesh_data_create(raw: mesh_data_t): mesh_data_t {
 		raw.scale_tex = 1.0;
 	}
 
-	raw._refcount = 0;
-	raw._vertex_buffer_map = map_create();
-	raw._ready = false;
-	raw._instanced = false;
-	raw._instance_count = 0;
+	raw._.refcount = 0;
+	raw._.vertex_buffer_map = map_create();
+	raw._.ready = false;
+	raw._.instanced = false;
+	raw._.instance_count = 0;
 
 	// Mesh data
 	let indices: u32_array_t[] = [];
@@ -67,12 +69,10 @@ function mesh_data_create(raw: mesh_data_t): mesh_data_t {
 		array_push(vertex_arrays, va_bone);
 		array_push(vertex_arrays, va_weight);
 	}
-	for (let i: i32 = 0; i < vertex_arrays.length; ++i) {
-		vertex_arrays[i]._size = mesh_data_get_vertex_size(vertex_arrays[i].data);
-	}
 
 	if (raw.skin != null) {
-		let vertex_length: i32 = math_floor(vertex_arrays[0].values.length / vertex_arrays[0]._size);
+		let size: i32 = mesh_data_get_vertex_size(vertex_arrays[0].data);
+		let vertex_length: i32 = math_floor(vertex_arrays[0].values.length / size);
 		let l: i32 = vertex_length * 4;
 		let bonea: i16_array_t = i16_array_create(l);
 		let weighta: i16_array_t = i16_array_create(l);
@@ -99,9 +99,9 @@ function mesh_data_create(raw: mesh_data_t): mesh_data_t {
 	}
 
 	// Make vertex buffers
-	raw._indices = indices;
-	raw._material_indices = material_indices;
-	raw._struct = mesh_data_get_vertex_struct(raw.vertex_arrays);
+	raw._.indices = indices;
+	raw._.material_indices = material_indices;
+	raw._.structure = mesh_data_get_vertex_struct(raw.vertex_arrays);
 
 	return raw;
 }
@@ -127,11 +127,12 @@ function mesh_data_get_vertex_data(data: string): vertex_data_t {
 }
 
 function mesh_data_build_vertices(vertices: buffer_view_t, vertex_arrays: vertex_array_t[], offset: i32 = 0, fake_uvs: bool = false, uvs_index: i32 = -1) {
-	let num_verts: i32 = vertex_arrays[0].values.length / vertex_arrays[0]._size;
+	let size: i32 = mesh_data_get_vertex_size(vertex_arrays[0].data);
+	let num_verts: i32 = vertex_arrays[0].values.length / size;
 	let di: i32 = -1 + offset;
 	for (let i: i32 = 0; i < num_verts; ++i) {
 		for (let va: i32 = 0; va < vertex_arrays.length; ++va) {
-			let l: i32 = vertex_arrays[va]._size;
+			let l: i32 = mesh_data_get_vertex_size(vertex_arrays[va].data);
 			if (fake_uvs && va == uvs_index) { // Add fake uvs if uvs where "asked" for but not found
 				for (let j: i32 = 0; j < l; ++j) {
 					buffer_view_set_i16(vertices, ++di * 2, 0);
@@ -169,7 +170,7 @@ function mesh_data_get_vertex_array(raw: mesh_data_t, name: string): vertex_arra
 function mesh_data_setup_inst(raw: mesh_data_t, data: f32_array_t, inst_type: i32) {
 	let structure: vertex_struct_t = g4_vertex_struct_create();
 	structure.instanced = true;
-	raw._instanced = true;
+	raw._.instanced = true;
 	// pos, pos+rot, pos+scale, pos+rot+scale
 	g4_vertex_struct_add(structure, "ipos", vertex_data_t.F32_3X);
 	if (inst_type == 2 || inst_type == 4) {
@@ -179,13 +180,13 @@ function mesh_data_setup_inst(raw: mesh_data_t, data: f32_array_t, inst_type: i3
 		g4_vertex_struct_add(structure, "iscl", vertex_data_t.F32_3X);
 	}
 
-	raw._instance_count = math_floor(data.length / math_floor(g4_vertex_struct_byte_size(structure) / 4));
-	raw._instanced_vb = g4_vertex_buffer_create(raw._instance_count, structure, usage_t.STATIC, 1);
-	let vertices: buffer_view_t = g4_vertex_buffer_lock(raw._instanced_vb);
+	raw._.instance_count = math_floor(data.length / math_floor(g4_vertex_struct_byte_size(structure) / 4));
+	raw._.instanced_vb = g4_vertex_buffer_create(raw._.instance_count, structure, usage_t.STATIC, 1);
+	let vertices: buffer_view_t = g4_vertex_buffer_lock(raw._.instanced_vb);
 	for (let i: i32 = 0; i < math_floor(buffer_view_size(vertices) / 4); ++i) {
 		buffer_view_set_f32(vertices, i * 4, data[i]);
 	}
-	g4_vertex_buffer_unlock(raw._instanced_vb);
+	g4_vertex_buffer_unlock(raw._.instanced_vb);
 }
 
 function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_t {
@@ -194,7 +195,7 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 		let e: vertex_element_t = vs[i];
 		key += e.name;
 	}
-	let vb: vertex_buffer_t = map_get(raw._vertex_buffer_map, key);
+	let vb: vertex_buffer_t = map_get(raw._.vertex_buffer_map, key);
 	if (vb == null) {
 		let vertex_arrays: vertex_array_t[] = [];
 		let has_tex: bool = false;
@@ -219,11 +220,12 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 		let uvs: vertex_array_t = mesh_data_get_vertex_array(raw, "tex");
 		let cols: vertex_array_t = mesh_data_get_vertex_array(raw, "col");
 		let vstruct: vertex_struct_t = mesh_data_get_vertex_struct(vertex_arrays);
-		vb = g4_vertex_buffer_create(math_floor(positions.values.length / positions._size), vstruct, usage_t.STATIC);
-		raw._vertices = g4_vertex_buffer_lock(vb);
-		mesh_data_build_vertices(raw._vertices, vertex_arrays, 0, has_tex && uvs == null, tex_offset);
+		let size: i32 = mesh_data_get_vertex_size(positions.data);
+		vb = g4_vertex_buffer_create(math_floor(positions.values.length / size), vstruct, usage_t.STATIC);
+		raw._.vertices = g4_vertex_buffer_lock(vb);
+		mesh_data_build_vertices(raw._.vertices, vertex_arrays, 0, has_tex && uvs == null, tex_offset);
 		g4_vertex_buffer_unlock(vb);
-		map_set(raw._vertex_buffer_map, key, vb);
+		map_set(raw._.vertex_buffer_map, key, vb);
 		if (has_tex && uvs == null) {
 			krom_log("Geometry " + raw.name + " is missing UV map");
 		}
@@ -235,27 +237,28 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 }
 
 function mesh_data_build(raw: mesh_data_t) {
-	if (raw._ready) {
+	if (raw._.ready) {
 		return;
 	}
 
 	let positions: vertex_array_t = mesh_data_get_vertex_array(raw, "pos");
-	raw._vertex_buffer = g4_vertex_buffer_create(math_floor(positions.values.length / positions._size), raw._struct, usage_t.STATIC);
-	raw._vertices = g4_vertex_buffer_lock(raw._vertex_buffer);
-	mesh_data_build_vertices(raw._vertices, raw.vertex_arrays);
-	g4_vertex_buffer_unlock(raw._vertex_buffer);
+	let size: i32 = mesh_data_get_vertex_size(positions.data);
+	raw._.vertex_buffer = g4_vertex_buffer_create(math_floor(positions.values.length / size), raw._.structure, usage_t.STATIC);
+	raw._.vertices = g4_vertex_buffer_lock(raw._.vertex_buffer);
+	mesh_data_build_vertices(raw._.vertices, raw.vertex_arrays);
+	g4_vertex_buffer_unlock(raw._.vertex_buffer);
 
 	let struct_str: string = "";
-	for (let i: i32 = 0; i < raw._struct.elements.length; ++i) {
-		let e: kinc_vertex_elem_t = raw._struct.elements[i];
+	for (let i: i32 = 0; i < raw._.structure.elements.length; ++i) {
+		let e: kinc_vertex_elem_t = raw._.structure.elements[i];
 		struct_str += e.name;
 	}
-	map_set(raw._vertex_buffer_map, struct_str, raw._vertex_buffer);
+	map_set(raw._.vertex_buffer_map, struct_str, raw._.vertex_buffer);
 
-	raw._index_buffers = [];
+	raw._.index_buffers = [];
 
-	for (let i: i32 = 0; i < raw._indices.length; ++i) {
-		let id: u32_array_t = raw._indices[i];
+	for (let i: i32 = 0; i < raw._.indices.length; ++i) {
+		let id: u32_array_t = raw._.indices[i];
 		if (id.length == 0) {
 			continue;
 		}
@@ -267,15 +270,15 @@ function mesh_data_build(raw: mesh_data_t) {
 		}
 
 		g4_index_buffer_unlock(index_buffer);
-		array_push(raw._index_buffers, index_buffer);
+		array_push(raw._.index_buffers, index_buffer);
 	}
 
 	// Instanced
-	if (raw.instanced_data != null) {
-		mesh_data_setup_inst(raw, raw.instanced_data, raw.instanced_type);
+	if (raw.instancing != null) {
+		mesh_data_setup_inst(raw, raw.instancing.data, raw.instancing.type);
 	}
 
-	raw._ready = true;
+	raw._.ready = true;
 }
 
 ///if arm_skin
@@ -290,11 +293,11 @@ function mesh_data_add_action(raw: mesh_data_t, bones: obj_t[], name: string) {
 	if (bones == null) {
 		return;
 	}
-	if (raw._actions == null) {
-		raw._actions = map_create();
-		raw._mats = map_create();
+	if (raw._.actions == null) {
+		raw._.actions = map_create();
+		raw._.mats = map_create();
 	}
-	if (map_get(raw._actions, name) != null) {
+	if (map_get(raw._.actions, name) != null) {
 		return;
 	}
 	let action_bones: obj_t[] = [];
@@ -309,22 +312,22 @@ function mesh_data_add_action(raw: mesh_data_t, bones: obj_t[], name: string) {
 			}
 		}
 	}
-	map_set(raw._actions, name, action_bones);
+	map_set(raw._.actions, name, action_bones);
 
 	let action_mats: mat4_t[] = [];
 	for (let i: i32 = 0; i < action_bones.length; ++i) {
 		let b: obj_t = action_bones[i];
-		array_push(action_mats, mat4_from_f32_array(b.transform.values));
+		array_push(action_mats, mat4_from_f32_array(b.transform));
 	}
-	map_set(raw._mats, name, action_mats);
+	map_set(raw._.mats, name, action_mats);
 }
 
 function mesh_data_init_skeleton_transforms(raw: mesh_data_t, transforms_inv: f32_array_t[]) {
-	raw._skeleton_transforms_inv = [];
+	raw._.skeleton_transforms_inv = [];
 	for (let i: i32 = 0; i < transforms_inv.length; ++i) {
 		let t: f32_array_t = transforms_inv[i];
 		let mi = mat4_from_f32_array(t);
-		array_push(raw._skeleton_transforms_inv, mi);
+		array_push(raw._.skeleton_transforms_inv, mi);
 	}
 }
 ///end
@@ -363,15 +366,15 @@ function mesh_data_calculate_aabb(raw: mesh_data_t): vec4_t {
 }
 
 function mesh_data_delete(raw: mesh_data_t) {
-	let buffer_map: vertex_buffer_t[] = map_to_array(raw._vertex_buffer_map);
+	let buffer_map: vertex_buffer_t[] = map_to_array(raw._.vertex_buffer_map);
 	for (let i: i32 = 0; i < buffer_map.length; ++i) {
 		let buf: vertex_buffer_t = buffer_map[i];
 		if (buf != null) {
 			g4_vertex_buffer_delete(buf);
 		}
 	}
-	for (let i: i32 = 0; i < raw._index_buffers.length; ++i) {
-		let buf: index_buffer_t = raw._index_buffers[i];
+	for (let i: i32 = 0; i < raw._.index_buffers.length; ++i) {
+		let buf: index_buffer_t = raw._.index_buffers[i];
 		g4_index_buffer_delete(buf);
 	}
 }

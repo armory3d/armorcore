@@ -55,7 +55,7 @@ function armature_init_mats(raw: armature_t) {
 		a.mats = [];
 		for (let i: i32 = 0; i < a.bones.length; ++i) {
 			let b: obj_t = a.bones[i];
-			array_push(a.mats, mat4_from_f32_array(b.transform.values));
+			array_push(a.mats, mat4_from_f32_array(b.transform));
 		}
 	}
 }

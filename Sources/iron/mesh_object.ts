@@ -41,7 +41,7 @@ function mesh_object_create(data: mesh_data_t, materials: material_data_t[]): me
 
 function mesh_object_set_data(raw: mesh_object_t, data: mesh_data_t) {
 	raw.data = data;
-	data._refcount++;
+	data._.refcount++;
 	mesh_data_build(data);
 
 	// Scale-up packed (-1,1) mesh coords
@@ -66,14 +66,14 @@ function mesh_object_remove(raw: mesh_object_t) {
 	}
 	///end
 	array_remove(scene_meshes, raw);
-	raw.data._refcount--;
+	raw.data._.refcount--;
 
 	object_remove_super(raw.base);
 }
 
 function mesh_object_setup_animation(raw: mesh_object_t, oactions: scene_t[] = null) {
 	///if arm_skin
-	let has_action: bool = raw.base.parent != null && raw.base.parent.raw != null && raw.base.parent.raw.bone_actions != null;
+	let has_action: bool = raw.base.parent != null && raw.base.parent.raw != null && raw.base.parent.raw.anim != null && raw.base.parent.raw.anim.bone_actions != null;
 	if (has_action) {
 		let armature_name: string = raw.base.parent.name;
 		raw.base.animation = object_get_parent_armature(raw.base, armature_name).base;
@@ -143,7 +143,7 @@ function mesh_object_cull_mesh(raw: mesh_object_t, context: string, camera: came
 		if (context == "voxel") {
 			radius_scale *= 100;
 		}
-		if (raw.data._instanced) {
+		if (raw.data._.instanced) {
 			radius_scale *= 100;
 		}
 
@@ -157,21 +157,14 @@ function mesh_object_cull_mesh(raw: mesh_object_t, context: string, camera: came
 	return raw.base.culled;
 }
 
-function mesh_object_skip_context(raw: mesh_object_t, context: string, mat: material_data_t): bool {
-	if (mat.skip_context != null && mat.skip_context == context) {
-		return true;
-	}
-	return false;
-}
-
 function mesh_object_get_contexts(raw: mesh_object_t, context: string, materials: material_data_t[], material_contexts: material_context_t[], shader_contexts: shader_context_t[]) {
 	for (let i: i32 = 0; i < materials.length; ++i) {
 		let mat: material_data_t = materials[i];
 		let found: bool = false;
 		for (let j: i32 = 0; j < mat.contexts.length; ++j) {
 			if (substring(mat.contexts[j].name, 0, context.length) == context) {
-				array_push(material_contexts, mat._contexts[j]);
-				array_push(shader_contexts, shader_data_get_context(mat._shader, context));
+				array_push(material_contexts, mat._.contexts[j]);
+				array_push(shader_contexts, shader_data_get_context(mat._.shader, context));
 				found = true;
 				break;
 			}
@@ -184,7 +177,7 @@ function mesh_object_get_contexts(raw: mesh_object_t, context: string, materials
 }
 
 function mesh_object_render(raw: mesh_object_t, context: string, bind_params: string[]) {
-	if (raw.data == null || !raw.data._ready) {
+	if (raw.data == null || !raw.data._.ready) {
 		return; // Data not yet streamed
 	}
 	if (!raw.base.visible) {
@@ -196,7 +189,7 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 	let mesh_context: bool = raw.base.raw != null ? context == "mesh" : false;
 
 	///if arm_particles
-	if (raw.base.raw != null && raw.base.raw.is_particle && raw.particle_owner == null) {
+	if (raw.base.raw != null && raw.base.raw.particles != null && raw.base.raw.particles.is_particle && raw.particle_owner == null) {
 		return; // Instancing not yet set-up by particle system owner
 	}
 	if (raw.particle_systems != null && mesh_context) {
@@ -218,7 +211,7 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 			particle_sys_update(raw.particle_systems[i], raw.particle_children[i], raw);
 		}
 	}
-	if (raw.particle_systems != null && raw.particle_systems.length > 0 && !raw.base.raw.render_emitter) {
+	if (raw.particle_systems != null && raw.particle_systems.length > 0 && raw.base.raw.particles != null && !raw.base.raw.particles.render_emitter) {
 		return;
 	}
 	///end
@@ -237,18 +230,13 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 	transform_update(raw.base.transform);
 
 	// Render mesh
-	for (let i: i32 = 0; i < raw.data._index_buffers.length; ++i) {
+	for (let i: i32 = 0; i < raw.data._.index_buffers.length; ++i) {
 
-		let mi: i32 = raw.data._material_indices[i];
+		let mi: i32 = raw.data._.material_indices[i];
 		if (shader_contexts.length <= mi || shader_contexts[mi] == null) {
 			continue;
 		}
 		raw.material_index = mi;
-
-		// Check context skip
-		if (raw.materials.length > mi && mesh_object_skip_context(raw, context, raw.materials[mi])) {
-			continue;
-		}
 
 		let scontext: shader_context_t = shader_contexts[mi];
 		if (scontext == null) {
@@ -257,32 +245,31 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 		let elems: vertex_element_t[] = scontext.vertex_elements;
 
 		// Uniforms
-		if (scontext._pipe_state != _mesh_object_last_pipeline) {
-			g4_set_pipeline(scontext._pipe_state);
-			_mesh_object_last_pipeline = scontext._pipe_state;
-			// uniforms_set_context_consts(g, scontext, bind_params);
+		if (scontext._.pipe_state != _mesh_object_last_pipeline) {
+			g4_set_pipeline(scontext._.pipe_state);
+			_mesh_object_last_pipeline = scontext._.pipe_state;
 		}
-		uniforms_set_context_consts(scontext, bind_params); //
+		uniforms_set_context_consts(scontext, bind_params);
 		uniforms_set_obj_consts(scontext, raw.base);
 		if (material_contexts.length > mi) {
 			uniforms_set_material_consts(scontext, material_contexts[mi]);
 		}
 
 		// VB / IB
-		if (raw.data._instanced_vb != null) {
+		if (raw.data._.instanced_vb != null) {
 			let vb: vertex_buffer_t = mesh_data_get(raw.data, elems);
-			let vbs: vertex_buffer_t[] = [vb, raw.data._instanced_vb];
+			let vbs: vertex_buffer_t[] = [vb, raw.data._.instanced_vb];
 			g4_set_vertex_buffers(vbs);
 		}
 		else {
 			g4_set_vertex_buffer(mesh_data_get(raw.data, elems));
 		}
 
-		g4_set_index_buffer(raw.data._index_buffers[i]);
+		g4_set_index_buffer(raw.data._.index_buffers[i]);
 
 		// Draw
-		if (raw.data._instanced) {
-			g4_draw_inst(raw.data._instance_count, 0, -1);
+		if (raw.data._.instanced) {
+			g4_draw_inst(raw.data._.instance_count, 0, -1);
 		}
 		else {
 			g4_draw(0, -1);

@@ -27,7 +27,7 @@ function data_get_mesh(file: string, name: string): mesh_data_t {
 
 	let b: mesh_data_t = mesh_data_parse(file, name);
 	map_set(data_cached_meshes, handle, b);
-	b._handle = handle;
+	b._.handle = handle;
 	return b;
 }
 
@@ -95,18 +95,15 @@ function data_get_world(file: string, name: string): world_data_t {
 	return b;
 }
 
-function data_get_shader(file: string, name: string, override_context: shader_override_t = null): shader_data_t {
+function data_get_shader(file: string, name: string): shader_data_t {
 	// Only one context override per shader data for now
 	let handle: string = name;
-	if (override_context != null) {
-		handle += "2";
-	}
 	let cached: shader_data_t = map_get(data_cached_shaders, handle); // Shader must have unique name
 	if (cached != null) {
 		return cached;
 	}
 
-	let b: shader_data_t = shader_data_parse(file, name, override_context);
+	let b: shader_data_t = shader_data_parse(file, name);
 	map_set(data_cached_shaders, handle, b);
 	return b;
 }

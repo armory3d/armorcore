@@ -9,15 +9,16 @@ function world_data_parse(name: string, id: string): world_data_t {
 		return null;
 	}
 
-	raw._radiance_mipmaps = [];
+	raw._ = {};
+	raw._.radiance_mipmaps = [];
 
 	let irr: f32_array_t = world_data_set_irradiance(raw);
-	raw._irradiance = irr;
+	raw._.irradiance = irr;
 	if (raw.radiance != null) {
 		let rad: image_t = data_get_image(raw.radiance);
-		raw._radiance = rad;
-		while (raw._radiance_mipmaps.length < raw.radiance_mipmaps) {
-			array_push(raw._radiance_mipmaps, null);
+		raw._.radiance = rad;
+		while (raw._.radiance_mipmaps.length < raw.radiance_mipmaps) {
+			array_push(raw._.radiance_mipmaps, null);
 		}
 		let dot: i32 = string_last_index_of(raw.radiance, ".");
 		let ext: string = substring(raw.radiance, dot, raw.radiance.length);
@@ -25,9 +26,9 @@ function world_data_parse(name: string, id: string): world_data_t {
 
 		for (let i: i32 = 0; i < raw.radiance_mipmaps; ++i) {
 			let mipimg: image_t = data_get_image(base + "_" + i + ext, true);
-			raw._radiance_mipmaps[i] = mipimg;
+			raw._.radiance_mipmaps[i] = mipimg;
 		}
-		image_set_mipmaps(raw._radiance, raw._radiance_mipmaps);
+		image_set_mipmaps(raw._.radiance, raw._.radiance_mipmaps);
 	}
 
 	return raw;
@@ -73,7 +74,7 @@ function world_data_set_irradiance(raw: world_data_t): f32_array_t {
 function world_data_load_envmap(raw: world_data_t, done: (wd: world_data_t)=>void) {
 	if (raw.envmap != null) {
 		let image: image_t = data_get_image(raw.envmap);
-		raw._envmap = image;
+		raw._.envmap = image;
 		done(raw);
 	}
 	else {

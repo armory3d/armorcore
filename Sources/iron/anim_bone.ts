@@ -47,7 +47,6 @@ function anim_bone_create(armature_name: string = ""): anim_bone_t {
 	raw.base.ext = raw;
 	raw.base.ext_type = "anim_bone_t";
 
-	raw.base.is_sampled = false;
 	for (let i: i32 = 0; i < scene_armatures.length; ++i) {
 		let a: armature_t = scene_armatures[i];
 		if (a.name == armature_name) {
@@ -56,13 +55,6 @@ function anim_bone_create(armature_name: string = ""): anim_bone_t {
 		}
 	}
 	return raw;
-}
-
-function anim_bone_get_num_bones(raw: anim_bone_t): i32 {
-	if (raw.skeleton_bones == null) {
-		return 0;
-	}
-	return raw.skeleton_bones.length;
 }
 
 function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
@@ -79,7 +71,7 @@ function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 		quat_set(raw.object.base.transform.rot, 0, 0, 0, 1);
 		transform_build_matrix(raw.object.base.transform);
 
-		let refs: string[] = mo.base.parent.raw.bone_actions;
+		let refs: string[] = mo.base.parent.raw.anim.bone_actions;
 		if (refs != null && refs.length > 0) {
 			let action: scene_t = data_get_scene_raw(refs[0]);
 			anim_bone_play(raw, action.name);
@@ -119,14 +111,14 @@ function anim_bone_update_bone_children(raw: anim_bone_t, bone: obj_t, bm: mat4_
 		if (t.bone_parent == null) {
 			t.bone_parent = mat4_identity();
 		}
-		if (o.raw.parent_bone_tail != null) {
-			if (o.raw.parent_bone_connected || raw.base.is_skinned) {
-				let v: f32_array_t = o.raw.parent_bone_tail;
+		if (o.raw.anim.parent_bone_tail != null) {
+			if (o.raw.anim.parent_bone_connected || raw.base.is_skinned) {
+				let v: f32_array_t = o.raw.anim.parent_bone_tail;
 				mat4_init_translate(t.bone_parent, v[0], v[1], v[2]);
 				mat4_mult_mat(t.bone_parent, bm);
 			}
 			else {
-				let v: f32_array_t = o.raw.parent_bone_tail_pose;
+				let v: f32_array_t = o.raw.anim.parent_bone_tail_pose;
 				mat4_set_from(t.bone_parent, bm);
 				mat4_translate(t.bone_parent, v[0], v[1], v[2]);
 			}
@@ -671,9 +663,7 @@ function anim_bone_update(raw: anim_bone_t, delta: f32) {
 	}
 
 	for (let i: i32 = 0; i < raw.skeleton_bones.length; ++i) {
-		if (!raw.skeleton_bones[i].is_ik_fk_only) {
-			anim_update_anim_sampled(raw.base, raw.skeleton_bones[i].anim, raw.skeleton_mats[i]);
-		}
+		anim_update_anim_sampled(raw.base, raw.skeleton_bones[i].anim, raw.skeleton_mats[i]);
 	}
 	if (raw.base.blend_time > 0 && raw.skeleton_bones_blend != null) {
 		for (let i: i32 = 0; i < raw.skeleton_bones_blend.length; ++i) {

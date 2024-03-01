@@ -195,9 +195,6 @@ function anim_object_play(raw: anim_object_t, action: string = "", on_complete: 
 		raw.base.action = raw.oactions[0].objects[0].name;
 	}
 	raw.oaction = anim_object_get_action(raw, raw.base.action);
-	if (raw.oaction != null) {
-		raw.base.is_sampled = raw.oaction.sampled != null && raw.oaction.sampled;
-	}
 }
 
 function anim_object_update(raw: anim_object_t, delta: f32) {

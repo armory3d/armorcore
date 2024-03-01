@@ -124,7 +124,7 @@ function object_get_children(raw: object_t, recursive: bool = false): object_t[]
 function object_setup_animation_super(raw: object_t, oactions: scene_t[] = null) {
 	// Parented to bone
 	///if arm_skin
-	if (raw.raw.parent_bone != null) {
+	if (raw.raw.anim != null && raw.raw.anim.parent_bone != null) {
 		app_notify_on_init(_object_setup_animation_on_init, raw);
 	}
 	///end
@@ -139,7 +139,7 @@ function object_setup_animation_super(raw: object_t, oactions: scene_t[] = null)
 function _object_setup_animation_on_init(raw: object_t) {
 	let banim: anim_bone_t = object_get_parent_armature(raw, raw.parent.name);
 	if (banim != null) {
-		anim_bone_add_bone_child(banim, raw.raw.parent_bone, raw);
+		anim_bone_add_bone_child(banim, raw.raw.anim.parent_bone, raw);
 	}
 }
 function object_get_parent_armature(raw: object_t, name: string): anim_bone_t {

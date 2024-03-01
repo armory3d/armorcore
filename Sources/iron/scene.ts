@@ -318,7 +318,7 @@ function scene_create_object(o: obj_t, format: scene_t, parent: object_t, parent
 			for (let i: i32 = 0; i < o.material_refs.length; ++i) {
 				let ref: string = o.material_refs[i];
 				let mat: material_data_t = data_get_material(scene_name, ref);
-				materials[i] = mat;
+				array_push(materials, mat);
 			}
 			return scene_create_mesh_object(o, format, parent, parent_object, materials);
 		}
@@ -355,10 +355,10 @@ function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, p
 
 	// Bone objects are stored in armature parent
 	///if arm_skin
-	if (parent_object != null && parent_object.bone_actions != null) {
+	if (parent_object != null && parent_object.anim != null && parent_object.anim.bone_actions != null) {
 		let bactions: scene_t[] = [];
-		for (let i: i32 = 0; i < parent_object.bone_actions.length; ++i) {
-			let ref: string = parent_object.bone_actions[i];
+		for (let i: i32 = 0; i < parent_object.anim.bone_actions.length; ++i) {
+			let ref: string = parent_object.anim.bone_actions[i];
 			let action: scene_t = data_get_scene_raw(ref);
 			array_push(bactions, action);
 		}
@@ -405,9 +405,9 @@ function scene_return_mesh_object(object_file: string, data_ref: string, scene_n
 
 	// Attach particle systems
 	///if arm_particles
-	if (o.particle_refs != null) {
-		for (let i: i32 = 0; i < o.particle_refs.length; ++i) {
-			let ref: particle_ref_t = o.particle_refs[i];
+	if (o.particles != null && o.particles.refs != null) {
+		for (let i: i32 = 0; i < o.particles.refs.length; ++i) {
+			let ref: particle_ref_t = o.particles.refs[i];
 			mesh_object_setup_particle_system(object, scene_name, ref);
 		}
 	}
@@ -417,14 +417,14 @@ function scene_return_mesh_object(object_file: string, data_ref: string, scene_n
 
 function scene_return_object(object: object_t, o: obj_t): object_t {
 	// Load object actions
-	if (object != null && o.object_actions != null) {
+	if (object != null && o.anim != null && o.anim.object_actions != null) {
 		let oactions: scene_t[] = [];
-		while (oactions.length < o.object_actions.length) {
+		while (oactions.length < o.anim.object_actions.length) {
 			array_push(oactions, null);
 		}
 
-		for (let i: i32 = 0; i < o.object_actions.length; ++i) {
-			let ref: string = o.object_actions[i];
+		for (let i: i32 = 0; i < o.anim.object_actions.length; ++i) {
+			let ref: string = o.anim.object_actions[i];
 			if (ref == "null") { // No startup action set
 				continue;
 			}
@@ -452,12 +452,8 @@ function scene_return_object_loaded(object: object_t, o: obj_t, oactions: scene_
 }
 
 function scene_gen_transform(object: obj_t, transform: transform_t) {
-	transform.world = object.transform != null ? mat4_from_f32_array(object.transform.values) : mat4_identity();
+	transform.world = object.transform != null ? mat4_from_f32_array(object.transform) : mat4_identity();
 	mat4_decompose(transform.world, transform.loc, transform.rot, transform.scale);
-	// Whether to apply parent matrix
-	if (object.local_only != null) {
-		transform.local_only = object.local_only;
-	}
 	if (transform.object.parent != null) {
 		transform_update(transform);
 	}

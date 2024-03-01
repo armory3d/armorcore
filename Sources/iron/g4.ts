@@ -387,7 +387,7 @@ function image_from_texture(tex: any): image_t {
 	return image;
 }
 
-function image_from_bytes(buffer: buffer_t, width: i32, height: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
+function image_from_bytes(buffer: buffer_t, width: i32, height: i32, format: tex_format_t = null): image_t {
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
@@ -399,7 +399,7 @@ function image_from_bytes(buffer: buffer_t, width: i32, height: i32, format: tex
 	return image;
 }
 
-function image_from_bytes_3d(buffer: buffer_t, width: i32, height: i32, depth: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
+function image_from_bytes_3d(buffer: buffer_t, width: i32, height: i32, depth: i32, format: tex_format_t = null): image_t {
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
@@ -418,7 +418,7 @@ function image_from_encoded_bytes(buffer: buffer_t, format: string, readable: bo
 	return image;
 }
 
-function image_create(width: i32, height: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
+function image_create(width: i32, height: i32, format: tex_format_t = null): image_t {
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}
@@ -429,7 +429,7 @@ function image_create(width: i32, height: i32, format: tex_format_t = null, usag
 	return image;
 }
 
-function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format_t = null, usage: usage_t = null): image_t {
+function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format_t = null): image_t {
 	if (format == null) {
 		format = tex_format_t.RGBA32;
 	}

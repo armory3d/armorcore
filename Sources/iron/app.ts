@@ -93,7 +93,12 @@ function app_update() {
 		cb.f(cb.data);
 
 		// Account for removed traits
-		l <= app_on_updates.length ? i++ : l = app_on_updates.length;
+		if (l <= app_on_updates.length) {
+			i++;
+		}
+		else {
+			l = app_on_updates.length;
+		}
 	}
 
 	for (let i: i32 = 0; i < app_on_end_frames.length; ++i) {

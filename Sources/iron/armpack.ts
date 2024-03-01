@@ -283,6 +283,12 @@ function armpack_write(v: buffer_view_t, d: any) {
 				armpack_write_f32(v, d[i]);
 			}
 		}
+		else if (d.constructor.name == "Int32Array") {
+			armpack_write_u8(v, 0xd2);
+			for (let i: i32 = 0; i < (d as i32_array_t).length; ++i) {
+				armpack_write_i32(v, d[i]);
+			}
+		}
 		else if (d.constructor.name == "Uint32Array") {
 			armpack_write_u8(v, 0xd2);
 			for (let i: i32 = 0; i < (d as u32_array_t).length; ++i) {
@@ -354,6 +360,12 @@ function armpack_write_dummy(d: any) {
 		else if (d.constructor.name == "Float32Array") {
 			_armpack_pos += 1;
 			for (let i: i32 = 0; i < (d as f32_array_t).length; ++i) {
+				_armpack_pos += 4;
+			}
+		}
+		else if (d.constructor.name == "Int32Array") {
+			_armpack_pos += 1;
+			for (let i: i32 = 0; i < (d as i32_array_t).length; ++i) {
 				_armpack_pos += 4;
 			}
 		}

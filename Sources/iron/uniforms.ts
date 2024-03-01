@@ -21,7 +21,7 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 	if (context.constants != null) {
 		for (let i: i32 = 0; i < context.constants.length; ++i) {
 			let c: shader_const_t = context.constants[i];
-			uniforms_set_context_const(context._constants[i], c);
+			uniforms_set_context_const(context._.constants[i], c);
 		}
 	}
 
@@ -51,21 +51,21 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 			}
 
 			if (char_at(tulink, 0) == "$") { // Link to embedded data
-				g4_set_tex(context._tex_units[j], map_get(scene_embedded, substring(tulink, 1, tulink.length)));
-				g4_set_tex_params(context._tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.NONE);
+				g4_set_tex(context._.tex_units[j], map_get(scene_embedded, substring(tulink, 1, tulink.length)));
+				g4_set_tex_params(context._.tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.NONE);
 			}
 			else if (tulink == "_envmap_radiance") {
 				let w: world_data_t = scene_world;
 				if (w != null) {
-					g4_set_tex(context._tex_units[j], w._radiance);
-					g4_set_tex_params(context._tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
+					g4_set_tex(context._.tex_units[j], w._.radiance);
+					g4_set_tex_params(context._.tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
 				}
 			}
 			else if (tulink == "_envmap") {
 				let w: world_data_t = scene_world;
 				if (w != null) {
-					g4_set_tex(context._tex_units[j], w._envmap);
-					g4_set_tex_params(context._tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.NONE);
+					g4_set_tex(context._.tex_units[j], w._.envmap);
+					g4_set_tex_params(context._.tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.NONE);
 				}
 			}
 		}
@@ -76,7 +76,7 @@ function uniforms_set_obj_consts(context: shader_context_t, object: object_t) {
 	if (context.constants != null) {
 		for (let i: i32 = 0; i < context.constants.length; ++i) {
 			let c: shader_const_t = context.constants[i];
-			uniforms_set_obj_const(object, context._constants[i], c);
+			uniforms_set_obj_const(object, context._.constants[i], c);
 		}
 	}
 
@@ -89,18 +89,13 @@ function uniforms_set_obj_consts(context: shader_context_t, object: object_t) {
 				if (tu.link == null) {
 					continue;
 				}
-				let tu_addr_u: tex_addressing_t = uniforms_get_tex_addressing(tu.addressing_u);
-				let tu_addr_v: tex_addressing_t = uniforms_get_tex_addressing(tu.addressing_v);
-				let tu_filter_min: tex_filter_t = uniforms_get_tex_filter(tu.filter_min);
-				let tu_filter_mag: tex_filter_t = uniforms_get_tex_filter(tu.filter_mag);
-				let tu_mip_map_filter: mip_map_filter_t = uniforms_get_mip_map_filter(tu.mipmap_filter);
 
 				let image: image_t = uniforms_tex_links(object, current_material(object), tu.link);
 				if (image != null) {
 					ends_with(tu.link, "_depth") ?
-						g4_set_tex_depth(context._tex_units[j], image) :
-						g4_set_tex(context._tex_units[j], image);
-					g4_set_tex_params(context._tex_units[j], tu_addr_u, tu_addr_v, tu_filter_min, tu_filter_mag, tu_mip_map_filter);
+						g4_set_tex_depth(context._.tex_units[j], image) :
+						g4_set_tex(context._.tex_units[j], image);
+					g4_set_tex_params(context._.tex_units[j], tex_addressing_t.REPEAT, tex_addressing_t.REPEAT, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.NONE);
 				}
 			}
 		}
@@ -116,52 +111,52 @@ function uniforms_bind_render_target(rt: render_target_t, context: shader_contex
 
 	for (let j: i32 = 0; j < tus.length; ++j) { // Set texture
 		if (sampler_id == tus[j].name) {
-			let is_image: bool = tus[j].is_image != null && tus[j].is_image;
+			let is_image: bool = tus[j].image_uniform != null && tus[j].image_uniform;
 			let params_set: bool = false;
 
 			if (rt.depth > 1) { // sampler3D
-				g4_set_tex_3d_params(context._tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.ANISOTROPIC, mip_map_filter_t.LINEAR);
+				g4_set_tex_3d_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.ANISOTROPIC, mip_map_filter_t.LINEAR);
 				params_set = true;
 			}
 
 			if (is_image) {
-				g4_set_image_tex(context._tex_units[j], rt.image); // image2D/3D
+				g4_set_image_tex(context._.tex_units[j], rt._image); // image2D/3D
 				// Multiple voxel volumes, always set params
-				g4_set_tex_3d_params(context._tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.POINT, mip_map_filter_t.LINEAR);
+				g4_set_tex_3d_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.POINT, mip_map_filter_t.LINEAR);
 				params_set = true;
 			}
 			else if (attach_depth) {
-				g4_set_tex_depth(context._tex_units[j], rt.image); // sampler2D
+				g4_set_tex_depth(context._.tex_units[j], rt._image); // sampler2D
 			}
 			else {
-				g4_set_tex(context._tex_units[j], rt.image); // sampler2D
+				g4_set_tex(context._.tex_units[j], rt._image); // sampler2D
 			}
 
 			if (!params_set && rt.mipmaps != null && rt.mipmaps == true && !is_image) {
-				g4_set_tex_params(context._tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
+				g4_set_tex_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
 				params_set = true;
 			}
 
 			if (!params_set) {
 				if (starts_with(rt.name, "bloom")) {
 					// Use bilinear filter for bloom mips to get correct blur
-					g4_set_tex_params(context._tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
+					g4_set_tex_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
 					params_set = true;
 				}
 				else if (attach_depth) {
-					g4_set_tex_params(context._tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.POINT, tex_filter_t.POINT, mip_map_filter_t.NONE);
+					g4_set_tex_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.POINT, tex_filter_t.POINT, mip_map_filter_t.NONE);
 					params_set = true;
 				}
 			}
 
 			if (!params_set) {
 				// No filtering when sampling render targets
-				let oc: shader_override_t = context._override_context;
+				let oc: _shader_override_t = context._.override_context;
 				let allow_params: bool = oc == null || oc.shared_sampler == null || oc.shared_sampler == sampler_id;
 				if (allow_params) {
 					let addressing: tex_addressing_t = (oc != null && oc.addressing == "repeat") ? tex_addressing_t.REPEAT : tex_addressing_t.CLAMP;
 					let filter: tex_filter_t = (oc != null && oc.filter == "point") ? tex_filter_t.POINT : tex_filter_t.LINEAR;
-					g4_set_tex_params(context._tex_units[j], addressing, addressing, filter, filter, mip_map_filter_t.NONE);
+					g4_set_tex_params(context._.tex_units[j], addressing, addressing, filter, filter, mip_map_filter_t.NONE);
 				}
 				params_set = true;
 			}
@@ -241,18 +236,21 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				v = _uniforms_vec;
 			}
 		}
-		else if (c.link == "_point_pos") {
-			let point: light_object_t = _render_path_point;
-			if (point != null) {
-				vec4_set(_uniforms_vec, transform_world_x(point.base.transform), transform_world_y(point.base.transform), transform_world_z(point.base.transform));
+		else if (c.link == "_light_pos") {
+			let light: light_object_t = _render_path_light;
+			if (light != null) {
+				vec4_set(_uniforms_vec, transform_world_x(light.base.transform), transform_world_y(light.base.transform), transform_world_z(light.base.transform));
 				v = _uniforms_vec;
 			}
 		}
-		else if (c.link == "_point_color") {
-			let point: light_object_t = _render_path_point;
-			if (point != null) {
-				let str: f32 = point.base.visible ? point.data.strength : 0.0;
-				vec4_set(_uniforms_vec, point.data.color[0] * str, point.data.color[1] * str, point.data.color[2] * str);
+		else if (c.link == "_light_color") {
+			let light: light_object_t = _render_path_light;
+			if (light != null) {
+				let str: f32 = light.base.visible ? light.data.strength : 0.0;
+				vec4_set(_uniforms_vec,
+					(color_get_rb(light.data.color) / 255) * str,
+					(color_get_gb(light.data.color) / 255) * str,
+					(color_get_bb(light.data.color) / 255) * str);
 				v = _uniforms_vec;
 			}
 		}
@@ -419,7 +417,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		let fa: f32_array_t = null;
 
 		if (c.link == "_envmap_irradiance") {
-			fa = scene_world == null ? world_data_get_empty_irradiance() : scene_world._irradiance;
+			fa = scene_world == null ? world_data_get_empty_irradiance() : scene_world._.irradiance;
 		}
 
 		if (fa != null) {
@@ -572,7 +570,7 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 			f = obj.uid;
 		}
 		else if (c.link == "_object_info_material_index") {
-			f = current_material(obj)._uid;
+			f = current_material(obj)._.uid;
 		}
 		else if (c.link == "_object_info_random") {
 			f = obj.urandom;
@@ -644,18 +642,18 @@ function uniforms_set_material_consts(context: shader_context_t, material_contex
 			}
 			let c: shader_const_t = context.constants[pos];
 
-			uniforms_set_material_const(context._constants[pos], c, matc);
+			uniforms_set_material_const(context._.constants[pos], c, matc);
 		}
 	}
 
-	if (material_context._textures != null) {
-		for (let i: i32 = 0; i < material_context._textures.length; ++i) {
+	if (material_context._.textures != null) {
+		for (let i: i32 = 0; i < material_context._.textures.length; ++i) {
 			let mname: string = material_context.bind_textures[i].name;
 
-			for (let j: i32 = 0; j < context._tex_units.length; ++j) {
+			for (let j: i32 = 0; j < context._.tex_units.length; ++j) {
 				let sname: string = context.texture_units[j].name;
 				if (mname == sname) {
-					g4_set_tex(context._tex_units[j], material_context._textures[i]);
+					g4_set_tex(context._.tex_units[j], material_context._.textures[i]);
 					// After texture sampler have been assigned, set texture parameters
 					material_context_set_tex_params(material_context, i, context, j);
 					break;
@@ -677,51 +675,21 @@ function current_material(object: object_t): material_data_t {
 
 function uniforms_set_material_const(location: kinc_const_loc_t, shader_const: shader_const_t, material_const: bind_const_t) {
 	if (shader_const.type == "vec4") {
-		g4_set_float4(location, material_const.vec4[0], material_const.vec4[1], material_const.vec4[2], material_const.vec4[3]);
+		g4_set_float4(location, material_const.vec[0], material_const.vec[1], material_const.vec[2], material_const.vec[3]);
 	}
 	else if (shader_const.type == "vec3") {
-		g4_set_float3(location, material_const.vec3[0], material_const.vec3[1], material_const.vec3[2]);
+		g4_set_float3(location, material_const.vec[0], material_const.vec[1], material_const.vec[2]);
 	}
 	else if (shader_const.type == "vec2") {
-		g4_set_float2(location, material_const.vec2[0], material_const.vec2[1]);
+		g4_set_float2(location, material_const.vec[0], material_const.vec[1]);
 	}
 	else if (shader_const.type == "float") {
-		g4_set_float(location,  material_const.vec1);
+		g4_set_float(location,  material_const.vec[0]);
 	}
 	else if (shader_const.type == "bool") {
-		g4_set_bool(location, material_const.vec1 > 0.0);
+		g4_set_bool(location, material_const.vec[0] > 0.0);
 	}
 	else if (shader_const.type == "int") {
-		g4_set_int(location, math_floor(material_const.vec1));
+		g4_set_int(location, math_floor(material_const.vec[0]));
 	}
-}
-
-function uniforms_get_tex_addressing(s: string): tex_addressing_t {
-	if (s == "clamp") {
-		return tex_addressing_t.CLAMP;
-	}
-	if (s == "mirror") {
-		return tex_addressing_t.MIRROR;
-	}
-	return tex_addressing_t.REPEAT;
-}
-
-function uniforms_get_tex_filter(s: string): tex_filter_t {
-	if (s == "anisotropic") {
-		return tex_filter_t.ANISOTROPIC;
-	}
-	if (s == "point") {
-		return tex_filter_t.POINT;
-	}
-	return tex_filter_t.LINEAR;
-}
-
-function uniforms_get_mip_map_filter(s: string): mip_map_filter_t {
-	if (s == "linear") {
-		return mip_map_filter_t.LINEAR;
-	}
-	if (s == "point") {
-		return mip_map_filter_t.POINT;
-	}
-	return mip_map_filter_t.NONE;
 }

@@ -3,18 +3,18 @@ type render_target_t = {
 	name?: string;
 	width?: i32;
 	height?: i32;
-	// Optional:
+	// Opt
 	format?: string;
 	scale?: f32;
 	depth_buffer?: string; // 2D texture
 	mipmaps?: bool;
 	depth?: i32; // 3D texture
 	is_image?: bool; // Image
-	// Runtime:
-	depth_format?: depth_format_t;
-	depth_from?: string;
-	image?: image_t; // RT or image
-	has_depth?: bool;
+	// Runtime
+	_depth_format?: depth_format_t;
+	_depth_from?: string;
+	_image?: image_t; // RT or image
+	_has_depth?: bool;
 };
 
 type cached_shader_context_t = {
@@ -40,8 +40,6 @@ let _render_path_frame_time: f32 = 0.0;
 let _render_path_frame: i32 = 0;
 let _render_path_current_target: render_target_t = null;
 let _render_path_light: light_object_t = null;
-let _render_path_sun: light_object_t = null;
-let _render_path_point: light_object_t = null;
 let _render_path_current_image: image_t = null;
 let _render_path_draw_order: draw_order_t = draw_order_t.DIST;
 let _render_path_paused: bool = false;
@@ -91,12 +89,6 @@ function render_path_render_frame() {
 		if (l.base.visible) {
 			light_object_build_mat(l, scene_camera);
 		}
-		if (l.data.type == "sun") {
-			_render_path_sun = l;
-		}
-		else {
-			_render_path_point = l;
-		}
 	}
 	_render_path_light = scene_lights[0];
 
@@ -124,15 +116,15 @@ function render_path_set_target(target: string, additional: string[] = null) {
 			for (let i: i32 = 0; i < additional.length; ++i) {
 				let s: string = additional[i];
 				let t: render_target_t = map_get(render_path_render_targets, s);
-				array_push(additional_images, t.image);
+				array_push(additional_images, t._image);
 			}
 		}
-		render_path_current_w = rt.image.width;
-		render_path_current_h = rt.image.height;
+		render_path_current_w = rt._image.width;
+		render_path_current_h = rt._image.height;
 		if (rt.depth > 1) {
-			render_path_current_d = rt.image.depth;
+			render_path_current_d = rt._image.depth;
 		}
-		render_path_begin(rt.image, additional_images);
+		render_path_begin(rt._image, additional_images);
 	}
 	_render_path_bind_params = null;
 }
@@ -140,7 +132,7 @@ function render_path_set_target(target: string, additional: string[] = null) {
 function render_path_set_depth_from(target: string, from: string) {
 	let rt: render_target_t = map_get(render_path_render_targets, target);
 	let rt_from: render_target_t = map_get(render_path_render_targets, from);
-	image_set_depth_from(rt.image, rt_from.image);
+	image_set_depth_from(rt._image, rt_from._image);
 }
 
 function render_path_begin(render_target: image_t = null, additional_targets: image_t[] = null) {
@@ -176,28 +168,20 @@ function render_path_set_viewport(view_w: i32, view_h: i32) {
 }
 
 function render_path_clear_target(color: color_t = 0x00000000, depth: f32 = 0.0, flags: i32 = clear_flag_t.COLOR) {
-	if (color == -1) { // 0xffffffff
-		if (scene_world != null) {
-			color = scene_world.background_color;
-		}
-		else if (scene_camera != null) {
-			let cc: f32_array_t = scene_camera.data.clear_color;
-			if (cc != null) {
-				color = color_from_floats(cc[0], cc[1], cc[2], 1.0);
-			}
-		}
+	if (color == -1 && scene_world != null) { // 0xffffffff
+		color = scene_world.color;
 	}
 	g4_clear(color, depth, flags);
 }
 
 function render_path_clear_image(target: string, color: i32) {
 	let rt: render_target_t = map_get(render_path_render_targets, target);
-	image_clear(rt.image, 0, 0, 0, rt.image.width, rt.image.height, rt.image.depth, color);
+	image_clear(rt._image, 0, 0, 0, rt._image.width, rt._image.height, rt._image.depth, color);
 }
 
 function render_path_gen_mipmaps(target: string) {
 	let rt: render_target_t = map_get(render_path_render_targets, target);
-	image_gen_mipmaps(rt.image, 1000);
+	image_gen_mipmaps(rt._image, 1000);
 }
 
 function _render_path_sort_dist(a: mesh_object_t, b: mesh_object_t): i32 {
@@ -257,7 +241,7 @@ function render_path_draw_skydome(handle: string) {
 	if (cc.context == null) {
 		return; // World data not specified
 	}
-	g4_set_pipeline(cc.context._pipe_state);
+	g4_set_pipeline(cc.context._.pipe_state);
 	uniforms_set_context_consts(cc.context, _render_path_bind_params);
 	uniforms_set_obj_consts(cc.context, null); // External hosek
 	g4_set_vertex_buffer(const_data_skydome_vb);
@@ -283,7 +267,7 @@ function render_path_draw_shader(handle: string) {
 	if (const_data_screen_aligned_vb == null) {
 		const_data_create_screen_aligned_data();
 	}
-	g4_set_pipeline(cc.context._pipe_state);
+	g4_set_pipeline(cc.context._.pipe_state);
 	uniforms_set_context_consts(cc.context, _render_path_bind_params);
 	uniforms_set_obj_consts(cc.context, null);
 	g4_set_vertex_buffer(const_data_screen_aligned_vb);
@@ -342,14 +326,14 @@ function render_path_resize() {
 	let rtargets: render_target_t[] = map_to_array(render_path_render_targets);
 	for (let i: i32 = 0; i < rtargets.length; ++i) {
 		let rt: render_target_t = rtargets[i];
-		if (rt == null || rt.width > 0 || rt.depth_from == "" || rt == map_get(_render_path_depth_to_render_target, rt.depth_from)) {
+		if (rt == null || rt.width > 0 || rt._depth_from == "" || rt == map_get(_render_path_depth_to_render_target, rt._depth_from)) {
 			continue;
 		}
 
 		let nodepth: render_target_t = null;
 		for (let j: i32 = 0; j < rtargets.length; ++j) {
 			let rt2: render_target_t = rtargets[j];
-			if (rt2 == null || rt2.width > 0 || rt2.depth_from != "" || map_get(_render_path_depth_to_render_target, rt2.depth_buffer) != null) {
+			if (rt2 == null || rt2.width > 0 || rt2._depth_from != "" || map_get(_render_path_depth_to_render_target, rt2.depth_buffer) != null) {
 				continue;
 			}
 
@@ -358,7 +342,7 @@ function render_path_resize() {
 		}
 
 		if (nodepth != null) {
-			image_set_depth_from(rt.image, nodepth.image);
+			image_set_depth_from(rt._image, nodepth._image);
 		}
 	}
 
@@ -366,18 +350,18 @@ function render_path_resize() {
 	for (let i: i32 = 0; i < rtargets.length; ++i) {
 		let rt: render_target_t = rtargets[i];
 		if (rt != null && rt.width == 0) {
-			let _image: image_t = rt.image;
+			let _image: image_t = rt._image;
 			app_notify_on_init(_render_path_resize_on_init, _image);
-			rt.image = render_path_create_image(rt, rt.depth_format);
+			rt._image = render_path_create_image(rt, rt._depth_format);
 		}
 	}
 
 	// Attach depth buffers
 	for (let i: i32 = 0; i < rtargets.length; ++i) {
 		let rt: render_target_t = rtargets[i];
-		if (rt != null && rt.depth_from != "") {
-			let depth_from: render_target_t = map_get(_render_path_depth_to_render_target, rt.depth_from);
-			image_set_depth_from(rt.image, depth_from.image);
+		if (rt != null && rt._depth_from != "") {
+			let depth_from: render_target_t = map_get(_render_path_depth_to_render_target, rt._depth_from);
+			image_set_depth_from(rt._image, depth_from._image);
 		}
 	}
 }
@@ -398,7 +382,7 @@ function render_path_create_depth_buffer(name: string, format: string = null) {
 function render_path_create_target(t: render_target_t): render_target_t {
 	// With depth buffer
 	if (t.depth_buffer != null) {
-		t.has_depth = true;
+		t._has_depth = true;
 		let depth_target: render_target_t = map_get(_render_path_depth_to_render_target, t.depth_buffer);
 
 		if (depth_target == null) { // Create new one
@@ -406,23 +390,23 @@ function render_path_create_target(t: render_target_t): render_target_t {
 				let db: depth_buffer_desc_t = _render_path_depth_buffers[i];
 				if (db.name == t.depth_buffer) {
 					map_set(_render_path_depth_to_render_target, db.name, t);
-					t.depth_format = render_path_get_depth_format(db.format);
-					t.image = render_path_create_image(t, t.depth_format);
+					t._depth_format = render_path_get_depth_format(db.format);
+					t._image = render_path_create_image(t, t._depth_format);
 					break;
 				}
 			}
 		}
 		else { // Reuse
-			t.depth_format = depth_format_t.NO_DEPTH;
-			t.depth_from = t.depth_buffer;
-			t.image = render_path_create_image(t, t.depth_format);
-			image_set_depth_from(t.image, depth_target.image);
+			t._depth_format = depth_format_t.NO_DEPTH;
+			t._depth_from = t.depth_buffer;
+			t._image = render_path_create_image(t, t._depth_format);
+			image_set_depth_from(t._image, depth_target._image);
 		}
 	}
 	else { // No depth buffer
-		t.has_depth = false;
-		t.depth_format = depth_format_t.NO_DEPTH;
-		t.image = render_path_create_image(t, t.depth_format);
+		t._has_depth = false;
+		t._depth_format = depth_format_t.NO_DEPTH;
+		t._image = render_path_create_image(t, t._depth_format);
 	}
 	return t;
 }
@@ -506,13 +490,13 @@ function render_target_create(): render_target_t {
 	raw.mipmaps = false;
 	raw.depth = 1;
 	raw.is_image = false;
-	raw.depth_from = "";
-	raw.has_depth = false;
+	raw._depth_from = "";
+	raw._has_depth = false;
 	return raw;
 }
 
 function render_target_unload(raw: render_target_t) {
-	if (raw.image != null) {
-		image_unload(raw.image);
+	if (raw._image != null) {
+		image_unload(raw._image);
 	}
 }

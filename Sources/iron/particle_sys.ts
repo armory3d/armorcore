@@ -144,7 +144,7 @@ function particle_sys_get_data(raw: particle_sys_t): mat4_t {
 }
 
 function particle_sys_update_gpu(raw: particle_sys_t, object: mesh_object_t, owner: mesh_object_t) {
-	if (!object.data._instanced) {
+	if (!object.data._.instanced) {
 		particle_sys_setup_geom(raw, object, owner);
 	}
 	// GPU particles transform is attached to owner object
@@ -167,14 +167,15 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 
 	if (raw.r.emit_from == 0) { // Vert
 		let pa: vertex_array_t = mesh_data_get_vertex_array(owner.data, "pos");
+		let size: i32 = mesh_data_get_vertex_size(pa.data);
 
 		for (let x: i32 = 0; x < raw.particles.length; ++x) {
-			let j: i32 = math_floor(particle_sys_fhash(i) * (pa.values.length / pa._size));
-			instanced_data[i] = pa.values[j * pa._size    ] * norm_fac * scale_fac.x;
+			let j: i32 = math_floor(particle_sys_fhash(i) * (pa.values.length / size));
+			instanced_data[i] = pa.values[j * size    ] * norm_fac * scale_fac.x;
 			i++;
-			instanced_data[i] = pa.values[j * pa._size + 1] * norm_fac * scale_fac.y;
+			instanced_data[i] = pa.values[j * size + 1] * norm_fac * scale_fac.y;
 			i++;
-			instanced_data[i] = pa.values[j * pa._size + 2] * norm_fac * scale_fac.z;
+			instanced_data[i] = pa.values[j * size + 2] * norm_fac * scale_fac.z;
 			i++;
 		}
 	}
@@ -183,7 +184,7 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 
 		for (let x: i32 = 0; x < raw.particles.length; ++x) {
 			// Choose random index array (there is one per material) and random face
-			let ia: u32_array_t = owner.data._indices[particle_sys_rand(owner.data._indices.length)];
+			let ia: u32_array_t = owner.data._.indices[particle_sys_rand(owner.data._.indices.length)];
 			let face_index: i32 = particle_sys_rand(math_floor(ia.length / 3));
 
 			let i0: i32 = ia[face_index * 3 + 0];
