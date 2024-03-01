@@ -73,6 +73,17 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
         for o in self.meshArray.items():
             self.export_mesh(o)
 
+        self.output["light_datas"] = None
+        self.output["camera_datas"] = None
+        self.output["camera_ref"] = None
+        self.output["material_datas"] = None
+        self.output["particle_datas"] = None
+        self.output["shader_datas"] = None
+        self.output["speaker_datas"] = None
+        self.output["world_datas"] = None
+        self.output["world_ref"] = None
+        self.output["embedded_datas"] = None
+
         self.write_arm(self.filepath, self.output)
         self.scene.frame_set(current_frame, subframe=current_subframe)
 
@@ -195,7 +206,8 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
             begin_frame = int(action.frame_range[0])
             end_frame = int(action.frame_range[1])
             tracko = {}
-            o["anim"] = {"tracks": [tracko]}
+            o["anim"] = {}
+            o["anim"]["tracks"] = [tracko]
             tracko["target"] = "transform"
             tracko["frames"] = [
                 i - begin_frame for i in range(begin_frame, end_frame + 1)
@@ -220,12 +232,12 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
 
     def export_object(self, bobject, scene, parento=None):
         if bobjectRef := self.bobjectArray.get(bobject):
-            o = {
-                "type": structIdentifier[bobjectRef["objectType"]],
-                "name": bobjectRef["structName"],
-            }
+            o = {}
+            o["type"] = structIdentifier[bobjectRef["objectType"]]
+            o["name"] = bobjectRef["structName"]
+
             if bobject.parent_type == "BONE":
-                o["parent_bone"] = bobject.parent_bone
+                o["anim"]["parent_bone"] = bobject.parent_bone
 
             if bobjectRef["objectType"] == NodeTypeMesh:
                 objref = bobject.data
@@ -248,24 +260,24 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
             if bobject.parent_type == "BONE":
                 armature = bobject.parent.data
                 bone = armature.bones[bobject.parent_bone]
-                o["parent_bone_connected"] = bone.use_connect
+                o["anim"]["parent_bone_connected"] = bone.use_connect
                 if bone.use_connect:
                     bone_translation = Vector((0, bone.length, 0)) + bone.head
-                    o["parent_bone_tail"] = [
+                    o["anim"]["parent_bone_tail"] = [
                         bone_translation[0],
                         bone_translation[1],
                         bone_translation[2],
                     ]
                 else:
                     bone_translation = bone.tail - bone.head
-                    o["parent_bone_tail"] = [
+                    o["anim"]["parent_bone_tail"] = [
                         bone_translation[0],
                         bone_translation[1],
                         bone_translation[2],
                     ]
                     pose_bone = bobject.parent.pose.bones[bobject.parent_bone]
                     bone_translation_pose = pose_bone.tail - pose_bone.head
-                    o["parent_bone_tail_pose"] = [
+                    o["anim"]["parent_bone_tail_pose"] = [
                         bone_translation_pose[0],
                         bone_translation_pose[1],
                         bone_translation_pose[2],
@@ -300,9 +312,9 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
                             export_actions.append(strip.action)
 
                 basename = os.path.basename(self.filepath)[:-4]
-                o["bone_actions"] = []
+                o["anim"]["bone_actions"] = []
                 for action in export_actions:
-                    o["bone_actions"].append(basename + "_" + action.name)
+                    o["anim"]["bone_actions"].append(basename + "_" + action.name)
 
                 orig_action = bobject.animation_data.action
                 for action in export_actions:
@@ -494,12 +506,13 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
                 o["scale_tex"] = maxdim
                 invscale_tex = (1 / o["scale_tex"]) * 32767
             else:
+                o["scale_tex"] = 1.0
                 invscale_tex = 1 * 32767
             if has_tang:
                 exportMesh.calc_tangents(uvmap=lay0.name)
-                tangdata = np.empty(num_verts * 3, dtype="<f4")
+                tangdata = np.empty(num_verts * 4, dtype="<f4")
         if has_col:
-            cdata = np.empty(num_verts * 3, dtype="<f4")
+            cdata = np.empty(num_verts * 4, dtype="<f4")
 
         # Scale for packed coords
         aabb = self.calc_aabb(bobject)
@@ -545,16 +558,17 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
                     t1data[i2] = uv[0]
                     t1data[i2 + 1] = 1.0 - uv[1]
                 if has_tang:
-                    i3 = i * 3
-                    tangdata[i3] = tang[0]
-                    tangdata[i3 + 1] = tang[1]
-                    tangdata[i3 + 2] = tang[2]
+                    i4 = i * 4
+                    tangdata[i4] = tang[0]
+                    tangdata[i4 + 1] = tang[1]
+                    tangdata[i4 + 2] = tang[2]
             if has_col:
                 col = vcol0[loop.index].color
-                i3 = i * 3
-                cdata[i3] = col[0]
-                cdata[i3 + 1] = col[1]
-                cdata[i3 + 2] = col[2]
+                i4 = i * 4
+                cdata[i4] = col[0]
+                cdata[i4 + 1] = col[1]
+                cdata[i4 + 2] = col[2]
+                cdata[i4 + 3] = col[3]
 
         mats = exportMesh.materials
         poly_map = []
@@ -634,7 +648,7 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
                 )
         if has_col:
             o["vertex_arrays"].append(
-                {"attrib": "col", "values": cdata, "data": "short4norm", "padding": 1}
+                {"attrib": "col", "values": cdata, "data": "short4norm"}
             )
         if has_tang:
             o["vertex_arrays"].append(
@@ -642,7 +656,6 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
                     "attrib": "tang",
                     "values": tangdata,
                     "data": "short4norm",
-                    "padding": 1,
                 }
             )
 
