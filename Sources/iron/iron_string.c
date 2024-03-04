@@ -4,10 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 
-// void *gc_alloc(size_t size);
+#ifdef WITH_MINITS
+void *gc_calloc(size_t size);
+#else
+static void *gc_calloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
+#endif
 
 char *string_join(char *a, char *b) {
-	char *r = malloc(strlen(a) + strlen(b) + 1);
+	char *r = gc_calloc(strlen(a) + strlen(b) + 1);
 	strcpy(r, a);
 	strcat(r, b);
 	return r;
@@ -26,7 +30,7 @@ bool string_equals(char *a, char *b) {
 
 char * i32_to_string(int32_t i) {
 	int l = snprintf(NULL, 0, "%d", i);
-	char *r = malloc(l + 1);
+	char *r = gc_calloc(l + 1);
 	sprintf(r, "%d", i);
 	return r;
 }
@@ -44,9 +48,9 @@ int32_t string_last_index_of(char *s, char *search) {
 }
 
 any_array_t *string_split(char *s, char *sep) {
-	char *r = malloc(strlen(s) + 1);
+	char *r = gc_calloc(strlen(s) + 1);
 	strcpy(r, s);
-	any_array_t *a = calloc(sizeof(any_array_t), 1);
+	any_array_t *a = gc_calloc(sizeof(any_array_t));
 	char *token = strtok(r, sep);
 	while (token != NULL) {
 		any_array_push(a, token);
@@ -72,7 +76,7 @@ int32_t char_code_at(char *s, int32_t i) {
 }
 
 char *char_at(char *s, int32_t i) {
-	char *r = malloc(2);
+	char *r = gc_calloc(2);
 	r[0] = s[i];
 	r[1] = 0;
 	return r;

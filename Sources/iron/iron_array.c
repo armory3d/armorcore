@@ -2,9 +2,17 @@
 
 #include <stdlib.h>
 
+#ifdef WITH_MINITS
+void *gc_realloc(void *ptr, size_t size);
+void gc_free(void *ptr);
+#else
+static void *gc_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
+static void gc_free(void *ptr) { free(ptr); }
+#endif
+
 void array_free(void *a) {
 	u8_array_t *tmp = (u8_array_t *)a;
-	free(tmp->buffer);
+	gc_free(tmp->buffer);
 	tmp->buffer = NULL;
 	tmp->length = tmp->capacity = 0;
 }
@@ -18,7 +26,7 @@ static void array_alloc(void *a, uint8_t element_size) {
 		else {
 			tmp->capacity *= 2;
 		}
-		tmp->buffer = realloc(tmp->buffer, tmp->capacity * element_size);
+		tmp->buffer = gc_realloc(tmp->buffer, tmp->capacity * element_size);
 	}
 }
 
@@ -64,47 +72,47 @@ void any_array_push(any_array_t *a, void *e) {
 
 void i8_array_resize(i8_array_t *a, int32_t size) {
 	a->capacity = size;
-	a->buffer = realloc(a->buffer, a->capacity * sizeof(int8_t));
+	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(int8_t));
 }
 
 void u8_array_resize(u8_array_t *a, int32_t size) {
 	a->capacity = size;
-	a->buffer = realloc(a->buffer, a->capacity * sizeof(uint8_t));
+	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(uint8_t));
 }
 
 void i16_array_resize(i16_array_t *a, int32_t size) {
 	a->capacity = size;
-	a->buffer = realloc(a->buffer, a->capacity * sizeof(int16_t));
+	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(int16_t));
 }
 
 void u16_array_resize(u16_array_t *a, int32_t size) {
 	a->capacity = size;
-	a->buffer = realloc(a->buffer, a->capacity * sizeof(uint16_t));
+	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(uint16_t));
 }
 
 void i32_array_resize(i32_array_t *a, int32_t size) {
 	a->capacity = size;
-	a->buffer = realloc(a->buffer, a->capacity * sizeof(int32_t));
+	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(int32_t));
 }
 
 void u32_array_resize(u32_array_t *a, int32_t size) {
 	a->capacity = size;
-	a->buffer = realloc(a->buffer, a->capacity * sizeof(uint32_t));
+	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(uint32_t));
 }
 
 void f32_array_resize(f32_array_t *a, int32_t size) {
 	a->capacity = size;
-	a->buffer = realloc(a->buffer, a->capacity * sizeof(float));
+	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(float));
 }
 
 void any_array_resize(any_array_t *a, int32_t size) {
 	a->capacity = size;
-	a->buffer = realloc(a->buffer, a->capacity * sizeof(void *));
+	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(void *));
 }
 
 void buffer_resize(buffer_t *b, int32_t size) {
 	b->length = size;
-	b->data = realloc(b->data, b->length * sizeof(uint8_t));
+	b->data = gc_realloc(b->data, b->length * sizeof(uint8_t));
 }
 
 void array_sort(void *ar, void *fn) {
