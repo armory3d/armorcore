@@ -905,10 +905,8 @@ function writeTSProject(projectdir, projectFiles, options) {
 	// MiniTS compiler
 	if (globalThis.flags.with_minits) {
 		globalThis.options = options;
-
 		let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
 		let stream = fs.createWriteStream('build/krom.ts');
-
 		for (let file_path of file_paths) {
 			if (file_path.endsWith('d.ts')) {
 				continue;
@@ -920,16 +918,15 @@ function writeTSProject(projectdir, projectFiles, options) {
 			file = ts_preprocessor(file);
 			stream.write(file);
 		}
-		stream.close();
-
-		// stream.on('close', function() {
+		stream.end();
+		stream.on('close', function() {
 			let minits = __dirname + '/Tools/minits/minits.js';
 			globalThis.require = require;
 			globalThis.flags.minits_input = process.cwd() + "/build/krom.ts";
 			// globalThis.flags.minits_output = process.cwd() + "/build/krom/krom.js";
 			globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
 			(1, eval)(fs.readFileSync(minits) + '');
-		// });
+		});
 	}
 	// TS compiler
 	else {

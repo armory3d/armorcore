@@ -541,7 +541,7 @@ function struct_malloc(token, malloc_type) {
 		if (malloc_type.endsWith(" *")) { // mystruct * -> mystruct
 			malloc_type = malloc_type.substring(0, malloc_type.length - 2);
 		}
-		token = "gc_alloc(sizeof(" + malloc_type + "))";
+		token = "gc_calloc(sizeof(" + malloc_type + "))";
 		pos++; // }
 		tabs--;
 	}
@@ -756,12 +756,12 @@ function string_length(token) {
 
 function value_type(value) {
 	if (value.indexOf("->") > -1) {
-		base = value.substring(0, value.indexOf("->"));
+		let base = value.substring(0, value.indexOf("->"));
 		let type = value_types.get(base);
+		value = value.substring(value.indexOf("->") + 2, value.length);
 		let struct_value_types = struct_types.get(type);
 		if (struct_value_types != null) {
-			let struct_value = value.substring(value.indexOf("->") + 2, value.length);
-			return struct_value_types.get(struct_value);
+			return struct_value_types.get(value);
 		}
 	}
 	return value_types.get(value);
@@ -904,8 +904,8 @@ function write_c() {
 			}
 			if (is_struct(type)) {
 				if (!array_structs.has(type)) {
-					let as = "typedef struct " + type + "_array{" +
-						type + "**buffer;int length;int capacity;}" +
+					let as = "typedef PACK(struct " + type + "_array{" +
+						type + "**buffer;int length;int capacity;})" +
 						type + "_array_t;";
 					array_structs.set(type, as);
 				}
@@ -975,6 +975,8 @@ function write_c() {
 	}
 
 	stream.write("\n");
+
+	stream.write('#include <krom_api.h>\n\n');
 
 	// Globals
 	let global_inits = [];
@@ -1257,6 +1259,11 @@ function write_c() {
 
 				if (token == "armpack_decode") {
 					token = "armpack_decodeb"; // todo
+				}
+
+				// a / b - > a / (float)b
+				if (token == "/") {
+					token = "/(float)";
 				}
 
 				// a(1) -> a(1, 2) // a(x: i32, y: i32 = 2)
