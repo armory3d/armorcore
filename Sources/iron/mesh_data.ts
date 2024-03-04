@@ -210,7 +210,8 @@ function mesh_data_get(raw: mesh_data_t, vs: vertex_element_t[]): vertex_buffer_
 				has_col = true;
 			}
 			for (let va: i32 = 0; va < raw.vertex_arrays.length; ++va) {
-				if (vs[e].name == raw.vertex_arrays[va].attrib) {
+				let name: string = vs[e].name;
+				if (name == raw.vertex_arrays[va].attrib) {
 					array_push(vertex_arrays, raw.vertex_arrays[va]);
 				}
 			}

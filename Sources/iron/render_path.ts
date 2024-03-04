@@ -90,7 +90,9 @@ function render_path_render_frame() {
 			light_object_build_mat(l, scene_camera);
 		}
 	}
-	_render_path_light = scene_lights[0];
+	if (scene_lights.length > 0) {
+		_render_path_light = scene_lights[0];
+	}
 
 	render_path_commands();
 

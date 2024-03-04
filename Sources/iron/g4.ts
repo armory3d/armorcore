@@ -349,6 +349,27 @@ function _image_set_size(image: image_t, tex: krom_texture_t) {
 	image.depth = tex.depth;
 }
 
+function _image_set_size_from_texture(image: image_t, _tex: any) {
+	///if arm_minits
+	let tex: kinc_g4_texture_t = _tex;
+	image.width = tex.tex_width;
+	image.height = tex.tex_height;
+	image.depth = tex.tex_depth;
+	///else
+	_image_set_size(image, _tex);
+	///end
+}
+
+function _image_set_size_from_render_target(image: image_t, _rt: any) {
+	///if arm_minits
+	let rt: kinc_g4_render_target_t = _rt;
+	image.width = rt.width;
+	image.height = rt.height;
+	///else
+	_image_set_size(image, _rt);
+	///end
+}
+
 function image_get_depth_buffer_bits(format: depth_format_t): i32 {
 	if (format == depth_format_t.NO_DEPTH) {
 		return -1;
@@ -383,7 +404,7 @@ function image_get_tex_format(format: tex_format_t): i32 {
 
 function image_from_texture(tex: any): image_t {
 	let image: image_t = _image_create(tex);
-	_image_set_size(image, tex);
+	_image_set_size_from_texture(image, tex);
 	return image;
 }
 
@@ -395,7 +416,7 @@ function image_from_bytes(buffer: buffer_t, width: i32, height: i32, format: tex
 	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture_from_bytes(buffer, width, height, image_get_tex_format(format), readable);
-	_image_set_size(image, image.texture_);
+	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
 
@@ -407,14 +428,14 @@ function image_from_bytes_3d(buffer: buffer_t, width: i32, height: i32, depth: i
 	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture_from_bytes3d(buffer, width, height, depth, image_get_tex_format(format), readable);
-	_image_set_size(image, image.texture_);
+	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
 
 function image_from_encoded_bytes(buffer: buffer_t, format: string, readable: bool = false): image_t {
 	let image: image_t = _image_create(null);
 	image.texture_ = krom_g4_create_texture_from_encoded_bytes(buffer, format, readable);
-	_image_set_size(image, image.texture_);
+	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
 
@@ -425,7 +446,7 @@ function image_create(width: i32, height: i32, format: tex_format_t = null): ima
 	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture(width, height, image_get_tex_format(format));
-	_image_set_size(image, image.texture_);
+	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
 
@@ -436,7 +457,7 @@ function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format
 	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture3d(width, height, depth, image_get_tex_format(format));
-	_image_set_size(image, image.texture_);
+	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
 
@@ -447,7 +468,7 @@ function image_create_render_target(width: i32, height: i32, format: tex_format_
 	let image: image_t = _image_create(null);
 	image.format = format;
 	image.render_target_ = krom_g4_create_render_target(width, height, format, image_get_depth_buffer_bits(depth_format), 0);
-	_image_set_size(image, image.render_target_);
+	_image_set_size_from_render_target(image, image.render_target_);
 	return image;
 }
 
@@ -603,9 +624,9 @@ type krom_pipeline_state_t = {
 };
 
 type krom_texture_t = {
-	width? :i32;
-	height? :i32;
-	depth? :i32;
+	width?: i32;
+	height?: i32;
+	depth?: i32;
 };
 
 enum clear_flag_t {

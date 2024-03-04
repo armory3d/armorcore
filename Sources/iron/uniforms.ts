@@ -632,7 +632,8 @@ function uniforms_set_material_consts(context: shader_context_t, material_contex
 			let matc: bind_const_t = material_context.bind_constants[i];
 			let pos: i32 = -1;
 			for (let i: i32 = 0; i < context.constants.length; ++i) {
-				if (context.constants[i].name == matc.name) {
+				let name: string = context.constants[i].name;
+				if (name == matc.name) {
 					pos = i;
 					break;
 				}
