@@ -64,8 +64,8 @@ function app_ready() {
 
 	let sc: shader_context_t = {};
 	sc.name = "mesh";
-	sc.vertex_shader = "mesh.vert";
-	sc.fragment_shader = "mesh.frag";
+	sc.vertex_shader = "data/mesh.vert";
+	sc.fragment_shader = "data/mesh.frag";
 	sc.compare_mode = "less";
 	sc.cull_mode = "clockwise";
 	sc.depth_write = true;
