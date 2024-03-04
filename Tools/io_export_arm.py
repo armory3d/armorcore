@@ -26,7 +26,7 @@ bl_info = {
     "location": "File -> Export",
     "description": "Armory mesh data",
     "author": "Armory3D.org",
-    "version": (2024, 1, 0),
+    "version": (2024, 3, 0),
     "blender": (3, 6, 0),
     "doc_url": "",
     "tracker_url": "",
@@ -139,8 +139,8 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
 
     def export_bone(self, armature, bone, scene, o, action):
         if bobjectRef := self.bobjectBoneArray.get(bone):
-            o["type"] = structIdentifier[bobjectRef["objectType"]]
             o["name"] = bobjectRef["structName"]
+            o["type"] = structIdentifier[bobjectRef["objectType"]]
             self.export_bone_transform(armature, bone, o, action)
         o["children"] = []
         for subbobject in bone.children:
@@ -233,8 +233,17 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
     def export_object(self, bobject, scene, parento=None):
         if bobjectRef := self.bobjectArray.get(bobject):
             o = {}
-            o["type"] = structIdentifier[bobjectRef["objectType"]]
             o["name"] = bobjectRef["structName"]
+            o["type"] = structIdentifier[bobjectRef["objectType"]]
+            o["data_ref"] = None
+            o["transform"] = self.write_matrix(bobject.matrix_local)
+            o["dimensions"] = None
+            o["visible"] = True
+            o["spawn"] = True
+            o["particles"] = None
+            o["anim"] = None
+            o["material_refs"] = None
+            o["children"] = None
 
             if bobject.parent_type == "BONE":
                 o["anim"]["parent_bone"] = bobject.parent_bone
@@ -251,9 +260,6 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
                 oid = self.meshArray[objref]["structName"]
                 o["data_ref"] = oid
                 o["dimensions"] = self.calc_aabb(bobject)
-
-            o["transform"] = {}
-            o["transform"]["values"] = self.write_matrix(bobject.matrix_local)
 
             # If the object is parented to a bone and is not relative, undo the
             # bone's transform
@@ -473,6 +479,16 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
         has_col = num_colors > 0
         has_tang = False
 
+        # Scale for packed coords
+        aabb = self.calc_aabb(bobject)
+        maxdim = max(aabb[0], max(aabb[1], aabb[2]))
+        if maxdim > 2:
+            o["scale_pos"] = maxdim / 2
+        else:
+            o["scale_pos"] = 1.0
+        if has_armature:  # Allow up to 2x bigger bounds for skinned mesh
+            o["scale_pos"] *= 2.0
+
         pdata = np.empty(num_verts * 4, dtype="<f4")  # p.xyz, n.z
         ndata = np.empty(num_verts * 2, dtype="<f4")  # n.xy
         if has_tex:
@@ -514,15 +530,8 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
         if has_col:
             cdata = np.empty(num_verts * 4, dtype="<f4")
 
-        # Scale for packed coords
-        aabb = self.calc_aabb(bobject)
-        maxdim = max(aabb[0], max(aabb[1], aabb[2]))
-        if maxdim > 2:
-            o["scale_pos"] = maxdim / 2
-        else:
-            o["scale_pos"] = 1.0
-        if has_armature:  # Allow up to 2x bigger bounds for skinned mesh
-            o["scale_pos"] *= 2.0
+        o["instancing"] = None
+        o["skin"] = None
 
         scale_pos = o["scale_pos"]
         invscale_pos = (1 / scale_pos) * 32767
@@ -570,6 +579,53 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
                 cdata[i4 + 2] = col[2]
                 cdata[i4 + 3] = col[3]
 
+        # Pack
+        pdata *= invscale_pos
+        ndata *= 32767
+        pdata = np.array(pdata, dtype="<i2")
+        ndata = np.array(ndata, dtype="<i2")
+        if has_tex:
+            t0data *= invscale_tex
+            t0data = np.array(t0data, dtype="<i2")
+            if has_tex1:
+                t1data *= invscale_tex
+                t1data = np.array(t1data, dtype="<i2")
+        if has_col:
+            cdata *= 32767
+            cdata = np.array(cdata, dtype="<i2")
+        if has_tang:
+            tangdata *= 32767
+            tangdata = np.array(tangdata, dtype="<i2")
+
+        # Output
+        o["vertex_arrays"] = []
+        o["vertex_arrays"].append(
+            {"attrib": "pos", "data": "short4norm", "values": pdata}
+        )
+        o["vertex_arrays"].append(
+            {"attrib": "nor", "data": "short2norm", "values": ndata}
+        )
+        if has_tex:
+            o["vertex_arrays"].append(
+                {"attrib": "tex", "data": "short2norm", "values": t0data}
+            )
+            if has_tex1:
+                o["vertex_arrays"].append(
+                    {"attrib": "tex1", "data": "short2norm", "values": t1data}
+                )
+        if has_col:
+            o["vertex_arrays"].append(
+                {"attrib": "col", "data": "short4norm", "values": cdata}
+            )
+        if has_tang:
+            o["vertex_arrays"].append(
+                {
+                    "attrib": "tang",
+                    "data": "short4norm",
+                    "values": tangdata,
+                }
+            )
+
         mats = exportMesh.materials
         poly_map = []
         for i in range(max(len(mats), 1)):
@@ -603,61 +659,14 @@ class ArmoryExporter(bpy.types.Operator, ExportHelper):
                     i += 3
 
             ia = {}
-            ia["values"] = prim
             ia["material"] = 0
             if len(mats) > 1:
                 for i in range(len(mats)):  # Multi-mat mesh
                     if mats[i] == mats[index]:  # Default material for empty slots
                         ia["material"] = i
                         break
+            ia["values"] = prim
             o["index_arrays"].append(ia)
-
-        # Pack
-        pdata *= invscale_pos
-        ndata *= 32767
-        pdata = np.array(pdata, dtype="<i2")
-        ndata = np.array(ndata, dtype="<i2")
-        if has_tex:
-            t0data *= invscale_tex
-            t0data = np.array(t0data, dtype="<i2")
-            if has_tex1:
-                t1data *= invscale_tex
-                t1data = np.array(t1data, dtype="<i2")
-        if has_col:
-            cdata *= 32767
-            cdata = np.array(cdata, dtype="<i2")
-        if has_tang:
-            tangdata *= 32767
-            tangdata = np.array(tangdata, dtype="<i2")
-
-        # Output
-        o["vertex_arrays"] = []
-        o["vertex_arrays"].append(
-            {"attrib": "pos", "values": pdata, "data": "short4norm"}
-        )
-        o["vertex_arrays"].append(
-            {"attrib": "nor", "values": ndata, "data": "short2norm"}
-        )
-        if has_tex:
-            o["vertex_arrays"].append(
-                {"attrib": "tex", "values": t0data, "data": "short2norm"}
-            )
-            if has_tex1:
-                o["vertex_arrays"].append(
-                    {"attrib": "tex1", "values": t1data, "data": "short2norm"}
-                )
-        if has_col:
-            o["vertex_arrays"].append(
-                {"attrib": "col", "values": cdata, "data": "short4norm"}
-            )
-        if has_tang:
-            o["vertex_arrays"].append(
-                {
-                    "attrib": "tang",
-                    "values": tangdata,
-                    "data": "short4norm",
-                }
-            )
 
     def export_mesh(self, objectRef):
         # This function exports a single mesh object
@@ -719,32 +728,7 @@ if __name__ == "__main__":
 # THE SOFTWARE.
 
 def _pack_integer(obj, fp):
-    if obj < 0:
-        if obj >= -32:
-            fp.write(struct.pack("b", obj))
-        elif obj >= -(2 ** (8 - 1)):
-            fp.write(b"\xd0" + struct.pack("b", obj))
-        elif obj >= -(2 ** (16 - 1)):
-            fp.write(b"\xd1" + struct.pack("<h", obj))
-        elif obj >= -(2 ** (32 - 1)):
-            fp.write(b"\xd2" + struct.pack("<i", obj))
-        elif obj >= -(2 ** (64 - 1)):
-            fp.write(b"\xd3" + struct.pack("<q", obj))
-        else:
-            raise Exception("huge signed int")
-    else:
-        if obj <= 127:
-            fp.write(struct.pack("B", obj))
-        elif obj <= 2**8 - 1:
-            fp.write(b"\xcc" + struct.pack("B", obj))
-        elif obj <= 2**16 - 1:
-            fp.write(b"\xcd" + struct.pack("<H", obj))
-        elif obj <= 2**32 - 1:
-            fp.write(b"\xce" + struct.pack("<I", obj))
-        elif obj <= 2**64 - 1:
-            fp.write(b"\xcf" + struct.pack("<Q", obj))
-        else:
-            raise Exception("huge unsigned int")
+    fp.write(b"\xd2" + struct.pack("<i", obj))
 
 def _pack_nil(fp):
     fp.write(b"\xc0")
@@ -753,42 +737,17 @@ def _pack_boolean(obj, fp):
     fp.write(b"\xc3" if obj else b"\xc2")
 
 def _pack_float(obj, fp):
-    # NOTE: forced 32-bit floats for Armory
-    # fp.write(b"\xcb" + struct.pack("<d", obj)) # Double
     fp.write(b"\xca" + struct.pack("<f", obj))
 
 def _pack_string(obj, fp):
     obj = obj.encode("utf-8")
-    if len(obj) <= 31:
-        fp.write(struct.pack("B", 0xA0 | len(obj)) + obj)
-    elif len(obj) <= 2**8 - 1:
-        fp.write(b"\xd9" + struct.pack("B", len(obj)) + obj)
-    elif len(obj) <= 2**16 - 1:
-        fp.write(b"\xda" + struct.pack("<H", len(obj)) + obj)
-    elif len(obj) <= 2**32 - 1:
-        fp.write(b"\xdb" + struct.pack("<I", len(obj)) + obj)
-    else:
-        raise Exception("huge string")
+    fp.write(b"\xdb" + struct.pack("<I", len(obj)) + obj)
 
 def _pack_binary(obj, fp):
-    if len(obj) <= 2**8 - 1:
-        fp.write(b"\xc4" + struct.pack("B", len(obj)) + obj)
-    elif len(obj) <= 2**16 - 1:
-        fp.write(b"\xc5" + struct.pack("<H", len(obj)) + obj)
-    elif len(obj) <= 2**32 - 1:
-        fp.write(b"\xc6" + struct.pack("<I", len(obj)) + obj)
-    else:
-        raise Exception("huge binary string")
+    fp.write(b"\xc6" + struct.pack("<I", len(obj)) + obj)
 
 def _pack_array(obj, fp):
-    if len(obj) <= 15:
-        fp.write(struct.pack("B", 0x90 | len(obj)))
-    elif len(obj) <= 2**16 - 1:
-        fp.write(b"\xdc" + struct.pack("<H", len(obj)))
-    elif len(obj) <= 2**32 - 1:
-        fp.write(b"\xdd" + struct.pack("<I", len(obj)))
-    else:
-        raise Exception("huge array")
+    fp.write(b"\xdd" + struct.pack("<I", len(obj)))
 
     if len(obj) > 0 and isinstance(obj[0], float):
         fp.write(b"\xca")
@@ -819,15 +778,7 @@ def _pack_array(obj, fp):
             pack(e, fp)
 
 def _pack_map(obj, fp):
-    if len(obj) <= 15:
-        fp.write(struct.pack("B", 0x80 | len(obj)))
-    elif len(obj) <= 2**16 - 1:
-        fp.write(b"\xde" + struct.pack("<H", len(obj)))
-    elif len(obj) <= 2**32 - 1:
-        fp.write(b"\xdf" + struct.pack("<I", len(obj)))
-    else:
-        raise Exception("huge array")
-
+    fp.write(b"\xdf" + struct.pack("<I", len(obj)))
     for k, v in obj.items():
         pack(k, fp)
         pack(v, fp)
@@ -849,8 +800,6 @@ def pack(obj, fp):
         _pack_array(obj, fp)
     elif isinstance(obj, dict):
         _pack_map(obj, fp)
-    else:
-        raise Exception(f"unsupported type: {str(type(obj))}")
 
 def packb(obj):
     fp = io.BytesIO()
