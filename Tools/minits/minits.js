@@ -1,7 +1,7 @@
 
-// minits transpiler
+// ts to c:
 // ../../Kinc/make --kfile minits.js
-// c:
+// build c:
 // ../../Kinc/make --run
 
 let flags = globalThis.flags;
