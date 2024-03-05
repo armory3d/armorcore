@@ -2,7 +2,7 @@
 
 let raw: scene_t = {};
 
-function start() {
+function main() {
 	let ops: kinc_sys_ops_t = {};
 	ops.title = "Empty";
 	ops.width = 1280;

@@ -12,7 +12,7 @@
 #include <iron/iron_array.h>
 #include <iron/iron_map.h>
 #include <iron/iron_armpack.h>
-#include <tgc.h>
+#include <gc.h>
 // #include <quickjs.h>
 
 #define f32 float
@@ -26,26 +26,30 @@
 #define any void *
 #define null NULL
 
-void _globals_init();
-void start();
+void _kickstart();
 
-static tgc_t gc;
 int _argc;
 char **_argv;
 char assetsdir[256];
 bool enable_window = true;
-int gc_flags = 0;
+bool in_background = false;
+bool gc_static_alloc = false;
 
-void *gc_calloc(size_t size) {
-	return tgc_calloc_opt(&gc, size, sizeof(uint8_t), gc_flags, NULL);
+void (*krom_update)(void);
+void (*krom_drop_files)(wchar_t *);
+void (*krom_key_down)(int);
+void (*krom_key_up)(int);
+
+void *gc_alloc(size_t size) {
+	return gc_static_alloc ? _gc_calloc_static(size, sizeof(uint8_t)) : _gc_calloc(size, sizeof(uint8_t));
 }
 
 void *gc_realloc(void *ptr, size_t size) {
-	return tgc_realloc(&gc, ptr, size);
+	return _gc_realloc(ptr, size);
 }
 
 void gc_free(void *ptr) {
-	tgc_free(&gc, ptr);
+	_gc_free(ptr);
 }
 
 int kickstart(int argc, char **argv) {
@@ -113,31 +117,24 @@ int kickstart(int argc, char **argv) {
 	// JS_FreeValue(ctx, result);
 	// JS_RunGC(runtime);
 
-	// Set to root durig global/static variables init
-	gc_flags = TGC_ROOT;
-	tgc_start(&gc, &argc);
+	gc_static_alloc = true;
+	_gc_start(&argc);
 
-	_globals_init();
-	start();
-	kinc_start();
+	void (*volatile __kickstart)(void) = _kickstart; // No inline, for gc
+	__kickstart();
 
 	#ifdef WITH_AUDIO
 	kinc_a2_shutdown();
 	#endif
-
 	#ifdef WITH_ONNX
 	if (ort != NULL) {
 		ort->ReleaseEnv(ort_env);
 		ort->ReleaseSessionOptions(ort_session_options);
 	}
 	#endif
-
-	tgc_stop(&gc);
-
+	_gc_stop();
 	return 0;
 }
-
-void(*krom_update)(void);
 
 void update(void *data) {
 	#ifdef KORE_WINDOWS
@@ -181,31 +178,83 @@ void update(void *data) {
 	krom_update();
 	kinc_g4_end(0);
 	kinc_g4_swap_buffers();
-	gc_flags = 0;
+	gc_static_alloc = false;
+}
+
+void drop_files(wchar_t *file_path, void *data) {
+	// Update mouse position
+	#ifdef KORE_WINDOWS
+	POINT p;
+	GetCursorPos(&p);
+	ScreenToClient(kinc_windows_window_handle(0), &p);
+	mouse_move(0, p.x, p.y, 0, 0, NULL);
+	#endif
+
+	// if (sizeof(wchar_t) == 2) {
+	// 	(const uint16_t *)file_path
+	// }
+	// else {
+	// 	size_t len = wcslen(file_path);
+	// 	uint16_t *str = new uint16_t[len + 1];
+	// 	for (int i = 0; i < len; i++) str[i] = file_path[i];
+	// 	str[len] = 0;
+	// }
+	krom_drop_files(file_path);
+	in_background = false;
+
+	#ifdef IDLE_SLEEP
+	paused_frames = 0;
+	#endif
+}
+
+void key_down(int code, void *data) {
+	krom_key_down(code);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) zui_key_down(zui_instances[i], code);
+	#endif
+
+	#ifdef IDLE_SLEEP
+	input_down = true;
+	paused_frames = 0;
+	#endif
+}
+
+void key_up(int code, void *data) {
+	krom_key_up(code);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) zui_key_up(zui_instances[i], code);
+	#endif
+
+	#ifdef IDLE_SLEEP
+	input_down = false;
+	paused_frames = 0;
+	#endif
 }
 
 i32_map_t *i32_map_create() {
-	return gc_calloc(sizeof(i32_map_t));
+	return gc_alloc(sizeof(i32_map_t));
 }
 
 any_map_t *any_map_create() {
-	return gc_calloc(sizeof(any_map_t));
+	return gc_alloc(sizeof(any_map_t));
 }
 
 buffer_t *buffer_create(i32 length) {
-	buffer_t * b = gc_calloc(sizeof(buffer_t));
+	buffer_t * b = gc_alloc(sizeof(buffer_t));
 	buffer_resize(b, length);
 	return b;
 }
 
 buffer_view_t *buffer_view_create(buffer_t *b) {
-	buffer_view_t *view = gc_calloc(sizeof(buffer_view_t));
+	buffer_view_t *view = gc_alloc(sizeof(buffer_view_t));
 	view->buffer = b;
 	return view;
 }
 
 f32_array_t *f32_array_create(i32 length) {
-	f32_array_t *a = gc_calloc(sizeof(f32_array_t));
+	f32_array_t *a = gc_alloc(sizeof(f32_array_t));
 	if (length > 0) {
 		f32_array_resize(a, length);
 		a->length = length;
@@ -214,7 +263,7 @@ f32_array_t *f32_array_create(i32 length) {
 }
 
 u32_array_t *u32_array_create(i32 length) {
-	u32_array_t *a = gc_calloc(sizeof(u32_array_t));
+	u32_array_t *a = gc_alloc(sizeof(u32_array_t));
 	if (length > 0) {
 		u32_array_resize(a, length);
 		a->length = length;
@@ -223,7 +272,7 @@ u32_array_t *u32_array_create(i32 length) {
 }
 
 i32_array_t *i32_array_create(i32 length) {
-	i32_array_t *a = gc_calloc(sizeof(i32_array_t));
+	i32_array_t *a = gc_alloc(sizeof(i32_array_t));
 	if (length > 0) {
 		i32_array_resize(a, length);
 		a->length = length;
@@ -232,7 +281,7 @@ i32_array_t *i32_array_create(i32 length) {
 }
 
 u16_array_t *u16_array_create(i32 length) {
-	u16_array_t *a = gc_calloc(sizeof(u16_array_t));
+	u16_array_t *a = gc_alloc(sizeof(u16_array_t));
 	if (length > 0) {
 		u16_array_resize(a, length);
 		a->length = length;
@@ -241,7 +290,7 @@ u16_array_t *u16_array_create(i32 length) {
 }
 
 i16_array_t *i16_array_create(i32 length) {
-	i16_array_t *a = gc_calloc(sizeof(i16_array_t));
+	i16_array_t *a = gc_alloc(sizeof(i16_array_t));
 	if (length > 0) {
 		i16_array_resize(a, length);
 		a->length = length;
@@ -250,7 +299,7 @@ i16_array_t *i16_array_create(i32 length) {
 }
 
 u8_array_t *u8_array_create(i32 length) {
-	u8_array_t *a = gc_calloc(sizeof(u8_array_t));
+	u8_array_t *a = gc_alloc(sizeof(u8_array_t));
 	if (length > 0) {
 		u8_array_resize(a, length);
 		a->length = length;
@@ -259,7 +308,7 @@ u8_array_t *u8_array_create(i32 length) {
 }
 
 u8_array_t *u8_array_create_from_buffer(buffer_t *b) {
-	u8_array_t *a = gc_calloc(sizeof(u8_array_t));
+	u8_array_t *a = gc_alloc(sizeof(u8_array_t));
 	a->buffer = b->data;
 	a->length = b->length;
 	a->capacity = b->length;
@@ -267,7 +316,7 @@ u8_array_t *u8_array_create_from_buffer(buffer_t *b) {
 }
 
 i8_array_t *i8_array_create(i32 length) {
-	i8_array_t *a = gc_calloc(sizeof(i8_array_t));
+	i8_array_t *a = gc_alloc(sizeof(i8_array_t));
 	if (length > 0) {
 		i8_array_resize(a, length);
 		a->length = length;
@@ -276,7 +325,7 @@ i8_array_t *i8_array_create(i32 length) {
 }
 
 any_array_t *any_array_create(i32 length) {
-	any_array_t *a = gc_calloc(sizeof(any_array_t));
+	any_array_t *a = gc_alloc(sizeof(any_array_t));
 	if (length > 0) {
 		any_array_resize(a, length);
 		a->length = length;
@@ -295,10 +344,6 @@ f32 math_atan2(f32 y, f32 x) { return atan2f(y, x); }
 f32 math_asin(f32 x) { return asinf(x); }
 f32 math_pi() { return 3.14159265358979323846; }
 f32 math_pow(f32 x, f32 y) { return powf(x, y); }
-
-string_t *trim_end(string_t *str) {
-   return NULL;
-}
 
 i32 color_from_floats(f32 r, f32 g, f32 b, f32 a) {
 	return ((int)(a * 255) << 24) | ((int)(r * 255) << 16) | ((int)(g * 255) << 8) | (int)(b * 255);

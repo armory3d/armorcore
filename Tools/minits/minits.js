@@ -535,13 +535,13 @@ function struct_access(s) {
 	return s;
 }
 
-function struct_malloc(token, malloc_type) {
+function struct_alloc(token, alloc_type) {
 	// Turn "= {}" into malloc()
 	if (get_token(-1) == "=" && token == "{" && get_token(1) == "}") {
-		if (malloc_type.endsWith(" *")) { // mystruct * -> mystruct
-			malloc_type = malloc_type.substring(0, malloc_type.length - 2);
+		if (alloc_type.endsWith(" *")) { // mystruct * -> mystruct
+			alloc_type = alloc_type.substring(0, alloc_type.length - 2);
 		}
-		token = "gc_calloc(sizeof(" + malloc_type + "))";
+		token = "gc_alloc(sizeof(" + alloc_type + "))";
 		pos++; // }
 		tabs--;
 	}
@@ -869,7 +869,7 @@ function write_c() {
 				let type = read_type();
 
 				// type_t * -> struct type *
-				if (type.endsWith("_t *")) {
+				if (type.endsWith("_t *") && type != "string_t *") {
 					let type_short = strip(type, 4); // _t *
 					if (type_short.endsWith("_array")) { // tex_format_t_array -> i32_array
 						for (let e of enums) {
@@ -930,6 +930,11 @@ function write_c() {
 			// Return type + name
 			pos++;
 			let fn_name = get_token();
+
+			if (fn_name == "main") {
+				fn_name = "_main";
+			}
+
 			let ret = function_return_type();
 
 			// Params
@@ -992,7 +997,7 @@ function write_c() {
 
 			stream.write(join_type_name(type, name) + ";");
 
-			// Init this var in _globals_init()
+			// Init this var in _kickstart()
 			let is_initialized = get_token(1) == "=";
 			if (is_initialized) {
 				let init = name;
@@ -1003,7 +1008,7 @@ function write_c() {
 
 					token = enum_access(token);
 					token = array_access(token);
-					token = struct_malloc(token, type);
+					token = struct_alloc(token, type);
 
 					if (token == ";") {
 						break;
@@ -1039,13 +1044,14 @@ function write_c() {
 		}
 	}
 
-	// Globals init
-	stream.write("\nvoid _globals_init() {\n");
+	// Start function
+	stream.write("\nvoid _kickstart() {\n");
+	// Init globals
 	for (let val of global_inits) {
-		stream.write("\t");
-		stream.write(val);
-		stream.write(";\n");
+		stream.write("\t" + val + ";\n");
 	}
+	stream.write("\t_main();\n");
+	stream.write("\tkinc_start();\n");
 	stream.write("}\n\n");
 
 	// Functions
@@ -1056,6 +1062,11 @@ function write_c() {
 			// Function declaration
 			pos++;
 			let fn_name = get_token();
+
+			if (fn_name == "main") {
+				fn_name = "_main";
+			}
+
 			let fn_decl = fn_declarations.get(fn_name);
 			stream.write(fn_decl + "{\n");
 
@@ -1090,7 +1101,7 @@ function write_c() {
 
 			tabs = 1;
 			new_line = true;
-			let malloc_type = "";
+			let alloc_type = "";
 
 			while (true) {
 				pos++;
@@ -1111,7 +1122,7 @@ function write_c() {
 
 					pos++; // :
 					let type = read_type();
-					malloc_type = type;
+					alloc_type = type;
 
 					stream.write(join_type_name(type, name));
 
@@ -1132,10 +1143,10 @@ function write_c() {
 					let t = struct_access(get_token(-2));
 					let type = value_type(t);
 					if (type != null) {
-						malloc_type = type;
+						alloc_type = type;
 					}
 				}
-				token = struct_malloc(token, malloc_type);
+				token = struct_alloc(token, alloc_type);
 
 				// [] -> _array_create
 				token = array_create(token, get_token(-2));

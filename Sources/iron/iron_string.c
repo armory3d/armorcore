@@ -5,13 +5,13 @@
 #include <string.h>
 
 #ifdef WITH_MINITS
-void *gc_calloc(size_t size);
+void *gc_alloc(size_t size);
 #else
-static void *gc_calloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
+static void *gc_alloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
 #endif
 
 char *string_join(char *a, char *b) {
-	char *r = gc_calloc(strlen(a) + strlen(b) + 1);
+	char *r = gc_alloc(strlen(a) + strlen(b) + 1);
 	strcpy(r, a);
 	strcat(r, b);
 	return r;
@@ -30,7 +30,7 @@ bool string_equals(char *a, char *b) {
 
 char * i32_to_string(int32_t i) {
 	int l = snprintf(NULL, 0, "%d", i);
-	char *r = gc_calloc(l + 1);
+	char *r = gc_alloc(l + 1);
 	sprintf(r, "%d", i);
 	return r;
 }
@@ -48,9 +48,9 @@ int32_t string_last_index_of(char *s, char *search) {
 }
 
 any_array_t *string_split(char *s, char *sep) {
-	char *r = gc_calloc(strlen(s) + 1);
+	char *r = gc_alloc(strlen(s) + 1);
 	strcpy(r, s);
-	any_array_t *a = gc_calloc(sizeof(any_array_t));
+	any_array_t *a = gc_alloc(sizeof(any_array_t));
 	char *token = strtok(r, sep);
 	while (token != NULL) {
 		any_array_push(a, token);
@@ -68,7 +68,10 @@ char *substring(char *s, int32_t start, int32_t end) {
 }
 
 char *string_from_char_code(int32_t c) {
-	return "x";
+	char *r = gc_alloc(2);
+	r[0] = c;
+	r[1] = '\0';
+	return r;
 }
 
 int32_t char_code_at(char *s, int32_t i) {
@@ -76,9 +79,9 @@ int32_t char_code_at(char *s, int32_t i) {
 }
 
 char *char_at(char *s, int32_t i) {
-	char *r = gc_calloc(2);
+	char *r = gc_alloc(2);
 	r[0] = s[i];
-	r[1] = 0;
+	r[1] = '\0';
 	return r;
 }
 
@@ -93,5 +96,19 @@ bool ends_with(char *s, char *end) {
 }
 
 char *to_lower_case(char *s) {
-	return s;
+	char *r = gc_alloc(strlen(s) + 1);
+	strcpy(r, s);
+	int len = string_length(r);
+	for (int i = 0; i < len; ++i) {
+		r[i] = tolower(r[i]);
+	}
+	return r;
+}
+
+char *trim_end(char *str) {
+	int pos = string_length(str);
+	while (pos > 0 && str[pos] == ' ' || str[pos] == '\n') {
+		pos--;
+	}
+	return substring(str, 0, pos);
 }

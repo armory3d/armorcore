@@ -1,7 +1,6 @@
 #pragma once
 
 #include "krom.h"
-
 #include <kinc/log.h>
 #include <kinc/io/filereader.h>
 #include <kinc/io/filewriter.h>
@@ -153,7 +152,6 @@ const int constant_buffer_size = 24;
 // ╚═╝  ╚═╝    ╚═╝  ╚═╝     ╚═════╝     ╚═╝     ╚═╝
 
 bool stderr_created = false;
-bool in_background = false;
 int paused_frames = 0;
 #ifdef IDLE_SLEEP
 bool input_down = false;
@@ -250,29 +248,46 @@ void krom_g4_clear(i32 flags, i32 color, f32 depth) {
 	kinc_g4_clear(flags, color, depth, 0);
 }
 
-void krom_set_update_callback(void(*callback)(void)) {
+void krom_set_update_callback(void (*callback)(void)) {
 	krom_update = callback;
 	kinc_set_update_callback(update, NULL);
 }
 
-void krom_set_drop_files_callback(any callback) {
-
+void krom_set_drop_files_callback(void (*callback)(wchar_t *)) {
+	krom_drop_files = callback;
+	kinc_set_drop_files_callback(drop_files, NULL);
 }
 
 void krom_set_cut_copy_paste_callback(any on_cut, any on_copy, any on_paste) {
-
+	// kinc_set_cut_callback(cut, NULL);
+	// kinc_set_copy_callback(copy, NULL);
+	// kinc_set_paste_callback(paste, NULL);
+	// SET_FUNC(cut_func, args[0]);
+	// SET_FUNC(copy_func, args[1]);
+	// SET_FUNC(paste_func, args[2]);
 }
 
 void krom_set_application_state_callback(any on_foreground, any on_resume, any on_pause, any on_background, any on_shutdown) {
-
+	// kinc_set_foreground_callback(foreground, NULL);
+	// kinc_set_resume_callback(resume, NULL);
+	// kinc_set_pause_callback(pause, NULL);
+	// kinc_set_background_callback(background, NULL);
+	// kinc_set_shutdown_callback(shutdown, NULL);
+	// SET_FUNC(foreground_func, args[0]);
+	// SET_FUNC(resume_func, args[1]);
+	// SET_FUNC(pause_func, args[2]);
+	// SET_FUNC(background_func, args[3]);
+	// SET_FUNC(shutdown_func, args[4]);
 }
 
-void krom_set_keyboard_down_callback(any callback) {
-
+void krom_set_keyboard_down_callback(void (*callback)(int)) {
+	krom_key_down = callback;
+	kinc_keyboard_set_key_down_callback(key_down, NULL);
 }
 
-void krom_set_keyboard_up_callback(any callback) {
-
+void krom_set_keyboard_up_callback(void (*callback)(int)) {
+	krom_key_up = callback;
+	kinc_keyboard_set_key_up_callback(key_up, NULL);
 }
 
 void krom_set_keyboard_press_callback(any callback) {

@@ -81,12 +81,12 @@ if (flags.with_minits) {
 	c_project.addDefine('_GNU_SOURCE');
 	c_project.addDefine('CONFIG_VERSION=\"2024-01-13\"');
 	c_project.addDefine('USE_BF_DEC');
-	c_project.addIncludeDir('Tools/quickjs');
-	c_project.addFile('Tools/quickjs/*.c');
-	c_project.addIncludeDir('Libraries/tgc');
-	c_project.addFile('Libraries/tgc/*.c');
+	c_project.addIncludeDir('Libraries/quickjs');
+	c_project.addFile('Libraries/quickjs/*.c');
+	c_project.addIncludeDir('Libraries/gc');
+	c_project.addFile('Libraries/gc/*.c');
 	c_project.addIncludeDir('Sources');
-	c_project.addFile(process.cwd() + '/build/krom.c');
+	c_project.addFile(path.relative(__dirname, process.cwd()) + '/build/krom.c');
 
 	////
 	flags.with_iron = false;
@@ -113,6 +113,7 @@ if (flags.with_g2) {
 if (flags.with_iron) {
 	c_project.addDefine('WITH_IRON');
 	c_project.addFile('Sources/iron/*.c');
+	c_project.addIncludeDir("Libraries/stb"); // iron_map.c -> stb_ds.h
 }
 
 if (flags.with_zui) {
