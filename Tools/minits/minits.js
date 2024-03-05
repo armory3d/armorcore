@@ -1,13 +1,12 @@
 
 // minits transpiler
 // ../../Kinc/make --kfile minits.js
-// js:
-// ../../Kinc/make --kfile test.js
 // c:
 // ../../Kinc/make --run
 
 let flags = globalThis.flags;
 if (flags == null) {
+	flags = {};
 	flags.minits_input = "./test.ts";
 	flags.minits_output = "./test.c";
 }
@@ -167,16 +166,23 @@ function parse() {
 	return tokens;
 }
 
-// ██╗    ██╗    ██████╗     ██╗    ████████╗    ███████╗             ██╗    ███████╗
-// ██║    ██║    ██╔══██╗    ██║    ╚══██╔══╝    ██╔════╝             ██║    ██╔════╝
-// ██║ █╗ ██║    ██████╔╝    ██║       ██║       █████╗               ██║    ███████╗
-// ██║███╗██║    ██╔══██╗    ██║       ██║       ██╔══╝          ██   ██║    ╚════██║
-// ╚███╔███╔╝    ██║  ██║    ██║       ██║       ███████╗        ╚█████╔╝    ███████║
-//  ╚══╝╚══╝     ╚═╝  ╚═╝    ╚═╝       ╚═╝       ╚══════╝         ╚════╝     ╚══════╝
+// ██╗    ██╗    ██████╗     ██╗    ████████╗    ███████╗         ██████╗
+// ██║    ██║    ██╔══██╗    ██║    ╚══██╔══╝    ██╔════╝        ██╔════╝
+// ██║ █╗ ██║    ██████╔╝    ██║       ██║       █████╗          ██║
+// ██║███╗██║    ██╔══██╗    ██║       ██║       ██╔══╝          ██║
+// ╚███╔███╔╝    ██║  ██║    ██║       ██║       ███████╗        ╚██████╗
+//  ╚══╝╚══╝     ╚═╝  ╚═╝    ╚═╝       ╚═╝       ╚══════╝         ╚═════╝
 
 let stream;
 let tabs = 0;
 let new_line = false;
+let basic_types = ["i8", "u8", "i16", "u16", "i32", "u32", "f32", "bool"];
+let enums = [];
+let value_types = new Map();
+let struct_types = new Map();
+let fn_default_params = new Map();
+let fn_call_stack = [];
+let param_pos_stack = [];
 
 function handle_tabs(token) {
 	// Entering block, add tab
@@ -219,171 +225,6 @@ function get_token(off = 0) {
 	}
 	return "";
 }
-
-function write_js() {
-	let is_let_declaration = false;
-	let is_func_declaration = false;
-
-	for (pos = 0; pos < tokens.length; ++pos) {
-		let token = get_token();
-
-		if (token == "let") {
-			is_let_declaration = true;
-		}
-		else if (token == "function") {
-			is_func_declaration = true;
-		}
-
-		if (is_let_declaration && (token == "=" || token == ";")) {
-			is_let_declaration = false;
-		}
-		else if (is_func_declaration && token == "{") {
-			is_func_declaration = false;
-		}
-
-		let is_declaration = is_let_declaration || is_func_declaration;
-
-		// Skip ": type" info
-		if (token == ":" && is_declaration) {
-			while (true) {
-				pos++;
-				token = get_token();
-
-				// Skip Map "<a,b>" info
-				if (token == "<") {
-					while (true) {
-						pos++;
-						token = get_token();
-						// Map block ending
-						if (token == ">") {
-							break;
-						}
-					}
-					continue;
-				}
-
-				// Type token is over
-				if (is_let_declaration) {
-					if (token == "=" ||
-						token == ";") {
-							pos--;
-							break;
-					}
-				}
-				else if (is_func_declaration) {
-					let next = get_token(1);
-					if (token == "," ||
-						(token == ")" &&
-							next != "=>" && next != "[") || // ()=>, (()=>x)[]
-						token == "{" ||
-						token == "=") {
-							pos--;
-							break;
-						}
-				}
-			}
-
-			// Skip writing ":"
-			continue;
-		}
-
-		// Skip "type = {};" and "type = x;" info
-		if (token == "type" && get_token(2) == "=") {
-
-			// "type = x;"
-			if (get_token(4) == ";") {
-				pos += 4;
-				continue;
-			}
-
-			// "type = {};"
-			while (true) {
-				pos++;
-				token = get_token();
-				// type struct ending
-				if (token == "}") {
-					pos++;
-					break;
-				}
-			}
-
-			// Skip writing "type"
-			continue;
-		}
-
-		// Skip (x as type) cast
-		if (token == "as") {
-			pos += 2;
-			continue;
-		}
-
-		// Turn enum {} into let {} structure
-		if (token == "enum") {
-			stream.write("let " + get_token(1) + "={");
-			pos += 2;
-
-			let counter = 0;
-			while (true) {
-				pos++; // Item name
-				token = get_token();
-				stream.write(token);
-
-				if (token == "}") { // Enum end
-					stream.write(";\n");
-					break;
-				}
-
-				pos++; // = or ,
-				token = get_token();
-
-				if (token == "=") {
-					stream.write(":");
-
-					pos++; // n
-					token = get_token();
-					stream.write(token);
-
-					pos++; // ,
-				}
-				else { // Enum with no numbers
-					stream.write(":" + counter);
-					counter++;
-				}
-
-				stream.write(",");
-			}
-
-			continue;
-		}
-
-		handle_tabs(token);
-
-		// Write token
-		stream.write(token);
-
-		handle_spaces(token, ["let", "else", "function", "return", "typeof"]);
-
-		handle_new_line(token);
-	}
-
-	stream.write("start();");
-	stream.write("\n");
-}
-
-// ██╗    ██╗    ██████╗     ██╗    ████████╗    ███████╗         ██████╗
-// ██║    ██║    ██╔══██╗    ██║    ╚══██╔══╝    ██╔════╝        ██╔════╝
-// ██║ █╗ ██║    ██████╔╝    ██║       ██║       █████╗          ██║
-// ██║███╗██║    ██╔══██╗    ██║       ██║       ██╔══╝          ██║
-// ╚███╔███╔╝    ██║  ██║    ██║       ██║       ███████╗        ╚██████╗
-//  ╚══╝╚══╝     ╚═╝  ╚═╝    ╚═╝       ╚═╝       ╚══════╝         ╚═════╝
-
-let basic_types = ["i8", "u8", "i16", "u16", "i32", "u32", "f32", "bool"];
-let enums = [];
-let value_types = new Map();
-let struct_types = new Map();
-let fn_default_params = new Map();
-let fn_call_stack = [];
-let param_pos_stack = [];
 
 function get_token_after_piece() {
 	let _pos = pos;

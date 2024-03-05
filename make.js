@@ -923,7 +923,6 @@ function writeTSProject(projectdir, projectFiles, options) {
 			let minits = __dirname + '/Tools/minits/minits.js';
 			globalThis.require = require;
 			globalThis.flags.minits_input = process.cwd() + "/build/krom.ts";
-			// globalThis.flags.minits_output = process.cwd() + "/build/krom/krom.js";
 			globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
 			(1, eval)(fs.readFileSync(minits) + '');
 		});

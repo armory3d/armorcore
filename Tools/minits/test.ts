@@ -19,24 +19,24 @@ function start() {
 
 	add(p);
 
-	let ar: array_f32_t = [];
-	array_f32_push(ar, p.x);
-	array_f32_push(ar, p.y);
+	let ar: f32_array_t = [];
+	f32_array_push(ar, p.x);
+	f32_array_push(ar, p.y);
 
 	for (let i: i32 = 0; i < 4; ++i) {
 		if (i == 1) {
 			continue;
 		}
 		else {
-			ar.data[0] += i;
+			ar[0] += i;
 		}
 	}
 
 	while (true) {
-		ar.data[0] += get_five();
+		ar[0] += get_five();
 		break;
 	}
 
 	// Print out result: 13.5
-	krom_log(ar.data[0]);
+	// krom_log(ar[0]);
 }
