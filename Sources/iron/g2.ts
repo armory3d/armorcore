@@ -7,6 +7,7 @@ let _g2_transformation: mat3_t = null;
 let _g2_render_target: image_t;
 
 let _g2_current: image_t = null;
+let _g2_in_use: bool = false;
 let _g2_font_glyphs: i32[] = _g2_make_glyphs(32, 127);
 let _g2_font_glyphs_last: i32[] = _g2_font_glyphs;
 let _g2_thrown: bool = false;
@@ -133,15 +134,12 @@ function g2_disable_scissor() {
 }
 
 function g2_begin(render_target: image_t = null) {
-	if (_g2_current == null) {
-		_g2_current = render_target;
+	if (_g2_in_use && !_g2_thrown) {
+		_g2_thrown = true;
+		krom_log("End before you begin");
 	}
-	else {
-		if (!_g2_thrown) {
-			_g2_thrown = true;
-			krom_log("End before you begin");
-		}
-	}
+	_g2_in_use = true;
+	_g2_current = render_target;
 
 	krom_g2_begin();
 
@@ -153,22 +151,19 @@ function g2_begin(render_target: image_t = null) {
 	}
 }
 
-function g2_clear(color: color_t = 0x00000000) {
-	g4_clear(color);
+function g2_end() {
+	if (!_g2_in_use && !_g2_thrown) {
+		_g2_thrown = true;
+		krom_log("Begin before you end");
+	}
+	_g2_in_use = false;
+	_g2_current = null;
+
+	krom_g2_end();
 }
 
-function g2_end() {
-	krom_g2_end();
-
-	if (_g2_current != null) {
-		_g2_current = null;
-	}
-	else {
-		if (!_g2_thrown) {
-			_g2_thrown = true;
-			krom_log("Begin before you end");
-		}
-	}
+function g2_clear(color: color_t = 0x00000000) {
+	g4_clear(color);
 }
 
 function g2_fill_circle(cx: f32, cy: f32, radius: f32, segments: i32 = 0) {

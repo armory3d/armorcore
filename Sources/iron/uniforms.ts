@@ -583,6 +583,7 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 		}
 		else if (uniforms_f32_links != null) {
 			f = uniforms_f32_links(obj, current_material(obj), c.link);
+			if (f == null) return;
 		}
 		else {
 			return;

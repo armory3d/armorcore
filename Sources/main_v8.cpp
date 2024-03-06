@@ -3152,8 +3152,8 @@ namespace {
 
 		Local<Object> jso = TO_OBJ(result);
 		zui_canvas_control_t c;
-		c.pan_x = TO_F32(OBJ_GET(jso, "panX"));
-		c.pan_y = TO_F32(OBJ_GET(jso, "panY"));
+		c.pan_x = TO_F32(OBJ_GET(jso, "pan_x"));
+		c.pan_y = TO_F32(OBJ_GET(jso, "pan_y"));
 		c.zoom = TO_F32(OBJ_GET(jso, "zoom"));
 		return c;
 	}

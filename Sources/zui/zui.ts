@@ -127,11 +127,11 @@ class zui_t {
 
 	set elements_baked(a: bool) { krom_zui_set(this.zui_, "elements_baked", a); }
 
-	get text_selected_handle_ptr(): Null<i32> { let h = krom_zui_get(this.zui_, "text_selected_handle"); return h == 0 ? null : h; }
+	get text_selected_handle_ptr(): i32 { return krom_zui_get(this.zui_, "text_selected_handle"); }
 
-	get submit_text_handle_ptr(): Null<i32> { let h = krom_zui_get(this.zui_, "submit_text_handle"); return h == 0 ? null : h; }
+	get submit_text_handle_ptr(): i32 { return krom_zui_get(this.zui_, "submit_text_handle"); }
 
-	get combo_selected_handle_ptr(): Null<i32> { let h = krom_zui_get(this.zui_, "combo_selected_handle"); return h == 0 ? null : h; }
+	get combo_selected_handle_ptr(): i32 { return krom_zui_get(this.zui_, "combo_selected_handle"); }
 }
 
 let zui_current: zui_t = null;
@@ -184,7 +184,7 @@ function zui_create(ops: zui_ops_t): zui_t {
 		{
 			font: ops.font.font_,
 			theme: ops.theme.theme_,
-			scale_factor: ops.scaleFactor,
+			scale_factor: ops.scale_factor,
 			color_wheel: ops.color_wheel != null ? ops.color_wheel.texture_ : null,
 			black_white_gradient: ops.black_white_gradient != null ? ops.black_white_gradient.texture_ : null
 		}
@@ -259,19 +259,19 @@ function zui_panel(handle: zui_handle_t, text: string, is_tree = false, filled =
 	return krom_zui_panel(handle.handle_, text, is_tree, filled, pack);
 }
 
-function zui_image(image: image_t, tint = 0xffffffff, h: Null<f32> = null, sx = 0, sy = 0, sw = 0, sh = 0): State {
-	return krom_zui_image(image, tint, h == null ? -1 : Math.floor(h), sx, sy, sw, sh);
+function zui_image(image: image_t, tint = 0xffffffff, h: f32 = -1.0, sx = 0, sy = 0, sw = 0, sh = 0): zui_state_t {
+	return krom_zui_image(image, tint, Math.floor(h), sx, sy, sw, sh);
 }
 
-function zui_text(text: string, align = Align.Left, bg = 0x00000000): State {
+function zui_text(text: string, align = zui_align_t.LEFT, bg = 0x00000000): zui_state_t {
 	return krom_zui_text(text, align, bg);
 }
 
-function zui_text_input(handle: zui_handle_t, label = "", align = Align.Left, editable = true, live_update = false): string {
+function zui_text_input(handle: zui_handle_t, label = "", align = zui_align_t.LEFT, editable = true, live_update = false): string {
 	return krom_zui_text_input(handle.handle_, label, align, editable, live_update);
 }
 
-function zui_button(text: string, align = Align.Center, label = "", icon: image_t = null, sx = 0, sy = 0, sw = 0, sh = 0): bool {
+function zui_button(text: string, align = zui_align_t.CENTER, label = "", icon: image_t = null, sx = 0, sy = 0, sw = 0, sh = 0): bool {
 	return krom_zui_button(text, align, label);
 }
 
@@ -283,11 +283,11 @@ function zui_radio(handle: zui_handle_t, position: i32, text: string, label: str
 	return krom_zui_radio(handle.handle_, position, text, label);
 }
 
-function zui_combo(handle: zui_handle_t, texts: string[], label = "", show_label = false, align = Align.Left, search_bar = true): i32 {
+function zui_combo(handle: zui_handle_t, texts: string[], label = "", show_label = false, align = zui_align_t.LEFT, search_bar = true): i32 {
 	return krom_zui_combo(handle.handle_, texts, label, show_label, align, search_bar);
 }
 
-function zui_slider(handle: zui_handle_t, text: string, from = 0.0, to = 1.0, filled = false, precision = 100.0, display_value = true, align = Align.Right, text_edit = true): f32 {
+function zui_slider(handle: zui_handle_t, text: string, from = 0.0, to = 1.0, filled = false, precision = 100.0, display_value = true, align = zui_align_t.RIGHT, text_edit = true): f32 {
 	return krom_zui_slider(handle.handle_, text, from, to, filled, precision, display_value, align, text_edit);
 }
 
@@ -299,8 +299,8 @@ function zui_tooltip(text: string) {
 	krom_zui_tooltip(text);
 }
 
-function zui_tooltip_image(image: image_t, max_width: Null<i32> = null) {
-	krom_zui_tooltip_image(image, max_width == null ? 0 : max_width);
+function zui_tooltip_image(image: image_t, max_width: i32 = 0) {
+	krom_zui_tooltip_image(image, max_width);
 }
 
 function zui_row(ratios: f32[]) {
@@ -319,11 +319,11 @@ function zui_draw_rect(fill: bool, x: f32, y: f32, w: f32, h: f32, strength = 0.
 	krom_zui_draw_rect(fill, x, y, w, h, strength);
 }
 
-function zui_end_element(element_size: Null<f32> = null) {
-	krom_zui_end_element(element_size == null ? -1 : element_size);
+function zui_end_element(element_size: f32 = -1.0) {
+	krom_zui_end_element(element_size);
 }
 
-function zui_start_text_edit(handle: zui_handle_t, align = Align.Left) {
+function zui_start_text_edit(handle: zui_handle_t, align = zui_align_t.LEFT) {
 	krom_zui_start_text_edit(handle.handle_, align);
 }
 
@@ -331,8 +331,8 @@ function zui_get_input_in_rect(x: f32, y: f32, w: f32, h: f32): bool {
 	return krom_zui_input_in_rect(x, y, w, h);
 }
 
-function zui_draw_string(text: string, x_offset: Null<f32> = null, y_offset: f32 = 0, align = Align.Left, truncation = true) {
-	krom_zui_draw_string(text, x_offset == null ? -1 : x_offset, y_offset, align, truncation);
+function zui_draw_string(text: string, x_offset: f32 = -1.0, y_offset: f32 = 0, align = zui_align_t.LEFT, truncation = true) {
+	krom_zui_draw_string(text, x_offset, y_offset, align, truncation);
 }
 
 function zui_get_hovered_tab_name(): string {
@@ -355,19 +355,19 @@ function zui_ELEMENT_OFFSET(raw: zui_t): f32 {
 	return raw.t.ELEMENT_OFFSET * zui_SCALE(raw);
 }
 
-function zui_float_input(handle: zui_handle_t, label = "", align = Align.Left, precision = 1000.0): f32 {
+function zui_float_input(handle: zui_handle_t, label = "", align = zui_align_t.LEFT, precision = 1000.0): f32 {
 	return krom_zui_float_input(handle.handle_, label, align, precision);
 }
 
-function zui_inline_radio(handle: zui_handle_t, texts: string[], align = Align.Left): i32 {
+function zui_inline_radio(handle: zui_handle_t, texts: string[], align = zui_align_t.LEFT): i32 {
 	return krom_zui_inline_radio(handle.handle_, texts, align);
 }
 
-function zui_color_wheel(handle: zui_handle_t, alpha = false, w: Null<f32> = null, h: Null<f32> = null, color_preview = true, picker: ()=>void = null): color_t {
-	return krom_zui_color_wheel(handle.handle_, alpha, w != null ? w : -1, h != null ? h : -1, color_preview, picker);
+function zui_color_wheel(handle: zui_handle_t, alpha = false, w: f32 = -1.0, h: f32 = -1.0, color_preview = true, picker: ()=>void = null): color_t {
+	return krom_zui_color_wheel(handle.handle_, alpha, w, h, color_preview, picker);
 }
 
-function zui_text_area(handle: zui_handle_t, align = Align.Left, editable = true, label = "", word_wrap = false): string {
+function zui_text_area(handle: zui_handle_t, align = zui_align_t.LEFT, editable = true, label = "", word_wrap = false): string {
 	return krom_zui_text_area(handle.handle_, align, editable, label, word_wrap);
 }
 
@@ -430,7 +430,7 @@ class zui_handle_t {
 
 	get texture(): any { return krom_zui_handle_get(this.handle_, "texture"); }
 
-	get ptr(): Null<i32> { return krom_zui_handle_ptr(this.handle_); }
+	get ptr(): i32 { return krom_zui_handle_ptr(this.handle_); }
 }
 
 function zui_handle_create(ops: zui_handle_ops_t = null): zui_handle_t {
@@ -441,7 +441,7 @@ function zui_handle_create(ops: zui_handle_ops_t = null): zui_handle_t {
 	if (ops.value == null) ops.value = 0.0;
 	if (ops.text == null) ops.text = "";
 	if (ops.color == null) ops.color = 0xffffffff;
-	if (ops.layout == null) ops.layout = Layout.Vertical;
+	if (ops.layout == null) ops.layout = zui_layout_t.VERTICAL;
 	raw.ops = ops;
 	return raw;
 }
@@ -820,9 +820,9 @@ function zui_nodes_BUTTONS_H(node: zui_node_t): i32 {
 	return Math.floor(h);
 }
 
-function zui_nodes_OUTPUTS_H(sockets: zui_node_socket_t[], length: Null<i32> = null): i32 {
+function zui_nodes_OUTPUTS_H(sockets: zui_node_socket_t[], length: i32 = -1): i32 {
 	let h = 0.0;
-	for (let i = 0; i < (length == null ? sockets.length : length); ++i) {
+	for (let i = 0; i < (length == -1 ? sockets.length : length); ++i) {
 		h += zui_nodes_LINE_H();
 	}
 	return Math.floor(h);
@@ -833,9 +833,9 @@ function zui_nodes_input_linked(canvas: zui_node_canvas_t, node_id: i32, i: i32)
 	return false;
 }
 
-function zui_nodes_INPUTS_H(canvas: zui_node_canvas_t, sockets: zui_node_socket_t[], length: Null<i32> = null): i32 {
+function zui_nodes_INPUTS_H(canvas: zui_node_canvas_t, sockets: zui_node_socket_t[], length: i32 = -1): i32 {
 	let h = 0.0;
-	for (let i = 0; i < (length == null ? sockets.length : length); ++i) {
+	for (let i = 0; i < (length == -1 ? sockets.length : length); ++i) {
 		if (sockets[i].type == "VECTOR" && sockets[i].display == 1 && !zui_nodes_input_linked(canvas, sockets[i].node_id, i)) h += zui_nodes_LINE_H() * 4;
 		else h += zui_nodes_LINE_H();
 	}
@@ -1024,85 +1024,85 @@ function zui_nodes_update_canvas_format(canvas: zui_node_canvas_t) {
 }
 
 type zui_ops_t = {
-	font: g2_font_t;
-	theme: theme_t;
-	scaleFactor: f32;
-	color_wheel: image_t;
-	black_white_gradient: image_t;
-}
+	font?: g2_font_t;
+	theme?: theme_t;
+	scale_factor?: f32;
+	color_wheel?: image_t;
+	black_white_gradient?: image_t;
+};
 
 type zui_handle_ops_t = {
-	selected?: boolean,
-	position?: i32,
-	value?: f32,
-	text?: string,
-	color?: color_t,
-	layout?: Layout
-}
+	selected?: boolean;
+	position?: i32;
+	value?: f32;
+	text?: string;
+	color?: color_t;
+	layout?: zui_layout_t;
+};
 
 type zui_coloring_t = {
-	color: i32;
-	start: string[];
-	end: string;
-	separated: boolean;
-}
+	color?: i32;
+	start?: string[];
+	end?: string;
+	separated?: boolean;
+};
 
 type zui_text_coloring_t = {
-	colorings: zui_coloring_t[];
-	default_color: i32;
-}
+	colorings?: zui_coloring_t[];
+	default_color?: i32;
+};
 
 type zui_canvas_control_t = {
-	panX: f32;
-	panY: f32;
-	zoom: f32;
-}
+	pan_x?: f32;
+	pan_y?: f32;
+	zoom?: f32;
+};
 
 type zui_node_canvas_t = {
-	name: string;
-	nodes: zui_node_t[];
+	name?: string;
+	nodes?: zui_node_t[];
 	nodes_count?: i32;
-	links: zui_node_link_t[];
+	links?: zui_node_link_t[];
 	links_count?: i32;
-}
+};
 
 type zui_node_t = {
-	id: i32;
-	name: string;
-	type: string;
-	x: f32;
-	y: f32;
-	color: i32;
-	inputs: zui_node_socket_t[];
-	outputs: zui_node_socket_t[];
-	buttons: zui_node_button_t[];
+	id?: i32;
+	name?: string;
+	type?: string;
+	x?: f32;
+	y?: f32;
+	color?: i32;
+	inputs?: zui_node_socket_t[];
+	outputs?: zui_node_socket_t[];
+	buttons?: zui_node_button_t[];
 	width?: f32;
-}
+};
 
 type zui_node_socket_t = {
-	id: i32;
-	node_id: i32;
-	name: string;
-	type: string;
-	color: i32;
-	default_value: any;
+	id?: i32;
+	node_id?: i32;
+	name?: string;
+	type?: string;
+	color?: i32;
+	default_value?: any;
 	min?: f32;
 	max?: f32;
 	precision?: f32;
 	display?: i32;
-}
+};
 
 type zui_node_link_t = {
-	id: i32;
-	from_id: i32;
-	from_socket: i32;
-	to_id: i32;
-	to_socket: i32;
-}
+	id?: i32;
+	from_id?: i32;
+	from_socket?: i32;
+	to_id?: i32;
+	to_socket?: i32;
+};
 
 type zui_node_button_t = {
-	name: string;
-	type: string;
+	name?: string;
+	type?: string;
 	output?: i32;
 	default_value?: any;
 	data?: any;
@@ -1110,23 +1110,23 @@ type zui_node_button_t = {
 	max?: f32;
 	precision?: f32;
 	height?: f32;
+};
+
+enum zui_layout_t {
+	VERTICAL,
+	HORIZONTAL,
 }
 
-enum Layout {
-	Vertical,
-	Horizontal,
+enum zui_align_t {
+	LEFT,
+	CENTER,
+	RIGHT,
 }
 
-enum Align {
-	Left,
-	Center,
-	Right,
-}
-
-enum State {
-	Idle,
-	Started,
-	Down,
-	Released,
-	Hovered,
+enum zui_state_t {
+	IDLE,
+	STARTED,
+	DOWN,
+	RELEASED,
+	HOVERED,
 }

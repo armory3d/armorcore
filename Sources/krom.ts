@@ -41,10 +41,11 @@ function array_sort(ar: any[], fn: (a: any, b: any)=>i32) { ar.sort(fn); }
 function array_push(ar: any[], e: any) { ar.push(e); }
 function array_splice(ar: any[], start: i32, delete_count: i32) { ar.splice(start, delete_count); }
 function array_concat(a: any[], b: any[]): any[] { return a.concat(b); }
+function array_index_of(a: any[], search: any): i32 { return a.indexOf(search); }
 function string_index_of(s: string, search: string): i32 { return s.indexOf(search); }
 function string_last_index_of(s: string, search: string): i32 { return s.lastIndexOf(search); }
 function string_split(s: string, sep: string): string[] { return s.split(sep); }
-function string_replace_all(s: string, search: string, replace: string) { s.replaceAll(search, replace); }
+function string_replace_all(s: string, search: string, replace: string): string { return (s as any).replaceAll(search, replace); }
 function substring(s: string, start: i32, end: i32): string { return s.substring(start, end); };
 function string_from_char_code(c: i32): string { return String.fromCharCode(c); }
 function char_code_at(s: string, i: i32): i32 { return s.charCodeAt(i); }
@@ -78,6 +79,8 @@ function any_to_string(a: any): string { return String(a); } // armpack
 // Object.keys() // armpack, tween
 // .constructor // armpack
 // globalThis // arm_shader_embed
+function json_parse(s: string): any { return JSON.parse(s); }
+function json_stringify(a: any): string { return JSON.stringify(a); }
 
 function array_remove(ar: any[], e: any) {
     ar.splice(ar.indexOf(e), 1);

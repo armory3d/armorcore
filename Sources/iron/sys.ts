@@ -22,7 +22,7 @@ let _sys_start_time: f32;
 let _sys_window_title: string;
 let _sys_shaders: map_t<string, shader_t> = map_create();
 
-function sys_start(ops: kinc_sys_ops_t, callback: ()=>void) {
+function sys_start(ops: kinc_sys_ops_t) {
 	krom_init(ops.title, ops.width, ops.height, ops.vsync, ops.mode, ops.features, ops.x, ops.y, ops.frequency);
 
 	_sys_start_time = krom_get_time();
@@ -47,8 +47,6 @@ function sys_start(ops: kinc_sys_ops_t, callback: ()=>void) {
 	krom_set_gamepad_axis_callback(sys_gamepad_axis_callback);
 	krom_set_gamepad_button_callback(sys_gamepad_button_callback);
 	input_register();
-
-	callback();
 }
 
 function _sys_callback_create(f: ()=>void): sys_callback_t {

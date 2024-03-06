@@ -8,7 +8,3 @@ declare type f32 = number;
 declare type f64 = number;
 declare type bool = boolean;
 declare type Null<T> = T | null; ////
-
-interface String {
-    replaceAll(searchValue: string | RegExp, replaceValue: string): string;
-}
