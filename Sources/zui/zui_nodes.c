@@ -486,11 +486,11 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 				for (int i = 0; i < but->data->length; ++i) {
 					if (string_start) {
 						string_start = false;
-						strcpy(texts_data[texts_count], zui_tr(&((char *)but->data)[i]));
+						strcpy(texts_data[texts_count], zui_tr(&((char *)but->data->buffer)[i]));
 						texts[texts_count] = texts_data[texts_count];
 						texts_count++;
 					}
-					if (((char *)but->data)[i] == '\0') string_start = true;
+					if (((char *)but->data->buffer)[i] == '\0') string_start = true;
 				}
 			}
 			else {
