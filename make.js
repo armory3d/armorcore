@@ -908,10 +908,7 @@ function writeTSProject(projectdir, projectFiles, options) {
 		let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
 		let stream = fs.createWriteStream('build/krom.ts');
 		for (let file_path of file_paths) {
-			if (file_path.endsWith('d.ts')) {
-				continue;
-			}
-			if (file_path.endsWith('/krom.ts')) {
+			if (file_path.endsWith('/krom_v8.ts')) {
 				continue;
 			}
 			file = fs.readFileSync(file_path) + '';
