@@ -238,7 +238,7 @@ static void zui_remove_link_at(zui_node_canvas_t *canvas, int at) {
 static void zui_remove_node_at(zui_node_canvas_t *canvas, int at) {
 	canvas->nodes->buffer[at] = NULL;
 	for (int i = at; i < canvas->nodes_count - 1; ++i) {
-		canvas->nodes[i] = canvas->nodes[i + 1];
+		canvas->nodes->buffer[i] = canvas->nodes->buffer[i + 1];
 	}
 	canvas->nodes_count--;
 }
