@@ -559,8 +559,8 @@ class zui_nodes_t {
 	nodes_: any;
 	colorPickerCallback: (col: color_t)=>void = null;
 
-	get nodesSelectedId(): i32[] { return krom_zui_nodes_get(this.nodes_, "nodes_selected_id"); }
-	set nodesSelectedId(a: i32[]) { krom_zui_nodes_set(this.nodes_, "nodes_selected_id", a); }
+	get nodes_selected_id(): i32[] { return krom_zui_nodes_get(this.nodes_, "nodes_selected_id"); }
+	set nodes_selected_id(a: i32[]) { krom_zui_nodes_set(this.nodes_, "nodes_selected_id", a); }
 
 	set _inputStarted(a: bool) { krom_zui_nodes_set(this.nodes_, "_input_started", a); }
 

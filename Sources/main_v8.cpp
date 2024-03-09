@@ -3062,7 +3062,7 @@ namespace {
 		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("inda"), Uint32Array::New(buffer_inda, 0, buffer_inda->ByteLength() / 4));
 
 		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("name"), String::NewFromUtf8(isolate, part->name).ToLocalChecked());
-		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("scalePos"), Number::New(isolate, part->scale_pos));
+		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("scale_pos"), Number::New(isolate, part->scale_pos));
 		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("has_next"), Number::New(isolate, part->has_next));
 		(void) obj->Set(isolate->GetCurrentContext(), TO_STR("pos"), Number::New(isolate, (int)part->pos));
 

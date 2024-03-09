@@ -71,13 +71,9 @@ function world_data_set_irradiance(raw: world_data_t): f32_array_t {
 	}
 }
 
-function world_data_load_envmap(raw: world_data_t, done: (wd: world_data_t)=>void) {
+function world_data_load_envmap(raw: world_data_t) {
 	if (raw.envmap != null) {
 		let image: image_t = data_get_image(raw.envmap);
 		raw._.envmap = image;
-		done(raw);
-	}
-	else {
-		done(raw);
 	}
 }
