@@ -1056,6 +1056,7 @@ type zui_canvas_control_t = {
 	pan_x?: f32;
 	pan_y?: f32;
 	zoom?: f32;
+	controls_down?: bool;
 };
 
 type zui_node_canvas_t = {

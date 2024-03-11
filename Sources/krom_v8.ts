@@ -44,6 +44,15 @@ function math_atan2(y: f32, x: f32): f32 { return Math.atan2(y, x); }
 function math_asin(x: f32): f32 { return Math.asin(x); }
 function math_pi(): f32 { return Math.PI; }
 function math_pow(x: f32, y: f32): f32 { return Math.pow(x, y); }
+function math_round(x: f32): f32 { return Math.round(x); }
+function math_ceil(x: f32): f32 { return Math.ceil(x); }
+function math_min(x: f32, y: f32): f32 { return Math.min(x, y); }
+function math_max(x: f32, y: f32): f32 { return Math.max(x, y); }
+function math_log(x: f32): f32 { return Math.log(x); }
+function math_log2(x: f32): f32 { return Math.log2(x); }
+function math_atan(x: f32): f32 { return Math.atan(x); }
+function math_acos(x: f32): f32 { return Math.acos(x); }
+function math_exp(x: f32): f32 { return Math.exp(x); }
 
 function map_get<K, V>(m: map_t<K, V>, k: any): any { return m.get(k); }
 function map_set<K, V>(m: map_t<K, V>, k: any, v: any) { m.set(k, v); }

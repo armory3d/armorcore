@@ -111,7 +111,7 @@ function uniforms_bind_render_target(rt: render_target_t, context: shader_contex
 
 	for (let j: i32 = 0; j < tus.length; ++j) { // Set texture
 		if (sampler_id == tus[j].name) {
-			let is_image: bool = tus[j].image_uniform != null && tus[j].image_uniform;
+			let is_image: bool = tus[j].image_uniform;
 			let params_set: bool = false;
 
 			if (rt.depth > 1) { // sampler3D
