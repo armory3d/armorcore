@@ -135,7 +135,7 @@ class zui_t {
 }
 
 let zui_current: zui_t = null;
-let zui_children: Map<string, zui_handle_t> = new Map();
+let zui_children: map_t<string, zui_handle_t> = map_create();
 
 function zui_handle(s: string, ops: zui_handle_ops_t = null): zui_handle_t {
 	let h = zui_children.get(s);
@@ -147,7 +147,7 @@ function zui_handle(s: string, ops: zui_handle_ops_t = null): zui_handle_t {
 }
 
 function zui_nest(raw: zui_handle_t, i: i32, ops: zui_handle_ops_t = null): zui_handle_t {
-	if (raw.children == null) raw.children = new Map();
+	if (raw.children == null) raw.children = map_create();
 	let c = raw.children.get(i);
 	if (c == null) {
 		c = zui_handle_create(ops);
@@ -355,19 +355,19 @@ function zui_ELEMENT_OFFSET(raw: zui_t): f32 {
 	return raw.t.ELEMENT_OFFSET * zui_SCALE(raw);
 }
 
-function zui_float_input(handle: zui_handle_t, label = "", align = zui_align_t.LEFT, precision = 1000.0): f32 {
+function zui_float_input(handle: zui_handle_t, label: string = "", align = zui_align_t.LEFT, precision: f32 = 1000.0): f32 {
 	return krom_zui_float_input(handle.handle_, label, align, precision);
 }
 
-function zui_inline_radio(handle: zui_handle_t, texts: string[], align = zui_align_t.LEFT): i32 {
+function zui_inline_radio(handle: zui_handle_t, texts: string[], align: zui_align_t = zui_align_t.LEFT): i32 {
 	return krom_zui_inline_radio(handle.handle_, texts, align);
 }
 
-function zui_color_wheel(handle: zui_handle_t, alpha = false, w: f32 = -1.0, h: f32 = -1.0, color_preview = true, picker: ()=>void = null): color_t {
+function zui_color_wheel(handle: zui_handle_t, alpha: bool = false, w: f32 = -1.0, h: f32 = -1.0, color_preview: bool = true, picker: ()=>void = null): color_t {
 	return krom_zui_color_wheel(handle.handle_, alpha, w, h, color_preview, picker);
 }
 
-function zui_text_area(handle: zui_handle_t, align = zui_align_t.LEFT, editable = true, label = "", word_wrap = false): string {
+function zui_text_area(handle: zui_handle_t, align: zui_align_t = zui_align_t.LEFT, editable: bool = true, label: string = "", word_wrap: bool = false): string {
 	return krom_zui_text_area(handle.handle_, align, editable, label, word_wrap);
 }
 
@@ -398,7 +398,7 @@ class zui_handle_t {
 	}
 
 	ops: zui_handle_ops_t;
-	children: Map<i32, zui_handle_t>;
+	children: map_t<i32, zui_handle_t>;
 
 	get selected(): bool { return krom_zui_handle_get(this.handle_, "selected"); }
 	set selected(a: bool) { krom_zui_handle_set(this.handle_, "selected", a); }
@@ -557,34 +557,34 @@ function zui_theme_create(): theme_t {
 
 class zui_nodes_t {
 	nodes_: any;
-	colorPickerCallback: (col: color_t)=>void = null;
+	color_picker_callback: (col: color_t)=>void = null;
 
 	get nodes_selected_id(): i32[] { return krom_zui_nodes_get(this.nodes_, "nodes_selected_id"); }
 	set nodes_selected_id(a: i32[]) { krom_zui_nodes_set(this.nodes_, "nodes_selected_id", a); }
 
-	set _inputStarted(a: bool) { krom_zui_nodes_set(this.nodes_, "_input_started", a); }
+	set _input_started(a: bool) { krom_zui_nodes_set(this.nodes_, "_input_started", a); }
 
-	set nodesDrag(a: bool) { krom_zui_nodes_set(this.nodes_, "nodes_drag", a); }
+	set nodes_drag(a: bool) { krom_zui_nodes_set(this.nodes_, "nodes_drag", a); }
 
-	get panX(): f32 { return krom_zui_nodes_get(this.nodes_, "pan_x"); }
-	set panX(a: f32) { krom_zui_nodes_set(this.nodes_, "pan_x", a); }
+	get pan_x(): f32 { return krom_zui_nodes_get(this.nodes_, "pan_x"); }
+	set pan_x(a: f32) { krom_zui_nodes_set(this.nodes_, "pan_x", a); }
 
-	get panY(): f32 { return krom_zui_nodes_get(this.nodes_, "pan_y"); }
-	set panY(a: f32) { krom_zui_nodes_set(this.nodes_, "pan_y", a); }
+	get pan_y(): f32 { return krom_zui_nodes_get(this.nodes_, "pan_y"); }
+	set pan_y(a: f32) { krom_zui_nodes_set(this.nodes_, "pan_y", a); }
 
 	set zoom(a: f32) { krom_zui_nodes_set(this.nodes_, "zoom", a); }
 
-	get linkDragId(): i32 { return krom_zui_nodes_get(this.nodes_, "link_drag_id"); }
-	set linkDragId(a: i32) { krom_zui_nodes_set(this.nodes_, "link_drag_id", a); }
+	get link_drag_id(): i32 { return krom_zui_nodes_get(this.nodes_, "link_drag_id"); }
+	set link_drag_id(a: i32) { krom_zui_nodes_set(this.nodes_, "link_drag_id", a); }
 }
 
 let zui_nodes_current: zui_nodes_t;
 let zui_current_canvas: zui_node_canvas_t;
-let zui_tr: (id: string, vars?: Map<string, string>)=>string;
+let zui_tr: (id: string, vars?: map_t<string, string>)=>string;
 
 let zui_clipboard = "";
 let zui_element_h = 25;
-let zui_exclude_remove: string[] = ["OUTPUT_MATERIAL_PBR", "GROUP_OUTPUT", "GROUP_INPUT", "BrushOutputNode"];
+let zui_exclude_remove: string[] = ["OUTPUT_MATERIAL_PBR", "GROUP_OUTPUT", "GROUP_INPUT", "brush_output_node"];
 let zui_node_replace: zui_node_t[] = [];
 let zui_nodes_eps = 0.00001;
 
