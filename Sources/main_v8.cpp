@@ -1524,6 +1524,10 @@ namespace {
 	void krom_request_shutdown(ARGS) {
 		SCOPE();
 		kinc_stop();
+
+		#ifdef KORE_LINUX
+		exit(1);
+		#endif
 	}
 
 	void krom_display_count(ARGS) {
