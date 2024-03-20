@@ -11,7 +11,9 @@ class zui_t {
 	set t(theme: theme_t) {
 		if (this.t != null) {
 			for (let key of Object.getOwnPropertyNames(theme_t.prototype)) {
-				if (key == "constructor") continue;
+				if (key == "constructor") {
+					continue;
+				}
 				let t_: any = this.t;
 				let theme_: any = theme;
 				t_[key] = theme_[key];
@@ -138,20 +140,20 @@ let zui_current: zui_t = null;
 let zui_children: map_t<string, zui_handle_t> = map_create();
 
 function zui_handle(s: string, ops: zui_handle_ops_t = null): zui_handle_t {
-	let h = zui_children.get(s);
+	let h = map_get(zui_children, s);
 	if (h == null) {
 		h = zui_handle_create(ops);
-		zui_children.set(s, h);
+		map_set(zui_children, s, h);
 	}
 	return h;
 }
 
 function zui_nest(raw: zui_handle_t, i: i32, ops: zui_handle_ops_t = null): zui_handle_t {
 	if (raw.children == null) raw.children = map_create();
-	let c = raw.children.get(i);
+	let c = map_get(raw.children, i);
 	if (c == null) {
 		c = zui_handle_create(ops);
-		raw.children.set(i, c);
+		map_set(raw.children, i, c);
 	}
 	return c;
 }
@@ -214,7 +216,7 @@ function zui_begin(raw: zui_t) {
 	krom_zui_begin(raw.zui_);
 }
 
-function zui_end(last = true) {
+function zui_end(last: bool = true) {
 	krom_zui_end(last);
 	_g2_current = null;
 }
@@ -224,7 +226,7 @@ function zui_begin_region(raw: zui_t, x: i32, y: i32, w: i32) {
 	krom_zui_begin_region(raw.zui_, x, y, w);
 }
 
-function zui_end_region(last = true) {
+function zui_end_region(last: bool = true) {
 	krom_zui_end_region(last);
 }
 
@@ -240,7 +242,7 @@ function zui_end_input() {
 	krom_zui_end_input();
 }
 
-function zui_window(handle: zui_handle_t, x: i32, y: i32, w: i32, h: i32, drag = false): bool {
+function zui_window(handle: zui_handle_t, x: i32, y: i32, w: i32, h: i32, drag: bool = false): bool {
 	let img = _image_create(null);
 	img.render_target_ = handle.texture;
 	_g2_current = img;
@@ -251,27 +253,27 @@ function zui_end_window(bind_global_g = true) {
 	krom_zui_end_window(bind_global_g);
 }
 
-function zui_tab(handle: zui_handle_t, text: string, vertical = false, color: i32 = -1): bool {
+function zui_tab(handle: zui_handle_t, text: string, vertical: bool = false, color: i32 = -1): bool {
 	return krom_zui_tab(handle.handle_, text, vertical, color);
 }
 
-function zui_panel(handle: zui_handle_t, text: string, is_tree = false, filled = true, pack = true): bool {
+function zui_panel(handle: zui_handle_t, text: string, is_tree: bool = false, filled: bool = true, pack: bool = true): bool {
 	return krom_zui_panel(handle.handle_, text, is_tree, filled, pack);
 }
 
-function zui_image(image: image_t, tint = 0xffffffff, h: f32 = -1.0, sx = 0, sy = 0, sw = 0, sh = 0): zui_state_t {
-	return krom_zui_image(image, tint, Math.floor(h), sx, sy, sw, sh);
+function zui_image(image: image_t, tint: i32 = 0xffffffff, h: f32 = -1.0, sx: i32 = 0, sy: i32 = 0, sw: i32 = 0, sh: i32 = 0): zui_state_t {
+	return krom_zui_image(image, tint, math_floor(h), sx, sy, sw, sh);
 }
 
-function zui_text(text: string, align = zui_align_t.LEFT, bg = 0x00000000): zui_state_t {
+function zui_text(text: string, align: zui_align_t = zui_align_t.LEFT, bg: i32 = 0x00000000): zui_state_t {
 	return krom_zui_text(text, align, bg);
 }
 
-function zui_text_input(handle: zui_handle_t, label = "", align = zui_align_t.LEFT, editable = true, live_update = false): string {
+function zui_text_input(handle: zui_handle_t, label: string = "", align: zui_align_t = zui_align_t.LEFT, editable: bool = true, live_update: bool = false): string {
 	return krom_zui_text_input(handle.handle_, label, align, editable, live_update);
 }
 
-function zui_button(text: string, align = zui_align_t.CENTER, label = "", icon: image_t = null, sx = 0, sy = 0, sw = 0, sh = 0): bool {
+function zui_button(text: string, align: zui_align_t = zui_align_t.CENTER, label: string = "", icon: image_t = null, sx: i32 = 0, sy: i32 = 0, sw: i32 = 0, sh: i32 = 0): bool {
 	return krom_zui_button(text, align, label);
 }
 
@@ -283,15 +285,15 @@ function zui_radio(handle: zui_handle_t, position: i32, text: string, label: str
 	return krom_zui_radio(handle.handle_, position, text, label);
 }
 
-function zui_combo(handle: zui_handle_t, texts: string[], label = "", show_label = false, align = zui_align_t.LEFT, search_bar = true): i32 {
+function zui_combo(handle: zui_handle_t, texts: string[], label: string = "", show_label: bool = false, align: zui_align_t = zui_align_t.LEFT, search_bar: bool = true): i32 {
 	return krom_zui_combo(handle.handle_, texts, label, show_label, align, search_bar);
 }
 
-function zui_slider(handle: zui_handle_t, text: string, from = 0.0, to = 1.0, filled = false, precision = 100.0, display_value = true, align = zui_align_t.RIGHT, text_edit = true): f32 {
+function zui_slider(handle: zui_handle_t, text: string, from: f32 = 0.0, to: f32 = 1.0, filled: bool = false, precision: f32 = 100.0, display_value: bool = true, align: zui_align_t = zui_align_t.RIGHT, text_edit: bool = true): f32 {
 	return krom_zui_slider(handle.handle_, text, from, to, filled, precision, display_value, align, text_edit);
 }
 
-function zui_separator(h = 4, fill = true) {
+function zui_separator(h: i32 = 4, fill: bool = true) {
 	krom_zui_separator(h, fill);
 }
 
@@ -311,11 +313,11 @@ function zui_fill(x: f32, y: f32, w: f32, h: f32, color: color_t) {
 	krom_zui_fill(x, y, w, h, color);
 }
 
-function zui_rect(x: f32, y: f32, w: f32, h: f32, color: color_t, strength = 1.0) {
+function zui_rect(x: f32, y: f32, w: f32, h: f32, color: color_t, strength: f32 = 1.0) {
 	krom_zui_rect(x, y, w, h, color, strength);
 }
 
-function zui_draw_rect(fill: bool, x: f32, y: f32, w: f32, h: f32, strength = 0.0) {
+function zui_draw_rect(fill: bool, x: f32, y: f32, w: f32, h: f32, strength: f32 = 0.0) {
 	krom_zui_draw_rect(fill, x, y, w, h, strength);
 }
 
@@ -323,7 +325,7 @@ function zui_end_element(element_size: f32 = -1.0) {
 	krom_zui_end_element(element_size);
 }
 
-function zui_start_text_edit(handle: zui_handle_t, align = zui_align_t.LEFT) {
+function zui_start_text_edit(handle: zui_handle_t, align: zui_align_t = zui_align_t.LEFT) {
 	krom_zui_start_text_edit(handle.handle_, align);
 }
 
@@ -331,7 +333,7 @@ function zui_get_input_in_rect(x: f32, y: f32, w: f32, h: f32): bool {
 	return krom_zui_input_in_rect(x, y, w, h);
 }
 
-function zui_draw_string(text: string, x_offset: f32 = -1.0, y_offset: f32 = 0, align = zui_align_t.LEFT, truncation = true) {
+function zui_draw_string(text: string, x_offset: f32 = -1.0, y_offset: f32 = 0, align: zui_align_t = zui_align_t.LEFT, truncation: bool = true) {
 	krom_zui_draw_string(text, x_offset, y_offset, align, truncation);
 }
 
@@ -355,7 +357,7 @@ function zui_ELEMENT_OFFSET(raw: zui_t): f32 {
 	return raw.t.ELEMENT_OFFSET * zui_SCALE(raw);
 }
 
-function zui_float_input(handle: zui_handle_t, label: string = "", align = zui_align_t.LEFT, precision: f32 = 1000.0): f32 {
+function zui_float_input(handle: zui_handle_t, label: string = "", align: zui_align_t = zui_align_t.LEFT, precision: f32 = 1000.0): f32 {
 	return krom_zui_float_input(handle.handle_, label, align, precision);
 }
 
@@ -435,13 +437,27 @@ class zui_handle_t {
 
 function zui_handle_create(ops: zui_handle_ops_t = null): zui_handle_t {
 	let raw = new zui_handle_t();
-	if (ops == null) ops = {};
-	if (ops.selected == null) ops.selected = false;
-	if (ops.position == null) ops.position = 0;
-	if (ops.value == null) ops.value = 0.0;
-	if (ops.text == null) ops.text = "";
-	if (ops.color == null) ops.color = 0xffffffff;
-	if (ops.layout == null) ops.layout = zui_layout_t.VERTICAL;
+	if (ops == null) {
+		ops = {};
+	}
+	if (ops.selected == null) {
+		ops.selected = false;
+	}
+	if (ops.position == null) {
+		ops.position = 0;
+	}
+	if (ops.value == null) {
+		ops.value = 0.0;
+	}
+	if (ops.text == null) {
+		ops.text = "";
+	}
+	if (ops.color == null) {
+		ops.color = 0xffffffff;
+	}
+	if (ops.layout == null) {
+		ops.layout = zui_layout_t.VERTICAL;
+	}
 	raw.ops = ops;
 	return raw;
 }
@@ -582,11 +598,11 @@ let zui_nodes_current: zui_nodes_t;
 let zui_current_canvas: zui_node_canvas_t;
 let zui_tr: (id: string, vars?: map_t<string, string>)=>string;
 
-let zui_clipboard = "";
-let zui_element_h = 25;
+let zui_clipboard: string = "";
+let zui_element_h: i32 = 25;
 let zui_exclude_remove: string[] = ["OUTPUT_MATERIAL_PBR", "GROUP_OUTPUT", "GROUP_INPUT", "brush_output_node"];
 let zui_node_replace: zui_node_t[] = [];
-let zui_nodes_eps = 0.00001;
+let zui_nodes_eps: f32 = 0.00001;
 
 function zui_set_on_link_drag(f: (link_drag_id: i32, is_new_link: bool)=>void) { krom_zui_nodes_set_on_link_drag(f); }
 function zui_set_on_socket_released(f: (socket_id: i32)=>void) { krom_zui_nodes_set_on_socket_released(f); }
@@ -605,31 +621,55 @@ function zui_nodes_create(): zui_nodes_t {
 }
 
 function zui_get_node(nodes: zui_node_t[], id: i32): zui_node_t {
-	for (let node of nodes) if (node.id == id) return node;
+	for (let node of nodes) {
+		if (node.id == id) {
+			return node;
+		}
+	}
 	return null;
 }
 
 function zui_get_node_id(nodes: zui_node_t[]): i32 {
 	let id = 0;
-	for (let n of nodes) if (n.id >= id) id = n.id + 1;
+	for (let n of nodes) {
+		if (n.id >= id) {
+			id = n.id + 1;
+		}
+	}
 	return id;
 }
 
 function zui_get_link(links: zui_node_link_t[], id: i32): zui_node_link_t {
-	for (let link of links) if (link.id == id) return link;
+	for (let link of links) {
+		if (link.id == id) {
+			return link;
+		}
+	}
 	return null;
 }
 
 function zui_get_link_id(links: zui_node_link_t[]): i32 {
 	let id = 0;
-	for (let l of links) if (l.id >= id) id = l.id + 1;
+	for (let l of links) {
+		if (l.id >= id) {
+			id = l.id + 1;
+		}
+	}
 	return id;
 }
 
 function zui_get_socket(nodes: zui_node_t[], id: i32): zui_node_socket_t {
 	for (let n of nodes) {
-		for (let s of n.inputs) if (s.id == id) return s;
-		for (let s of n.outputs) if (s.id == id) return s;
+		for (let s of n.inputs) {
+			if (s.id == id) {
+				return s;
+			}
+		}
+		for (let s of n.outputs) {
+			if (s.id == id) {
+				return s;
+			}
+		}
 	}
 	return null;
 }
@@ -637,8 +677,16 @@ function zui_get_socket(nodes: zui_node_t[], id: i32): zui_node_socket_t {
 function zui_get_socket_id(nodes: zui_node_t[]): i32 {
 	let id = 0;
 	for (let n of nodes) {
-		for (let s of n.inputs) if (s.id >= id) id = s.id + 1;
-		for (let s of n.outputs) if (s.id >= id) id = s.id + 1;
+		for (let s of n.inputs) {
+			if (s.id >= id) {
+				id = s.id + 1;
+			}
+		}
+		for (let s of n.outputs) {
+			if (s.id >= id) {
+				id = s.id + 1;
+			}
+		}
 	}
 	return id;
 }
@@ -653,9 +701,9 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 	// Ensure properties order
 	let canvas_: zui_node_canvas_t = {
 		name: canvas.name,
-		nodes: canvas.nodes.slice(),
+		nodes: array_slice(canvas.nodes, 0, canvas.nodes.length),
 		nodes_count: canvas.nodes.length,
-		links: canvas.links.slice(),
+		links: array_slice(canvas.links, 0, canvas.links.length),
 		links_count: canvas.links.length,
 	}
 
@@ -676,7 +724,7 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 	// Ensure properties order
 	for (let n of canvas_.nodes) {
 		n.name = zui_tr(n.name);
-		for (let i = 0; i < n.inputs.length; ++i) {
+		for (let i: i32 = 0; i < n.inputs.length; ++i) {
 			n.inputs[i] = {
 				id: n.inputs[i].id,
 				node_id: n.inputs[i].node_id,
@@ -690,7 +738,7 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 				display: n.inputs[i].display,
 			};
 		}
-		for (let i = 0; i < n.outputs.length; ++i) {
+		for (let i: i32 = 0; i < n.outputs.length; ++i) {
 			n.outputs[i] = {
 				id: n.outputs[i].id,
 				node_id: n.outputs[i].node_id,
@@ -704,7 +752,7 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 				display: n.outputs[i].display,
 			};
 		}
-		for (let i = 0; i < n.buttons.length; ++i) {
+		for (let i: i32 = 0; i < n.buttons.length; ++i) {
 			n.buttons[i] = {
 				name: zui_tr(n.buttons[i].name),
 				type: n.buttons[i].type,
@@ -721,16 +769,20 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 
 	// Reserve capacity
 	while (canvas_.nodes.length < 128) {
-		canvas_.nodes.push({ id: -1, name: "", type: "", x: 0, y: 0, color: 0, inputs: [], outputs: [], buttons: [], width: 0 });
+		array_push(canvas_.nodes, { id: -1, name: "", type: "", x: 0, y: 0, color: 0, inputs: [], outputs: [], buttons: [], width: 0 });
 	}
 	while (canvas_.links.length < 256) {
-		canvas_.links.push({ id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
+		array_push(canvas_.links, { id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
 	}
 
-	let packed = krom_zui_node_canvas(raw.nodes_, armpack_encode(canvas_));
+	let packed: buffer_t = krom_zui_node_canvas(raw.nodes_, armpack_encode(canvas_));
 	canvas_ = armpack_decode(packed);
-	if (canvas_.nodes == null) canvas_.nodes = [];
-	if (canvas_.links == null) canvas_.links = [];
+	if (canvas_.nodes == null) {
+		canvas_.nodes = [];
+	}
+	if (canvas_.links == null) {
+		canvas_.links = [];
+	}
 
 	// Convert default data
 	for (let n of canvas_.nodes) {
@@ -752,7 +804,7 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 
 	// Restore nodes modified in js while zui_node_canvas was running
 	for (let n of zui_node_replace) {
-		for (let i = 0; i < canvas.nodes.length; ++i) {
+		for (let i: i32 = 0; i < canvas.nodes.length; ++i) {
 			if (canvas.nodes[i].id == n.id) {
 				canvas.nodes[i] = n;
 				break;
@@ -764,19 +816,23 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 	zui_element_h = ui.t.ELEMENT_H + 2;
 }
 
-function zui_nodes_rgba_popup(ui: zui_t, nhandle: zui_handle_t, val: Float32Array, x: i32, y: i32) {
+function zui_nodes_rgba_popup(ui: zui_t, nhandle: zui_handle_t, val: f32_array_t, x: i32, y: i32) {
 	krom_zui_nodes_rgba_popup(nhandle.handle_, val.buffer, x, y);
 }
 
 function zui_remove_node(n: zui_node_t, canvas: zui_node_canvas_t) {
-	if (n == null) return;
-	let i = 0;
+	if (n == null) {
+		return;
+	}
+	let i: i32 = 0;
 	while (i < canvas.links.length) {
-		let l = canvas.links[i];
+		let l: zui_node_link_t = canvas.links[i];
 		if (l.from_id == n.id || l.to_id == n.id) {
-			canvas.links.splice(i, 1);
+			array_splice(canvas.links, i, 1);
 		}
-		else i++;
+		else {
+			i++;
+		}
 	}
 	array_remove(canvas.nodes, n);
 }
@@ -794,11 +850,11 @@ function zui_nodes_PAN_Y(): f32 {
 }
 
 function zui_nodes_NODE_H(canvas: zui_node_canvas_t, node: zui_node_t): i32 {
-	return Math.floor(zui_nodes_LINE_H() * 1.2 + zui_nodes_INPUTS_H(canvas, node.inputs) + zui_nodes_OUTPUTS_H(node.outputs) + zui_nodes_BUTTONS_H(node));
+	return math_floor(zui_nodes_LINE_H() * 1.2 + zui_nodes_INPUTS_H(canvas, node.inputs) + zui_nodes_OUTPUTS_H(node.outputs) + zui_nodes_BUTTONS_H(node));
 }
 
 function zui_nodes_NODE_W(node: zui_node_t): i32 {
-	return Math.floor((node.width != 0 ? node.width : 140) * zui_nodes_SCALE());
+	return math_floor((node.width != 0 ? node.width : 140) * zui_nodes_SCALE());
 }
 
 function zui_nodes_NODE_X(node: zui_node_t): f32 {
@@ -810,48 +866,64 @@ function zui_nodes_NODE_Y(node: zui_node_t): f32 {
 }
 
 function zui_nodes_BUTTONS_H(node: zui_node_t): i32 {
-	let h = 0.0;
+	let h: f32 = 0.0;
 	for (let but of node.buttons) {
-		if (but.type == "RGBA") h += 102 * zui_nodes_SCALE() + zui_nodes_LINE_H() * 5; // Color wheel + controls
-		else if (but.type == "VECTOR") h += zui_nodes_LINE_H() * 4;
-		else if (but.type == "CUSTOM") h += zui_nodes_LINE_H() * but.height;
-		else h += zui_nodes_LINE_H();
+		if (but.type == "RGBA") {
+			h += 102 * zui_nodes_SCALE() + zui_nodes_LINE_H() * 5; // Color wheel + controls
+		}
+		else if (but.type == "VECTOR") {
+			h += zui_nodes_LINE_H() * 4;
+		}
+		else if (but.type == "CUSTOM") {
+			h += zui_nodes_LINE_H() * but.height;
+		}
+		else {
+			h += zui_nodes_LINE_H();
+		}
 	}
-	return Math.floor(h);
+	return math_floor(h);
 }
 
 function zui_nodes_OUTPUTS_H(sockets: zui_node_socket_t[], length: i32 = -1): i32 {
-	let h = 0.0;
+	let h: f32 = 0.0;
 	for (let i = 0; i < (length == -1 ? sockets.length : length); ++i) {
 		h += zui_nodes_LINE_H();
 	}
-	return Math.floor(h);
+	return math_floor(h);
 }
 
 function zui_nodes_input_linked(canvas: zui_node_canvas_t, node_id: i32, i: i32): bool {
-	for (let l of canvas.links) if (l.to_id == node_id && l.to_socket == i) return true;
+	for (let l of canvas.links) {
+		if (l.to_id == node_id && l.to_socket == i) {
+			return true;
+		}
+	}
 	return false;
 }
 
 function zui_nodes_INPUTS_H(canvas: zui_node_canvas_t, sockets: zui_node_socket_t[], length: i32 = -1): i32 {
-	let h = 0.0;
+	let h: f32 = 0.0;
 	for (let i = 0; i < (length == -1 ? sockets.length : length); ++i) {
-		if (sockets[i].type == "VECTOR" && sockets[i].display == 1 && !zui_nodes_input_linked(canvas, sockets[i].node_id, i)) h += zui_nodes_LINE_H() * 4;
-		else h += zui_nodes_LINE_H();
+		if (sockets[i].type == "VECTOR" && sockets[i].display == 1 && !zui_nodes_input_linked(canvas, sockets[i].node_id, i)) {
+			h += zui_nodes_LINE_H() * 4;
+		}
+		else {
+			h += zui_nodes_LINE_H();
+		}
 	}
-	return Math.floor(h);
+	return math_floor(h);
 }
 
 function zui_nodes_INPUT_Y(canvas: zui_node_canvas_t, sockets: zui_node_socket_t[], pos: i32): i32 {
-	return Math.floor(zui_nodes_LINE_H() * 1.62) + zui_nodes_INPUTS_H(canvas, sockets, pos);
+	return math_floor(zui_nodes_LINE_H() * 1.62) + zui_nodes_INPUTS_H(canvas, sockets, pos);
 }
 
 function zui_nodes_OUTPUT_Y(sockets: zui_node_socket_t[], pos: i32): i32 {
-	return Math.floor(zui_nodes_LINE_H() * 1.62) + zui_nodes_OUTPUTS_H(sockets, pos);
+	return math_floor(zui_nodes_LINE_H() * 1.62) + zui_nodes_OUTPUTS_H(sockets, pos);
 }
 
 function zui_nodes_LINE_H(): i32 {
-	return Math.floor(zui_element_h * zui_nodes_SCALE());
+	return math_floor(zui_element_h * zui_nodes_SCALE());
 }
 
 function zui_nodes_p(f: f32): f32 {
@@ -862,100 +934,120 @@ function zui_nodes_on_custom_button(node_id: i32, button_name: string) {
 	eval(button_name + "(Zui.current, current, current.getNode(currentCanvas.nodes, node_id))");
 }
 
-function zui_nodes_js_to_c(type: string, d: any): Uint8Array {
+function zui_nodes_js_to_c(type: string, d: any): u8_array_t {
 	if (type == "RGBA") {
-		if (d == null) return new Uint8Array(16);
+		if (d == null) return u8_array_create(16);
 		else {
-			let f32a = new Float32Array(4);
+			let f32a: f32_array_t = f32_array_create(4);
 			f32a[0] = d[0];
 			f32a[1] = d[1];
 			f32a[2] = d[2];
 			f32a[3] = d[3];
-			d = new Uint8Array(f32a.buffer);
+			d = new u8_array_t(f32a.buffer);
 		}
-		return new Uint8Array(d.buffer);
+		return new u8_array_t(d.buffer);
 	}
 	if (type == "VECTOR") {
-		if (d == null) return new Uint8Array(12);
+		if (d == null) {
+			return u8_array_create(12);
+		}
 		else {
-			let f32a = new Float32Array(4);
+			let f32a: f32_array_t = f32_array_create(4);
 			f32a[0] = d[0];
 			f32a[1] = d[1];
 			f32a[2] = d[2];
-			d = new Uint8Array(f32a.buffer);
+			d = new u8_array_t(f32a.buffer);
 		}
-		return new Uint8Array(d.buffer);
+		return new u8_array_t(d.buffer);
 	}
 	if (type == "VALUE") {
-		if (d == null) return new Uint8Array(4);
-		let f32a = new Float32Array([d]);
-		return new Uint8Array(f32a.buffer);
+		if (d == null) {
+			return u8_array_create(4);
+		}
+		let f32a: f32_array_t = new f32_array_t([d]);
+		return new u8_array_t(f32a.buffer);
 	}
 	if (type == "STRING") {
-		if (d == null) return new Uint8Array(1);
+		if (d == null) {
+			return u8_array_create(1);
+		}
 		let s: string = d;
-		let u8a = new Uint8Array(s.length + 1);
-		for (let i = 0; i < s.length; ++i) u8a[i] = s.charCodeAt(i);
+		let u8a: u8_array_t = u8_array_create(s.length + 1);
+		for (let i = 0; i < s.length; ++i) {
+			u8a[i] = char_code_at(s, i);
+		}
 		return u8a;
 	}
 	if (type == "ENUM") {
-		if (d == null) return new Uint8Array(1);
-		let u32a = new Uint32Array([d]);
-		return new Uint8Array(u32a.buffer);
+		if (d == null) {
+			return u8_array_create(1);
+		}
+		let u32a: u32_array_t = new u32_array_t([d]);
+		return new u8_array_t(u32a.buffer);
 	}
 	if (type == "BOOL") {
-		if (d == null) return new Uint8Array(1);
-		let u8a = new Uint8Array(1);
+		if (d == null) {
+			return u8_array_create(1);
+		}
+		let u8a: u8_array_t = u8_array_create(1);
 		u8a[0] = d == true ? 1 : 0;
 		return u8a;
 	}
 	if (type == "CUSTOM") {
-		return new Uint8Array(1);
+		return u8_array_create(1);
 	}
-	return new Uint8Array(1);
+	return u8_array_create(1);
 }
 
-function zui_nodes_js_to_c_data(type: string, d: any): Uint8Array {
+function zui_nodes_js_to_c_data(type: string, d: any): u8_array_t {
 	if (type == "ENUM") {
-		if (d == null) return new Uint8Array(1);
+		if (d == null) {
+			return u8_array_create(1);
+		}
 		let a: string[] = d;
-		let length = 0;
+		let length: i32 = 0;
 		for (let s of a) {
 			length += s.length + 1;
 		}
-		if (length == 0) return new Uint8Array(1);
-		let u8a = new Uint8Array(length);
-		let pos = 0;
+		if (length == 0) {
+			return u8_array_create(1);
+		}
+		let u8a: u8_array_t = u8_array_create(length);
+		let pos: i32 = 0;
 		for (let s of a) {
-			for (let i = 0; i < s.length; ++i) u8a[pos++] = s.charCodeAt(i);
+			for (let i: i32 = 0; i < s.length; ++i) {
+				u8a[pos++] = char_code_at(s, i);
+			}
 			u8a[pos++] = 0; // '\0'
 		}
 		return u8a;
 	}
 	if (type == "CUSTOM") {
-		return new Uint8Array(1);
+		return u8_array_create(1);
 	}
-	return new Uint8Array(1);
+	return u8_array_create(1);
 }
 
-function zui_nodes_c_to_js(type: string, u8a: Uint8Array): any {
+function zui_nodes_c_to_js(type: string, u8a: u8_array_t): any {
 	if (type == "RGBA") {
-		return new Float32Array(u8a.buffer);
+		return new f32_array_t(u8a.buffer);
 	}
 	if (type == "VECTOR") {
-		return new Float32Array(u8a.buffer);
+		return new f32_array_t(u8a.buffer);
 	}
 	if (type == "VALUE") {
-		let f32a = new Float32Array(u8a.buffer);
+		let f32a: f32_array_t = new f32_array_t(u8a.buffer);
 		return f32a[0];
 	}
 	if (type == "STRING") {
 		let s = "";
-		for (let i = 0; i < u8a.length - 1; ++i) s += String.fromCharCode(u8a[i]);
+		for (let i: i32 = 0; i < u8a.length - 1; ++i) {
+			s += string_from_char_code(u8a[i]);
+		}
 		return s;
 	}
 	if (type == "ENUM") {
-		let u32a = new Uint32Array(u8a.buffer);
+		let u32a: u32_array_t = new u32_array_t(u8a.buffer);
 		return u32a[0];
 	}
 	if (type == "BOOL") {
@@ -967,17 +1059,17 @@ function zui_nodes_c_to_js(type: string, u8a: Uint8Array): any {
 	return null;
 }
 
-function zui_nodes_c_to_js_data(type: string, u8a: Uint8Array): any {
+function zui_nodes_c_to_js_data(type: string, u8a: u8_array_t): any {
 	if (type == "ENUM") {
 		let a: string[] = [];
-		let s = "";
-		for (let i = 0; i < u8a.length; ++i) {
+		let s: string = "";
+		for (let i: i32 = 0; i < u8a.length; ++i) {
 			if (u8a[i] == 0) {
-				a.push(s);
+				array_push(a, s);
 				s = "";
 			}
 			else {
-				s += String.fromCharCode(u8a[i]);
+				s += string_from_char_code(u8a[i]);
 			}
 		}
 		return a;
@@ -991,35 +1083,83 @@ function zui_nodes_c_to_js_data(type: string, u8a: Uint8Array): any {
 function zui_nodes_update_canvas_format(canvas: zui_node_canvas_t) {
 	for (let n of canvas.nodes) {
 		for (let soc of n.inputs) {
-			if (soc.min == null) soc.min = 0.0;
-			if (soc.max == null) soc.max = 1.0;
-			if (soc.precision == null) soc.precision = 100.0;
-			if (soc.display == null) soc.display = 0;
-			if (soc.min - Math.floor(soc.min) == 0.0) soc.min += zui_nodes_eps;
-			if (soc.max - Math.floor(soc.max) == 0.0) soc.max += zui_nodes_eps;
-			if (soc.precision - Math.floor(soc.precision) == 0.0) soc.precision += zui_nodes_eps;
+			if (soc.min == null) {
+				soc.min = 0.0;
+			}
+			if (soc.max == null) {
+				soc.max = 1.0;
+			}
+			if (soc.precision == null) {
+				soc.precision = 100.0;
+			}
+			if (soc.display == null) {
+				soc.display = 0;
+			}
+			if (soc.min - math_floor(soc.min) == 0.0) {
+				soc.min += zui_nodes_eps;
+			}
+			if (soc.max - math_floor(soc.max) == 0.0) {
+				soc.max += zui_nodes_eps;
+			}
+			if (soc.precision - math_floor(soc.precision) == 0.0) {
+				soc.precision += zui_nodes_eps;
+			}
 		}
 		for (let soc of n.outputs) {
-			if (soc.min == null) soc.min = 0.0;
-			if (soc.max == null) soc.max = 1.0;
-			if (soc.precision == null) soc.precision = 100.0;
-			if (soc.display == null) soc.display = 0;
-			if (soc.min - Math.floor(soc.min) == 0.0) soc.min += zui_nodes_eps;
-			if (soc.max - Math.floor(soc.max) == 0.0) soc.max += zui_nodes_eps;
-			if (soc.precision - Math.floor(soc.precision) == 0.0) soc.precision += zui_nodes_eps;
+			if (soc.min == null) {
+				soc.min = 0.0;
+			}
+			if (soc.max == null) {
+				soc.max = 1.0;
+			}
+			if (soc.precision == null) {
+				soc.precision = 100.0;
+			}
+			if (soc.display == null) {
+				soc.display = 0;
+			}
+			if (soc.min - math_floor(soc.min) == 0.0) {
+				soc.min += zui_nodes_eps;
+			}
+			if (soc.max - math_floor(soc.max) == 0.0) {
+				soc.max += zui_nodes_eps;
+			}
+			if (soc.precision - math_floor(soc.precision) == 0.0) {
+				soc.precision += zui_nodes_eps;
+			}
 		}
 		for (let but of n.buttons) {
-			if (but.output == null) but.output = -1;
-			if (but.min == null) but.min = 0.0;
-			if (but.max == null) but.max = 1.0;
-			if (but.precision == null) but.precision = 100.0;
-			if (but.height == null) but.height = 0.0;
-			if (but.height - Math.floor(but.height) == 0.0) but.height += zui_nodes_eps;
-			if (but.min - Math.floor(but.min) == 0.0) but.min += zui_nodes_eps;
-			if (but.max - Math.floor(but.max) == 0.0) but.max += zui_nodes_eps;
-			if (but.precision - Math.floor(but.precision) == 0.0) but.precision += zui_nodes_eps;
+			if (but.output == null) {
+				but.output = -1;
+			}
+			if (but.min == null) {
+				but.min = 0.0;
+			}
+			if (but.max == null) {
+				but.max = 1.0;
+			}
+			if (but.precision == null) {
+				but.precision = 100.0;
+			}
+			if (but.height == null) {
+				but.height = 0.0;
+			}
+			if (but.height - math_floor(but.height) == 0.0) {
+				but.height += zui_nodes_eps;
+			}
+			if (but.min - math_floor(but.min) == 0.0) {
+				but.min += zui_nodes_eps;
+			}
+			if (but.max - math_floor(but.max) == 0.0) {
+				but.max += zui_nodes_eps;
+			}
+			if (but.precision - math_floor(but.precision) == 0.0) {
+				but.precision += zui_nodes_eps;
+			}
 		}
-		if (n.width == null) n.width = 0;
+		if (n.width == null) {
+			n.width = 0;
+		}
 	}
 }
 

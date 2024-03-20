@@ -40,7 +40,7 @@ int armpack_size_f32();
 	let test = {
 		name: "test",
 		point: { x: 2, y: 4 },
-		array: new Int32Array([1, 2, 3])
+		array: i32_array_create([1, 2, 3])
 	};
 */
 

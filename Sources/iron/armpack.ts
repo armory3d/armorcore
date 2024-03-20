@@ -257,7 +257,7 @@ function armpack_write(v: buffer_view_t, d: any) {
 		armpack_write_i32(v, d.length);
 		armpack_write_string(v, d);
 	}
-	else if (d.constructor.name == "ArrayBuffer") {
+	else if (d.constructor.name == "buffer_t") {
 		armpack_write_u8(v, 0xc6);
 		armpack_write_i32(v, buffer_size(d));
 		armpack_write_buffer(v, d);
@@ -265,31 +265,31 @@ function armpack_write(v: buffer_view_t, d: any) {
 	else if (is_view(d)) {
 		armpack_write_u8(v, 0xdd);
 		armpack_write_i32(v, (d as any).length);
-		if (d.constructor.name == "Uint8Array") {
+		if (d.constructor.name == "u8_array_t") {
 			armpack_write_u8(v, 0xc4);
 			for (let i: i32 = 0; i < (d as u8_array_t).length; ++i) {
 				armpack_write_u8(v, d[i]);
 			}
 		}
-		else if (d.constructor.name == "Int16Array") {
+		else if (d.constructor.name == "i16_array_t") {
 			armpack_write_u8(v, 0xd1);
 			for (let i: i32 = 0; i < (d as i16_array_t).length; ++i) {
 				armpack_write_i16(v, d[i]);
 			}
 		}
-		else if (d.constructor.name == "Float32Array") {
+		else if (d.constructor.name == "f32_array_t") {
 			armpack_write_u8(v, 0xca);
 			for (let i: i32 = 0; i < (d as f32_array_t).length; ++i) {
 				armpack_write_f32(v, d[i]);
 			}
 		}
-		else if (d.constructor.name == "Int32Array") {
+		else if (d.constructor.name == "i32_array_t") {
 			armpack_write_u8(v, 0xd2);
 			for (let i: i32 = 0; i < (d as i32_array_t).length; ++i) {
 				armpack_write_i32(v, d[i]);
 			}
 		}
-		else if (d.constructor.name == "Uint32Array") {
+		else if (d.constructor.name == "u32_array_t") {
 			armpack_write_u8(v, 0xd2);
 			for (let i: i32 = 0; i < (d as u32_array_t).length; ++i) {
 				armpack_write_i32(v, d[i]);
@@ -337,7 +337,7 @@ function armpack_write_dummy(d: any) {
 		_armpack_pos += 4;
 		_armpack_pos += d.length;
 	}
-	else if (d.constructor.name == "ArrayBuffer") {
+	else if (d.constructor.name == "buffer_t") {
 		_armpack_pos += 1;
 		_armpack_pos += 4;
 		_armpack_pos += buffer_size(d);
@@ -345,31 +345,31 @@ function armpack_write_dummy(d: any) {
 	else if (is_view(d)) {
 		_armpack_pos += 1;
 		_armpack_pos += 4;
-		if (d.constructor.name == "Uint8Array") {
+		if (d.constructor.name == "u8_array_t") {
 			_armpack_pos += 1;
 			for (let i: i32 = 0; i < (d as u8_array_t).length; ++i) {
 				_armpack_pos += 1;
 			}
 		}
-		else if (d.constructor.name == "Int16Array") {
+		else if (d.constructor.name == "i16_array_t") {
 			_armpack_pos += 1;
 			for (let i: i32 = 0; i < (d as i16_array_t).length; ++i) {
 				_armpack_pos += 2;
 			}
 		}
-		else if (d.constructor.name == "Float32Array") {
+		else if (d.constructor.name == "f32_array_t") {
 			_armpack_pos += 1;
 			for (let i: i32 = 0; i < (d as f32_array_t).length; ++i) {
 				_armpack_pos += 4;
 			}
 		}
-		else if (d.constructor.name == "Int32Array") {
+		else if (d.constructor.name == "i32_array_t") {
 			_armpack_pos += 1;
 			for (let i: i32 = 0; i < (d as i32_array_t).length; ++i) {
 				_armpack_pos += 4;
 			}
 		}
-		else if (d.constructor.name == "Uint32Array") {
+		else if (d.constructor.name == "u32_array_t") {
 			_armpack_pos += 1;
 			for (let i: i32 = 0; i < (d as u32_array_t).length; ++i) {
 				_armpack_pos += 4;

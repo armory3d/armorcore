@@ -1083,20 +1083,20 @@ void krom_g2_draw_cubic_bezier(f32 *x, f32 *y, i32 segments, f32 strength) {
 // declare function krom_read_directory(path: string, foldersOnly: bool): string;
 // declare function krom_file_exists(path: string): bool;
 // declare function krom_delete_file(path: string): void;
-// declare function krom_inflate(bytes: ArrayBuffer, raw: bool): ArrayBuffer;
-// declare function krom_deflate(bytes: ArrayBuffer, raw: bool): ArrayBuffer;
-// declare function krom_write_jpg(path: string, bytes: ArrayBuffer, w: i32, h: i32, format: i32, quality: i32): void; // RGBA, R, RGB1, RRR1, GGG1, BBB1, AAA1
-// declare function krom_write_png(path: string, bytes: ArrayBuffer, w: i32, h: i32, format: i32): void;
-// declare function krom_encode_jpg(bytes: ArrayBuffer, w: i32, h: i32, format: i32, quality: i32): ArrayBuffer;
-// declare function krom_encode_png(bytes: ArrayBuffer, w: i32, h: i32, format: i32): ArrayBuffer;
-// declare function krom_write_mpeg(): ArrayBuffer;
-// declare function krom_ml_inference(model: ArrayBuffer, tensors: ArrayBuffer[], input_shape?: i32[][], output_shape?: i32[], use_gpu?: bool): ArrayBuffer;
+// declare function krom_inflate(bytes: buffer_t, raw: bool): buffer_t;
+// declare function krom_deflate(bytes: buffer_t, raw: bool): buffer_t;
+// declare function krom_write_jpg(path: string, bytes: buffer_t, w: i32, h: i32, format: i32, quality: i32): void; // RGBA, R, RGB1, RRR1, GGG1, BBB1, AAA1
+// declare function krom_write_png(path: string, bytes: buffer_t, w: i32, h: i32, format: i32): void;
+// declare function krom_encode_jpg(bytes: buffer_t, w: i32, h: i32, format: i32, quality: i32): buffer_t;
+// declare function krom_encode_png(bytes: buffer_t, w: i32, h: i32, format: i32): buffer_t;
+// declare function krom_write_mpeg(): buffer_t;
+// declare function krom_ml_inference(model: buffer_t, tensors: buffer_t[], input_shape?: i32[][], output_shape?: i32[], use_gpu?: bool): buffer_t;
 // declare function krom_ml_unload(): void;
 
 // declare function krom_raytrace_supported(): bool;
-// declare function krom_raytrace_init(shader: ArrayBuffer, vb: any, ib: any, scale: f32): void;
+// declare function krom_raytrace_init(shader: buffer_t, vb: any, ib: any, scale: f32): void;
 // declare function krom_raytrace_set_textures(tex0: image_t, tex1: image_t, tex2: image_t, texenv: any, tex_sobol: any, tex_scramble: any, tex_rank: any): void;
-// declare function krom_raytrace_dispatch_rays(target: any, cb: ArrayBuffer): void;
+// declare function krom_raytrace_dispatch_rays(target: any, cb: buffer_t): void;
 
 i32 krom_window_x() {
 	return 0;
@@ -1109,4 +1109,4 @@ i32 krom_window_y() {
 char *krom_language() {
 	return NULL;
 }
-// declare function krom_io_obj_parse(file_bytes: ArrayBuffer, split_code: i32, start_pos: i32, udim: bool): any;
+// declare function krom_io_obj_parse(file_bytes: buffer_t, split_code: i32, start_pos: i32, udim: bool): any;

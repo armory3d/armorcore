@@ -60,9 +60,11 @@ function map_delete<K, V>(m: map_t<K, V>, k: any) { m.delete(k); }
 function array_sort(ar: any[], fn: (a: any, b: any)=>i32) { ar.sort(fn); }
 function array_push(ar: any[], e: any) { ar.push(e); }
 function array_splice(ar: any[], start: i32, delete_count: i32) { ar.splice(start, delete_count); }
+function array_insert(ar: any[], at: i32, e: any) { ar.splice(at, 0, e); }
 function array_concat(a: any[], b: any[]): any[] { return a.concat(b); }
 function array_index_of(a: any[], search: any): i32 { return a.indexOf(search); }
 function string_index_of(s: string, search: string): i32 { return s.indexOf(search); }
+function string_index_of_pos(s: string, search: string, pos: i32) { return s.indexOf(search, pos); }
 function string_last_index_of(s: string, search: string): i32 { return s.lastIndexOf(search); }
 function string_split(s: string, sep: string): string[] { return s.split(sep); }
 function string_replace_all(s: string, search: string, replace: string): string { return (s as any).replaceAll(search, replace); }
@@ -75,8 +77,8 @@ function ends_with(s: string, end: string): bool { return s.endsWith(end); }
 function to_lower_case(s: string): string { return s.toLowerCase(); }
 function map_to_array(m: any): any[] { return Array.from(m.values()); }
 function array_slice(a: any[], begin: i32, end: i32): any[] { return a.slice(begin, end); }
-function buffer_slice(a: ArrayBuffer, begin: i32, end: i32): ArrayBuffer { return a.slice(begin, end); }
-function buffer_size(b: ArrayBuffer): i32 { return b.byteLength; }
+function buffer_slice(a: buffer_t, begin: i32, end: i32): buffer_t { return a.slice(begin, end); }
+function buffer_size(b: buffer_t): i32 { return b.byteLength; }
 function buffer_view_size(v: buffer_view_t): i32 { return v.byteLength; }
 function buffer_view_get_u8(v: buffer_view_t, p: i32): u8 { return v.getUint8(p); }
 function buffer_view_get_i8(v: buffer_view_t, p: i32): i8 { return v.getInt8(p); }
@@ -93,7 +95,7 @@ function buffer_view_set_u32(v: buffer_view_t, p: i32, n: u32) { v.setUint32(p, 
 function buffer_view_set_i32(v: buffer_view_t, p: i32, n: i32) { v.setInt32(p, n, true); }
 function buffer_view_set_f32(v: buffer_view_t, p: i32, n: f32) { v.setFloat32(p, n, true); }
 function is_integer(a: any): bool { return Number.isInteger(a); } // armpack
-function is_view(a: any): bool { return ArrayBuffer.isView(a); } // armpack
+function is_view(a: any): bool { return buffer_t.isView(a); } // armpack
 function is_array(a: any): bool { return Array.isArray(a); } // armpack
 function any_to_string(a: any): string { return String(a); } // armpack
 // Object.keys() // armpack, tween
@@ -103,18 +105,18 @@ function json_parse(s: string): any { return JSON.parse(s); }
 function json_stringify(a: any): string { return JSON.stringify(a); }
 
 function array_remove(ar: any[], e: any) {
-    ar.splice(ar.indexOf(e), 1);
+    array_splice(ar, array_index_of(ar, e), 1);
 }
 
 function trim_end(str: string): string {
     while (str.length > 0 && (str[str.length - 1] == " " || str[str.length - 1] == "\n")) {
-        str = str.substring(0, str.length - 1);
+        str = substring(str, 0, str.length - 1);
     }
     return str;
 }
 
 function color_from_floats(r: f32, g: f32, b: f32, a: f32): i32 {
-    return (Math.round(a * 255) << 24) | (Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255);
+    return (math_round(a * 255) << 24) | (math_round(r * 255) << 16) | (math_round(g * 255) << 8) | math_round(b * 255);
 }
 
 function color_get_rb(c: i32): u8 {
@@ -182,18 +184,18 @@ declare function krom_show_keyboard(show: bool): void;
 
 declare function krom_g4_create_index_buffer(count: i32): any;
 declare function krom_g4_delete_index_buffer(buffer: any): void;
-declare function krom_g4_lock_index_buffer(buffer: any): Uint32Array;
+declare function krom_g4_lock_index_buffer(buffer: any): u32_array_t;
 declare function krom_g4_unlock_index_buffer(buffer: any): void;
 declare function krom_g4_set_index_buffer(buffer: any): void;
 declare function krom_g4_create_vertex_buffer(count: i32, structure: kinc_vertex_elem_t[], usage: i32, inst_data_step_rate: i32): any;
 declare function krom_g4_delete_vertex_buffer(buffer: any): void;
-declare function krom_g4_lock_vertex_buffer(buffer: any): ArrayBuffer;
+declare function krom_g4_lock_vertex_buffer(buffer: any): buffer_t;
 declare function krom_g4_unlock_vertex_buffer(buffer: any): void;
 declare function krom_g4_set_vertex_buffer(buffer: any): void;
 declare function krom_g4_set_vertex_buffers(vertex_buffers: vertex_buffer_t[]): void;
 declare function krom_g4_draw_indexed_vertices(start: i32, count: i32): void;
 declare function krom_g4_draw_indexed_vertices_instanced(inst_count: i32, start: i32, count: i32): void;
-declare function krom_g4_create_shader(data: ArrayBuffer, type: i32): any;
+declare function krom_g4_create_shader(data: buffer_t, type: i32): any;
 declare function krom_g4_create_vertex_shader_from_source(source: string): any;
 declare function krom_g4_create_fragment_shader_from_source(source: string): any;
 declare function krom_g4_delete_shader(shader: any): void;
@@ -207,7 +209,7 @@ declare function krom_load_sound(file: string): any;
 declare function krom_unload_sound(sound: any): void;
 declare function krom_play_sound(sound: any, loop: bool): void;
 declare function krom_stop_sound(sound: any): void;
-declare function krom_load_blob(file: string): ArrayBuffer;
+declare function krom_load_blob(file: string): buffer_t;
 declare function krom_load_url(url: string): void;
 declare function krom_copy_to_clipboard(text: string): void;
 
@@ -225,9 +227,9 @@ declare function krom_g4_set_float(location: any, value: f32): void;
 declare function krom_g4_set_float2(location: any, value1: f32, value2: f32): void;
 declare function krom_g4_set_float3(location: any, value1: f32, value2: f32, value3: f32): void;
 declare function krom_g4_set_float4(location: any, value1: f32, value2: f32, value3: f32, value4: f32): void;
-declare function krom_g4_set_floats(location: any, values: ArrayBuffer): void;
-declare function krom_g4_set_matrix4(location: any, matrix: ArrayBuffer): void;
-declare function krom_g4_set_matrix3(location: any, matrix: ArrayBuffer): void;
+declare function krom_g4_set_floats(location: any, values: buffer_t): void;
+declare function krom_g4_set_matrix4(location: any, matrix: buffer_t): void;
+declare function krom_g4_set_matrix3(location: any, matrix: buffer_t): void;
 
 declare function krom_get_time(): f32;
 declare function krom_window_width(): i32;
@@ -247,18 +249,18 @@ declare function krom_display_x(index: i32): i32;
 declare function krom_display_y(index: i32): i32;
 declare function krom_display_frequency(index: i32): i32;
 declare function krom_display_is_primary(index: i32): bool;
-declare function krom_write_storage(name: string, data: ArrayBuffer): void;
-declare function krom_read_storage(name: string): ArrayBuffer;
+declare function krom_write_storage(name: string, data: buffer_t): void;
+declare function krom_read_storage(name: string): buffer_t;
 
 declare function krom_g4_create_render_target(width: i32, height: i32, format: i32, depth_buffer_bits: i32, stencil_buffer_bits: i32): any;
 declare function krom_g4_create_texture(width: i32, height: i32, format: i32): any;
 declare function krom_g4_create_texture3d(width: i32, height: i32, depth: i32, format: i32): any;
-declare function krom_g4_create_texture_from_bytes(data: ArrayBuffer, width: i32, height: i32, format: i32, readable: bool): any;
-declare function krom_g4_create_texture_from_bytes3d(data: ArrayBuffer, width: i32, height: i32, depth: i32, format: i32, readable: bool): any;
-declare function krom_g4_create_texture_from_encoded_bytes(data: ArrayBuffer, format: string, readable: bool): any;
-declare function krom_g4_get_texture_pixels(texture: any): ArrayBuffer;
-declare function krom_g4_get_render_target_pixels(render_target: any, data: ArrayBuffer): void;
-declare function krom_g4_lock_texture(texture: any, level: i32): ArrayBuffer;
+declare function krom_g4_create_texture_from_bytes(data: buffer_t, width: i32, height: i32, format: i32, readable: bool): any;
+declare function krom_g4_create_texture_from_bytes3d(data: buffer_t, width: i32, height: i32, depth: i32, format: i32, readable: bool): any;
+declare function krom_g4_create_texture_from_encoded_bytes(data: buffer_t, format: string, readable: bool): any;
+declare function krom_g4_get_texture_pixels(texture: any): buffer_t;
+declare function krom_g4_get_render_target_pixels(render_target: any, data: buffer_t): void;
+declare function krom_g4_lock_texture(texture: any, level: i32): buffer_t;
 declare function krom_g4_unlock_texture(texture: any): void;
 declare function krom_g4_clear_texture(target: any, x: i32, y: i32, z: i32, width: i32, height: i32, depth: i32, color: i32): void;
 declare function krom_g4_generate_texture_mipmaps(texture: any, levels: i32): void;
@@ -271,15 +273,15 @@ declare function krom_g4_disable_scissor(): void;
 declare function krom_g4_render_targets_inverted_y(): bool;
 declare function krom_g4_begin(render_target: image_t, additional: image_t[]): void;
 declare function krom_g4_end(): void;
-declare function krom_file_save_bytes(path: string, bytes: ArrayBuffer, length?: i32): void;
+declare function krom_file_save_bytes(path: string, bytes: buffer_t, length?: i32): void;
 declare function krom_sys_command(cmd: string, args?: string[]): i32;
 declare function krom_save_path(): string;
 declare function krom_get_arg_count(): i32;
 declare function krom_get_arg(index: i32): string;
 declare function krom_get_files_location(): string;
-declare function krom_http_request(url: string, size: i32, callback: (_: ArrayBuffer)=>void): void;
+declare function krom_http_request(url: string, size: i32, callback: (_: buffer_t)=>void): void;
 
-declare function krom_g2_init(image_vert: ArrayBuffer, image_frag: ArrayBuffer, colored_vert: ArrayBuffer, colored_frag: ArrayBuffer, text_vert: ArrayBuffer, text_frag: ArrayBuffer): void;
+declare function krom_g2_init(image_vert: buffer_t, image_frag: buffer_t, colored_vert: buffer_t, colored_frag: buffer_t, text_vert: buffer_t, text_frag: buffer_t): void;
 declare function krom_g2_begin(): void;
 declare function krom_g2_end(): void;
 declare function krom_g2_draw_scaled_sub_image(image: image_t, sx: f32, sy: f32, sw: f32, sh: f32, dx: f32, dy: f32, dw: f32, dh: f32): void;
@@ -289,8 +291,8 @@ declare function krom_g2_draw_rect(x: f32, y: f32, width: f32, height: f32, stre
 declare function krom_g2_draw_line(x0: f32, y0: f32, x1: f32, y1: f32, strength: f32): void;
 declare function krom_g2_draw_string(text: string, x: f32, y: f32): void;
 declare function krom_g2_set_font(font: any, size: i32): void;
-declare function krom_g2_font_init(blob: ArrayBuffer, font_index: i32): any;
-declare function krom_g2_font_13(blob: ArrayBuffer): any;
+declare function krom_g2_font_init(blob: buffer_t, font_index: i32): any;
+declare function krom_g2_font_13(blob: buffer_t): any;
 declare function krom_g2_font_set_glyphs(glyphs: i32[]): void;
 declare function krom_g2_font_count(font: any): i32;
 declare function krom_g2_font_height(font: any, size: i32): i32;
@@ -300,7 +302,7 @@ declare function krom_g2_restore_render_target(): void;
 declare function krom_g2_set_render_target(render_target: any): void;
 declare function krom_g2_set_color(color: i32): void;
 declare function krom_g2_set_pipeline(pipeline: any): void;
-declare function krom_g2_set_transform(matrix: ArrayBuffer): void;
+declare function krom_g2_set_transform(matrix: buffer_t): void;
 declare function krom_g2_fill_circle(cx: f32, cy: f32, radius: f32, segments: i32): void;
 declare function krom_g2_draw_circle(cx: f32, cy: f32, radius: f32, segments: i32, strength: f32): void;
 declare function krom_g2_draw_cubic_bezier(x: f32[], y: f32[], segments: i32, strength: f32): void;
@@ -313,25 +315,25 @@ declare function krom_save_dialog(filter_list: string, default_path: string): st
 declare function krom_read_directory(path: string, foldersOnly: bool): string;
 declare function krom_file_exists(path: string): bool;
 declare function krom_delete_file(path: string): void;
-declare function krom_inflate(bytes: ArrayBuffer, raw: bool): ArrayBuffer;
-declare function krom_deflate(bytes: ArrayBuffer, raw: bool): ArrayBuffer;
-declare function krom_write_jpg(path: string, bytes: ArrayBuffer, w: i32, h: i32, format: i32, quality: i32): void; // RGBA, R, RGB1, RRR1, GGG1, BBB1, AAA1
-declare function krom_write_png(path: string, bytes: ArrayBuffer, w: i32, h: i32, format: i32): void;
-declare function krom_encode_jpg(bytes: ArrayBuffer, w: i32, h: i32, format: i32, quality: i32): ArrayBuffer;
-declare function krom_encode_png(bytes: ArrayBuffer, w: i32, h: i32, format: i32): ArrayBuffer;
-declare function krom_write_mpeg(): ArrayBuffer;
-declare function krom_ml_inference(model: ArrayBuffer, tensors: ArrayBuffer[], input_shape?: i32[][], output_shape?: i32[], use_gpu?: bool): ArrayBuffer;
+declare function krom_inflate(bytes: buffer_t, raw: bool): buffer_t;
+declare function krom_deflate(bytes: buffer_t, raw: bool): buffer_t;
+declare function krom_write_jpg(path: string, bytes: buffer_t, w: i32, h: i32, format: i32, quality: i32): void; // RGBA, R, RGB1, RRR1, GGG1, BBB1, AAA1
+declare function krom_write_png(path: string, bytes: buffer_t, w: i32, h: i32, format: i32): void;
+declare function krom_encode_jpg(bytes: buffer_t, w: i32, h: i32, format: i32, quality: i32): buffer_t;
+declare function krom_encode_png(bytes: buffer_t, w: i32, h: i32, format: i32): buffer_t;
+declare function krom_write_mpeg(): buffer_t;
+declare function krom_ml_inference(model: buffer_t, tensors: buffer_t[], input_shape?: i32[][], output_shape?: i32[], use_gpu?: bool): buffer_t;
 declare function krom_ml_unload(): void;
 
 declare function krom_raytrace_supported(): bool;
-declare function krom_raytrace_init(shader: ArrayBuffer, vb: any, ib: any, scale: f32): void;
+declare function krom_raytrace_init(shader: buffer_t, vb: any, ib: any, scale: f32): void;
 declare function krom_raytrace_set_textures(tex0: image_t, tex1: image_t, tex2: image_t, texenv: any, tex_sobol: any, tex_scramble: any, tex_rank: any): void;
-declare function krom_raytrace_dispatch_rays(target: any, cb: ArrayBuffer): void;
+declare function krom_raytrace_dispatch_rays(target: any, cb: buffer_t): void;
 
 declare function krom_window_x(): i32;
 declare function krom_window_y(): i32;
 declare function krom_language(): string;
-declare function krom_io_obj_parse(file_bytes: ArrayBuffer, split_code: i32, start_pos: i32, udim: bool): any;
+declare function krom_io_obj_parse(file_bytes: buffer_t, split_code: i32, start_pos: i32, udim: bool): any;
 
 declare function krom_zui_init(ops: any): any;
 declare function krom_zui_get_scale(ui: any): f32;
@@ -377,10 +379,10 @@ declare function krom_zui_float_input(handle: any, label: string, align: i32, pr
 declare function krom_zui_inline_radio(handle: any, texts: string[], align: i32): i32;
 declare function krom_zui_color_wheel(handle: any, alpha: bool, w: f32, h: f32, color_preview: bool, picker: ()=>void): i32;
 declare function krom_zui_text_area(handle: any, align: i32, editable: bool, label: string, word_wrap: bool): string;
-declare function krom_zui_text_area_coloring(packed: ArrayBuffer): void;
+declare function krom_zui_text_area_coloring(packed: buffer_t): void;
 declare function krom_zui_nodes_init(): any;
-declare function krom_zui_node_canvas(nodes: any, packed: ArrayBuffer): ArrayBuffer;
-declare function krom_zui_nodes_rgba_popup(handle: any, val: ArrayBuffer, x: i32, y: i32): void;
+declare function krom_zui_node_canvas(nodes: any, packed: buffer_t): buffer_t;
+declare function krom_zui_nodes_rgba_popup(handle: any, val: buffer_t, x: i32, y: i32): void;
 declare function krom_zui_nodes_scale(): f32;
 declare function krom_zui_nodes_pan_x(): f32;
 declare function krom_zui_nodes_pan_y(): f32;
