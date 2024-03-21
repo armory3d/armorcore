@@ -18,3 +18,4 @@ void *any_map_get(any_map_t *m, void *k);
 
 void map_delete(any_map_t *m, void *k);
 void *map_to_array(any_map_t *m);
+void *map_keys_to_array(any_map_t *m);

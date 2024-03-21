@@ -75,7 +75,8 @@ function char_at(s: string, i: i32): string { return s.charAt(i); }
 function starts_with(s: string, start: string): bool { return s.startsWith(start); }
 function ends_with(s: string, end: string): bool { return s.endsWith(end); }
 function to_lower_case(s: string): string { return s.toLowerCase(); }
-function map_to_array(m: any): any[] { return Array.from(m.values()); }
+function map_to_array(m: map_t<any, any>): any[] { return Array.from(m.values()); }
+function map_keys_to_array(m: map_t<any, any>): any[] { return Array.from(m.keys()); }
 function array_slice(a: any[], begin: i32, end: i32): any[] { return a.slice(begin, end); }
 function buffer_slice(a: buffer_t, begin: i32, end: i32): buffer_t { return a.slice(begin, end); }
 function buffer_size(b: buffer_t): i32 { return b.byteLength; }
@@ -94,6 +95,9 @@ function buffer_view_set_i16(v: buffer_view_t, p: i32, n: i16) { v.setInt16(p, n
 function buffer_view_set_u32(v: buffer_view_t, p: i32, n: u32) { v.setUint32(p, n, true); }
 function buffer_view_set_i32(v: buffer_view_t, p: i32, n: i32) { v.setInt32(p, n, true); }
 function buffer_view_set_f32(v: buffer_view_t, p: i32, n: f32) { v.setFloat32(p, n, true); }
+function parse_int(s: string): i32 { return parseInt(s); }
+function parse_int_hex(s: string): i32 { return parseInt(s, 16); }
+function parse_float(s: string): i32 { return parseFloat(s); }
 function is_integer(a: any): bool { return Number.isInteger(a); } // armpack
 function is_view(a: any): bool { return buffer_t.isView(a); } // armpack
 function is_array(a: any): bool { return Array.isArray(a); } // armpack
@@ -103,6 +107,20 @@ function any_to_string(a: any): string { return String(a); } // armpack
 // globalThis // arm_shader_embed
 function json_parse(s: string): any { return JSON.parse(s); }
 function json_stringify(a: any): string { return JSON.stringify(a); }
+
+function js_eval(js: string, context: string = ""): any {
+    let result: any;
+    try {
+        // (1, eval)(js); // Global scope
+        // globalThis.eval
+        result = eval(js); // Local scope
+    }
+    catch(e: any) {
+        krom_log(context);
+        krom_log(e);
+    }
+    return result;
+}
 
 function array_remove(ar: any[], e: any) {
     array_splice(ar, array_index_of(ar, e), 1);

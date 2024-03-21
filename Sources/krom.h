@@ -233,6 +233,10 @@ void key_up(int code, void *data) {
 	#endif
 }
 
+f32 js_eval(const char *js, const char *context) {
+	return 0.0;
+}
+
 i32_map_t *i32_map_create() {
 	return gc_alloc(sizeof(i32_map_t));
 }
@@ -344,6 +348,10 @@ f32 math_atan2(f32 y, f32 x) { return atan2f(y, x); }
 f32 math_asin(f32 x) { return asinf(x); }
 f32 math_pi() { return 3.14159265358979323846; }
 f32 math_pow(f32 x, f32 y) { return powf(x, y); }
+
+i32 parse_int(const char *s) { return 0; } // strtol
+i32 parse_int_hex(const char *s) { return 0; } // strtol
+f32 parse_float(const char *s) { return 0.0; } // strtof
 
 i32 color_from_floats(f32 r, f32 g, f32 b, f32 a) {
 	return ((int)(a * 255) << 24) | ((int)(r * 255) << 16) | ((int)(g * 255) << 8) | (int)(b * 255);
