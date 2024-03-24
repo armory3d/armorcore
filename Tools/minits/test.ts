@@ -12,14 +12,14 @@ function get_five(): i32 {
 	return 5;
 }
 
-function start() {
+function main() {
 	let p: point_t = {};
 	p.x = 1.5;
 	p.y = 3.0;
 
 	add(p);
 
-	let ar: f32_array_t = [];
+	let ar: f32_array_t = f32_array_create(0);
 	f32_array_push(ar, p.x);
 	f32_array_push(ar, p.y);
 
@@ -38,5 +38,6 @@ function start() {
 	}
 
 	// Print out result: 13.5
-	// krom_log(ar[0]);
+	kinc_log(KINC_LOG_LEVEL_INFO, "%f", ar[0]);
+	exit(1);
 }

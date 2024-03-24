@@ -8,7 +8,7 @@ declare type u32 = number;
 declare type f32 = number;
 declare type f64 = number;
 declare type bool = boolean;
-declare type Null<T> = T | null; ////
+declare let __ID__: string; // file:line - ts preprocessor
 
 class map_t<K, V> extends Map<K, V> {}
 class buffer_t extends ArrayBuffer {}
@@ -25,6 +25,10 @@ function map_create<K, V>(): map_t<K, V> { return new map_t(); }
 function buffer_create(length: i32): buffer_t { return new buffer_t(length); }
 function buffer_view_create(b: buffer_t): buffer_view_t { return new buffer_view_t(b); }
 function f32_array_create(length: i32): f32_array_t { return new f32_array_t(length); }
+function f32_array_create_xy(x: f32, y: f32) { return new f32_array_t([x, y]); }
+function f32_array_create_xyz(x: f32, y: f32, z: f32) { return new f32_array_t([x, y, z]); }
+function f32_array_create_xyzw(x: f32, y: f32, z: f32, w: f32) { return new f32_array_t([x, y, z, w]); }
+function f32_array_create_xyzwv(x: f32, y: f32, z: f32, w: f32, v: f32) { return new f32_array_t([x, y, z, w, v]); }
 function u32_array_create(length: i32): u32_array_t { return new u32_array_t(length); }
 function i32_array_create(length: i32): i32_array_t { return new i32_array_t(length); }
 function u16_array_create(length: i32): u16_array_t { return new u16_array_t(length); }
@@ -102,6 +106,8 @@ function is_integer(a: any): bool { return Number.isInteger(a); } // armpack
 function is_view(a: any): bool { return buffer_t.isView(a); } // armpack
 function is_array(a: any): bool { return Array.isArray(a); } // armpack
 function any_to_string(a: any): string { return String(a); } // armpack
+function i32_to_string(i: i32): string { return i.toString(); }
+function i32_to_string_hex(i: i32): string { return i.toString(16); }
 // Object.keys() // armpack, tween
 // .constructor // armpack
 // globalThis // arm_shader_embed

@@ -266,6 +266,40 @@ f32_array_t *f32_array_create(i32 length) {
 	return a;
 }
 
+f32_array_t *f32_array_create_xy(f32 x, f32 y) {
+	f32_array_t *a = f32_array_create(2);
+	a->buffer[0] = x;
+	a->buffer[1] = y;
+	return a;
+}
+
+f32_array_t *f32_array_create_xyz(f32 x, f32 y, f32 z) {
+	f32_array_t *a = f32_array_create(3);
+	a->buffer[0] = x;
+	a->buffer[1] = y;
+	a->buffer[2] = z;
+	return a;
+}
+
+f32_array_t *f32_array_create_xyzw(f32 x, f32 y, f32 z, f32 w) {
+	f32_array_t *a = f32_array_create(4);
+	a->buffer[0] = x;
+	a->buffer[1] = y;
+	a->buffer[2] = z;
+	a->buffer[3] = w;
+	return a;
+}
+
+f32_array_t *f32_array_create_xyzwv(f32 x, f32 y, f32 z, f32 w, f32 v) {
+	f32_array_t *a = f32_array_create(5);
+	a->buffer[0] = x;
+	a->buffer[1] = y;
+	a->buffer[2] = z;
+	a->buffer[3] = w;
+	a->buffer[4] = v;
+	return a;
+}
+
 u32_array_t *u32_array_create(i32 length) {
 	u32_array_t *a = gc_alloc(sizeof(u32_array_t));
 	if (length > 0) {

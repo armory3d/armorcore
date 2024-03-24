@@ -565,6 +565,42 @@ class theme_t {
 	set ROUND_CORNERS(a: bool) { krom_zui_theme_set(this.theme_, "ROUND_CORNERS", a); }
 }
 
+let zui_theme_keys: string[] = [
+	"WINDOW_BG_COL",
+	"WINDOW_TINT_COL",
+	"ACCENT_COL",
+	"ACCENT_HOVER_COL",
+	"ACCENT_SELECT_COL",
+	"BUTTON_COL",
+	"BUTTON_TEXT_COL",
+	"BUTTON_HOVER_COL",
+	"BUTTON_PRESSED_COL",
+	"TEXT_COL",
+	"LABEL_COL",
+	"SEPARATOR_COL",
+	"HIGHLIGHT_COL",
+	"CONTEXT_COL",
+	"PANEL_BG_COL",
+	"FONT_SIZE",
+	"ELEMENT_W",
+	"ELEMENT_H",
+	"ELEMENT_OFFSET",
+	"ARROW_SIZE",
+	"BUTTON_H",
+	"CHECK_SIZE",
+	"CHECK_SELECT_SIZE",
+	"SCROLL_W",
+	"SCROLL_MINI_W",
+	"TEXT_OFFSET",
+	"TAB_W",
+	"FILL_WINDOW_BG",
+	"FILL_BUTTON_BG",
+	"FILL_ACCENT_BG",
+	"LINK_STYLE",
+	"FULL_TABS",
+	"ROUND_CORNERS",
+];
+
 function zui_theme_create(): theme_t {
 	let raw = new theme_t();
 	raw.theme_ = krom_zui_theme_init();

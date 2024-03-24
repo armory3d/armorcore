@@ -792,7 +792,7 @@ class ArmorCoreExporter {
 	}
 }
 
-function ts_preprocessor(file) {
+function ts_preprocessor(file, file_path) {
 	let contains_define = (define) => {
 		let b = false;
 		for (let s of globalThis.options.defines) {
@@ -845,6 +845,12 @@ function ts_preprocessor(file) {
 			if (comment) {
 				lines[i] = "///" + lines[i];
 			}
+		}
+		if (lines[i].indexOf("__ID__") > -1 && !lines[i].startsWith("declare")) {
+			// #define ID__(x, y) x ":" #y
+			// #define ID_(x, y) ID__(x, y)
+			// #define ID ID_(__FILE__, __LINE__)
+			lines[i] = lines[i].replace("__ID__", "\"" + path.basename(file_path) + ":" + i + "\"");
 		}
 	}
 	return lines.join("\n");
@@ -912,7 +918,7 @@ function writeTSProject(projectdir, projectFiles, options) {
 				continue;
 			}
 			file = fs.readFileSync(file_path) + '';
-			file = ts_preprocessor(file);
+			file = ts_preprocessor(file, file_path);
 			stream.write(file);
 		}
 		stream.end();

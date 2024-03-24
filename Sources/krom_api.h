@@ -1,4 +1,6 @@
 #pragma once
+#ifdef NO_KROM_API
+#else
 
 #include "krom.h"
 #include <kinc/log.h>
@@ -1110,3 +1112,5 @@ char *krom_language() {
 	return NULL;
 }
 // declare function krom_io_obj_parse(file_bytes: buffer_t, split_code: i32, start_pos: i32, udim: bool): any;
+
+#endif
