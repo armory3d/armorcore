@@ -583,10 +583,6 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 		}
 		else if (uniforms_f32_links != null) {
 			f = uniforms_f32_links(obj, current_material(obj), c.link);
-			if (f == null) return;
-		}
-		else {
-			return;
 		}
 
 		g4_set_float(loc, f);
@@ -620,9 +616,6 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 			i = uniforms_i32_links(obj, current_material(obj), c.link);
 		}
 
-		if (i == null) {
-			return;
-		}
 		g4_set_int(loc, i);
 	}
 }
