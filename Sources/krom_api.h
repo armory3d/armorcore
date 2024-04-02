@@ -31,32 +31,32 @@
 #include <kinc/audio1/sound.h>
 #include <kinc/audio2/audio.h>
 #endif
-#ifdef KORE_LZ4X
+#ifdef KINC_LZ4X
 int LZ4_decompress_safe(const char *source, char *dest, int compressed_size, int maxOutputSize);
 #else
 #include <kinc/io/lz4/lz4.h>
 #endif
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
-#ifdef KORE_DIRECT3D11
+#ifdef KINC_DIRECT3D11
 #include <d3d11.h>
 #endif
-#ifdef KORE_DIRECT3D12
+#ifdef KINC_DIRECT3D12
 #include <d3d12.h>
 bool waitAfterNextDraw;
 #endif
-#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
+#if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
 #include <kinc/graphics5/constantbuffer.h>
 #include <kinc/graphics5/commandlist.h>
 #include <kinc/graphics5/raytrace.h>
 #endif
 
-#ifdef KORE_WINDOWS
+#ifdef KINC_WINDOWS
 #include <dwmapi.h>
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
-struct HWND__ *kinc_windows_window_handle(int window_index); // Kore/Windows.h
+struct HWND__ *kinc_windows_window_handle(int window_index); // KINC/Windows.h
 bool show_window = false;
 // Enable visual styles for ui controls
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -68,10 +68,10 @@ bool show_window = false;
 #endif
 #ifdef WITH_NFD
 #include <nfd.h>
-#elif defined(KORE_ANDROID)
+#elif defined(KINC_ANDROID)
 #include "android/android_file_dialog.h"
 #include "android/android_http_request.h"
-#elif defined(KORE_IOS)
+#elif defined(KINC_IOS)
 #include "ios/ios_file_dialog.h"
 #endif
 #ifdef WITH_TINYDIR
@@ -94,13 +94,13 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 #endif
 #ifdef WITH_ONNX
 #include <onnxruntime_c_api.h>
-#ifdef KORE_WINDOWS
+#ifdef KINC_WINDOWS
 #include <dml_provider_factory.h>
-#elif defined(KORE_MACOS)
+#elif defined(KINC_MACOS)
 #include <coreml_provider_factory.h>
 #endif
 #endif
-#if defined(IDLE_SLEEP) && !defined(KORE_WINDOWS)
+#if defined(IDLE_SLEEP) && !defined(KINC_WINDOWS)
 #include <unistd.h>
 #endif
 
@@ -121,22 +121,22 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 void plugin_embed();
 #endif
 
-#ifdef KORE_MACOS
+#ifdef KINC_MACOS
 const char *macgetresourcepath();
 #endif
-#ifdef KORE_IOS
+#ifdef KINC_IOS
 const char *iphonegetresourcepath();
 #endif
 
-#if defined(KORE_IOS) || defined(KORE_ANDROID)
+#if defined(KINC_IOS) || defined(KINC_ANDROID)
 char mobile_title[1024];
 #endif
 
-#if defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
+#if defined(KINC_VULKAN) && defined(KRAFIX_LIBRARY)
 int krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype, int version);
 #endif
 
-#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
+#if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
 extern "C" kinc_g5_command_list_t commandList;
 static kinc_g5_constant_buffer_t constant_buffer;
 static kinc_g4_render_target_t *render_target;
@@ -165,7 +165,7 @@ char temp_string[4096];
 char temp_string_vs[1024 * 1024];
 char temp_string_fs[1024 * 1024];
 char temp_string_vstruct[4][32][32];
-#ifdef KORE_WINDOWS
+#ifdef KINC_WINDOWS
 wchar_t temp_wstring[1024];
 wchar_t temp_wstring1[1024];
 #endif
@@ -190,7 +190,7 @@ void krom_init(string_t *title, i32 width, i32 height, bool vsync, i32 window_mo
 	frame.frequency = frequency;
 
 	win.display_index = -1;
-	#ifdef KORE_WINDOWS
+	#ifdef KINC_WINDOWS
 	win.visible = false; // Prevent white flicker when opening the window
 	#else
 	win.visible = enable_window;
@@ -201,7 +201,7 @@ void krom_init(string_t *title, i32 width, i32 height, bool vsync, i32 window_mo
 	kinc_init(title, win.width, win.height, &win, &frame);
 	kinc_random_init((int)(kinc_time() * 1000));
 
-	#ifdef KORE_WINDOWS
+	#ifdef KINC_WINDOWS
 	// Maximized window has x < -1, prevent window centering done by kinc
 	if (win.x < -1 && win.y < -1) {
 		kinc_window_move(0, win.x, win.y);
@@ -221,7 +221,7 @@ void krom_init(string_t *title, i32 width, i32 height, bool vsync, i32 window_mo
 	kinc_a2_init();
 	#endif
 
-	#ifdef KORE_ANDROID
+	#ifdef KINC_ANDROID
 	android_check_permissions();
 	#endif
 }
@@ -439,7 +439,7 @@ void krom_g4_set_vertex_buffers(vertex_buffer_t **vertex_buffers) {
 }
 
 void krom_g4_draw_indexed_vertices(i32 start, i32 count) {
-	#ifdef KORE_DIRECT3D12
+	#ifdef KINC_DIRECT3D12
 	// TODO: Prevent heapIndex overflow in texture.c.h/kinc_g5_internal_set_textures
 	waitAfterNextDraw = true;
 	#endif
@@ -578,7 +578,7 @@ bool _load_image(kinc_file_reader_t *reader, const char *filename, unsigned char
 			LZ4_decompress_safe((char *)(data + 12), (char *)*output, compressed_size, output_size);
 			*format = KINC_IMAGE_FORMAT_RGBA128;
 
-			#ifdef KORE_IOS // No RGBA128 filtering, convert to RGBA64
+			#ifdef KINC_IOS // No RGBA128 filtering, convert to RGBA64
 			uint32_t *_output32 = (uint32_t *)*output;
 			unsigned char *_output = (unsigned char *)malloc(output_size / 2);
 			uint16_t *_output16 = (uint16_t *)_output;

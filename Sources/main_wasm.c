@@ -25,7 +25,7 @@
 #include <kinc/display.h>
 #define STB_SPRINTF_IMPLEMENTATION
 #include <kinc/libs/stb_sprintf.h>
-#ifdef KORE_LZ4X
+#ifdef KINC_LZ4X
 int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int maxOutputSize);
 #else
 #include <kinc/io/lz4/lz4.h>

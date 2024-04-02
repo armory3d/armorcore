@@ -304,7 +304,7 @@ void zui_pen_move(zui_t *ui, int x, int y, float pressure);
 void zui_key_down(zui_t *ui, int key_code);
 void zui_key_up(zui_t *ui, int key_code);
 void zui_key_press(zui_t *ui, unsigned character);
-#if defined(KORE_ANDROID) || defined(KORE_IOS)
+#if defined(KINC_ANDROID) || defined(KINC_IOS)
 void zui_touch_down(zui_t *ui, int index, int x, int y);
 void zui_touch_up(zui_t *ui, int index, int x, int y);
 void zui_touch_move(zui_t *ui, int index, int x, int y);

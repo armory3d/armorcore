@@ -31,7 +31,7 @@
 #include <kinc/audio2/audio.h>
 #endif
 
-#ifdef KORE_LZ4X
+#ifdef KINC_LZ4X
 extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int maxOutputSize);
 #else
 #include <kinc/io/lz4/lz4.h>
@@ -40,16 +40,16 @@ extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compresse
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
 
-#ifdef KORE_DIRECT3D11
+#ifdef KINC_DIRECT3D11
 #include <d3d11.h>
 #endif
 
-#ifdef KORE_DIRECT3D12
+#ifdef KINC_DIRECT3D12
 #include <d3d12.h>
 extern "C" bool waitAfterNextDraw;
 #endif
 
-#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
+#if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
 #include <kinc/graphics5/constantbuffer.h>
 #include <kinc/graphics5/commandlist.h>
 #include <kinc/graphics5/raytrace.h>
@@ -59,13 +59,13 @@ extern "C" bool waitAfterNextDraw;
 #include <v8.h>
 #include <v8-fast-api-calls.h>
 
-#ifdef KORE_WINDOWS
+#ifdef KINC_WINDOWS
 #include <Windows.h> // AttachConsole
 #include <dwmapi.h>
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
-extern "C" struct HWND__ *kinc_windows_window_handle(int window_index); // Kore/Windows.h
+extern "C" struct HWND__ *kinc_windows_window_handle(int window_index); // KINC/Windows.h
 bool show_window = false;
 // Enable visual styles for ui controls
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -79,10 +79,10 @@ bool show_window = false;
 
 #ifdef WITH_NFD
 #include <nfd.h>
-#elif defined(KORE_ANDROID)
+#elif defined(KINC_ANDROID)
 #include "android/android_file_dialog.h"
 #include "android/android_http_request.h"
-#elif defined(KORE_IOS)
+#elif defined(KINC_IOS)
 #include "ios/ios_file_dialog.h"
 #endif
 
@@ -110,14 +110,14 @@ extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len,
 
 #ifdef WITH_ONNX
 #include <onnxruntime_c_api.h>
-#ifdef KORE_WINDOWS
+#ifdef KINC_WINDOWS
 #include <dml_provider_factory.h>
-#elif defined(KORE_MACOS)
+#elif defined(KINC_MACOS)
 #include <coreml_provider_factory.h>
 #endif
 #endif
 
-#if defined(IDLE_SLEEP) && !defined(KORE_WINDOWS)
+#if defined(IDLE_SLEEP) && !defined(KINC_WINDOWS)
 #include <unistd.h>
 #endif
 
@@ -147,22 +147,22 @@ using namespace v8;
 void plugin_embed(v8::Isolate *isolate, Local<ObjectTemplate> global);
 #endif
 
-#ifdef KORE_MACOS
+#ifdef KINC_MACOS
 extern "C" const char *macgetresourcepath();
 #endif
-#ifdef KORE_IOS
+#ifdef KINC_IOS
 extern "C" const char *iphonegetresourcepath();
 #endif
 
-#if defined(KORE_IOS) || defined(KORE_ANDROID)
+#if defined(KINC_IOS) || defined(KINC_ANDROID)
 char mobile_title[1024];
 #endif
 
-#if defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
+#if defined(KINC_VULKAN) && defined(KRAFIX_LIBRARY)
 extern "C" int krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype, int version);
 #endif
 
-#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
+#if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
 extern "C" kinc_g5_command_list_t commandList;
 static kinc_g5_constant_buffer_t constant_buffer;
 static kinc_g4_render_target_t *render_target;
@@ -308,7 +308,7 @@ namespace {
 	char temp_string_fs[1024 * 1024];
 	char temp_string_vstruct[4][32][32];
 	std::string assetsdir;
-	#ifdef KORE_WINDOWS
+	#ifdef KINC_WINDOWS
 	wchar_t temp_wstring[1024];
 	wchar_t temp_wstring1[1024];
 	#endif
@@ -328,7 +328,7 @@ namespace {
 	void write_stack_trace(const char *stack_trace) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "Trace: %s", stack_trace);
 
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		FILE *file = fopen("stderr.txt", stderr_created ? "a" : "w");
 		if (file == nullptr) { // Running from protected path
 			strcpy(temp_string, kinc_internal_save_path());
@@ -372,7 +372,7 @@ namespace {
 		frame.frequency = TO_I32(args[8]);
 
 		win.display_index = -1;
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		win.visible = false; // Prevent white flicker when opening the window
 		#else
 		win.visible = enable_window;
@@ -383,7 +383,7 @@ namespace {
 		kinc_init(*title, win.width, win.height, &win, &frame);
 		kinc_random_init((int)(kinc_time() * 1000));
 
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		// Maximized window has x < -1, prevent window centering done by kinc
 		if (win.x < -1 && win.y < -1) {
 			kinc_window_move(0, win.x, win.y);
@@ -403,7 +403,7 @@ namespace {
 		kinc_a2_init();
 		#endif
 
-		#ifdef KORE_ANDROID
+		#ifdef KINC_ANDROID
 		android_check_permissions();
 		#endif
 	}
@@ -734,7 +734,7 @@ namespace {
 	}
 
 	void krom_g4_draw_indexed_vertices_fast(Local<Object> receiver, int start, int count) {
-		#ifdef KORE_DIRECT3D12
+		#ifdef KINC_DIRECT3D12
 		// TODO: Prevent heapIndex overflow in texture.c.h/kinc_g5_internal_set_textures
 		waitAfterNextDraw = true;
 		#endif
@@ -884,14 +884,14 @@ namespace {
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
 
-		#elif defined(KORE_METAL)
+		#elif defined(KINC_METAL)
 
 		strcpy(temp_string_vs, "// my_main\n");
 		strcat(temp_string_vs, *utf8_value);
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, temp_string_vs, strlen(temp_string_vs), KINC_G4_SHADER_TYPE_VERTEX);
 
-		#elif defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
+		#elif defined(KINC_VULKAN) && defined(KRAFIX_LIBRARY)
 
 		char *output = new char[1024 * 1024];
 		int length;
@@ -1003,14 +1003,14 @@ namespace {
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
 
-		#elif defined(KORE_METAL)
+		#elif defined(KINC_METAL)
 
 		strcpy(temp_string_fs, "// my_main\n");
 		strcat(temp_string_fs, *utf8_value);
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, temp_string_fs, strlen(temp_string_fs), KINC_G4_SHADER_TYPE_FRAGMENT);
 
-		#elif defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
+		#elif defined(KINC_VULKAN) && defined(KRAFIX_LIBRARY)
 
 		char *output = new char[1024 * 1024];
 		int length;
@@ -1164,7 +1164,7 @@ namespace {
 				LZ4_decompress_safe((char *)(data + 12), (char *)output, compressedSize, outputSize);
 				format = KINC_IMAGE_FORMAT_RGBA128;
 
-				#ifdef KORE_IOS // No RGBA128 filtering, convert to RGBA64
+				#ifdef KINC_IOS // No RGBA128 filtering, convert to RGBA64
 				uint32_t *_output32 = (uint32_t *)output;
 				unsigned char *_output = (unsigned char *)malloc(outputSize / 2);
 				uint16_t *_output16 = (uint16_t *)_output;
@@ -1480,7 +1480,7 @@ namespace {
 		SCOPE();
 		String::Utf8Value title(isolate, args[0]);
 		kinc_window_set_title(0, *title);
-		#if defined(KORE_IOS) || defined(KORE_ANDROID)
+		#if defined(KINC_IOS) || defined(KINC_ANDROID)
 		strcpy(mobile_title, *title);
 		#endif
 	}
@@ -1525,7 +1525,7 @@ namespace {
 		SCOPE();
 		kinc_stop();
 
-		#ifdef KORE_LINUX
+		#ifdef KINC_LINUX
 		exit(1);
 		#endif
 	}
@@ -1568,7 +1568,7 @@ namespace {
 	void krom_display_is_primary(ARGS) {
 		SCOPE();
 		int index = TO_I32(args[0]);
-		#ifdef KORE_LINUX // TODO: Primary display detection broken in Kinc
+		#ifdef KINC_LINUX // TODO: Primary display detection broken in Kinc
 		RETURN_I32(true);
 		#else
 		RETURN_I32(index == kinc_primary_display());
@@ -1795,13 +1795,13 @@ namespace {
 		kinc_g4_render_target_get_pixels(rt, b);
 
 		// Release staging texture immediately to save memory
-		#ifdef KORE_DIRECT3D11
+		#ifdef KINC_DIRECT3D11
 		rt->impl.textureStaging->Release();
 		rt->impl.textureStaging = NULL;
-		#elif defined(KORE_DIRECT3D12)
+		#elif defined(KINC_DIRECT3D12)
 		rt->impl._renderTarget.impl.renderTargetReadback->Release();
 		rt->impl._renderTarget.impl.renderTargetReadback = NULL;
-		#elif defined(KORE_METAL)
+		#elif defined(KINC_METAL)
 		// id<MTLTexture> texReadback = (__bridge_transfer id<MTLTexture>)rt->impl._renderTarget.impl._texReadback;
 		// texReadback = nil;
 		// rt->impl._renderTarget.impl._texReadback = NULL;
@@ -1958,7 +1958,7 @@ namespace {
 		int byteLength = hasLengthArg ? TO_I32(args[2]) : (int)content->ByteLength();
 		if (byteLength > (int)content->ByteLength()) byteLength = (int)content->ByteLength();
 
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		MultiByteToWideChar(CP_UTF8, 0, *utf8_path, -1, temp_wstring, 1024);
 		FILE *file = _wfopen(temp_wstring, L"wb");
 		#else
@@ -1970,13 +1970,13 @@ namespace {
 	}
 
 	int sys_command(const char *cmd) {
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		int wlen = MultiByteToWideChar(CP_UTF8, 0, cmd, -1, NULL, 0);
 		wchar_t *wstr = new wchar_t[wlen];
 		MultiByteToWideChar(CP_UTF8, 0, cmd, -1, wstr, wlen);
 		int result = _wsystem(wstr);
 		delete[] wstr;
-		#elif defined(KORE_IOS)
+		#elif defined(KINC_IOS)
 		int result = 0;
 		#else
 		int result = system(cmd);
@@ -2009,18 +2009,18 @@ namespace {
 
 	void krom_get_files_location(ARGS) {
 		SCOPE();
-		#ifdef KORE_MACOS
+		#ifdef KINC_MACOS
 		char path[1024];
 		strcpy(path, macgetresourcepath());
 		strcat(path, "/");
-		strcat(path, KORE_DEBUGDIR);
+		strcat(path, KINC_DEBUGDIR);
 		strcat(path, "/");
 		RETURN_STR(path);
-		#elif defined(KORE_IOS)
+		#elif defined(KINC_IOS)
 		char path[1024];
 		strcpy(path, iphonegetresourcepath());
 		strcat(path, "/");
-		strcat(path, KORE_DEBUGDIR);
+		strcat(path, KINC_DEBUGDIR);
 		strcat(path, "/");
 		RETURN_STR(path);
 		#else
@@ -2065,7 +2065,7 @@ namespace {
 			url_path[j] = curl[i + 8 + j];
 		}
 		url_path[j] = 0;
-		#ifdef KORE_ANDROID // TODO: move to Kinc
+		#ifdef KINC_ANDROID // TODO: move to Kinc
 		android_http_request(curl, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, cbd);
 		#else
 		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, cbd);
@@ -2101,7 +2101,7 @@ namespace {
 	}
 
 	void krom_g2_draw_scaled_sub_image(ARGS) {
-		#ifdef KORE_DIRECT3D12
+		#ifdef KINC_DIRECT3D12
 		waitAfterNextDraw = true;
 		#endif
 		SCOPE();
@@ -2325,7 +2325,7 @@ namespace {
 	#endif
 
 	bool window_close_callback(void *data) {
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		LOCKER();
 		bool save = false;
 
@@ -2363,7 +2363,7 @@ namespace {
 		SCOPE();
 		int id = TO_I32(args[0]);
 		kinc_mouse_set_cursor(id);
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		// Set hand icon for drag even when mouse button is pressed
 		if (id == 1) SetCursor(LoadCursor(NULL, IDC_HAND));
 		#endif
@@ -2427,7 +2427,7 @@ namespace {
 			kinc_log(KINC_LOG_LEVEL_INFO, "Error: %s\n", NFD_GetError());
 		}
 	}
-	#elif defined(KORE_ANDROID)
+	#elif defined(KINC_ANDROID)
 	void krom_open_dialog(ARGS) {
 		SCOPE();
 		AndroidFileDialogOpen();
@@ -2443,7 +2443,7 @@ namespace {
 		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)str).ToLocalChecked());
 		delete[] str;
 	}
-	#elif defined(KORE_IOS)
+	#elif defined(KINC_IOS)
 	void krom_open_dialog(ARGS) {
 		SCOPE();
 		// Once finished drop_files callback is called
@@ -2470,14 +2470,14 @@ namespace {
 		bool foldersOnly = TO_I32(args[1]);
 
 		tinydir_dir dir;
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		MultiByteToWideChar(CP_UTF8, 0, *path, -1, temp_wstring, 1023);
 		tinydir_open_sorted(&dir, temp_wstring);
 		#else
 		tinydir_open_sorted(&dir, *path);
 		#endif
 
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		std::wstring files;
 		#else
 		std::string files;
@@ -2488,7 +2488,7 @@ namespace {
 			tinydir_readfile_n(&dir, &file, i);
 
 			if (!file.is_dir || !foldersOnly) {
-				#ifdef KORE_WINDOWS
+				#ifdef KINC_WINDOWS
 				if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesW(file.path)) continue; // Skip hidden files
 				if (wcscmp(file.name, L".") == 0 || wcscmp(file.name, L"..") == 0) continue;
 				files += file.name;
@@ -2503,7 +2503,7 @@ namespace {
 		}
 
 		tinydir_close(&dir);
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)files.c_str()).ToLocalChecked());
 		#else
 		RETURN_STR(files.c_str());
@@ -2526,9 +2526,9 @@ namespace {
 	void krom_delete_file(ARGS) {
 		SCOPE();
 		String::Utf8Value utf8_value(isolate, args[0]);
-		#ifdef KORE_IOS
+		#ifdef KINC_IOS
 		IOSDeleteFile(*utf8_value);
-		#elif defined(KORE_WINDOWS)
+		#elif defined(KINC_WINDOWS)
 		char path[1024];
 		strcpy(path, "del /f \"");
 		strcat(path, *utf8_value);
@@ -2633,7 +2633,7 @@ namespace {
 			comp = 3;
 			pixels = (unsigned char *)malloc(w * h * comp);
 			for (int i = 0; i < w * h; ++i) {
-				#if defined(KORE_METAL) || defined(KORE_VULKAN)
+				#if defined(KINC_METAL) || defined(KINC_VULKAN)
 				pixels[i * 3    ] = rgba[i * 4 + 2];
 				pixels[i * 3 + 1] = rgba[i * 4 + 1];
 				pixels[i * 3 + 2] = rgba[i * 4    ];
@@ -2648,7 +2648,7 @@ namespace {
 			comp = 1;
 			pixels = (unsigned char *)malloc(w * h * comp);
 			int off = format - 3;
-			#if defined(KORE_METAL) || defined(KORE_VULKAN)
+			#if defined(KINC_METAL) || defined(KINC_VULKAN)
 			off = 2 - off;
 			#endif
 			for (int i = 0; i < w * h; ++i) pixels[i] = rgba[i * 4 + off];
@@ -2748,13 +2748,13 @@ namespace {
 			ort->SetInterOpNumThreads(ort_session_options, 8);
 
 			if (use_gpu) {
-				#ifdef KORE_WINDOWS
+				#ifdef KINC_WINDOWS
 				ort->SetSessionExecutionMode(ort_session_options, ORT_SEQUENTIAL);
 				ort->DisableMemPattern(ort_session_options);
 				onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
-				#elif defined(KORE_LINUX)
+				#elif defined(KINC_LINUX)
 				// onnx_status = OrtSessionOptionsAppendExecutionProvider_CUDA(ort_session_options, 0);
-				#elif defined(KORE_MACOS)
+				#elif defined(KINC_MACOS)
 				onnx_status = OrtSessionOptionsAppendExecutionProvider_CoreML(ort_session_options, 0);
 				#endif
 				if (onnx_status != NULL) {
@@ -2876,10 +2876,10 @@ namespace {
 	}
 	#endif
 
-	#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
+	#if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
 	void krom_raytrace_supported(ARGS) {
 		SCOPE();
-		#ifdef KORE_METAL
+		#ifdef KINC_METAL
 		bool supported = kinc_raytrace_supported();
 		#else
 		bool supported = true;
@@ -2919,7 +2919,7 @@ namespace {
 		Local<Value> texpaint0_rt = OBJ_GET(texpaint0_image, "render_target_");
 
 		if (texpaint0_tex->IsObject()) {
-			#ifdef KORE_DIRECT3D12
+			#ifdef KINC_DIRECT3D12
 			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(texpaint0_tex));
 			if (!texture->impl._uploaded) {
 				kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
@@ -2938,7 +2938,7 @@ namespace {
 		Local<Value> texpaint1_rt = OBJ_GET(texpaint1_image, "render_target_");
 
 		if (texpaint1_tex->IsObject()) {
-			#ifdef KORE_DIRECT3D12
+			#ifdef KINC_DIRECT3D12
 			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(texpaint1_tex));
 			if (!texture->impl._uploaded) {
 				kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
@@ -2957,7 +2957,7 @@ namespace {
 		Local<Value> texpaint2_rt = OBJ_GET(texpaint2_image, "render_target_");
 
 		if (texpaint2_tex->IsObject()) {
-			#ifdef KORE_DIRECT3D12
+			#ifdef KINC_DIRECT3D12
 			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(texpaint2_tex));
 			if (!texture->impl._uploaded) {
 				kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
@@ -4124,7 +4124,7 @@ namespace {
 		V8::InitializePlatform(plat.get());
 
 		std::string flags = "";
-		#ifdef KORE_IOS
+		#ifdef KINC_IOS
 		flags += "--jitless ";
 		#endif
 		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
@@ -4307,7 +4307,7 @@ namespace {
 		BIND_FUNCTION(global, "krom_set_save_and_quit_callback", krom_set_save_and_quit_callback);
 		BIND_FUNCTION(global, "krom_set_mouse_cursor", krom_set_mouse_cursor);
 		BIND_FUNCTION_FAST(global, "krom_delay_idle_sleep", krom_delay_idle_sleep);
-		#if defined(WITH_NFD) || defined(KORE_IOS) || defined(KORE_ANDROID)
+		#if defined(WITH_NFD) || defined(KINC_IOS) || defined(KINC_ANDROID)
 		BIND_FUNCTION(global, "krom_open_dialog", krom_open_dialog);
 		BIND_FUNCTION(global, "krom_save_dialog", krom_save_dialog);
 		#endif
@@ -4334,7 +4334,7 @@ namespace {
 		BIND_FUNCTION(global, "krom_ml_unload", krom_ml_unload);
 		#endif
 
-		#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
+		#if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
 		BIND_FUNCTION(global, "krom_raytrace_supported", krom_raytrace_supported);
 		BIND_FUNCTION(global, "krom_raytrace_init", krom_raytrace_init);
 		BIND_FUNCTION(global, "krom_raytrace_set_textures", krom_raytrace_set_textures);
@@ -4462,7 +4462,7 @@ namespace {
 	}
 
 	void update(void *data) {
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		if (show_window && enable_window) {
 			show_window = false;
 			kinc_window_show(0);
@@ -4480,13 +4480,13 @@ namespace {
 			last_window_height = kinc_window_height(0);
 			paused_frames = 0;
 		}
-		#if defined(KORE_IOS) || defined(KORE_ANDROID)
+		#if defined(KINC_IOS) || defined(KINC_ANDROID)
 		int start_sleep = 1200;
 		#else
 		int start_sleep = 120;
 		#endif
 		if (++paused_frames > start_sleep && !input_down) {
-			#ifdef KORE_WINDOWS
+			#ifdef KINC_WINDOWS
 			Sleep(1);
 			#else
 			usleep(1000);
@@ -4507,7 +4507,7 @@ namespace {
 
 	void drop_files(wchar_t *file_path, void *data) {
 		// Update mouse position
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		POINT p;
 		GetCursorPos(&p);
 		ScreenToClient(kinc_windows_window_handle(0), &p);
@@ -4705,7 +4705,7 @@ namespace {
 		CALL_FUNCI(touch_move_func, 3, argv);
 
 		#ifdef WITH_ZUI
-		#if defined(KORE_ANDROID) || defined(KORE_IOS)
+		#if defined(KINC_ANDROID) || defined(KINC_IOS)
 		for (int i = 0; i < zui_instances_count; ++i) zui_touch_move(zui_instances[i], index, x, y);
 		#endif
 		#endif
@@ -4721,7 +4721,7 @@ namespace {
 		CALL_FUNCI(touch_down_func, 3, argv);
 
 		#ifdef WITH_ZUI
-		#if defined(KORE_ANDROID) || defined(KORE_IOS)
+		#if defined(KINC_ANDROID) || defined(KINC_IOS)
 		for (int i = 0; i < zui_instances_count; ++i) zui_touch_down(zui_instances[i], index, x, y);
 		#endif
 		#endif
@@ -4738,7 +4738,7 @@ namespace {
 		CALL_FUNCI(touch_up_func, 3, argv);
 
 		#ifdef WITH_ZUI
-		#if defined(KORE_ANDROID) || defined(KORE_IOS)
+		#if defined(KINC_ANDROID) || defined(KINC_IOS)
 		for (int i = 0; i < zui_instances_count; ++i) zui_touch_up(zui_instances[i], index, x, y);
 		#endif
 		#endif
@@ -4817,22 +4817,22 @@ namespace {
 int kickstart(int argc, char **argv) {
 	_argc = argc;
 	_argv = argv;
-#ifdef KORE_ANDROID
+#ifdef KINC_ANDROID
 	std::string bindir("/");
-#elif defined(KORE_IOS)
+#elif defined(KINC_IOS)
 	std::string bindir("");
 #else
 	std::string bindir(argv[0]);
 #endif
 
-#ifdef KORE_WINDOWS // Handle non-ascii path
+#ifdef KINC_WINDOWS // Handle non-ascii path
 	HMODULE hModule = GetModuleHandleW(NULL);
 	GetModuleFileNameW(hModule, temp_wstring, 1024);
 	WideCharToMultiByte(CP_UTF8, 0, temp_wstring, -1, temp_string, 4096, nullptr, nullptr);
 	bindir = temp_string;
 #endif
 
-#ifdef KORE_WINDOWS
+#ifdef KINC_WINDOWS
 	bindir = bindir.substr(0, bindir.find_last_of("\\"));
 #else
 	bindir = bindir.substr(0, bindir.find_last_of("/"));
@@ -4856,7 +4856,7 @@ int kickstart(int argc, char **argv) {
 			snapshot = true;
 		}
 		else if (read_console_pid) {
-			#ifdef KORE_WINDOWS
+			#ifdef KINC_WINDOWS
 			AttachConsole(atoi(argv[i]));
 			#endif
 			read_console_pid = false;
@@ -4866,11 +4866,11 @@ int kickstart(int argc, char **argv) {
 		}
 	}
 
-#if !defined(KORE_MACOS) && !defined(KORE_IOS)
+#if !defined(KINC_MACOS) && !defined(KINC_IOS)
 	kinc_internal_set_files_location(&assetsdir[0u]);
 #endif
 
-#ifdef KORE_MACOS
+#ifdef KINC_MACOS
 	// Handle loading assets located outside of '.app/Contents/Resources/Deployment' folder
 	// when assets and shaders dir is passed as an argument
 	if (argc > 2) {

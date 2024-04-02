@@ -59,22 +59,22 @@ void gc_free(void *ptr) {
 int kickstart(int argc, char **argv) {
 	_argc = argc;
 	_argv = argv;
-#ifdef KORE_ANDROID
+#ifdef KINC_ANDROID
 	char *bindir = "/";
-#elif defined(KORE_IOS)
+#elif defined(KINC_IOS)
 	char *bindir = "";
 #else
 	char *bindir = argv[0];
 #endif
 
-#ifdef KORE_WINDOWS // Handle non-ascii path
+#ifdef KINC_WINDOWS // Handle non-ascii path
 	HMODULE hmodule = GetModuleHandleW(NULL);
 	GetModuleFileNameW(hmodule, temp_wstring, 1024);
 	WideCharToMultiByte(CP_UTF8, 0, temp_wstring, -1, temp_string, 4096, nullptr, nullptr);
 	bindir = temp_string;
 #endif
 
-#ifdef KORE_WINDOWS
+#ifdef KINC_WINDOWS
 	// bindir = bindir.substr(0, bindir.find_last_of("\\"));
 #else
 	// bindir = bindir.substr(0, bindir.find_last_of("/"));
@@ -95,11 +95,11 @@ int kickstart(int argc, char **argv) {
 		}
 	}
 
-#if !defined(KORE_MACOS) && !defined(KORE_IOS)
+#if !defined(KINC_MACOS) && !defined(KINC_IOS)
 	// kinc_internal_set_files_location(&assetsdir[0u]);
 #endif
 
-#ifdef KORE_MACOS
+#ifdef KINC_MACOS
 	// Handle loading assets located outside of '.app/Contents/Resources/Deployment' folder
 	// when assets and shaders dir is passed as an argument
 	if (argc > 2) {
@@ -141,7 +141,7 @@ int kickstart(int argc, char **argv) {
 }
 
 void update(void *data) {
-	#ifdef KORE_WINDOWS
+	#ifdef KINC_WINDOWS
 	if (show_window && enable_window) {
 		show_window = false;
 		kinc_window_show(0);
@@ -159,13 +159,13 @@ void update(void *data) {
 		last_window_height = kinc_window_height(0);
 		paused_frames = 0;
 	}
-	#if defined(KORE_IOS) || defined(KORE_ANDROID)
+	#if defined(KINC_IOS) || defined(KINC_ANDROID)
 	int start_sleep = 1200;
 	#else
 	int start_sleep = 120;
 	#endif
 	if (++paused_frames > start_sleep && !input_down) {
-		#ifdef KORE_WINDOWS
+		#ifdef KINC_WINDOWS
 		Sleep(1);
 		#else
 		usleep(1000);
@@ -187,7 +187,7 @@ void update(void *data) {
 
 void drop_files(wchar_t *file_path, void *data) {
 	// Update mouse position
-	#ifdef KORE_WINDOWS
+	#ifdef KINC_WINDOWS
 	POINT p;
 	GetCursorPos(&p);
 	ScreenToClient(kinc_windows_window_handle(0), &p);

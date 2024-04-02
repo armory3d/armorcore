@@ -676,7 +676,7 @@ void zui_draw_combo(bool begin /*= true*/) {
 		zui_lower_case(search, search);
 		if (current->is_released) zui_combo_first = true; // Keep combo open
 		if (zui_combo_first) {
-			#if !defined(KORE_ANDROID) && !defined(KORE_IOS)
+			#if !defined(KINC_ANDROID) && !defined(KINC_IOS)
 			zui_start_text_edit(&zui_combo_search_handle, ZUI_ALIGN_LEFT); // Focus search bar
 			#endif
 		}
@@ -1984,7 +1984,7 @@ float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool fi
 	}
 	else handle->changed = false;
 
-	#if !defined(KORE_ANDROID) && !defined(KORE_IOS)
+	#if !defined(KINC_ANDROID) && !defined(KINC_IOS)
 	if (handle == current->scroll_handle && current->input_dx != 0) { // Scroll
 	#else
 	if (handle == current->scroll_handle) { // Scroll
@@ -2101,7 +2101,7 @@ void zui_mouse_down(zui_t *ui, int button, int x, int y) {
 	if (button == 0) { ui->input_started = ui->input_down = true; }
 	else { ui->input_started_r = ui->input_down_r = true; }
 	ui->input_started_time = kinc_time();
-	#if defined(KORE_ANDROID) || defined(KORE_IOS)
+	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	zui_set_input_position(ui, x, y);
 	#endif
 	ui->input_started_x = x;
@@ -2109,7 +2109,7 @@ void zui_mouse_down(zui_t *ui, int button, int x, int y) {
 }
 
 void zui_mouse_move(zui_t *ui, int x, int y, int movement_x, int movement_y) {
-	#if !defined(KORE_ANDROID) && !defined(KORE_IOS)
+	#if !defined(KINC_ANDROID) && !defined(KINC_IOS)
 	zui_set_input_position(ui, x, y);
 	#endif
 }
@@ -2138,7 +2138,7 @@ void zui_mouse_up(zui_t *ui, int button, int x, int y) {
 
 	if (button == 0) ui->input_down = false;
 	else ui->input_down_r = false;
-	#if defined(KORE_ANDROID) || defined(KORE_IOS)
+	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	zui_set_input_position(ui, x, y);
 	#endif
 	zui_deselect_text(ui);
@@ -2149,7 +2149,7 @@ void zui_mouse_wheel(zui_t *ui, int delta) {
 }
 
 void zui_pen_down(zui_t *ui, int x, int y, float pressure) {
-	#if defined(KORE_ANDROID) || defined(KORE_IOS)
+	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	return;
 	#endif
 
@@ -2157,7 +2157,7 @@ void zui_pen_down(zui_t *ui, int x, int y, float pressure) {
 }
 
 void zui_pen_up(zui_t *ui, int x, int y, float pressure) {
-	#if defined(KORE_ANDROID) || defined(KORE_IOS)
+	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	return;
 	#endif
 
@@ -2167,7 +2167,7 @@ void zui_pen_up(zui_t *ui, int x, int y, float pressure) {
 }
 
 void zui_pen_move(zui_t *ui, int x, int y, float pressure) {
-	#if defined(KORE_IOS)
+	#if defined(KINC_IOS)
 	// Listen to pen hover if no other input is active
 	if (pressure == 0.0) {
 		if (!ui->input_down && !ui->input_down_r) {
@@ -2177,7 +2177,7 @@ void zui_pen_move(zui_t *ui, int x, int y, float pressure) {
 	}
 	#endif
 
-	#if defined(KORE_ANDROID) || defined(KORE_IOS)
+	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	return;
 	#endif
 
@@ -2192,7 +2192,7 @@ void zui_key_down(zui_t *ui, int key_code) {
 	switch (key_code) {
 		case KINC_KEY_SHIFT: ui->is_shift_down = true; break;
 		case KINC_KEY_CONTROL: ui->is_ctrl_down = true; break;
-		#ifdef KORE_DARWIN
+		#ifdef KINC_DARWIN
 		case KINC_KEY_META: ui->is_ctrl_down = true; break;
 		#endif
 		case KINC_KEY_ALT: ui->is_alt_down = true; break;
@@ -2214,7 +2214,7 @@ void zui_key_up(zui_t *ui, int key_code) {
 	switch (key_code) {
 		case KINC_KEY_SHIFT: ui->is_shift_down = false; break;
 		case KINC_KEY_CONTROL: ui->is_ctrl_down = false; break;
-		#ifdef KORE_DARWIN
+		#ifdef KINC_DARWIN
 		case KINC_KEY_META: ui->is_ctrl_down = false; break;
 		#endif
 		case KINC_KEY_ALT: ui->is_alt_down = false; break;
@@ -2235,7 +2235,7 @@ void zui_key_press(zui_t *ui, unsigned key_char) {
 	ui->is_key_pressed = true;
 }
 
-#if defined(KORE_ANDROID) || defined(KORE_IOS)
+#if defined(KINC_ANDROID) || defined(KINC_IOS)
 static float zui_pinch_distance = 0.0;
 static float zui_pinch_total = 0.0;
 static bool zui_pinch_started = false;
@@ -2336,7 +2336,7 @@ void zui_theme_default(zui_theme_t *t) {
 	t->FILL_ACCENT_BG = false;
 	t->LINK_STYLE = ZUI_LINK_STYLE_LINE;
 	t->FULL_TABS = false;
-	#if defined(KORE_ANDROID) || defined(KORE_IOS)
+	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	t->ROUND_CORNERS = true;
 	#else
 	t->ROUND_CORNERS = false;
