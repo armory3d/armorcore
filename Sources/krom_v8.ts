@@ -25,14 +25,19 @@ function map_create<K, V>(): map_t<K, V> { return new map_t(); }
 function buffer_create(length: i32): buffer_t { return new buffer_t(length); }
 function buffer_view_create(b: buffer_t): buffer_view_t { return new buffer_view_t(b); }
 function f32_array_create(length: i32): f32_array_t { return new f32_array_t(length); }
+function f32_array_create_from_buffer(b: buffer_t): f32_array_t { return new f32_array_t(b); }
+function f32_array_create_from_array(a: f32[]): f32_array_t { return new f32_array_t(a); }
 function f32_array_create_xy(x: f32, y: f32) { return new f32_array_t([x, y]); }
 function f32_array_create_xyz(x: f32, y: f32, z: f32) { return new f32_array_t([x, y, z]); }
 function f32_array_create_xyzw(x: f32, y: f32, z: f32, w: f32) { return new f32_array_t([x, y, z, w]); }
 function f32_array_create_xyzwv(x: f32, y: f32, z: f32, w: f32, v: f32) { return new f32_array_t([x, y, z, w, v]); }
 function u32_array_create(length: i32): u32_array_t { return new u32_array_t(length); }
+function u32_array_create_from_array(a: u32[]): u32_array_t { return new u32_array_t(a); }
 function i32_array_create(length: i32): i32_array_t { return new i32_array_t(length); }
+function i32_array_create_from_array(a: i32[]): i32_array_t { return new i32_array_t(a); }
 function u16_array_create(length: i32): u16_array_t { return new u16_array_t(length); }
 function i16_array_create(length: i32): i16_array_t { return new i16_array_t(length); }
+function i16_array_create_from_array(a: i16[]) { return new i16_array_t(a); }
 function u8_array_create(length: i32): u8_array_t { return new u8_array_t(length); }
 function u8_array_create_from_buffer(b: buffer_t): u8_array_t { return new u8_array_t(b); }
 function i8_array_create(length: i32): i8_array_t { return new i8_array_t(length); }
@@ -113,6 +118,7 @@ function i32_to_string_hex(i: i32): string { return i.toString(16); }
 // globalThis // arm_shader_embed
 function json_parse(s: string): any { return JSON.parse(s); }
 function json_stringify(a: any): string { return JSON.stringify(a); }
+function uri_decode(s: string): string { return decodeURIComponent(s); }
 
 function js_eval(js: string, context: string = ""): any {
     let result: any;
@@ -297,6 +303,7 @@ declare function krom_g4_disable_scissor(): void;
 declare function krom_g4_render_targets_inverted_y(): bool;
 declare function krom_g4_begin(render_target: image_t, additional: image_t[]): void;
 declare function krom_g4_end(): void;
+declare function krom_g4_swap_buffers(): void;
 declare function krom_file_save_bytes(path: string, bytes: buffer_t, length?: i32): void;
 declare function krom_sys_command(cmd: string, args?: string[]): i32;
 declare function krom_save_path(): string;

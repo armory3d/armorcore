@@ -949,6 +949,12 @@ void krom_g4_end() {
 
 }
 
+void krom_g4_swap_buffers() {
+	kinc_g4_end(0);
+	kinc_g4_swap_buffers();
+	kinc_g4_begin(0);
+}
+
 void krom_file_save_bytes(string_t *path, buffer_t *bytes, i32 length) {
 
 }

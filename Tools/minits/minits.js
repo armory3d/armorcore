@@ -174,6 +174,7 @@ function parse() {
 //  ╚══╝╚══╝     ╚═╝  ╚═╝    ╚═╝       ╚═╝       ╚══════╝         ╚═════╝
 
 let stream;
+let string = "";
 let tabs = 0;
 let new_line = false;
 let basic_types = ["i8", "u8", "i16", "u16", "i32", "u32", "f32", "bool"];
@@ -196,7 +197,7 @@ function handle_tabs(token) {
 	// New line, add tabs
 	if (new_line) {
 		for (let i = 0; i < tabs; ++i) {
-			stream.write("\t");
+			write("\t");
 		}
 	}
 }
@@ -205,7 +206,7 @@ function handle_new_line(token) {
 	// Insert new line
 	new_line = token == ";" || token == "{" || token == "}";
 	if (new_line) {
-		stream.write("\n");
+		write("\n");
 	}
 }
 
@@ -213,7 +214,7 @@ function handle_spaces(token, keywords) {
 	// Add space to separate keywords
 	for (let kw of keywords) {
 		if (token == kw) {
-			stream.write(" ");
+			write(" ");
 			break;
 		}
 	}
@@ -384,6 +385,20 @@ function struct_alloc(token, alloc_type) {
 		}
 		token = "gc_alloc(sizeof(" + alloc_type + "))";
 		pos++; // }
+		tabs--;
+	}
+	// Turn "= { ... }" into malloc() with designated init
+	if (get_token(-1) == "=" && token == "{" && get_token(1) != "}") {
+		if (alloc_type.endsWith(" *")) { // mystruct * -> mystruct
+			alloc_type = alloc_type.substring(0, alloc_type.length - 2);
+		}
+		token = "GC_ALLOC_INIT(" + alloc_type + ", ";
+		while (get_token() != "}") {
+			token += get_token();
+			pos++;
+		}
+		token += get_token(); // "}"
+		token += ")";
 		tabs--;
 	}
 	return token;
@@ -608,8 +623,18 @@ function value_type(value) {
 	return value_types.get(value);
 }
 
+function stream_write(token) {
+	stream.write(token);
+}
+
+function string_write(token) {
+	string += token;
+}
+
+let write = stream_write;
+
 function write_c() {
-	stream.write('#include <krom.h>\n\n');
+	write('#include <krom.h>\n\n');
 
 	// Enums
 	enums = [];
@@ -622,7 +647,7 @@ function write_c() {
 			let enum_name = get_token();
 			enums.push(enum_name);
 
-			stream.write("typedef enum{\n");
+			write("typedef enum{\n");
 			pos++; // {
 
 			while (true) {
@@ -631,11 +656,11 @@ function write_c() {
 				token = get_token(); // Item name
 
 				if (token == "}") { // Enum end
-					stream.write("}" + enum_name + ";\n");
+					write("}" + enum_name + ";\n");
 					break;
 				}
 
-				stream.write("\t" + enum_name + "_" + token);
+				write("\t" + enum_name + "_" + token);
 
 				pos++; // = or ,
 				token = get_token();
@@ -643,14 +668,14 @@ function write_c() {
 				if (token == "=") { // Enum value
 					pos++; // n
 					token = get_token();
-					stream.write("=" + token);
+					write("=" + token);
 					pos++; // ,
 				}
 
-				stream.write(",\n");
+				write(",\n");
 			}
 
-			stream.write("\n");
+			write("\n");
 			continue;
 		}
 	}
@@ -680,14 +705,14 @@ function write_c() {
 				pos--;
 				let type = read_type();
 
-				stream.write("typedef " + type + " " + struct_name + ";\n\n");
+				write("typedef " + type + " " + struct_name + ";\n\n");
 				skip_until(";");
 				continue;
 			}
 
 			// "type x = {};"
 			// Use PACK() for armpack support (use only when " _: " is present?)
-			stream.write("typedef PACK(struct " + stuct_name_short + "{\n");
+			write("typedef PACK(struct " + stuct_name_short + "{\n");
 
 			let struct_value_types = new Map();
 			struct_types.set(struct_name + " *", struct_value_types);
@@ -698,7 +723,7 @@ function write_c() {
 				let name = get_token();
 
 				if (name == "}") { // Struct end
-					stream.write("})" + struct_name + ";\n");
+					write("})" + struct_name + ";\n");
 					break;
 				}
 
@@ -725,11 +750,11 @@ function write_c() {
 
 				skip_until(";");
 
-				stream.write("\t" + join_type_name(type, name) + ";\n");
+				write("\t" + join_type_name(type, name) + ";\n");
 				struct_value_types.set(name, type);
 			}
 
-			stream.write("\n");
+			write("\n");
 			continue;
 		}
 	}
@@ -756,14 +781,15 @@ function write_c() {
 	}
 
 	for (let as of array_structs.values()) {
-		stream.write(as);
-		stream.write("\n")
+		write(as);
+		write("\n")
 	}
-	stream.write("\n")
+	write("\n")
 
 	// Function declarations
 	let fn_declarations = new Map();
 	fn_default_params = new Map();
+	let last_fn_name = "";
 	for (pos = 0; pos < tokens.length; ++pos) {
 		let token = get_token();
 
@@ -777,6 +803,17 @@ function write_c() {
 			}
 
 			let ret = function_return_type();
+
+			if (fn_name == "(") { // Anonymous function
+				fn_name = last_fn_name + "_";
+				last_fn_name = fn_name;
+				let params = "()";
+				let fn_decl = ret + " " + fn_name + params;
+				write(fn_decl + ";\n");
+				continue;
+			}
+
+			last_fn_name = fn_name;
 
 			// Params
 			let _param_pos = 0;
@@ -814,15 +851,15 @@ function write_c() {
 			params += ")";
 
 			let fn_decl = ret + " " + fn_name + params;
-			stream.write(fn_decl + ";\n");
+			write(fn_decl + ";\n");
 
 			fn_declarations.set(fn_name, fn_decl);
 		}
 	}
 
-	stream.write("\n");
+	write("\n");
 
-	stream.write('#include <krom_api.h>\n\n');
+	write('#include <krom_api.h>\n\n');
 
 	// Globals
 	let global_inits = [];
@@ -836,7 +873,7 @@ function write_c() {
 			pos++; // :
 			let type = read_type();
 
-			stream.write(join_type_name(type, name) + ";");
+			write(join_type_name(type, name) + ";");
 
 			// Init this var in _kickstart()
 			let is_initialized = get_token(1) == "=";
@@ -875,7 +912,7 @@ function write_c() {
 				global_inits.push(init);
 			}
 
-			stream.write("\n");
+			write("\n");
 		}
 
 		// Skip function blocks
@@ -886,14 +923,14 @@ function write_c() {
 	}
 
 	// Start function
-	stream.write("\nvoid _kickstart() {\n");
+	write("\nvoid _kickstart() {\n");
 	// Init globals
 	for (let val of global_inits) {
-		stream.write("\t" + val + ";\n");
+		write("\t" + val + ";\n");
 	}
-	stream.write("\t_main();\n");
-	stream.write("\tkinc_start();\n");
-	stream.write("}\n\n");
+	write("\t_main();\n");
+	write("\tkinc_start();\n");
+	write("}\n\n");
 
 	// Functions
 	for (pos = 0; pos < tokens.length; ++pos) {
@@ -909,7 +946,7 @@ function write_c() {
 			}
 
 			let fn_decl = fn_declarations.get(fn_name);
-			stream.write(fn_decl + "{\n");
+			write(fn_decl + "{\n");
 
 			// Function body
 
@@ -944,13 +981,34 @@ function write_c() {
 			new_line = true;
 			let alloc_type = "";
 
+			let anon_fn = fn_name;
+			let nested = false;
+
 			while (true) {
 				pos++;
 				token = get_token();
 
+				if (token == "function") {
+					anon_fn += "_";
+					write("&" + anon_fn + ";\n");
+
+					let ret = function_return_type();
+					skip_until("{");
+					string += ret + " " + anon_fn + "() {\n";
+					write = string_write;
+					nested = true;
+					continue;
+				}
+				if (token == "}" && nested) {
+					nested = false;
+					write("}\n\n");
+					write = stream_write;
+					continue;
+				}
+
 				// Function end
 				if (token == "}" && tabs == 1) {
-					stream.write("}\n\n");
+					write("}\n\n");
 					break;
 				}
 
@@ -965,7 +1023,7 @@ function write_c() {
 					let type = read_type();
 					alloc_type = type;
 
-					stream.write(join_type_name(type, name));
+					write(join_type_name(type, name));
 
 					// = or ;
 					pos++;
@@ -987,6 +1045,16 @@ function write_c() {
 						alloc_type = type;
 					}
 				}
+
+				// Turn "= { ... }" into malloc() with designated init
+				if (get_token(-1) == "=" && token == "{" && get_token(1) != "}") {
+					let t = struct_access(get_token(-2));
+					let type = value_type(t);
+					if (type != null) {
+						alloc_type = type;
+					}
+				}
+
 				token = struct_alloc(token, alloc_type);
 
 				// [] -> _array_create
@@ -1125,12 +1193,18 @@ function write_c() {
 				}
 
 				// Write token
-				stream.write(token);
+				write(token);
 
 				handle_spaces(token, ["return", "else"]);
 
 				handle_new_line(token);
 			}
+		}
+
+		// Anonymous functions (non-capturing)
+		if (string != "") {
+			write(string);
+			string = "";
 		}
 	}
 }
@@ -1147,18 +1221,10 @@ function kickstart() {
 	if (!fs.existsSync(flags.minits_input)) {
 		return;
 	}
-
 	file = fs.readFileSync(flags.minits_input).toString();
 	tokens = parse(file);
 	stream = fs.createWriteStream(flags.minits_output);
-
-	if (flags.minits_output.endsWith(".js")) {
-		write_js();
-	}
-	else if (flags.minits_output.endsWith(".c")) {
-		write_c();
-	}
-
+	write_c();
 	stream.close();
 }
 

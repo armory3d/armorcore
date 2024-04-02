@@ -1208,7 +1208,7 @@ type zui_ops_t = {
 };
 
 type zui_handle_ops_t = {
-	selected?: boolean;
+	selected?: bool;
 	position?: i32;
 	value?: f32;
 	text?: string;
@@ -1220,7 +1220,7 @@ type zui_coloring_t = {
 	color?: i32;
 	start?: string[];
 	end?: string;
-	separated?: boolean;
+	separated?: bool;
 };
 
 type zui_text_coloring_t = {

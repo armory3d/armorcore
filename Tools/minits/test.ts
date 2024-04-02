@@ -9,13 +9,14 @@ function add(point: point_t) {
 }
 
 function get_five(): i32 {
-	return 5;
+	let five: ()=>i32 = function (): i32 {
+		return 5;
+	}
+	return five();
 }
 
 function main() {
-	let p: point_t = {};
-	p.x = 1.5;
-	p.y = 3.0;
+	let p: point_t = { x: 1.5, y: 3.5 };
 
 	add(p);
 

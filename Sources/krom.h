@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <kinc/log.h>
 #include <kinc/system.h>
 #include <kinc/display.h>
@@ -51,6 +52,9 @@ void *gc_realloc(void *ptr, size_t size) {
 void gc_free(void *ptr) {
 	_gc_free(ptr);
 }
+
+// point_t *p = GC_ALLOC_INIT(point_t, {x: 1.5, y: 3.5});
+#define GC_ALLOC_INIT(type, ...) (type *)memcpy(gc_alloc(sizeof(type)), (type[]){ __VA_ARGS__ }, sizeof(type))
 
 int kickstart(int argc, char **argv) {
 	_argc = argc;
@@ -266,6 +270,22 @@ f32_array_t *f32_array_create(i32 length) {
 	return a;
 }
 
+f32_array_t *f32_array_create_from_buffer(buffer_t *b) {
+	f32_array_t *a = gc_alloc(sizeof(f32_array_t));
+	a->buffer = b->data;
+	a->length = b->length / 4;
+	a->capacity = b->length / 4;
+	return a;
+}
+
+f32_array_t *f32_array_create_from_array(f32_array_t *from) {
+	f32_array_t *a = f32_array_create(from->length);
+	for (int i = 0; i < from->length; ++i) {
+		a->buffer[i] = from->buffer[i];
+	}
+	return a;
+}
+
 f32_array_t *f32_array_create_xy(f32 x, f32 y) {
 	f32_array_t *a = f32_array_create(2);
 	a->buffer[0] = x;
@@ -309,11 +329,27 @@ u32_array_t *u32_array_create(i32 length) {
 	return a;
 }
 
+u32_array_t *u32_array_create_from_array(u32_array_t *from) {
+	u32_array_t *a = u32_array_create(from->length);
+	for (int i = 0; i < from->length; ++i) {
+		a->buffer[i] = from->buffer[i];
+	}
+	return a;
+}
+
 i32_array_t *i32_array_create(i32 length) {
 	i32_array_t *a = gc_alloc(sizeof(i32_array_t));
 	if (length > 0) {
 		i32_array_resize(a, length);
 		a->length = length;
+	}
+	return a;
+}
+
+i32_array_t *i32_array_create_from_array(i32_array_t *from) {
+	i32_array_t *a = i32_array_create(from->length);
+	for (int i = 0; i < from->length; ++i) {
+		a->buffer[i] = from->buffer[i];
 	}
 	return a;
 }
@@ -332,6 +368,14 @@ i16_array_t *i16_array_create(i32 length) {
 	if (length > 0) {
 		i16_array_resize(a, length);
 		a->length = length;
+	}
+	return a;
+}
+
+i16_array_t *i16_array_create_from_array(i16_array_t *from) {
+	i16_array_t *a = i16_array_create(from->length);
+	for (int i = 0; i < from->length; ++i) {
+		a->buffer[i] = from->buffer[i];
 	}
 	return a;
 }
@@ -369,6 +413,42 @@ any_array_t *any_array_create(i32 length) {
 		a->length = length;
 	}
 	return a;
+}
+
+void uri_decode(char *dst, const char *src) {
+	char a, b;
+	while (*src) {
+		if ((*src == '%') && ((a = src[1]) && (b = src[2])) && (isxdigit(a) && isxdigit(b))) {
+			if (a >= 'a') {
+				a -= 'a' - 'A';
+			}
+			if (a >= 'A') {
+				a -= ('A' - 10);
+			}
+			else {
+				a -= '0';
+			}
+			if (b >= 'a') {
+				b -= 'a' - 'A';
+			}
+			if (b >= 'A') {
+				b -= ('A' - 10);
+			}
+			else {
+				b -= '0';
+			}
+			*dst++ = 16 * a + b;
+			src += 3;
+		}
+		else if (*src == '+') {
+			*dst++ = ' ';
+			src++;
+		}
+		else {
+			*dst++ = *src++;
+		}
+	}
+	*dst++ = '\0';
 }
 
 f32 math_floor(f32 x) { return floorf(x); }
