@@ -300,8 +300,8 @@ namespace {
 	void pen_down(int window, int x, int y, float pressure);
 	void pen_up(int window, int x, int y, float pressure);
 	void pen_move(int window, int x, int y, float pressure);
-	void gamepad_axis(int gamepad, int axis, float value);
-	void gamepad_button(int gamepad, int button, float value);
+	void gamepad_axis(int gamepad, int axis, float value, void *data);
+	void gamepad_button(int gamepad, int button, float value, void *data);
 
 	char temp_string[4096];
 	char temp_string_vs[1024 * 1024];
@@ -561,13 +561,13 @@ namespace {
 
 	void krom_set_gamepad_axis_callback(ARGS) {
 		SCOPE();
-		kinc_gamepad_set_axis_callback(gamepad_axis);
+		kinc_gamepad_set_axis_callback(gamepad_axis, NULL);
 		SET_FUNC(gamepad_axis_func, args[0]);
 	}
 
 	void krom_set_gamepad_button_callback(ARGS) {
 		SCOPE();
-		kinc_gamepad_set_button_callback(gamepad_button);
+		kinc_gamepad_set_button_callback(gamepad_button, NULL);
 		SET_FUNC(gamepad_button_func, args[0]);
 	}
 
@@ -1941,6 +1941,12 @@ namespace {
 
 	void krom_g4_end(ARGS) {
 		SCOPE();
+	}
+
+	void krom_g4_swap_buffers(ARGS) {
+		kinc_g4_end(0);
+		kinc_g4_swap_buffers();
+		kinc_g4_begin(0);
 	}
 
 	void krom_file_save_bytes(ARGS) {
@@ -4263,6 +4269,7 @@ namespace {
 		BIND_FUNCTION_FAST(global, "krom_g4_render_targets_inverted_y", krom_g4_render_targets_inverted_y);
 		BIND_FUNCTION(global, "krom_g4_begin", krom_g4_begin);
 		BIND_FUNCTION(global, "krom_g4_end", krom_g4_end);
+		BIND_FUNCTION(global, "krom_g4_swap_buffers", krom_g4_swap_buffers);
 		BIND_FUNCTION(global, "krom_file_save_bytes", krom_file_save_bytes);
 		BIND_FUNCTION(global, "krom_sys_command", krom_sys_command);
 		BIND_FUNCTION(global, "krom_save_path", krom_save_path);
@@ -4786,7 +4793,7 @@ namespace {
 		#endif
 	}
 
-	void gamepad_axis(int gamepad, int axis, float value) {
+	void gamepad_axis(int gamepad, int axis, float value, void *data) {
 		LOCKER();
 		Local<Value> argv[3] = {Int32::New(isolate, gamepad), Int32::New(isolate, axis), Number::New(isolate, value)};
 		CALL_FUNCI(gamepad_axis_func, 3, argv);
@@ -4796,7 +4803,7 @@ namespace {
 		#endif
 	}
 
-	void gamepad_button(int gamepad, int button, float value) {
+	void gamepad_button(int gamepad, int button, float value, void *data) {
 		LOCKER();
 		Local<Value> argv[3] = {Int32::New(isolate, gamepad), Int32::New(isolate, button), Number::New(isolate, value)};
 		CALL_FUNCI(gamepad_button_func, 3, argv);
