@@ -462,11 +462,258 @@ kinc_g4_shader_t *krom_g4_create_shader(buffer_t *data, i32 shader_type) {
 }
 
 any krom_g4_create_vertex_shader_from_source(string_t *source) {
-	return NULL;
+
+	#ifdef WITH_D3DCOMPILER
+
+	strcpy(temp_string_vs, source);
+
+	ID3DBlob *error_message;
+	ID3DBlob *shader_buffer;
+	UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
+	HRESULT hr = D3DCompile(temp_string_vs, strlen(source) + 1, nullptr, nullptr, nullptr, "main", "vs_5_0", flags, 0, &shader_buffer, &error_message);
+	if (hr != S_OK) {
+		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->GetBufferPointer());
+		return;
+	}
+
+	bool hasBone = strstr(temp_string_vs, "bone :") != NULL;
+	bool hasCol = strstr(temp_string_vs, "col :") != NULL;
+	bool hasNor = strstr(temp_string_vs, "nor :") != NULL;
+	bool hasPos = strstr(temp_string_vs, "pos :") != NULL;
+	bool hasTex = strstr(temp_string_vs, "tex :") != NULL;
+
+	std::map<std::string, int> attributes;
+	int index = 0;
+	if (hasBone) attributes["bone"] = index++;
+	if (hasCol) attributes["col"] = index++;
+	if (hasNor) attributes["nor"] = index++;
+	if (hasPos) attributes["pos"] = index++;
+	if (hasTex) attributes["tex"] = index++;
+	if (hasBone) attributes["weight"] = index++;
+
+	std::ostringstream file;
+	size_t output_len = 0;
+
+	file.put((char)attributes.size());
+	output_len += 1;
+	for (std::map<std::string, int>::const_iterator attribute = attributes.begin(); attribute != attributes.end(); ++attribute) {
+		(file) << attribute->first.c_str();
+		output_len += attribute->first.length();
+		file.put(0);
+		output_len += 1;
+		file.put(attribute->second);
+		output_len += 1;
+	}
+
+	ID3D11ShaderReflection *reflector = nullptr;
+	D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+
+	D3D11_SHADER_DESC desc;
+	reflector->GetDesc(&desc);
+
+	file.put(desc.BoundResources);
+	output_len += 1;
+	for (unsigned i = 0; i < desc.BoundResources; ++i) {
+		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+		reflector->GetResourceBindingDesc(i, &bindDesc);
+		(file) << bindDesc.Name;
+		output_len += strlen(bindDesc.Name);
+		file.put(0);
+		output_len += 1;
+		file.put(bindDesc.BindPoint);
+		output_len += 1;
+	}
+
+	ID3D11ShaderReflectionConstantBuffer *constants = reflector->GetConstantBufferByName("$Globals");
+	D3D11_SHADER_BUFFER_DESC bufferDesc;
+	hr = constants->GetDesc(&bufferDesc);
+	if (hr == S_OK) {
+		file.put(bufferDesc.Variables);
+		output_len += 1;
+		for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
+			ID3D11ShaderReflectionVariable *variable = constants->GetVariableByIndex(i);
+			D3D11_SHADER_VARIABLE_DESC variableDesc;
+			hr = variable->GetDesc(&variableDesc);
+			if (hr == S_OK) {
+				(file) << variableDesc.Name;
+				output_len += strlen(variableDesc.Name);
+				file.put(0);
+				output_len += 1;
+				file.write((char *)&variableDesc.StartOffset, 4);
+				output_len += 4;
+				file.write((char *)&variableDesc.Size, 4);
+				output_len += 4;
+				D3D11_SHADER_TYPE_DESC typeDesc;
+				hr = variable->GetType()->GetDesc(&typeDesc);
+				if (hr == S_OK) {
+					file.put(typeDesc.Columns);
+					output_len += 1;
+					file.put(typeDesc.Rows);
+					output_len += 1;
+				}
+				else {
+					file.put(0);
+					output_len += 1;
+					file.put(0);
+					output_len += 1;
+				}
+			}
+		}
+	}
+	else {
+		file.put(0);
+		output_len += 1;
+	}
+	file.write((char *)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
+	output_len += shader_buffer->GetBufferSize();
+	shader_buffer->Release();
+	reflector->Release();
+
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
+	kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
+
+	#elif defined(KINC_METAL)
+
+	strcpy(temp_string_vs, "// my_main\n");
+	strcat(temp_string_vs, source);
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
+	kinc_g4_shader_init(shader, temp_string_vs, strlen(temp_string_vs), KINC_G4_SHADER_TYPE_VERTEX);
+
+	#elif defined(KINC_VULKAN) && defined(KRAFIX_LIBRARY)
+
+	char *output = new char[1024 * 1024];
+	int length;
+	krafix_compile(source, output, &length, "spirv", "windows", "vert", -1);
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
+	kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_VERTEX);
+
+	#else
+
+	char *source_ = malloc(strlen(source) + 1);
+	strcpy(source_, source);
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
+	kinc_g4_shader_init(shader, source_, strlen(source_), KINC_G4_SHADER_TYPE_VERTEX);
+
+	#endif
+
+	return shader;
 }
 
 any krom_g4_create_fragment_shader_from_source(string_t *source) {
-	return NULL;
+
+	#ifdef WITH_D3DCOMPILER
+
+	strcpy(temp_string_fs, source);
+
+	ID3DBlob *error_message;
+	ID3DBlob *shader_buffer;
+	UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
+	HRESULT hr = D3DCompile(temp_string_fs, strlen(source) + 1, nullptr, nullptr, nullptr, "main", "ps_5_0", flags, 0, &shader_buffer, &error_message);
+	if (hr != S_OK) {
+		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->GetBufferPointer());
+		return;
+	}
+
+	std::map<std::string, int> attributes;
+
+	std::ostringstream file;
+	size_t output_len = 0;
+
+	file.put((char)attributes.size());
+	output_len += 1;
+
+	ID3D11ShaderReflection *reflector = nullptr;
+	D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+
+	D3D11_SHADER_DESC desc;
+	reflector->GetDesc(&desc);
+
+	file.put(desc.BoundResources);
+	output_len += 1;
+	for (unsigned i = 0; i < desc.BoundResources; ++i) {
+		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+		reflector->GetResourceBindingDesc(i, &bindDesc);
+		(file) << bindDesc.Name;
+		output_len += strlen(bindDesc.Name);
+		file.put(0);
+		output_len += 1;
+		file.put(bindDesc.BindPoint);
+		output_len += 1;
+	}
+
+	ID3D11ShaderReflectionConstantBuffer *constants = reflector->GetConstantBufferByName("$Globals");
+	D3D11_SHADER_BUFFER_DESC bufferDesc;
+	hr = constants->GetDesc(&bufferDesc);
+	if (hr == S_OK) {
+		file.put(bufferDesc.Variables);
+		output_len += 1;
+		for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
+			ID3D11ShaderReflectionVariable *variable = constants->GetVariableByIndex(i);
+			D3D11_SHADER_VARIABLE_DESC variableDesc;
+			hr = variable->GetDesc(&variableDesc);
+			if (hr == S_OK) {
+				(file) << variableDesc.Name;
+				output_len += strlen(variableDesc.Name);
+				file.put(0);
+				output_len += 1;
+				file.write((char *)&variableDesc.StartOffset, 4);
+				output_len += 4;
+				file.write((char *)&variableDesc.Size, 4);
+				output_len += 4;
+				D3D11_SHADER_TYPE_DESC typeDesc;
+				hr = variable->GetType()->GetDesc(&typeDesc);
+				if (hr == S_OK) {
+					file.put(typeDesc.Columns);
+					output_len += 1;
+					file.put(typeDesc.Rows);
+					output_len += 1;
+				}
+				else {
+					file.put(0);
+					output_len += 1;
+					file.put(0);
+					output_len += 1;
+				}
+			}
+		}
+	}
+	else {
+		file.put(0);
+		output_len += 1;
+	}
+	file.write((char *)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
+	output_len += shader_buffer->GetBufferSize();
+	shader_buffer->Release();
+	reflector->Release();
+
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
+	kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
+
+	#elif defined(KINC_METAL)
+
+	strcpy(temp_string_fs, "// my_main\n");
+	strcat(temp_string_fs, source);
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
+	kinc_g4_shader_init(shader, temp_string_fs, strlen(temp_string_fs), KINC_G4_SHADER_TYPE_FRAGMENT);
+
+	#elif defined(KINC_VULKAN) && defined(KRAFIX_LIBRARY)
+
+	char *output = new char[1024 * 1024];
+	int length;
+	krafix_compile(source, output, &length, "spirv", "windows", "frag", -1);
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
+	kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_FRAGMENT);
+
+	#else
+
+	char *source_ = malloc(strlen(source) + 1);
+	strcpy(source_, source);
+	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
+	kinc_g4_shader_init(shader, source_, strlen(source_), KINC_G4_SHADER_TYPE_FRAGMENT);
+
+	#endif
+
+	return shader;
 }
 
 void krom_g4_delete_shader(any shader) {
