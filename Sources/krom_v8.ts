@@ -40,6 +40,7 @@ function i16_array_create(length: i32): i16_array_t { return new i16_array_t(len
 function i16_array_create_from_array(a: i16[]) { return new i16_array_t(a); }
 function u8_array_create(length: i32): u8_array_t { return new u8_array_t(length); }
 function u8_array_create_from_buffer(b: buffer_t): u8_array_t { return new u8_array_t(b); }
+function u8_array_create_from_array(a: u8[]): u8_array_t { return new u8_array_t(a); }
 function i8_array_create(length: i32): i8_array_t { return new i8_array_t(length); }
 
 function math_floor(x: f32): f32 { return Math.floor(x); }
@@ -310,7 +311,7 @@ declare function krom_save_path(): string;
 declare function krom_get_arg_count(): i32;
 declare function krom_get_arg(index: i32): string;
 declare function krom_get_files_location(): string;
-declare function krom_http_request(url: string, size: i32, callback: (_: buffer_t)=>void): void;
+declare function krom_http_request(url: string, size: i32, callback: (url: string, _: buffer_t)=>void): void;
 
 declare function krom_g2_init(image_vert: buffer_t, image_frag: buffer_t, colored_vert: buffer_t, colored_frag: buffer_t, text_vert: buffer_t, text_frag: buffer_t): void;
 declare function krom_g2_begin(): void;

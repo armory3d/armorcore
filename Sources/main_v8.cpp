@@ -322,6 +322,7 @@ namespace {
 	class KromCallbackdata {
 	public:
 		int32_t size;
+		char url[512];
 		Global<Function> func;
 	};
 
@@ -2030,14 +2031,15 @@ namespace {
 
 	void krom_http_callback(int error, int response, const char *body, void *callbackdata) {
 		LOCKER();
-		Local<Value> argv[1];
 		KromCallbackdata *cbd = (KromCallbackdata *)callbackdata;
+		Local<Value> argv[2];
+		argv[0] = {String::NewFromUtf8(isolate, cbd->url).ToLocalChecked()};
 		if (body != NULL) {
 			std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore(
 				(void *)body, cbd->size > 0 ? cbd->size : strlen(body), [](void *, size_t, void *) {}, nullptr);
-			argv[0] = ArrayBuffer::New(isolate, std::move(backing));
+			argv[1] = ArrayBuffer::New(isolate, std::move(backing));
 		}
-		CALL_FUNCI(cbd->func, body != NULL ? 1 : 0, argv);
+		CALL_FUNCI(cbd->func, body != NULL ? 2 : 1, argv);
 		delete cbd;
 	}
 
@@ -2047,6 +2049,7 @@ namespace {
 
 		KromCallbackdata *cbd = new KromCallbackdata();
 		cbd->size = TO_I32(args[1]);
+		strcpy(cbd->url, *url);
 		SET_FUNC(cbd->func, args[2]);
 
 		char url_base[512];

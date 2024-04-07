@@ -397,6 +397,14 @@ u8_array_t *u8_array_create_from_buffer(buffer_t *b) {
 	return a;
 }
 
+u8_array_t *u8_array_create_from_array(u8_array_t *from) {
+	u8_array_t *a = u8_array_create(from->length);
+	for (int i = 0; i < from->length; ++i) {
+		a->buffer[i] = from->buffer[i];
+	}
+	return a;
+}
+
 i8_array_t *i8_array_create(i32 length) {
 	i8_array_t *a = gc_alloc(sizeof(i8_array_t));
 	if (length > 0) {

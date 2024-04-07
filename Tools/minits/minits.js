@@ -990,7 +990,10 @@ function write_c() {
 
 				if (token == "function") {
 					anon_fn += "_";
-					write("&" + anon_fn + ";\n");
+					write("&" + anon_fn);
+					if (get_token(-1) == "=") {
+						write(";\n");
+					}
 
 					let ret = function_return_type();
 					skip_until("{");

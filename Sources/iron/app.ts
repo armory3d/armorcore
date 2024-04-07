@@ -5,6 +5,7 @@ type callback_t = {
 };
 
 let app_on_resets: callback_t[] = [];
+let app_on_next_frames: callback_t[] = [];
 let app_on_end_frames: callback_t[] = [];
 let app_on_inits: callback_t[] = [];
 let app_on_updates: callback_t[] = [];
@@ -53,6 +54,8 @@ function app_init(done: ()=>void) {
 }
 
 function app_reset() {
+	app_on_next_frames = [];
+	app_on_end_frames = [];
 	app_on_inits = [];
 	app_on_updates = [];
 	app_on_renders = [];
@@ -69,6 +72,14 @@ function app_update() {
 	}
 	if (app_pause_updates) {
 		return;
+	}
+
+	if (app_on_next_frames.length > 0) {
+		for (let i: i32 = 0; i < app_on_next_frames.length; ++i) {
+			let cb: callback_t = app_on_next_frames[i];
+			cb.f(cb.data);
+		}
+		array_splice(app_on_next_frames, 0, app_on_next_frames.length);
 	}
 
 	scene_update_frame();
@@ -204,6 +215,10 @@ function app_notify_on_render_2d(f: (data?: any)=>void, data: any = null) {
 
 function app_notify_on_reset(f: (data?: any)=>void, data: any = null) {
 	array_push(app_on_resets, _callback_create(f, data));
+}
+
+function app_notify_on_next_frame(f: (data?: any)=>void, data: any = null) {
+	array_push(app_on_next_frames, _callback_create(f, data));
 }
 
 function app_notify_on_end_frame(f: (data?: any)=>void, data: any = null) {
