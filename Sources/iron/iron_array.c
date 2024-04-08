@@ -123,6 +123,10 @@ void array_push(void *ar, void *e) {
 
 }
 
+void *array_pop(void *ar) {
+
+}
+
 void array_splice(void *ar, int32_t start, int32_t delete_count) {
 
 }

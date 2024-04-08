@@ -48,8 +48,7 @@ function app_y(): i32 {
 	return 0;
 }
 
-function app_init(done: ()=>void) {
-	done();
+function app_init() {
 	sys_notify_on_frames(app_render);
 }
 

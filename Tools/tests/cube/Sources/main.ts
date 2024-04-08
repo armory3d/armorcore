@@ -13,11 +13,9 @@ function main() {
 	ops.mode = window_mode_t.WINDOWED;
 	ops.frequency = 60;
 	ops.vsync = true;
-	sys_start(ops, sys_started);
-}
-
-function sys_started() {
-	app_init(app_ready);
+	sys_start(ops);
+	app_init();
+	app_ready();
 }
 
 function render_commands() {
@@ -116,7 +114,6 @@ function data_ready() {
 
 	// Instantiate scene
 	scene_create(raw);
-
 	scene_ready();
 }
 

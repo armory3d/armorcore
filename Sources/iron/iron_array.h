@@ -87,6 +87,7 @@ void buffer_resize(buffer_t *b, int32_t size);
 
 void array_sort(void *ar, void *fn);
 void array_push(void *ar, void *e);
+void *array_pop(void *ar);
 void array_splice(void *ar, int32_t start, int32_t delete_count);
 void *array_concat(void *a, void *b);
 void *array_slice(void *a, int32_t begin, int32_t end);

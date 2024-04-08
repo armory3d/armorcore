@@ -69,6 +69,7 @@ function map_set<K, V>(m: map_t<K, V>, k: any, v: any) { m.set(k, v); }
 function map_delete<K, V>(m: map_t<K, V>, k: any) { m.delete(k); }
 function array_sort(ar: any[], fn: (a: any, b: any)=>i32) { ar.sort(fn); }
 function array_push(ar: any[], e: any) { ar.push(e); }
+function array_pop(ar: any[]): any { return ar.pop(); }
 function array_splice(ar: any[], start: i32, delete_count: i32) { ar.splice(start, delete_count); }
 function array_insert(ar: any[], at: i32, e: any) { ar.splice(at, 0, e); }
 function array_concat(a: any[], b: any[]): any[] { return a.concat(b); }
@@ -118,6 +119,8 @@ function i32_to_string_hex(i: i32): string { return i.toString(16); }
 // .constructor // armpack
 // globalThis // arm_shader_embed
 function json_parse(s: string): any { return JSON.parse(s); }
+// @ts-ignore
+function json_parse_to_map(s: string): map_t<string, string> { return new Map(Object.entries(json_parse(s))); }
 function json_stringify(a: any): string { return JSON.stringify(a); }
 function uri_decode(s: string): string { return decodeURIComponent(s); }
 
