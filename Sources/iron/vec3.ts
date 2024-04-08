@@ -35,3 +35,18 @@ function vec3_sub(self: vec3_t, v: vec3_t): vec3_t {
 	self.z -= v.z;
 	return self;
 }
+
+function vec3_len(self: vec3_t): f32 {
+	return math_sqrt(self.x * self.x + self.y * self.y + self.z * self.z);
+}
+
+function vec3_normalize(self: vec3_t): vec3_t {
+	let n: f32 = vec3_len(self);
+	if (n > 0.0) {
+		let inv_n: f32 = 1.0 / n;
+		self.x *= inv_n;
+		self.y *= inv_n;
+		self.z *= inv_n;
+	}
+	return self;
+}
