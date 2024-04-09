@@ -187,13 +187,13 @@ void zui_nodes_bake_elements() {
 		kinc_g4_render_target_destroy(&zui_socket_image);
 	}
 	kinc_g4_render_target_init(&zui_socket_image, 24, 24, KINC_G4_RENDER_TARGET_FORMAT_32BIT, 0, 0);
-	g2_set_render_target(&zui_socket_image);
+	arm_g2_set_render_target(&zui_socket_image);
 	kinc_g4_clear(KINC_G4_CLEAR_COLOR, 0x00000000, 0, 0);
-	g2_set_color(0xff000000);
-	g2_fill_circle(12, 12, 11, 0);
-	g2_set_color(0xffffffff);
-	g2_fill_circle(12, 12, 9, 0);
-	g2_restore_render_target();
+	arm_g2_set_color(0xff000000);
+	arm_g2_fill_circle(12, 12, 11, 0);
+	arm_g2_set_color(0xffffffff);
+	arm_g2_fill_circle(12, 12, 9, 0);
+	arm_g2_restore_render_target();
 	zui_nodes_elements_baked = true;
 }
 
@@ -211,19 +211,19 @@ void zui_draw_link(float x1, float y1, float x2, float y2, bool highlight) {
 	int c1 = current->ops.theme->LABEL_COL;
 	int c2 = current->ops.theme->ACCENT_SELECT_COL;
 	int c = highlight ? c1 : c2;
-	g2_set_color(zui_color(zui_color_r(c), zui_color_g(c), zui_color_b(c), 210));
+	arm_g2_set_color(zui_color(zui_color_r(c), zui_color_g(c), zui_color_b(c), 210));
 	if (current->ops.theme->LINK_STYLE == ZUI_LINK_STYLE_LINE) {
-		g2_draw_line(x1, y1, x2, y2, 1.0);
-		g2_set_color(zui_color(zui_color_r(c), zui_color_g(c), zui_color_b(c), 150)); // AA
-		g2_draw_line(x1 + 0.5, y1, x2 + 0.5, y2, 1.0);
-		g2_draw_line(x1 - 0.5, y1, x2 - 0.5, y2, 1.0);
-		g2_draw_line(x1, y1 + 0.5, x2, y2 + 0.5, 1.0);
-		g2_draw_line(x1, y1 - 0.5, x2, y2 - 0.5, 1.0);
+		arm_g2_draw_line(x1, y1, x2, y2, 1.0);
+		arm_g2_set_color(zui_color(zui_color_r(c), zui_color_g(c), zui_color_b(c), 150)); // AA
+		arm_g2_draw_line(x1 + 0.5, y1, x2 + 0.5, y2, 1.0);
+		arm_g2_draw_line(x1 - 0.5, y1, x2 - 0.5, y2, 1.0);
+		arm_g2_draw_line(x1, y1 + 0.5, x2, y2 + 0.5, 1.0);
+		arm_g2_draw_line(x1, y1 - 0.5, x2, y2 - 0.5, 1.0);
 	}
 	else if (current->ops.theme->LINK_STYLE == ZUI_LINK_STYLE_CUBIC_BEZIER) {
 		float x[] = { x1, x1 + fabs(x1 - x2) / 2.0, x2 - fabs(x1 - x2) / 2.0, x2 };
 		float y[] = { y1, y1, y2, y2 };
-		g2_draw_cubic_bezier(x, y, 30, highlight ? 2.0 : 1.0);
+		arm_g2_draw_cubic_bezier(x, y, 30, highlight ? 2.0 : 1.0);
 	}
 }
 
@@ -354,37 +354,37 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	}
 
 	// Outline
-	g2_set_color(zui_is_selected(node) ? current->ops.theme->LABEL_COL : current->ops.theme->CONTEXT_COL);
+	arm_g2_set_color(zui_is_selected(node) ? current->ops.theme->LABEL_COL : current->ops.theme->CONTEXT_COL);
 	zui_draw_rect(true, nx - 1, ny - 1, w + 2, h + 2);
 
 	// Body
-	g2_set_color(current->ops.theme->WINDOW_BG_COL);
+	arm_g2_set_color(current->ops.theme->WINDOW_BG_COL);
 	zui_draw_rect(true, nx, ny, w, h);
 
 	// Header line
-	g2_set_color(node->color);
-	g2_fill_rect(nx, ny + lineh - zui_p(3), w, zui_p(3));
+	arm_g2_set_color(node->color);
+	arm_g2_fill_rect(nx, ny + lineh - zui_p(3), w, zui_p(3));
 
 	// Title
-	g2_set_color(current->ops.theme->LABEL_COL);
-	float textw = g2_string_width(current->ops.font, current->font_size, text);
-	g2_draw_string(text, nx + zui_p(10), ny + zui_p(6));
+	arm_g2_set_color(current->ops.theme->LABEL_COL);
+	float textw = arm_g2_string_width(current->ops.font, current->font_size, text);
+	arm_g2_draw_string(text, nx + zui_p(10), ny + zui_p(6));
 	ny += lineh * 0.5;
 
 	// Outputs
 	for (int i = 0; i < node->outputs->length; ++i) {
 		zui_node_socket_t *out = node->outputs->buffer[i];
 		ny += lineh;
-		g2_set_color(out->color);
-		g2_draw_scaled_render_target(&zui_socket_image, nx + w - zui_p(6), ny - zui_p(3), zui_p(12), zui_p(12));
+		arm_g2_set_color(out->color);
+		arm_g2_draw_scaled_render_target(&zui_socket_image, nx + w - zui_p(6), ny - zui_p(3), zui_p(12), zui_p(12));
 	}
 	ny -= lineh * node->outputs->length;
-	g2_set_color(current->ops.theme->LABEL_COL);
+	arm_g2_set_color(current->ops.theme->LABEL_COL);
 	for (int i = 0; i < node->outputs->length; ++i) {
 		zui_node_socket_t *out = node->outputs->buffer[i];
 		ny += lineh;
-		float strw = g2_string_width(current->ops.font, current->font_size, zui_tr(out->name));
-		g2_draw_string(zui_tr(out->name), nx + w - strw - zui_p(12), ny - zui_p(3));
+		float strw = arm_g2_string_width(current->ops.font, current->font_size, zui_tr(out->name));
+		arm_g2_draw_string(zui_tr(out->name), nx + w - strw - zui_p(12), ny - zui_p(3));
 
 		if (zui_nodes_on_socket_released != NULL && current->input_enabled && (current->input_released || current->input_released_r)) {
 			if (current->input_x > wx + nx && current->input_x < wx + nx + w && current->input_y > wy + ny && current->input_y < wy + ny + lineh) {
@@ -530,8 +530,8 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	for (int i = 0; i < node->inputs->length; ++i) {
 		zui_node_socket_t *inp = node->inputs->buffer[i];
 		ny += lineh;
-		g2_set_color(inp->color);
-		g2_draw_scaled_render_target(&zui_socket_image, nx - zui_p(6), ny - zui_p(3), zui_p(12), zui_p(12));
+		arm_g2_set_color(inp->color);
+		arm_g2_draw_scaled_render_target(&zui_socket_image, nx - zui_p(6), ny - zui_p(3), zui_p(12), zui_p(12));
 		bool is_linked = zui_input_linked(canvas, node->id, i);
 		if (!is_linked && strcmp(inp->type, "VALUE") == 0) {
 			current->_x = nx + zui_p(6);
@@ -564,18 +564,18 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->ops.theme->TEXT_OFFSET = text_off;
 		}
 		else if (!is_linked && strcmp(inp->type, "RGBA") == 0) {
-			g2_set_color(current->ops.theme->LABEL_COL);
-			g2_draw_string(zui_tr(inp->name), nx + zui_p(12), ny - zui_p(3));
+			arm_g2_set_color(current->ops.theme->LABEL_COL);
+			arm_g2_draw_string(zui_tr(inp->name), nx + zui_p(12), ny - zui_p(3));
 			zui_node_socket_t *soc = inp;
-			g2_set_color(0xff000000);
-			g2_fill_rect(nx + w - zui_p(38), ny - zui_p(6), zui_p(36), zui_p(18));
+			arm_g2_set_color(0xff000000);
+			arm_g2_fill_rect(nx + w - zui_p(38), ny - zui_p(6), zui_p(36), zui_p(18));
 			float *val = (float *)soc->default_value->buffer;
-			g2_set_color(zui_color(val[0] * 255, val[1] * 255, val[2] * 255, 255));
+			arm_g2_set_color(zui_color(val[0] * 255, val[1] * 255, val[2] * 255, 255));
 			float rx = nx + w - zui_p(37);
 			float ry = ny - zui_p(5);
 			float rw = zui_p(34);
 			float rh = zui_p(16);
-			g2_fill_rect(rx, ry, rw, rh);
+			arm_g2_fill_rect(rx, ry, rw, rh);
 			float ix = current->input_x - wx;
 			float iy = current->input_y - wy;
 			if (current->input_started && ix > rx && iy > ry && ix < rx + rw && iy < ry + rh) {
@@ -591,8 +591,8 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			}
 		}
 		else if (!is_linked && strcmp(inp->type, "VECTOR") == 0 && inp->display == 1) {
-			g2_set_color(current->ops.theme->LABEL_COL);
-			g2_draw_string(zui_tr(inp->name), nx + zui_p(12), ny - zui_p(3));
+			arm_g2_set_color(current->ops.theme->LABEL_COL);
+			arm_g2_draw_string(zui_tr(inp->name), nx + zui_p(12), ny - zui_p(3));
 			ny += lineh / 2;
 			current->_x = nx;
 			current->_y = ny;
@@ -617,8 +617,8 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			ny += lineh * 2.5;
 		}
 		else {
-			g2_set_color(current->ops.theme->LABEL_COL);
-			g2_draw_string(zui_tr(inp->name), nx + zui_p(12), ny - zui_p(3));
+			arm_g2_set_color(current->ops.theme->LABEL_COL);
+			arm_g2_draw_string(zui_tr(inp->name), nx + zui_p(12), ny - zui_p(3));
 		}
 		if (zui_nodes_on_socket_released != NULL && current->input_enabled && (current->input_released || current->input_released_r)) {
 			if (current->input_x > wx + nx && current->input_x < wx + nx + w && current->input_y > wy + ny && current->input_y < wy + ny + lineh) {
@@ -678,7 +678,7 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	current_nodes->ELEMENT_H = current->ops.theme->ELEMENT_H + 2;
 	zui_set_scale(ZUI_NODES_SCALE()); // Apply zoomed scale
 	current->elements_baked = true;
-	g2_set_font(current->ops.font, current->font_size);
+	arm_g2_set_font(current->ops.font, current->font_size);
 
 	for (int i = 0; i < canvas->links_count; ++i) {
 		zui_node_link_t *link = canvas->links->buffer[i];
@@ -912,11 +912,11 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	}
 
 	if (zui_box_select) {
-		g2_set_color(0x223333dd);
-		g2_fill_rect(zui_box_select_x, zui_box_select_y, current->input_x - zui_box_select_x - current->_window_x, current->input_y - zui_box_select_y - current->_window_y);
-		g2_set_color(0x773333dd);
-		g2_draw_rect(zui_box_select_x, zui_box_select_y, current->input_x - zui_box_select_x - current->_window_x, current->input_y - zui_box_select_y - current->_window_y, 1);
-		g2_set_color(0xffffffff);
+		arm_g2_set_color(0x223333dd);
+		arm_g2_fill_rect(zui_box_select_x, zui_box_select_y, current->input_x - zui_box_select_x - current->_window_x, current->input_y - zui_box_select_y - current->_window_y);
+		arm_g2_set_color(0x773333dd);
+		arm_g2_draw_rect(zui_box_select_x, zui_box_select_y, current->input_x - zui_box_select_x - current->_window_x, current->input_y - zui_box_select_y - current->_window_y, 1);
+		arm_g2_set_color(0xffffffff);
 	}
 	if (current->input_enabled && current->input_started && !current->is_alt_down && current_nodes->link_drag_id == -1 && !current_nodes->nodes_drag && !current->changed) {
 		zui_box_select = true;

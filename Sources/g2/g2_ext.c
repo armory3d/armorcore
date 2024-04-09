@@ -6,7 +6,7 @@
 
 #define MATH_PI 3.14159265358979323846
 
-void g2_fill_circle(float cx, float cy, float radius, int segments) {
+void arm_g2_fill_circle(float cx, float cy, float radius, int segments) {
 	if (segments <= 0) {
 		segments = (int)floor(10 * sqrt(radius));
 	}
@@ -26,11 +26,11 @@ void g2_fill_circle(float cx, float cy, float radius, int segments) {
 		x = c * x - s * y;
 		y = c * y + s * t;
 
-		g2_fill_triangle(px, py, x + cx, y + cy, cx, cy);
+		arm_g2_fill_triangle(px, py, x + cx, y + cy, cx, cy);
 	}
 }
 
-void g2_draw_inner_line(float x1, float y1, float x2, float y2, float strength) {
+void arm_g2_draw_inner_line(float x1, float y1, float x2, float y2, float strength) {
 	int side = y2 > y1 ? 1 : 0;
 	if (y2 == y1) {
 		side = x2 - x1 > 0 ? 1 : 0;
@@ -48,11 +48,11 @@ void g2_draw_inner_line(float x1, float y1, float x2, float y2, float strength) 
 	kinc_vector2_t p2 = {x2 + side * vec.x, y2 + side * vec.y};
 	kinc_vector2_t p3 = vec2_sub(p1, vec);
 	kinc_vector2_t p4 = vec2_sub(p2, vec);
-	g2_fill_triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
-	g2_fill_triangle(p3.x, p3.y, p2.x, p2.y, p4.x, p4.y);
+	arm_g2_fill_triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+	arm_g2_fill_triangle(p3.x, p3.y, p2.x, p2.y, p4.x, p4.y);
 }
 
-void g2_draw_circle(float cx, float cy, float radius, int segments, float strength) {
+void arm_g2_draw_circle(float cx, float cy, float radius, int segments, float strength) {
 	radius += strength / 2;
 
 	if (segments <= 0) {
@@ -74,11 +74,11 @@ void g2_draw_circle(float cx, float cy, float radius, int segments, float streng
 		x = c * x - s * y;
 		y = c * y + s * t;
 
-		g2_draw_inner_line(x + cx, y + cy, px, py, strength);
+		arm_g2_draw_inner_line(x + cx, y + cy, px, py, strength);
 	}
 }
 
-void g2_calculate_cubic_bezier_point(float t, float *x, float *y, float *out) {
+void arm_g2_calculate_cubic_bezier_point(float t, float *x, float *y, float *out) {
 	float u = 1 - t;
 	float tt = t * t;
 	float uu = u * u;
@@ -109,15 +109,15 @@ void g2_calculate_cubic_bezier_point(float t, float *x, float *y, float *out) {
  * Provide x and y in the following order: startPoint, controlPoint1, controlPoint2, endPoint
  * Reference: http://devmag.org.za/2011/04/05/bzier-curves-a-tutorial/
  */
-void g2_draw_cubic_bezier(float *x, float *y, int segments, float strength) {
+void arm_g2_draw_cubic_bezier(float *x, float *y, int segments, float strength) {
 	float q0[2];
 	float q1[2];
-	g2_calculate_cubic_bezier_point(0, x, y, q0);
+	arm_g2_calculate_cubic_bezier_point(0, x, y, q0);
 
 	for (int i = 1; i < (segments + 1); ++i) {
 		float t = (float)i / segments;
-		g2_calculate_cubic_bezier_point(t, x, y, q1);
-		g2_draw_line(q0[0], q0[1], q1[0], q1[1], strength);
+		arm_g2_calculate_cubic_bezier_point(t, x, y, q1);
+		arm_g2_draw_line(q0[0], q0[1], q1[0], q1[1], strength);
 		q0[0] = q1[0];
 		q0[1] = q1[1];
 	}

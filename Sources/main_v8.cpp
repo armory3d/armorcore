@@ -2090,17 +2090,17 @@ namespace {
 		std::shared_ptr<BackingStore> content_text_vert = buffer_text_vert->GetBackingStore();
 		Local<ArrayBuffer> buffer_text_frag = Local<ArrayBuffer>::Cast(args[5]);
 		std::shared_ptr<BackingStore> content_text_frag = buffer_text_frag->GetBackingStore();
-		g2_init(content_image_vert->Data(), (int)content_image_vert->ByteLength(), content_image_frag->Data(), (int)content_image_frag->ByteLength(), content_colored_vert->Data(), (int)content_colored_vert->ByteLength(), content_colored_frag->Data(), (int)content_colored_frag->ByteLength(), content_text_vert->Data(), (int)content_text_vert->ByteLength(), content_text_frag->Data(), (int)content_text_frag->ByteLength());
+		arm_g2_init(content_image_vert->Data(), (int)content_image_vert->ByteLength(), content_image_frag->Data(), (int)content_image_frag->ByteLength(), content_colored_vert->Data(), (int)content_colored_vert->ByteLength(), content_colored_frag->Data(), (int)content_colored_frag->ByteLength(), content_text_vert->Data(), (int)content_text_vert->ByteLength(), content_text_frag->Data(), (int)content_text_frag->ByteLength());
 	}
 
 	void krom_g2_begin(ARGS) {
 		SCOPE();
-		g2_begin();
+		arm_g2_begin();
 	}
 
 	void krom_g2_end(ARGS) {
 		SCOPE();
-		g2_end();
+		arm_g2_end();
 	}
 
 	void krom_g2_draw_scaled_sub_image(ARGS) {
@@ -2120,12 +2120,12 @@ namespace {
 		Local<Value> tex = OBJ_GET(image, "texture_");
 		if (tex->IsObject()) {
 			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)TO_EXTERNAL(GET_INTERNAL(tex));
-			g2_draw_scaled_sub_image(texture, sx, sy, sw, sh, dx, dy, dw, dh);
+			arm_g2_draw_scaled_sub_image(texture, sx, sy, sw, sh, dx, dy, dw, dh);
 		}
 		else {
 			Local<Value> rt = OBJ_GET(image, "render_target_");
 			kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(rt));
-			g2_draw_scaled_sub_render_target(render_target, sx, sy, sw, sh, dx, dy, dw, dh);
+			arm_g2_draw_scaled_sub_render_target(render_target, sx, sy, sw, sh, dx, dy, dw, dh);
 		}
 	}
 
@@ -2137,7 +2137,7 @@ namespace {
 		float y1 = TO_F32(args[3]);
 		float x2 = TO_F32(args[4]);
 		float y2 = TO_F32(args[5]);
-		g2_fill_triangle(x0, y0, x1, y1, x2, y2);
+		arm_g2_fill_triangle(x0, y0, x1, y1, x2, y2);
 	}
 
 	void krom_g2_fill_rect(ARGS) {
@@ -2146,7 +2146,7 @@ namespace {
 		float y = TO_F32(args[1]);
 		float width = TO_F32(args[2]);
 		float height = TO_F32(args[3]);
-		g2_fill_rect(x, y, width, height);
+		arm_g2_fill_rect(x, y, width, height);
 	}
 
 	void krom_g2_draw_rect(ARGS) {
@@ -2156,7 +2156,7 @@ namespace {
 		float width = TO_F32(args[2]);
 		float height = TO_F32(args[3]);
 		float strength = TO_F32(args[4]);
-		g2_draw_rect(x, y, width, height, strength);
+		arm_g2_draw_rect(x, y, width, height, strength);
 	}
 
 	void krom_g2_draw_line(ARGS) {
@@ -2166,7 +2166,7 @@ namespace {
 		float x1 = TO_F32(args[2]);
 		float y1 = TO_F32(args[3]);
 		float strength = TO_F32(args[4]);
-		g2_draw_line(x0, y0, x1, y1, strength);
+		arm_g2_draw_line(x0, y0, x1, y1, strength);
 	}
 
 	void krom_g2_draw_string(ARGS) {
@@ -2174,21 +2174,21 @@ namespace {
 		String::Utf8Value text(isolate, args[0]);
 		float x = TO_F32(args[1]);
 		float y = TO_F32(args[2]);
-		g2_draw_string(*text, x, y);
+		arm_g2_draw_string(*text, x, y);
 	}
 
 	void krom_g2_set_font(ARGS) {
 		SCOPE();
-		g2_font_t *font = (g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
+		arm_g2_font_t *font = (arm_g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		int size = TO_I32(args[1]);
-		g2_set_font(font, size);
+		arm_g2_set_font(font, size);
 	}
 
 	void krom_g2_font_init(ARGS) {
 		SCOPE();
 		MAKE_CONTENT(args[0]);
-		g2_font_t *font = (g2_font_t *)malloc(sizeof(g2_font_t));
-		g2_font_init(font, content->Data(), TO_I32(args[1]));
+		arm_g2_font_t *font = (arm_g2_font_t *)malloc(sizeof(arm_g2_font_t));
+		arm_g2_font_init(font, content->Data(), TO_I32(args[1]));
 		MAKE_OBJ(font);
 		args.GetReturnValue().Set(obj);
 	}
@@ -2196,8 +2196,8 @@ namespace {
 	void krom_g2_font_13(ARGS) {
 		SCOPE();
 		MAKE_CONTENT(args[0]);
-		g2_font_t *font = (g2_font_t *)malloc(sizeof(g2_font_t));
-		g2_font_13(font, content->Data());
+		arm_g2_font_t *font = (arm_g2_font_t *)malloc(sizeof(arm_g2_font_t));
+		arm_g2_font_13(font, content->Data());
 		MAKE_OBJ(font);
 		args.GetReturnValue().Set(obj);
 	}
@@ -2211,54 +2211,54 @@ namespace {
 			int32_t j = TO_I32(ARRAY_GET(js_array, i));
 			ar[i] = j;
 		}
-		g2_font_set_glyphs(ar, length);
+		arm_g2_font_set_glyphs(ar, length);
 		free(ar);
 	}
 
 	void krom_g2_font_count(ARGS) {
 		SCOPE();
-		g2_font_t *font = (g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
-		int i = g2_font_count(font);
+		arm_g2_font_t *font = (arm_g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
+		int i = arm_g2_font_count(font);
 		RETURN_I32(i);
 	}
 
 	void krom_g2_font_height(ARGS) {
 		SCOPE();
-		g2_font_t *font = (g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
+		arm_g2_font_t *font = (arm_g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		int size = TO_I32(args[1]);
-		int i = (int)g2_font_height(font, size);
+		int i = (int)arm_g2_font_height(font, size);
 		RETURN_I32(i);
 	}
 
 	void krom_g2_string_width(ARGS) {
 		SCOPE();
-		g2_font_t *font = (g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
+		arm_g2_font_t *font = (arm_g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		int size = TO_I32(args[1]);
 		String::Utf8Value text(isolate, args[2]);
-		int i = (int)g2_string_width(font, size, *text);
+		int i = (int)arm_g2_string_width(font, size, *text);
 		RETURN_I32(i);
 	}
 
 	void krom_g2_set_bilinear_filter(ARGS) {
 		SCOPE();
-		g2_set_bilinear_filter(TO_I32(args[0]));
+		arm_g2_set_bilinear_filter(TO_I32(args[0]));
 	}
 
 	void krom_g2_restore_render_target(ARGS) {
 		SCOPE();
-		g2_restore_render_target();
+		arm_g2_restore_render_target();
 	}
 
 	void krom_g2_set_render_target(ARGS) {
 		SCOPE();
 		kinc_g4_render_target_t *rt = (kinc_g4_render_target_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
-		g2_set_render_target(rt);
+		arm_g2_set_render_target(rt);
 	}
 
 	void krom_g2_set_color(ARGS) {
 		SCOPE();
 		int color = TO_I32(args[0]);
-		g2_set_color(color);
+		arm_g2_set_color(color);
 	}
 
 	void krom_g2_set_pipeline(ARGS) {
@@ -2267,17 +2267,17 @@ namespace {
 		if (!args[0]->IsNullOrUndefined()) {
 			pipeline = (kinc_g4_pipeline_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		}
-		g2_set_pipeline(pipeline);
+		arm_g2_set_pipeline(pipeline);
 	}
 
 	void krom_g2_set_transform(ARGS) {
 		SCOPE();
 		if (args[0]->IsNullOrUndefined()) {
-			g2_set_transform(NULL);
+			arm_g2_set_transform(NULL);
 		}
 		else {
 			MAKE_CONTENT(args[0]);
-			g2_set_transform((kinc_matrix3x3_t *)content->Data());
+			arm_g2_set_transform((kinc_matrix3x3_t *)content->Data());
 		}
 	}
 
@@ -2287,7 +2287,7 @@ namespace {
 		float cy = TO_F32(args[1]);
 		float radius = TO_F32(args[2]);
 		int segments = TO_I32(args[3]);
-		g2_fill_circle(cx, cy, radius, segments);
+		arm_g2_fill_circle(cx, cy, radius, segments);
 	}
 
 	void krom_g2_draw_circle(ARGS) {
@@ -2297,7 +2297,7 @@ namespace {
 		float radius = TO_F32(args[2]);
 		int segments = TO_I32(args[3]);
 		float strength = TO_F32(args[4]);
-		g2_draw_circle(cx, cy, radius, segments, strength);
+		arm_g2_draw_circle(cx, cy, radius, segments, strength);
 	}
 
 	void krom_g2_draw_cubic_bezier(ARGS) {
@@ -2321,7 +2321,7 @@ namespace {
 
 		int segments = TO_I32(args[2]);
 		float strength = TO_F32(args[3]);
-		g2_draw_cubic_bezier(x, y, segments, strength);
+		arm_g2_draw_cubic_bezier(x, y, segments, strength);
 		free(x);
 		free(y);
 	}
@@ -3199,7 +3199,7 @@ namespace {
 		ops.theme = (zui_theme_t *)TO_EXTERNAL(GET_INTERNAL(theme));
 
 		Local<Value> font = OBJ_GET(arg0, "font");
-		ops.font = (g2_font_t *)TO_EXTERNAL(GET_INTERNAL(font));
+		ops.font = (arm_g2_font_t *)TO_EXTERNAL(GET_INTERNAL(font));
 
 		Local<Value> colorwheel = OBJ_GET(arg0, "color_wheel");
 		if (!colorwheel->IsNullOrUndefined()) {
@@ -3249,7 +3249,7 @@ namespace {
 	void krom_zui_set_font(ARGS) {
 		SCOPE();
 		zui_t *ui = (zui_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
-		g2_font_t *font = (g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[1]));
+		arm_g2_font_t *font = (arm_g2_font_t *)TO_EXTERNAL(GET_INTERNAL(args[1]));
 		ui->ops.font = font;
 	}
 
