@@ -408,10 +408,7 @@ function image_from_texture(tex: any): image_t {
 	return image;
 }
 
-function image_from_bytes(buffer: buffer_t, width: i32, height: i32, format: tex_format_t = null): image_t {
-	if (format == null) {
-		format = tex_format_t.RGBA32;
-	}
+function image_from_bytes(buffer: buffer_t, width: i32, height: i32, format: tex_format_t = tex_format_t.RGBA32): image_t {
 	let readable: bool = true;
 	let image: image_t = _image_create(null);
 	image.format = format;
@@ -420,10 +417,7 @@ function image_from_bytes(buffer: buffer_t, width: i32, height: i32, format: tex
 	return image;
 }
 
-function image_from_bytes_3d(buffer: buffer_t, width: i32, height: i32, depth: i32, format: tex_format_t = null): image_t {
-	if (format == null) {
-		format = tex_format_t.RGBA32;
-	}
+function image_from_bytes_3d(buffer: buffer_t, width: i32, height: i32, depth: i32, format: tex_format_t = tex_format_t.RGBA32): image_t {
 	let readable: bool = true;
 	let image: image_t = _image_create(null);
 	image.format = format;
@@ -439,10 +433,7 @@ function image_from_encoded_bytes(buffer: buffer_t, format: string, readable: bo
 	return image;
 }
 
-function image_create(width: i32, height: i32, format: tex_format_t = null): image_t {
-	if (format == null) {
-		format = tex_format_t.RGBA32;
-	}
+function image_create(width: i32, height: i32, format: tex_format_t = tex_format_t.RGBA32): image_t {
 	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture(width, height, image_get_tex_format(format));
@@ -450,10 +441,7 @@ function image_create(width: i32, height: i32, format: tex_format_t = null): ima
 	return image;
 }
 
-function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format_t = null): image_t {
-	if (format == null) {
-		format = tex_format_t.RGBA32;
-	}
+function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format_t = tex_format_t.RGBA32): image_t {
 	let image: image_t = _image_create(null);
 	image.format = format;
 	image.texture_ = krom_g4_create_texture3d(width, height, depth, image_get_tex_format(format));
@@ -461,10 +449,7 @@ function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format
 	return image;
 }
 
-function image_create_render_target(width: i32, height: i32, format: tex_format_t = null, depth_format: depth_format_t = depth_format_t.NO_DEPTH): image_t {
-	if (format == null) {
-		format = tex_format_t.RGBA32;
-	}
+function image_create_render_target(width: i32, height: i32, format: tex_format_t = tex_format_t.RGBA32, depth_format: depth_format_t = depth_format_t.NO_DEPTH): image_t {
 	let image: image_t = _image_create(null);
 	image.format = format;
 	image.render_target_ = krom_g4_create_render_target(width, height, format, image_get_depth_buffer_bits(depth_format), 0);
