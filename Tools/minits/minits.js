@@ -394,7 +394,7 @@ function struct_alloc(token, alloc_type) {
 		}
 		token = "GC_ALLOC_INIT(" + alloc_type + ", ";
 		while (get_token() != "}") {
-			token += get_token();
+			token += get_token_c();
 			pos++;
 		}
 		token += get_token(); // "}"
@@ -805,12 +805,8 @@ function write_c() {
 			let ret = function_return_type();
 
 			if (fn_name == "(") { // Anonymous function
-				fn_name = last_fn_name + "_";
-				last_fn_name = fn_name;
-				let params = "()";
-				let fn_decl = ret + " " + fn_name + params;
-				write(fn_decl + ";\n");
-				continue;
+				fn_name = last_fn_name + "_1";
+				pos--;
 			}
 
 			last_fn_name = fn_name;
@@ -989,16 +985,16 @@ function write_c() {
 				token = get_token();
 
 				if (token == "function") {
-					anon_fn += "_";
+					anon_fn += "_1";
 					write("&" + anon_fn);
 					if (get_token(-1) == "=") {
 						write(";\n");
 					}
 
-					let ret = function_return_type();
 					skip_until("{");
-					string += ret + " " + anon_fn + "() {\n";
 					write = string_write;
+					let fn_decl = fn_declarations.get(anon_fn);
+					write(fn_decl + "{\n");
 					nested = true;
 					continue;
 				}
@@ -1128,18 +1124,28 @@ function write_c() {
 				}
 
 				if (is_string) {
-					// "str" + str
+					// "str" + str + 1 + ...
+					let first = true;
 					while (get_token_after_piece() == "+") {
-						token = read_piece();
-						pos++;
+						if (first) {
+							first = false;
+							token = read_piece();
 
-						if (value_type(token) == "i32") {
-							token = "i32_to_string(" + token + ")";
+							if (value_type(token) == "i32") {
+								token = "i32_to_string(" + token + ")";
+							}
 						}
+						pos++;
 
 						token = "string_join(" + token + ",";
 						pos++;
-						token += read_piece();
+
+						let token_b = read_piece();
+						if (value_type(token_b) == "i32") {
+							token_b = "i32_to_string(" + token_b + ")";
+						}
+
+						token += token_b;
 						token += ")";
 					}
 

@@ -15,6 +15,9 @@
 #include <iron/iron_armpack.h>
 #include <gc.h>
 // #include <quickjs.h>
+#ifdef WITH_ZUI
+#include "zui/zui.h"
+#endif
 
 #define f32 float
 #define i32 int32_t
@@ -215,7 +218,9 @@ void key_down(int code, void *data) {
 	krom_key_down(code);
 
 	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) zui_key_down(zui_instances[i], code);
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_key_down(zui_instances[i], code);
+	}
 	#endif
 
 	#ifdef IDLE_SLEEP
@@ -228,7 +233,9 @@ void key_up(int code, void *data) {
 	krom_key_up(code);
 
 	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) zui_key_up(zui_instances[i], code);
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_key_up(zui_instances[i], code);
+	}
 	#endif
 
 	#ifdef IDLE_SLEEP
@@ -465,7 +472,7 @@ f32 math_sin(f32 x) { return sinf(x); }
 f32 math_tan(f32 x) { return tanf(x); }
 f32 math_sqrt(f32 x) { return sqrtf(x); }
 f32 math_abs(f32 x) { return fabsf(x); }
-f32 math_random() { return rand() / RAND_MAX; }
+f32 math_random() { return rand() / (float)RAND_MAX; }
 f32 math_atan2(f32 y, f32 x) { return atan2f(y, x); }
 f32 math_asin(f32 x) { return asinf(x); }
 f32 math_pi() { return 3.14159265358979323846; }

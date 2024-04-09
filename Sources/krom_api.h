@@ -79,7 +79,7 @@ bool show_window = false;
 #endif
 #ifdef WITH_STB_IMAGE_WRITE
 #ifdef WITH_ZLIB
-extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
+unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
 #define STBIW_ZLIB_COMPRESS stbiw_zlib_compress
 #endif
 #define STBI_WINDOWS_UTF8
@@ -137,7 +137,7 @@ int krafix_compile(const char *source, char *output, int *length, const char *ta
 #endif
 
 #if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
-extern "C" kinc_g5_command_list_t commandList;
+kinc_g5_command_list_t commandList;
 static kinc_g5_constant_buffer_t constant_buffer;
 static kinc_g4_render_target_t *render_target;
 static kinc_raytrace_pipeline_t pipeline;
@@ -952,8 +952,8 @@ void krom_g4_set_texture(kinc_g4_texture_unit_t *unit, kinc_g4_texture_t *textur
 	kinc_g4_set_texture(*unit, texture);
 }
 
-void krom_g4_set_render_target(kinc_g4_texture_unit_t *unit, any render_target) {
-
+void krom_g4_set_render_target(kinc_g4_texture_unit_t *unit, kinc_g4_render_target_t *render_target) {
+	kinc_g4_render_target_use_color_as_texture(render_target, *unit);
 }
 
 void krom_g4_set_texture_depth(any unit, any texture) {
@@ -1014,11 +1014,11 @@ f32 krom_get_time() {
 }
 
 i32 krom_window_width() {
-	return 1280;
+	return kinc_window_width(0);
 }
 
 i32 krom_window_height() {
-	return 720;
+	return kinc_window_height(0);
 }
 
 void krom_set_window_title(string_t *title) {
@@ -1042,7 +1042,7 @@ void krom_move_window(i32 x, i32 y) {
 }
 
 i32 krom_screen_dpi() {
-	return 0;
+	return kinc_display_current_mode(kinc_primary_display()).pixels_per_inch;
 }
 
 string_t *krom_system_id() {
@@ -1054,15 +1054,15 @@ void krom_request_shutdown() {
 }
 
 i32 krom_display_count() {
-	return 1;
+	return kinc_count_displays();
 }
 
 i32 krom_display_width(i32 index) {
-	return 1280;
+	return kinc_display_current_mode(index).width;
 }
 
 i32 krom_display_height(i32 index) {
-	return 720;
+	return kinc_display_current_mode(index).height;
 }
 
 i32 krom_display_x(i32 index) {
@@ -1074,7 +1074,7 @@ i32 krom_display_y(i32 index) {
 }
 
 i32 krom_display_frequency(i32 index) {
-	return 0;
+	return kinc_display_current_mode(index).frequency;
 }
 
 bool krom_display_is_primary(i32 index) {
@@ -1231,19 +1231,29 @@ void krom_http_request(string_t *url, i32 size, any callback) {
 }
 
 void krom_g2_init(buffer_t *image_vert, buffer_t *image_frag, buffer_t *colored_vert, buffer_t *colored_frag, buffer_t *text_vert, buffer_t *text_frag) {
-
+	arm_g2_init(image_vert->data, image_vert->length, image_frag->data, image_frag->length, colored_vert->data, colored_vert->length, colored_frag->data, colored_frag->length, text_vert->data, text_vert->length, text_frag->data, text_frag->length);
 }
 
 void krom_g2_begin() {
-
+	arm_g2_begin();
 }
 
 void krom_g2_end() {
-
+	arm_g2_end();
 }
 
 void krom_g2_draw_scaled_sub_image(image_t *image, f32 sx, f32 sy, f32 sw, f32 sh, f32 dx, f32 dy, f32 dw, f32 dh) {
-
+	#ifdef KINC_DIRECT3D12
+	waitAfterNextDraw = true;
+	#endif
+	if (image->texture_ != NULL) {
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)image->texture_;
+		arm_g2_draw_scaled_sub_image(texture, sx, sy, sw, sh, dx, dy, dw, dh);
+	}
+	else {
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)image->render_target_;
+		arm_g2_draw_scaled_sub_render_target(render_target, sx, sy, sw, sh, dx, dy, dw, dh);
+	}
 }
 
 void krom_g2_fill_triangle(f32 x0, f32 y0, f32 x1, f32 y1, f32 x2, f32 y2) {
@@ -1335,7 +1345,9 @@ void krom_g2_draw_cubic_bezier(f32 *x, f32 *y, i32 segments, f32 strength) {
 // declare function krom_delay_idle_sleep(): void;
 // declare function krom_open_dialog(filter_list: string, default_path: string, open_multiple: bool): string[];
 // declare function krom_save_dialog(filter_list: string, default_path: string): string;
-// declare function krom_read_directory(path: string, foldersOnly: bool): string;
+char *krom_read_directory(char *path, bool folders_only) {
+
+}
 // declare function krom_file_exists(path: string): bool;
 // declare function krom_delete_file(path: string): void;
 // declare function krom_inflate(bytes: buffer_t, raw: bool): buffer_t;
