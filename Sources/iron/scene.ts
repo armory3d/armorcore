@@ -217,7 +217,7 @@ function scene_traverse_objects(format: scene_t, parent: object_t, objects: obj_
 	}
 	for (let i: i32 = 0; i < objects.length; ++i) {
 		let o: obj_t = objects[i];
-		if (o.spawn != null && o.spawn == false) {
+		if (o.spawn == false) {
 			continue; // Do not auto-create Scene object
 		}
 
@@ -249,7 +249,7 @@ function scene_get_objects_count(objects: obj_t[]): i32 {
 	let result: i32 = objects.length;
 	for (let i: i32 = 0; i < objects.length; ++i) {
 		let o: obj_t = objects[i];
-		if (o.spawn != null && o.spawn == false) {
+		if (o.spawn == false) {
 			continue; // Do not count children of non-spawned objects
 		}
 		if (o.children != null) {
@@ -442,9 +442,7 @@ function scene_return_object_loaded(object: object_t, o: obj_t, oactions: scene_
 	if (object != null) {
 		object.raw = o;
 		object.name = o.name;
-		if (o.visible != null) {
-			object.visible = o.visible;
-		}
+		object.visible = o.visible;
 		scene_gen_transform(o, object.transform);
 		object_setup_animation(object, oactions);
 	}

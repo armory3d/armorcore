@@ -1,5 +1,8 @@
 #pragma once
 
+#pragma clang diagnostic ignored "-Wgnu-designator"
+#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
+
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,15 +40,21 @@ char **_argv;
 char assetsdir[256];
 bool enable_window = true;
 bool in_background = false;
-bool gc_static_alloc = false;
 
 void (*krom_update)(void);
 void (*krom_drop_files)(wchar_t *);
 void (*krom_key_down)(int);
 void (*krom_key_up)(int);
+void (*krom_mouse_down)(int, int, int);
+void (*krom_mouse_up)(int, int, int);
+void (*krom_mouse_move)(int, int, int, int);
 
 void *gc_alloc(size_t size) {
-	return gc_static_alloc ? _gc_calloc_static(size, sizeof(uint8_t)) : _gc_calloc(size, sizeof(uint8_t));
+	return _gc_calloc(size, sizeof(uint8_t));
+}
+
+void *gc_global(void *ptr) {
+	return _gc_make_static(ptr);
 }
 
 void *gc_realloc(void *ptr, size_t size) {
@@ -124,7 +133,6 @@ int kickstart(int argc, char **argv) {
 	// JS_FreeValue(ctx, result);
 	// JS_RunGC(runtime);
 
-	gc_static_alloc = true;
 	_gc_start(&argc);
 
 	void (*volatile __kickstart)(void) = _kickstart; // No inline, for gc
@@ -185,7 +193,6 @@ void update(void *data) {
 	krom_update();
 	kinc_g4_end(0);
 	kinc_g4_swap_buffers();
-	gc_static_alloc = false;
 }
 
 void drop_files(wchar_t *file_path, void *data) {
@@ -240,6 +247,50 @@ void key_up(int code, void *data) {
 
 	#ifdef IDLE_SLEEP
 	input_down = false;
+	paused_frames = 0;
+	#endif
+}
+
+void _mouse_down(int window, int button, int x, int y, void *data) {
+	krom_mouse_down(button, x, y);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_mouse_down(zui_instances[i], button, x, y);
+	}
+	#endif
+
+	#ifdef IDLE_SLEEP
+	input_down = true;
+	paused_frames = 0;
+	#endif
+}
+
+void _mouse_up(int window, int button, int x, int y, void *data) {
+	krom_mouse_up(button, x, y);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_mouse_up(zui_instances[i], button, x, y);
+	}
+	#endif
+
+	#ifdef IDLE_SLEEP
+	input_down = false;
+	paused_frames = 0;
+	#endif
+}
+
+void mouse_move(int window, int x, int y, int mx, int my, void *data) {
+	krom_mouse_move(x, y, mx, my);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_mouse_move(zui_instances[i], x, y, mx, my);
+	}
+	#endif
+
+	#ifdef IDLE_SLEEP
 	paused_frames = 0;
 	#endif
 }

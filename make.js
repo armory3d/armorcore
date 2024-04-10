@@ -885,6 +885,11 @@ function writeTSProject(projectdir, projectFiles, options) {
 			let files = fs.readdirSync(options.sources[i]);
 			for (let file of files) {
 				if (file.endsWith(".ts")) {
+
+					if (globalThis.flags.with_minits && file.endsWith('_v8.ts')) {
+						continue;
+					}
+
 					// Prevent duplicates, keep the newly added file
 					for (let included of tsdata.include){
 						if (path.basename(included) == file) {
@@ -914,9 +919,6 @@ function writeTSProject(projectdir, projectFiles, options) {
 		let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
 		let stream = fs.createWriteStream('build/krom.ts');
 		for (let file_path of file_paths) {
-			if (file_path.endsWith('/krom_v8.ts')) {
-				continue;
-			}
 			file = fs.readFileSync(file_path) + '';
 			file = ts_preprocessor(file, file_path);
 			stream.write(file);

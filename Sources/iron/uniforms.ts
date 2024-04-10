@@ -132,7 +132,7 @@ function uniforms_bind_render_target(rt: render_target_t, context: shader_contex
 				g4_set_tex(context._.tex_units[j], rt._image); // sampler2D
 			}
 
-			if (!params_set && rt.mipmaps != null && rt.mipmaps == true && !is_image) {
+			if (!params_set && rt.mipmaps == true && !is_image) {
 				g4_set_tex_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
 				params_set = true;
 			}

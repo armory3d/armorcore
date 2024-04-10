@@ -296,16 +296,19 @@ void krom_set_keyboard_press_callback(any callback) {
 
 }
 
-void krom_set_mouse_down_callback(any callback) {
-
+void krom_set_mouse_down_callback(void (*callback)(int, int, int)) {
+	krom_mouse_down = callback;
+	kinc_mouse_set_press_callback(_mouse_down, NULL);
 }
 
-void krom_set_mouse_up_callback(any callback) {
-
+void krom_set_mouse_up_callback(void (*callback)(int, int, int)) {
+	krom_mouse_up = callback;
+	kinc_mouse_set_release_callback(_mouse_up, NULL);
 }
 
-void krom_set_mouse_move_callback(any callback) {
-
+void krom_set_mouse_move_callback(void (*callback)(int, int, int, int)) {
+	krom_mouse_move = callback;
+	kinc_mouse_set_move_callback(mouse_move, NULL);
 }
 
 void krom_set_mouse_wheel_callback(any callback) {
@@ -761,9 +764,9 @@ void krom_g4_compile_pipeline(kinc_g4_pipeline_t *pipeline, vertex_struct_t *str
 	}
 	pipeline->input_layout[length] = NULL;
 
-	pipeline->cull_mode = state->cull_mode;
+	pipeline->cull_mode = (kinc_g4_cull_mode_t)state->cull_mode;
 	pipeline->depth_write = state->depth_write;
-	pipeline->depth_mode = state->depth_mode;
+	pipeline->depth_mode = (kinc_g4_compare_mode_t)state->depth_mode;
 	pipeline->blend_source = (kinc_g4_blending_factor_t)state->blend_source;
 	pipeline->blend_destination = (kinc_g4_blending_factor_t)state->blend_dest;
 	pipeline->alpha_blend_source = (kinc_g4_blending_factor_t)state->alpha_blend_source;
@@ -1281,15 +1284,17 @@ void krom_g2_set_font(any font, i32 size) {
 }
 
 any krom_g2_font_init(buffer_t *blob, i32 font_index) {
-	return NULL;
+	arm_g2_font_t *font = (arm_g2_font_t *)malloc(sizeof(arm_g2_font_t));
+	arm_g2_font_init(font, blob->data, font_index);
+	return font;
 }
 
 any krom_g2_font_13(buffer_t *blob) {
 	return NULL;
 }
 
-void krom_g2_font_set_glyphs(i32 *glyphs) {
-
+void krom_g2_font_set_glyphs(i32_array_t *glyphs) {
+	arm_g2_font_set_glyphs(glyphs->buffer, glyphs->length);
 }
 
 i32 krom_g2_font_count(any font) {
@@ -1346,7 +1351,7 @@ void krom_g2_draw_cubic_bezier(f32 *x, f32 *y, i32 segments, f32 strength) {
 // declare function krom_open_dialog(filter_list: string, default_path: string, open_multiple: bool): string[];
 // declare function krom_save_dialog(filter_list: string, default_path: string): string;
 char *krom_read_directory(char *path, bool folders_only) {
-
+	return NULL;
 }
 // declare function krom_file_exists(path: string): bool;
 // declare function krom_delete_file(path: string): void;
@@ -1377,5 +1382,11 @@ char *krom_language() {
 	return NULL;
 }
 // declare function krom_io_obj_parse(file_bytes: buffer_t, split_code: i32, start_pos: i32, udim: bool): any;
+
+#ifdef WITH_ZUI
+float krom_js_eval(char *str) {
+	return 0.0;
+}
+#endif
 
 #endif

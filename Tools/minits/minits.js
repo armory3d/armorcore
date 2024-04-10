@@ -157,6 +157,10 @@ function parse() {
 		if (token.startsWith("//")) { // Throw away comment tokens
 			continue;
 		}
+		if (token == "=" && tokens[tokens.length - 1] == "!") { // Merge "!" and "=" into "!=" token
+			tokens[tokens.length - 1] = "!=";
+			continue;
+		}
 		if (token == "") { // No more tokens
 			break;
 		}
@@ -859,6 +863,7 @@ function write_c() {
 
 	// Globals
 	let global_inits = [];
+	let global_ptrs = [];
 	for (pos = 0; pos < tokens.length; ++pos) {
 		let token = get_token();
 
@@ -868,6 +873,18 @@ function write_c() {
 
 			pos++; // :
 			let type = read_type();
+
+			if (type != "f32" &&
+				type != "i32" &&
+				type != "u32" &&
+				type != "i16" &&
+				type != "u16" &&
+				type != "i8" &&
+				type != "u8" &&
+				type != "bool" &&
+				enums.indexOf(type) == -1) {
+				global_ptrs.push(name);
+			}
 
 			write(join_type_name(type, name) + ";");
 
@@ -922,7 +939,12 @@ function write_c() {
 	write("\nvoid _kickstart() {\n");
 	// Init globals
 	for (let val of global_inits) {
-		write("\t" + val + ";\n");
+		write("\t" + val + ";");
+		let name = val.split("=")[0];
+		if (global_ptrs.indexOf(name) > -1 && !val.endsWith("=null")) {
+			write("gc_global(" + name + ");");
+		}
+		write("\n");
 	}
 	write("\t_main();\n");
 	write("\tkinc_start();\n");
@@ -976,7 +998,7 @@ function write_c() {
 			tabs = 1;
 			new_line = true;
 			let alloc_type = "";
-
+			let mark_global = null;
 			let anon_fn = fn_name;
 			let nested = false;
 
@@ -1035,6 +1057,17 @@ function write_c() {
 
 				// array[0] -> array->buffer[0]
 				token = array_access(token);
+
+				// Use static alloc for global pointers
+				if (get_token(1) == "=" && token != ":" && get_token(2) != "null") {
+					if (global_ptrs.indexOf(token) > -1) {
+						mark_global = token;
+					}
+				}
+				if (token == ";" && mark_global != null) {
+					write(";gc_global(" + mark_global + ")");
+					mark_global = null;
+				}
 
 				// Turn "= {}" into malloc()
 				if (get_token(-1) == "=" && token == "{" && get_token(1) == "}") {
