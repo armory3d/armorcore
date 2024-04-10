@@ -3,28 +3,7 @@
 
 class zui_t {
 
-	_t: theme_t = null;
-
-	get t(): theme_t {
-		return this._t;
-	}
-
-	set t(theme: theme_t) {
-		if (this.t != null) {
-			for (let key of Object.getOwnPropertyNames(theme_t.prototype)) {
-				if (key == "constructor") {
-					continue;
-				}
-				let t_: any = this.t;
-				let theme_: any = theme;
-				t_[key] = theme_[key];
-			}
-			theme.theme_ = this.t.theme_;
-		}
-		this._t = theme;
-	}
-
-	font: g2_font_t;
+	ops: zui_ops_t;
 	zui_: any;
 
 	get is_scrolling(): bool { return krom_zui_get(this.zui_, "is_scrolling"); }
@@ -193,14 +172,13 @@ function zui_create(ops: zui_ops_t): zui_t {
 		}
 	);
 	zui_current = raw;
-	raw.t = ops.theme;
-	raw.font = ops.font;
+	raw.ops = ops;
 	return raw;
 }
 
 function zui_set_font(raw: zui_t, font: g2_font_t) {
 	g2_font_init(font); // Make sure font_ is ready
-	raw.font = font;
+	raw.ops.font = font;
 	krom_zui_set_font(raw.zui_, font.font_);
 }
 
@@ -347,15 +325,15 @@ function zui_set_hovered_tab_name(name: string) {
 }
 
 function zui_ELEMENT_W(raw: zui_t): f32 {
-	return raw.t.ELEMENT_W * zui_SCALE(raw);
+	return raw.ops.theme.ELEMENT_W * zui_SCALE(raw);
 }
 
 function zui_ELEMENT_H(raw: zui_t): f32 {
-	return raw.t.ELEMENT_H * zui_SCALE(raw);
+	return raw.ops.theme.ELEMENT_H * zui_SCALE(raw);
 }
 
 function zui_ELEMENT_OFFSET(raw: zui_t): f32 {
-	return raw.t.ELEMENT_OFFSET * zui_SCALE(raw);
+	return raw.ops.theme.ELEMENT_OFFSET * zui_SCALE(raw);
 }
 
 function zui_float_input(handle: zui_handle_t, label: string = "", align: zui_align_t = zui_align_t.LEFT, precision: f32 = 1000.0): f32 {
@@ -387,8 +365,8 @@ function zui_menu_button(text: string): bool {
 }
 
 function zui_MENUBAR_H(raw: zui_t): f32 {
-	let button_offset_y = (raw.t.ELEMENT_H * zui_SCALE(raw) - raw.t.BUTTON_H * zui_SCALE(raw)) / 2;
-	return raw.t.BUTTON_H * zui_SCALE(raw) * 1.1 + 2 + button_offset_y;
+	let button_offset_y = (raw.ops.theme.ELEMENT_H * zui_SCALE(raw) - raw.ops.theme.BUTTON_H * zui_SCALE(raw)) / 2;
+	return raw.ops.theme.BUTTON_H * zui_SCALE(raw) * 1.1 + 2 + button_offset_y;
 }
 
 class zui_handle_t {
@@ -732,8 +710,45 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 	zui_nodes_current = raw;
 	zui_current_canvas = canvas;
 
-	// Fill in optional values
-	zui_nodes_update_canvas_format(canvas);
+	// Ensure floats are encoded as floats
+	for (let n of canvas.nodes) {
+		for (let soc of n.inputs) {
+			if (soc.min - math_floor(soc.min) == 0.0) {
+				soc.min += zui_nodes_eps;
+			}
+			if (soc.max - math_floor(soc.max) == 0.0) {
+				soc.max += zui_nodes_eps;
+			}
+			if (soc.precision - math_floor(soc.precision) == 0.0) {
+				soc.precision += zui_nodes_eps;
+			}
+		}
+		for (let soc of n.outputs) {
+			if (soc.min - math_floor(soc.min) == 0.0) {
+				soc.min += zui_nodes_eps;
+			}
+			if (soc.max - math_floor(soc.max) == 0.0) {
+				soc.max += zui_nodes_eps;
+			}
+			if (soc.precision - math_floor(soc.precision) == 0.0) {
+				soc.precision += zui_nodes_eps;
+			}
+		}
+		for (let but of n.buttons) {
+			if (but.height - math_floor(but.height) == 0.0) {
+				but.height += zui_nodes_eps;
+			}
+			if (but.min - math_floor(but.min) == 0.0) {
+				but.min += zui_nodes_eps;
+			}
+			if (but.max - math_floor(but.max) == 0.0) {
+				but.max += zui_nodes_eps;
+			}
+			if (but.precision - math_floor(but.precision) == 0.0) {
+				but.precision += zui_nodes_eps;
+			}
+		}
+	}
 
 	// Ensure properties order
 	let canvas_: zui_node_canvas_t = {
@@ -758,52 +773,6 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 		}
 	}
 
-	// Ensure properties order
-	for (let n of canvas_.nodes) {
-		n.name = zui_tr(n.name);
-		for (let i: i32 = 0; i < n.inputs.length; ++i) {
-			n.inputs[i] = {
-				id: n.inputs[i].id,
-				node_id: n.inputs[i].node_id,
-				name: zui_tr(n.inputs[i].name),
-				type: n.inputs[i].type,
-				color: n.inputs[i].color,
-				default_value: n.inputs[i].default_value,
-				min: n.inputs[i].min,
-				max: n.inputs[i].max,
-				precision: n.inputs[i].precision,
-				display: n.inputs[i].display,
-			};
-		}
-		for (let i: i32 = 0; i < n.outputs.length; ++i) {
-			n.outputs[i] = {
-				id: n.outputs[i].id,
-				node_id: n.outputs[i].node_id,
-				name: zui_tr(n.outputs[i].name),
-				type: n.outputs[i].type,
-				color: n.outputs[i].color,
-				default_value: n.outputs[i].default_value,
-				min: n.outputs[i].min,
-				max: n.outputs[i].max,
-				precision: n.outputs[i].precision,
-				display: n.outputs[i].display,
-			};
-		}
-		for (let i: i32 = 0; i < n.buttons.length; ++i) {
-			n.buttons[i] = {
-				name: zui_tr(n.buttons[i].name),
-				type: n.buttons[i].type,
-				output: n.buttons[i].output,
-				default_value: n.buttons[i].default_value,
-				data: n.buttons[i].data,
-				min: n.buttons[i].min,
-				max: n.buttons[i].max,
-				precision: n.buttons[i].precision,
-				height: n.buttons[i].height,
-			};
-		}
-	}
-
 	// Reserve capacity
 	while (canvas_.nodes.length < 128) {
 		array_push(canvas_.nodes, { id: -1, name: "", type: "", x: 0, y: 0, color: 0, inputs: [], outputs: [], buttons: [], width: 0 });
@@ -814,6 +783,7 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 
 	let packed: buffer_t = krom_zui_node_canvas(raw.nodes_, armpack_encode(canvas_));
 	canvas_ = armpack_decode(packed);
+
 	if (canvas_.nodes == null) {
 		canvas_.nodes = [];
 	}
@@ -850,7 +820,7 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 	}
 	zui_node_replace = [];
 
-	zui_element_h = ui.t.ELEMENT_H + 2;
+	zui_element_h = ui.ops.theme.ELEMENT_H + 2;
 }
 
 function zui_nodes_rgba_popup(ui: zui_t, nhandle: zui_handle_t, val: f32_array_t, x: i32, y: i32) {
@@ -1115,89 +1085,6 @@ function zui_nodes_c_to_js_data(type: string, u8a: u8_array_t): any {
 		return 0;
 	}
 	return null;
-}
-
-function zui_nodes_update_canvas_format(canvas: zui_node_canvas_t) {
-	for (let n of canvas.nodes) {
-		for (let soc of n.inputs) {
-			if (soc.min == null) {
-				soc.min = 0.0;
-			}
-			if (soc.max == null) {
-				soc.max = 1.0;
-			}
-			if (soc.precision == null) {
-				soc.precision = 100.0;
-			}
-			if (soc.display == null) {
-				soc.display = 0;
-			}
-			if (soc.min - math_floor(soc.min) == 0.0) {
-				soc.min += zui_nodes_eps;
-			}
-			if (soc.max - math_floor(soc.max) == 0.0) {
-				soc.max += zui_nodes_eps;
-			}
-			if (soc.precision - math_floor(soc.precision) == 0.0) {
-				soc.precision += zui_nodes_eps;
-			}
-		}
-		for (let soc of n.outputs) {
-			if (soc.min == null) {
-				soc.min = 0.0;
-			}
-			if (soc.max == null) {
-				soc.max = 1.0;
-			}
-			if (soc.precision == null) {
-				soc.precision = 100.0;
-			}
-			if (soc.display == null) {
-				soc.display = 0;
-			}
-			if (soc.min - math_floor(soc.min) == 0.0) {
-				soc.min += zui_nodes_eps;
-			}
-			if (soc.max - math_floor(soc.max) == 0.0) {
-				soc.max += zui_nodes_eps;
-			}
-			if (soc.precision - math_floor(soc.precision) == 0.0) {
-				soc.precision += zui_nodes_eps;
-			}
-		}
-		for (let but of n.buttons) {
-			if (but.output == null) {
-				but.output = -1;
-			}
-			if (but.min == null) {
-				but.min = 0.0;
-			}
-			if (but.max == null) {
-				but.max = 1.0;
-			}
-			if (but.precision == null) {
-				but.precision = 100.0;
-			}
-			if (but.height == null) {
-				but.height = 0.0;
-			}
-			if (but.height - math_floor(but.height) == 0.0) {
-				but.height += zui_nodes_eps;
-			}
-			if (but.min - math_floor(but.min) == 0.0) {
-				but.min += zui_nodes_eps;
-			}
-			if (but.max - math_floor(but.max) == 0.0) {
-				but.max += zui_nodes_eps;
-			}
-			if (but.precision - math_floor(but.precision) == 0.0) {
-				but.precision += zui_nodes_eps;
-			}
-		}
-		if (n.width == null) {
-			n.width = 0;
-		}
-	}
 }
 
 type zui_ops_t = {
