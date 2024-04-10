@@ -367,10 +367,15 @@ void *_gc_calloc(size_t count, size_t size) {
 	return gc_allocate(count, size, NULL);
 }
 
-void* _gc_calloc_static(size_t count, size_t size) {
+void *_gc_calloc_static(size_t count, size_t size) {
 	void *ptr = gc_allocate(count, size, NULL);
 	gc_make_root(ptr);
 	return ptr;
+}
+
+void *_gc_make_static(void *ptr) {
+    gc_make_root(ptr);
+    return ptr;
 }
 
 void *_gc_realloc(void *p, size_t size) {
