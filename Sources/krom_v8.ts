@@ -27,6 +27,7 @@ function buffer_view_create(b: buffer_t): buffer_view_t { return new buffer_view
 function f32_array_create(length: i32): f32_array_t { return new f32_array_t(length); }
 function f32_array_create_from_buffer(b: buffer_t): f32_array_t { return new f32_array_t(b); }
 function f32_array_create_from_array(a: f32[]): f32_array_t { return new f32_array_t(a); }
+function f32_array_create_x(x: f32) { return new f32_array_t([x]); }
 function f32_array_create_xy(x: f32, y: f32) { return new f32_array_t([x, y]); }
 function f32_array_create_xyz(x: f32, y: f32, z: f32) { return new f32_array_t([x, y, z]); }
 function f32_array_create_xyzw(x: f32, y: f32, z: f32, w: f32) { return new f32_array_t([x, y, z, w]); }

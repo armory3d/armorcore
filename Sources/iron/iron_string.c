@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #ifdef WITH_MINITS
 void *gc_alloc(size_t size);

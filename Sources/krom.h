@@ -39,15 +39,52 @@ int _argc;
 char **_argv;
 char assetsdir[256];
 bool enable_window = true;
+bool stderr_created = false;
 bool in_background = false;
+int paused_frames = 0;
+bool save_and_quit_callback_set = false;
+#ifdef IDLE_SLEEP
+bool input_down = false;
+int last_window_width = 0;
+int last_window_height = 0;
+#endif
+
+char temp_string[4096];
+char temp_string_vs[1024 * 1024];
+char temp_string_fs[1024 * 1024];
+char temp_string_vstruct[4][32][32];
+#ifdef KINC_WINDOWS
+wchar_t temp_wstring[1024];
+wchar_t temp_wstring1[1024];
+#endif
 
 void (*krom_update)(void);
-void (*krom_drop_files)(wchar_t *);
+void (*krom_drop_files)(char *);
+// void (*krom_cut)(void);
+// void (*krom_copy])(void);
+// void (*krom_paste)(void);
+void (*krom_foreground)(void);
+void (*krom_resume)(void);
+void (*krom_pause)(void);
+void (*krom_background)(void);
+void (*krom_shutdown)(void);
+void (*krom_pause)(void);
 void (*krom_key_down)(int);
 void (*krom_key_up)(int);
+void (*krom_key_press)(int);
 void (*krom_mouse_down)(int, int, int);
 void (*krom_mouse_up)(int, int, int);
 void (*krom_mouse_move)(int, int, int, int);
+void (*krom_mouse_wheel)(int);
+void (*krom_touch_down)(int, int, int);
+void (*krom_touch_up)(int, int, int);
+void (*krom_touch_move)(int, int, int);
+void (*krom_pen_down)(int, int, float);
+void (*krom_pen_up)(int, int, float);
+void (*krom_pen_move)(int, int, float);
+void (*krom_gamepad_axis)(int, int, float);
+void (*krom_gamepad_button)(int, int, float);
+void (*krom_save_and_quit)(bool);
 
 void *gc_alloc(size_t size) {
 	return _gc_calloc(size, sizeof(uint8_t));
@@ -62,7 +99,9 @@ void *gc_realloc(void *ptr, size_t size) {
 }
 
 void gc_free(void *ptr) {
-	_gc_free(ptr);
+	if (ptr != NULL) {
+		_gc_free(ptr);
+	}
 }
 
 // point_t *p = GC_ALLOC_INIT(point_t, {x: 1.5, y: 3.5});
@@ -151,7 +190,7 @@ int kickstart(int argc, char **argv) {
 	return 0;
 }
 
-void update(void *data) {
+void _update(void *data) {
 	#ifdef KINC_WINDOWS
 	if (show_window && enable_window) {
 		show_window = false;
@@ -195,7 +234,7 @@ void update(void *data) {
 	kinc_g4_swap_buffers();
 }
 
-void drop_files(wchar_t *file_path, void *data) {
+void _drop_files(wchar_t *file_path, void *data) {
 	// Update mouse position
 	#ifdef KINC_WINDOWS
 	POINT p;
@@ -213,7 +252,10 @@ void drop_files(wchar_t *file_path, void *data) {
 	// 	for (int i = 0; i < len; i++) str[i] = file_path[i];
 	// 	str[len] = 0;
 	// }
-	krom_drop_files(file_path);
+
+	char buffer[512];
+	wcstombs(buffer, file_path, sizeof(buffer));
+	krom_drop_files(buffer);
 	in_background = false;
 
 	#ifdef IDLE_SLEEP
@@ -221,7 +263,58 @@ void drop_files(wchar_t *file_path, void *data) {
 	#endif
 }
 
-void key_down(int code, void *data) {
+char *_copy(void *data) {
+	// result = krom_copy();
+	// strcpy(temp_string, result);
+
+	#ifdef WITH_ZUI
+	strcpy(temp_string, zui_copy());
+	#endif
+	return temp_string;
+}
+
+char *_cut(void *data) {
+	// result = krom_cut();
+	// strcpy(temp_string, result);
+
+	#ifdef WITH_ZUI
+	strcpy(temp_string, zui_cut());
+	#endif
+	return temp_string;
+}
+
+void _paste(char *text, void *data) {
+	// krom_paste(text);
+
+	#ifdef WITH_ZUI
+	zui_paste(text);
+	#endif
+}
+
+void _foreground(void *data) {
+	krom_foreground();
+	in_background = false;
+}
+
+void _resume(void *data) {
+	krom_resume();
+}
+
+void _pause(void *data) {
+	krom_pause();
+}
+
+void _background(void *data) {
+	krom_background();
+	in_background = true;
+	paused_frames = 0;
+}
+
+void _shutdown(void *data) {
+	krom_shutdown();
+}
+
+void _key_down(int code, void *data) {
 	krom_key_down(code);
 
 	#ifdef WITH_ZUI
@@ -236,7 +329,7 @@ void key_down(int code, void *data) {
 	#endif
 }
 
-void key_up(int code, void *data) {
+void _key_up(int code, void *data) {
 	krom_key_up(code);
 
 	#ifdef WITH_ZUI
@@ -247,6 +340,20 @@ void key_up(int code, void *data) {
 
 	#ifdef IDLE_SLEEP
 	input_down = false;
+	paused_frames = 0;
+	#endif
+}
+
+void _key_press(unsigned int character, void *data) {
+	krom_key_press(character);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_key_press(zui_instances[i], character);
+	}
+	#endif
+
+	#ifdef IDLE_SLEEP
 	paused_frames = 0;
 	#endif
 }
@@ -281,7 +388,7 @@ void _mouse_up(int window, int button, int x, int y, void *data) {
 	#endif
 }
 
-void mouse_move(int window, int x, int y, int mx, int my, void *data) {
+void _mouse_move(int window, int x, int y, int mx, int my, void *data) {
 	krom_mouse_move(x, y, mx, my);
 
 	#ifdef WITH_ZUI
@@ -295,9 +402,133 @@ void mouse_move(int window, int x, int y, int mx, int my, void *data) {
 	#endif
 }
 
-f32 js_eval(const char *js, const char *context) {
-	return 0.0;
+void _mouse_wheel(int window, int delta, void *data) {
+	krom_mouse_wheel(delta);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_mouse_wheel(zui_instances[i], delta);
+	}
+	#endif
+
+	#ifdef IDLE_SLEEP
+	paused_frames = 0;
+	#endif
 }
+
+void _touch_move(int index, int x, int y) {
+	krom_touch_move(index, x, y);
+
+	#ifdef WITH_ZUI
+	#if defined(KINC_ANDROID) || defined(KINC_IOS)
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_touch_move(zui_instances[i], index, x, y);
+	}
+	#endif
+	#endif
+
+	#ifdef IDLE_SLEEP
+	paused_frames = 0;
+	#endif
+}
+
+void _touch_down(int index, int x, int y) {
+	krom_touch_down(index, x, y);
+
+	#ifdef WITH_ZUI
+	#if defined(KINC_ANDROID) || defined(KINC_IOS)
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_touch_down(zui_instances[i], index, x, y);
+	}
+	#endif
+	#endif
+
+	#ifdef IDLE_SLEEP
+	input_down = true;
+	paused_frames = 0;
+	#endif
+}
+
+void _touch_up(int index, int x, int y) {
+	krom_touch_up(index, x, y);
+
+	#ifdef WITH_ZUI
+	#if defined(KINC_ANDROID) || defined(KINC_IOS)
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_touch_up(zui_instances[i], index, x, y);
+	}
+	#endif
+	#endif
+
+	#ifdef IDLE_SLEEP
+	input_down = false;
+	paused_frames = 0;
+	#endif
+}
+
+void _pen_down(int window, int x, int y, float pressure) {
+	krom_pen_down(x, y, pressure);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_pen_down(zui_instances[i], x, y, pressure);
+	}
+	#endif
+
+	#ifdef IDLE_SLEEP
+	input_down = true;
+	paused_frames = 0;
+	#endif
+}
+
+void _pen_up(int window, int x, int y, float pressure) {
+	krom_pen_up(x, y, pressure);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_pen_up(zui_instances[i], x, y, pressure);
+	}
+	#endif
+
+	#ifdef IDLE_SLEEP
+	input_down = false;
+	paused_frames = 0;
+	#endif
+}
+
+void _pen_move(int window, int x, int y, float pressure) {
+	krom_pen_move(x, y, pressure);
+
+	#ifdef WITH_ZUI
+	for (int i = 0; i < zui_instances_count; ++i) {
+		zui_pen_move(zui_instances[i], x, y, pressure);
+	}
+	#endif
+
+	#ifdef IDLE_SLEEP
+	paused_frames = 0;
+	#endif
+}
+
+void _gamepad_axis(int gamepad, int axis, float value, void *data) {
+	krom_gamepad_axis(gamepad, axis, value);
+
+	#ifdef IDLE_SLEEP
+	paused_frames = 0;
+	#endif
+}
+
+void _gamepad_button(int gamepad, int button, float value, void *data) {
+	krom_gamepad_button(gamepad, button, value);
+
+	#ifdef IDLE_SLEEP
+	paused_frames = 0;
+	#endif
+}
+
+// f32 js_eval(const char *js, const char *context) {
+// 	return 0.0;
+// }
 
 i32_map_t *i32_map_create() {
 	return gc_alloc(sizeof(i32_map_t));
@@ -341,6 +572,12 @@ f32_array_t *f32_array_create_from_array(f32_array_t *from) {
 	for (int i = 0; i < from->length; ++i) {
 		a->buffer[i] = from->buffer[i];
 	}
+	return a;
+}
+
+f32_array_t *f32_array_create_x(f32 x) {
+	f32_array_t *a = f32_array_create(1);
+	a->buffer[0] = x;
 	return a;
 }
 
@@ -529,9 +766,9 @@ f32 math_asin(f32 x) { return asinf(x); }
 f32 math_pi() { return 3.14159265358979323846; }
 f32 math_pow(f32 x, f32 y) { return powf(x, y); }
 
-i32 parse_int(const char *s) { return 0; } // strtol
-i32 parse_int_hex(const char *s) { return 0; } // strtol
-f32 parse_float(const char *s) { return 0.0; } // strtof
+i32 parse_int(const char *s) { return strtol(s, NULL, 10); }
+i32 parse_int_hex(const char *s) { return strtol(s, NULL, 16); }
+f32 parse_float(const char *s) { return strtof(s, NULL); }
 
 i32 color_from_floats(f32 r, f32 g, f32 b, f32 a) {
 	return ((int)(a * 255) << 24) | ((int)(r * 255) << 16) | ((int)(g * 255) << 8) | (int)(b * 255);

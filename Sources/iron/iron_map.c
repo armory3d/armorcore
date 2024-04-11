@@ -7,15 +7,23 @@ void i32_map_set(i32_map_t *m, char *k, int v) {
 	shput(m->hash, k, v);
 }
 
+void f32_map_set(f32_map_t *m, char *k, float v) {
+	shput(m->hash, k, v);
+}
+
 void any_map_set(any_map_t *m, char *k, void *v) {
 	shput(m->hash, k, v);
 }
 
-int32_t i32_map_get(i32_map_t *m, void *k) {
+int32_t i32_map_get(i32_map_t *m, char *k) {
 	return shget(m->hash, k);
 }
 
-void *any_map_get(any_map_t *m, void *k) {
+float f32_map_get(f32_map_t *m, char *k) {
+	return shget(m->hash, k);
+}
+
+void *any_map_get(any_map_t *m, char *k) {
 	return shget(m->hash, k);
 }
 

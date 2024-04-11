@@ -65,6 +65,13 @@ function app_reset() {
 	}
 }
 
+function _app_run_callbacks(cbs: callback_t[]) {
+	for (let i: i32 = 0; i < cbs.length; ++i) {
+		let cb: callback_t = cbs[i];
+		cb.f(cb.data);
+	}
+}
+
 function app_update() {
 	if (!_scene_ready) {
 		return;
@@ -74,10 +81,7 @@ function app_update() {
 	}
 
 	if (app_on_next_frames.length > 0) {
-		for (let i: i32 = 0; i < app_on_next_frames.length; ++i) {
-			let cb: callback_t = app_on_next_frames[i];
-			cb.f(cb.data);
-		}
+		_app_run_callbacks(app_on_next_frames);
 		array_splice(app_on_next_frames, 0, app_on_next_frames.length);
 	}
 
@@ -87,15 +91,7 @@ function app_update() {
 	let l: i32 = app_on_updates.length;
 	while (i < l) {
 		if (app_on_inits.length > 0) {
-			for (let j: i32 = 0; j < app_on_inits.length; ++j) {
-				if (app_on_inits.length > 0) {
-					let cb: callback_t = app_on_inits[j];
-					cb.f(cb.data);
-				}
-				else {
-					break;
-				}
-			}
+			_app_run_callbacks(app_on_inits);
 			array_splice(app_on_inits, 0, app_on_inits.length);
 		}
 
@@ -111,10 +107,7 @@ function app_update() {
 		}
 	}
 
-	for (let i: i32 = 0; i < app_on_end_frames.length; ++i) {
-		let cb: callback_t = app_on_end_frames[i];
-		cb.f(cb.data);
-	}
+	_app_run_callbacks(app_on_end_frames);
 
 	// Rebuild projection on window resize
 	if (app_lastw == -1) {
@@ -125,10 +118,8 @@ function app_update() {
 		if (app_on_resize != null) {
 			app_on_resize();
 		}
-		else {
-			if (scene_camera != null) {
-				camera_object_build_proj(scene_camera);
-			}
+		else if (scene_camera != null) {
+			camera_object_build_proj(scene_camera);
 		}
 	}
 	app_lastw = app_w();
@@ -145,45 +136,19 @@ function app_render() {
 	}
 
 	if (app_on_inits.length > 0) {
-		for (let i: i32 = 0; i < app_on_inits.length; ++i) {
-			if (app_on_inits.length > 0) {
-				let cb: callback_t = app_on_inits[i];
-				cb.f(cb.data);
-			}
-			else {
-				break;
-			}
-		}
+		_app_run_callbacks(app_on_inits);
 		array_splice(app_on_inits, 0, app_on_inits.length);
 	}
 
 	scene_render_frame();
-
-	for (let i: i32 = 0; i < app_on_renders.length; ++i) {
-		if (app_on_renders.length > 0) {
-			let cb: callback_t = app_on_renders[i];
-			cb.f(cb.data);
-		}
-		else {
-			break;
-		}
-	}
-
+	_app_run_callbacks(app_on_renders);
 	app_render_2d();
 }
 
 function app_render_2d() {
 	if (app_on_renders_2d.length > 0) {
 		g2_begin();
-		for (let i: i32 = 0; i < app_on_renders_2d.length; ++i) {
-			if (app_on_renders_2d.length > 0) {
-				let cb: callback_t = app_on_renders_2d[i];
-				cb.f(cb.data);
-			}
-			else {
-				break;
-			}
-		}
+		_app_run_callbacks(app_on_renders_2d);
 		g2_end();
 	}
 }

@@ -404,6 +404,7 @@ function sys_get_shader(name: string): shader_t {
 
 function video_unload(self: video_t) {}
 
+///if arm_audio
 function sound_create(sound_: any): sound_t {
 	let raw: sound_t = {};
 	raw.sound_ = sound_;
@@ -413,6 +414,7 @@ function sound_create(sound_: any): sound_t {
 function sound_unload(raw: sound_t) {
 	krom_unload_sound(raw.sound_);
 }
+///end
 
 type color_t = i32;
 
