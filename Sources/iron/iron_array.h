@@ -85,13 +85,14 @@ void f32_array_resize(f32_array_t *a, int32_t size);
 void any_array_resize(any_array_t *a, int32_t size);
 void buffer_resize(buffer_t *b, int32_t size);
 
-void array_sort(void *ar, void *fn);
-void array_push(void *ar, void *e);
-void *array_pop(void *ar);
-void array_splice(void *ar, int32_t start, int32_t delete_count);
-void *array_concat(void *a, void *b);
-void *array_slice(void *a, int32_t begin, int32_t end);
-void array_remove(void *ar, void *e);
+void array_sort(any_array_t *ar, int (*compare)(const void *, const void *));
+void *array_pop(any_array_t *ar);
+void array_splice(any_array_t *ar, int32_t start, int32_t delete_count);
+any_array_t *array_concat(any_array_t *a, any_array_t *b);
+any_array_t *array_slice(any_array_t *a, int32_t begin, int32_t end);
+void array_insert(any_array_t *a, int at, void *e);
+void array_remove(any_array_t *ar, void *e);
+int array_index_of(any_array_t *ar, void *e);
 
 buffer_t *buffer_slice(buffer_t *a, int32_t begin, int32_t end);
 int32_t buffer_size(buffer_t *b);

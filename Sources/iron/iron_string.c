@@ -29,23 +29,46 @@ bool string_equals(char *a, char *b) {
 	return strcmp(a, b) == 0;
 }
 
-char * i32_to_string(int32_t i) {
+char *i32_to_string(int32_t i) {
 	int l = snprintf(NULL, 0, "%d", i);
 	char *r = gc_alloc(l + 1);
 	sprintf(r, "%d", i);
 	return r;
 }
 
-int32_t string_index_of(char *s, char *search) {
-	char *found = strstr(s, search);
+char *i32_to_string_hex(int32_t i) {
+	int l = snprintf(NULL, 0, "%X", i);
+	char *r = gc_alloc(l + 1);
+	sprintf(r, "%X", i);
+	return r;
+}
+
+int32_t string_index_of_pos(char *s, char *search, int pos) {
+	char *found = strstr(s + pos, search);
 	if (found != NULL) {
 	    return found - s;
 	}
 	return -1;
 }
 
+int32_t string_index_of(char *s, char *search) {
+	return string_index_of_pos(s, search, 0);
+}
+
 int32_t string_last_index_of(char *s, char *search) {
-	return -1;
+	char *found = NULL;
+    while (1) {
+        char *p = strstr(s, search);
+        if (p == NULL) {
+            break;
+		}
+        found = p;
+        s = p + 1;
+    }
+	if (found != NULL) {
+	    return found - s;
+	}
+    return -1;
 }
 
 any_array_t *string_split(char *s, char *sep) {
@@ -60,12 +83,32 @@ any_array_t *string_split(char *s, char *sep) {
 	return a;
 }
 
-void string_replace_all(char *s, char *search, char *replace) {
-
+char *string_replace_all(char *s, char *search, char *replace) {
+	char *buffer = gc_alloc(1024);
+    char *buffer_pos = buffer;
+    size_t search_len = strlen(search);
+    size_t replace_len = strlen(replace);
+    while (1) {
+        char *p = strstr(s, search);
+        if (p == NULL) {
+            strcpy(buffer_pos, s);
+            break;
+        }
+        memcpy(buffer_pos, s, p - s);
+        buffer_pos += p - s;
+        memcpy(buffer_pos, replace, replace_len);
+        buffer_pos += replace_len;
+        s = p + search_len;
+    }
+    return buffer;
 }
 
 char *substring(char *s, int32_t start, int32_t end) {
-	return s;
+	char *buffer = gc_alloc(end - start + 1);
+	for (int i = 0; i < end - start; ++i) {
+		buffer[i] = s[start + i];
+	}
+	return buffer;
 }
 
 char *string_from_char_code(int32_t c) {

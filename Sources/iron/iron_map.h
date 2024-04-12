@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "iron_array.h"
 
 typedef struct i32_map {
 	struct { char *key; int value; } *hash;
@@ -23,5 +24,4 @@ float f32_map_get(f32_map_t *m, char *k);
 void *any_map_get(any_map_t *m, char *k);
 
 void map_delete(any_map_t *m, void *k);
-void *map_to_array(any_map_t *m);
-void *map_keys_to_array(any_map_t *m);
+any_array_t *map_keys(any_map_t *m);

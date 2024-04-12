@@ -115,36 +115,74 @@ void buffer_resize(buffer_t *b, int32_t size) {
 	b->data = gc_realloc(b->data, b->length * sizeof(uint8_t));
 }
 
-void array_sort(void *ar, void *fn) {
-
+void array_sort(any_array_t *ar, int (*compare)(const void *, const void *)) {
+	qsort(ar->buffer, ar->length, sizeof(ar->buffer[0]), compare);
 }
 
-void array_push(void *ar, void *e) {
-
+void *array_pop(any_array_t *ar) {
+	ar->length--;
+	return ar->buffer[ar->length];
 }
 
-void *array_pop(void *ar) {
-
+void array_splice(any_array_t *ar, int32_t start, int32_t delete_count) {
+	for (int i = start; i < delete_count; ++i) {
+		ar->buffer[i] = ar->buffer[i + delete_count];
+	}
+	ar->length -= delete_count;
 }
 
-void array_splice(void *ar, int32_t start, int32_t delete_count) {
-
+any_array_t *array_concat(any_array_t *a, any_array_t *b) {
+	any_array_t *ar = malloc(sizeof(any_array_t));
+	ar->length = a->length + b->length;
+	any_array_resize(ar, ar->length);
+	for (int i = 0; i < a->length; ++i) {
+		ar->buffer[i] = a->buffer[i];
+	}
+	for (int i = 0; i < b->length; ++i) {
+		ar->buffer[a->length + i] = b->buffer[i];
+	}
+	return ar;
 }
 
-void *array_concat(void *a, void *b) {
-	return NULL;
+any_array_t *array_slice(any_array_t *a, int32_t begin, int32_t end) {
+	any_array_t *ar = malloc(sizeof(any_array_t));
+	ar->length = end - begin;
+	any_array_resize(ar, ar->length);
+	for (int i = 0; i < ar->length; ++i) {
+		ar->buffer[i] = a->buffer[begin + i];
+	}
+	return ar;
 }
 
-void *array_slice(void *a, int32_t begin, int32_t end) {
-	return NULL;
+void array_insert(any_array_t *a, int at, void *e) {
+	array_alloc(a, sizeof(uintptr_t));
+	a->length++;
+	for (int i = a->length; i > at; --i) {
+		a->buffer[i] = a->buffer[i - 1];
+	}
+	a->buffer[at] = e;
 }
 
-void array_remove(void *ar, void *e) {
+void array_remove(any_array_t *ar, void *e) {
+	array_splice(ar, array_index_of(ar, e), 1);
+}
 
+int array_index_of(any_array_t *ar, void *e) {
+	for (int i = 0; i < ar->length; ++i) {
+		if (ar->buffer[i] == e) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 buffer_t *buffer_slice(buffer_t *a, int32_t begin, int32_t end) {
-	return NULL;
+	buffer_t *b = malloc(sizeof(buffer_t));
+	buffer_resize(b, end - begin);
+	for (int i = 0; i < b->length; ++i) {
+		b->data[i] = a->data[begin + i];
+	}
+	return b;
 }
 
 int32_t buffer_size(buffer_t *b) {
