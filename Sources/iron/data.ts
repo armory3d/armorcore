@@ -260,16 +260,16 @@ function data_delete_sound(handle: string) {
 ///end
 
 function data_delete_all() {
-	let cached_meshes: mesh_data_t[] = map_to_array(data_cached_meshes);
-	for (let i: i32 = 0; i < cached_meshes.length; ++i) {
-		let c: mesh_data_t = cached_meshes[i];
+	let cached_meshes_keys: string[] = map_keys(data_cached_meshes);
+	for (let i: i32 = 0; i < cached_meshes_keys.length; ++i) {
+		let c: mesh_data_t = map_get(data_cached_meshes, cached_meshes_keys[i]);
 		mesh_data_delete(c);
 	}
 	data_cached_meshes = map_create();
 
-	let cached_shaders: shader_data_t[] = map_to_array(data_cached_shaders);
-	for (let i: i32 = 0; i < cached_shaders.length; ++i) {
-		let c: shader_data_t = cached_shaders[i];
+	let cached_shaders_keys: string[] = map_keys(data_cached_shaders);
+	for (let i: i32 = 0; i < cached_shaders_keys.length; ++i) {
+		let c: shader_data_t = map_get(data_cached_shaders, cached_shaders_keys[i]);
 		shader_data_delete(c);
 	}
 	data_cached_shaders = map_create();
@@ -283,32 +283,32 @@ function data_delete_all() {
 	render_path_unload();
 	data_cached_blobs = map_create();
 
-	let cached_images: image_t[] = map_to_array(data_cached_images);
-	for (let i: i32 = 0; i < cached_images.length; ++i) {
-		let c: image_t = cached_images[i];
+	let cached_images_keys: string[] = map_keys(data_cached_images);
+	for (let i: i32 = 0; i < cached_images_keys.length; ++i) {
+		let c: image_t = map_get(data_cached_images, cached_images_keys[i]);
 		image_unload(c);
 	}
 	data_cached_images = map_create();
 
 	///if arm_audio
-	let cached_sounds: sound_t[] = map_to_array(data_cached_sounds);
-	for (let i: i32 = 0; i < cached_sounds.length; ++i) {
-		let c = cached_sounds[i];
+	let cached_sounds_keys: string[] = map_keys(data_cached_sounds);
+	for (let i: i32 = 0; i < cached_sounds_keys.length; ++i) {
+		let c: sound_t = map_get(data_cached_sounds, cached_sounds_keys[i]);
 		sound_unload(c);
 	}
 	data_cached_sounds = map_create();
 	///end
 
-	let cached_videos: video_t[] = map_to_array(data_cached_videos);
-	for (let i: i32 = 0; i < cached_videos.length; ++i) {
-		let c: video_t = cached_videos[i];
+	let cached_videos_keys: string[] = map_keys(data_cached_videos);
+	for (let i: i32 = 0; i < cached_videos_keys.length; ++i) {
+		let c: video_t = map_get(data_cached_videos, cached_videos_keys[i]);
 		video_unload(c);
 	}
 	data_cached_videos = map_create();
 
-	let cached_fonts: g2_font_t[] = map_to_array(data_cached_fonts);
-	for (let i: i32 = 0; i < cached_fonts.length; ++i) {
-		let c: g2_font_t = cached_fonts[i];
+	let cached_fonts_keys: string[] = map_keys(data_cached_fonts);
+	for (let i: i32 = 0; i < cached_fonts_keys.length; ++i) {
+		let c: g2_font_t = map_get(data_cached_fonts, cached_fonts_keys[i]);
 		g2_font_unload(c);
 	}
 	data_cached_fonts = map_create();

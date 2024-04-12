@@ -526,9 +526,9 @@ void _gamepad_button(int gamepad, int button, float value, void *data) {
 	#endif
 }
 
-// f32 js_eval(const char *js, const char *context) {
-// 	return 0.0;
-// }
+f32 js_eval(const char *js, const char *context) {
+	return 0.0;
+}
 
 i32_map_t *i32_map_create() {
 	return gc_alloc(sizeof(i32_map_t));

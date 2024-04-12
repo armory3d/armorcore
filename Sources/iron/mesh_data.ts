@@ -367,9 +367,9 @@ function mesh_data_calculate_aabb(raw: mesh_data_t): vec4_t {
 }
 
 function mesh_data_delete(raw: mesh_data_t) {
-	let buffer_map: vertex_buffer_t[] = map_to_array(raw._.vertex_buffer_map);
-	for (let i: i32 = 0; i < buffer_map.length; ++i) {
-		let buf: vertex_buffer_t = buffer_map[i];
+	let vertex_buffer_keys: string[] = map_keys(raw._.vertex_buffer_map);
+	for (let i: i32 = 0; i < vertex_buffer_keys.length; ++i) {
+		let buf: vertex_buffer_t = map_get(raw._.vertex_buffer_map, vertex_buffer_keys[i]);
 		if (buf != null) {
 			g4_vertex_buffer_delete(buf);
 		}

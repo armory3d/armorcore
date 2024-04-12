@@ -308,9 +308,9 @@ function render_path_unload_shader(handle: string) {
 }
 
 function render_path_unload() {
-	let rtargets: render_target_t[] = map_to_array(render_path_render_targets);
-	for (let i: i32 = 0; i < rtargets.length; ++i) {
-		let rt: render_target_t = rtargets[i];
+	let render_targets_keys: string[] = map_keys(render_path_render_targets);
+	for (let i: i32 = 0; i < render_targets_keys.length; ++i) {
+		let rt: render_target_t = map_get(render_path_render_targets, render_targets_keys[i]);
 		render_target_unload(rt);
 	}
 }
@@ -325,16 +325,16 @@ function render_path_resize() {
 	}
 
 	// Make sure depth buffer is attached to single target only and gets released once
-	let rtargets: render_target_t[] = map_to_array(render_path_render_targets);
-	for (let i: i32 = 0; i < rtargets.length; ++i) {
-		let rt: render_target_t = rtargets[i];
+	let render_targets_keys: string[] = map_keys(render_path_render_targets);
+	for (let i: i32 = 0; i < render_targets_keys.length; ++i) {
+		let rt: render_target_t = map_get(render_path_render_targets, render_targets_keys[i]);
 		if (rt == null || rt.width > 0 || rt._depth_from == "" || rt == map_get(_render_path_depth_to_render_target, rt._depth_from)) {
 			continue;
 		}
 
 		let nodepth: render_target_t = null;
-		for (let j: i32 = 0; j < rtargets.length; ++j) {
-			let rt2: render_target_t = rtargets[j];
+		for (let j: i32 = 0; j < render_targets_keys.length; ++j) {
+			let rt2: render_target_t = map_get(render_path_render_targets, render_targets_keys[j]);
 			if (rt2 == null || rt2.width > 0 || rt2._depth_from != "" || map_get(_render_path_depth_to_render_target, rt2.depth_buffer) != null) {
 				continue;
 			}
@@ -349,8 +349,8 @@ function render_path_resize() {
 	}
 
 	// Resize textures
-	for (let i: i32 = 0; i < rtargets.length; ++i) {
-		let rt: render_target_t = rtargets[i];
+	for (let i: i32 = 0; i < render_targets_keys.length; ++i) {
+		let rt: render_target_t = map_get(render_path_render_targets, render_targets_keys[i]);
 		if (rt != null && rt.width == 0) {
 			let _image: image_t = rt._image;
 			app_notify_on_init(_render_path_resize_on_init, _image);
@@ -359,8 +359,8 @@ function render_path_resize() {
 	}
 
 	// Attach depth buffers
-	for (let i: i32 = 0; i < rtargets.length; ++i) {
-		let rt: render_target_t = rtargets[i];
+	for (let i: i32 = 0; i < render_targets_keys.length; ++i) {
+		let rt: render_target_t = map_get(render_path_render_targets, render_targets_keys[i]);
 		if (rt != null && rt._depth_from != "") {
 			let depth_from: render_target_t = map_get(_render_path_depth_to_render_target, rt._depth_from);
 			image_set_depth_from(rt._image, depth_from._image);

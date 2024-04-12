@@ -1908,16 +1908,10 @@ buffer_t *krom_deflate(buffer_t *bytes, bool raw) {
 #endif
 
 #ifdef WITH_STB_IMAGE_WRITE
-void _write_image(const FunctionCallbackInfo<Value> &args, int image_format, int quality) {
-	String::Utf8Value utf8_path(isolate, args[0]);
-	MAKE_CONTENT(args[1]);
-	int w = TO_I32(args[2]);
-	int h = TO_I32(args[3]);
-	int format = TO_I32(args[4]);
-
+void _write_image(char *path, buffer_t *bytes, i32 w, i32 h, i32 format, int image_format, int quality) {
 	int comp = 0;
 	unsigned char *pixels = NULL;
-	unsigned char *rgba = (unsigned char *)content->Data();
+	unsigned char *rgba = (unsigned char *)bytes->data;
 	if (format == 0) { // RGBA
 		comp = 4;
 		pixels = rgba;
@@ -1948,12 +1942,14 @@ void _write_image(const FunctionCallbackInfo<Value> &args, int image_format, int
 		#if defined(KINC_METAL) || defined(KINC_VULKAN)
 		off = 2 - off;
 		#endif
-		for (int i = 0; i < w * h; ++i) pixels[i] = rgba[i * 4 + off];
+		for (int i = 0; i < w * h; ++i) {
+			pixels[i] = rgba[i * 4 + off];
+		}
 	}
 
 	image_format == 0 ?
-		stbi_write_jpg(*utf8_path, w, h, comp, pixels, quality) :
-		stbi_write_png(*utf8_path, w, h, comp, pixels, w * comp);
+		stbi_write_jpg(path, w, h, comp, pixels, quality) :
+		stbi_write_png(path, w, h, comp, pixels, w * comp);
 
 	if (pixels != rgba) {
 		free(pixels);
@@ -2024,29 +2020,272 @@ buffer_t *krom_write_mpeg() {
 
 #ifdef WITH_ONNX
 buffer_t *krom_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]*/ any_array_t *input_shape, i32_array_t output_shape, bool use_gpu) {
+	OrtStatus *onnx_status = NULL;
+	static bool use_gpu_last = false;
+	if (ort == NULL || use_gpu_last != use_gpu) {
+		use_gpu_last = use_gpu;
+		ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
+		ort->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "armorcore", &ort_env);
 
+		ort->CreateSessionOptions(&ort_session_options);
+		ort->SetIntraOpNumThreads(ort_session_options, 8);
+		ort->SetInterOpNumThreads(ort_session_options, 8);
+
+		if (use_gpu) {
+			#ifdef KINC_WINDOWS
+			ort->SetSessionExecutionMode(ort_session_options, ORT_SEQUENTIAL);
+			ort->DisableMemPattern(ort_session_options);
+			onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
+			#elif defined(KINC_LINUX)
+			// onnx_status = OrtSessionOptionsAppendExecutionProvider_CUDA(ort_session_options, 0);
+			#elif defined(KINC_MACOS)
+			onnx_status = OrtSessionOptionsAppendExecutionProvider_CoreML(ort_session_options, 0);
+			#endif
+			if (onnx_status != NULL) {
+				const char *msg = ort->GetErrorMessage(onnx_status);
+				kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
+				ort->ReleaseStatus(onnx_status);
+			}
+		}
+	}
+
+	static void *content_last = 0;
+	if (content_last != model->data || session == NULL) {
+		if (session != NULL) {
+			ort->ReleaseSession(session);
+			session = NULL;
+		}
+		onnx_status = ort->CreateSessionFromArray(ort_env, model->data, (int)model->length, ort_session_options, &session);
+		if (onnx_status != NULL) {
+			const char* msg = ort->GetErrorMessage(onnx_status);
+			kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
+			ort->ReleaseStatus(onnx_status);
+		}
+	}
+	content_last = model->data;
+
+	OrtAllocator *allocator;
+	ort->GetAllocatorWithDefaultOptions(&allocator);
+	OrtMemoryInfo *memory_info;
+	ort->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info);
+
+	int32_t length = tensors->length;
+	if (length > 4) {
+		length = 4;
+	}
+	char *input_node_names[4];
+	OrtValue *input_tensors[4];
+	for (int32_t i = 0; i < length; ++i) {
+		ort->SessionGetInputName(session, i, allocator, &input_node_names[i]);
+
+		OrtTypeInfo *input_type_info;
+		ort->SessionGetInputTypeInfo(session, i, &input_type_info);
+		const OrtTensorTypeAndShapeInfo *input_tensor_info;
+		ort->CastTypeInfoToTensorInfo(input_type_info, &input_tensor_info);
+		size_t num_input_dims;
+		ort->GetDimensionsCount(input_tensor_info, &num_input_dims);
+		std::vector<int64_t> input_node_dims(num_input_dims);
+
+		if (input_shape != NULL) {
+			for (int32_t j = 0; j < num_input_dims; ++j) {
+				input_node_dims[j] = input_shape->buffer[i]->data[j];
+			}
+		}
+		else {
+			ort->GetDimensions(input_tensor_info, (int64_t *)input_node_dims.data(), num_input_dims);
+		}
+		ONNXTensorElementDataType tensor_element_type;
+		ort->GetTensorElementType(input_tensor_info, &tensor_element_type);
+
+		ort->CreateTensorWithDataAsOrtValue(memory_info, tensors->buffer[i]->data, (int)tensors->buffer[i]->length, input_node_dims.data(), num_input_dims,  tensor_element_type, &input_tensors[i]);
+		ort->ReleaseTypeInfo(input_type_info);
+	}
+
+	char *output_node_name;
+	ort->SessionGetOutputName(session, 0, allocator, &output_node_name);
+	OrtValue *output_tensor = NULL;
+	onnx_status = ort->Run(session, NULL, input_node_names, input_tensors, length, &output_node_name, 1, &output_tensor);
+	if (onnx_status != NULL) {
+		const char* msg = ort->GetErrorMessage(onnx_status);
+		kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
+		ort->ReleaseStatus(onnx_status);
+	}
+	float *float_array;
+	ort->GetTensorMutableData(output_tensor, (void **)&float_array);
+
+	size_t output_byte_length = 4;
+	if (output_shape != NULL) {
+		int32_t length = output_shape->length;
+		for (int i = 0; i < length; ++i) {
+			output_byte_length *= output_shape->data[i];
+		}
+	}
+	else {
+		OrtTypeInfo *output_type_info;
+		ort->SessionGetOutputTypeInfo(session, 0, &output_type_info);
+		const OrtTensorTypeAndShapeInfo *output_tensor_info;
+		ort->CastTypeInfoToTensorInfo(output_type_info, &output_tensor_info);
+		size_t num_output_dims;
+		ort->GetDimensionsCount(output_tensor_info, &num_output_dims);
+		std::vector<int64_t> output_node_dims(num_output_dims);
+		ort->GetDimensions(output_tensor_info, (int64_t *)output_node_dims.data(), num_output_dims);
+		ort->ReleaseTypeInfo(output_type_info);
+		for (int i = 0; i < num_output_dims; ++i) {
+			if (output_node_dims[i] > 1) {
+				output_byte_length *= output_node_dims[i];
+			}
+		}
+	}
+
+	buffer_t *output = buffer_create(output_byte_length);
+	memcpy(output->data, float_array, output_byte_length);
+
+	ort->ReleaseMemoryInfo(memory_info);
+	ort->ReleaseValue(output_tensor);
+	for (int i = 0; i < length; ++i) {
+		ort->ReleaseValue(input_tensors[i]);
+	}
+	return output;
 }
 
 void krom_ml_unload() {
-
+	if (session != NULL) {
+		ort->ReleaseSession(session);
+		session = NULL;
+	}
 }
 #endif
 
 #if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
 bool krom_raytrace_supported() {
-
+	#ifdef KINC_METAL
+	return kinc_raytrace_supported();
+	#else
+	return true;
+	#endif
 }
 
-void krom_raytrace_init(buffer_t *shader, any vb, any ib, f32 scale) {
+void krom_raytrace_init(buffer_t *shader, kinc_g4_vertex_buffer_t *vb, kinc_g4_index_buffer_t *ib, f32 scale) {
+	if (accel_created) {
+		kinc_g5_constant_buffer_destroy(&constant_buffer);
+		kinc_raytrace_acceleration_structure_destroy(&accel);
+		kinc_raytrace_pipeline_destroy(&pipeline);
+	}
 
+	kinc_g5_vertex_buffer_t *vertex_buffer = &vb->impl._buffer;
+	kinc_g5_index_buffer_t *index_buffer = &ib->impl._buffer;
+
+	float scale = TO_F32(args[3]);
+	kinc_g5_constant_buffer_init(&constant_buffer, constant_buffer_size * 4);
+	kinc_raytrace_pipeline_init(&pipeline, &commandList, shader->data, (int)shader->length, &constant_buffer);
+	kinc_raytrace_acceleration_structure_init(&accel, &commandList, vertex_buffer, index_buffer, scale);
+	accel_created = true;
 }
 
-void krom_raytrace_set_textures(image_t tex0, image_t tex1, image_t tex2, any texenv, any tex_sobol, any tex_scramble, any tex_rank) {
+void krom_raytrace_set_textures(image_t *tex0, image_t *tex1, image_t *tex2, kinc_g4_texture_t *texenv, kinc_g4_texture_t *tex_sobol, kinc_g4_texture_t *tex_scramble, kinc_g4_texture_t *tex_rank) {
+	kinc_g4_render_target_t *texpaint0;
+	kinc_g4_render_target_t *texpaint1;
+	kinc_g4_render_target_t *texpaint2;
 
+	image_t *texpaint0_image = tex0;
+	kinc_g4_texture_t *texpaint0_tex = texpaint0_image->texture_;
+	kinc_g4_render_target_t *texpaint0_rt = texpaint0_image->render_target_;
+
+	if (texpaint0_tex != NULL) {
+		#ifdef KINC_DIRECT3D12
+		kinc_g4_texture_t *texture = texpaint0_tex;
+		if (!texture->impl._uploaded) {
+			kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
+			texture->impl._uploaded = true;
+		}
+		texpaint0 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
+		texpaint0->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
+		#endif
+	}
+	else {
+		texpaint0 = texpaint0_rt;
+	}
+
+	image_t *texpaint1_image = tex1;
+	kinc_g4_texture_t *texpaint1_tex = texpaint1_image->texture_;
+	kinc_g4_render_target_t *texpaint1_rt = texpaint1_image->render_target_;
+
+	if (texpaint1_tex != NULL) {
+		#ifdef KINC_DIRECT3D12
+		kinc_g4_texture_t *texture = texpaint1_tex;
+		if (!texture->impl._uploaded) {
+			kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
+			texture->impl._uploaded = true;
+		}
+		texpaint1 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
+		texpaint1->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
+		#endif
+	}
+	else {
+		texpaint1 = texpaint1_rt;
+	}
+
+	image_t *texpaint2_image = tex2;
+	kinc_g4_texture_t *texpaint2_tex = texpaint2_image->texture_;
+	kinc_g4_render_target_t *texpaint2_rt = texpaint2_image->render_target_;
+
+	if (texpaint2_tex != NULL) {
+		#ifdef KINC_DIRECT3D12
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texpaint2_tex;
+		if (!texture->impl._uploaded) {
+			kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
+			texture->impl._uploaded = true;
+		}
+		texpaint2 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
+		texpaint2->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
+		#endif
+	}
+	else {
+		texpaint2 = texpaint2_rt;
+	}
+
+	if (!texenv->impl._uploaded) {
+		kinc_g5_command_list_upload_texture(&commandList, &texenv->impl._texture);
+		texenv->impl._uploaded = true;
+	}
+	if (!texsobol->impl._uploaded) {
+		kinc_g5_command_list_upload_texture(&commandList, &texsobol->impl._texture);
+		texsobol->impl._uploaded = true;
+	}
+	if (!texscramble->impl._uploaded) {
+		kinc_g5_command_list_upload_texture(&commandList, &texscramble->impl._texture);
+		texscramble->impl._uploaded = true;
+	}
+	if (!texrank->impl._uploaded) {
+		kinc_g5_command_list_upload_texture(&commandList, &texrank->impl._texture);
+		texrank->impl._uploaded = true;
+	}
+
+	kinc_raytrace_set_textures(&texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture, &texsobol->impl._texture, &texscramble->impl._texture, &texrank->impl._texture);
+
+	if (texpaint0_tex != NULL) {
+		free(texpaint0);
+	}
+	if (texpaint1_tex != NULL) {
+		free(texpaint1);
+	}
+	if (texpaint2_tex != NULL) {
+		free(texpaint2);
+	}
 }
 
-void krom_raytrace_dispatch_rays(any target, buffer_t cb) {
+void krom_raytrace_dispatch_rays(kinc_g4_render_target_t *render_target, buffer_t *buffer) {
+	float *cb = (float *)buffer->data;
+	kinc_g5_constant_buffer_lock_all(&constant_buffer);
+	for (int i = 0; i < constant_buffer_size; ++i) {
+		kinc_g5_constant_buffer_set_float(&constant_buffer, i * 4, cb[i]);
+	}
+	kinc_g5_constant_buffer_unlock(&constant_buffer);
 
+	kinc_raytrace_set_acceleration_structure(&accel);
+	kinc_raytrace_set_pipeline(&pipeline);
+	kinc_raytrace_set_target(&render_target->impl._renderTarget);
+	kinc_raytrace_dispatch_rays(&commandList);
 }
 #endif
 
@@ -2064,7 +2303,53 @@ char *krom_language() {
 
 #ifdef WITH_IRON
 any krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_pos, bool udim) {
+	obj_part_t *part = io_obj_parse((uint8_t *)file_bytes->data, split_code, start_pos, udim);
 
+	i16_array_t *posa = malloc(sizeof(i16_array_t));
+	posa->buffer = part->posa;
+	posa->length = part->vertex_count * 4;
+	posa->capacity = part->vertex_count * 4;
+
+	i16_array_t *nora = malloc(sizeof(i16_array_t));
+	nora->buffer = part->nora;
+	nora->length = part->vertex_count * 2;
+	nora->capacity = part->vertex_count * 2;
+
+	i16_array_t *texa = NULL;
+	if (part->texa != NULL) {
+		texa = malloc(sizeof(i16_array_t));
+		texa->buffer = part->texa;
+		texa->length = part->vertex_count * 2;
+		texa->capacity = part->vertex_count * 2;
+	}
+
+	u32_array_t *inda = malloc(sizeof(u32_array_t));
+	inda->buffer = part->inda;
+	inda->length = part->index_count;
+	inda->capacity = part->index_count;
+
+	obj->posa = posa;
+	obj->nora = nora;
+	obj->texa = texa;
+	obj->inda = inda;
+	obj->name = part->name;
+	obj->scale_pos = part->scale_pos;
+	obj->has_next = part->has_next;
+	obj->pos = (int)part->pos;
+
+	if (udim) {
+		obj->udims_u = part->udims_u;
+		any_array_t *udims = any_array_create(part->udims_u * part->udims_v);
+		for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
+			u32_array_t *data = malloc(sizeof(u32_array_t));
+			data->buffer = part->udims[i];
+			data->length = part->udims_count[i];
+			data->capacity = part->udims_count[i];
+			udims->buffer[i] = data;
+		}
+		obj->udims = udims;
+	}
+	return obj;
 }
 #endif
 

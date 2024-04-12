@@ -68,10 +68,12 @@ function math_exp(x: f32): f32 { return Math.exp(x); }
 function map_get<K, V>(m: map_t<K, V>, k: any): any { return m.get(k); }
 function map_set<K, V>(m: map_t<K, V>, k: any, v: any) { m.set(k, v); }
 function map_delete<K, V>(m: map_t<K, V>, k: any) { m.delete(k); }
+function map_keys(m: map_t<any, any>): any[] { return Array.from(m.keys()); }
 function array_sort(ar: any[], fn: (a: any, b: any)=>i32) { ar.sort(fn); }
 function array_push(ar: any[], e: any) { ar.push(e); }
 function array_pop(ar: any[]): any { return ar.pop(); }
 function array_splice(ar: any[], start: i32, delete_count: i32) { ar.splice(start, delete_count); }
+function array_slice(a: any[], begin: i32, end: i32): any[] { return a.slice(begin, end); }
 function array_insert(ar: any[], at: i32, e: any) { ar.splice(at, 0, e); }
 function array_concat(a: any[], b: any[]): any[] { return a.concat(b); }
 function array_index_of(a: any[], search: any): i32 { return a.indexOf(search); }
@@ -87,9 +89,6 @@ function char_at(s: string, i: i32): string { return s.charAt(i); }
 function starts_with(s: string, start: string): bool { return s.startsWith(start); }
 function ends_with(s: string, end: string): bool { return s.endsWith(end); }
 function to_lower_case(s: string): string { return s.toLowerCase(); }
-function map_to_array(m: map_t<any, any>): any[] { return Array.from(m.values()); }
-function map_keys_to_array(m: map_t<any, any>): any[] { return Array.from(m.keys()); }
-function array_slice(a: any[], begin: i32, end: i32): any[] { return a.slice(begin, end); }
 function buffer_slice(a: buffer_t, begin: i32, end: i32): buffer_t { return a.slice(begin, end); }
 function buffer_size(b: buffer_t): i32 { return b.byteLength; }
 function buffer_view_size(v: buffer_view_t): i32 { return v.byteLength; }
