@@ -885,11 +885,9 @@ function writeTSProject(projectdir, projectFiles, options) {
 			let files = fs.readdirSync(options.sources[i]);
 			for (let file of files) {
 				if (file.endsWith(".ts")) {
-
 					if (globalThis.flags.with_minits && file.endsWith('_v8.ts')) {
 						continue;
 					}
-
 					// Prevent duplicates, keep the newly added file
 					for (let included of tsdata.include){
 						if (path.basename(included) == file) {
@@ -898,7 +896,6 @@ function writeTSProject(projectdir, projectFiles, options) {
 						}
 					}
 					tsdata.include.push(options.sources[i] + "/" + file);
-
 					if (file == "main.ts") main_ts = options.sources[i] + "/" + file;
 				}
 			}
@@ -916,21 +913,18 @@ function writeTSProject(projectdir, projectFiles, options) {
 	// MiniTS compiler
 	if (globalThis.flags.with_minits) {
 		globalThis.options = options;
+		globalThis.require = require;
+		let source = '';
 		let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
-		let stream = fs.createWriteStream('build/krom.ts');
 		for (let file_path of file_paths) {
-			file = fs.readFileSync(file_path) + '';
+			let file = fs.readFileSync(file_path) + '';
 			file = ts_preprocessor(file, file_path);
-			stream.write(file);
+			source += file;
 		}
-		stream.end();
-		stream.on('close', function() {
-			let minits = __dirname + '/Tools/minits/minits.js';
-			globalThis.require = require;
-			globalThis.flags.minits_input = process.cwd() + "/build/krom.ts";
-			globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
-			(1, eval)(fs.readFileSync(minits) + '');
-		});
+		globalThis.flags.minits_source = source;
+		globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
+		let minits = __dirname + '/Tools/minits/minits.js';
+		(1, eval)(fs.readFileSync(minits) + '');
 	}
 	// TS compiler
 	else {

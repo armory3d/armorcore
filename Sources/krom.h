@@ -104,6 +104,18 @@ void gc_free(void *ptr) {
 	}
 }
 
+void gc_pause() {
+	_gc_pause();
+}
+
+void gc_resume() {
+	_gc_resume();
+}
+
+void gc_run() {
+	_gc_run();
+}
+
 // point_t *p = GC_ALLOC_INIT(point_t, {x: 1.5, y: 3.5});
 #define GC_ALLOC_INIT(type, ...) (type *)memcpy(gc_alloc(sizeof(type)), (type[]){ __VA_ARGS__ }, sizeof(type))
 

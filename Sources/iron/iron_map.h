@@ -13,6 +13,7 @@ typedef struct f32_map {
 
 typedef struct any_map {
 	struct { char *key; void *value; } *hash;
+	any_array_t *gc; // gc reference
 } any_map_t;
 
 void i32_map_set(i32_map_t *m, char *k, int v);

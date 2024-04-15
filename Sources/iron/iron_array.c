@@ -3,9 +3,11 @@
 #include <stdlib.h>
 
 #ifdef WITH_MINITS
+void *gc_alloc(size_t size);
 void *gc_realloc(void *ptr, size_t size);
 void gc_free(void *ptr);
 #else
+static void *gc_alloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
 static void *gc_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
 static void gc_free(void *ptr) { free(ptr); }
 #endif
@@ -132,7 +134,7 @@ void array_splice(any_array_t *ar, int32_t start, int32_t delete_count) {
 }
 
 any_array_t *array_concat(any_array_t *a, any_array_t *b) {
-	any_array_t *ar = malloc(sizeof(any_array_t));
+	any_array_t *ar = gc_alloc(sizeof(any_array_t));
 	ar->length = a->length + b->length;
 	any_array_resize(ar, ar->length);
 	for (int i = 0; i < a->length; ++i) {
@@ -145,7 +147,7 @@ any_array_t *array_concat(any_array_t *a, any_array_t *b) {
 }
 
 any_array_t *array_slice(any_array_t *a, int32_t begin, int32_t end) {
-	any_array_t *ar = malloc(sizeof(any_array_t));
+	any_array_t *ar = gc_alloc(sizeof(any_array_t));
 	ar->length = end - begin;
 	any_array_resize(ar, ar->length);
 	for (int i = 0; i < ar->length; ++i) {
@@ -177,7 +179,7 @@ int array_index_of(any_array_t *ar, void *e) {
 }
 
 buffer_t *buffer_slice(buffer_t *a, int32_t begin, int32_t end) {
-	buffer_t *b = malloc(sizeof(buffer_t));
+	buffer_t *b = gc_alloc(sizeof(buffer_t));
 	buffer_resize(b, end - begin);
 	for (int i = 0; i < b->length; ++i) {
 		b->data[i] = a->data[begin + i];

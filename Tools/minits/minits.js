@@ -7,6 +7,7 @@
 let flags = globalThis.flags;
 if (flags == null) {
 	flags = {};
+	flags.minits_source = null;
 	flags.minits_input = "./test.ts";
 	flags.minits_output = "./test.c";
 }
@@ -22,7 +23,6 @@ let specials = [":", ";", ",", "(", ")", "[", "]", "{", "}", "<", ">", "!"];
 let is_comment = false;
 let is_string = false;
 let pos = 0;
-let file = "";
 let tokens = [];
 
 function is_alpha_numeric(code) {
@@ -63,14 +63,14 @@ function is_white_space(code) {
 
 function read_token() {
 	// Skip white space
-	while (is_white_space(file.charCodeAt(pos))) {
+	while (is_white_space(flags.minits_source.charCodeAt(pos))) {
 		pos++;
 	}
 
 	let token = "";
 
-	while (pos < file.length) {
-		let c = file.charAt(pos);
+	while (pos < flags.minits_source.length) {
+		let c = flags.minits_source.charAt(pos);
 
 		// Comment start
 		if (token == "//") {
@@ -118,7 +118,7 @@ function read_token() {
 		}
 
 		// Token end
-		if (is_white_space(file.charCodeAt(pos))) {
+		if (is_white_space(flags.minits_source.charCodeAt(pos))) {
 			break;
 		}
 
@@ -397,6 +397,36 @@ function struct_access(s) {
 	return s;
 }
 
+function struct_alloc_designated(alloc_type) {
+	let token = "GC_ALLOC_INIT(" + alloc_type + ", {";
+	pos++; // {
+
+	while (get_token() != "}") {
+		let t = get_token_c();
+
+		// Nested struct
+		// if (t == "{") {
+		// 	alloc_type = ;
+		// 	t += struct_alloc_designated("", alloc_type);
+		// }
+
+		// ": []" -> _array_create
+		if (t == "->buffer[") {
+			let member = get_token(-2);
+			let type = array_type(member);
+			t = type + "_array_create(0)"; // any/i32/.._array_create
+			pos++; // Skip "]"
+		}
+
+		token += t;
+		pos++;
+	}
+	token += get_token(); // "}"
+	token += ")";
+	tabs--;
+	return token;
+}
+
 function struct_alloc(token, alloc_type) {
 	// Turn "= {}" into malloc()
 	if (get_token(-1) == "=" && token == "{" && get_token(1) == "}") {
@@ -407,19 +437,12 @@ function struct_alloc(token, alloc_type) {
 		pos++; // }
 		tabs--;
 	}
-	// Turn "= { ... }" into malloc() with designated init
-	if (get_token(-1) == "=" && token == "{" && get_token(1) != "}") {
+	// Turn "{ a: b, ... }" into malloc() with designated init
+	if (token == "{" && get_token(1) != "}" && get_token(2) == ":") {
 		if (alloc_type.endsWith(" *")) { // mystruct * -> mystruct
 			alloc_type = alloc_type.substring(0, alloc_type.length - 2);
 		}
-		token = "GC_ALLOC_INIT(" + alloc_type + ", ";
-		while (get_token() != "}") {
-			token += get_token_c();
-			pos++;
-		}
-		token += get_token(); // "}"
-		token += ")";
-		tabs--;
+		token = struct_alloc_designated(alloc_type);
 	}
 	return token;
 }
@@ -498,7 +521,7 @@ function array_create(token, name) {
 
 			token = type + "_array_create(" + contents.length + ");\n";
 			token = add_tabs(token);
-			token += "const " + type + " " + tmp + "[]={";
+			token += type + " " + tmp + "[]={";
 			for (let e of contents) {
 				token += e + ",";
 			}
@@ -1332,14 +1355,14 @@ function write_c() {
 
 function kickstart() {
 	let fs = require("fs");
-	if (!fs.existsSync(flags.minits_input)) {
-		return;
+	if (flags.minits_source == null) {
+		flags.minits_source = fs.readFileSync(flags.minits_input).toString();
 	}
-	file = fs.readFileSync(flags.minits_input).toString();
-	tokens = parse(file);
+
+	tokens = parse();
 	stream = fs.createWriteStream(flags.minits_output);
 	write_c();
-	stream.close();
+	stream.end();
 }
 
 kickstart();

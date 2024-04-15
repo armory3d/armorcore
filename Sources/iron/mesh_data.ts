@@ -7,13 +7,13 @@ function mesh_data_parse(name: string, id: string): mesh_data_t {
 		return null;
 	}
 
-	let dat: mesh_data_t = mesh_data_create(raw);
+	let data: mesh_data_t = mesh_data_create(raw);
 	///if arm_skin
 	if (raw.skin != null) {
-		mesh_data_init_skeleton_transforms(dat, raw.skin.transforms_inv);
+		mesh_data_init_skeleton_transforms(data, raw.skin.transforms_inv);
 	}
 	///end
-	return dat;
+	return data;
 }
 
 function mesh_data_get_raw_by_name(datas: mesh_data_t[], name: string): mesh_data_t {
