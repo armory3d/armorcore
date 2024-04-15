@@ -1,18 +1,19 @@
 // ../../../Kinc/make --from ../../../ -g opengl --compiler clang --run
 
-let raw: scene_t = {};
+let scene: scene_t;
 
 function main() {
-	let ops: kinc_sys_ops_t = {};
-	ops.title = "Empty";
-	ops.width = 1280;
-	ops.height = 720;
-	ops.x = 0;
-	ops.y = 0;
-	ops.features = window_features_t.NONE;
-	ops.mode = window_mode_t.WINDOWED;
-	ops.frequency = 60;
-	ops.vsync = true;
+	let ops: kinc_sys_ops_t = {
+		title: "Empty",
+		width: 1280,
+		height: 720,
+		x: 0,
+		y: 0,
+		features: window_features_t.NONE,
+		mode: window_mode_t.WINDOWED,
+		frequency: 60,
+		vsync: true
+	};
 	sys_start(ops);
 	app_init();
 	app_ready();
@@ -27,93 +28,108 @@ function render_commands() {
 function app_ready() {
 	render_path_commands = render_commands;
 
-	// raw = {};
-	raw.name = "Scene";
-	raw.shader_datas = [];
-	raw.material_datas = [];
-	raw.mesh_datas = [];
-	raw.camera_datas = [];
-	raw.camera_ref = "Camera";
-	raw.objects = [];
-	map_set(data_cached_scene_raws, raw.name, raw);
+	scene = {
+		name: "Scene",
+		objects: [],
+		camera_datas: [],
+		camera_ref: "Camera",
+		material_datas: [],
+		shader_datas: []
+	};
+	map_set(data_cached_scene_raws, scene.name, scene);
 
-	let cd: camera_data_t = {};
-	cd.name = "MyCamera";
-	cd.near_plane = 0.1;
-	cd.far_plane = 100.0;
-	cd.fov = 0.85;
-	array_push(raw.camera_datas, cd);
+	let cd: camera_data_t = {
+		name: "MyCamera",
+		near_plane: 0.1,
+		far_plane: 100.0,
+		fov: 0.85,
+	};
+	array_push(scene.camera_datas, cd);
 
-	let wvp_const: shader_const_t = {};
-	wvp_const.name = "WVP";
-	wvp_const.type = "mat4";
-	wvp_const.link = "_world_view_proj_matrix";
+	let pos: vertex_element_t = {
+		name: "pos",
+		data: "short4norm"
+	};
 
-	let tu: tex_unit_t = {};
-	tu.name = "MyTexture";
+	let tex: vertex_element_t = {
+		name: "tex",
+		data: "short2norm"
+	};
 
-	let pos: vertex_element_t = {};
-	pos.name = "pos";
-	pos.data = "short4norm";
+	let wvp: shader_const_t = {
+		name: "WVP",
+		type: "mat4",
+		link: "_world_view_proj_matrix"
+	};
 
-	let tex: vertex_element_t = {};
-	tex.name = "tex";
-	tex.data = "short2norm";
+	let tu: tex_unit_t = {
+		name: "MyTexture"
+	};
 
-	let sc: shader_context_t = {};
-	sc.name = "mesh";
-	sc.vertex_shader = "data/mesh.vert";
-	sc.fragment_shader = "data/mesh.frag";
-	sc.compare_mode = "less";
-	sc.cull_mode = "clockwise";
-	sc.depth_write = true;
-	sc.constants = [wvp_const];
-	sc.texture_units = [tu];
+	let sc: shader_context_t = {
+		name: "mesh",
+		vertex_shader: "mesh.vert",
+		fragment_shader: "mesh.frag",
+		compare_mode: "less",
+		cull_mode: "clockwise",
+		depth_write: true
+	};
 	sc.vertex_elements = [pos, tex];
+	sc.constants = [wvp];
+	sc.texture_units = [tu];
 
-	let sh: shader_data_t = {};
-	sh.name = "MyShader";
+	let sh: shader_data_t = {
+		name: "MyShader"
+	};
 	sh.contexts = [sc];
-	array_push(raw.shader_datas, sh);
+	array_push(scene.shader_datas, sh);
 
-	let bt: bind_tex_t = {};
-	bt.name = "MyTexture";
-	bt.file = "texture.k";
+	let bt: bind_tex_t = {
+		name: "MyTexture",
+		file: "texture.k"
+	};
 
-	let mc: material_context_t = {};
-	mc.name = "mesh";
+	let mc: material_context_t = {
+		name: "mesh"
+	};
 	mc.bind_textures = [bt];
 
-	let md: material_data_t = {};
-	md.name = "MyMaterial";
-	md.shader = "MyShader";
-	md.contexts = [mc]
-	array_push(raw.material_datas, md);
+	let md: material_data_t = {
+		name: "MyMaterial",
+		shader: "MyShader"
+	};
+	md.contexts = [mc];
+	array_push(scene.material_datas, md);
 
-	material_data_parse(raw.name, md.name);
+	material_data_parse(scene.name, md.name);
 	data_ready();
 }
 
 function data_ready() {
 	// Camera object
-	let co: obj_t = {};
-	co.name = "Camera";
-	co.type = "camera_object";
-	co.data_ref = "MyCamera";
-	co.transform = null;
-	array_push(raw.objects, co);
+	let co: obj_t = {
+		name: "Camera",
+		type: "camera_object",
+		data_ref: "MyCamera",
+		visible: true,
+		spawn: true
+	};
+	array_push(scene.objects, co);
 
 	// Mesh object
-	let o: obj_t = {};
-	o.name = "Cube";
-	o.type = "mesh_object";
-	o.data_ref = "cube.arm/Cube";
+	let o: obj_t = {
+		name: "Cube",
+		type: "mesh_object",
+		data_ref: "cube.arm/Cube"
+	};
+
 	o.material_refs = ["MyMaterial"];
-	o.transform = null;
-	array_push(raw.objects, o);
+	o.visible = true;
+	o.spawn = true;
+	array_push(scene.objects, o);
 
 	// Instantiate scene
-	scene_create(raw);
+	scene_create(scene);
 	scene_ready();
 }
 
