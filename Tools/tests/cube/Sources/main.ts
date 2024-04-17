@@ -1,7 +1,5 @@
 // ../../../Kinc/make --from ../../../ -g opengl --compiler clang --run
 
-let scene: scene_t;
-
 function main() {
 	let ops: kinc_sys_ops_t = {
 		title: "Empty",
@@ -28,105 +26,90 @@ function render_commands() {
 function app_ready() {
 	render_path_commands = render_commands;
 
-	scene = {
+	let scene: scene_t = {
 		name: "Scene",
-		objects: [],
-		camera_datas: [],
+		objects: [
+			{
+				name: "Cube",
+				type: "mesh_object",
+				data_ref: "cube.arm/Cube",
+				material_refs: ["MyMaterial"],
+				visible: true,
+				spawn: true
+			},
+			{
+				name: "Camera",
+				type: "camera_object",
+				data_ref: "MyCamera",
+				visible: true,
+				spawn: true
+			}
+		],
+		camera_datas: [
+			{
+				name: "MyCamera",
+				near_plane: 0.1,
+				far_plane: 100.0,
+				fov: 0.85
+			}
+		],
 		camera_ref: "Camera",
-		material_datas: [],
-		shader_datas: []
+		material_datas: [
+			{
+				name: "MyMaterial",
+				shader: "MyShader",
+				contexts: [
+					{
+						name: "mesh",
+						bind_textures: [
+							{
+								name: "MyTexture",
+								file: "texture.k"
+							}
+						]
+					}
+				]
+			}
+		],
+		shader_datas: [
+			{
+				name: "MyShader",
+				contexts: [
+					{
+						name: "mesh",
+						vertex_shader: "mesh.vert",
+						fragment_shader: "mesh.frag",
+						compare_mode: "less",
+						cull_mode: "clockwise",
+						depth_write: true,
+						vertex_elements: [
+							{
+								name: "pos",
+								data: "short4norm"
+							},
+							{
+								name: "tex",
+								data: "short2norm"
+							}
+						],
+						constants: [
+							{
+								name: "WVP",
+								type: "mat4",
+								link: "_world_view_proj_matrix"
+							}
+						],
+						texture_units: [
+							{
+								name: "MyTexture"
+							}
+						]
+					}
+				]
+			}
+		]
 	};
 	map_set(data_cached_scene_raws, scene.name, scene);
-
-	let cd: camera_data_t = {
-		name: "MyCamera",
-		near_plane: 0.1,
-		far_plane: 100.0,
-		fov: 0.85,
-	};
-	array_push(scene.camera_datas, cd);
-
-	let pos: vertex_element_t = {
-		name: "pos",
-		data: "short4norm"
-	};
-
-	let tex: vertex_element_t = {
-		name: "tex",
-		data: "short2norm"
-	};
-
-	let wvp: shader_const_t = {
-		name: "WVP",
-		type: "mat4",
-		link: "_world_view_proj_matrix"
-	};
-
-	let tu: tex_unit_t = {
-		name: "MyTexture"
-	};
-
-	let sc: shader_context_t = {
-		name: "mesh",
-		vertex_shader: "mesh.vert",
-		fragment_shader: "mesh.frag",
-		compare_mode: "less",
-		cull_mode: "clockwise",
-		depth_write: true
-	};
-	sc.vertex_elements = [pos, tex];
-	sc.constants = [wvp];
-	sc.texture_units = [tu];
-
-	let sh: shader_data_t = {
-		name: "MyShader"
-	};
-	sh.contexts = [sc];
-	array_push(scene.shader_datas, sh);
-
-	let bt: bind_tex_t = {
-		name: "MyTexture",
-		file: "texture.k"
-	};
-
-	let mc: material_context_t = {
-		name: "mesh"
-	};
-	mc.bind_textures = [bt];
-
-	let md: material_data_t = {
-		name: "MyMaterial",
-		shader: "MyShader"
-	};
-	md.contexts = [mc];
-	array_push(scene.material_datas, md);
-
-	material_data_parse(scene.name, md.name);
-	data_ready();
-}
-
-function data_ready() {
-	// Camera object
-	let co: obj_t = {
-		name: "Camera",
-		type: "camera_object",
-		data_ref: "MyCamera",
-		visible: true,
-		spawn: true
-	};
-	array_push(scene.objects, co);
-
-	// Mesh object
-	let o: obj_t = {
-		name: "Cube",
-		type: "mesh_object",
-		data_ref: "cube.arm/Cube"
-	};
-
-	o.material_refs = ["MyMaterial"];
-	o.visible = true;
-	o.spawn = true;
-	array_push(scene.objects, o);
 
 	// Instantiate scene
 	scene_create(scene);
