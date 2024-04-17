@@ -49,3 +49,11 @@ any_array_t *map_keys(any_map_t *m) {
 	}
 	return ar;
 }
+
+i32_map_t *i32_map_create() {
+	return gc_alloc(sizeof(i32_map_t));
+}
+
+any_map_t *any_map_create() {
+	return gc_alloc(sizeof(any_map_t));
+}

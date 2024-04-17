@@ -16,7 +16,7 @@
 #include <iron/iron_array.h>
 #include <iron/iron_map.h>
 #include <iron/iron_armpack.h>
-#include <gc.h>
+#include <iron/iron_gc.h>
 // #include <quickjs.h>
 #ifdef WITH_ZUI
 #include "zui/zui.h"
@@ -86,39 +86,6 @@ void (*krom_gamepad_axis)(int, int, float);
 void (*krom_gamepad_button)(int, int, float);
 void (*krom_save_and_quit)(bool);
 
-void *gc_alloc(size_t size) {
-	return _gc_calloc(size, sizeof(uint8_t));
-}
-
-void *gc_global(void *ptr) {
-	return _gc_make_static(ptr);
-}
-
-void *gc_realloc(void *ptr, size_t size) {
-	return _gc_realloc(ptr, size);
-}
-
-void gc_free(void *ptr) {
-	if (ptr != NULL) {
-		_gc_free(ptr);
-	}
-}
-
-void gc_pause() {
-	_gc_pause();
-}
-
-void gc_resume() {
-	_gc_resume();
-}
-
-void gc_run() {
-	_gc_run();
-}
-
-// point_t *p = GC_ALLOC_INIT(point_t, {x: 1.5, y: 3.5});
-#define GC_ALLOC_INIT(type, ...) (type *)memcpy(gc_alloc(sizeof(type)), (type[]){ __VA_ARGS__ }, sizeof(type))
-
 int kickstart(int argc, char **argv) {
 	_argc = argc;
 	_argv = argv;
@@ -184,10 +151,8 @@ int kickstart(int argc, char **argv) {
 	// JS_FreeValue(ctx, result);
 	// JS_RunGC(runtime);
 
-	_gc_start(&argc);
-
-	void (*volatile __kickstart)(void) = _kickstart; // No inline, for gc
-	__kickstart();
+	gc_start(&argc);
+	_kickstart();
 
 	#ifdef WITH_AUDIO
 	kinc_a2_shutdown();
@@ -198,7 +163,7 @@ int kickstart(int argc, char **argv) {
 		ort->ReleaseSessionOptions(ort_session_options);
 	}
 	#endif
-	_gc_stop();
+	gc_stop();
 	return 0;
 }
 
@@ -540,258 +505,6 @@ void _gamepad_button(int gamepad, int button, float value, void *data) {
 
 f32 js_eval(const char *js, const char *context) {
 	return 0.0;
-}
-
-i32_map_t *i32_map_create() {
-	return gc_alloc(sizeof(i32_map_t));
-}
-
-any_map_t *any_map_create() {
-	return gc_alloc(sizeof(any_map_t));
-}
-
-buffer_t *buffer_create(i32 length) {
-	buffer_t * b = gc_alloc(sizeof(buffer_t));
-	buffer_resize(b, length);
-	return b;
-}
-
-buffer_view_t *buffer_view_create(buffer_t *b) {
-	buffer_view_t *view = gc_alloc(sizeof(buffer_view_t));
-	view->buffer = b;
-	return view;
-}
-
-f32_array_t *f32_array_create(i32 length) {
-	f32_array_t *a = gc_alloc(sizeof(f32_array_t));
-	if (length > 0) {
-		f32_array_resize(a, length);
-		a->length = length;
-	}
-	return a;
-}
-
-f32_array_t *f32_array_create_from_buffer(buffer_t *b) {
-	f32_array_t *a = gc_alloc(sizeof(f32_array_t));
-	a->buffer = b->data;
-	a->length = b->length / 4;
-	a->capacity = b->length / 4;
-	return a;
-}
-
-f32_array_t *f32_array_create_from_array(f32_array_t *from) {
-	f32_array_t *a = f32_array_create(from->length);
-	for (int i = 0; i < from->length; ++i) {
-		a->buffer[i] = from->buffer[i];
-	}
-	return a;
-}
-
-f32_array_t *f32_array_create_from_raw(f32 *raw, int length) {
-	f32_array_t *a = f32_array_create(length);
-	for (int i = 0; i < length; ++i) {
-		a->buffer[i] = raw[i];
-	}
-	return a;
-}
-
-f32_array_t *f32_array_create_x(f32 x) {
-	f32_array_t *a = f32_array_create(1);
-	a->buffer[0] = x;
-	return a;
-}
-
-f32_array_t *f32_array_create_xy(f32 x, f32 y) {
-	f32_array_t *a = f32_array_create(2);
-	a->buffer[0] = x;
-	a->buffer[1] = y;
-	return a;
-}
-
-f32_array_t *f32_array_create_xyz(f32 x, f32 y, f32 z) {
-	f32_array_t *a = f32_array_create(3);
-	a->buffer[0] = x;
-	a->buffer[1] = y;
-	a->buffer[2] = z;
-	return a;
-}
-
-f32_array_t *f32_array_create_xyzw(f32 x, f32 y, f32 z, f32 w) {
-	f32_array_t *a = f32_array_create(4);
-	a->buffer[0] = x;
-	a->buffer[1] = y;
-	a->buffer[2] = z;
-	a->buffer[3] = w;
-	return a;
-}
-
-f32_array_t *f32_array_create_xyzwv(f32 x, f32 y, f32 z, f32 w, f32 v) {
-	f32_array_t *a = f32_array_create(5);
-	a->buffer[0] = x;
-	a->buffer[1] = y;
-	a->buffer[2] = z;
-	a->buffer[3] = w;
-	a->buffer[4] = v;
-	return a;
-}
-
-u32_array_t *u32_array_create(i32 length) {
-	u32_array_t *a = gc_alloc(sizeof(u32_array_t));
-	if (length > 0) {
-		u32_array_resize(a, length);
-		a->length = length;
-	}
-	return a;
-}
-
-u32_array_t *u32_array_create_from_array(u32_array_t *from) {
-	u32_array_t *a = u32_array_create(from->length);
-	for (int i = 0; i < from->length; ++i) {
-		a->buffer[i] = from->buffer[i];
-	}
-	return a;
-}
-
-u32_array_t *u32_array_create_from_raw(u32 *raw, int length) {
-	u32_array_t *a = u32_array_create(length);
-	for (int i = 0; i < length; ++i) {
-		a->buffer[i] = raw[i];
-	}
-	return a;
-}
-
-i32_array_t *i32_array_create(i32 length) {
-	i32_array_t *a = gc_alloc(sizeof(i32_array_t));
-	if (length > 0) {
-		i32_array_resize(a, length);
-		a->length = length;
-	}
-	return a;
-}
-
-i32_array_t *i32_array_create_from_array(i32_array_t *from) {
-	i32_array_t *a = i32_array_create(from->length);
-	for (int i = 0; i < from->length; ++i) {
-		a->buffer[i] = from->buffer[i];
-	}
-	return a;
-}
-
-i32_array_t *i32_array_create_from_raw(i32 *raw, int length) {
-	i32_array_t *a = i32_array_create(length);
-	for (int i = 0; i < length; ++i) {
-		a->buffer[i] = raw[i];
-	}
-	return a;
-}
-
-u16_array_t *u16_array_create(i32 length) {
-	u16_array_t *a = gc_alloc(sizeof(u16_array_t));
-	if (length > 0) {
-		u16_array_resize(a, length);
-		a->length = length;
-	}
-	return a;
-}
-
-u16_array_t *u16_array_create_from_raw(u16 *raw, int length) {
-	u16_array_t *a = u16_array_create(length);
-	for (int i = 0; i < length; ++i) {
-		a->buffer[i] = raw[i];
-	}
-	return a;
-}
-
-i16_array_t *i16_array_create(i32 length) {
-	i16_array_t *a = gc_alloc(sizeof(i16_array_t));
-	if (length > 0) {
-		i16_array_resize(a, length);
-		a->length = length;
-	}
-	return a;
-}
-
-i16_array_t *i16_array_create_from_array(i16_array_t *from) {
-	i16_array_t *a = i16_array_create(from->length);
-	for (int i = 0; i < from->length; ++i) {
-		a->buffer[i] = from->buffer[i];
-	}
-	return a;
-}
-
-i16_array_t *i16_array_create_from_raw(i16 *raw, int length) {
-	i16_array_t *a = i16_array_create(length);
-	for (int i = 0; i < length; ++i) {
-		a->buffer[i] = raw[i];
-	}
-	return a;
-}
-
-u8_array_t *u8_array_create(i32 length) {
-	u8_array_t *a = gc_alloc(sizeof(u8_array_t));
-	if (length > 0) {
-		u8_array_resize(a, length);
-		a->length = length;
-	}
-	return a;
-}
-
-u8_array_t *u8_array_create_from_buffer(buffer_t *b) {
-	u8_array_t *a = gc_alloc(sizeof(u8_array_t));
-	a->buffer = b->data;
-	a->length = b->length;
-	a->capacity = b->length;
-	return a;
-}
-
-u8_array_t *u8_array_create_from_array(u8_array_t *from) {
-	u8_array_t *a = u8_array_create(from->length);
-	for (int i = 0; i < from->length; ++i) {
-		a->buffer[i] = from->buffer[i];
-	}
-	return a;
-}
-
-u8_array_t *u8_array_create_from_raw(u8 *raw, int length) {
-	u8_array_t *a = u8_array_create(length);
-	for (int i = 0; i < length; ++i) {
-		a->buffer[i] = raw[i];
-	}
-	return a;
-}
-
-i8_array_t *i8_array_create(i32 length) {
-	i8_array_t *a = gc_alloc(sizeof(i8_array_t));
-	if (length > 0) {
-		i8_array_resize(a, length);
-		a->length = length;
-	}
-	return a;
-}
-
-i8_array_t *i8_array_create_from_raw(i8 *raw, int length) {
-	i8_array_t *a = i8_array_create(length);
-	for (int i = 0; i < length; ++i) {
-		a->buffer[i] = raw[i];
-	}
-	return a;
-}
-
-any_array_t *any_array_create(i32 length) {
-	any_array_t *a = gc_alloc(sizeof(any_array_t));
-	if (length > 0) {
-		any_array_resize(a, length);
-		a->length = length;
-	}
-	return a;
-}
-
-any_array_t *any_array_create_from_raw(any *raw, int length) {
-	any_array_t *a = any_array_create(length);
-	for (int i = 0; i < length; ++i) {
-		a->buffer[i] = raw[i];
-	}
-	return a;
 }
 
 void uri_decode(char *dst, const char *src) {

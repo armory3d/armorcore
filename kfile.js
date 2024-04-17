@@ -95,6 +95,7 @@ if (flags.with_minits) {
 	c_project.addFile('Sources/iron/iron_string.c');
 	c_project.addFile('Sources/iron/iron_armpack.c');
 	c_project.addFile('Sources/iron/iron_vec2.c');
+	c_project.addFile('Sources/iron/iron_gc.c');
 	c_project.addIncludeDir('Libraries/stb'); // iron_map.c -> stb_ds.h
 	c_project.addIncludeDir('Libraries/jsmn'); // iron_json.c -> jsmn.h
 	////
