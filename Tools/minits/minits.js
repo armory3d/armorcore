@@ -391,58 +391,42 @@ function enum_access(s) {
 
 function struct_access(s) {
 	// Turn a.b into a->b
-	if (s.indexOf(".") > -1 && !is_number(s) && s.charAt(0) != "\"") {
+	if (s.indexOf(".") > -1 && !is_number(s) && s.charAt(0) != "\"" && !s.startsWith("GC_ALLOC_INIT")) {
 		s = s.replaceAll(".", "->");
 	}
 	return s;
 }
 
-function struct_alloc_designated(alloc_type) {
-	let token = "GC_ALLOC_INIT(" + alloc_type + ", {";
-	pos++; // {
-
-	while (get_token() != "}") {
-		let t = get_token_c();
-
-		// Nested struct
-		// if (t == "{") {
-		// 	alloc_type = ;
-		// 	t += struct_alloc_designated("", alloc_type);
-		// }
-
-		// ": []" -> _array_create
-		if (t == "->buffer[") {
-			let member = get_token(-2);
-			let type = array_type(member);
-			t = type + "_array_create(0)"; // any/i32/.._array_create
-			pos++; // Skip "]"
+function struct_alloc(token, type = null) {
+	// "= { a: b, ... }" -> GC_ALLOC_INIT
+	if ((get_token(-1) == "=" && token == "{") || type != null) {
+		if (type == null) {
+			// let a: b = {, a = {
+			let i = get_token(-3) == ":" ? -4 : -2;
+			let t = struct_access(get_token(i));
+			type = value_type(t);
+			if (type.endsWith(" *")) { // my_struct * -> my_struct
+				type = type.substring(0, type.length - 2);
+			}
 		}
 
-		token += t;
-		pos++;
-	}
-	token += get_token(); // "}"
-	token += ")";
-	tabs--;
-	return token;
-}
-
-function struct_alloc(token, alloc_type) {
-	// Turn "= {}" into malloc()
-	if (get_token(-1) == "=" && token == "{" && get_token(1) == "}") {
-		if (alloc_type.endsWith(" *")) { // mystruct * -> mystruct
-			alloc_type = alloc_type.substring(0, alloc_type.length - 2);
+		token = "GC_ALLOC_INIT(" + type + ", {";
+		pos++; // {
+		while (get_token() != "}") {
+			let t = get_token_c();
+			if (get_token() == "[") {
+				let member = get_token(-2);
+				let types = struct_types.get(type + " *");
+				let content_type = types.get(member);
+				content_type = content_type.substring(7, content_type.length - 8); // struct my_struct_array_t * -> my_struct
+				t = array_create("[", "", content_type);
+			}
+			token += t;
+			pos++;
 		}
-		token = "gc_alloc(sizeof(" + alloc_type + "))";
-		pos++; // }
+		token += get_token(); // "}"
+		token += ")";
 		tabs--;
-	}
-	// Turn "{ a: b, ... }" into malloc() with designated init
-	if (token == "{" && get_token(1) != "}" && get_token(2) == ":") {
-		if (alloc_type.endsWith(" *")) { // mystruct * -> mystruct
-			alloc_type = alloc_type.substring(0, alloc_type.length - 2);
-		}
-		token = struct_alloc_designated(alloc_type);
 	}
 	return token;
 }
@@ -464,8 +448,8 @@ function array_type(name) {
 	}
 }
 
-function array_contents() {
-	// [1, 2, ..]
+function array_contents(type) {
+	// [1, 2, ..] or [{a:b}, {a:b}]
 	let contents = [];
 	while (true) {
 		pos++;
@@ -475,6 +459,10 @@ function array_contents() {
 		}
 		if (token == ",") {
 			continue;
+		}
+		if (token == "{") {
+			token = struct_alloc(token, type);
+			tabs++; // Undo tabs-- in struct_alloc
 		}
 		token = struct_access(token);
 		contents.push(token);
@@ -490,45 +478,27 @@ function member_name(name) {
 	return name;
 }
 
-function safe_name(name) {
-	return name.replaceAll(".", "_");
-}
-
-function add_tabs(token) {
-	for (let i = 0; i < tabs; ++i) {
-		token += "\t";
-	}
-	return token;
-}
-
-function array_create(token, name) {
-	if (get_token(-1) == "=" && token == "[") {
+function array_create(token, name, content_type = null) {
+	if ((get_token(-1) == "=" && token == "[") || content_type != null) {
 		if (name == "]") {
 			name = get_token(-6); // ar: i32[] = [
 		}
 		let member = member_name(name);
 		let type = array_type(member);
 
-		// "= []" -> _array_create
-		if (get_token(1) == "]") {
-			token = type + "_array_create(0)"; // any/i32/.._array_create
-			pos++;
-		}
-		// "= [1, 2, ..]"
-		else {
-			let contents = array_contents();
-			let tmp = "_" + safe_name(name);
-
-			token = type + "_array_create(" + contents.length + ");\n";
-			token = add_tabs(token);
-			token += type + " " + tmp + "[]={";
-			for (let e of contents) {
-				token += e + ",";
+		// = [], = [1, 2, ..] -> any/i32/.._array_create_from_raw
+		if (content_type == null) {
+			content_type = value_type(name);
+			if (content_type != null) {
+				content_type = content_type.substring(0, content_type.length - 10);
 			}
-			token += "};\n";
-			token = add_tabs(token);
-			token += "memcpy(" + struct_access(name) + "->buffer, " + tmp + ", sizeof(" + tmp + "))";
 		}
+		let contents = array_contents(content_type);
+		token = type + "_array_create_from_raw((" + type + "[]){";
+		for (let e of contents) {
+			token += e + ",";
+		}
+		token += "}," + contents.length + ")";
 	}
 	return token;
 }
@@ -1071,7 +1041,7 @@ function write_globals() {
 
 					token = enum_access(token);
 					token = array_access(token);
-					token = struct_alloc(token, type);
+					token = struct_alloc(token);
 
 					if (token == ";") {
 						break;
@@ -1148,7 +1118,6 @@ function write_function() {
 
 	tabs = 1;
 	new_line = true;
-	let alloc_type = "";
 	let mark_global = null;
 	let anon_fn = fn_name;
 	let nested = false;
@@ -1197,13 +1166,9 @@ function write_function() {
 		if (token == "let") {
 			pos++;
 			let name = get_token();
-
 			pos++; // :
 			let type = read_type();
-			alloc_type = type;
-
 			write(join_type_name(type, name));
-
 			// = or ;
 			pos++;
 			token = get_token();
@@ -1228,25 +1193,8 @@ function write_function() {
 			mark_global = null;
 		}
 
-		// Turn "= {}" into malloc()
-		if (get_token(-1) == "=" && token == "{" && get_token(1) == "}") {
-			let t = struct_access(get_token(-2));
-			let type = value_type(t);
-			if (type != null) {
-				alloc_type = type;
-			}
-		}
-
-		// Turn "= { ... }" into malloc() with designated init
-		if (get_token(-1) == "=" && token == "{" && get_token(1) != "}") {
-			let t = struct_access(get_token(-2));
-			let type = value_type(t);
-			if (type != null) {
-				alloc_type = type;
-			}
-		}
-
-		token = struct_alloc(token, alloc_type);
+		// "= { ... }" -> GC_ALLOC_INIT
+		token = struct_alloc(token);
 
 		// [] -> _array_create
 		token = array_create(token, get_token(-2));

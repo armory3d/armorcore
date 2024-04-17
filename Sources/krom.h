@@ -587,6 +587,14 @@ f32_array_t *f32_array_create_from_array(f32_array_t *from) {
 	return a;
 }
 
+f32_array_t *f32_array_create_from_raw(f32 *raw, int length) {
+	f32_array_t *a = f32_array_create(length);
+	for (int i = 0; i < length; ++i) {
+		a->buffer[i] = raw[i];
+	}
+	return a;
+}
+
 f32_array_t *f32_array_create_x(f32 x) {
 	f32_array_t *a = f32_array_create(1);
 	a->buffer[0] = x;
@@ -644,6 +652,14 @@ u32_array_t *u32_array_create_from_array(u32_array_t *from) {
 	return a;
 }
 
+u32_array_t *u32_array_create_from_raw(u32 *raw, int length) {
+	u32_array_t *a = u32_array_create(length);
+	for (int i = 0; i < length; ++i) {
+		a->buffer[i] = raw[i];
+	}
+	return a;
+}
+
 i32_array_t *i32_array_create(i32 length) {
 	i32_array_t *a = gc_alloc(sizeof(i32_array_t));
 	if (length > 0) {
@@ -661,11 +677,27 @@ i32_array_t *i32_array_create_from_array(i32_array_t *from) {
 	return a;
 }
 
+i32_array_t *i32_array_create_from_raw(i32 *raw, int length) {
+	i32_array_t *a = i32_array_create(length);
+	for (int i = 0; i < length; ++i) {
+		a->buffer[i] = raw[i];
+	}
+	return a;
+}
+
 u16_array_t *u16_array_create(i32 length) {
 	u16_array_t *a = gc_alloc(sizeof(u16_array_t));
 	if (length > 0) {
 		u16_array_resize(a, length);
 		a->length = length;
+	}
+	return a;
+}
+
+u16_array_t *u16_array_create_from_raw(u16 *raw, int length) {
+	u16_array_t *a = u16_array_create(length);
+	for (int i = 0; i < length; ++i) {
+		a->buffer[i] = raw[i];
 	}
 	return a;
 }
@@ -683,6 +715,14 @@ i16_array_t *i16_array_create_from_array(i16_array_t *from) {
 	i16_array_t *a = i16_array_create(from->length);
 	for (int i = 0; i < from->length; ++i) {
 		a->buffer[i] = from->buffer[i];
+	}
+	return a;
+}
+
+i16_array_t *i16_array_create_from_raw(i16 *raw, int length) {
+	i16_array_t *a = i16_array_create(length);
+	for (int i = 0; i < length; ++i) {
+		a->buffer[i] = raw[i];
 	}
 	return a;
 }
@@ -712,6 +752,14 @@ u8_array_t *u8_array_create_from_array(u8_array_t *from) {
 	return a;
 }
 
+u8_array_t *u8_array_create_from_raw(u8 *raw, int length) {
+	u8_array_t *a = u8_array_create(length);
+	for (int i = 0; i < length; ++i) {
+		a->buffer[i] = raw[i];
+	}
+	return a;
+}
+
 i8_array_t *i8_array_create(i32 length) {
 	i8_array_t *a = gc_alloc(sizeof(i8_array_t));
 	if (length > 0) {
@@ -721,11 +769,27 @@ i8_array_t *i8_array_create(i32 length) {
 	return a;
 }
 
+i8_array_t *i8_array_create_from_raw(i8 *raw, int length) {
+	i8_array_t *a = i8_array_create(length);
+	for (int i = 0; i < length; ++i) {
+		a->buffer[i] = raw[i];
+	}
+	return a;
+}
+
 any_array_t *any_array_create(i32 length) {
 	any_array_t *a = gc_alloc(sizeof(any_array_t));
 	if (length > 0) {
 		any_array_resize(a, length);
 		a->length = length;
+	}
+	return a;
+}
+
+any_array_t *any_array_create_from_raw(any *raw, int length) {
+	any_array_t *a = any_array_create(length);
+	for (int i = 0; i < length; ++i) {
+		a->buffer[i] = raw[i];
 	}
 	return a;
 }
