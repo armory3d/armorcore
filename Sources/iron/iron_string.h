@@ -14,6 +14,7 @@ int32_t string_index_of(char *s, char *search);
 int32_t string_index_of_pos(char *s, char *search, int pos);
 int32_t string_last_index_of(char *s, char *search);
 any_array_t *string_split(char *s, char *sep);
+char *string_array_join(any_array_t *a, char *separator);
 char *string_replace_all(char *s, char *search, char *replace);
 char *substring(char *s, int32_t start, int32_t end);
 char *string_from_char_code(int32_t c);
@@ -23,4 +24,3 @@ bool starts_with(char *s, char *start);
 bool ends_with(char *s, char *end);
 char *to_lower_case(char *s);
 char *trim_end(char *str);
-

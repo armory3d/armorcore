@@ -83,6 +83,26 @@ any_array_t *string_split(char *s, char *sep) {
 	return a;
 }
 
+char *string_array_join(any_array_t *a, char *separator) {
+	int len = 0;
+	int len_sep = strlen(separator);
+	for (int i = 0; i < a->length; ++i) {
+		len += strlen(a->buffer[i]);
+		if (i < a->length - 1) {
+			len += len_sep;
+		}
+	}
+
+	char *r = gc_alloc(len + 1);
+	for (int i = 0; i < a->length; ++i) {
+		strcat(r, a->buffer[i]);
+		if (i < a->length - 1) {
+			strcat(r, separator);
+		}
+	}
+	return r;
+}
+
 char *string_replace_all(char *s, char *search, char *replace) {
 	char *buffer = gc_alloc(1024);
     char *buffer_pos = buffer;
