@@ -255,11 +255,11 @@ void krom_set_cut_copy_paste_callback(any on_cut, any on_copy, any on_paste) {
 }
 
 void krom_set_application_state_callback(void (*on_foreground)(void), void (*on_resume)(void), void (*on_pause)(void), void (*on_background)(void), void (*on_shutdown)(void)) {
-	kinc_set_foreground_callback(_foreground, NULL);
-	kinc_set_resume_callback(_resume, NULL);
-	kinc_set_pause_callback(_pause, NULL);
-	kinc_set_background_callback(_background, NULL);
-	kinc_set_shutdown_callback(_shutdown, NULL);
+	kinc_set_foreground_callback(on_foreground != NULL ? _foreground : NULL, NULL);
+	kinc_set_resume_callback(on_resume != NULL ? _resume : NULL, NULL);
+	kinc_set_pause_callback(on_pause != NULL ? _pause : NULL, NULL);
+	kinc_set_background_callback(on_background != NULL ? _background : NULL, NULL);
+	kinc_set_shutdown_callback(on_shutdown != NULL ? _shutdown : NULL, NULL);
 	krom_foreground = on_foreground;
 	krom_resume = on_resume;
 	krom_pause = on_pause;

@@ -76,7 +76,8 @@ typedef struct zui_handle {
 	int position;
 	uint32_t color;
 	float value;
-	char text[256];
+	// char text[256];
+	char *text;
 	kinc_g4_render_target_t texture;
 	int redraws;
 	float scroll_offset;

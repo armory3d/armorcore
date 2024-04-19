@@ -95,7 +95,9 @@ function read_token() {
 		// String start / end
 		if (c == "\"") {
 			// Escaped \"
-			let is_escaped = token == "\"\\";
+			let last = token.length > 0 ? token.charAt(token.length - 1) : "";
+			let last_last = token.length > 1 ? token.charAt(token.length - 2) : "";
+			let is_escaped = last == "\\" && last_last != "\\";
 
 			if (!is_escaped) {
 				is_string = !is_string;
@@ -586,9 +588,6 @@ function get_token_c() {
 
 function read_piece(nested = 0) {
 	let piece = get_token_c();
-	piece = enum_access(piece);
-	piece = struct_access(piece);
-	piece = array_access(piece);
 	piece = string_length(piece);
 
 	if (get_token(1) == "(" || get_token(1) == "[") {
@@ -705,6 +704,21 @@ function string_ops(token) {
 		pos++;
 		token += read_piece();
 		token += ")";
+	}
+
+	// str = str
+	if (get_token_after_piece(1) == "=") {
+		let _pos = pos;
+		let t1 = read_piece();
+		pos++;
+		pos++; // =
+		let t2 = read_piece();
+		if (get_token(1) == ";" && !t2.startsWith("\"")) { // str = str;
+			token = t1 + "=string_join(" + t2 + ", \"\")"; // Copy string
+		}
+		else {
+			pos = _pos;
+		}
 	}
 
 	// "str" == str

@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <kinc/log.h>
+#include <kinc/window.h>
 #include <kinc/system.h>
 #include <kinc/display.h>
 #include <kinc/threads/thread.h>
@@ -16,8 +17,12 @@
 #include <iron/iron_array.h>
 #include <iron/iron_map.h>
 #include <iron/iron_armpack.h>
+#include <iron/iron_json.h>
 #include <iron/iron_gc.h>
 // #include <quickjs.h>
+#ifdef IDLE_SLEEP
+#include <unistd.h>
+#endif
 #ifdef WITH_ZUI
 #include "zui/zui.h"
 #endif

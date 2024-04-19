@@ -81,6 +81,7 @@ function string_index_of(s: string, search: string): i32 { return s.indexOf(sear
 function string_index_of_pos(s: string, search: string, pos: i32) { return s.indexOf(search, pos); }
 function string_last_index_of(s: string, search: string): i32 { return s.lastIndexOf(search); }
 function string_split(s: string, sep: string): string[] { return s.split(sep); }
+function string_array_join(a: string[], sep: string): string { return a.join(sep); }
 function string_replace_all(s: string, search: string, replace: string): string { return (s as any).replaceAll(search, replace); }
 function substring(s: string, start: i32, end: i32): string { return s.substring(start, end); };
 function string_from_char_code(c: i32): string { return String.fromCharCode(c); }
