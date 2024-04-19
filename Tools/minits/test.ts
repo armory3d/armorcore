@@ -1,4 +1,6 @@
 
+// ../../Kinc/make --kfile minits.js ; ../../Kinc/make --run
+
 type point_t = {
 	x: f32;
 	y: f32;
@@ -17,20 +19,13 @@ function get_five(): i32 {
 
 function main() {
 	let p: point_t = { x: 1.5, y: 3.5 };
-
 	add(p);
 
 	let ar: f32_array_t = f32_array_create(0);
 	f32_array_push(ar, p.x);
-	f32_array_push(ar, p.y);
 
 	for (let i: i32 = 0; i < 4; ++i) {
-		if (i == 1) {
-			continue;
-		}
-		else {
-			ar[0] += i;
-		}
+		ar[0] += i;
 	}
 
 	while (true) {
@@ -38,7 +33,7 @@ function main() {
 		break;
 	}
 
-	// Print out result: 13.5
+	// Print out result: 14.5
 	kinc_log(KINC_LOG_LEVEL_INFO, "%f", ar[0]);
 	exit(1);
 }
