@@ -8,7 +8,6 @@ function tilesheet_create(scene_name: string, tilesheet_ref: string, tilesheet_a
 		let ts: tilesheet_data_t = tilesheet_datas[i];
 		if (ts.name == tilesheet_ref) {
 			t.raw = ts;
-			// Scene.active.tilesheets.push(this);
 			tilesheet_play(t, tilesheet_action_ref);
 			t.ready = true;
 			break;
@@ -39,10 +38,6 @@ function tilesheet_resume(self: tilesheet_t) {
 	self.paused = false;
 }
 
-function tilesheet_remove(self: tilesheet_t) {
-	// Scene.active.tilesheets.remove(self);
-}
-
 function tilesheet_set_frame_offset(self: tilesheet_t, frame: i32) {
 	tilesheet_set_frame(self, self.action.start + frame);
 	self.paused = false;
@@ -53,7 +48,7 @@ function tilesheet_get_frame_offset(self: tilesheet_t): i32 {
 }
 
 function tilesheet_update(self: tilesheet_t) {
-	if (!self.ready || self.paused || self.action.start >= self.action.end) {
+	if (!self.ready || self.paused) {
 		return;
 	}
 
@@ -76,7 +71,7 @@ function tilesheet_set_frame(self: tilesheet_t, f: i32) {
 	self.frame = f;
 
 	// Action end
-	if (self.frame > self.action.end && self.action.start < self.action.end) {
+	if (self.frame > self.action.end) {
 		if (self.on_action_complete != null) {
 			self.on_action_complete();
 		}
