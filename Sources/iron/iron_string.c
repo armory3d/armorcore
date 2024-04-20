@@ -43,6 +43,13 @@ char *i32_to_string_hex(int32_t i) {
 	return r;
 }
 
+char *f32_to_string(float f) {
+	int l = snprintf(NULL, 0, "%f", f);
+	char *r = gc_alloc(l + 1);
+	sprintf(r, "%f", f);
+	return r;
+}
+
 int32_t string_index_of_pos(char *s, char *search, int pos) {
 	char *found = strstr(s + pos, search);
 	if (found != NULL) {

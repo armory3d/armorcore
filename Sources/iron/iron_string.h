@@ -7,8 +7,9 @@
 char *string_join(char *a, char *b);
 int string_length(char *str);
 bool string_equals(char *a, char *b);
-char * i32_to_string(int32_t i);
-char * i32_to_string_hex(int32_t i);
+char *i32_to_string(int32_t i);
+char *i32_to_string_hex(int32_t i);
+char *f32_to_string(float f);
 
 int32_t string_index_of(char *s, char *search);
 int32_t string_index_of_pos(char *s, char *search, int pos);
