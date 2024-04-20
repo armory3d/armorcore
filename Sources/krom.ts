@@ -1,4 +1,7 @@
 
+///if arm_minits
+///else
+
 declare type i8 = number;
 declare type i16 = number;
 declare type i32 = number;
@@ -442,3 +445,5 @@ declare function krom_zui_nodes_set_on_canvas_control(f: ()=>any): void;
 declare function krom_zui_nodes_set_on_canvas_released(f: ()=>void): void;
 declare function krom_zui_nodes_set_on_socket_released(f: (socket_id: i32)=>void): void;
 declare function krom_zui_nodes_set_on_link_drag(f: (link_drag_id: i32, is_new_link: bool)=>void): void;
+
+///end

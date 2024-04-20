@@ -669,6 +669,16 @@ function set_fn_param_types() {
 	}
 }
 
+function number_to_string(token) {
+	if (value_type(token) == "i32") {
+		return "i32_to_string(" + token + ")";
+	}
+	else if (value_type(token) == "f32") {
+		return "f32_to_string(" + token + ")";
+	}
+	return token;
+}
+
 function string_ops(token) {
 	// "str" + str + 1 + ...
 	let first = true;
@@ -676,21 +686,13 @@ function string_ops(token) {
 		if (first) {
 			first = false;
 			token = read_piece();
-
-			if (value_type(token) == "i32") {
-				token = "i32_to_string(" + token + ")";
-			}
+			token = number_to_string(token);
 		}
 		pos++;
-
 		token = "string_join(" + token + ",";
 		pos++;
-
 		let token_b = read_piece();
-		if (value_type(token_b) == "i32") {
-			token_b = "i32_to_string(" + token_b + ")";
-		}
-
+		token_b = number_to_string(token_b);
 		token += token_b;
 		token += ")";
 	}

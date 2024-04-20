@@ -559,6 +559,15 @@ f32 math_atan2(f32 y, f32 x) { return atan2f(y, x); }
 f32 math_asin(f32 x) { return asinf(x); }
 f32 math_pi() { return 3.14159265358979323846; }
 f32 math_pow(f32 x, f32 y) { return powf(x, y); }
+f32 math_round(f32 x) { return roundf(x); }
+f32 math_ceil(f32 x) { return ceilf(x); }
+f32 math_min(f32 x, f32 y) { return x < y ? x : y; }
+f32 math_max(f32 x, f32 y) { return x > y ? x : y; }
+f32 math_log(f32 x) { return logf(x); }
+f32 math_log2(f32 x) { return log2f(x); }
+f32 math_atan(f32 x) { return atanf(x); }
+f32 math_acos(f32 x) { return acosf(x); }
+f32 math_exp(f32 x) { return expf(x); }
 
 i32 parse_int(const char *s) { return strtol(s, NULL, 10); }
 i32 parse_int_hex(const char *s) { return strtol(s, NULL, 16); }
