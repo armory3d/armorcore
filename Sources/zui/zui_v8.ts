@@ -119,22 +119,28 @@ class zui_t {
 let zui_current: zui_t = null;
 let zui_children: map_t<string, zui_handle_t> = map_create();
 
-function zui_handle(s: string, ops: zui_handle_ops_t = null): zui_handle_t {
+function zui_handle(s: string): zui_handle_t {
 	let h = map_get(zui_children, s);
 	if (h == null) {
-		h = zui_handle_create(ops);
+		h = zui_handle_create();
 		map_set(zui_children, s, h);
+		h.init = true;
+		return h;
 	}
+	h.init = false;
 	return h;
 }
 
-function zui_nest(raw: zui_handle_t, i: i32, ops: zui_handle_ops_t = null): zui_handle_t {
+function zui_nest(raw: zui_handle_t, i: i32): zui_handle_t {
 	if (raw.children == null) raw.children = map_create();
 	let c = map_get(raw.children, i);
 	if (c == null) {
-		c = zui_handle_create(ops);
+		c = zui_handle_create();
 		map_set(raw.children, i, c);
+		c.init = true;
+		return c;
 	}
+	c.init = false;
 	return c;
 }
 
@@ -373,12 +379,11 @@ class zui_handle_t {
 	handle__: any = null;
 	get handle_(): any {
 		if (this.handle__ == null) {
-			this.handle__ = krom_zui_handle(this.ops);
+			this.handle__ = krom_zui_handle();
 		}
 		return this.handle__;
 	}
 
-	ops: zui_handle_ops_t;
 	children: map_t<i32, zui_handle_t>;
 
 	get selected(): bool { return krom_zui_handle_get(this.handle_, "selected"); }
@@ -386,6 +391,9 @@ class zui_handle_t {
 
 	get position(): i32 { return krom_zui_handle_get(this.handle_, "position"); }
 	set position(a: i32) { krom_zui_handle_set(this.handle_, "position", a); }
+
+	get layout(): i32 { return krom_zui_handle_get(this.handle_, "layout"); }
+	set layout(a: i32) { krom_zui_handle_set(this.handle_, "layout", a); }
 
 	get color(): i32 { return krom_zui_handle_get(this.handle_, "color"); }
 	set color(a: i32) { krom_zui_handle_set(this.handle_, "color", a); }
@@ -409,36 +417,16 @@ class zui_handle_t {
 	get changed(): bool { return krom_zui_handle_get(this.handle_, "changed"); }
 	set changed(a: bool) { krom_zui_handle_set(this.handle_, "changed", a); }
 
+	get init(): bool { return krom_zui_handle_get(this.handle_, "init"); }
+	set init(a: bool) { krom_zui_handle_set(this.handle_, "init", a); }
+
 	get texture(): any { return krom_zui_handle_get(this.handle_, "texture"); }
 
 	get ptr(): i32 { return krom_zui_handle_ptr(this.handle_); }
 }
 
-function zui_handle_create(ops: zui_handle_ops_t = null): zui_handle_t {
-	let raw = new zui_handle_t();
-	if (ops == null) {
-		ops = {};
-	}
-	if (ops.selected == null) {
-		ops.selected = false;
-	}
-	if (ops.position == null) {
-		ops.position = 0;
-	}
-	if (ops.value == null) {
-		ops.value = 0.0;
-	}
-	if (ops.text == null) {
-		ops.text = "";
-	}
-	if (ops.color == null) {
-		ops.color = 0xffffffff;
-	}
-	if (ops.layout == null) {
-		ops.layout = zui_layout_t.VERTICAL;
-	}
-	raw.ops = ops;
-	return raw;
+function zui_handle_create(): zui_handle_t {
+	return new zui_handle_t();
 }
 
 class theme_t {
@@ -750,75 +738,23 @@ function zui_node_canvas(raw: zui_nodes_t, ui: zui_t, canvas: zui_node_canvas_t)
 		}
 	}
 
-	// Ensure properties order
-	let canvas_: zui_node_canvas_t = {
-		name: canvas.name,
-		nodes: array_slice(canvas.nodes, 0, canvas.nodes.length),
-		nodes_count: canvas.nodes.length,
-		links: array_slice(canvas.links, 0, canvas.links.length),
-		links_count: canvas.links.length,
-	}
-
-	// Convert default data
-	for (let n of canvas_.nodes) {
-		for (let soc of n.inputs) {
-			soc.default_value = zui_nodes_js_to_c(soc.type, soc.default_value);
-		}
-		for (let soc of n.outputs) {
-			soc.default_value = zui_nodes_js_to_c(soc.type, soc.default_value);
-		}
-		for (let but of n.buttons) {
-			but.default_value = zui_nodes_js_to_c(but.type, but.default_value);
-			but.data = zui_nodes_js_to_c_data(but.type, but.data);
-		}
-	}
-
-	// Reserve capacity
-	while (canvas_.nodes.length < 128) {
-		array_push(canvas_.nodes, { id: -1, name: "", type: "", x: 0, y: 0, color: 0, inputs: [], outputs: [], buttons: [], width: 0 });
-	}
-	while (canvas_.links.length < 256) {
-		array_push(canvas_.links, { id: -1, from_id: 0, from_socket: 0, to_id: 0, to_socket: 0 });
-	}
-
-	let packed: buffer_t = krom_zui_node_canvas(raw.nodes_, armpack_encode(canvas_));
-	canvas_ = armpack_decode(packed);
-
-	if (canvas_.nodes == null) {
-		canvas_.nodes = [];
-	}
-	if (canvas_.links == null) {
-		canvas_.links = [];
-	}
-
-	// Convert default data
-	for (let n of canvas_.nodes) {
-		for (let soc of n.inputs) {
-			soc.default_value = zui_nodes_c_to_js(soc.type, soc.default_value);
-		}
-		for (let soc of n.outputs) {
-			soc.default_value = zui_nodes_c_to_js(soc.type, soc.default_value);
-		}
-		for (let but of n.buttons) {
-			but.default_value = zui_nodes_c_to_js(but.type, but.default_value);
-			but.data = zui_nodes_c_to_js_data(but.type, but.data);
-		}
-	}
+	let packed: buffer_t = krom_zui_node_canvas(raw.nodes_, armpack_encode(canvas));
+	let canvas_: zui_node_canvas_t = armpack_decode(packed);
 
 	canvas.name = canvas_.name;
 	canvas.nodes = canvas_.nodes;
 	canvas.links = canvas_.links;
 
 	// Restore nodes modified in js while zui_node_canvas was running
-	for (let n of zui_node_replace) {
-		for (let i: i32 = 0; i < canvas.nodes.length; ++i) {
-			if (canvas.nodes[i].id == n.id) {
-				canvas.nodes[i] = n;
-				break;
-			}
-		}
-	}
-	zui_node_replace = [];
+	// for (let n of zui_node_replace) {
+	// 	for (let i: i32 = 0; i < canvas.nodes.length; ++i) {
+	// 		if (canvas.nodes[i].id == n.id) {
+	// 			canvas.nodes[i] = n;
+	// 			break;
+	// 		}
+	// 	}
+	// }
+	// zui_node_replace = [];
 
 	zui_element_h = ui.ops.theme.ELEMENT_H + 2;
 }
@@ -941,167 +877,12 @@ function zui_nodes_on_custom_button(node_id: i32, button_name: string) {
 	eval(button_name + "(Zui.current, current, current.getNode(currentCanvas.nodes, node_id))");
 }
 
-function zui_nodes_js_to_c(type: string, d: any): u8_array_t {
-	if (type == "RGBA") {
-		if (d == null) return u8_array_create(16);
-		else {
-			let f32a: f32_array_t = f32_array_create(4);
-			f32a[0] = d[0];
-			f32a[1] = d[1];
-			f32a[2] = d[2];
-			f32a[3] = d[3];
-			d = new u8_array_t(f32a.buffer);
-		}
-		return new u8_array_t(d.buffer);
-	}
-	if (type == "VECTOR") {
-		if (d == null) {
-			return u8_array_create(12);
-		}
-		else {
-			let f32a: f32_array_t = f32_array_create(4);
-			f32a[0] = d[0];
-			f32a[1] = d[1];
-			f32a[2] = d[2];
-			d = new u8_array_t(f32a.buffer);
-		}
-		return new u8_array_t(d.buffer);
-	}
-	if (type == "VALUE") {
-		if (d == null) {
-			return u8_array_create(4);
-		}
-		let f32a: f32_array_t = new f32_array_t([d]);
-		return new u8_array_t(f32a.buffer);
-	}
-	if (type == "STRING") {
-		if (d == null) {
-			return u8_array_create(1);
-		}
-		let s: string = d;
-		let u8a: u8_array_t = u8_array_create(s.length + 1);
-		for (let i = 0; i < s.length; ++i) {
-			u8a[i] = char_code_at(s, i);
-		}
-		return u8a;
-	}
-	if (type == "ENUM") {
-		if (d == null) {
-			return u8_array_create(1);
-		}
-		let u32a: u32_array_t = new u32_array_t([d]);
-		return new u8_array_t(u32a.buffer);
-	}
-	if (type == "BOOL") {
-		if (d == null) {
-			return u8_array_create(1);
-		}
-		let u8a: u8_array_t = u8_array_create(1);
-		u8a[0] = d == true ? 1 : 0;
-		return u8a;
-	}
-	if (type == "CUSTOM") {
-		return u8_array_create(1);
-	}
-	return u8_array_create(1);
-}
-
-function zui_nodes_js_to_c_data(type: string, d: any): u8_array_t {
-	if (type == "ENUM") {
-		if (d == null) {
-			return u8_array_create(1);
-		}
-		let a: string[] = d;
-		let length: i32 = 0;
-		for (let s of a) {
-			length += s.length + 1;
-		}
-		if (length == 0) {
-			return u8_array_create(1);
-		}
-		let u8a: u8_array_t = u8_array_create(length);
-		let pos: i32 = 0;
-		for (let s of a) {
-			for (let i: i32 = 0; i < s.length; ++i) {
-				u8a[pos++] = char_code_at(s, i);
-			}
-			u8a[pos++] = 0; // '\0'
-		}
-		return u8a;
-	}
-	if (type == "CUSTOM") {
-		return u8_array_create(1);
-	}
-	return u8_array_create(1);
-}
-
-function zui_nodes_c_to_js(type: string, u8a: u8_array_t): any {
-	if (type == "RGBA") {
-		return new f32_array_t(u8a.buffer);
-	}
-	if (type == "VECTOR") {
-		return new f32_array_t(u8a.buffer);
-	}
-	if (type == "VALUE") {
-		let f32a: f32_array_t = new f32_array_t(u8a.buffer);
-		return f32a[0];
-	}
-	if (type == "STRING") {
-		let s = "";
-		for (let i: i32 = 0; i < u8a.length - 1; ++i) {
-			s += string_from_char_code(u8a[i]);
-		}
-		return s;
-	}
-	if (type == "ENUM") {
-		let u32a: u32_array_t = new u32_array_t(u8a.buffer);
-		return u32a[0];
-	}
-	if (type == "BOOL") {
-		return u8a[0] > 0 ? true : false;
-	}
-	if (type == "CUSTOM") {
-		return 0;
-	}
-	return null;
-}
-
-function zui_nodes_c_to_js_data(type: string, u8a: u8_array_t): any {
-	if (type == "ENUM") {
-		let a: string[] = [];
-		let s: string = "";
-		for (let i: i32 = 0; i < u8a.length; ++i) {
-			if (u8a[i] == 0) {
-				array_push(a, s);
-				s = "";
-			}
-			else {
-				s += string_from_char_code(u8a[i]);
-			}
-		}
-		return a;
-	}
-	if (type == "CUSTOM") {
-		return 0;
-	}
-	return null;
-}
-
 type zui_ops_t = {
 	font?: g2_font_t;
 	theme?: theme_t;
 	scale_factor?: f32;
 	color_wheel?: image_t;
 	black_white_gradient?: image_t;
-};
-
-type zui_handle_ops_t = {
-	selected?: bool;
-	position?: i32;
-	value?: f32;
-	text?: string;
-	color?: color_t;
-	layout?: zui_layout_t;
 };
 
 type zui_coloring_t = {
@@ -1126,9 +907,7 @@ type zui_canvas_control_t = {
 type zui_node_canvas_t = {
 	name?: string;
 	nodes?: zui_node_t[];
-	nodes_count?: i32;
 	links?: zui_node_link_t[];
-	links_count?: i32;
 };
 
 type zui_node_t = {
@@ -1150,7 +929,7 @@ type zui_node_socket_t = {
 	name?: string;
 	type?: string;
 	color?: i32;
-	default_value?: any;
+	default_value?: f32_array_t;
 	min?: f32;
 	max?: f32;
 	precision?: f32;
@@ -1169,8 +948,8 @@ type zui_node_button_t = {
 	name?: string;
 	type?: string;
 	output?: i32;
-	default_value?: any;
-	data?: any;
+	default_value?: f32_array_t;
+	data?: u8_array_t;
 	min?: f32;
 	max?: f32;
 	precision?: f32;

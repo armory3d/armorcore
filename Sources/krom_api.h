@@ -1958,11 +1958,11 @@ void _write_image(char *path, buffer_t *bytes, i32 w, i32 h, i32 format, int ima
 
 void krom_write_jpg(char *path, buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality) {
 	// RGBA, R, RGB1, RRR1, GGG1, BBB1, AAA1
-	write_image(path, bytes, w, h, format, 0, quality);
+	_write_image(path, bytes, w, h, format, 0, quality);
 }
 
 void krom_write_png(char *path, buffer_t *bytes, i32 w, i32 h, i32 format) {
-	write_image(path, bytes, w, h, format, 1, 100);
+	_write_image(path, bytes, w, h, format, 1, 100);
 }
 
 unsigned char *_encode_data;
@@ -1985,11 +1985,11 @@ buffer_t *_encode_image(buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality) 
 }
 
 buffer_t *krom_encode_jpg(buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality) {
-	return encode_image(bytes, w, h, 0, quality);
+	return _encode_image(bytes, w, h, 0, quality);
 }
 
-buffer_t *krom_encode_png(buffer_t bytes, i32 w, i32 h, i32 format) {
-	return encode_image(bytes, w, h, 1, 100);
+buffer_t *krom_encode_png(buffer_t *bytes, i32 w, i32 h, i32 format) {
+	return _encode_image(bytes, w, h, 1, 100);
 }
 
 #ifdef WITH_ZLIB

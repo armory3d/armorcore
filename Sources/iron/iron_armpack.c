@@ -47,6 +47,11 @@ static void store_ptr(uint32_t ptr) {
 	di += PTR_SIZE;
 }
 
+static void store_ptr_abs(void *ptr) {
+	*(uint64_t *)(decoded + di) = (uint64_t)ptr;
+	di += PTR_SIZE;
+}
+
 static void store_string_bytes(char *str) {
 	for (int i = 0; i < string_length; ++i) {
 		store_u8(str[i]);
@@ -210,9 +215,14 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 	uint32_t _di = di;
 	di = bottom;
 
-	store_ptr(di + PTR_SIZE + 4 + 4); // Pointer to buffer contents
+	if (count > 0) {
+		store_ptr(di + PTR_SIZE + 4 + 4); // Pointer to buffer contents
+	}
+	else {
+		store_ptr_abs(NULL);
+	}
 	store_i32(count); // Element count
-	store_i32(count); // Capacity
+	store_i32(0); // Capacity = 0 -> do not free on first realloc
 	bottom = di;
 
 	if (count == 0) {
@@ -307,7 +317,7 @@ static void read_store() {
 }
 
 void *armpack_decode(void *_encoded, uint32_t len) {
-	capacity = len * 2;
+	capacity = len * 4;
 	decoded = gc_alloc(capacity);
 	encoded = _encoded;
 	di = 0;
@@ -353,6 +363,10 @@ void armpack_encode_array(uint32_t count) { // any
 }
 
 void armpack_encode_array_f32(float *f32, uint32_t count) {
+	if (f32 == NULL) {
+		armpack_write_u8(0xc0); // NULL
+		return;
+	}
 	armpack_write_u8(0xdd);
 	armpack_write_i32(count);
 	armpack_write_u8(0xca);
@@ -362,6 +376,10 @@ void armpack_encode_array_f32(float *f32, uint32_t count) {
 }
 
 void armpack_encode_array_u8(uint8_t *u8, uint32_t count) {
+	if (u8 == NULL) {
+		armpack_write_u8(0xc0); // NULL
+		return;
+	}
 	armpack_write_u8(0xdd);
 	armpack_write_i32(count);
 	armpack_write_u8(0xc4);

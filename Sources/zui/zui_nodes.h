@@ -15,7 +15,7 @@ typedef PACK(struct zui_node_socket {
 	char *name;
 	char *type;
 	uint32_t color;
-	any_array_t *default_value;
+	f32_array_t *default_value;
 	float min;
 	float max;
 	float precision;
@@ -26,8 +26,8 @@ typedef PACK(struct zui_node_button {
 	char *name;
 	char *type;
 	int output;
-	any_array_t *default_value;
-	any_array_t *data;
+	f32_array_t *default_value;
+	u8_array_t *data;
 	float min;
 	float max;
 	float precision;
@@ -81,10 +81,8 @@ typedef struct zui_node_link_array {
 
 typedef PACK(struct zui_node_canvas {
 	char *name;
-	zui_node_array_t *nodes; // 128
-	int nodes_count;
-	zui_node_link_array_t *links; // 256
-	int links_count;
+	zui_node_array_t *nodes;
+	zui_node_link_array_t *links;
 }) zui_node_canvas_t;
 
 typedef struct zui_nodes {

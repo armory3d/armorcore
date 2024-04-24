@@ -1,4 +1,6 @@
 
+#ifdef WITH_MINITS
+
 #include "iron_gc.h"
 #include <gc.h>
 
@@ -39,3 +41,5 @@ void gc_start(void *bos) {
 void gc_stop() {
     _gc_stop();
 }
+
+#endif

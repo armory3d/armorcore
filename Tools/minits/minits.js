@@ -689,8 +689,10 @@ function string_ops(token) {
 			token = number_to_string(token);
 		}
 		pos++;
+
 		token = "string_join(" + token + ",";
 		pos++;
+
 		let token_b = read_piece();
 		token_b = number_to_string(token_b);
 		token += token_b;

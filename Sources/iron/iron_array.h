@@ -138,6 +138,8 @@ u8_array_t *u8_array_create(int32_t length);
 u8_array_t *u8_array_create_from_buffer(buffer_t *b);
 u8_array_t *u8_array_create_from_array(u8_array_t *from);
 u8_array_t *u8_array_create_from_raw(uint8_t *raw, int length);
+u8_array_t *u8_array_create_from_string(char *s);
+char *u8_array_to_string(u8_array_t *a);
 i8_array_t *i8_array_create(int32_t length);
 i8_array_t *i8_array_create_from_raw(int8_t *raw, int length);
 any_array_t *any_array_create(int32_t length);

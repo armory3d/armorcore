@@ -80,10 +80,18 @@ float ZUI_BUTTONS_H(zui_node_t *node) {
 	float h = 0.0;
 	for (int i = 0; i < node->buttons->length; ++i) {
 		zui_node_button_t *but = node->buttons->buffer[i];
-		if (strcmp(but->type, "RGBA") == 0) h += 102.0 * ZUI_NODES_SCALE() + ZUI_LINE_H() * 5.0; // Color wheel + controls
-		else if (strcmp(but->type, "VECTOR") == 0) h += ZUI_LINE_H() * 4.0;
-		else if (strcmp(but->type, "CUSTOM") == 0) h += ZUI_LINE_H() * but->height;
-		else h += ZUI_LINE_H();
+		if (strcmp(but->type, "RGBA") == 0) {
+			h += 102.0 * ZUI_NODES_SCALE() + ZUI_LINE_H() * 5.0; // Color wheel + controls
+		}
+		else if (strcmp(but->type, "VECTOR") == 0) {
+			h += ZUI_LINE_H() * 4.0;
+		}
+		else if (strcmp(but->type, "CUSTOM") == 0) {
+			h += ZUI_LINE_H() * but->height;
+		}
+		else {
+			h += ZUI_LINE_H();
+		}
 	}
 	return h;
 }
@@ -97,9 +105,11 @@ float ZUI_OUTPUTS_H(int sockets_count, int length) {
 }
 
 bool zui_input_linked(zui_node_canvas_t *canvas, int node_id, int i) {
-	for (int x = 0; x < canvas->links_count; ++x) {
+	for (int x = 0; x < canvas->links->length; ++x) {
 		zui_node_link_t *l = canvas->links->buffer[x];
-		if (l->to_id == node_id && l->to_socket == i) return true;
+		if (l->to_id == node_id && l->to_socket == i) {
+			return true;
+		}
 	}
 	return false;
 }
@@ -107,8 +117,12 @@ bool zui_input_linked(zui_node_canvas_t *canvas, int node_id, int i) {
 float ZUI_INPUTS_H(zui_node_canvas_t *canvas, zui_node_socket_t **sockets, int sockets_count, int length) {
 	float h = 0.0;
 	for (int i = 0; i < (length < 0 ? sockets_count : length); ++i) {
-		if (strcmp(sockets[i]->type, "VECTOR") == 0 && sockets[i]->display == 1 && !zui_input_linked(canvas, sockets[i]->node_id, i)) h += ZUI_LINE_H() * 4;
-		else h += ZUI_LINE_H();
+		if (strcmp(sockets[i]->type, "VECTOR") == 0 && sockets[i]->display == 1 && !zui_input_linked(canvas, sockets[i]->node_id, i)) {
+			h += ZUI_LINE_H() * 4;
+		}
+		else {
+			h += ZUI_LINE_H();
+		}
 	}
 	return h;
 }
@@ -152,23 +166,41 @@ int zui_get_node_index(zui_node_t **nodes, int nodes_count, int id) {
 }
 
 int zui_next_node_id(zui_node_t **nodes, int nodes_count) {
-	if (zui_node_id == -1) for (int i = 0; i < nodes_count; ++i) if (zui_node_id < nodes[i]->id) zui_node_id = nodes[i]->id;
+	if (zui_node_id == -1) {
+		for (int i = 0; i < nodes_count; ++i) {
+			if (zui_node_id < nodes[i]->id) {
+				zui_node_id = nodes[i]->id;
+			}
+		}
+	}
 	return ++zui_node_id;
 }
 
 zui_node_link_t *zui_get_link(zui_node_link_t **links, int links_count, int id) {
-	for (int i = 0; i < links_count; ++i) if (links[i]->id == id) return links[i];
+	for (int i = 0; i < links_count; ++i) {
+		if (links[i]->id == id) {
+			return links[i];
+		}
+	}
 	return NULL;
 }
 
 int zui_get_link_index(zui_node_link_t **links, int links_count, int id) {
-	for (int i = 0; i < links_count; ++i) if (links[i]->id == id) return i;
+	for (int i = 0; i < links_count; ++i) {
+		if (links[i]->id == id) {
+			return i;
+		}
+	}
 	return -1;
 }
 
 int zui_next_link_id(zui_node_link_t **links, int links_count) {
 	int id = 0;
-	for (int i = 0; i < links_count; ++i) if (links[i]->id >= id) id = links[i]->id + 1;
+	for (int i = 0; i < links_count; ++i) {
+		if (links[i]->id >= id) {
+			id = links[i]->id + 1;
+		}
+	}
 	return id;
 }
 
@@ -176,8 +208,16 @@ int zui_get_socket_id(zui_node_t **nodes, int nodes_count) {
 	int id = 0;
 	for (int i = 0; i < nodes_count; ++i) {
 		zui_node_t *n = nodes[i];
-		for (int j = 0; j < n->inputs->length; ++j) if (n->inputs->buffer[j]->id >= id) id = n->inputs->buffer[j]->id + 1;
-		for (int j = 0; j < n->outputs->length; ++j) if (n->outputs->buffer[j]->id >= id) id = n->outputs->buffer[j]->id + 1;
+		for (int j = 0; j < n->inputs->length; ++j) {
+			if (n->inputs->buffer[j]->id >= id) {
+				id = n->inputs->buffer[j]->id + 1;
+			}
+		}
+		for (int j = 0; j < n->outputs->length; ++j) {
+			if (n->outputs->buffer[j]->id >= id) {
+				id = n->outputs->buffer[j]->id + 1;
+			}
+		}
 	}
 	return id;
 }
@@ -229,31 +269,31 @@ void zui_draw_link(float x1, float y1, float x2, float y2, bool highlight) {
 
 static void zui_remove_link_at(zui_node_canvas_t *canvas, int at) {
 	canvas->links->buffer[at] = NULL;
-	for (int i = at; i < canvas->links_count - 1; ++i) {
+	for (int i = at; i < canvas->links->length - 1; ++i) {
 		canvas->links->buffer[i] = canvas->links->buffer[i + 1];
 	}
-	canvas->links_count--;
+	canvas->links->length--;
 }
 
 static void zui_remove_node_at(zui_node_canvas_t *canvas, int at) {
 	canvas->nodes->buffer[at] = NULL;
-	for (int i = at; i < canvas->nodes_count - 1; ++i) {
+	for (int i = at; i < canvas->nodes->length - 1; ++i) {
 		canvas->nodes->buffer[i] = canvas->nodes->buffer[i + 1];
 	}
-	canvas->nodes_count--;
+	canvas->nodes->length--;
 }
 
 void zui_remove_node(zui_node_t *n, zui_node_canvas_t *canvas) {
 	if (n == NULL) return;
 	int i = 0;
-	while (i < canvas->links_count) {
+	while (i < canvas->links->length) {
 		zui_node_link_t *l = canvas->links->buffer[i];
 		if (l->from_id == n->id || l->to_id == n->id) {
 			zui_remove_link_at(canvas, i);
 		}
 		else i++;
 	}
-	zui_remove_node_at(canvas, zui_get_node_index(canvas->nodes->buffer, canvas->nodes_count, n->id));
+	zui_remove_node_at(canvas, zui_get_node_index(canvas->nodes->buffer, canvas->nodes->length, n->id));
 	if (zui_nodes_on_node_remove != NULL) {
 		(*zui_nodes_on_node_remove)(n);
 	}
@@ -343,7 +383,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	// Disallow input if node is overlapped by another node
 	current_nodes->_input_started = current->input_started;
 	if (current->input_started) {
-		for (int i = zui_get_node_index(canvas->nodes->buffer, canvas->nodes_count, node->id) + 1; i < canvas->nodes_count; ++i) {
+		for (int i = zui_get_node_index(canvas->nodes->buffer, canvas->nodes->length, node->id) + 1; i < canvas->nodes->length; ++i) {
 			zui_node_t *n = canvas->nodes->buffer[i];
 			if (ZUI_NODE_X(n) < current->input_x - current->_window_x && ZUI_NODE_X(n) + ZUI_NODE_W(n) > current->input_x - current->_window_x &&
 				ZUI_NODE_Y(n) < current->input_y - current->_window_y && ZUI_NODE_Y(n) + ZUI_NODE_H(canvas, n) > current->input_y - current->_window_y) {
@@ -426,17 +466,19 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 
 			zui_handle_t *h = zui_nest(nhandle, buti);
 			zui_handle_t *h0 = zui_nest(h, 0);
-			if (!h0->initialized) h0->value = val[0];
+			if (h0->init) h0->value = val[0];
 			zui_handle_t *h1 = zui_nest(h, 1);
-			if (!h1->initialized) h1->value = val[1];
+			if (h1->init) h1->value = val[1];
 			zui_handle_t *h2 = zui_nest(h, 2);
-			if (!h2->initialized) h2->value = val[2];
+			if (h2->init) h2->value = val[2];
 
 			val[0] = zui_slider(h0, "X", min, max, true, 100, true, ZUI_ALIGN_LEFT, true);
 			val[1] = zui_slider(h1, "Y", min, max, true, 100, true, ZUI_ALIGN_LEFT, true);
 			val[2] = zui_slider(h2, "Z", min, max, true, 100, true, ZUI_ALIGN_LEFT, true);
 			current->ops.theme->TEXT_OFFSET = text_off;
-			if (but->output >= 0) node->outputs->buffer[but->output]->default_value->buffer = but->default_value->buffer;
+			if (but->output >= 0) {
+				node->outputs->buffer[but->output]->default_value->buffer = but->default_value->buffer;
+			}
 			ny += lineh * 3.0;
 		}
 		else if (strcmp(but->type, "VALUE") == 0) {
@@ -451,7 +493,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			float text_off = current->ops.theme->TEXT_OFFSET;
 			current->ops.theme->TEXT_OFFSET = 6;
 			zui_handle_t *soc_handle = zui_nest(nhandle, buti);
-			if (!soc_handle->initialized) soc_handle->value = ((float *)soc->default_value->buffer)[0];
+			if (soc_handle->init) soc_handle->value = ((float *)soc->default_value->buffer)[0];
 			((float *)soc->default_value->buffer)[0] = zui_slider(soc_handle, "Value", min, max, true, prec, true, ZUI_ALIGN_LEFT, true);
 			current->ops.theme->TEXT_OFFSET = text_off;
 		}
@@ -462,10 +504,12 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_w = w;
 			zui_node_socket_t *soc = but->output >= 0 ? node->outputs->buffer[but->output] : NULL;
 			zui_handle_t *h = zui_nest(nhandle, buti);
-			if (!h->initialized) strcpy(h->text, soc != NULL ? soc->default_value->buffer : but->default_value->buffer != NULL ? but->default_value->buffer : "");
+			if (h->init) strcpy(h->text, soc != NULL ? soc->default_value->buffer : but->default_value->buffer != NULL ? but->default_value->buffer : "");
 			but->default_value->buffer = zui_text_input(h, zui_tr(but->name), ZUI_ALIGN_LEFT, true, false);
 			but->default_value->length = strlen(but->default_value->buffer) + 1;
-			if (soc != NULL) soc->default_value->buffer = but->default_value->buffer;
+			if (soc != NULL) {
+				soc->default_value->buffer = but->default_value->buffer;
+			}
 		}
 		else if (strcmp(but->type, "ENUM") == 0) {
 			ny += lineh;
@@ -481,7 +525,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			char **texts = combo_selected ? temp_texts : enum_texts;
 
 			int texts_count = 0;
-			if (but->data->length > 1) {
+			if (but->data != NULL && but->data->length > 1) {
 				bool string_start = true;
 				for (int i = 0; i < but->data->length; ++i) {
 					if (string_start) {
@@ -490,7 +534,9 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 						texts[texts_count] = texts_data[texts_count];
 						texts_count++;
 					}
-					if (((char *)but->data->buffer)[i] == '\0') string_start = true;
+					if (((char *)but->data->buffer)[i] == '\0') {
+						string_start = true;
+					}
 				}
 			}
 			else {
@@ -503,8 +549,8 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			}
 			strcpy(label, zui_tr(but->name));
 			zui_handle_t *but_handle = zui_nest(nhandle, buti);
-			but_handle->position = ((int *)but->default_value->buffer)[0];
-			((int *)but->default_value->buffer)[0] = zui_combo(but_handle, texts, texts_count, label, false, ZUI_ALIGN_LEFT, true);
+			but_handle->position = ((float *)but->default_value->buffer)[0];
+			((float *)but->default_value->buffer)[0] = zui_combo(but_handle, texts, texts_count, label, false, ZUI_ALIGN_LEFT, true);
 		}
 		else if (strcmp(but->type, "BOOL") == 0) {
 			ny += lineh;
@@ -512,7 +558,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_y = ny;
 			current->_w = w;
 			zui_handle_t *h = zui_nest(nhandle, buti);
-			if (!h->initialized) h->selected = ((uint8_t *)but->default_value->buffer)[0];
+			if (h->init) h->selected = ((uint8_t *)but->default_value->buffer)[0];
 			((uint8_t *)but->default_value->buffer)[0] = zui_check(h, zui_tr(but->name), "");
 		}
 		else if (strcmp(but->type, "CUSTOM") == 0) { // Calls external function for custom button drawing
@@ -546,7 +592,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 
 			zui_handle_t *_handle = zui_nest(nhandle, zui_max_buttons);
 			zui_handle_t *soc_handle = zui_nest(_handle, i);
-			if (!soc_handle->initialized) soc_handle->value = ((float *)soc->default_value->buffer)[0];
+			if (soc_handle->init) soc_handle->value = ((float *)soc->default_value->buffer)[0];
 			((float *)soc->default_value->buffer)[0] = zui_slider(soc_handle, zui_tr(inp->name), min, max, true, prec, true, ZUI_ALIGN_LEFT, true);
 			current->ops.theme->TEXT_OFFSET = text_off;
 		}
@@ -559,7 +605,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->ops.theme->TEXT_OFFSET = 6;
 			zui_handle_t *_handle = zui_nest(nhandle, zui_max_buttons);
 			zui_handle_t *h = zui_nest(_handle, i);
-			if (!h->initialized) strcpy(h->text, soc->default_value->buffer);
+			if (h->init) strcpy(h->text, soc->default_value->buffer);
 			soc->default_value->buffer = zui_text_input(h, zui_tr(inp->name), ZUI_ALIGN_LEFT, true, false);
 			current->ops.theme->TEXT_OFFSET = text_off;
 		}
@@ -605,11 +651,11 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			zui_handle_t *h = zui_nest(nhandle, zui_max_buttons);
 			zui_handle_t *hi = zui_nest(h, i);
 			zui_handle_t *h0 = zui_nest(hi, 0);
-			if (!h0->initialized) h0->value = val[0];
+			if (h0->init) h0->value = val[0];
 			zui_handle_t *h1 = zui_nest(hi, 1);
-			if (!h1->initialized) h1->value = val[1];
+			if (h1->init) h1->value = val[1];
 			zui_handle_t *h2 = zui_nest(hi, 2);
-			if (!h2->initialized) h2->value = val[2];
+			if (h2->init) h2->value = val[2];
 			val[0] = zui_slider(h0, "X", min, max, true, 100, true, ZUI_ALIGN_LEFT, true);
 			val[1] = zui_slider(h1, "Y", min, max, true, 100, true, ZUI_ALIGN_LEFT, true);
 			val[2] = zui_slider(h2, "Z", min, max, true, 100, true, ZUI_ALIGN_LEFT, true);
@@ -636,8 +682,12 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 
 bool zui_is_node_type_excluded(char *type) {
 	for (int i = 0; i < 64; ++i) {
-		if (zui_nodes_exclude_remove[i] == NULL) break;
-		if (strcmp(zui_nodes_exclude_remove[i], type) == 0) return true;
+		if (zui_nodes_exclude_remove[i] == NULL) {
+			break;
+		}
+		if (strcmp(zui_nodes_exclude_remove[i], type) == 0) {
+			return true;
+		}
 	}
 	return false;
 }
@@ -645,7 +695,9 @@ bool zui_is_node_type_excluded(char *type) {
 void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	current_nodes = nodes;
 	zui_t *current = zui_get_current();
-	if (!zui_nodes_elements_baked) zui_nodes_bake_elements();
+	if (!zui_nodes_elements_baked) {
+		zui_nodes_bake_elements();
+	}
 
 	float wx = current->_window_x;
 	float wy = current->_window_y;
@@ -663,8 +715,12 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	// Zoom canvas
 	if (current->input_enabled && controls.zoom != 0.0) {
 		current_nodes->zoom += controls.zoom;
-		if (current_nodes->zoom < 0.1) current_nodes->zoom = 0.1;
-		else if (current_nodes->zoom > 1.0) current_nodes->zoom = 1.0;
+		if (current_nodes->zoom < 0.1) {
+			current_nodes->zoom = 0.1;
+		}
+		else if (current_nodes->zoom > 1.0) {
+			current_nodes->zoom = 1.0;
+		}
 		current_nodes->zoom = round(current_nodes->zoom * 100.0) / 100.0;
 		current_nodes->uiw = current->_w;
 		current_nodes->uih = current->_h;
@@ -680,10 +736,10 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	current->elements_baked = true;
 	arm_g2_set_font(current->ops.font, current->font_size);
 
-	for (int i = 0; i < canvas->links_count; ++i) {
+	for (int i = 0; i < canvas->links->length; ++i) {
 		zui_node_link_t *link = canvas->links->buffer[i];
-		zui_node_t *from = zui_get_node(canvas->nodes->buffer, canvas->nodes_count, link->from_id);
-		zui_node_t *to = zui_get_node(canvas->nodes->buffer, canvas->nodes_count, link->to_id);
+		zui_node_t *from = zui_get_node(canvas->nodes->buffer, canvas->nodes->length, link->from_id);
+		zui_node_t *to = zui_get_node(canvas->nodes->buffer, canvas->nodes->length, link->to_id);
 		float from_x = from == NULL ? current->input_x : wx + ZUI_NODE_X(from) + ZUI_NODE_W(from);
 		float from_y = from == NULL ? current->input_y : wy + ZUI_NODE_Y(from) + ZUI_OUTPUT_Y(from->outputs->length, link->from_socket);
 		float to_x = to == NULL ? current->input_x : wx + ZUI_NODE_X(to);
@@ -711,7 +767,7 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 			}
 			current_nodes->snap_from_id = current_nodes->snap_to_id = -1;
 
-			for (int j = 0; j < canvas->nodes_count; ++j) {
+			for (int j = 0; j < canvas->nodes->length; ++j) {
 				zui_node_t *node = canvas->nodes->buffer[j];
 				zui_node_socket_t **inps = node->inputs->buffer;
 				zui_node_socket_t **outs = node->outputs->buffer;
@@ -767,7 +823,7 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 		zui_draw_link(from_x - wx, from_y - wy, to_x - wx, to_y - wy, selected);
 	}
 
-	for (int i = 0; i < canvas->nodes_count; ++i) {
+	for (int i = 0; i < canvas->nodes->length; ++i) {
 		zui_node_t *node = canvas->nodes->buffer[i];
 
 		// Cull
@@ -819,13 +875,12 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 					if (zui_input_in_rect(sx - ZUI_LINE_H() / 2.0, sy - ZUI_LINE_H() / 2.0, ZUI_LINE_H(), ZUI_LINE_H())) {
 						// New link from output
 						zui_node_link_t *l = (zui_node_link_t *)malloc(sizeof(zui_node_link_t)); // TODO: store at canvas->links without malloc
-						l->id = zui_next_link_id(canvas->links->buffer, canvas->links_count);
+						l->id = zui_next_link_id(canvas->links->buffer, canvas->links->length);
 						l->from_id = node->id;
 						l->from_socket = j;
 						l->to_id = -1;
 						l->to_socket = -1;
-						canvas->links->buffer[canvas->links_count] = l;
-						canvas->links_count++;
+						any_array_push(canvas->links, l);
 						current_nodes->link_drag_id = l->id;
 						current_nodes->is_new_link = true;
 						break;
@@ -838,7 +893,7 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 					float sy = wy + ZUI_NODE_Y(node) + ZUI_INPUT_Y(canvas, inps, node->inputs->length, j) + ZUI_OUTPUTS_H(node->outputs->length, -1) + ZUI_BUTTONS_H(node);
 					if (zui_input_in_rect(sx - ZUI_LINE_H() / 2.0, sy - ZUI_LINE_H() / 2.0, ZUI_LINE_H(), ZUI_LINE_H())) {
 						// Already has a link - disconnect
-						for (int k = 0; k < canvas->links_count; ++k) {
+						for (int k = 0; k < canvas->links->length; ++k) {
 							zui_node_link_t *l = canvas->links->buffer[k];
 							if (l->to_id == node->id && l->to_socket == j) {
 								l->to_id = l->to_socket = -1;
@@ -850,13 +905,12 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 						if (current_nodes->link_drag_id != -1) break;
 						// New link from input
 						zui_node_link_t *l = (zui_node_link_t *)malloc(sizeof(zui_node_link_t));
-						l->id = zui_next_link_id(canvas->links->buffer, canvas->links_count);
+						l->id = zui_next_link_id(canvas->links->buffer, canvas->links->length);
 						l->from_id = -1;
 						l->from_socket = -1;
 						l->to_id = node->id;
 						l->to_socket = j;
-						canvas->links->buffer[canvas->links_count] = l;
-						canvas->links_count++;
+						any_array_push(canvas->links, l);
 						current_nodes->link_drag_id = l->id;
 						current_nodes->is_new_link = true;
 						break;
@@ -867,26 +921,26 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 		else if (current->input_released) {
 			if (current_nodes->snap_to_id != -1) { // Connect to input
 				// Force single link per input
-				for (int j = 0; j < canvas->links_count; ++j) {
+				for (int j = 0; j < canvas->links->length; ++j) {
 					zui_node_link_t *l = canvas->links->buffer[j];
 					if (l->to_id == current_nodes->snap_to_id && l->to_socket == current_nodes->snap_socket) {
-						zui_remove_link_at(canvas, zui_get_link_index(canvas->links->buffer, canvas->links_count, l->id));
+						zui_remove_link_at(canvas, zui_get_link_index(canvas->links->buffer, canvas->links->length, l->id));
 						break;
 					}
 				}
-				zui_node_link_t *link_drag = zui_get_link(canvas->links->buffer, canvas->links_count, current_nodes->link_drag_id);
+				zui_node_link_t *link_drag = zui_get_link(canvas->links->buffer, canvas->links->length, current_nodes->link_drag_id);
 				link_drag->to_id = current_nodes->snap_to_id;
 				link_drag->to_socket = current_nodes->snap_socket;
 				current->changed = true;
 			}
 			else if (current_nodes->snap_from_id != -1) { // Connect to output
-				zui_node_link_t *link_drag = zui_get_link(canvas->links->buffer, canvas->links_count, current_nodes->link_drag_id);
+				zui_node_link_t *link_drag = zui_get_link(canvas->links->buffer, canvas->links->length, current_nodes->link_drag_id);
 				link_drag->from_id = current_nodes->snap_from_id;
 				link_drag->from_socket = current_nodes->snap_socket;
 				current->changed = true;
 			}
 			else if (current_nodes->link_drag_id != -1) { // Remove dragged link
-				zui_remove_link_at(canvas, zui_get_link_index(canvas->links->buffer, canvas->links_count, current_nodes->link_drag_id));
+				zui_remove_link_at(canvas, zui_get_link_index(canvas->links->buffer, canvas->links->length, current_nodes->link_drag_id));
 				current->changed = true;
 				if (zui_nodes_on_link_drag != NULL) {
 					zui_nodes_on_link_drag(current_nodes->link_drag_id, current_nodes->is_new_link);
@@ -941,7 +995,7 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 		}
 		zui_node_t *nodes[32];
 		int nodes_count = 0;
-		for (int j = 0; j < canvas->nodes_count; ++j) {
+		for (int j = 0; j < canvas->nodes->length; ++j) {
 			zui_node_t *n = canvas->nodes->buffer[j];
 			if (ZUI_NODE_X(n) + ZUI_NODE_W(n) > left && ZUI_NODE_X(n) < right &&
 				ZUI_NODE_Y(n) + ZUI_NODE_H(canvas, n) > top && ZUI_NODE_Y(n) < bottom) {
@@ -964,10 +1018,9 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 
 	// Place selected node on top
 	if (current_nodes->move_on_top != NULL) {
-		int index = zui_get_node_index(canvas->nodes->buffer, canvas->nodes_count, current_nodes->move_on_top->id);
+		int index = zui_get_node_index(canvas->nodes->buffer, canvas->nodes->length, current_nodes->move_on_top->id);
 		zui_remove_node_at(canvas, index);
-		canvas->nodes->buffer[canvas->nodes_count] = current_nodes->move_on_top;
-		canvas->nodes_count++;
+		any_array_push(canvas->nodes, current_nodes->move_on_top);
 		current_nodes->move_on_top = NULL;
 	}
 
@@ -978,26 +1031,28 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 		int copy_nodes_count = 0;
 		for (int i = 0; i < current_nodes->nodes_selected_count; ++i) {
 			int id = current_nodes->nodes_selected_id[i];
-			zui_node_t *n = zui_get_node(canvas->nodes->buffer, canvas->nodes_count, id);
-			if (zui_is_node_type_excluded(n->type)) continue;
+			zui_node_t *n = zui_get_node(canvas->nodes->buffer, canvas->nodes->length, id);
+			if (zui_is_node_type_excluded(n->type)) {
+				continue;
+			}
 			copy_nodes[copy_nodes_count] = n;
 			copy_nodes_count++;
 		}
 		zui_node_link_t *copy_links[64];
 		int copy_links_count = 0;
-		for (int i = 0; i < canvas->links_count; ++i) {
+		for (int i = 0; i < canvas->links->length; ++i) {
 			zui_node_link_t *l = canvas->links->buffer[i];
 			zui_node_t *from = NULL;
 			for (int j = 0; j < current_nodes->nodes_selected_count; ++j) {
 				if (current_nodes->nodes_selected_id[j] == l->from_id) {
-					from = zui_get_node(canvas->nodes->buffer, canvas->nodes_count, l->from_id);
+					from = zui_get_node(canvas->nodes->buffer, canvas->nodes->length, l->from_id);
 					break;
 				}
 			}
 			zui_node_t *to = NULL;
 			for (int j = 0; j < current_nodes->nodes_selected_count; ++j) {
 				if (current_nodes->nodes_selected_id[j] == l->to_id) {
-					to = zui_get_node(canvas->nodes->buffer, canvas->nodes_count, l->to_id);
+					to = zui_get_node(canvas->nodes->buffer, canvas->nodes->length, l->to_id);
 					break;
 				}
 			}
@@ -1012,9 +1067,9 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 			zui_node_canvas_t copy_canvas;
 			copy_canvas.name = canvas->name;
 			copy_canvas.nodes = copy_nodes;
-			copy_canvas.nodes_count = copy_nodes_count;
+			copy_canvas.nodes->length = copy_nodes_count;
 			copy_canvas.links = copy_links;
-			copy_canvas.links_count = copy_links_count;
+			copy_canvas.links->length = copy_links_count;
 			// zui_clipboard = haxe.Json.stringify(copy_canvas);
 		}
 		cut_selected = zui_is_cut;
@@ -1025,43 +1080,41 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 		// Try: clipboard can contain non-json data
 		// paste_canvas = haxe.Json.parse(zui_clipboard);
 		if (paste_canvas != NULL) {
-			for (int i = 0; i < paste_canvas->links_count; ++i) {
+			for (int i = 0; i < paste_canvas->links->length; ++i) {
 				zui_node_link_t *l = paste_canvas->links->buffer[i];
 				// Assign unique link id
-				l->id = zui_next_link_id(canvas->links->buffer, canvas->links_count);
-				canvas->links->buffer[canvas->links_count] = l;
-				canvas->links_count++;
+				l->id = zui_next_link_id(canvas->links->buffer, canvas->links->length);
+				any_array_push(canvas->links, l);
 			}
-			int offset_x = (int)(((int)(current->input_x / ZUI_SCALE()) * ZUI_NODES_SCALE() - wx - ZUI_NODES_PAN_X()) / ZUI_NODES_SCALE()) - paste_canvas->nodes->buffer[paste_canvas->nodes_count - 1]->x;
-			int offset_y = (int)(((int)(current->input_y / ZUI_SCALE()) * ZUI_NODES_SCALE() - wy - ZUI_NODES_PAN_Y()) / ZUI_NODES_SCALE()) - paste_canvas->nodes->buffer[paste_canvas->nodes_count - 1]->y;
-			for (int i = 0; i < paste_canvas->nodes_count; ++i) {
+			int offset_x = (int)(((int)(current->input_x / ZUI_SCALE()) * ZUI_NODES_SCALE() - wx - ZUI_NODES_PAN_X()) / ZUI_NODES_SCALE()) - paste_canvas->nodes->buffer[paste_canvas->nodes->length - 1]->x;
+			int offset_y = (int)(((int)(current->input_y / ZUI_SCALE()) * ZUI_NODES_SCALE() - wy - ZUI_NODES_PAN_Y()) / ZUI_NODES_SCALE()) - paste_canvas->nodes->buffer[paste_canvas->nodes->length - 1]->y;
+			for (int i = 0; i < paste_canvas->nodes->length; ++i) {
 				zui_node_t *n = paste_canvas->nodes->buffer[i];
 				// Assign unique node id
 				int old_id = n->id;
-				n->id = zui_next_node_id(canvas->nodes->buffer, canvas->nodes_count);
+				n->id = zui_next_node_id(canvas->nodes->buffer, canvas->nodes->length);
 
 				for (int j = 0; j < n->inputs->length; ++j) {
 					zui_node_socket_t *soc = n->inputs->buffer[j];
-					soc->id = zui_get_socket_id(canvas->nodes->buffer, canvas->nodes_count);
+					soc->id = zui_get_socket_id(canvas->nodes->buffer, canvas->nodes->length);
 					soc->node_id = n->id;
 				}
 				for (int j = 0; j < n->outputs->length; ++j) {
 					zui_node_socket_t *soc = n->outputs->buffer[j];
-					soc->id = zui_get_socket_id(canvas->nodes->buffer, canvas->nodes_count);
+					soc->id = zui_get_socket_id(canvas->nodes->buffer, canvas->nodes->length);
 					soc->node_id = n->id;
 				}
-				for (int j = 0; j < paste_canvas->links_count; ++j) {
+				for (int j = 0; j < paste_canvas->links->length; ++j) {
 					zui_node_link_t *l = paste_canvas->links->buffer[j];
 					if (l->from_id == old_id) l->from_id = n->id;
 					else if (l->to_id == old_id) l->to_id = n->id;
 				}
 				n->x += offset_x;
 				n->y += offset_y;
-				canvas->nodes->buffer[canvas->nodes_count] = n;
-				canvas->nodes_count++;
+				any_array_push(canvas->nodes, n);
 			}
 			current_nodes->nodes_drag = true;
-			for (int i = 0; i < paste_canvas->nodes_count; ++i){
+			for (int i = 0; i < paste_canvas->nodes->length; ++i){
 				current_nodes->nodes_selected_id[i] = paste_canvas->nodes->buffer[i]->id;
 				current_nodes->nodes_selected_count++;
 			}
@@ -1072,7 +1125,7 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	// Select all nodes
 	if (current->is_ctrl_down && current->key_code == KINC_KEY_A && !current->is_typing) {
 		current_nodes->nodes_selected_count = 0;
-		for (int i = 0; i < canvas->nodes_count; ++i) {
+		for (int i = 0; i < canvas->nodes->length; ++i) {
 			add_to_selection(canvas->nodes->buffer[i]);
 		}
 	}
@@ -1082,9 +1135,13 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 		int i = current_nodes->nodes_selected_count - 1;
 		while (i >= 0) {
 			int nid = current_nodes->nodes_selected_id[i--];
-			zui_node_t *n = zui_get_node(canvas->nodes->buffer, canvas->nodes_count, nid);
-			if (n == NULL) continue; ////
-			if (zui_is_node_type_excluded(n->type)) continue;
+			zui_node_t *n = zui_get_node(canvas->nodes->buffer, canvas->nodes->length, nid);
+			if (n == NULL) {
+				continue; ////
+			}
+			if (zui_is_node_type_excluded(n->type)) {
+				continue;
+			}
 			zui_remove_node(n, canvas);
 			current->changed = true;
 		}
@@ -1118,8 +1175,8 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 	armpack_encode_string(canvas->name);
 
 	armpack_encode_string("nodes");
-	armpack_encode_array(canvas->nodes_count);
-	for (int i = 0; i < canvas->nodes_count; ++i) {
+	armpack_encode_array(canvas->nodes->length);
+	for (int i = 0; i < canvas->nodes->length; ++i) {
 		armpack_encode_map(10);
 		armpack_encode_string("id");
 		armpack_encode_i32(canvas->nodes->buffer[i]->id);
@@ -1149,7 +1206,7 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("color");
 			armpack_encode_i32(canvas->nodes->buffer[i]->inputs->buffer[j]->color);
 			armpack_encode_string("default_value");
-			armpack_encode_array_u8(canvas->nodes->buffer[i]->inputs->buffer[j]->default_value->buffer, canvas->nodes->buffer[i]->inputs->buffer[j]->default_value->length);
+			armpack_encode_array_f32(canvas->nodes->buffer[i]->inputs->buffer[j]->default_value->buffer, canvas->nodes->buffer[i]->inputs->buffer[j]->default_value->length);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes->buffer[i]->inputs->buffer[j]->min);
 			armpack_encode_string("max");
@@ -1175,7 +1232,7 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("color");
 			armpack_encode_i32(canvas->nodes->buffer[i]->outputs->buffer[j]->color);
 			armpack_encode_string("default_value");
-			armpack_encode_array_u8(canvas->nodes->buffer[i]->outputs->buffer[j]->default_value->buffer, canvas->nodes->buffer[i]->outputs->buffer[j]->default_value->length);
+			armpack_encode_array_f32(canvas->nodes->buffer[i]->outputs->buffer[j]->default_value->buffer, canvas->nodes->buffer[i]->outputs->buffer[j]->default_value->length);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes->buffer[i]->outputs->buffer[j]->min);
 			armpack_encode_string("max");
@@ -1197,9 +1254,10 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("output");
 			armpack_encode_i32(canvas->nodes->buffer[i]->buttons->buffer[j]->output);
 			armpack_encode_string("default_value");
-			armpack_encode_array_u8(canvas->nodes->buffer[i]->buttons->buffer[j]->default_value->buffer, canvas->nodes->buffer[i]->buttons->buffer[j]->default_value->length);
+			armpack_encode_array_f32(canvas->nodes->buffer[i]->buttons->buffer[j]->default_value->buffer, canvas->nodes->buffer[i]->buttons->buffer[j]->default_value->length);
 			armpack_encode_string("data");
-			armpack_encode_array_u8(canvas->nodes->buffer[i]->buttons->buffer[j]->data->buffer, canvas->nodes->buffer[i]->buttons->buffer[j]->data->length);
+			u8_array_t *u8 = canvas->nodes->buffer[i]->buttons->buffer[j]->data;
+			armpack_encode_array_u8(u8 != NULL ? u8->buffer : NULL, u8 != NULL ? u8->length : 0);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes->buffer[i]->buttons->buffer[j]->min);
 			armpack_encode_string("max");
@@ -1215,8 +1273,8 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 	}
 
 	armpack_encode_string("links");
-	armpack_encode_array(canvas->links_count);
-	for (int i = 0; i < canvas->links_count; ++i) {
+	armpack_encode_array(canvas->links->length);
+	for (int i = 0; i < canvas->links->length; ++i) {
 		armpack_encode_map(5);
 		armpack_encode_string("id");
 		armpack_encode_i32(canvas->links->buffer[i]->id);
@@ -1239,7 +1297,7 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 
 	size += armpack_size_string("nodes");
 	size += armpack_size_array();
-	for (int i = 0; i < canvas->nodes_count; ++i) {
+	for (int i = 0; i < canvas->nodes->length; ++i) {
 		size += armpack_size_map();
 		size += armpack_size_string("id");
 		size += armpack_size_i32();
@@ -1269,7 +1327,7 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("color");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array_u8(canvas->nodes->buffer[i]->inputs->buffer[j]->default_value->length);
+			size += armpack_size_array_f32(canvas->nodes->buffer[i]->inputs->buffer[j]->default_value->length);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");
@@ -1295,7 +1353,7 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("color");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array_u8(canvas->nodes->buffer[i]->outputs->buffer[j]->default_value->length);
+			size += armpack_size_array_f32(canvas->nodes->buffer[i]->outputs->buffer[j]->default_value->length);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");
@@ -1317,9 +1375,10 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("output");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array_u8(canvas->nodes->buffer[i]->buttons->buffer[j]->default_value->length);
+			size += armpack_size_array_f32(canvas->nodes->buffer[i]->buttons->buffer[j]->default_value->length);
 			size += armpack_size_string("data");
-			size += armpack_size_array_u8(canvas->nodes->buffer[i]->buttons->buffer[j]->data->length);
+			u8_array_t *u8 = canvas->nodes->buffer[i]->buttons->buffer[j]->data;
+			size += armpack_size_array_u8(u8 != NULL ? u8->length : 0);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");
@@ -1336,7 +1395,7 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 
 	size += armpack_size_string("links");
 	size += armpack_size_array();
-	for (int i = 0; i < canvas->links_count; ++i) {
+	for (int i = 0; i < canvas->links->length; ++i) {
 		size += armpack_size_map();
 		size += armpack_size_string("id");
 		size += armpack_size_i32();

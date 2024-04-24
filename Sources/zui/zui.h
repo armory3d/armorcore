@@ -71,6 +71,12 @@ typedef struct zui_options {
 	kinc_g4_texture_t *black_white_gradient;
 } zui_options_t;
 
+typedef struct zui_handle_array {
+	struct zui_handle **buffer;
+	int length;
+	int capacity;
+} zui_handle_array_t;
+
 typedef struct zui_handle {
 	bool selected;
 	int position;
@@ -89,9 +95,8 @@ typedef struct zui_handle {
 	int drag_x;
 	int drag_y;
 	bool changed;
-	bool initialized;
-	struct zui_handle **children;
-	int children_count;
+	bool init;
+	zui_handle_array_t *children;
 } zui_handle_t;
 
 typedef struct zui_text_extract {
@@ -316,6 +321,7 @@ void zui_paste(char *s);
 void zui_theme_default(zui_theme_t *t);
 zui_t *zui_get_current();
 void zui_set_current(zui_t *current);
+zui_handle_t *zui_handle_create();
 zui_handle_t *zui_nest(zui_handle_t *handle, int pos);
 void zui_set_scale(float factor);
 

@@ -45,6 +45,20 @@ function i16_array_create_from_array(a: i16[]) { return new i16_array_t(a); }
 function u8_array_create(length: i32): u8_array_t { return new u8_array_t(length); }
 function u8_array_create_from_buffer(b: buffer_t): u8_array_t { return new u8_array_t(b); }
 function u8_array_create_from_array(a: u8[]): u8_array_t { return new u8_array_t(a); }
+function u8_array_create_from_string(s: string): u8_array_t {
+    let a: u8_array_t = u8_array_create(s.length + 1);
+    for (let i: i32 = 0; i < s.length; ++i) {
+        a[i] = char_code_at(s, i);
+    }
+    return a;
+}
+function u8_array_to_string(a: u8_array_t): string {
+    let r: string = "";
+    for (let i: i32 = 0; i < a.length; ++i) {
+        r += string_from_char_code(a[i]);
+    }
+    return r;
+}
 function i8_array_create(length: i32): i8_array_t { return new i8_array_t(length); }
 
 function math_floor(x: f32): f32 { return Math.floor(x); }
@@ -93,6 +107,7 @@ function char_at(s: string, i: i32): string { return s.charAt(i); }
 function starts_with(s: string, start: string): bool { return s.startsWith(start); }
 function ends_with(s: string, end: string): bool { return s.endsWith(end); }
 function to_lower_case(s: string): string { return s.toLowerCase(); }
+function to_upper_case(s: string): string { return s.toUpperCase(); }
 function buffer_slice(a: buffer_t, begin: i32, end: i32): buffer_t { return a.slice(begin, end); }
 function buffer_size(b: buffer_t): i32 { return b.byteLength; }
 function buffer_view_size(v: buffer_view_t): i32 { return v.byteLength; }
@@ -400,7 +415,7 @@ declare function krom_zui_text(text: string, align: i32, bg: i32): i32;
 declare function krom_zui_text_input(handle: any, label: string, align: i32, editable: bool, live_update: bool): string;
 declare function krom_zui_tab(handle: any, text: string, vertical: bool, color: i32): bool;
 declare function krom_zui_panel(handle: any, text: string, isTree: bool, filled: bool, pack: bool): bool;
-declare function krom_zui_handle(ops: any): any;
+declare function krom_zui_handle(): any;
 declare function krom_zui_separator(h: i32, fill: bool): void;
 declare function krom_zui_tooltip(text: string): void;
 declare function krom_zui_tooltip_image(image: image_t, max_width: i32): void;

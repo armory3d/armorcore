@@ -142,6 +142,9 @@ function armpack_read(v: buffer_view_t): any {
 }
 
 function armpack_read_array(v: buffer_view_t, length: i32): any {
+	if (_armpack_pos >= v.byteLength) {
+		return []; // Empty array at the end
+	}
 	let b: i32 = armpack_read_u8(v);
 
 	if (b == 0xca) { // Typed float32

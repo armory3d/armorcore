@@ -176,6 +176,16 @@ char *to_lower_case(char *s) {
 	return r;
 }
 
+char *to_upper_case(char *s) {
+	char *r = gc_alloc(strlen(s) + 1);
+	strcpy(r, s);
+	int len = string_length(r);
+	for (int i = 0; i < len; ++i) {
+		r[i] = toupper(r[i]);
+	}
+	return r;
+}
+
 char *trim_end(char *str) {
 	int pos = string_length(str);
 	while (pos > 0 && str[pos] == ' ' || str[pos] == '\n') {

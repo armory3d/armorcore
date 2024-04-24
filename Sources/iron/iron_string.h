@@ -24,4 +24,5 @@ char *char_at(char *s, int32_t i);
 bool starts_with(char *s, char *start);
 bool ends_with(char *s, char *end);
 char *to_lower_case(char *s);
+char *to_upper_case(char *s);
 char *trim_end(char *str);

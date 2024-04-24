@@ -3481,19 +3481,7 @@ namespace {
 
 	void krom_zui_handle(ARGS) {
 		SCOPE();
-		Local<Object> ops = TO_OBJ(args[0]);
-		zui_handle_t *handle = (zui_handle_t *)malloc(sizeof(zui_handle_t));
-		memset(handle, 0, sizeof(zui_handle_t));
-		handle->redraws = 2;
-		handle->selected = (bool)TO_I32(OBJ_GET(ops, "selected"));
-		handle->position = TO_I32(OBJ_GET(ops, "position"));
-		handle->value = TO_F32(OBJ_GET(ops, "value"));
-		Local<Value> str = OBJ_GET(ops, "text");
-		String::Utf8Value text(isolate, str);
-		assert(strlen(*text) < 128);
-		strcpy(handle->text, *text);
-		handle->color = TO_I32(OBJ_GET(ops, "color"));
-		handle->layout = TO_I32(OBJ_GET(ops, "layout"));
+		zui_handle_t *handle = zui_handle_create();
 		RETURN_OBJ(handle);
 	}
 
@@ -3889,8 +3877,10 @@ namespace {
 		zui_handle_t *handle = (zui_handle_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		ZUI_GET_I32(handle, selected)
 		ZUI_GET_I32(handle, position)
+		ZUI_GET_I32(handle, layout)
 		ZUI_GET_I32(handle, color)
 		ZUI_GET_I32(handle, changed)
+		ZUI_GET_I32(handle, init)
 		ZUI_GET_I32(handle, drag_x)
 		ZUI_GET_I32(handle, drag_y)
 		ZUI_GET_F32(handle, value)
@@ -3912,9 +3902,11 @@ namespace {
 		zui_handle_t *handle = (zui_handle_t *)TO_EXTERNAL(GET_INTERNAL(args[0]));
 		ZUI_SET_I32(handle, selected)
 		ZUI_SET_I32(handle, position)
+		ZUI_SET_I32(handle, layout)
 		ZUI_SET_I32(handle, color)
 		ZUI_SET_I32(handle, redraws)
 		ZUI_SET_I32(handle, changed)
+		ZUI_SET_I32(handle, init)
 		ZUI_SET_I32(handle, drag_x)
 		ZUI_SET_I32(handle, drag_y)
 		ZUI_SET_F32(handle, value)

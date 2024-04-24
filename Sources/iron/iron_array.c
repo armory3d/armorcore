@@ -1,6 +1,7 @@
 #include "iron_array.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef WITH_MINITS
 void *gc_alloc(size_t size);
@@ -19,16 +20,26 @@ void array_free(void *a) {
 	tmp->length = tmp->capacity = 0;
 }
 
+static void *gc_realloc_no_free(void *ptr, size_t old_size, size_t new_size) {
+	void *buffer = gc_alloc(new_size);
+	memcpy(buffer, ptr, old_size);
+	return buffer;
+}
+
 static void array_alloc(void *a, uint8_t element_size) {
 	u8_array_t *tmp = (u8_array_t *)a;
-	if (tmp->length == tmp->capacity) {
+	if (tmp->length >= tmp->capacity) {
 		if (tmp->capacity == 0) {
-			tmp->capacity = 1;
+			// If the array was created in armpack, length can already be > 0
+			tmp->capacity = tmp->length + 1;
+			size_t old_size = tmp->length * element_size;
+			size_t new_size = tmp->capacity * element_size;
+			tmp->buffer = gc_realloc_no_free(tmp->buffer, old_size, new_size);
 		}
 		else {
 			tmp->capacity *= 2;
+			tmp->buffer = gc_realloc(tmp->buffer, tmp->capacity * element_size);
 		}
-		tmp->buffer = gc_realloc(tmp->buffer, tmp->capacity * element_size);
 	}
 }
 
@@ -459,6 +470,20 @@ u8_array_t *u8_array_create_from_raw(uint8_t *raw, int length) {
 		a->buffer[i] = raw[i];
 	}
 	return a;
+}
+
+u8_array_t *u8_array_create_from_string(char *s) {
+	u8_array_t *a = u8_array_create(strlen(s) + 1);
+    for (int i = 0; i < strlen(s); ++i) {
+        a->buffer[i] = s[i];
+    }
+    return a;
+}
+
+char *u8_array_to_string(u8_array_t *a) {
+	char *r = gc_alloc(a->length);
+	memcpy(r, a->buffer, a->length);
+    return r;
 }
 
 i8_array_t *i8_array_create(int32_t length) {

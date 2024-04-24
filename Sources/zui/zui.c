@@ -109,15 +109,30 @@ void zui_set_current(zui_t *_current) {
 	current = _current;
 }
 
+zui_handle_t *zui_handle_create() {
+	zui_handle_t *h = (zui_handle_t *)malloc(sizeof(zui_handle_t));
+	memset(h, 0, sizeof(zui_handle_t));
+	h->redraws = 2;
+	h->color = 0xffffffff;
+	h->init = true;
+	return h;
+}
+
 zui_handle_t *zui_nest(zui_handle_t *handle, int pos) {
-	while(pos >= handle->children_count) {
-		handle->children_count++;
-		handle->children = realloc(handle->children, handle->children_count * sizeof(zui_handle_t *));
-		zui_handle_t *h = (zui_handle_t *)malloc(sizeof(zui_handle_t));
-		memset(h, 0, sizeof(zui_handle_t));
-		handle->children[handle->children_count - 1] = h;
+	while(handle->children == NULL || pos >= handle->children->length) {
+		zui_handle_t *h = zui_handle_create();
+		if (handle->children == NULL) {
+			handle->children = any_array_create(0);
+		}
+		any_array_push(handle->children, h);
+		if (pos == handle->children->length - 1) {
+			// Return now so init stays true
+			return h;
+		}
 	}
-	return handle->children[pos];
+	// This handle already exists, set init to false
+	handle->children->buffer[pos]->init = false;
+	return handle->children->buffer[pos];
 }
 
 void zui_fade_color(float alpha) {
