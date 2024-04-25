@@ -180,7 +180,7 @@ function parse() {
 // ╚══════╝    ╚═╝    ╚═════╝
 
 let stream;
-let string = "";
+let strings = [];
 let tabs = 0;
 let new_line = false;
 let basic_types = ["i8", "u8", "i16", "u16", "i32", "u32", "f32", "bool"];
@@ -401,14 +401,17 @@ function struct_access(s) {
 
 function struct_alloc(token, type = null) {
 	// "= { a: b, ... }" -> GC_ALLOC_INIT
-	if ((get_token(-1) == "=" && token == "{") || type != null) {
+	if ((get_token(-1) == "=" && token == "{" && get_token(-3) != "type") || type != null) {
 		if (type == null) {
-			// let a: b = {, a = {
+			// let a: b = {, a = {, a.b = {
 			let i = get_token(-3) == ":" ? -4 : -2;
 			let t = struct_access(get_token(i));
 			type = value_type(t);
 			if (type.endsWith(" *")) { // my_struct * -> my_struct
 				type = type.substring(0, type.length - 2);
+			}
+			if (type.startsWith("struct ")) { // struct my_struct -> my_struct_t
+				type = type.substring(7, type.length) + "_t";
 			}
 		}
 
@@ -416,7 +419,7 @@ function struct_alloc(token, type = null) {
 		pos++; // {
 		while (get_token() != "}") {
 			let t = get_token_c();
-			if (get_token() == "[") {
+			if (get_token() == "[" && get_token(-1) == ":") {
 				let member = get_token(-2);
 				let types = struct_types.get(type + " *");
 				let content_type = types.get(member);
@@ -796,7 +799,7 @@ function stream_write(token) {
 }
 
 function string_write(token) {
-	string += token;
+	strings[strings.length - 1] += token;
 }
 
 let write = stream_write;
@@ -1103,7 +1106,7 @@ function write_kickstart() {
 	for (let val of global_inits) {
 		write("\t");
 		let name = val.split("=")[0];
-		let global_alloc = global_ptrs.indexOf(name) > -1 && !val.endsWith("=null");
+		let global_alloc = global_ptrs.indexOf(name) > -1 && !val.endsWith("=null") && !val.endsWith("\"");
 		if (global_alloc) {
 			write("gc_free(" + name + ");");  // Make sure there are no other users?
 		}
@@ -1138,7 +1141,7 @@ function write_function() {
 	new_line = true;
 	let mark_global = null;
 	let anon_fn = fn_name;
-	let nested = false;
+	let nested = [];
 
 	while (true) {
 		pos++;
@@ -1153,16 +1156,30 @@ function write_function() {
 
 			skip_until("{");
 			write = string_write;
+			strings.push("");
 			let fn_decl = fn_declarations.get(anon_fn);
 			write(fn_decl + "{\n");
-			nested = true;
+			nested.push(1);
 			continue;
 		}
-		if (token == "}" && nested) { // End nested function
-			nested = false;
-			write("}\n\n");
-			write = stream_write;
-			continue;
+		if (token == "{" && nested.length > 0) {
+			nested[nested.length - 1]++;
+		}
+		if (token == "}" && nested.length > 0) { // End nested function
+			nested[nested.length - 1]--;
+			if (nested[nested.length - 1] == 0) {
+				nested.pop();
+				write("}\n\n");
+				if (strings.length > 1) {
+					let s = strings.pop();
+					strings[strings.length - 1] = s + strings[strings.length - 1];
+				}
+
+				if (nested.length == 0) {
+					write = stream_write;
+				}
+				continue;
+			}
 		}
 
 		// Function end
@@ -1293,9 +1310,9 @@ function write_functions() {
 		}
 
 		// Write anonymous function body
-		if (string != "") {
-			write(string);
-			string = "";
+		while (strings.length > 0) {
+			let s = strings.pop();
+			write(s);
 		}
 	}
 }

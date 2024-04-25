@@ -3,7 +3,7 @@
 
 class zui_t {
 
-	ops: zui_ops_t;
+	ops: zui_options_t;
 	zui_: any;
 
 	get is_scrolling(): bool { return krom_zui_get(this.zui_, "is_scrolling"); }
@@ -166,7 +166,7 @@ function zui_set_is_copy(a: bool) { krom_zui_set(null, "zui_is_copy", a); }
 function zui_set_is_paste(a: bool) { krom_zui_set(null, "zui_is_paste", a); }
 function zui_is_paste(): bool { return krom_zui_get(null, "zui_is_paste"); }
 
-function zui_create(ops: zui_ops_t): zui_t {
+function zui_create(ops: zui_options_t): zui_t {
 	let raw = new zui_t();
 	raw.zui_ = krom_zui_init(
 		{
@@ -877,7 +877,7 @@ function zui_nodes_on_custom_button(node_id: i32, button_name: string) {
 	eval(button_name + "(Zui.current, current, current.getNode(currentCanvas.nodes, node_id))");
 }
 
-type zui_ops_t = {
+type zui_options_t = {
 	font?: g2_font_t;
 	theme?: theme_t;
 	scale_factor?: f32;
