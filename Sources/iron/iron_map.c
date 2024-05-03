@@ -57,3 +57,25 @@ i32_map_t *i32_map_create() {
 any_map_t *any_map_create() {
 	return gc_alloc(sizeof(any_map_t));
 }
+
+// imap
+
+void any_imap_set(any_imap_t *m, int k, void *v) {
+	hmput(m->hash, k, v);
+	if (m->gc == NULL) {
+		 m->gc = gc_alloc(sizeof(any_imap_t));
+	}
+	any_array_push(m->gc, v); // gc reference
+}
+
+void *any_imap_get(any_imap_t *m, int k) {
+	return hmget(m->hash, k);
+}
+
+void imap_delete(any_imap_t *m, int k) {
+	hmdel(m->hash, k);
+}
+
+any_imap_t *any_imap_create() {
+	return gc_alloc(sizeof(any_imap_t));
+}

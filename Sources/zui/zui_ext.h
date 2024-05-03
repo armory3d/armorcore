@@ -4,7 +4,7 @@
 
 float zui_float_input(zui_handle_t *handle, char *label, int align, float precision);
 char *zui_file_browser(zui_handle_t *handle, bool folders_only);
-int zui_inline_radio(zui_handle_t *handle, char **texts, int count, int align);
+int zui_inline_radio(zui_handle_t *handle, char_ptr_array_t *texts, int align);
 int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool color_preview, void (*picker)(void *), void *data);
 char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label, bool word_wrap);
 void zui_begin_menu();

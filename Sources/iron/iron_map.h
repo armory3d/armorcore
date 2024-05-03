@@ -29,3 +29,15 @@ any_array_t *map_keys(any_map_t *m);
 
 i32_map_t *i32_map_create();
 any_map_t *any_map_create();
+
+// imap
+
+typedef struct any_imap {
+	struct { int key; void *value; } *hash;
+	any_array_t *gc; // gc reference
+} any_imap_t;
+
+void any_imap_set(any_imap_t *m, int k, void *v);
+void *any_imap_get(any_imap_t *m, int k);
+void imap_delete(any_imap_t *m, int k);
+any_imap_t *any_imap_create();

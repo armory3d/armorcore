@@ -82,8 +82,7 @@ typedef struct zui_handle {
 	int position;
 	uint32_t color;
 	float value;
-	char text[256];
-	// char *text;
+	char *text;
 	kinc_g4_render_target_t texture;
 	int redraws;
 	float scroll_offset;
@@ -182,13 +181,12 @@ typedef struct zui {
 	float input_started_time;
 	int cursor_x; // Text input
 	int highlight_anchor;
-	float ratios[128]; // Splitting rows
-	int ratios_count;
+	f32_array_t *ratios; // Splitting rows
 	int current_ratio;
 	float x_before_split;
 	int w_before_split;
 
-	zui_options_t ops;
+	zui_options_t *ops;
 	int font_size;
 	float font_offset_y; // Precalculated offsets
 	float arrow_offset_x;
@@ -235,9 +233,8 @@ typedef struct zui {
 	zui_handle_t *combo_selected_handle;
 	zui_handle_t *combo_selected_window;
 	int combo_selected_align;
-	char **combo_selected_texts;
+	char_ptr_array_t *combo_selected_texts;
 	char *combo_selected_label;
-	int combo_selected_count;
 	int combo_selected_x;
 	int combo_selected_y;
 	int combo_selected_w;
@@ -273,7 +270,7 @@ typedef struct zui {
 	kinc_g4_render_target_t filled_round_corner_image;
 } zui_t;
 
-void zui_init(zui_t *ui, zui_options_t ops);
+void zui_init(zui_t *ui, zui_options_t *ops);
 void zui_begin(zui_t *ui);
 void zui_begin_sticky();
 void zui_end_sticky();
@@ -289,9 +286,9 @@ int zui_image(/*kinc_g4_texture_t kinc_g4_render_target_t*/ void *image, bool is
 char *zui_text_input(zui_handle_t *handle, char *label, int align, bool editable, bool live_update);
 bool zui_check(zui_handle_t *handle, char *text, char *label);
 bool zui_radio(zui_handle_t *handle, int position, char *text, char *label);
-int zui_combo(zui_handle_t *handle, char **texts, int count, char *label, bool show_label, int align, bool search_bar);
+int zui_combo(zui_handle_t *handle, char_ptr_array_t *texts, char *label, bool show_label, int align, bool search_bar);
 float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool filled, float precision, bool display_value, int align, bool text_edit);
-void zui_row(float *ratios, int count);
+void zui_row(f32_array_t *ratios);
 void zui_separator(int h, bool fill);
 void zui_tooltip(char *text);
 void zui_tooltip_image(kinc_g4_texture_t *image, int max_width);

@@ -379,11 +379,11 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			v.y = 1.0 /render_path_current_h;
 		}
 		else if (c.link == "_camera_plane_proj") {
-			let near: f32 = camera.data.near_plane;
-			let far: f32 = camera.data.far_plane;
+			let znear: f32 = camera.data.near_plane;
+			let zfar: f32 = camera.data.far_plane;
 			v = _uniforms_vec;
-			v.x = far / (far - near);
-			v.y = (-far * near) / (far - near);
+			v.x = zfar / (zfar - znear);
+			v.y = (-zfar * znear) / (zfar - znear);
 		}
 		else {
 			return false;
@@ -481,9 +481,9 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 		}
 		///if arm_particles
 		else if (c.link == "_particle_data") {
-			let mo: any = obj.ext;
-			if (mo.particle_owner != null && mo.particle_owner.particle_dystems != null) {
-				m = particle_sys_get_data(mo.particle_owner.particle_dystems[mo.particle_index]);
+			let mo: mesh_object_t = obj.ext;
+			if (mo.particle_owner != null && mo.particle_owner.particle_systems != null) {
+				m = particle_sys_get_data(mo.particle_owner.particle_systems[mo.particle_index]);
 			}
 		}
 		///end

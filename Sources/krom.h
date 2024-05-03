@@ -1,6 +1,5 @@
 #pragma once
 
-#pragma clang diagnostic ignored "-Wgnu-designator"
 #pragma clang diagnostic ignored "-Wincompatible-pointer-types"
 
 #include <math.h>
@@ -19,14 +18,21 @@
 #include <iron/iron_armpack.h>
 #include <iron/iron_json.h>
 #include <iron/iron_gc.h>
+#include "iron/io_obj.h"
 // #include <quickjs.h>
+#ifdef KINC_WINDOWS
+#include <Windows.h>
+#endif
 #ifdef IDLE_SLEEP
 #include <unistd.h>
 #endif
 #ifdef WITH_ZUI
 #include "zui/zui.h"
+#include "zui/zui_ext.h"
+#include "zui/zui_nodes.h"
 #endif
 
+#define i64 int64_t
 #define f32 float
 #define i32 int32_t
 #define u32 uint32_t
@@ -61,6 +67,7 @@ char temp_string_vstruct[4][32][32];
 #ifdef KINC_WINDOWS
 wchar_t temp_wstring[1024];
 wchar_t temp_wstring1[1024];
+bool show_window = false;
 #endif
 
 void (*krom_update)(void);
@@ -103,10 +110,10 @@ int kickstart(int argc, char **argv) {
 #endif
 
 #ifdef KINC_WINDOWS // Handle non-ascii path
-	HMODULE hmodule = GetModuleHandleW(NULL);
-	GetModuleFileNameW(hmodule, temp_wstring, 1024);
-	WideCharToMultiByte(CP_UTF8, 0, temp_wstring, -1, temp_string, 4096, nullptr, nullptr);
-	bindir = temp_string;
+	// HMODULE hmodule = GetModuleHandleW(NULL);
+	// GetModuleFileNameW(hmodule, temp_wstring, 1024);
+	// WideCharToMultiByte(CP_UTF8, 0, temp_wstring, -1, temp_string, 4096, nullptr, nullptr);
+	// bindir = temp_string;
 #endif
 
 #ifdef KINC_WINDOWS
@@ -214,35 +221,6 @@ void _update(void *data) {
 	krom_update();
 	kinc_g4_end(0);
 	kinc_g4_swap_buffers();
-}
-
-void _drop_files(wchar_t *file_path, void *data) {
-	// Update mouse position
-	#ifdef KINC_WINDOWS
-	POINT p;
-	GetCursorPos(&p);
-	ScreenToClient(kinc_windows_window_handle(0), &p);
-	mouse_move(0, p.x, p.y, 0, 0, NULL);
-	#endif
-
-	// if (sizeof(wchar_t) == 2) {
-	// 	(const uint16_t *)file_path
-	// }
-	// else {
-	// 	size_t len = wcslen(file_path);
-	// 	uint16_t *str = new uint16_t[len + 1];
-	// 	for (int i = 0; i < len; i++) str[i] = file_path[i];
-	// 	str[len] = 0;
-	// }
-
-	char buffer[512];
-	wcstombs(buffer, file_path, sizeof(buffer));
-	krom_drop_files(buffer);
-	in_background = false;
-
-	#ifdef IDLE_SLEEP
-	paused_frames = 0;
-	#endif
 }
 
 char *_copy(void *data) {
@@ -508,11 +486,41 @@ void _gamepad_button(int gamepad, int button, float value, void *data) {
 	#endif
 }
 
+void _drop_files(wchar_t *file_path, void *data) {
+// Update mouse position
+#ifdef KINC_WINDOWS
+	POINT p;
+	GetCursorPos(&p);
+	ScreenToClient(kinc_windows_window_handle(0), &p);
+	_mouse_move(0, p.x, p.y, 0, 0, NULL);
+#endif
+
+	// if (sizeof(wchar_t) == 2) {
+	// 	(const uint16_t *)file_path
+	// }
+	// else {
+	// 	size_t len = wcslen(file_path);
+	// 	uint16_t *str = new uint16_t[len + 1];
+	// 	for (int i = 0; i < len; i++) str[i] = file_path[i];
+	// 	str[len] = 0;
+	// }
+
+	char buffer[512];
+	wcstombs(buffer, file_path, sizeof(buffer));
+	krom_drop_files(buffer);
+	in_background = false;
+
+#ifdef IDLE_SLEEP
+	paused_frames = 0;
+#endif
+}
+
 f32 js_eval(const char *js, const char *context) {
 	return 0.0;
 }
 
-void uri_decode(char *dst, const char *src) {
+char *uri_decode(const char *src) {
+	char *dst = gc_alloc(1024);
 	char a, b;
 	while (*src) {
 		if ((*src == '%') && ((a = src[1]) && (b = src[2])) && (isxdigit(a) && isxdigit(b))) {
@@ -546,6 +554,7 @@ void uri_decode(char *dst, const char *src) {
 		}
 	}
 	*dst++ = '\0';
+	return dst;
 }
 
 f32 math_floor(f32 x) { return floorf(x); }
@@ -568,6 +577,7 @@ f32 math_log2(f32 x) { return log2f(x); }
 f32 math_atan(f32 x) { return atanf(x); }
 f32 math_acos(f32 x) { return acosf(x); }
 f32 math_exp(f32 x) { return expf(x); }
+f32 math_fmod(f32 x, f32 y) { return fmod(x, y); }
 
 i32 parse_int(const char *s) { return strtol(s, NULL, 10); }
 i32 parse_int_hex(const char *s) { return strtol(s, NULL, 16); }

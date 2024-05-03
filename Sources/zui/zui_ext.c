@@ -183,18 +183,18 @@ char *zui_file_browser(zui_handle_t *handle, bool folders_only) {
 	return handle->text;
 }
 
-int zui_inline_radio(zui_handle_t *handle, char **texts, int count, int align) {
+int zui_inline_radio(zui_handle_t *handle, char_ptr_array_t *texts, int align) {
 	zui_t *current = zui_get_current();
 
 	if (!zui_is_visible(ZUI_ELEMENT_H())) {
 		zui_end_element();
 		return handle->position;
 	}
-	float step = current->_w / count;
+	float step = current->_w / texts->length;
 	int hovered = -1;
 	if (zui_get_hover(ZUI_ELEMENT_H())) {
 		int ix = current->input_x - current->_x - current->_window_x;
-		for (int i = 0; i < count; ++i) {
+		for (int i = 0; i < texts->length; ++i) {
 			if (ix < i * step + step) {
 				hovered = i;
 				break;
@@ -207,22 +207,22 @@ int zui_inline_radio(zui_handle_t *handle, char **texts, int count, int align) {
 	}
 	else handle->changed = false;
 
-	for (int i = 0; i < count; ++i) {
+	for (int i = 0; i < texts->length; ++i) {
 		if (handle->position == i) {
-			arm_g2_set_color(current->ops.theme->ACCENT_HOVER_COL);
+			arm_g2_set_color(current->ops->theme->ACCENT_HOVER_COL);
 			if (!current->enabled) zui_fade_color(0.25);
 			zui_draw_rect(true, current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H());
 		}
 		else if (hovered == i) {
-			arm_g2_set_color(current->ops.theme->ACCENT_COL);
+			arm_g2_set_color(current->ops->theme->ACCENT_COL);
 			if (!current->enabled) zui_fade_color(0.25);
 			zui_draw_rect(false, current->_x + step * i, current->_y + current->button_offset_y, step, ZUI_BUTTON_H());
 		}
-		arm_g2_set_color(current->ops.theme->TEXT_COL); // Text
+		arm_g2_set_color(current->ops->theme->TEXT_COL); // Text
 		current->_x += step * i;
 		float _w = current->_w;
 		current->_w = (int)step;
-		zui_draw_string(texts[i], current->ops.theme->TEXT_OFFSET, 0, align, true);
+		zui_draw_string(texts->buffer[i], current->ops->theme->TEXT_OFFSET, 0, align, true);
 		current->_x -= step * i;
 		current->_w = _w;
 	}
@@ -288,7 +288,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	current->_w = _w;
 
 	uint32_t col = zui_color(round(cval * 255.0f), round(cval * 255.0f), round(cval * 255.0f), 255);
-	zui_image(current->ops.color_wheel, false, col, -1);
+	zui_image(current->ops->color_wheel, false, col, -1);
 	// Picker
 	float ph = current->_y - py;
 	float ox = px + w / 2.0;
@@ -310,7 +310,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 
 	current->_x = px - (scroll ? 0 : ZUI_SCROLL_W() / 2.0);
 	current->_y = py;
-	zui_image(current->ops.black_white_gradient, false, 0xffffffff, -1);
+	zui_image(current->ops->black_white_gradient, false, 0xffffffff, -1);
 
 	arm_g2_set_color(0xff000000);
 	arm_g2_fill_rect(cx - 3.0 * ZUI_SCALE(), cy - 3.0 * ZUI_SCALE(), 6.0 * ZUI_SCALE(), 6.0 * ZUI_SCALE());
@@ -359,7 +359,10 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	if (color_preview) zui_text("", ZUI_ALIGN_RIGHT, handle->color);
 
 	char *strings[] = {"RGB", "HSV", "Hex"};
-	int pos = zui_inline_radio(&radio_handle, strings, 3, ZUI_ALIGN_LEFT);
+	char_ptr_array_t car;
+	car.buffer = strings;
+	car.length = 3;
+	int pos = zui_inline_radio(&radio_handle, &car, ZUI_ALIGN_LEFT);
 	zui_handle_t *h0 = &temp0;
 	zui_handle_t *h1 = &temp1;
 	zui_handle_t *h2 = &temp2;
@@ -524,9 +527,9 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		new_lines[0] = '\0';
 		for (int i = 0; i < word_count; ++i) {
 			char *w = zui_extract_word(lines, i);
-			float spacew = arm_g2_string_width(current->ops.font, current->font_size, " ");
-			float wordw = spacew + arm_g2_string_width(current->ops.font, current->font_size, w);
-			float linew = wordw + arm_g2_string_width(current->ops.font, current->font_size, line);
+			float spacew = arm_g2_string_width(current->ops->font, current->font_size, " ");
+			float wordw = spacew + arm_g2_string_width(current->ops->font, current->font_size, w);
+			float linew = wordw + arm_g2_string_width(current->ops->font, current->font_size, line);
 			if (linew > current->_w - 10 && linew > wordw) {
 				if (new_lines[0] != '\0') strcat(new_lines, "\n");
 				strcat(new_lines, line);
@@ -565,15 +568,15 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 
 	if (zui_text_area_line_numbers) {
 		float _y = current->_y;
-		int _TEXT_COL = current->ops.theme->TEXT_COL;
-		current->ops.theme->TEXT_COL = current->ops.theme->ACCENT_COL;
+		int _TEXT_COL = current->ops->theme->TEXT_COL;
+		current->ops->theme->TEXT_COL = current->ops->theme->ACCENT_COL;
 		int max_length = ceil(log(line_count + 0.5) / log(10)); // Express log_10 with natural log
 		char s[64];
 		for (int i = 0; i < line_count; ++i) {
 			zui_text(right_align_number(&s[0], i + 1, max_length), ZUI_ALIGN_LEFT, 0x00000000);
 			current->_y -= ZUI_ELEMENT_OFFSET();
 		}
-		current->ops.theme->TEXT_COL = _TEXT_COL;
+		current->ops->theme->TEXT_COL = _TEXT_COL;
 		current->_y = _y;
 
 		sprintf(s, "%d", line_count);
@@ -582,7 +585,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		current->_w -= numbers_w - ZUI_SCROLL_W();
 	}
 
-	arm_g2_set_color(current->ops.theme->SEPARATOR_COL); // Background
+	arm_g2_set_color(current->ops->theme->SEPARATOR_COL); // Background
 	zui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w - current->button_offset_y * 2, line_count * ZUI_ELEMENT_H() - current->button_offset_y * 2);
 
 	zui_text_coloring_t *_text_coloring = current->text_coloring;
@@ -608,10 +611,10 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		// Text
 		else {
 			if (show_label) {
-				int TEXT_COL = current->ops.theme->TEXT_COL;
-				current->ops.theme->TEXT_COL = current->ops.theme->LABEL_COL;
+				int TEXT_COL = current->ops->theme->TEXT_COL;
+				current->ops->theme->TEXT_COL = current->ops->theme->LABEL_COL;
 				zui_text(label, ZUI_ALIGN_RIGHT, 0x00000000);
-				current->ops.theme->TEXT_COL = TEXT_COL;
+				current->ops->theme->TEXT_COL = TEXT_COL;
 			}
 			else {
 				// Multi-line selection highlight
@@ -620,8 +623,8 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 					(i <= text_area_selection_start && i > handle->position)) {
 					int line_height = ZUI_ELEMENT_H();
 					int cursor_height = line_height - current->button_offset_y * 3.0;
-					int linew = arm_g2_string_width(current->ops.font, current->font_size, line);
-					arm_g2_set_color(current->ops.theme->ACCENT_SELECT_COL);
+					int linew = arm_g2_string_width(current->ops->font, current->font_size, line);
+					arm_g2_set_color(current->ops->theme->ACCENT_SELECT_COL);
 					arm_g2_fill_rect(current->_x + ZUI_ELEMENT_OFFSET() * 2.0, current->_y + current->button_offset_y * 1.5, linew, cursor_height);
 				}
 				zui_text(line, align, 0x00000000);
@@ -679,22 +682,22 @@ float ZUI_MENUBAR_H() {
 
 void zui_begin_menu() {
 	zui_t *current = zui_get_current();
-	_ELEMENT_OFFSET = current->ops.theme->ELEMENT_OFFSET;
-	_BUTTON_COL = current->ops.theme->BUTTON_COL;
-	current->ops.theme->ELEMENT_OFFSET = 0;
-	current->ops.theme->BUTTON_COL = current->ops.theme->SEPARATOR_COL;
-	arm_g2_set_color(current->ops.theme->SEPARATOR_COL);
+	_ELEMENT_OFFSET = current->ops->theme->ELEMENT_OFFSET;
+	_BUTTON_COL = current->ops->theme->BUTTON_COL;
+	current->ops->theme->ELEMENT_OFFSET = 0;
+	current->ops->theme->BUTTON_COL = current->ops->theme->SEPARATOR_COL;
+	arm_g2_set_color(current->ops->theme->SEPARATOR_COL);
 	arm_g2_fill_rect(0, 0, current->_window_w, ZUI_MENUBAR_H());
 }
 
 void zui_end_menu() {
 	zui_t *current = zui_get_current();
-	current->ops.theme->ELEMENT_OFFSET = _ELEMENT_OFFSET;
-	current->ops.theme->BUTTON_COL = _BUTTON_COL;
+	current->ops->theme->ELEMENT_OFFSET = _ELEMENT_OFFSET;
+	current->ops->theme->BUTTON_COL = _BUTTON_COL;
 }
 
 bool zui_menu_button(char *text) {
 	zui_t *current = zui_get_current();
-	current->_w = arm_g2_string_width(current->ops.font, current->font_size, text) + 25.0 * ZUI_SCALE();
+	current->_w = arm_g2_string_width(current->ops->font, current->font_size, text) + 25.0 * ZUI_SCALE();
 	return zui_button(text, ZUI_ALIGN_CENTER, "");
 }

@@ -220,7 +220,7 @@ function g2_font_clone(raw: g2_font_t): g2_font_t {
 }
 
 type g2_font_t = {
-	font_?: any;
+	font_?: any; // arm_g2_font_t
 	blob?: buffer_t;
 	glyphs?: i32[];
 	index?: i32;

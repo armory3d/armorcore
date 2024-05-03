@@ -78,11 +78,11 @@ if (flags.with_eval) {
 
 if (flags.with_minits) {
 	c_project.addDefine('WITH_MINITS');
-	c_project.addDefine('_GNU_SOURCE');
-	c_project.addDefine('CONFIG_VERSION=\"2024-01-13\"');
-	c_project.addDefine('USE_BF_DEC');
-	c_project.addIncludeDir('Libraries/quickjs');
-	c_project.addFile('Libraries/quickjs/*.c');
+	// c_project.addDefine('_GNU_SOURCE');
+	// c_project.addDefine('CONFIG_VERSION=\"2024-01-13\"');
+	// c_project.addDefine('USE_BF_DEC');
+	// c_project.addIncludeDir('Libraries/quickjs');
+	// c_project.addFile('Libraries/quickjs/*.c');
 	c_project.addIncludeDir('Libraries/gc');
 	c_project.addFile('Libraries/gc/*.c');
 	c_project.addIncludeDir('Sources');

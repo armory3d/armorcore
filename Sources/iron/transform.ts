@@ -73,7 +73,12 @@ function transform_compose_delta(raw: transform_t) {
 }
 
 function transform_build_matrix(raw: transform_t) {
-	raw.dloc == null ? mat4_compose(raw.local, raw.loc, raw.rot, raw.scale) : transform_compose_delta(raw);
+	if (raw.dloc == null) {
+		mat4_compose(raw.local, raw.loc, raw.rot, raw.scale);
+	}
+	else {
+		transform_compose_delta(raw);
+	}
 
 	if (raw.bone_parent != null) {
 		mat4_mult_mats(raw.local, raw.bone_parent, raw.local);

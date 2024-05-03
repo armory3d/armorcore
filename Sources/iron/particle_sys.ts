@@ -50,7 +50,7 @@ function particle_create(): particle_t {
 }
 
 function particle_sys_create(scene_name: string, ref: particle_ref_t): particle_sys_t {
-	let raw: particle_sys_t = {}
+	let raw: particle_sys_t = {};
 	raw.speed = 1.0;
 	raw.frame_rate = 24;
 	raw.time = 0.0;
@@ -224,8 +224,8 @@ function particle_sys_setup_geom(raw: particle_sys_t, object: mesh_object_t, own
 
 function particle_sys_fhash(n: i32): f32 {
 	let s: f32 = n + 1.0;
-	s *= 9301.0 % s;
-	s = (s * 9301.0 + 49297.0) % 233280.0;
+	s *= math_fmod(9301.0, s);
+	s = math_fmod(s * 9301.0 + 49297.0, 233280.0);
 	return s / 233280.0;
 }
 

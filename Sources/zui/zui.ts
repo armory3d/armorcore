@@ -1,10 +1,120 @@
 
 // Externs for Zui in C
 
-///if arm_minits
-
 let zui_current: zui_t = null;
 let zui_children: map_t<string, zui_handle_t> = map_create();
+let zui_tr: (id: string, vars: map_t<string, string>)=>string;
+let zui_clipboard: string = "";
+
+function zui_SCALE(ui: zui_t): f32 {
+	let current: zui_t = zui_get_current();
+	zui_set_current(ui);
+	let f: f32 = ZUI_SCALE();
+	zui_set_current(current);
+	return f;
+}
+
+function zui_ELEMENT_OFFSET(ui: zui_t): f32 {
+	let current: zui_t = zui_get_current();
+	zui_set_current(ui);
+	let f: f32 = ZUI_ELEMENT_OFFSET();
+	zui_set_current(current);
+	return f;
+}
+
+function zui_ELEMENT_W(ui: zui_t): f32 {
+	let current: zui_t = zui_get_current();
+	zui_set_current(ui);
+	let f: f32 = ZUI_ELEMENT_W();
+	zui_set_current(current);
+	return f;
+}
+
+function zui_ELEMENT_H(ui: zui_t): f32 {
+	let current: zui_t = zui_get_current();
+	zui_set_current(ui);
+	let f: f32 = ZUI_ELEMENT_H();
+	zui_set_current(current);
+	return f;
+}
+
+function zui_MENUBAR_H(ui: zui_t): f32 {
+	let button_offset_y: f32 = (ui.ops.theme.ELEMENT_H * zui_SCALE(ui) - ui.ops.theme.BUTTON_H * zui_SCALE(ui)) / 2;
+	return ui.ops.theme.BUTTON_H * zui_SCALE(ui) * 1.1 + 2 + button_offset_y;
+}
+
+function zui_nodes_LINE_H(): f32 {
+	return ZUI_LINE_H();
+}
+
+function zui_nodes_SCALE(): f32 {
+	return ZUI_NODES_SCALE();
+}
+
+function zui_nodes_p(f: f32): f32 {
+	return zui_p(f);
+}
+
+function zui_nodes_NODE_X(node: zui_node_t): f32 {
+	return ZUI_NODE_X(node);
+}
+
+function zui_nodes_NODE_Y(node: zui_node_t): f32 {
+	return ZUI_NODE_Y(node);
+}
+
+function zui_nodes_NODE_W(node: zui_node_t): f32 {
+	return ZUI_NODE_W(node);
+}
+
+function zui_nodes_NODE_H(canvas: zui_node_canvas_t, node: zui_node_t): f32 {
+	return ZUI_NODE_H(canvas, node);
+}
+
+function zui_nodes_OUTPUT_Y(sockets_count: i32, pos: i32): f32 {
+	return ZUI_OUTPUT_Y(sockets_count, pos);
+}
+
+function zui_nodes_INPUT_Y(canvas: zui_node_canvas_t, sockets: zui_node_socket_t[], pos: i32): f32 {
+	return ZUI_INPUT_Y(canvas, sockets.buffer, sockets.length, pos);
+}
+
+function zui_nodes_OUTPUTS_H(sockets_count: i32, length: i32 = -1): f32 {
+	return ZUI_OUTPUTS_H(sockets_count, length);
+}
+
+function zui_nodes_BUTTONS_H(node: zui_node_t): f32 {
+	return ZUI_BUTTONS_H(node);
+}
+
+function zui_nodes_PAN_X(): f32 {
+	return ZUI_NODES_PAN_X();
+}
+
+function zui_nodes_PAN_Y(): f32 {
+	return ZUI_NODES_PAN_Y();
+}
+
+function _zui_image(image: image_t, tint: i32 = 0xffffffff, h: f32 = -1.0, sx: i32 = 0, sy: i32 = 0, sw: i32 = 0, sh: i32 = 0): zui_state_t {
+	let aimage: any;
+	let is_rt: bool;
+	if (image.texture_ != null) {
+		aimage = image.texture_;
+		is_rt = false;
+	}
+	else {
+		image = image.render_target_;
+		is_rt = true;
+	}
+	return zui_sub_image(image, is_rt, tint, h, sx, sy, sw, sh);
+}
+
+function _zui_set_scale(ui: zui_t, factor: f32) {
+	let current: zui_t = zui_get_current();
+	zui_set_current(ui);
+	zui_set_scale(factor);
+	zui_set_current(current);
+}
 
 function zui_handle(s: string): zui_handle_t {
 	let h: zui_handle_t = map_get(zui_children, s);
@@ -19,44 +129,144 @@ function zui_handle(s: string): zui_handle_t {
 
 function zui_create(ops: zui_options_t): zui_t {
     let raw: zui_t = {};
-    zui_init(raw, * ops);
+    zui_init(raw, ops);
     return raw;
 }
 
-type zui_options_t = {
-	font?: g2_font_t;
-	theme?: zui_theme_t;
-	scale_factor?: f32;
-	color_wheel?: image_t;
-	black_white_gradient?: image_t;
+function zui_theme_create(): zui_theme_t {
+	let raw: zui_theme_t = {};
+	zui_theme_default(raw);
+	return raw;
+}
+
+function nodes_on_custom_button(node_id: i32, button_name: string) {
+	// eval(button_name + "(Zui.current, current, current.getNode(currentCanvas.nodes, node_id))");
+}
+
+function zui_nodes_create(): zui_nodes_t {
+	let raw: zui_nodes_t = {};
+	zui_nodes_init(raw);
+	// zui_nodes_exclude_remove[0] = "OUTPUT_MATERIAL_PBR";
+	// zui_nodes_exclude_remove[1] = "GROUP_OUTPUT";
+	// zui_nodes_exclude_remove[2] = "GROUP_INPUT";
+	// zui_nodes_exclude_remove[3] = "BrushOutputNode";
+	zui_nodes_on_custom_button = nodes_on_custom_button;
+	return raw;
+}
+
+function zui_get_socket(nodes: zui_node_t[], id: i32): zui_node_socket_t {
+	for (let i: i32 = 0; i < nodes.length; ++i) {
+		let n: zui_node_t = nodes[i];
+		for (let j: i32 = 0; j < n.inputs.length; ++j) {
+			let s: zui_node_socket_t = n.inputs[j];
+			if (s.id == id) {
+				return s;
+			}
+		}
+		for (let j: i32 = 0; j < n.outputs.length; ++j) {
+			let s: zui_node_socket_t = n.outputs[j];
+			if (s.id == id) {
+				return s;
+			}
+		}
+	}
+	return null;
+}
+
+function zui_set_font(raw: zui_t, font: g2_font_t) {
+	g2_font_init(font); // Make sure font_ is ready
+	raw.ops.font = font.font_;
+}
+
+declare let zui_nodes_enum_texts: (s: string)=>string[];
+declare let zui_touch_scroll: bool;
+declare let zui_always_redraw_window: bool;
+
+declare function zui_nest(handle: zui_handle_t, pos: i32): zui_handle_t;
+declare function zui_theme_default(theme: zui_theme_t): void;
+declare function zui_tab(handle: zui_handle_t, text: string, vertical: bool = false, color: i32 = -1): void;
+declare function zui_combo(handle: zui_handle_t, texts: string[], label: string = "", show_label: bool = false, align: zui_align_t = zui_align_t.LEFT, search_bar: bool = true): i32;
+declare function zui_slider(handle: zui_handle_t, text: string, from: f32 = 0.0, to: f32 = 1.0, filled: bool = false, precision: f32 = 100.0, display_value: bool = true, align: zui_align_t = zui_align_t.RIGHT, text_edit: bool = true): f32;
+declare function zui_button(text: string, align: zui_align_t = zui_align_t.CENTER, label: string = ""): bool;
+declare function zui_text(text: string, align: zui_align_t = zui_align_t.LEFT, bg: i32 = 0x00000000): zui_state_t;
+declare function zui_text_input(handle: zui_handle_t, label: string = "", align: zui_align_t = zui_align_t.LEFT, editable: bool = true, live_update: bool = false): string;
+declare function zui_check(handle: zui_handle_t, text: string, label: string = ""): bool;
+declare function zui_color_wheel(handle: zui_handle_t, alpha: bool = false, w: f32 = -1.0, h: f32 = -1.0, color_preview: bool = true, picker: ()=>void = null, data: any = null): color_t;
+declare function zui_hovered_tab_name(): string;
+declare function zui_radio(handle: zui_handle_t, position: i32, text: string, label: string = ""): bool;
+declare function zui_start_text_edit(handle: zui_handle_t, align: zui_align_t = zui_align_t.LEFT): void;
+declare function zui_tooltip_image(image: image_t, max_width: i32 = 0): void;
+declare function zui_separator(h: i32 = 4, fill: bool = true): void;
+declare function zui_text_area(handle: zui_handle_t, align: zui_align_t = zui_align_t.LEFT, editable: bool = true, label: string = "", word_wrap: bool = false): string;
+declare function zui_window(handle: zui_handle_t, x: i32, y: i32, w: i32, h: i32, drag: bool = false): bool;
+declare function zui_end(last: bool = true): void;
+declare function zui_end_window(bind_global_g: bool = true): void;
+declare function zui_end_region(last: bool = true): void;
+declare function zui_float_input(handle: zui_handle_t, label: string = "", align: zui_align_t = zui_align_t.LEFT, precision: f32 = 1000.0): f32;
+
+declare type kinc_g4_texture_t = any;
+declare type arm_g2_font_t = any;
+declare type zui_theme_t = any;
+
+declare type zui_t = {
+	ops: zui_options_t;
 };
 
-type zui_coloring_t = {
+declare type zui_handle_t = {
+	selected: bool;
+	position: i32;
+	color: u32;
+	value: f32;
+	// char *text;
+	// kinc_g4_render_target_t texture;
+	redraws: i32;
+	scroll_offset: f32;
+	scroll_enabled: bool;
+	layout: i32;
+	last_max_x: f32;
+	last_max_y: f32;
+	drag_enabled: bool;
+	drag_x: i32;
+	drag_y: i32;
+	changed: bool;
+	init: bool;
+	children: zui_handle_t[];
+};
+
+declare type zui_options_t = {
+	font?: arm_g2_font_t;
+	theme?: zui_theme_t;
+	scale_factor?: f32;
+	color_wheel?: kinc_g4_texture_t;
+	black_white_gradient?: kinc_g4_texture_t;
+};
+
+declare type zui_coloring_t = {
 	color?: i32;
 	start?: string[];
 	end?: string;
 	separated?: bool;
 };
 
-type zui_text_coloring_t = {
+declare type zui_text_coloring_t = {
 	colorings?: zui_coloring_t[];
 	default_color?: i32;
 };
 
-type zui_canvas_control_t = {
+declare type zui_canvas_control_t = {
 	pan_x?: f32;
 	pan_y?: f32;
 	zoom?: f32;
 	controls_down?: bool;
 };
 
-type zui_node_canvas_t = {
+declare type zui_node_canvas_t = {
 	name?: string;
 	nodes?: zui_node_t[];
 	links?: zui_node_link_t[];
 };
 
-type zui_node_t = {
+declare type zui_node_t = {
 	id?: i32;
 	name?: string;
 	type?: string;
@@ -69,7 +279,7 @@ type zui_node_t = {
 	width?: f32;
 };
 
-type zui_node_socket_t = {
+declare type zui_node_socket_t = {
 	id?: i32;
 	node_id?: i32;
 	name?: string;
@@ -82,7 +292,7 @@ type zui_node_socket_t = {
 	display?: i32;
 };
 
-type zui_node_link_t = {
+declare type zui_node_link_t = {
 	id?: i32;
 	from_id?: i32;
 	from_socket?: i32;
@@ -90,7 +300,7 @@ type zui_node_link_t = {
 	to_socket?: i32;
 };
 
-type zui_node_button_t = {
+declare type zui_node_button_t = {
 	name?: string;
 	type?: string;
 	output?: i32;
@@ -100,6 +310,17 @@ type zui_node_button_t = {
 	max?: f32;
 	precision?: f32;
 	height?: f32;
+};
+
+declare type zui_nodes_t = {
+	color_picker_callback?: (col: color_t)=>void;
+	nodes_selected_id?: i32[];
+	_input_started?: bool;
+	nodes_drag?: bool;
+	pan_x?: f32;
+	pan_y?: f32;
+	zoom?: f32;
+	link_drag_id?: i32;
 };
 
 enum zui_layout_t {
@@ -121,20 +342,38 @@ enum zui_state_t {
 	HOVERED,
 }
 
-///end
-
-///if _
-
-declare type zui_t = any;
-declare type zui_theme_t = any;
-declare type zui_handle_t = any;
-declare type zui_nodes_t = any;
-declare function zui_handle_create(): zui_handle_t;
-declare function zui_init(ui: zui_t, ops: zui_options_t): void;
-declare function zui_theme_default(t: zui_theme_t): void;
-declare function zui_begin(ui: zui_t): void;
-declare function zui_end(last: bool): void;
-declare function zui_window(handle: zui_handle_t, x: i32, y: i32, w: i32, h: i32, drag: bool): bool;
-declare function zui_button(text: string, align: zui_align_t, label: string): bool;
-
-///end
+let zui_theme_keys: string[] = [
+	"WINDOW_BG_COL",
+	"WINDOW_TINT_COL",
+	"ACCENT_COL",
+	"ACCENT_HOVER_COL",
+	"ACCENT_SELECT_COL",
+	"BUTTON_COL",
+	"BUTTON_TEXT_COL",
+	"BUTTON_HOVER_COL",
+	"BUTTON_PRESSED_COL",
+	"TEXT_COL",
+	"LABEL_COL",
+	"SEPARATOR_COL",
+	"HIGHLIGHT_COL",
+	"CONTEXT_COL",
+	"PANEL_BG_COL",
+	"FONT_SIZE",
+	"ELEMENT_W",
+	"ELEMENT_H",
+	"ELEMENT_OFFSET",
+	"ARROW_SIZE",
+	"BUTTON_H",
+	"CHECK_SIZE",
+	"CHECK_SELECT_SIZE",
+	"SCROLL_W",
+	"SCROLL_MINI_W",
+	"TEXT_OFFSET",
+	"TAB_W",
+	"FILL_WINDOW_BG",
+	"FILL_BUTTON_BG",
+	"FILL_ACCENT_BG",
+	"LINK_STYLE",
+	"FULL_TABS",
+	"ROUND_CORNERS",
+];

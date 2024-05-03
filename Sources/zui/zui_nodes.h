@@ -7,6 +7,7 @@ typedef struct zui_canvas_control {
 	float pan_x;
 	float pan_y;
 	float zoom;
+	bool controls_down;
 } zui_canvas_control_t;
 
 typedef PACK(struct zui_node_socket {
@@ -87,8 +88,7 @@ typedef PACK(struct zui_node_canvas {
 
 typedef struct zui_nodes {
 	bool nodes_drag;
-	int nodes_selected_id[32];
-	int nodes_selected_count;
+	i32_array_t *nodes_selected_id;
 	float pan_x;
 	float pan_y;
 	float zoom;
@@ -113,10 +113,13 @@ typedef struct zui_nodes {
 void zui_nodes_init(zui_nodes_t *nodes);
 void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas);
 void zui_nodes_rgba_popup(zui_handle_t *nhandle, float *val, int x, int y);
+
+void zui_remove_node(zui_node_t *n, zui_node_canvas_t *canvas);
+
 float ZUI_NODES_SCALE();
 float ZUI_NODES_PAN_X();
 float ZUI_NODES_PAN_Y();
-extern char *zui_nodes_exclude_remove[64];
+extern char_ptr_array_t *zui_nodes_exclude_remove;
 extern bool zui_nodes_socket_released;
 extern char **(*zui_nodes_enum_texts)(char *);
 extern void (*zui_nodes_on_custom_button)(int, char *);
@@ -127,3 +130,22 @@ extern void (*zui_nodes_on_link_drag)(int, bool);
 
 void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas);
 uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas);
+
+float ZUI_NODE_X(zui_node_t *node);
+float ZUI_NODE_Y(zui_node_t *node);
+float ZUI_NODE_W(zui_node_t *node);
+float ZUI_NODE_H(zui_node_canvas_t *canvas, zui_node_t *node);
+float ZUI_OUTPUT_Y(int sockets_count, int pos);
+float ZUI_INPUT_Y(zui_node_canvas_t *canvas, zui_node_socket_t **sockets, int sockets_count, int pos);
+float ZUI_OUTPUTS_H(int sockets_count, int length);
+float ZUI_BUTTONS_H(zui_node_t *node);
+float ZUI_LINE_H();
+float ZUI_NODES_PAN_X();
+float ZUI_NODES_PAN_Y();
+
+float zui_p(float f);
+int zui_get_socket_id(zui_node_t **nodes, int nodes_count);
+zui_node_link_t *zui_get_link(zui_node_link_t **links, int links_count, int id);
+int zui_next_link_id(zui_node_link_t **links, int links_count);
+zui_node_t *zui_get_node(zui_node_t **nodes, int nodes_count, int id);
+int zui_next_node_id(zui_node_t **nodes, int nodes_count);

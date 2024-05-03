@@ -137,6 +137,15 @@ void *array_pop(any_array_t *ar) {
 	return ar->buffer[ar->length];
 }
 
+void *array_shift(any_array_t *ar) {
+	void *first = ar->buffer[0];
+	for (int i = 0; i < ar->length - 1; ++i) {
+		ar->buffer[i] = ar->buffer[i + 1];
+	}
+	ar->length--;
+	return first;
+}
+
 void array_splice(any_array_t *ar, int32_t start, int32_t delete_count) {
 	for (int i = start; i < delete_count; ++i) {
 		ar->buffer[i] = ar->buffer[i + delete_count];
@@ -189,6 +198,18 @@ int array_index_of(any_array_t *ar, void *e) {
 	return -1;
 }
 
+int i32_array_index_of(i32_array_t *ar, int e) {
+	return array_index_of((any_array_t *)ar, (void *)e);
+}
+
+void array_reverse(any_array_t *ar) {
+	for (int i = 0; i < ar->length / 2; ++i) {
+		void *tmp = ar->buffer[i];
+		ar->buffer[i] = ar->buffer[ar->length - 1 - i];
+		ar->buffer[ar->length - 1 - i] = tmp;
+	}
+}
+
 buffer_t *buffer_slice(buffer_t *a, int32_t begin, int32_t end) {
 	buffer_t *b = gc_alloc(sizeof(buffer_t));
 	buffer_resize(b, end - begin);
@@ -232,6 +253,10 @@ int32_t buffer_view_get_i32(buffer_view_t *v, int32_t p) {
 
 float buffer_view_get_f32(buffer_view_t *v, int32_t p) {
 	return *(float *)(v->buffer->data + p);
+}
+
+int64_t buffer_view_get_i64(buffer_view_t *v, int32_t p) {
+	return *(int64_t *)(v->buffer->data + p);
 }
 
 void buffer_view_set_u8(buffer_view_t *v, int32_t p, uint8_t n) {

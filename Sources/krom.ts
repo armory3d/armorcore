@@ -5,6 +5,7 @@
 declare type i8 = number;
 declare type i16 = number;
 declare type i32 = number;
+declare type i64 = number;
 declare type u8 = number;
 declare type u16 = number;
 declare type u32 = number;
@@ -81,6 +82,7 @@ function math_log2(x: f32): f32 { return Math.log2(x); }
 function math_atan(x: f32): f32 { return Math.atan(x); }
 function math_acos(x: f32): f32 { return Math.acos(x); }
 function math_exp(x: f32): f32 { return Math.exp(x); }
+function math_fmod(x: f32, y: f32): f32 { return x % y; }
 
 function map_get<K, V>(m: map_t<K, V>, k: any): any { return m.get(k); }
 function map_set<K, V>(m: map_t<K, V>, k: any, v: any) { m.set(k, v); }
@@ -89,11 +91,13 @@ function map_keys(m: map_t<any, any>): any[] { return Array.from(m.keys()); }
 function array_sort(ar: any[], fn: (a: any, b: any)=>i32) { ar.sort(fn); }
 function array_push(ar: any[], e: any) { ar.push(e); }
 function array_pop(ar: any[]): any { return ar.pop(); }
+function array_shift(ar: any[]): any { return ar.shift(); }
 function array_splice(ar: any[], start: i32, delete_count: i32) { ar.splice(start, delete_count); }
 function array_slice(a: any[], begin: i32, end: i32): any[] { return a.slice(begin, end); }
 function array_insert(ar: any[], at: i32, e: any) { ar.splice(at, 0, e); }
 function array_concat(a: any[], b: any[]): any[] { return a.concat(b); }
 function array_index_of(a: any[], search: any): i32 { return a.indexOf(search); }
+function array_reverse(a: any[]) { a.reverse(); }
 function string_index_of(s: string, search: string): i32 { return s.indexOf(search); }
 function string_index_of_pos(s: string, search: string, pos: i32) { return s.indexOf(search, pos); }
 function string_last_index_of(s: string, search: string): i32 { return s.lastIndexOf(search); }
@@ -118,6 +122,7 @@ function buffer_view_get_i16(v: buffer_view_t, p: i32): i16 { return v.getInt16(
 function buffer_view_get_u32(v: buffer_view_t, p: i32): u32 { return v.getUint32(p, true); }
 function buffer_view_get_i32(v: buffer_view_t, p: i32): i32 { return v.getInt32(p, true); }
 function buffer_view_get_f32(v: buffer_view_t, p: i32): f32 { return v.getFloat32(p, true); }
+function buffer_view_get_i64(v: buffer_view_t, p: i32): i32 { return 0; }
 function buffer_view_set_u8(v: buffer_view_t, p: i32, n: u8) { v.setUint8(p, n); }
 function buffer_view_set_i8(v: buffer_view_t, p: i32, n: i8) { v.setInt8(p, n); }
 function buffer_view_set_u16(v: buffer_view_t, p: i32, n: u16) { v.setUint16(p, n, true); }
@@ -128,10 +133,10 @@ function buffer_view_set_f32(v: buffer_view_t, p: i32, n: f32) { v.setFloat32(p,
 function parse_int(s: string): i32 { return parseInt(s); }
 function parse_int_hex(s: string): i32 { return parseInt(s, 16); }
 function parse_float(s: string): i32 { return parseFloat(s); }
-function is_integer(a: any): bool { return Number.isInteger(a); } // armpack
-function is_view(a: any): bool { return buffer_t.isView(a); } // armpack
-function is_array(a: any): bool { return Array.isArray(a); } // armpack
-function any_to_string(a: any): string { return String(a); } // armpack
+// function is_integer(a: any): bool { return Number.isInteger(a); } // armpack
+// function is_view(a: any): bool { return buffer_t.isView(a); } // armpack
+// function is_array(a: any): bool { return Array.isArray(a); } // armpack
+// function any_to_string(a: any): string { return String(a); } // armpack
 function i32_to_string(i: i32): string { return i.toString(); }
 function i32_to_string_hex(i: i32): string { return i.toString(16); }
 // Object.keys() // armpack, tween

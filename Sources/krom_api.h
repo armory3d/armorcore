@@ -57,8 +57,7 @@ bool waitAfterNextDraw;
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
-struct HWND__ *kinc_windows_window_handle(int window_index); // KINC/Windows.h
-bool show_window = false;
+//struct HWND__ *kinc_windows_window_handle(int window_index); // KINC/Windows.h
 // Enable visual styles for ui controls
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
@@ -108,9 +107,6 @@ unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_l
 #ifdef WITH_G2
 #include "g2/g2.h"
 #include "g2/g2_ext.h"
-#endif
-#ifdef WITH_IRON
-#include "iron/io_obj.h"
 #endif
 #ifdef WITH_ZUI
 #include "zui/zui.h"
@@ -195,7 +191,7 @@ void krom_init(string_t *title, i32 width, i32 height, bool vsync, i32 window_mo
 	char vdata[4];
 	DWORD cbdata = 4 * sizeof(char);
 	RegGetValueW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", L"AppsUseLightTheme", RRF_RT_REG_DWORD, NULL, vdata, &cbdata);
-	BOOL use_dark_mode = int(vdata[3] << 24 | vdata[2] << 16 | vdata[1] << 8 | vdata[0]) != 1;
+	BOOL use_dark_mode = (int)(vdata[3] << 24 | vdata[2] << 16 | vdata[1] << 8 | vdata[0]) != 1;
 	DwmSetWindowAttribute(kinc_windows_window_handle(0), DWMWA_USE_IMMERSIVE_DARK_MODE, &use_dark_mode, sizeof(use_dark_mode));
 
 	show_window = true;
@@ -1419,7 +1415,7 @@ void krom_file_save_bytes(string_t *path, buffer_t *bytes, i32 length) {
 	fclose(file);
 }
 
-i32 krom_sys_command(string_t *cmd, string_t_array_t *args) {
+i32 krom_sys_command(string_t *cmd) {
 	#ifdef KINC_WINDOWS
 	int wlen = MultiByteToWideChar(CP_UTF8, 0, cmd, -1, NULL, 0);
 	wchar_t *wstr = malloc(sizeof(wchar_t) * wlen);
@@ -1654,10 +1650,10 @@ bool _window_close_callback(void *data) {
 			return false;
 		}
 	}
-	if (save_and_quit_func_set) {
-		krom_save_and_quit(save);
-		return false;
-	}
+	//if (save_and_quit_func_set) {
+	//	krom_save_and_quit(save);
+	//	return false;
+	//}
 	#endif
 	return true;
 }
@@ -1841,13 +1837,13 @@ void krom_delete_file(char *path) {
 	strcpy(cmd, "del /f \"");
 	strcat(cmd, path);
 	strcat(cmd, "\"");
-	krom_sys_command(cmd, NULL);
+	krom_sys_command(cmd);
 	#else
 	char cmd[1024];
 	strcpy(cmd, "rm \"");
 	strcat(cmd, path);
 	strcat(cmd, "\"");
-	krom_sys_command(cmd, NULL);
+	krom_sys_command(cmd);
 	#endif
 }
 
@@ -2301,9 +2297,8 @@ char *krom_language() {
 	return kinc_language();
 }
 
-#ifdef WITH_IRON
-any krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_pos, bool udim) {
-	obj_part_t *part = io_obj_parse((uint8_t *)file_bytes->data, split_code, start_pos, udim);
+obj_part_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_pos, bool udim) {
+	obj_part_t *part = io_obj_parse(file_bytes->data, split_code, start_pos, udim);
 
 	i16_array_t *posa = malloc(sizeof(i16_array_t));
 	posa->buffer = part->posa;
@@ -2328,30 +2323,30 @@ any krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_pos, bool 
 	inda->length = part->index_count;
 	inda->capacity = part->index_count;
 
-	obj->posa = posa;
-	obj->nora = nora;
-	obj->texa = texa;
-	obj->inda = inda;
-	obj->name = part->name;
-	obj->scale_pos = part->scale_pos;
-	obj->has_next = part->has_next;
-	obj->pos = (int)part->pos;
+	// obj->posa = posa;
+	// obj->nora = nora;
+	// obj->texa = texa;
+	// obj->inda = inda;
+	// obj->name = part->name;
+	// obj->scale_pos = part->scale_pos;
+	// obj->has_next = part->has_next;
+	// obj->pos = (int)part->pos;
 
-	if (udim) {
-		obj->udims_u = part->udims_u;
-		any_array_t *udims = any_array_create(part->udims_u * part->udims_v);
-		for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
-			u32_array_t *data = malloc(sizeof(u32_array_t));
-			data->buffer = part->udims[i];
-			data->length = part->udims_count[i];
-			data->capacity = part->udims_count[i];
-			udims->buffer[i] = data;
-		}
-		obj->udims = udims;
-	}
-	return obj;
+	// if (udim) {
+	// 	obj->udims_u = part->udims_u;
+	// 	any_array_t *udims = any_array_create(part->udims_u * part->udims_v);
+	// 	for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
+	// 		u32_array_t *data = malloc(sizeof(u32_array_t));
+	// 		data->buffer = part->udims[i];
+	// 		data->length = part->udims_count[i];
+	// 		data->capacity = part->udims_count[i];
+	// 		udims->buffer[i] = data;
+	// 	}
+	// 	obj->udims = udims;
+	// }
+	// return obj;
+	return NULL;
 }
-#endif
 
 #ifdef WITH_ZUI
 float krom_js_eval(char *str) {

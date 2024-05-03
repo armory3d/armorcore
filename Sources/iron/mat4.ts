@@ -77,13 +77,13 @@ function mat4_persp(fov_y: f32, aspect: f32, zn: f32, zf: f32): mat4_t {
 	);
 }
 
-function mat4_ortho(left: f32, right: f32, bottom: f32, top: f32, near: f32, far: f32): mat4_t {
+function mat4_ortho(left: f32, right: f32, bottom: f32, top: f32, znear: f32, zfar: f32): mat4_t {
 	let rl: f32 = right - left;
 	let tb: f32 = top - bottom;
-	let fn: f32 = far - near;
+	let fn: f32 = zfar - znear;
 	let tx: f32 = -(right + left) / (rl);
 	let ty: f32 = -(top + bottom) / (tb);
-	let tz: f32 = -(far + near) / (fn);
+	let tz: f32 = -(zfar + znear) / (fn);
 	return mat4_create(
 		2 / rl,	0,		0,		 tx,
 		0,		2 / tb,	0,		 ty,
