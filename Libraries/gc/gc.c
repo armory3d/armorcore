@@ -422,7 +422,7 @@ void _gc_free(void *ptr) {
 void _gc_start(void *bos) {
 	gc->paused = false;
 	gc->bos = bos;
-	gc->allocs = gc_allocation_map_new(1024, 1024, 0.5, 0.2, 0.8);
+	gc->allocs = gc_allocation_map_new(1024 * 8, 1024 * 1024, 0.5, 0.2, 0.8);
 }
 
 void _gc_pause() {

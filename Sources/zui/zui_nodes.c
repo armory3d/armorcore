@@ -310,7 +310,7 @@ bool zui_is_selected(zui_node_t *node) {
 }
 
 static void remove_from_selection(zui_node_t *node) {
-	array_remove(current_nodes->nodes_selected_id, node->id);
+	i32_array_remove(current_nodes->nodes_selected_id, node->id);
 }
 
 static void add_to_selection(zui_node_t *node) {

@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "iron_string.h"
 
 #ifdef WITH_MINITS
 void *gc_alloc(size_t size);
@@ -189,9 +190,22 @@ void array_remove(any_array_t *ar, void *e) {
 	array_splice(ar, array_index_of(ar, e), 1);
 }
 
+void i32_array_remove(i32_array_t *ar, int e) {
+	array_splice((any_array_t *)ar, i32_array_index_of(ar, e), 1);
+}
+
 int array_index_of(any_array_t *ar, void *e) {
 	for (int i = 0; i < ar->length; ++i) {
 		if (ar->buffer[i] == e) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+int char_ptr_array_index_of(char_ptr_array_t *ar, char *e) {
+	for (int i = 0; i < ar->length; ++i) {
+		if (string_equals(ar->buffer[i], e)) {
 			return i;
 		}
 	}

@@ -3,7 +3,7 @@
 
 let zui_current: zui_t = null;
 let zui_children: map_t<string, zui_handle_t> = map_create();
-let zui_tr: (id: string, vars: map_t<string, string>)=>string;
+// let zui_tr: (id: string, vars: map_t<string, string>)=>string;
 let zui_clipboard: string = "";
 
 function zui_SCALE(ui: zui_t): f32 {
@@ -114,6 +114,15 @@ function _zui_set_scale(ui: zui_t, factor: f32) {
 	zui_set_current(ui);
 	zui_set_scale(factor);
 	zui_set_current(current);
+}
+
+function _zui_end_element(element_size: f32 = -1.0) {
+	if (element_size < 0) {
+		zui_end_element();
+	}
+	else {
+		zui_end_element_of_size(element_size);
+	}
 }
 
 function zui_handle(s: string): zui_handle_t {

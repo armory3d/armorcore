@@ -13,6 +13,12 @@
 #include <kinc/log.h>
 #include "../g2/g2_ext.h"
 
+#ifdef WITH_MINITS
+void *gc_alloc(size_t size);
+#else
+static void *gc_alloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
+#endif
+
 static zui_t *current = NULL;
 static bool zui_key_repeat = true; // Emulate key repeat for non-character keys
 static bool zui_dynamic_glyph_load = true; // Allow text input fields to push new glyphs into the font atlas
@@ -110,7 +116,8 @@ void zui_set_current(zui_t *_current) {
 }
 
 zui_handle_t *zui_handle_create() {
-	zui_handle_t *h = (zui_handle_t *)malloc(sizeof(zui_handle_t));
+	// zui_handle_t *h = (zui_handle_t *)malloc(sizeof(zui_handle_t));
+	zui_handle_t *h = (zui_handle_t *)gc_alloc(sizeof(zui_handle_t));
 	memset(h, 0, sizeof(zui_handle_t));
 	h->redraws = 2;
 	h->color = 0xffffffff;
@@ -123,6 +130,7 @@ zui_handle_t *zui_nest(zui_handle_t *handle, int pos) {
 		zui_handle_t *h = zui_handle_create();
 		if (handle->children == NULL) {
 			handle->children = any_array_create(0);
+			// handle->children = calloc(1, sizeof(any_array_t));
 		}
 		any_array_push(handle->children, h);
 		if (pos == handle->children->length - 1) {

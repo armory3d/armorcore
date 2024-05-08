@@ -4,8 +4,14 @@ type vec4_t = {
 	y?: f32;
 	z?: f32;
 	w?: f32;
-	type?: string;
+	// type?: string;
 };
+
+////
+function vec4_new(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): vec4_t {
+	return vec4_create(x, y, z, w);
+}
+////
 
 function vec4_create(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): vec4_t {
 	let self: vec4_t = {};
@@ -13,7 +19,7 @@ function vec4_create(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): ve
 	self.y = y;
 	self.z = z;
 	self.w = w;
-	self.type = "vec4_t";
+	// self.type = "vec4_t";
 	return self;
 }
 

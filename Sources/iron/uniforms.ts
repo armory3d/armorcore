@@ -37,7 +37,13 @@ function uniforms_set_context_consts(context: shader_context_t, bind_params: str
 				attach_depth = true;
 				rt_id = substring(rt_id, 1, rt_id.length);
 			}
-			let rt: render_target_t = attach_depth ? map_get(_render_path_depth_to_render_target, rt_id) : map_get(render_path_render_targets, rt_id);
+			let rt: render_target_t;
+			if (attach_depth) {
+				rt = map_get(_render_path_depth_to_render_target, rt_id);
+			}
+			else {
+				rt = map_get(render_path_render_targets, rt_id);
+			}
 			uniforms_bind_render_target(rt, context, sampler_id, attach_depth);
 		}
 	}

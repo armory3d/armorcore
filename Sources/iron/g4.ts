@@ -298,7 +298,11 @@ function g4_set_float4(loc: kinc_const_loc_t, value1: f32, value2: f32, value3: 
 }
 
 function g4_set_floats(loc: kinc_const_loc_t, values: f32_array_t) {
-	krom_g4_set_floats(loc, values.buffer);
+	let b: buffer_t = {
+		data: values.buffer,
+		length: values.length * 4
+	};
+	krom_g4_set_floats(loc, b);
 }
 
 function g4_set_vec2(loc: kinc_const_loc_t, v: vec2_t) {

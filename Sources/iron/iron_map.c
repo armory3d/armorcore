@@ -23,6 +23,7 @@ void any_map_set(any_map_t *m, char *k, void *v) {
 	if (m->gc == NULL) {
 		 m->gc = gc_alloc(sizeof(any_map_t));
 	}
+	any_array_push(m->gc, k); // gc reference
 	any_array_push(m->gc, v); // gc reference
 }
 
@@ -51,7 +52,9 @@ any_array_t *map_keys(any_map_t *m) {
 }
 
 i32_map_t *i32_map_create() {
-	return gc_alloc(sizeof(i32_map_t));
+	i32_map_t *r = gc_alloc(sizeof(i32_map_t));
+	hmdefault(r->hash, -1);
+	return r;
 }
 
 any_map_t *any_map_create() {
@@ -59,6 +62,10 @@ any_map_t *any_map_create() {
 }
 
 // imap
+
+void i32_imap_set(i32_imap_t *m, int k, int v) {
+	hmput(m->hash, k, v);
+}
 
 void any_imap_set(any_imap_t *m, int k, void *v) {
 	hmput(m->hash, k, v);
@@ -68,12 +75,20 @@ void any_imap_set(any_imap_t *m, int k, void *v) {
 	any_array_push(m->gc, v); // gc reference
 }
 
+int32_t i32_imap_get(i32_imap_t *m, int k) {
+	return hmget(m->hash, k);
+}
+
 void *any_imap_get(any_imap_t *m, int k) {
 	return hmget(m->hash, k);
 }
 
 void imap_delete(any_imap_t *m, int k) {
 	hmdel(m->hash, k);
+}
+
+i32_imap_t *i32_imap_create() {
+	return gc_alloc(sizeof(i32_imap_t));
 }
 
 any_imap_t *any_imap_create() {

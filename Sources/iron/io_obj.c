@@ -32,7 +32,9 @@ static int read_int() {
 	int bi = 0;
 	while (true) { // Read into buffer
 		char c = bytes[part->pos];
-		if (c == '/' || c == '\n' || c == '\r' || c == ' ') break;
+		if (c == '/' || c == '\n' || c == '\r' || c == ' ') {
+			break;
+		}
 		part->pos++;
 		buf[bi++] = c;
 	}
@@ -44,7 +46,9 @@ static int read_int() {
 		res += (buf[len - i] - 48) * dec;
 		dec *= 10;
 	}
-	if (off > 0) res *= -1;
+	if (off > 0) {
+		res *= -1;
+	}
 	return res;
 }
 
@@ -55,10 +59,14 @@ static void read_face_fast() {
 		ua[ui++] = read_int() - 1;
 		part->pos++; // '/'
 		na[ni++] = read_int() - 1;
-		if (bytes[part->pos] == '\n' || bytes[part->pos] == '\r') break;
+		if (bytes[part->pos] == '\n' || bytes[part->pos] == '\r') {
+			break;
+		}
 		part->pos++; // ' '
 		// Some exporters put space at the end of "f" line
-		if (vi >= 3 && (bytes[part->pos] == '\n' || bytes[part->pos] == '\r')) break;
+		if (vi >= 3 && (bytes[part->pos] == '\n' || bytes[part->pos] == '\r')) {
+			break;
+		}
 	}
 }
 
@@ -96,14 +104,18 @@ static float read_float() {
 	int bi = 0;
 	while (true) { // Read into buffer
 		char c = bytes[part->pos];
-		if (c == ' ' || c == '\n' || c == '\r') break;
+		if (c == ' ' || c == '\n' || c == '\r') {
+			break;
+		}
 		if (c == 'E' || c == 'e') {
 			part->pos++;
 			int first = buf[0] == '-' ? -(buf[1] - 48) : buf[0] - 48;
 			int exp = read_int();
 			int dec = 1;
 			int loop = exp > 0 ? exp : -exp;
-			for (int i = 0; i < loop; ++i) dec *= 10;
+			for (int i = 0; i < loop; ++i) {
+				dec *= 10;
+			}
 			return exp > 0 ? (float)first * dec : (float)first / dec;
 		}
 		part->pos++;
@@ -123,8 +135,12 @@ static float read_float() {
 		res += (c - 48) * dec;
 		dec *= 10;
 	}
-	if (off > 0) res /= -dot;
-	else res /= dot;
+	if (off > 0) {
+		res /= -dot;
+	}
+	else {
+		res /= dot;
+	}
 	return res;
 }
 
@@ -132,10 +148,14 @@ static char *read_string() {
 	size_t begin = part->pos;
 	while (true) {
 		char c = bytes[part->pos];
-		if (c == '\n' || c == '\r' || c == ' ') break;
+		if (c == '\n' || c == '\r' || c == ' ') {
+			break;
+		}
 		part->pos++;
 	}
-	for (int i = 0; i < part->pos - begin; ++i) str[i] = bytes[begin + i];
+	for (int i = 0; i < part->pos - begin; ++i) {
+		str[i] = bytes[begin + i];
+	}
 	str[part->pos - begin] = '\0';
 	return str;
 }
@@ -143,7 +163,9 @@ static char *read_string() {
 static void next_line() {
 	while (true) {
 		char c = bytes[part->pos++];
-		if (c == '\n' || part->pos >= bytes_length) break; // \n, \r\n
+		if (c == '\n' || part->pos >= bytes_length) {
+			break; // \n, \r\n
+		}
 	}
 }
 
@@ -162,9 +184,15 @@ static int get_tile(int i1, int i2, int i3, i32_array_t *uv_indices, int tiles_u
 static bool pnpoly(float v0x, float v0y, float v1x, float v1y, float v2x, float v2y, float px, float py) {
 	// https://wrf.ecse.rpi.edu//Research/Short_Notes/pnpoly.html
 	bool c = false;
-	if (((v0y > py) != (v2y > py)) && (px < (v2x - v0x) * (py - v0y) / (v2y - v0y) + v0x)) c = !c;
-	if (((v1y > py) != (v0y > py)) && (px < (v0x - v1x) * (py - v1y) / (v0y - v1y) + v1x)) c = !c;
-	if (((v2y > py) != (v1y > py)) && (px < (v1x - v2x) * (py - v2y) / (v1y - v2y) + v2x)) c = !c;
+	if (((v0y > py) != (v2y > py)) && (px < (v2x - v0x) * (py - v0y) / (v2y - v0y) + v0x)) {
+		c = !c;
+	}
+	if (((v1y > py) != (v0y > py)) && (px < (v0x - v1x) * (py - v1y) / (v0y - v1y) + v1x)) {
+		c = !c;
+	}
+	if (((v2y > py) != (v1y > py)) && (px < (v1x - v2x) * (py - v2y) / (v1y - v2y) + v2x)) {
+		c = !c;
+	}
 	return c;
 }
 
@@ -200,7 +228,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	bool reading_object = false;
 	bool full_attrib = false;
 
-	if (start_pos == 0) vind_off = tind_off = nind_off = 0;
+	if (start_pos == 0) {
+		vind_off = tind_off = nind_off = 0;
+	}
 
 	if (split_code == 'u' && start_pos > 0) {
 		pos_temp = *pos_first;
@@ -214,7 +244,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	}
 
 	while (true) {
-		if (part->pos >= bytes_length) break;
+		if (part->pos >= bytes_length) {
+			break;
+		}
 
 		char c0 = bytes[part->pos++];
 		if (reading_object && reading_faces && (c0 == 'v' || c0 == split_code)) {
@@ -238,7 +270,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 				f32_array_push(&uv_temp, read_float());
 				part->pos++; // Space
 				f32_array_push(&uv_temp, read_float());
-				if (nor_temp.length > 0) full_attrib = true;
+				if (nor_temp.length > 0) {
+					full_attrib = true;
+				}
 			}
 			else if (c1 == 'n') {
 				part->pos++; // Space
@@ -247,12 +281,16 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 				f32_array_push(&nor_temp, read_float());
 				part->pos++; // Space
 				f32_array_push(&nor_temp, read_float());
-				if (uv_temp.length > 0) full_attrib = true;
+				if (uv_temp.length > 0) {
+					full_attrib = true;
+				}
 			}
 		}
 		else if (c0 == 'f') {
 			part->pos++; // Space
-			if (bytes[part->pos] == ' ') part->pos++; // Some exporters put additional space directly after "f"
+			if (bytes[part->pos] == ' ') {
+				part->pos++; // Some exporters put additional space directly after "f"
+			}
 			reading_faces = true;
 			vi = ui = ni = 0;
 			full_attrib ? read_face_fast() : read_face();
@@ -337,7 +375,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 					float e1x = v2x - v1x;
 					float e1y = v2y - v1y;
 					float cross = e0x * e1y - e0y * e1x;
-					if (cross <= 0) continue;
+					if (cross <= 0) {
+						continue;
+					}
 
 					bool overlap = false; // Other vertex found inside this triangle
 					for (int j = 0; j < vi - 3; ++j) {
@@ -349,7 +389,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 							break;
 						}
 					}
-					if (overlap) continue;
+					if (overlap) {
+						continue;
+					}
 
 					i32_array_push(&pos_indices, va[i ]); // Found ear
 					i32_array_push(&pos_indices, va[i1]);
@@ -390,9 +432,13 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 			}
 		}
 		else if (c0 == split_code) {
-			if (split_code == 'u') part->pos += 5; // "u"semtl
+			if (split_code == 'u') {
+				part->pos += 5; // "u"semtl
+			}
 			part->pos++; // Space
-			if (!udim) reading_object = true;
+			if (!udim) {
+				reading_object = true;
+			}
 			part->name = read_string();
 		}
 		next_line();
@@ -400,9 +446,15 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 
 	if (start_pos > 0) {
 		if (split_code != 'u') {
-			for (int i = 0; i < pos_indices.length; ++i) pos_indices.buffer[i] -= vind_off;
-			for (int i = 0; i < uv_indices.length; ++i) uv_indices.buffer[i] -= tind_off;
-			for (int i = 0; i < nor_indices.length; ++i) nor_indices.buffer[i] -= nind_off;
+			for (int i = 0; i < pos_indices.length; ++i) {
+				pos_indices.buffer[i] -= vind_off;
+			}
+			for (int i = 0; i < uv_indices.length; ++i) {
+				uv_indices.buffer[i] -= tind_off;
+			}
+			for (int i = 0; i < nor_indices.length; ++i) {
+				nor_indices.buffer[i] -= nind_off;
+			}
 		}
 	}
 	else {
@@ -420,51 +472,65 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	part->scale_pos = 0.0;
 	for (int i = 0; i < pos_temp.length; ++i) {
 		float f = (float)fabs(pos_temp.buffer[i]);
-		if (part->scale_pos < f) part->scale_pos = f;
+		if (part->scale_pos < f) {
+			part->scale_pos = f;
+		}
 	}
 	float inv = 32767 * (1 / part->scale_pos);
 
-	part->posa = (int16_t *)malloc(pos_indices.length * 4 * sizeof(int16_t));
-	part->inda = (uint32_t *)malloc(pos_indices.length * sizeof(uint32_t));
+	part->posa = malloc(sizeof(i16_array_t));
+	i16_array_resize(part->posa, pos_indices.length * 4);
+	part->posa->length = pos_indices.length * 4;
+
+	part->inda = malloc(sizeof(u32_array_t));
+	u32_array_resize(part->inda, pos_indices.length);
+	part->inda->length = pos_indices.length;
+
 	part->vertex_count = pos_indices.length;
 	part->index_count = pos_indices.length;
 	int inda_length = pos_indices.length;
 	for (int i = 0; i < pos_indices.length; ++i) {
-		part->posa[i * 4    ] = (int)( pos_temp.buffer[pos_indices.buffer[i] * 3    ] * inv);
-		part->posa[i * 4 + 1] = (int)(-pos_temp.buffer[pos_indices.buffer[i] * 3 + 2] * inv);
-		part->posa[i * 4 + 2] = (int)( pos_temp.buffer[pos_indices.buffer[i] * 3 + 1] * inv);
-		part->inda[i] = i;
+		part->posa->buffer[i * 4    ] = (int)( pos_temp.buffer[pos_indices.buffer[i] * 3    ] * inv);
+		part->posa->buffer[i * 4 + 1] = (int)(-pos_temp.buffer[pos_indices.buffer[i] * 3 + 2] * inv);
+		part->posa->buffer[i * 4 + 2] = (int)( pos_temp.buffer[pos_indices.buffer[i] * 3 + 1] * inv);
+		part->inda->buffer[i] = i;
 	}
 
 	if (nor_indices.length > 0) {
-		part->nora = (int16_t *)malloc(nor_indices.length * 2 * sizeof(int16_t));
+		part->nora = malloc(sizeof(i16_array_t));
+		i16_array_resize(part->nora, nor_indices.length * 2);
+		part->nora->length = nor_indices.length * 2;
+
 		for (int i = 0; i < pos_indices.length; ++i) {
-			part->nora[i * 2    ] = (int)( nor_temp.buffer[nor_indices.buffer[i] * 3    ] * 32767);
-			part->nora[i * 2 + 1] = (int)(-nor_temp.buffer[nor_indices.buffer[i] * 3 + 2] * 32767);
-			part->posa[i * 4 + 3] = (int)( nor_temp.buffer[nor_indices.buffer[i] * 3 + 1] * 32767);
+			part->nora->buffer[i * 2    ] = (int)( nor_temp.buffer[nor_indices.buffer[i] * 3    ] * 32767);
+			part->nora->buffer[i * 2 + 1] = (int)(-nor_temp.buffer[nor_indices.buffer[i] * 3 + 2] * 32767);
+			part->posa->buffer[i * 4 + 3] = (int)( nor_temp.buffer[nor_indices.buffer[i] * 3 + 1] * 32767);
 		}
 	}
 	else {
 		// Calc normals
-		part->nora = (int16_t *)malloc(inda_length * 2 * sizeof(int16_t));
+		part->nora = malloc(sizeof(i16_array_t));
+		i16_array_resize(part->nora, inda_length * 2);
+		part->nora->length = inda_length * 2;
+
 		for (int i = 0; i < (int)(inda_length / 3); ++i) {
-			int i1 = part->inda[i * 3    ];
-			int i2 = part->inda[i * 3 + 1];
-			int i3 = part->inda[i * 3 + 2];
+			int i1 = part->inda->buffer[i * 3    ];
+			int i2 = part->inda->buffer[i * 3 + 1];
+			int i3 = part->inda->buffer[i * 3 + 2];
 			kinc_vector4_t n = calc_normal(
-				vec4_new(part->posa[i1 * 4], part->posa[i1 * 4 + 1], part->posa[i1 * 4 + 2], 1.0),
-				vec4_new(part->posa[i2 * 4], part->posa[i2 * 4 + 1], part->posa[i2 * 4 + 2], 1.0),
-				vec4_new(part->posa[i3 * 4], part->posa[i3 * 4 + 1], part->posa[i3 * 4 + 2], 1.0)
+				vec4_new(part->posa->buffer[i1 * 4], part->posa->buffer[i1 * 4 + 1], part->posa->buffer[i1 * 4 + 2], 1.0),
+				vec4_new(part->posa->buffer[i2 * 4], part->posa->buffer[i2 * 4 + 1], part->posa->buffer[i2 * 4 + 2], 1.0),
+				vec4_new(part->posa->buffer[i3 * 4], part->posa->buffer[i3 * 4 + 1], part->posa->buffer[i3 * 4 + 2], 1.0)
 			);
-			part->nora[i1 * 2    ] = (int)(n.x * 32767);
-			part->nora[i1 * 2 + 1] = (int)(n.y * 32767);
-			part->posa[i1 * 4 + 3] = (int)(n.z * 32767);
-			part->nora[i2 * 2    ] = (int)(n.x * 32767);
-			part->nora[i2 * 2 + 1] = (int)(n.y * 32767);
-			part->posa[i2 * 4 + 3] = (int)(n.z * 32767);
-			part->nora[i3 * 2    ] = (int)(n.x * 32767);
-			part->nora[i3 * 2 + 1] = (int)(n.y * 32767);
-			part->posa[i3 * 4 + 3] = (int)(n.z * 32767);
+			part->nora->buffer[i1 * 2    ] = (int)(n.x * 32767);
+			part->nora->buffer[i1 * 2 + 1] = (int)(n.y * 32767);
+			part->posa->buffer[i1 * 4 + 3] = (int)(n.z * 32767);
+			part->nora->buffer[i2 * 2    ] = (int)(n.x * 32767);
+			part->nora->buffer[i2 * 2 + 1] = (int)(n.y * 32767);
+			part->posa->buffer[i2 * 4 + 3] = (int)(n.z * 32767);
+			part->nora->buffer[i3 * 2    ] = (int)(n.x * 32767);
+			part->nora->buffer[i3 * 2 + 1] = (int)(n.y * 32767);
+			part->posa->buffer[i3 * 4 + 3] = (int)(n.z * 32767);
 		}
 	}
 
@@ -482,7 +548,7 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 			uint32_t *num = (uint32_t *)malloc(tiles_u * tiles_v * sizeof(uint32_t));
 			memset(num, 0, tiles_u * tiles_v * sizeof(uint32_t));
 			for (int i = 0; i < (int)(inda_length / 3); ++i) {
-				int tile = get_tile(part->inda[i * 3], part->inda[i * 3 + 1], part->inda[i * 3 + 2], &uv_indices, tiles_u);
+				int tile = get_tile(part->inda->buffer[i * 3], part->inda->buffer[i * 3 + 1], part->inda->buffer[i * 3 + 2], &uv_indices, tiles_u);
 				num[tile] += 3;
 			}
 
@@ -498,9 +564,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 			}
 
 			for (int i = 0; i < (int)(inda_length / 3); ++i) {
-				int i1 = part->inda[i * 3    ];
-				int i2 = part->inda[i * 3 + 1];
-				int i3 = part->inda[i * 3 + 2];
+				int i1 = part->inda->buffer[i * 3    ];
+				int i2 = part->inda->buffer[i * 3 + 1];
+				int i3 = part->inda->buffer[i * 3 + 2];
 				int tile = get_tile(i1, i2, i3, &uv_indices, tiles_u);
 				part->udims[tile][num[tile]++] = i1;
 				part->udims[tile][num[tile]++] = i2;
@@ -510,9 +576,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 			// Normalize uvs to 0-1 range
 			int16_t *uvtiles = (int16_t *)malloc(uv_temp.length * sizeof(int16_t));
 			for (int i = 0; i < (int)(inda_length / 3); ++i) { // TODO: merge loops
-				int i1 = part->inda[i * 3    ];
-				int i2 = part->inda[i * 3 + 1];
-				int i3 = part->inda[i * 3 + 2];
+				int i1 = part->inda->buffer[i * 3    ];
+				int i2 = part->inda->buffer[i * 3 + 1];
+				int i3 = part->inda->buffer[i * 3 + 2];
 				int tile = get_tile(i1, i2, i3, &uv_indices, tiles_u);
 				int tile_u = tile % tiles_u;
 				int tile_v = (int)(tile / tiles_u);
@@ -523,18 +589,27 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 				uvtiles[uv_indices.buffer[i3] * 2    ] = tile_u;
 				uvtiles[uv_indices.buffer[i3] * 2 + 1] = tile_v;
 			}
-			for (int i = 0; i < uv_temp.length; ++i) uv_temp.buffer[i] -= uvtiles[i];
+			for (int i = 0; i < uv_temp.length; ++i) {
+				uv_temp.buffer[i] -= uvtiles[i];
+			}
 			free(uvtiles);
 		}
 
-		part->texa = (int16_t *)malloc(uv_indices.length * 2 * sizeof(int16_t));
+		part->texa = malloc(sizeof(i16_array_t));
+		i16_array_resize(part->texa, uv_indices.length * 2);
+		part->texa->length = uv_indices.length * 2;
+
 		for (int i = 0; i < pos_indices.length; ++i) {
 			float uvx = uv_temp.buffer[uv_indices.buffer[i] * 2];
-			if (uvx > 1.0) uvx = uvx - (int)(uvx);
+			if (uvx > 1.0) {
+				uvx = uvx - (int)(uvx);
+			}
 			float uvy = uv_temp.buffer[uv_indices.buffer[i] * 2 + 1];
-			if (uvy > 1.0) uvy = uvy - (int)(uvy);
-			part->texa[i * 2    ] = (int)(       uvx  * 32767);
-			part->texa[i * 2 + 1] = (int)((1.0 - uvy) * 32767);
+			if (uvy > 1.0) {
+				uvy = uvy - (int)(uvy);
+			}
+			part->texa->buffer[i * 2    ] = (int)(       uvx  * 32767);
+			part->texa->buffer[i * 2 + 1] = (int)((1.0 - uvy) * 32767);
 		}
 	}
 	bytes = NULL;

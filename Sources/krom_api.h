@@ -2299,38 +2299,7 @@ char *krom_language() {
 
 obj_part_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_pos, bool udim) {
 	obj_part_t *part = io_obj_parse(file_bytes->data, split_code, start_pos, udim);
-
-	i16_array_t *posa = malloc(sizeof(i16_array_t));
-	posa->buffer = part->posa;
-	posa->length = part->vertex_count * 4;
-	posa->capacity = part->vertex_count * 4;
-
-	i16_array_t *nora = malloc(sizeof(i16_array_t));
-	nora->buffer = part->nora;
-	nora->length = part->vertex_count * 2;
-	nora->capacity = part->vertex_count * 2;
-
-	i16_array_t *texa = NULL;
-	if (part->texa != NULL) {
-		texa = malloc(sizeof(i16_array_t));
-		texa->buffer = part->texa;
-		texa->length = part->vertex_count * 2;
-		texa->capacity = part->vertex_count * 2;
-	}
-
-	u32_array_t *inda = malloc(sizeof(u32_array_t));
-	inda->buffer = part->inda;
-	inda->length = part->index_count;
-	inda->capacity = part->index_count;
-
-	// obj->posa = posa;
-	// obj->nora = nora;
-	// obj->texa = texa;
-	// obj->inda = inda;
-	// obj->name = part->name;
-	// obj->scale_pos = part->scale_pos;
-	// obj->has_next = part->has_next;
-	// obj->pos = (int)part->pos;
+	return part;
 
 	// if (udim) {
 	// 	obj->udims_u = part->udims_u;
@@ -2344,8 +2313,6 @@ obj_part_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_po
 	// 	}
 	// 	obj->udims = udims;
 	// }
-	// return obj;
-	return NULL;
 }
 
 #ifdef WITH_ZUI

@@ -374,7 +374,13 @@ function read_type() { // Cursor at ":"
 			type = "f32_" + type;
 		}
 		else if (basic_types.indexOf(mv) > -1) {
-			type = "i32_" + type;
+			let mk = get_token(2);
+			if (mk == "i32") {
+				type = "i32_i" + type;
+			}
+			else {
+				type = "i32_" + type;
+			}
 		}
 		else {
 			let mk = get_token(2);
@@ -385,7 +391,7 @@ function read_type() { // Cursor at ":"
 				type = "any_" + type;
 			}
 		}
-		pos += 5; // Skip <a, b>
+		skip_until(">"); // Skip <a, b>
 	}
 
 	return type;
@@ -410,7 +416,7 @@ function struct_access(s) {
 	if (is_numeric(s.charCodeAt(dot + 1))) {
 		return s;
 	}
-	if (s.charAt(0) == "\"") {
+	if (s.indexOf("\"") > -1) {
 		return s;
 	}
 	if (s.startsWith("GC_ALLOC_INIT")) {
@@ -438,9 +444,24 @@ function struct_alloc(token, type = null) {
 
 		token = "GC_ALLOC_INIT(" + type + ", {";
 		pos++; // {
+		let ternary = 0;
 		while (get_token() != "}") {
 			let t = get_token_c();
 			t = string_ops(t);
+			if (get_token(1) == ":" && !ternary) {
+				t = "." + t; // a: b -> .a = b
+			}
+			if (get_token() == ":") {
+				if (ternary > 0) {
+					ternary--;
+				}
+				else {
+					t = "=";
+				}
+			}
+			if (get_token() == "?") {
+				ternary++;
+			}
 			if (get_token() == "[" && get_token(-1) == ":") {
 				let member = get_token(-2);
 				let types = struct_types.get(type + " *");
@@ -509,6 +530,7 @@ function array_contents(type) {
 			}
 		}
 		token = struct_access(token);
+		token = string_ops(token);
 		content += token;
 	}
 	return contents;
@@ -881,6 +903,9 @@ function map_ops(token) {
 		if (t == "i32_map_t *") {
 			token = "i32_map_create";
 		}
+		else if (t == "i32_imap_t *") {
+			token = "i32_imap_create";
+		}
 		else if (t == "any_imap_t *") {
 			token = "any_imap_create";
 		}
@@ -894,6 +919,9 @@ function map_ops(token) {
 		if (t == "i32_map_t *") {
 			token = "i32_map_set";
 		}
+		else if (t == "i32_imap_t *") {
+			token = "i32_imap_set";
+		}
 		else if (t == "any_imap_t *") {
 			token = "any_imap_set";
 		}
@@ -906,6 +934,9 @@ function map_ops(token) {
 		let t = value_type(get_token(2));
 		if (t == "i32_map_t *") {
 			token = "i32_map_get";
+		}
+		else if (t == "i32_imap_t *") {
+			token = "i32_imap_get";
 		}
 		else if (t == "any_imap_t *") {
 			token = "any_imap_get";
@@ -1265,6 +1296,9 @@ function write_globals() {
 						if (t == "i32_map_t *") {
 							token = "i32_map_create";
 						}
+						else if (t == "i32_imap_t *") {
+							token = "i32_imap_create";
+						}
 						else if (t == "any_imap_t *") {
 							token = "any_imap_create";
 						}
@@ -1300,7 +1334,7 @@ function write_kickstart() {
 		let name = val.split("=")[0];
 		let global_alloc = global_ptrs.indexOf(name) > -1 && !val.endsWith("=null") && !val.endsWith("\"");
 		if (global_alloc) {
-			write("gc_free(" + name + ");");  // Make sure there are no other users?
+			// write("gc_free(" + name + ");");  // Make sure there are no other users
 		}
 		write(val + ";");
 		if (global_alloc) {
@@ -1412,7 +1446,7 @@ function write_function() {
 		if (get_token(1) == "=" && token != ":" && get_token(2) != "null") {
 			if (global_ptrs.indexOf(token) > -1) {
 				mark_global = token;
-				write("gc_free(" + mark_global + ");"); // Make sure there are no other users?
+				// write("gc_free(" + mark_global + ");"); // Make sure there are no other users
 			}
 		}
 		if (token == ";" && mark_global != null) {
@@ -1441,7 +1475,7 @@ function write_function() {
 			token = type + "_array_push";
 		}
 
-		// array_index_of -> i32_array_index_of
+		// array_index_of -> i32_array_index_of / char_ptr_array_index_of
 		if (token == "array_index_of") {
 			let value = get_token(2);
 			value = struct_access(value);
@@ -1451,6 +1485,9 @@ function write_function() {
 			}
 			if (type == "i32_array_t *") {
 				token = "i32_array_index_of";
+			}
+			else if (type == "string_t_array_t *") {
+				token = "char_ptr_array_index_of"
 			}
 		}
 

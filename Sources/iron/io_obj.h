@@ -5,10 +5,10 @@
 #include <stddef.h>
 
 typedef struct obj_part {
-	int16_t *posa;
-	int16_t *nora;
-	int16_t *texa;
-	uint32_t *inda;
+	struct i16_array *posa;
+	struct i16_array *nora;
+	struct i16_array *texa;
+	struct u32_array *inda;
 	int vertex_count;
 	int index_count;
 	float scale_pos;

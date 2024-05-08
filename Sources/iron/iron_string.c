@@ -62,7 +62,8 @@ int32_t string_index_of(char *s, char *search) {
 	return string_index_of_pos(s, search, 0);
 }
 
-int32_t string_last_index_of(char *s, char *search) {
+int32_t string_last_index_of(char *str, char *search) {
+	char *s = str;
 	char *found = NULL;
     while (1) {
         char *p = strstr(s, search);
@@ -73,7 +74,7 @@ int32_t string_last_index_of(char *s, char *search) {
         s = p + 1;
     }
 	if (found != NULL) {
-	    return found - s;
+	    return found - str;
 	}
     return -1;
 }
