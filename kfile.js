@@ -22,8 +22,8 @@ globalThis.flags = {
 };
 
 try {
-	if (process.env.ARM_SNAPSHOT) {
-		process.argv.push("--snapshot");
+	if (process.env.ARM_EMBED) {
+		process.argv.push("--embed");
 	}
 
 	if (platform === Platform.Android || platform === Platform.Wasm) {
