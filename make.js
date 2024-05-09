@@ -885,9 +885,6 @@ function writeTSProject(projectdir, projectFiles, options) {
 			let files = fs.readdirSync(options.sources[i]);
 			for (let file of files) {
 				if (file.endsWith(".ts")) {
-					if (globalThis.flags.with_minits && file.endsWith('_v8.ts')) {
-						continue;
-					}
 					// Prevent duplicates, keep the newly added file
 					for (let included of tsdata.include){
 						if (path.basename(included) == file) {
@@ -979,12 +976,6 @@ let options = [
 		full: 'shaderversion',
 		description: 'Set target shader version manually.',
 		value: true,
-		default: null
-	},
-	{
-		full: 'snapshot',
-		description: 'Generate v8 snapshot file.',
-		value: false,
 		default: null
 	},
 ];

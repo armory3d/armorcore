@@ -13,7 +13,6 @@ cd armorcore
 
 **Windows (x64)**
 ```bash
-# Unpack `v8\libraries\win32\release\v8_monolith.7z` using 7-Zip - Extract Here (exceeds 100MB)
 Kinc/make -g direct3d12
 # Open generated Visual Studio project at `build\Armory.sln`
 # Build for x64 & release

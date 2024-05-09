@@ -54,7 +54,6 @@ const system = platform === Platform.Windows ? "win32" :
 			   								   "unknown";
 
 const build = flags.release ? 'release' : 'debug';
-const libdir = __dirname + '/v8/libraries/' + system + '/' + build + '/';
 
 let c_project = new Project(flags.name);
 await c_project.addProject('Kinc');
@@ -102,13 +101,6 @@ if (flags.with_minits) {
 	c_project.addIncludeDir('Libraries/jsmn'); // iron_json.c -> jsmn.h
 	////
 }
-else if (platform === Platform.Wasm) {
-	c_project.addFile('Sources/main_wasm.c');
-	c_project.addFile('Shaders/**');
-}
-else {
-	c_project.addFile('Sources/main_v8.cpp');
-}
 
 if (flags.with_g2) {
 	c_project.addDefine('WITH_G2');
@@ -126,8 +118,6 @@ if (flags.with_zui) {
 	c_project.addDefine('WITH_ZUI');
 	c_project.addFile('Sources/zui/*.c');
 }
-
-c_project.addIncludeDir('v8/include');
 
 if (platform === Platform.Android) {
 	c_project.addFile('Sources/android/android_file_dialog.c');
@@ -148,39 +138,24 @@ else if (platform === Platform.iOS) {
 if (platform === Platform.Windows) {
 	c_project.addLib('Dbghelp'); // Stack walk
 	c_project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
-	c_project.addLib('winmm'); // timeGetTime for V8
-	c_project.addLib(libdir + 'v8_monolith');
 	if (flags.with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
 		c_project.addDefine('WITH_D3DCOMPILER');
 		c_project.addLib("d3d11");
 		c_project.addLib("d3dcompiler");
 	}
-	if (!flags.release) {
-		c_project.addDefine('_HAS_ITERATOR_DEBUGGING=0');
-		c_project.addDefine('_ITERATOR_DEBUG_LEVEL=0');
-	}
 }
 else if (platform === Platform.Linux) {
-	if (!flags.with_minits) {
-		c_project.addLib('v8_monolith -L' + libdir);
-	}
 	c_project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
 }
 else if (platform === Platform.Android) {
-	// c_project.addLib(libdir + 'libv8_monolith.a');
-	// Some manual tweaking is required for now:
-	// In app/CMakeLists.txt:
-	//   add_library(v8_monolith STATIC IMPORTED)
-	//   set_target_properties(v8_monolith PROPERTIES IMPORTED_LOCATION ../../../../../../../../armorcore/v8/libraries/android/release/libv8_monolith.a)
-	//   target_link_libraries(v8_monolith)
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
 }
 else if (platform === Platform.iOS) {
-	c_project.addLib('v8/libraries/ios/release/libv8_monolith.a');
+
 }
 else if (platform === Platform.OSX) {
-	c_project.addLib('v8/libraries/macos/release/libv8_monolith.a');
+
 }
 
 if (flags.with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
