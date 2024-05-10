@@ -710,9 +710,7 @@ class ArmorCoreExporter {
 		else if (process.platform === 'darwin') {
 			defines.push('krom_darwin');
 		}
-		if (globalThis.flags.with_minits) {
-			defines.push('arm_minits');
-		}
+		defines.push('arm_minits');
 		return {
 			from: this.options.from.toString(),
 			to: path.join(this.sysdir(), 'krom.js.temp'),
@@ -894,42 +892,19 @@ function writeTSProject(projectdir, projectFiles, options) {
 	fs.writeFileSync(path.join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
 
 	// MiniTS compiler
-	if (globalThis.flags.with_minits) {
-		globalThis.options = options;
-		globalThis.require = require;
-		let source = '';
-		let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
-		for (let file_path of file_paths) {
-			let file = fs.readFileSync(file_path) + '';
-			file = ts_preprocessor(file, file_path);
-			source += file;
-		}
-		globalThis.flags.minits_source = source;
-		globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
-		let minits = __dirname + '/Tools/minits/minits.js';
-		(1, eval)(fs.readFileSync(minits) + '');
+	globalThis.options = options;
+	globalThis.require = require;
+	let source = '';
+	let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
+	for (let file_path of file_paths) {
+		let file = fs.readFileSync(file_path) + '';
+		file = ts_preprocessor(file, file_path);
+		source += file;
 	}
-	// TS compiler
-	else {
-		let tsc = path.resolve(__dirname + '/Tools/tsc/tsc.js');
-		globalThis.require = require;
-		globalThis.module = {};
-		globalThis.__filename = tsc;
-		globalThis.options = options;
-		globalThis.ts_preprocessor = ts_preprocessor;
-
-		let _cwd = process.cwd();
-		process.chdir(projectdir + '/krom')
-		let _argv = process.argv;
-		process.argv = [];
-		process.argv.push('tsc.js');
-		process.argv.push('.');
-		process.argv.push('--outFile');
-		process.argv.push('krom.js');
-		(1, eval)(fs.readFileSync(tsc) + '');
-		process.argv = _argv;
-		process.chdir(_cwd);
-	}
+	globalThis.flags.minits_source = source;
+	globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
+	let minits = __dirname + '/Tools/minits/minits.js';
+	(1, eval)(fs.readFileSync(minits) + '');
 }
 
 let options = [

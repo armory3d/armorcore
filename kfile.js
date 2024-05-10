@@ -17,7 +17,6 @@ globalThis.flags = {
 	with_iron: false,
 	with_zui: false,
 	with_eval: true,
-	with_minits: false,
 	on_c_project_created: null,
 };
 
@@ -75,32 +74,30 @@ if (flags.with_eval) {
 	c_project.addDefine('WITH_EVAL');
 }
 
-if (flags.with_minits) {
-	c_project.addDefine('WITH_MINITS');
-	// c_project.addDefine('_GNU_SOURCE');
-	// c_project.addDefine('CONFIG_VERSION=\"2024-01-13\"');
-	// c_project.addDefine('USE_BF_DEC');
-	// c_project.addIncludeDir('Libraries/quickjs');
-	// c_project.addFile('Libraries/quickjs/*.c');
-	c_project.addIncludeDir('Libraries/gc');
-	c_project.addFile('Libraries/gc/*.c');
-	c_project.addIncludeDir('Sources');
-	c_project.addFile(path.relative(__dirname, process.cwd()) + '/build/krom.c');
+c_project.addDefine('WITH_MINITS');
+// c_project.addDefine('_GNU_SOURCE');
+// c_project.addDefine('CONFIG_VERSION=\"2024-01-13\"');
+// c_project.addDefine('USE_BF_DEC');
+// c_project.addIncludeDir('Libraries/quickjs');
+// c_project.addFile('Libraries/quickjs/*.c');
+c_project.addIncludeDir('Libraries/gc');
+c_project.addFile('Libraries/gc/*.c');
+c_project.addIncludeDir('Sources');
+c_project.addFile(path.relative(__dirname, process.cwd()) + '/build/krom.c');
 
-	////
-	flags.with_iron = false;
-	c_project.addFile('Sources/iron/iron_map.c');
-	c_project.addFile('Sources/iron/iron_array.c');
-	c_project.addFile('Sources/iron/iron_string.c');
-	c_project.addFile('Sources/iron/iron_armpack.c');
-	c_project.addFile('Sources/iron/iron_vec2.c');
-	c_project.addFile('Sources/iron/iron_gc.c');
-	c_project.addFile('Sources/iron/iron_json.c');
-	c_project.addFile('Sources/iron/io_obj.c');
-	c_project.addIncludeDir('Libraries/stb'); // iron_map.c -> stb_ds.h
-	c_project.addIncludeDir('Libraries/jsmn'); // iron_json.c -> jsmn.h
-	////
-}
+////
+flags.with_iron = false;
+c_project.addFile('Sources/iron/iron_map.c');
+c_project.addFile('Sources/iron/iron_array.c');
+c_project.addFile('Sources/iron/iron_string.c');
+c_project.addFile('Sources/iron/iron_armpack.c');
+c_project.addFile('Sources/iron/iron_vec2.c');
+c_project.addFile('Sources/iron/iron_gc.c');
+c_project.addFile('Sources/iron/iron_json.c');
+c_project.addFile('Sources/iron/io_obj.c');
+c_project.addIncludeDir('Libraries/stb'); // iron_map.c -> stb_ds.h
+c_project.addIncludeDir('Libraries/jsmn'); // iron_json.c -> jsmn.h
+////
 
 if (flags.with_g2) {
 	c_project.addDefine('WITH_G2');
