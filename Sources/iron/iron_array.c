@@ -126,7 +126,7 @@ void any_array_resize(any_array_t *a, int32_t size) {
 
 void buffer_resize(buffer_t *b, int32_t size) {
 	b->length = size;
-	b->data = gc_realloc(b->data, b->length * sizeof(uint8_t));
+	b->buffer = gc_realloc(b->buffer, b->length * sizeof(uint8_t));
 }
 
 void array_sort(any_array_t *ar, int (*compare)(const void *, const void *)) {
@@ -228,7 +228,7 @@ buffer_t *buffer_slice(buffer_t *a, int32_t begin, int32_t end) {
 	buffer_t *b = gc_alloc(sizeof(buffer_t));
 	buffer_resize(b, end - begin);
 	for (int i = 0; i < b->length; ++i) {
-		b->data[i] = a->data[begin + i];
+		b->buffer[i] = a->buffer[begin + i];
 	}
 	return b;
 }
@@ -242,63 +242,63 @@ int32_t buffer_view_size(buffer_view_t *v) {
 }
 
 uint8_t buffer_view_get_u8(buffer_view_t *v, int32_t p) {
-	return *(uint8_t *)(v->buffer->data + p);
+	return *(uint8_t *)(v->buffer->buffer + p);
 }
 
 int8_t buffer_view_get_i8(buffer_view_t *v, int32_t p) {
-	return *(int8_t *)(v->buffer->data + p);
+	return *(int8_t *)(v->buffer->buffer + p);
 }
 
 uint16_t buffer_view_get_u16(buffer_view_t *v, int32_t p) {
-	return *(uint16_t *)(v->buffer->data + p);
+	return *(uint16_t *)(v->buffer->buffer + p);
 }
 
 int16_t buffer_view_get_i16(buffer_view_t *v, int32_t p) {
-	return *(int16_t *)(v->buffer->data + p);
+	return *(int16_t *)(v->buffer->buffer + p);
 }
 
 uint32_t buffer_view_get_u32(buffer_view_t *v, int32_t p) {
-	return *(uint32_t *)(v->buffer->data + p);
+	return *(uint32_t *)(v->buffer->buffer + p);
 }
 
 int32_t buffer_view_get_i32(buffer_view_t *v, int32_t p) {
-	return *(int32_t *)(v->buffer->data + p);
+	return *(int32_t *)(v->buffer->buffer + p);
 }
 
 float buffer_view_get_f32(buffer_view_t *v, int32_t p) {
-	return *(float *)(v->buffer->data + p);
+	return *(float *)(v->buffer->buffer + p);
 }
 
 int64_t buffer_view_get_i64(buffer_view_t *v, int32_t p) {
-	return *(int64_t *)(v->buffer->data + p);
+	return *(int64_t *)(v->buffer->buffer + p);
 }
 
 void buffer_view_set_u8(buffer_view_t *v, int32_t p, uint8_t n) {
-	*(uint8_t *)(v->buffer->data + p) = n;
+	*(uint8_t *)(v->buffer->buffer + p) = n;
 }
 
 void buffer_view_set_i8(buffer_view_t *v, int32_t p, int8_t n) {
-	*(int8_t *)(v->buffer->data + p) = n;
+	*(int8_t *)(v->buffer->buffer + p) = n;
 }
 
 void buffer_view_set_u16(buffer_view_t *v, int32_t p, uint16_t n) {
-	*(uint16_t *)(v->buffer->data + p) = n;
+	*(uint16_t *)(v->buffer->buffer + p) = n;
 }
 
 void buffer_view_set_i16(buffer_view_t *v, int32_t p, uint16_t n) {
-	*(int16_t *)(v->buffer->data + p) = n;
+	*(int16_t *)(v->buffer->buffer + p) = n;
 }
 
 void buffer_view_set_u32(buffer_view_t *v, int32_t p, uint32_t n) {
-	*(uint32_t *)(v->buffer->data + p) = n;
+	*(uint32_t *)(v->buffer->buffer + p) = n;
 }
 
 void buffer_view_set_i32(buffer_view_t *v, int32_t p, int32_t n) {
-	*(int32_t *)(v->buffer->data + p) = n;
+	*(int32_t *)(v->buffer->buffer + p) = n;
 }
 
 void buffer_view_set_f32(buffer_view_t *v, int32_t p, float n) {
-	*(float *)(v->buffer->data + p) = n;
+	*(float *)(v->buffer->buffer + p) = n;
 }
 
 buffer_t *buffer_create(int32_t length) {
@@ -324,7 +324,7 @@ f32_array_t *f32_array_create(int32_t length) {
 
 f32_array_t *f32_array_create_from_buffer(buffer_t *b) {
 	f32_array_t *a = gc_alloc(sizeof(f32_array_t));
-	a->buffer = b->data;
+	a->buffer = b->buffer;
 	a->length = b->length / 4;
 	a->capacity = b->length / 4;
 	return a;
@@ -489,7 +489,7 @@ u8_array_t *u8_array_create(int32_t length) {
 
 u8_array_t *u8_array_create_from_buffer(buffer_t *b) {
 	u8_array_t *a = gc_alloc(sizeof(u8_array_t));
-	a->buffer = b->data;
+	a->buffer = b->buffer;
 	a->length = b->length;
 	a->capacity = b->length;
 	return a;

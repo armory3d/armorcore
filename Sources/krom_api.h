@@ -417,7 +417,7 @@ void krom_g4_delete_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
 buffer_t *krom_g4_lock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
 	float *vertices = kinc_g4_vertex_buffer_lock_all(buffer);
 	buffer_t *b = (buffer_t *)malloc(sizeof(buffer_t));
-	b->data = vertices;
+	b->buffer = vertices;
 	b->length = kinc_g4_vertex_buffer_count(buffer) * kinc_g4_vertex_buffer_stride(buffer);
 	return b;
 }
@@ -458,7 +458,7 @@ void krom_g4_draw_indexed_vertices_instanced(i32 instance_count, i32 start, i32 
 
 kinc_g4_shader_t *krom_g4_create_shader(buffer_t *data, i32 shader_type) {
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-	kinc_g4_shader_init(shader, data->data, data->length, (kinc_g4_shader_type_t)shader_type);
+	kinc_g4_shader_init(shader, data->buffer, data->length, (kinc_g4_shader_type_t)shader_type);
 	return shader;
 }
 
@@ -935,7 +935,7 @@ buffer_t *krom_load_blob(string_t *file) {
 	}
 	uint32_t reader_size = (uint32_t)kinc_file_reader_size(&reader);
 	buffer_t *buffer = buffer_create(reader_size);
-	kinc_file_reader_read(&reader, buffer->data, reader_size);
+	kinc_file_reader_read(&reader, buffer->buffer, reader_size);
 	kinc_file_reader_close(&reader);
 	return buffer;
 }
@@ -1021,7 +1021,7 @@ void krom_g4_set_float4(kinc_g4_constant_location_t *location, f32 value1, f32 v
 }
 
 void krom_g4_set_floats(kinc_g4_constant_location_t *location, buffer_t *values) {
-	kinc_g4_set_floats(*location, (float *)values->data, (int)(values->length / 4));
+	kinc_g4_set_floats(*location, (float *)values->buffer, (int)(values->length / 4));
 }
 
 void krom_g4_set_matrix4(kinc_g4_constant_location_t *location, /*buffer_t*/ float *matrix) {
@@ -1119,7 +1119,7 @@ bool krom_display_is_primary(i32 index) {
 void krom_write_storage(string_t *name, buffer_t *data) {
 	kinc_file_writer_t writer;
 	kinc_file_writer_open(&writer, name);
-	kinc_file_writer_write(&writer, data->data, data->length);
+	kinc_file_writer_write(&writer, data->buffer, data->length);
 	kinc_file_writer_close(&writer);
 }
 
@@ -1130,7 +1130,7 @@ buffer_t *krom_read_storage(string_t *name) {
 	}
 	int reader_size = (int)kinc_file_reader_size(&reader);
 	buffer_t *buffer = buffer_create(reader_size);
-	kinc_file_reader_read(&reader, buffer->data, reader_size);
+	kinc_file_reader_read(&reader, buffer->buffer, reader_size);
 	kinc_file_reader_close(&reader);
 	return buffer;
 }
@@ -1160,10 +1160,10 @@ kinc_g4_texture_t *krom_g4_create_texture_from_bytes(buffer_t *data, i32 width, 
 	void *image_data;
 	if (readable) {
 		image_data = malloc(data->length);
-		memcpy(image_data, data->data, data->length);
+		memcpy(image_data, data->buffer, data->length);
 	}
 	else {
-		image_data = data->data;
+		image_data = data->buffer;
 	}
 
 	kinc_image_init(image, image_data, width, height, (kinc_image_format_t)format);
@@ -1184,10 +1184,10 @@ kinc_g4_texture_t *krom_g4_create_texture_from_bytes3d(buffer_t *data, i32 width
 	void *image_data;
 	if (readable) {
 		image_data = malloc(data->length);
-		memcpy(image_data, data->data, data->length);
+		memcpy(image_data, data->buffer, data->length);
 	}
 	else {
-		image_data = data->data;
+		image_data = data->buffer;
 	}
 
 	kinc_image_init3d(image, image_data, width, height, depth, (kinc_image_format_t)format);
@@ -1207,7 +1207,7 @@ kinc_g4_texture_t *krom_g4_create_texture_from_encoded_bytes(buffer_t *data, str
 	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 	kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
-	unsigned char *content_data = (unsigned char *)data->data;
+	unsigned char *content_data = (unsigned char *)data->buffer;
 	int content_length = (int)data->length;
 	unsigned char *image_data;
 	kinc_image_format_t image_format;
@@ -1287,13 +1287,13 @@ buffer_t *krom_g4_get_texture_pixels(kinc_image_t *image) {
 	uint8_t *data = kinc_image_get_pixels(image);
 	int byte_length = _format_byte_size(image->format) * image->width * image->height * image->depth;
 	buffer_t *buffer = malloc(sizeof(buffer_t));
-	buffer->data = data;
+	buffer->buffer = data;
 	buffer->length = byte_length;
 	return buffer;
 }
 
 void krom_g4_get_render_target_pixels(kinc_g4_render_target_t *rt, buffer_t *data) {
-	uint8_t *b = (uint8_t *)data->data;
+	uint8_t *b = (uint8_t *)data->buffer;
 	kinc_g4_render_target_get_pixels(rt, b);
 
 	// Release staging texture immediately to save memory
@@ -1315,7 +1315,7 @@ buffer_t *krom_g4_lock_texture(kinc_g4_texture_t *texture, i32 level) {
 	int stride = kinc_g4_texture_stride(texture);
 	int byte_length = stride * texture->tex_height * texture->tex_depth;
 	buffer_t *buffer = malloc(sizeof(buffer_t));
-	buffer->data = tex;
+	buffer->buffer = tex;
 	buffer->length = byte_length;
 	return buffer;
 }
@@ -1411,7 +1411,7 @@ void krom_file_save_bytes(string_t *path, buffer_t *bytes, i32 length) {
 	if (file == NULL) {
 		return;
 	}
-	fwrite(bytes->data, 1, byte_length, file);
+	fwrite(bytes->buffer, 1, byte_length, file);
 	fclose(file);
 }
 
@@ -1474,7 +1474,7 @@ void _http_callback(int error, int response, const char *body, void *callback_da
 	if (body != NULL) {
 		buffer = malloc(sizeof(buffer_t));
 		buffer->length = cbd->size > 0 ? cbd->size : strlen(body);
-		buffer->data = body;
+		buffer->buffer = body;
 	}
 	cbd->func(cbd->url, buffer);
 	free(cbd);
@@ -1517,7 +1517,7 @@ void krom_http_request(string_t *url, i32 size, void (*callback)(char *, buffer_
 
 #ifdef WITH_G2
 void krom_g2_init(buffer_t *image_vert, buffer_t *image_frag, buffer_t *colored_vert, buffer_t *colored_frag, buffer_t *text_vert, buffer_t *text_frag) {
-	arm_g2_init(image_vert->data, image_vert->length, image_frag->data, image_frag->length, colored_vert->data, colored_vert->length, colored_frag->data, colored_frag->length, text_vert->data, text_vert->length, text_frag->data, text_frag->length);
+	arm_g2_init(image_vert->buffer, image_vert->length, image_frag->buffer, image_frag->length, colored_vert->buffer, colored_vert->length, colored_frag->buffer, colored_frag->length, text_vert->buffer, text_vert->length, text_frag->buffer, text_frag->length);
 }
 
 void krom_g2_begin() {
@@ -1568,13 +1568,13 @@ void krom_g2_set_font(arm_g2_font_t *font, i32 size) {
 
 arm_g2_font_t *krom_g2_font_init(buffer_t *blob, i32 font_index) {
 	arm_g2_font_t *font = (arm_g2_font_t *)malloc(sizeof(arm_g2_font_t));
-	arm_g2_font_init(font, blob->data, font_index);
+	arm_g2_font_init(font, blob->buffer, font_index);
 	return font;
 }
 
 arm_g2_font_t *krom_g2_font_13(buffer_t *blob) {
 	arm_g2_font_t *font = (arm_g2_font_t *)malloc(sizeof(arm_g2_font_t));
-	arm_g2_font_13(font, blob->data);
+	arm_g2_font_13(font, blob->buffer);
 	return font;
 }
 
@@ -1615,7 +1615,7 @@ void krom_g2_set_pipeline(kinc_g4_pipeline_t *pipeline) {
 }
 
 void krom_g2_set_transform(buffer_t *matrix) {
-	arm_g2_set_transform(matrix != NULL ? (kinc_matrix3x3_t *)matrix->data : NULL);
+	arm_g2_set_transform(matrix != NULL ? (kinc_matrix3x3_t *)matrix->buffer : NULL);
 }
 
 void krom_g2_fill_circle(f32 cx, f32 cy, f32 radius, i32 segments) {
@@ -1855,7 +1855,7 @@ buffer_t *krom_inflate(buffer_t *bytes, bool raw) {
 	infstream.zfree = Z_NULL;
 	infstream.opaque = Z_NULL;
 	infstream.avail_in = (uInt)bytes->length;
-	infstream.next_in = (Bytef *)bytes->data;
+	infstream.next_in = (Bytef *)bytes->buffer;
 	infstream.avail_out = (uInt)bytes->length;
 	infstream.next_out = (Bytef *)inflated;
 	inflateInit2(&infstream, raw ? -15 : 15 + 32);
@@ -1876,7 +1876,7 @@ buffer_t *krom_inflate(buffer_t *bytes, bool raw) {
 	inflateEnd(&infstream);
 
 	buffer_t *output = buffer_create(infstream.total_out);
-	memcpy(output->data, inflated, infstream.total_out);
+	memcpy(output->buffer, inflated, infstream.total_out);
 	free(inflated);
 	return output;
 }
@@ -1889,7 +1889,7 @@ buffer_t *krom_deflate(buffer_t *bytes, bool raw) {
 	defstream.zfree = Z_NULL;
 	defstream.opaque = Z_NULL;
 	defstream.avail_in = (uInt)bytes->length;
-	defstream.next_in = (Bytef *)bytes->data;
+	defstream.next_in = (Bytef *)bytes->buffer;
 	defstream.avail_out = deflated_size;
 	defstream.next_out = (Bytef *)deflated;
 	deflateInit2(&defstream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, raw ? -15 : 15, 5, Z_DEFAULT_STRATEGY);
@@ -1897,7 +1897,7 @@ buffer_t *krom_deflate(buffer_t *bytes, bool raw) {
 	deflateEnd(&defstream);
 
 	buffer_t *output = buffer_create(defstream.total_out);
-	memcpy(output->data, deflated, defstream.total_out);
+	memcpy(output->buffer, deflated, defstream.total_out);
 	free(deflated);
 	return output;
 }
@@ -1907,7 +1907,7 @@ buffer_t *krom_deflate(buffer_t *bytes, bool raw) {
 void _write_image(char *path, buffer_t *bytes, i32 w, i32 h, i32 format, int image_format, int quality) {
 	int comp = 0;
 	unsigned char *pixels = NULL;
-	unsigned char *rgba = (unsigned char *)bytes->data;
+	unsigned char *rgba = (unsigned char *)bytes->buffer;
 	if (format == 0) { // RGBA
 		comp = 4;
 		pixels = rgba;
@@ -1972,10 +1972,10 @@ buffer_t *_encode_image(buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality) 
 	_encode_data = (unsigned char *)malloc(w * h * 4);
 	_encode_size = 0;
 	format == 0 ?
-		stbi_write_jpg_to_func(&_encode_image_func, NULL, w, h, 4, bytes->data, quality) :
-		stbi_write_png_to_func(&_encode_image_func, NULL, w, h, 4, bytes->data, w * 4);
+		stbi_write_jpg_to_func(&_encode_image_func, NULL, w, h, 4, bytes->buffer, quality) :
+		stbi_write_png_to_func(&_encode_image_func, NULL, w, h, 4, bytes->buffer, w * 4);
 	buffer_t *buffer = malloc(sizeof(buffer_t));
-	buffer->data = _encode_data;
+	buffer->buffer = _encode_data;
 	buffer->length = _encode_size;
 	return buffer;
 }
@@ -2298,7 +2298,7 @@ char *krom_language() {
 }
 
 obj_part_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_pos, bool udim) {
-	obj_part_t *part = io_obj_parse(file_bytes->data, split_code, start_pos, udim);
+	obj_part_t *part = io_obj_parse(file_bytes->buffer, split_code, start_pos, udim);
 	return part;
 
 	// if (udim) {

@@ -329,7 +329,7 @@ void *armpack_decode(void *_encoded, uint32_t len) {
 }
 
 void *armpack_decodeb(buffer_t *b) {
-	return armpack_decode(b->data, b->length);
+	return armpack_decode(b->buffer, b->length);
 }
 
 void armpack_encode_start(void *_encoded) {

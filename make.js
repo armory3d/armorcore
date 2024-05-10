@@ -860,21 +860,7 @@ function writeTSProject(projectdir, projectFiles, options) {
 	let tsdata = {
 		include: [],
 		compilerOptions: {
-			lib: ["es2015"],
-			target: "es2015",
-			removeComments: true,
-			alwaysStrict: true,
-			noImplicitAny: true,
-			noImplicitReturns: true,
-			noUncheckedIndexedAccess: true,
-			strictPropertyInitialization: false,
-			incremental: true,
-			tsBuildInfoFile: "./krom.tsbuildinfo"
-			// noFallthroughCasesInSwitch
-			// noUnusedLocals
-			// noUnusedParameters
-			// strictNullChecks
-			// allowUnreachableCode
+			target: "es2015"
 		}
 	};
 

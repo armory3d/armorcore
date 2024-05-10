@@ -1475,6 +1475,19 @@ function write_function() {
 			token = type + "_array_push";
 		}
 
+		// array_remove -> i32_array_remove
+		if (token == "array_remove") {
+			let value = get_token(2);
+
+			if (value.lastIndexOf(".") > -1) {
+				value = value.substring(value.lastIndexOf(".") + 1, value.length);
+			}
+			let type = array_type(value);
+			if (type == "i32") {
+				token = type + "_array_remove";
+			}
+		}
+
 		// array_index_of -> i32_array_index_of / char_ptr_array_index_of
 		if (token == "array_index_of") {
 			let value = get_token(2);

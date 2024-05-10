@@ -299,7 +299,7 @@ function g4_set_float4(loc: kinc_const_loc_t, value1: f32, value2: f32, value3: 
 
 function g4_set_floats(loc: kinc_const_loc_t, values: f32_array_t) {
 	let b: buffer_t = {
-		data: values.buffer,
+		buffer: values.buffer,
 		length: values.length * 4
 	};
 	krom_g4_set_floats(loc, b);
@@ -347,31 +347,17 @@ function _image_create(tex: any): image_t {
 	return raw;
 }
 
-function _image_set_size(image: image_t, tex: krom_texture_t) {
-	image.width = tex.width;
-	image.height = tex.height;
-	image.depth = tex.depth;
-}
-
 function _image_set_size_from_texture(image: image_t, _tex: any) {
-	///if arm_minits
 	let tex: kinc_g4_texture_t = _tex;
 	image.width = tex.tex_width;
 	image.height = tex.tex_height;
 	image.depth = tex.tex_depth;
-	///else
-	_image_set_size(image, _tex);
-	///end
 }
 
 function _image_set_size_from_render_target(image: image_t, _rt: any) {
-	///if arm_minits
 	let rt: kinc_g4_render_target_t = _rt;
 	image.width = rt.width;
 	image.height = rt.height;
-	///else
-	_image_set_size(image, _rt);
-	///end
 }
 
 function image_get_depth_buffer_bits(format: depth_format_t): i32 {

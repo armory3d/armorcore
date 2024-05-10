@@ -56,10 +56,7 @@ typedef struct char_ptr_array {
 	int capacity;
 } char_ptr_array_t;
 
-typedef struct buffer {
-	uint8_t *data;
-	int length;
-} buffer_t;
+typedef u8_array_t buffer_t;
 
 typedef struct buffer_view {
 	buffer_t *buffer;

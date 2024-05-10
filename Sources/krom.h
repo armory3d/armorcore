@@ -12,6 +12,7 @@
 #include <kinc/display.h>
 #include <kinc/threads/thread.h>
 #include <kinc/graphics4/graphics.h>
+#include <kinc/io/filereader.h>
 #include <iron/iron_string.h>
 #include <iron/iron_array.h>
 #include <iron/iron_map.h>
@@ -98,6 +99,14 @@ void (*krom_gamepad_axis)(int, int, float);
 void (*krom_gamepad_button)(int, int, float);
 void (*krom_save_and_quit)(bool);
 
+char *_substring(char *s, int32_t start, int32_t end) {
+	char *buffer = calloc(1, end - start + 1);
+	for (int i = 0; i < end - start; ++i) {
+		buffer[i] = s[start + i];
+	}
+	return buffer;
+}
+
 int kickstart(int argc, char **argv) {
 	_argc = argc;
 	_argv = argv;
@@ -110,26 +119,26 @@ int kickstart(int argc, char **argv) {
 #endif
 
 #ifdef KINC_WINDOWS // Handle non-ascii path
-	// HMODULE hmodule = GetModuleHandleW(NULL);
-	// GetModuleFileNameW(hmodule, temp_wstring, 1024);
-	// WideCharToMultiByte(CP_UTF8, 0, temp_wstring, -1, temp_string, 4096, nullptr, nullptr);
-	// bindir = temp_string;
+	HMODULE hmodule = GetModuleHandleW(NULL);
+	GetModuleFileNameW(hmodule, temp_wstring, 1024);
+	WideCharToMultiByte(CP_UTF8, 0, temp_wstring, -1, temp_string, 4096, NULL, NULL);
+	bindir = temp_string;
 #endif
 
 #ifdef KINC_WINDOWS
-	// bindir = bindir.substr(0, bindir.find_last_of("\\"));
+	bindir = _substring(bindir, 0, string_last_index_of(bindir, "\\"));
 #else
-	// bindir = bindir.substr(0, bindir.find_last_of("/"));
+	bindir = _substring(bindir, 0, string_last_index_of(bindir, "/"));
 #endif
-	// assetsdir = argc > 1 ? argv[1] : bindir;
+	char *assetsdir = argc > 1 ? argv[1] : bindir;
 
 	// Opening a file
-	// int l = (int)assetsdir.length();
-	// if ((l > 6 && assetsdir[l - 6] == '.') ||
-	// 	(l > 5 && assetsdir[l - 5] == '.') ||
-	// 	(l > 4 && assetsdir[l - 4] == '.')) {
-	// 	assetsdir = bindir;
-	// }
+	int l = strlen(assetsdir);
+	if ((l > 6 && assetsdir[l - 6] == '.') ||
+		(l > 5 && assetsdir[l - 5] == '.') ||
+		(l > 4 && assetsdir[l - 4] == '.')) {
+		assetsdir = bindir;
+	}
 
 	for (int i = 2; i < argc; ++i) {
 		if (strcmp(argv[i], "--nowindow") == 0) {
@@ -138,7 +147,7 @@ int kickstart(int argc, char **argv) {
 	}
 
 #if !defined(KINC_MACOS) && !defined(KINC_IOS)
-	// kinc_internal_set_files_location(&assetsdir[0u]);
+	kinc_internal_set_files_location(assetsdir);
 #endif
 
 #ifdef KINC_MACOS

@@ -1,7 +1,6 @@
-
+// @ts-nocheck
 // Externs for Zui in C
 
-let zui_current: zui_t = null;
 let zui_children: map_t<string, zui_handle_t> = map_create();
 // let zui_tr: (id: string, vars: map_t<string, string>)=>string;
 let zui_clipboard: string = "";
@@ -189,11 +188,29 @@ function zui_set_font(raw: zui_t, font: g2_font_t) {
 
 declare let zui_nodes_enum_texts: (s: string)=>string[];
 declare let zui_touch_scroll: bool;
+declare let zui_touch_hold : bool;
+declare let zui_touch_tooltip: bool;
 declare let zui_always_redraw_window: bool;
+declare let zui_on_border_hover: any;
+declare let zui_on_text_hover: any;
+declare let zui_on_deselect_text: any;
+declare let zui_on_tab_drop: any;
+declare let zui_nodes_on_link_drag: any;
+declare let zui_nodes_on_socket_released: any;
+declare let zui_nodes_on_canvas_released: any;
+declare let zui_nodes_on_canvas_control: any;
+declare let zui_text_area_line_numbers: bool;
+declare let zui_text_area_scroll_past_end: bool;
+declare let zui_text_area_coloring: any;
+declare let zui_nodes_socket_released: bool;
+declare let zui_is_cut: bool;
+declare let zui_is_copy: bool;
+declare let zui_is_paste: bool;
+declare let zui_nodes_exclude_remove: string[];
 
 declare function zui_nest(handle: zui_handle_t, pos: i32): zui_handle_t;
 declare function zui_theme_default(theme: zui_theme_t): void;
-declare function zui_tab(handle: zui_handle_t, text: string, vertical: bool = false, color: i32 = -1): void;
+declare function zui_tab(handle: zui_handle_t, text: string, vertical: bool = false, color: i32 = -1): bool;
 declare function zui_combo(handle: zui_handle_t, texts: string[], label: string = "", show_label: bool = false, align: zui_align_t = zui_align_t.LEFT, search_bar: bool = true): i32;
 declare function zui_slider(handle: zui_handle_t, text: string, from: f32 = 0.0, to: f32 = 1.0, filled: bool = false, precision: f32 = 100.0, display_value: bool = true, align: zui_align_t = zui_align_t.RIGHT, text_edit: bool = true): f32;
 declare function zui_button(text: string, align: zui_align_t = zui_align_t.CENTER, label: string = ""): bool;
@@ -204,21 +221,98 @@ declare function zui_color_wheel(handle: zui_handle_t, alpha: bool = false, w: f
 declare function zui_hovered_tab_name(): string;
 declare function zui_radio(handle: zui_handle_t, position: i32, text: string, label: string = ""): bool;
 declare function zui_start_text_edit(handle: zui_handle_t, align: zui_align_t = zui_align_t.LEFT): void;
+declare function zui_tooltip(s: string): void;
 declare function zui_tooltip_image(image: image_t, max_width: i32 = 0): void;
 declare function zui_separator(h: i32 = 4, fill: bool = true): void;
 declare function zui_text_area(handle: zui_handle_t, align: zui_align_t = zui_align_t.LEFT, editable: bool = true, label: string = "", word_wrap: bool = false): string;
 declare function zui_window(handle: zui_handle_t, x: i32, y: i32, w: i32, h: i32, drag: bool = false): bool;
+declare function zui_begin(ui: zui_t): void;
 declare function zui_end(last: bool = true): void;
 declare function zui_end_window(bind_global_g: bool = true): void;
 declare function zui_end_region(last: bool = true): void;
 declare function zui_float_input(handle: zui_handle_t, label: string = "", align: zui_align_t = zui_align_t.LEFT, precision: f32 = 1000.0): f32;
+declare function zui_get_current(): zui_t;
+declare function zui_remove_node(n: zui_node_t, canvas: zui_node_canvas_t): void;
+declare function zui_next_link_id(links: zui_node_link_t[]): i32;
+declare function zui_set_hovered_tab_name(s: string): void;
+declare function zui_begin_sticky(): void;
+declare function zui_end_sticky(): void;
+declare function zui_row(r: f32[]): void;
+declare function zui_handle_create(): zui_handle_t;
+declare function zui_fill(x: i32, y: i32, w: i32, h: i32, color: i32): void;
+declare function zui_rect(x: i32, y: i32, w: i32, h: i32, color: i32, strength: f32): void;
+declare function zui_draw_rect(filled: bool, x: i32, y: i32, w: i32, h: i32): void;
+declare function zui_begin_menu(): void;
+declare function zui_end_menu(): void;
+declare function zui_menu_button(s: string): bool;
+declare function zui_begin_region(ui: zui_t, x: i32, y: i32, w: i32): void;
+declare function zui_end_region(last: bool): void;
+declare function zui_inline_radio(handle: zui_handle_t, texts: string[], align: i32): int;
+declare function zui_end_input(): void;
+declare function zui_panel(handle: zui_handle_t, text: string, is_tree: bool, filled: bool, pack: bool): bool;
+declare function zui_nodes_rgba_popup(nhandle: zui_handle_t, val: f32[], x: i32, y: i32): void;
+declare function zui_get_link(links: zui_node_link_t[], id: i32): zui_node_link_t;
+declare function zui_get_node(nodes: zui_node_t[], id: i32): zui_node_t;
+declare function zui_input_in_rect(x: f32, y: f32, w: f32, h: f32): bool;
+declare function zui_get_socket_id(nodes: zui_node_t[]): i32;
+declare function zui_draw_string(text: string, x_offset: f32, y_offset: f32, align: i32, truncation: bool): void;
+declare function zui_next_node_id(nodes: zui_node_t[]): i32;
+declare function zui_node_canvas(nodes: zui_nodes_t, canvas: zui_node_canvas_t): void;
 
 declare type kinc_g4_texture_t = any;
+declare type kinc_g4_render_target_t = any;
 declare type arm_g2_font_t = any;
 declare type zui_theme_t = any;
 
 declare type zui_t = {
 	ops: zui_options_t;
+	is_hovered: bool;
+	is_typing: bool;
+	is_escape_down: bool;
+	is_delete_down: bool;
+	is_return_down: bool;
+	is_ctrl_down: bool;
+	is_released: bool;
+	is_key_pressed: bool;
+	is_scrolling: bool;
+	key_code: i32;
+	input_started: bool;
+	input_started_r: bool;
+	input_released: bool;
+	input_released_r: bool;
+	input_x: i32;
+	input_y: i32;
+	input_started_x: i32;
+	input_started_y: i32;
+	input_enabled: bool;
+	input_down_r: bool;
+	input_dx: i32;
+	input_dy: i32;
+	input_wheel_delta: i32;
+	_x: i32;
+	_y: i32;
+	_w: i32;
+	_window_w: i32;
+	_window_h: i32;
+	_window_x: i32;
+	_window_y: i32;
+	scroll_enabled: bool;
+	input_down: bool;
+	font_size: i32;
+	image_scroll_align: bool;
+	changed: bool;
+	font_offset_y: f32;
+	enabled: bool;
+	scissor: bool;
+	text_selected_handle: zui_handle_t;
+	submit_text_handle: zui_handle_t;
+	combo_selected_handle: zui_handle_t;
+	current_ratio: i32;
+	image_invert_y: bool;
+	elements_baked: bool;
+	window_border_right: i32;
+	window_border_top: i32;
+	window_border_bottom: i32;
 };
 
 declare type zui_handle_t = {
@@ -226,7 +320,7 @@ declare type zui_handle_t = {
 	position: i32;
 	color: u32;
 	value: f32;
-	// char *text;
+	text: string;
 	// kinc_g4_render_target_t texture;
 	redraws: i32;
 	scroll_offset: f32;

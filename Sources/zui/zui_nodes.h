@@ -144,8 +144,8 @@ float ZUI_NODES_PAN_X();
 float ZUI_NODES_PAN_Y();
 
 float zui_p(float f);
-int zui_get_socket_id(zui_node_t **nodes, int nodes_count);
-zui_node_link_t *zui_get_link(zui_node_link_t **links, int links_count, int id);
-int zui_next_link_id(zui_node_link_t **links, int links_count);
-zui_node_t *zui_get_node(zui_node_t **nodes, int nodes_count, int id);
-int zui_next_node_id(zui_node_t **nodes, int nodes_count);
+int zui_get_socket_id(zui_node_array_t *nodes);
+zui_node_link_t *zui_get_link(zui_node_link_array_t *links, int id);
+int zui_next_link_id(zui_node_link_array_t *links);
+zui_node_t *zui_get_node(zui_node_array_t *nodes, int id);
+int zui_next_node_id(zui_node_array_t *nodes);

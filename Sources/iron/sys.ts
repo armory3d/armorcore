@@ -365,7 +365,7 @@ function sys_string_to_buffer(str: string): buffer_t {
 	for (let i: i32 = 0; i < str.length; ++i) {
 		u8a[i] = char_code_at(str, i);
 	}
-	return u8a.buffer;
+	return u8a;
 }
 
 function sys_shader_ext(): string {

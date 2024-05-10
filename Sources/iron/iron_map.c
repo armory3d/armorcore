@@ -36,6 +36,9 @@ float f32_map_get(f32_map_t *m, char *k) {
 }
 
 void *any_map_get(any_map_t *m, char *k) {
+	if (k == NULL) {
+		return NULL;
+	}
 	return shget(m->hash, k);
 }
 
