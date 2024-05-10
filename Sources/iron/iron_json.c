@@ -1,5 +1,6 @@
 
 #include "iron_json.h"
+#include "iron_string.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -224,4 +225,49 @@ any_map_t *json_parse_to_map(char *s) {
 
 char *json_stringify(void *a) {
 	return NULL;
+}
+
+static char *encoded;
+static int keys;
+
+void json_encode_start() {
+	encoded = "{";
+	keys = 0;
+}
+
+char *json_encode_end() {
+	encoded = string_join(encoded, "}");
+	return encoded;
+}
+
+void json_encode_key(char *k) {
+	if (keys > 0) {
+		encoded = string_join(encoded, ",");
+	}
+	encoded = string_join(encoded, "\"");
+	encoded = string_join(encoded, k);
+	encoded = string_join(encoded, "\":");
+	keys++;
+}
+
+void json_encode_string(char *k, char *v) {
+	json_encode_key(k);
+	encoded = string_join(encoded, "\"");
+	encoded = string_join(encoded, v);
+	encoded = string_join(encoded, "\"");
+}
+
+void json_encode_f32(char *k, float f) {
+	json_encode_key(k);
+	encoded = string_join(encoded, f32_to_string(f));
+}
+
+void json_encode_i32(char *k, int i) {
+	json_encode_key(k);
+	encoded = string_join(encoded, i32_to_string(i));
+}
+
+void json_encode_bool(char *k, bool b) {
+	json_encode_key(k);
+	encoded = string_join(encoded, b ? "true" : "false");
 }

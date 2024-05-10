@@ -2,7 +2,15 @@
 
 #include "iron_array.h"
 #include "iron_map.h"
+#include <stdbool.h>
 
 void *json_parse(char *s);
 any_map_t *json_parse_to_map(char *s);
 char *json_stringify(void *a);
+
+void json_encode_start();
+char *json_encode_end();
+void json_encode_string(char *k, char *v);
+void json_encode_f32(char *k, float f);
+void json_encode_i32(char *k, int i);
+void json_encode_bool(char *k, bool b);
