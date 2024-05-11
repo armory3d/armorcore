@@ -75,13 +75,8 @@ if (flags.with_eval) {
 }
 
 c_project.addDefine('WITH_MINITS');
-// c_project.addDefine('_GNU_SOURCE');
-// c_project.addDefine('CONFIG_VERSION=\"2024-01-13\"');
-// c_project.addDefine('USE_BF_DEC');
-// c_project.addIncludeDir('Libraries/quickjs');
-// c_project.addFile('Libraries/quickjs/*.c');
-c_project.addIncludeDir('Libraries/gc');
-c_project.addFile('Libraries/gc/*.c');
+c_project.addIncludeDir('Sources/lib/gc');
+c_project.addFile('Sources/lib/gc/*.c');
 c_project.addIncludeDir('Sources');
 c_project.addFile(path.relative(__dirname, process.cwd()) + '/build/krom.c');
 
@@ -95,8 +90,8 @@ c_project.addFile('Sources/iron/iron_vec2.c');
 c_project.addFile('Sources/iron/iron_gc.c');
 c_project.addFile('Sources/iron/iron_json.c');
 c_project.addFile('Sources/iron/io_obj.c');
-c_project.addIncludeDir('Libraries/stb'); // iron_map.c -> stb_ds.h
-c_project.addIncludeDir('Libraries/jsmn'); // iron_json.c -> jsmn.h
+c_project.addIncludeDir('Sources/lib/stb'); // iron_map.c -> stb_ds.h
+c_project.addIncludeDir('Sources/lib/jsmn'); // iron_json.c -> jsmn.h
 ////
 
 if (flags.with_g2) {
@@ -107,8 +102,8 @@ if (flags.with_g2) {
 if (flags.with_iron) {
 	c_project.addDefine('WITH_IRON');
 	c_project.addFile('Sources/iron/*.c');
-	c_project.addIncludeDir("Libraries/stb"); // iron_map.c -> stb_ds.h
-	c_project.addIncludeDir('Libraries/jsmn'); // iron_json.c -> jsmn.h
+	c_project.addIncludeDir("Sources/lib/stb"); // iron_map.c -> stb_ds.h
+	c_project.addIncludeDir('Sources/lib/jsmn'); // iron_json.c -> jsmn.h
 }
 
 if (flags.with_zui) {
@@ -157,14 +152,14 @@ else if (platform === Platform.OSX) {
 
 if (flags.with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
 	c_project.addDefine('WITH_NFD');
-	c_project.addIncludeDir("Libraries/nfd/include");
-	c_project.addFile('Libraries/nfd/nfd_common.c');
+	c_project.addIncludeDir("Sources/lib/nfd");
+	c_project.addFile('Sources/lib/nfd/nfd_common.c');
 
 	if (platform === Platform.Windows) {
-		c_project.addFile('Libraries/nfd/nfd_win.cpp');
+		c_project.addFile('Sources/lib/nfd/nfd_win.cpp');
 	}
 	else if (platform === Platform.Linux) {
-		c_project.addFile('Libraries/nfd/nfd_gtk.c');
+		c_project.addFile('Sources/lib/nfd/nfd_gtk.c');
 		c_project.addIncludeDir("/usr/include/gtk-3.0");
 		c_project.addIncludeDir("/usr/include/glib-2.0");
 		c_project.addIncludeDir("/usr/lib/x86_64-linux-gnu/glib-2.0/include");
@@ -180,30 +175,26 @@ if (flags.with_nfd && (platform === Platform.Windows || platform === Platform.Li
 		c_project.addLib('glib-2.0');
 	}
 	else {
-		c_project.addFile('Libraries/nfd/nfd_cocoa.m');
+		c_project.addFile('Sources/lib/nfd/nfd_cocoa.m');
 	}
 }
 if (flags.with_tinydir) {
 	c_project.addDefine('WITH_TINYDIR');
-	c_project.addIncludeDir("Libraries/tinydir/include");
+	c_project.addIncludeDir("Sources/lib/tinydir");
 }
 if (flags.with_zlib) {
 	c_project.addDefine('WITH_ZLIB');
-	c_project.addIncludeDir("Libraries/zlib");
-	c_project.addFile("Libraries/zlib/*.h");
-	c_project.addFile("Libraries/zlib/*.c");
-	c_project.addExclude("Libraries/zlib/gzlib.c");
-	c_project.addExclude("Libraries/zlib/gzclose.c");
-	c_project.addExclude("Libraries/zlib/gzwrite.c");
-	c_project.addExclude("Libraries/zlib/gzread.c");
+	c_project.addIncludeDir("Sources/lib/zlib");
+	c_project.addFile("Sources/lib/zlib/*.h");
+	c_project.addFile("Sources/lib/zlib/*.c");
 }
 if (flags.with_stb_image_write) {
 	c_project.addDefine('WITH_STB_IMAGE_WRITE');
-	c_project.addIncludeDir("Libraries/stb");
+	c_project.addIncludeDir("Sources/lib/stb");
 }
 if (flags.with_mpeg_write) {
 	c_project.addDefine('WITH_MPEG_WRITE');
-	c_project.addIncludeDir("Libraries/jo_mpeg");
+	c_project.addIncludeDir("Sources/lib/jo_mpeg");
 }
 
 if (flags.on_c_project_created) {
