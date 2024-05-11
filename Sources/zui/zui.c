@@ -279,13 +279,13 @@ void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool
 		char *full_text = text;
 		strcpy(temp, text);
 		text = &temp[0];
-		while (strlen(text) > 0 && arm_g2_string_width(current->ops->font, current->font_size, text) > current->_w - 6.0 * ZUI_SCALE()) {
+		while (strlen(text) > 0 && arm_g2_string_width(current->ops->font->font_, current->font_size, text) > current->_w - 6.0 * ZUI_SCALE()) {
 			text[strlen(text) - 1] = 0;
 		}
 		if (strlen(text) < strlen(full_text)) {
 			strcat(text, "..");
 			// Strip more to fit ".."
-			while (strlen(text) > 2 && arm_g2_string_width(current->ops->font, current->font_size, text) > current->_w - 10.0 * ZUI_SCALE()) {
+			while (strlen(text) > 2 && arm_g2_string_width(current->ops->font->font_, current->font_size, text) > current->_w - 10.0 * ZUI_SCALE()) {
 				text[strlen(text) - 3] = 0;
 				strcat(text, "..");
 			}
@@ -307,9 +307,9 @@ void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool
 
 	if (x_offset < 0) x_offset = current->ops->theme->TEXT_OFFSET;
 	x_offset *= ZUI_SCALE();
-	arm_g2_set_font(current->ops->font, current->font_size);
-	if (align == ZUI_ALIGN_CENTER) x_offset = current->_w / 2.0 - arm_g2_string_width(current->ops->font, current->font_size, text) / 2.0;
-	else if (align == ZUI_ALIGN_RIGHT) x_offset = current->_w - arm_g2_string_width(current->ops->font, current->font_size, text) - ZUI_TEXT_OFFSET();
+	arm_g2_set_font(current->ops->font->font_, current->font_size);
+	if (align == ZUI_ALIGN_CENTER) x_offset = current->_w / 2.0 - arm_g2_string_width(current->ops->font->font_, current->font_size, text) / 2.0;
+	else if (align == ZUI_ALIGN_RIGHT) x_offset = current->_w - arm_g2_string_width(current->ops->font->font_, current->font_size, text) - ZUI_TEXT_OFFSET();
 
 	if (!current->enabled) zui_fade_color(0.25);
 
@@ -376,6 +376,10 @@ float zui_get_ratio(float ratio, float dyn) {
 // Draw the upcoming elements in the same row
 // Negative values will be treated as absolute, positive values as ratio to `window width`
 void zui_row(f32_array_t *ratios) {
+	if (ratios->length == 0) {
+		current->ratios = NULL;
+		return;
+	}
 	current->ratios = ratios;
 	current->current_ratio = 0;
 	current->x_before_split = current->_x;
@@ -514,12 +518,12 @@ void zui_draw_tooltip_text(bool bind_global_g) {
 	int line_count = zui_line_count(current->tooltip_text);
 	float tooltip_w = 0.0;
 	for (int i = 0; i < line_count; ++i) {
-		float line_tooltip_w = arm_g2_string_width(current->ops->font, current->font_size, zui_extract_line(current->tooltip_text, i));
+		float line_tooltip_w = arm_g2_string_width(current->ops->font->font_, current->font_size, zui_extract_line(current->tooltip_text, i));
 		if (line_tooltip_w > tooltip_w) tooltip_w = line_tooltip_w;
 	}
 	current->tooltip_x = fmin(current->tooltip_x, kinc_window_width(0) - tooltip_w - 20);
 	if (bind_global_g) arm_g2_restore_render_target();
-	float font_height = arm_g2_font_height(current->ops->font, current->font_size);
+	float font_height = arm_g2_font_height(current->ops->font->font_, current->font_size);
 	float off = 0;
 	if (current->tooltip_img != NULL) {
 		float w = current->tooltip_img->tex_width;
@@ -532,7 +536,7 @@ void zui_draw_tooltip_text(bool bind_global_g) {
 		off = current->tooltip_rt->height * (w / current->tooltip_rt->width);
 	}
 	arm_g2_fill_rect(current->tooltip_x, current->tooltip_y + off, tooltip_w + 20, font_height * line_count);
-	arm_g2_set_font(current->ops->font, current->font_size);
+	arm_g2_set_font(current->ops->font->font_, current->font_size);
 	arm_g2_set_color(current->ops->theme->ACCENT_COL);
 	for (int i = 0; i < line_count; ++i) {
 		arm_g2_draw_string(zui_extract_line(current->tooltip_text, i), current->tooltip_x + 5, current->tooltip_y + off + i * current->font_size);
@@ -572,12 +576,12 @@ void zui_draw_tooltip_rt(bool bind_global_g) {
 void zui_draw_tooltip(bool bind_global_g) {
 	if (current->slider_tooltip) {
 		if (bind_global_g) arm_g2_restore_render_target();
-		arm_g2_set_font(current->ops->font, current->font_size * 2);
+		arm_g2_set_font(current->ops->font->font_, current->font_size * 2);
 		assert(sprintf(NULL, "%f", round(current->scroll_handle->value * 100.0) / 100.0) < 1024);
 		sprintf(temp, "%f", round(current->scroll_handle->value * 100.0) / 100.0);
 		char *text = temp;
-		float x_off = arm_g2_string_width(current->ops->font, current->font_size * 2.0, text) / 2.0;
-		float y_off = arm_g2_font_height(current->ops->font, current->font_size * 2.0);
+		float x_off = arm_g2_string_width(current->ops->font->font_, current->font_size * 2.0, text) / 2.0;
+		float y_off = arm_g2_font_height(current->ops->font->font_, current->font_size * 2.0);
 		float x = fmin(fmax(current->slider_tooltip_x, current->input_x), current->slider_tooltip_x + current->slider_tooltip_w);
 		arm_g2_set_color(current->ops->theme->ACCENT_COL);
 		arm_g2_fill_rect(x - x_off, current->slider_tooltip_y - y_off, x_off * 2.0, y_off);
@@ -586,9 +590,9 @@ void zui_draw_tooltip(bool bind_global_g) {
 	}
 	if (zui_touch_tooltip && current->text_selected_handle != NULL) {
 		if (bind_global_g) arm_g2_restore_render_target();
-		arm_g2_set_font(current->ops->font, current->font_size * 2.0);
-		float x_off = arm_g2_string_width(current->ops->font, current->font_size * 2.0, current->text_selected) / 2.0;
-		float y_off = arm_g2_font_height(current->ops->font, current->font_size * 2.0) / 2.0;
+		arm_g2_set_font(current->ops->font->font_, current->font_size * 2.0);
+		float x_off = arm_g2_string_width(current->ops->font->font_, current->font_size * 2.0, current->text_selected) / 2.0;
+		float y_off = arm_g2_font_height(current->ops->font->font_, current->font_size * 2.0) / 2.0;
 		float x = kinc_window_width(0) / 2.0;
 		float y = kinc_window_height(0) / 3.0;
 		arm_g2_set_color(current->ops->theme->ACCENT_COL);
@@ -852,10 +856,10 @@ void zui_end_region(bool last) {
 }
 
 void zui_set_cursor_to_input(int align) {
-	float off = align == ZUI_ALIGN_LEFT ? ZUI_TEXT_OFFSET() : current->_w - arm_g2_string_width(current->ops->font, current->font_size, current->text_selected);
+	float off = align == ZUI_ALIGN_LEFT ? ZUI_TEXT_OFFSET() : current->_w - arm_g2_string_width(current->ops->font->font_, current->font_size, current->text_selected);
 	float x = current->input_x - (current->_window_x + current->_x + off);
 	current->cursor_x = 0;
-	while (current->cursor_x < strlen(current->text_selected) && arm_g2_sub_string_width(current->ops->font, current->font_size, current->text_selected, 0, current->cursor_x) < x) {
+	while (current->cursor_x < strlen(current->text_selected) && arm_g2_sub_string_width(current->ops->font->font_, current->font_size, current->text_selected, 0, current->cursor_x) < x) {
 		current->cursor_x++;
 	}
 	current->highlight_anchor = current->cursor_x;
@@ -1058,11 +1062,11 @@ void zui_update_text_edit(int align, bool editable, bool live_update) {
 			iend = current->cursor_x;
 		}
 
-		float hlstrw = arm_g2_sub_string_width(current->ops->font, current->font_size, text, istart, iend);
-		float start_off = arm_g2_sub_string_width(current->ops->font, current->font_size, text, 0, istart);
+		float hlstrw = arm_g2_sub_string_width(current->ops->font->font_, current->font_size, text, istart, iend);
+		float start_off = arm_g2_sub_string_width(current->ops->font->font_, current->font_size, text, 0, istart);
 		float hl_start = align == ZUI_ALIGN_LEFT ? current->_x + start_off + off : current->_x + current->_w - hlstrw - off;
 		if (align == ZUI_ALIGN_RIGHT) {
-			hl_start -= arm_g2_sub_string_width(current->ops->font, current->font_size, text, iend, strlen(text));
+			hl_start -= arm_g2_sub_string_width(current->ops->font->font_, current->font_size, text, iend, strlen(text));
 		}
 		arm_g2_set_color(current->ops->theme->ACCENT_SELECT_COL);
 		arm_g2_fill_rect(hl_start, current->_y + current->button_offset_y * 1.5, hlstrw, cursor_height);
@@ -1071,7 +1075,7 @@ void zui_update_text_edit(int align, bool editable, bool live_update) {
 	// Draw cursor
 	int str_start = align == ZUI_ALIGN_LEFT ? 0 : current->cursor_x;
 	int str_length = align == ZUI_ALIGN_LEFT ? current->cursor_x : (strlen(text) - current->cursor_x);
-	float strw = arm_g2_sub_string_width(current->ops->font, current->font_size, text, str_start, str_length);
+	float strw = arm_g2_sub_string_width(current->ops->font->font_, current->font_size, text, str_start, str_length);
 	float cursor_x = align == ZUI_ALIGN_LEFT ? current->_x + strw + off : current->_x + current->_w - strw - off;
 	arm_g2_set_color(current->ops->theme->TEXT_COL); // Cursor
 	arm_g2_fill_rect(cursor_x, current->_y + current->button_offset_y * 1.5, 1.0 * ZUI_SCALE(), cursor_height);
@@ -1140,7 +1144,7 @@ void zui_draw_tabs() {
 		current->_y = base_y + tab_y;
 		current->_w = current->tab_vertical ? (ZUI_ELEMENT_W() - 1 * ZUI_SCALE()) :
 			 		  current->ops->theme->FULL_TABS ? (current->_window_w / current->tab_count) :
-					  (arm_g2_string_width(current->ops->font, current->font_size, current->tab_names[i]) + current->button_offset_y * 2.0 + 18.0 * ZUI_SCALE());
+					  (arm_g2_string_width(current->ops->font->font_, current->font_size, current->tab_names[i]) + current->button_offset_y * 2.0 + 18.0 * ZUI_SCALE());
 		bool released = zui_get_released(tab_h);
 		bool started = zui_get_started(tab_h);
 		bool pushed = zui_get_pushed(tab_h);
@@ -1306,7 +1310,7 @@ void zui_draw_slider(float value, float from, float to, bool filled, bool hover)
 void zui_set_scale(float factor) {
 	current->ops->scale_factor = factor;
 	current->font_size = ZUI_FONT_SIZE();
-	float font_height = arm_g2_font_height(current->ops->font, current->font_size);
+	float font_height = arm_g2_font_height(current->ops->font->font_, current->font_size);
 	current->font_offset_y = (ZUI_ELEMENT_H() - font_height) / 2.0; // Precalculate offsets
 	current->arrow_offset_y = (ZUI_ELEMENT_H() - ZUI_ARROW_SIZE()) / 2.0;
 	current->arrow_offset_x = current->arrow_offset_y;
@@ -1608,7 +1612,7 @@ int zui_text(char *text, int align, int bg) {
 		zui_split_text(text, align, bg);
 		return ZUI_STATE_IDLE;
 	}
-	float h = fmax(ZUI_ELEMENT_H(), arm_g2_font_height(current->ops->font, current->font_size));
+	float h = fmax(ZUI_ELEMENT_H(), arm_g2_font_height(current->ops->font->font_, current->font_size));
 	if (!zui_is_visible(h)) {
 		zui_end_element_of_size(h + ZUI_ELEMENT_OFFSET());
 		return ZUI_STATE_IDLE;
@@ -1914,7 +1918,7 @@ int zui_combo(zui_handle_t *handle, char_ptr_array_t *texts, char *label, bool s
 			current->combo_selected_w = current->_w;
 			current->combo_search_bar = search_bar;
 			for (int i = 0; i < texts->length; ++i) { // Adapt combo list width to combo item width
-				int w = (int)arm_g2_string_width(current->ops->font, current->font_size, texts->buffer[i]) + 10;
+				int w = (int)arm_g2_string_width(current->ops->font->font_, current->font_size, texts->buffer[i]) + 10;
 				if (current->combo_selected_w < w) current->combo_selected_w = w;
 			}
 			if (current->combo_selected_w > current->_w * 2.0) current->combo_selected_w = current->_w * 2.0;

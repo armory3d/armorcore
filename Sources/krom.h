@@ -20,7 +20,6 @@
 #include <iron/iron_json.h>
 #include <iron/iron_gc.h>
 #include "iron/io_obj.h"
-// #include <quickjs.h>
 #ifdef KINC_WINDOWS
 #include <Windows.h>
 #endif
@@ -164,13 +163,6 @@ int kickstart(int argc, char **argv) {
 	// #ifdef WITH_PLUGIN_EMBED
 	// plugin_embed(isolate, global);
 	// #endif
-
-	// JSRuntime *runtime = JS_NewRuntime();
-	// JSContext *ctx = JS_NewContext(runtime);
-	// JSValue result = JS_Eval(ctx, "5+2", 3, "mini.js", JS_EVAL_TYPE_GLOBAL);
-	// printf("%d\n", JS_VALUE_GET_INT(result));
-	// JS_FreeValue(ctx, result);
-	// JS_RunGC(runtime);
 
 	gc_start(&argc);
 	_kickstart();

@@ -529,6 +529,10 @@ function array_contents(type) {
 				}
 			}
 		}
+		// a / b - > a / (float)b
+		if (token == "/") {
+			token = "/(float)";
+		}
 		token = struct_access(token);
 		token = string_ops(token);
 		content += token;

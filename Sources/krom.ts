@@ -129,7 +129,11 @@ declare function json_parse_to_map(s: string): map_t<string, string>;
 declare function json_stringify(a: any): string;
 declare function json_encode_start(): void;
 declare function json_encode_string(k: string, v: string): void;
+declare function json_encode_string_array(k: string, v: string[]): void;
+declare function json_encode_i32(k: string, v: i32): void;
+declare function json_encode_i32_array(k: string, v: i32[]): void;
 declare function json_encode_f32(k: string, v: f32): void;
+declare function json_encode_bool(k: string, v: bool): void;
 declare function json_encode_end(): string;
 declare function uri_decode(s: string): string;
 

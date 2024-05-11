@@ -401,7 +401,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 
 	// Title
 	arm_g2_set_color(current->ops->theme->LABEL_COL);
-	float textw = arm_g2_string_width(current->ops->font, current->font_size, text);
+	float textw = arm_g2_string_width(current->ops->font->font_, current->font_size, text);
 	arm_g2_draw_string(text, nx + zui_p(10), ny + zui_p(6));
 	ny += lineh * 0.5;
 
@@ -417,7 +417,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	for (int i = 0; i < node->outputs->length; ++i) {
 		zui_node_socket_t *out = node->outputs->buffer[i];
 		ny += lineh;
-		float strw = arm_g2_string_width(current->ops->font, current->font_size, zui_tr(out->name));
+		float strw = arm_g2_string_width(current->ops->font->font_, current->font_size, zui_tr(out->name));
 		arm_g2_draw_string(zui_tr(out->name), nx + w - strw - zui_p(12), ny - zui_p(3));
 
 		if (zui_nodes_on_socket_released != NULL && current->input_enabled && (current->input_released || current->input_released_r)) {
@@ -732,7 +732,7 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	current_nodes->ELEMENT_H = current->ops->theme->ELEMENT_H + 2;
 	zui_set_scale(ZUI_NODES_SCALE()); // Apply zoomed scale
 	current->elements_baked = true;
-	arm_g2_set_font(current->ops->font, current->font_size);
+	arm_g2_set_font(current->ops->font->font_, current->font_size);
 
 	for (int i = 0; i < canvas->links->length; ++i) {
 		zui_node_link_t *link = canvas->links->buffer[i];

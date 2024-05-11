@@ -95,17 +95,17 @@ function zui_nodes_PAN_Y(): f32 {
 }
 
 function _zui_image(image: image_t, tint: i32 = 0xffffffff, h: f32 = -1.0, sx: i32 = 0, sy: i32 = 0, sw: i32 = 0, sh: i32 = 0): zui_state_t {
-	let aimage: any;
+	let any_image: any;
 	let is_rt: bool;
 	if (image.texture_ != null) {
-		aimage = image.texture_;
+		any_image = image.texture_;
 		is_rt = false;
 	}
 	else {
-		image = image.render_target_;
+		any_image = image.render_target_;
 		is_rt = true;
 	}
-	return zui_sub_image(image, is_rt, tint, h, sx, sy, sw, sh);
+	return zui_sub_image(any_image, is_rt, tint, h, sx, sy, sw, sh);
 }
 
 function _zui_set_scale(ui: zui_t, factor: f32) {
@@ -183,7 +183,7 @@ function zui_get_socket(nodes: zui_node_t[], id: i32): zui_node_socket_t {
 
 function zui_set_font(raw: zui_t, font: g2_font_t) {
 	g2_font_init(font); // Make sure font_ is ready
-	raw.ops.font = font.font_;
+	raw.ops.font = font;
 }
 
 declare let zui_nodes_enum_texts: (s: string)=>string[];
@@ -261,7 +261,6 @@ declare function zui_node_canvas(nodes: zui_nodes_t, canvas: zui_node_canvas_t):
 
 declare type kinc_g4_texture_t = any;
 declare type kinc_g4_render_target_t = any;
-declare type arm_g2_font_t = any;
 declare type zui_theme_t = any;
 
 declare type zui_t = {
@@ -337,7 +336,7 @@ declare type zui_handle_t = {
 };
 
 declare type zui_options_t = {
-	font?: arm_g2_font_t;
+	font?: g2_font_t;
 	theme?: zui_theme_t;
 	scale_factor?: f32;
 	color_wheel?: kinc_g4_texture_t;

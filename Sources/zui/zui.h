@@ -64,7 +64,7 @@ typedef struct zui_theme {
 } zui_theme_t;
 
 typedef struct zui_options {
-	arm_g2_font_t *font;
+	g2_font_t *font;
 	zui_theme_t *theme;
 	float scale_factor;
 	kinc_g4_texture_t *color_wheel;

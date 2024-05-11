@@ -22,6 +22,13 @@ typedef struct arm_g2_font {
 	int offset;
 } arm_g2_font_t;
 
+typedef struct g2_font {
+	arm_g2_font_t *font_;
+	void *blob; // buffer_t
+	void *glyphs; // i32_array_t
+	int index;
+} g2_font_t;
+
 void arm_g2_init(void *image_vert, int image_vert_size, void *image_frag, int image_frag_size, void *colored_vert, int colored_vert_size, void *colored_frag, int colored_frag_size, void *text_vert, int text_vert_size, void *text_frag, int text_frag_size);
 void arm_g2_begin(void);
 void arm_g2_draw_scaled_sub_image(kinc_g4_texture_t *tex, float sx, float sy, float sw, float sh, float dx, float dy, float dw, float dh);

@@ -527,9 +527,9 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 		new_lines[0] = '\0';
 		for (int i = 0; i < word_count; ++i) {
 			char *w = zui_extract_word(lines, i);
-			float spacew = arm_g2_string_width(current->ops->font, current->font_size, " ");
-			float wordw = spacew + arm_g2_string_width(current->ops->font, current->font_size, w);
-			float linew = wordw + arm_g2_string_width(current->ops->font, current->font_size, line);
+			float spacew = arm_g2_string_width(current->ops->font->font_, current->font_size, " ");
+			float wordw = spacew + arm_g2_string_width(current->ops->font->font_, current->font_size, w);
+			float linew = wordw + arm_g2_string_width(current->ops->font->font_, current->font_size, line);
 			if (linew > current->_w - 10 && linew > wordw) {
 				if (new_lines[0] != '\0') strcat(new_lines, "\n");
 				strcat(new_lines, line);
@@ -623,7 +623,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 					(i <= text_area_selection_start && i > handle->position)) {
 					int line_height = ZUI_ELEMENT_H();
 					int cursor_height = line_height - current->button_offset_y * 3.0;
-					int linew = arm_g2_string_width(current->ops->font, current->font_size, line);
+					int linew = arm_g2_string_width(current->ops->font->font_, current->font_size, line);
 					arm_g2_set_color(current->ops->theme->ACCENT_SELECT_COL);
 					arm_g2_fill_rect(current->_x + ZUI_ELEMENT_OFFSET() * 2.0, current->_y + current->button_offset_y * 1.5, linew, cursor_height);
 				}
@@ -698,6 +698,6 @@ void zui_end_menu() {
 
 bool zui_menu_button(char *text) {
 	zui_t *current = zui_get_current();
-	current->_w = arm_g2_string_width(current->ops->font, current->font_size, text) + 25.0 * ZUI_SCALE();
+	current->_w = arm_g2_string_width(current->ops->font->font_, current->font_size, text) + 25.0 * ZUI_SCALE();
 	return zui_button(text, ZUI_ALIGN_CENTER, "");
 }
