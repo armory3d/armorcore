@@ -472,6 +472,12 @@ function struct_alloc(token, type = null) {
 			token += t;
 			pos++;
 		}
+
+		// "= {}" -> "= {0}", otherwise msvc refuses to init members to zero
+		if (get_token(-1) == "{") {
+			token += "0";
+		}
+
 		token += get_token(); // "}"
 		token += ")";
 		tabs--;

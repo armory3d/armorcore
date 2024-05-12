@@ -56,7 +56,6 @@ const build = flags.release ? 'release' : 'debug';
 
 let c_project = new Project(flags.name);
 await c_project.addProject('Kinc');
-c_project.cppStd = "c++17";
 c_project.setDebugDir('Deployment');
 
 if (fs.existsSync(process.cwd() + '/icon.png')) {
@@ -78,7 +77,9 @@ c_project.addDefine('WITH_MINITS');
 c_project.addIncludeDir('Sources/lib/gc');
 c_project.addFile('Sources/lib/gc/*.c');
 c_project.addIncludeDir('Sources');
-c_project.addFile(path.relative(__dirname, process.cwd()) + '/build/krom.c');
+c_project.addFile('Sources/krom.c');
+let krom_c_path = path.relative(__dirname, process.cwd()) + '/build/krom.c';
+c_project.addDefine('KROM_C_PATH="../' + krom_c_path + '"');
 
 ////
 flags.with_iron = false;

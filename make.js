@@ -370,6 +370,7 @@ class ShaderCompiler {
 		}
 		else {
 			let parameters = [this.type, from, to, this.temp, 'krom'];
+			fs.ensureDirSync(this.temp);
 			if (this.options.shaderversion) {
 				parameters.push('--version');
 				parameters.push(this.options.shaderversion);

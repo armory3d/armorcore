@@ -23,7 +23,7 @@
 #ifdef KINC_WINDOWS
 #include <Windows.h>
 #endif
-#ifdef IDLE_SLEEP
+#if defined(IDLE_SLEEP) && !defined(KINC_WINDOWS)
 #include <unistd.h>
 #endif
 #ifdef WITH_G2

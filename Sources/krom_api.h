@@ -64,7 +64,6 @@ bool waitAfterNextDraw;
 #ifdef WITH_D3DCOMPILER
 #include <d3d11.h>
 #include <D3Dcompiler.h>
-#include <sstream>
 #endif
 #ifdef WITH_NFD
 #include <nfd.h>
@@ -454,7 +453,7 @@ kinc_g4_shader_t *krom_g4_create_shader(buffer_t *data, i32 shader_type) {
 
 any krom_g4_create_vertex_shader_from_source(string_t *source) {
 
-	#ifdef WITH_D3DCOMPILER
+#ifdef WITH_D3DCOMPILER
 
 	strcpy(temp_string_vs, source);
 
@@ -463,7 +462,7 @@ any krom_g4_create_vertex_shader_from_source(string_t *source) {
 	UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
 	HRESULT hr = D3DCompile(temp_string_vs, strlen(source) + 1, NULL, NULL, NULL, "main", "vs_5_0", flags, 0, &shader_buffer, &error_message);
 	if (hr != S_OK) {
-		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->GetBufferPointer());
+		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->lpVtbl->GetBufferPointer(error_message));
 		return;
 	}
 
@@ -473,95 +472,109 @@ any krom_g4_create_vertex_shader_from_source(string_t *source) {
 	bool hasPos = strstr(temp_string_vs, "pos :") != NULL;
 	bool hasTex = strstr(temp_string_vs, "tex :") != NULL;
 
-	std::map<std::string, int> attributes;
+	i32_map_t *attributes = calloc(sizeof(i32_map_t), 1);
 	int index = 0;
-	if (hasBone) attributes["bone"] = index++;
-	if (hasCol) attributes["col"] = index++;
-	if (hasNor) attributes["nor"] = index++;
-	if (hasPos) attributes["pos"] = index++;
-	if (hasTex) attributes["tex"] = index++;
-	if (hasBone) attributes["weight"] = index++;
+	if (hasBone) i32_map_set(attributes, "bone", index++);
+	if (hasCol) i32_map_set(attributes, "col", index++);
+	if (hasNor) i32_map_set(attributes, "nor", index++);
+	if (hasPos) i32_map_set(attributes, "pos", index++);
+	if (hasTex) i32_map_set(attributes, "tex", index++);
+	if (hasBone) i32_map_set(attributes, "weight", index++);
 
-	std::ostringstream file;
+	char file[2048];
 	size_t output_len = 0;
 
-	file.put((char)attributes.size());
+	file[output_len] = (char)index;
 	output_len += 1;
-	for (std::map<std::string, int>::const_iterator attribute = attributes.begin(); attribute != attributes.end(); ++attribute) {
-		(file) << attribute->first.c_str();
-		output_len += attribute->first.length();
-		file.put(0);
+
+	any_array_t *keys = map_keys(attributes);
+	for (int i = 0; i < keys->length; ++i) {
+		strcpy(file + output_len, keys->buffer[i]);
+		output_len += strlen(keys->buffer[i]);
+		file[output_len] = 0;
 		output_len += 1;
-		file.put(attribute->second);
+		file[output_len] = i32_map_get(attributes, keys->buffer[i]);
 		output_len += 1;
 	}
 
 	ID3D11ShaderReflection *reflector = NULL;
-	D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+	D3DReflect(shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer), &IID_ID3D11ShaderReflection, (void **)&reflector);
 
 	D3D11_SHADER_DESC desc;
-	reflector->GetDesc(&desc);
+	reflector->lpVtbl->GetDesc(reflector, &desc);
 
-	file.put(desc.BoundResources);
+	file[output_len] = desc.BoundResources;
 	output_len += 1;
-	for (unsigned i = 0; i < desc.BoundResources; ++i) {
+	for (int i = 0; i < desc.BoundResources; ++i) {
 		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-		reflector->GetResourceBindingDesc(i, &bindDesc);
-		(file) << bindDesc.Name;
+		reflector->lpVtbl->GetResourceBindingDesc(reflector, i, &bindDesc);
+		strcpy(file + output_len, bindDesc.Name);
 		output_len += strlen(bindDesc.Name);
-		file.put(0);
+		file[output_len] = 0;
 		output_len += 1;
-		file.put(bindDesc.BindPoint);
+		file[output_len] = bindDesc.BindPoint;
 		output_len += 1;
 	}
 
-	ID3D11ShaderReflectionConstantBuffer *constants = reflector->GetConstantBufferByName("$Globals");
+	ID3D11ShaderReflectionConstantBuffer *constants = reflector->lpVtbl->GetConstantBufferByName(reflector, "$Globals");
 	D3D11_SHADER_BUFFER_DESC bufferDesc;
-	hr = constants->GetDesc(&bufferDesc);
+	hr = constants->lpVtbl->GetDesc(constants, &bufferDesc);
 	if (hr == S_OK) {
-		file.put(bufferDesc.Variables);
+		file[output_len] = bufferDesc.Variables;
 		output_len += 1;
-		for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
-			ID3D11ShaderReflectionVariable *variable = constants->GetVariableByIndex(i);
+		for (int i = 0; i < bufferDesc.Variables; ++i) {
+			ID3D11ShaderReflectionVariable *variable = constants->lpVtbl->GetVariableByIndex(constants, i);
 			D3D11_SHADER_VARIABLE_DESC variableDesc;
-			hr = variable->GetDesc(&variableDesc);
+			hr = variable->lpVtbl->GetDesc(variable, &variableDesc);
 			if (hr == S_OK) {
-				(file) << variableDesc.Name;
+				strcpy(file + output_len, variableDesc.Name);
 				output_len += strlen(variableDesc.Name);
-				file.put(0);
+				file[output_len] = 0;
 				output_len += 1;
-				file.write((char *)&variableDesc.StartOffset, 4);
+
+				file[output_len] = (char *)(&variableDesc.StartOffset)[0];
+				file[output_len + 1] = (char *)(&variableDesc.StartOffset)[1];
+				file[output_len + 2] = (char *)(&variableDesc.StartOffset)[2];
+				file[output_len + 3] = (char *)(&variableDesc.StartOffset)[3];
 				output_len += 4;
-				file.write((char *)&variableDesc.Size, 4);
+
+				file[output_len] = (char *)(&variableDesc.Size)[0];
+				file[output_len + 1] = (char *)(&variableDesc.Size)[1];
+				file[output_len + 2] = (char *)(&variableDesc.Size)[2];
+				file[output_len + 3] = (char *)(&variableDesc.Size)[3];
 				output_len += 4;
+
 				D3D11_SHADER_TYPE_DESC typeDesc;
-				hr = variable->GetType()->GetDesc(&typeDesc);
+				ID3D11ShaderReflectionType *type = variable->lpVtbl->GetType(variable);
+				hr = type->lpVtbl->GetDesc(type, &typeDesc);
 				if (hr == S_OK) {
-					file.put(typeDesc.Columns);
+					file[output_len] = typeDesc.Columns;
 					output_len += 1;
-					file.put(typeDesc.Rows);
+					file[output_len] = typeDesc.Rows;
 					output_len += 1;
 				}
 				else {
-					file.put(0);
+					file[output_len] = 0;
 					output_len += 1;
-					file.put(0);
+					file[output_len] = 0;
 					output_len += 1;
 				}
 			}
 		}
 	}
 	else {
-		file.put(0);
+		file[output_len] = 0;
 		output_len += 1;
 	}
-	file.write((char *)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
-	output_len += shader_buffer->GetBufferSize();
-	shader_buffer->Release();
-	reflector->Release();
+
+	memcpy(file + output_len, (char *)shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer));
+	output_len += shader_buffer->lpVtbl->GetBufferSize(shader_buffer);
+
+	shader_buffer->lpVtbl->Release(shader_buffer);
+	reflector->lpVtbl->Release(reflector);
 
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-	kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
+	kinc_g4_shader_init(shader, file, (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
 
 	#elif defined(KINC_METAL)
 
@@ -601,84 +614,94 @@ any krom_g4_create_fragment_shader_from_source(string_t *source) {
 	UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
 	HRESULT hr = D3DCompile(temp_string_fs, strlen(source) + 1, NULL, NULL, NULL, "main", "ps_5_0", flags, 0, &shader_buffer, &error_message);
 	if (hr != S_OK) {
-		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->GetBufferPointer());
+		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->lpVtbl->GetBufferPointer(error_message));
 		return;
 	}
 
-	std::map<std::string, int> attributes;
-
-	std::ostringstream file;
+	char file[2048];
 	size_t output_len = 0;
 
-	file.put((char)attributes.size());
+	file[output_len] = 0;
 	output_len += 1;
 
 	ID3D11ShaderReflection *reflector = NULL;
-	D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
+	D3DReflect(shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer), &IID_ID3D11ShaderReflection, (void **)&reflector);
 
 	D3D11_SHADER_DESC desc;
-	reflector->GetDesc(&desc);
+	reflector->lpVtbl->GetDesc(reflector, &desc);
 
-	file.put(desc.BoundResources);
+	file[output_len] = desc.BoundResources;
 	output_len += 1;
-	for (unsigned i = 0; i < desc.BoundResources; ++i) {
+	for (int i = 0; i < desc.BoundResources; ++i) {
 		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-		reflector->GetResourceBindingDesc(i, &bindDesc);
-		(file) << bindDesc.Name;
+		reflector->lpVtbl->GetResourceBindingDesc(reflector, i, &bindDesc);
+		strcpy(file + output_len, bindDesc.Name);
 		output_len += strlen(bindDesc.Name);
-		file.put(0);
+		file[output_len] = 0;
 		output_len += 1;
-		file.put(bindDesc.BindPoint);
+		file[output_len] = bindDesc.BindPoint;
 		output_len += 1;
 	}
 
-	ID3D11ShaderReflectionConstantBuffer *constants = reflector->GetConstantBufferByName("$Globals");
+	ID3D11ShaderReflectionConstantBuffer *constants = reflector->lpVtbl->GetConstantBufferByName(reflector, "$Globals");
 	D3D11_SHADER_BUFFER_DESC bufferDesc;
-	hr = constants->GetDesc(&bufferDesc);
+	hr = constants->lpVtbl->GetDesc(constants, &bufferDesc);
 	if (hr == S_OK) {
-		file.put(bufferDesc.Variables);
+		file[output_len] = bufferDesc.Variables;
 		output_len += 1;
-		for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
-			ID3D11ShaderReflectionVariable *variable = constants->GetVariableByIndex(i);
+		for (int i = 0; i < bufferDesc.Variables; ++i) {
+			ID3D11ShaderReflectionVariable *variable = constants->lpVtbl->GetVariableByIndex(constants, i);
 			D3D11_SHADER_VARIABLE_DESC variableDesc;
-			hr = variable->GetDesc(&variableDesc);
+			hr = variable->lpVtbl->GetDesc(variable, &variableDesc);
 			if (hr == S_OK) {
-				(file) << variableDesc.Name;
+				strcpy(file + output_len, variableDesc.Name);
 				output_len += strlen(variableDesc.Name);
-				file.put(0);
+				file[output_len] = 0;
 				output_len += 1;
-				file.write((char *)&variableDesc.StartOffset, 4);
+
+				file[output_len] = (char *)(&variableDesc.StartOffset)[0];
+				file[output_len + 1] = (char *)(&variableDesc.StartOffset)[1];
+				file[output_len + 2] = (char *)(&variableDesc.StartOffset)[2];
+				file[output_len + 3] = (char *)(&variableDesc.StartOffset)[3];
 				output_len += 4;
-				file.write((char *)&variableDesc.Size, 4);
+
+				file[output_len] = (char *)(&variableDesc.Size)[0];
+				file[output_len + 1] = (char *)(&variableDesc.Size)[1];
+				file[output_len + 2] = (char *)(&variableDesc.Size)[2];
+				file[output_len + 3] = (char *)(&variableDesc.Size)[3];
 				output_len += 4;
+
 				D3D11_SHADER_TYPE_DESC typeDesc;
-				hr = variable->GetType()->GetDesc(&typeDesc);
+				ID3D11ShaderReflectionType *type = variable->lpVtbl->GetType(variable);
+				hr = type->lpVtbl->GetDesc(type, &typeDesc);
 				if (hr == S_OK) {
-					file.put(typeDesc.Columns);
+					file[output_len] = typeDesc.Columns;
 					output_len += 1;
-					file.put(typeDesc.Rows);
+					file[output_len] = typeDesc.Rows;
 					output_len += 1;
 				}
 				else {
-					file.put(0);
+					file[output_len] = 0;
 					output_len += 1;
-					file.put(0);
+					file[output_len] = 0;
 					output_len += 1;
 				}
 			}
 		}
 	}
 	else {
-		file.put(0);
+		file[output_len] = 0;
 		output_len += 1;
 	}
-	file.write((char *)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
-	output_len += shader_buffer->GetBufferSize();
-	shader_buffer->Release();
-	reflector->Release();
+
+	memcpy(file + output_len, (char *)shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer));
+	output_len += shader_buffer->lpVtbl->GetBufferSize(shader_buffer);
+
+	shader_buffer->lpVtbl->Release(shader_buffer);
+	//reflector->lpVtbl->Release(reflector);
 
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-	kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
+	kinc_g4_shader_init(shader, file, (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
 
 	#elif defined(KINC_METAL)
 
@@ -1288,10 +1311,10 @@ void krom_g4_get_render_target_pixels(kinc_g4_render_target_t *rt, buffer_t *dat
 
 	// Release staging texture immediately to save memory
 	#ifdef KINC_DIRECT3D11
-	rt->impl.textureStaging->Release();
+	rt->impl.textureStaging->lpVtbl->Release(rt->impl.textureStaging);
 	rt->impl.textureStaging = NULL;
 	#elif defined(KINC_DIRECT3D12)
-	rt->impl._renderTarget.impl.renderTargetReadback->Release();
+	rt->impl._renderTarget.impl.renderTargetReadback->lpVtbl->Release(rt->impl._renderTarget.impl.renderTargetReadback);
 	rt->impl._renderTarget.impl.renderTargetReadback = NULL;
 	#elif defined(KINC_METAL)
 	// id<MTLTexture> texReadback = (__bridge_transfer id<MTLTexture>)rt->impl._renderTarget.impl._texReadback;
@@ -1769,8 +1792,8 @@ char *krom_read_directory(char *path, bool folders_only) {
 	wchar_t files[1024];
 	#else
 	char *files = malloc(1024);
-	files[0] = 0;
 	#endif
+	files[0] = 0;
 
 	for (int i = 0; i < dir.n_files; i++) {
 		tinydir_file file;
@@ -1784,10 +1807,10 @@ char *krom_read_directory(char *path, bool folders_only) {
 			if (wcscmp(file.name, L".") == 0 || wcscmp(file.name, L"..") == 0) {
 				continue;
 			}
-			files += file.name;
+			wcscat(files, file.name);
 
 			if (i < dir.n_files - 1) {
-				files += L"\n"; // Separator
+				wcscat(files, L"\n"); // Separator
 			}
 			#else
 			if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0) {
