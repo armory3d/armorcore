@@ -26,6 +26,10 @@
 #ifdef IDLE_SLEEP
 #include <unistd.h>
 #endif
+#ifdef WITH_G2
+#include "g2/g2.h"
+#include "g2/g2_ext.h"
+#endif
 #ifdef WITH_ZUI
 #include "zui/zui.h"
 #include "zui/zui_ext.h"

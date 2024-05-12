@@ -104,16 +104,6 @@ unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_l
 #include <unistd.h>
 #endif
 
-#ifdef WITH_G2
-#include "g2/g2.h"
-#include "g2/g2_ext.h"
-#endif
-#ifdef WITH_ZUI
-#include "zui/zui.h"
-#include "zui/zui_ext.h"
-#include "zui/zui_nodes.h"
-#endif
-
 #ifdef WITH_PLUGIN_EMBED
 void plugin_embed();
 #endif
@@ -1371,7 +1361,7 @@ void krom_g4_begin(image_t *render_target, image_t_array_t *additional) {
 	else {
 		kinc_g4_render_target_t *rt = (kinc_g4_render_target_t *)render_target->render_target_;
 		int32_t length = 1;
-		kinc_g4_render_target_t *render_targets[8] = { render_target, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+		kinc_g4_render_target_t *render_targets[8] = { rt, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 		if (additional != NULL) {
 			length = additional->length + 1;
 			if (length > 8) {
