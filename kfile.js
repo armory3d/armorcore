@@ -31,28 +31,13 @@ try {
 	}
 
 	eval(fs.readFileSync(__dirname + "/make.js") + "");
-	await make_run();
 
 	if (process.argv.indexOf("--run") >= 0) {
-		fs.cp(process.cwd() + "/build/krom", __dirname + "/Deployment", {recursive: true}, function (err){});
-	}
-
-	if (process.env.ARM_TSONLY) {
-		process.exit(1);
+		fs.cp(process.cwd() + "/build/krom", __dirname + "/Deployment", { recursive: true }, function (err) {});
 	}
 }
 catch (e) {
 }
-
-const system = platform === Platform.Windows ? "win32" :
-			   platform === Platform.Linux   ? "linux" :
-			   platform === Platform.OSX     ? "macos" :
-			   platform === Platform.Wasm    ? "wasm" :
-			   platform === Platform.Android ? "android" :
-			   platform === Platform.iOS     ? "ios" :
-			   								   "unknown";
-
-const build = flags.release ? 'release' : 'debug';
 
 let c_project = new Project(flags.name);
 await c_project.addProject('Kinc');
@@ -65,14 +50,6 @@ if (fs.existsSync(process.cwd() + '/icon.png')) {
 	}
 }
 
-if (flags.with_audio) {
-	c_project.addDefine('WITH_AUDIO');
-}
-
-if (flags.with_eval) {
-	c_project.addDefine('WITH_EVAL');
-}
-
 c_project.addDefine('WITH_MINITS');
 c_project.addIncludeDir('Sources/lib/gc');
 c_project.addFile('Sources/lib/gc/*.c');
@@ -81,19 +58,13 @@ c_project.addFile('Sources/krom.c');
 let krom_c_path = path.relative(__dirname, process.cwd()) + '/build/krom.c';
 c_project.addDefine('KROM_C_PATH="../' + krom_c_path + '"');
 
-////
-flags.with_iron = false;
-c_project.addFile('Sources/iron/iron_map.c');
-c_project.addFile('Sources/iron/iron_array.c');
-c_project.addFile('Sources/iron/iron_string.c');
-c_project.addFile('Sources/iron/iron_armpack.c');
-c_project.addFile('Sources/iron/iron_vec2.c');
-c_project.addFile('Sources/iron/iron_gc.c');
-c_project.addFile('Sources/iron/iron_json.c');
-c_project.addFile('Sources/iron/io_obj.c');
-c_project.addIncludeDir('Sources/lib/stb'); // iron_map.c -> stb_ds.h
-c_project.addIncludeDir('Sources/lib/jsmn'); // iron_json.c -> jsmn.h
-////
+if (flags.with_audio) {
+	c_project.addDefine('WITH_AUDIO');
+}
+
+if (flags.with_eval) {
+	c_project.addDefine('WITH_EVAL');
+}
 
 if (flags.with_g2) {
 	c_project.addDefine('WITH_G2');
@@ -102,7 +73,15 @@ if (flags.with_g2) {
 
 if (flags.with_iron) {
 	c_project.addDefine('WITH_IRON');
-	c_project.addFile('Sources/iron/*.c');
+	// c_project.addFile('Sources/iron/*.c');
+	c_project.addFile('Sources/iron/iron_map.c');
+	c_project.addFile('Sources/iron/iron_array.c');
+	c_project.addFile('Sources/iron/iron_string.c');
+	c_project.addFile('Sources/iron/iron_armpack.c');
+	c_project.addFile('Sources/iron/iron_vec2.c');
+	c_project.addFile('Sources/iron/iron_gc.c');
+	c_project.addFile('Sources/iron/iron_json.c');
+	c_project.addFile('Sources/iron/io_obj.c');
 	c_project.addIncludeDir("Sources/lib/stb"); // iron_map.c -> stb_ds.h
 	c_project.addIncludeDir('Sources/lib/jsmn'); // iron_json.c -> jsmn.h
 }
@@ -110,22 +89,6 @@ if (flags.with_iron) {
 if (flags.with_zui) {
 	c_project.addDefine('WITH_ZUI');
 	c_project.addFile('Sources/zui/*.c');
-}
-
-if (platform === Platform.Android) {
-	c_project.addFile('Sources/android/android_file_dialog.c');
-	c_project.addFile('Sources/android/android_http_request.c');
-	c_project.addDefine('IDLE_SLEEP');
-
-	c_project.targetOptions.android.package = flags.package;
-	c_project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
-	c_project.targetOptions.android.screenOrientation = ['sensorLandscape'];
-	c_project.targetOptions.android.minSdkVersion = 30;
-	c_project.targetOptions.android.targetSdkVersion = 33;
-}
-else if (platform === Platform.iOS) {
-	c_project.addFile('Sources/ios/ios_file_dialog.mm');
-	c_project.addDefine('IDLE_SLEEP');
 }
 
 if (platform === Platform.Windows) {
@@ -140,15 +103,26 @@ if (platform === Platform.Windows) {
 else if (platform === Platform.Linux) {
 	c_project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
 }
+else if (platform === Platform.OSX) {
+
+}
 else if (platform === Platform.Android) {
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
+
+	c_project.addFile('Sources/android/android_file_dialog.c');
+	c_project.addFile('Sources/android/android_http_request.c');
+	c_project.addDefine('IDLE_SLEEP');
+
+	c_project.targetOptions.android.package = flags.package;
+	c_project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
+	c_project.targetOptions.android.screenOrientation = ['sensorLandscape'];
+	c_project.targetOptions.android.minSdkVersion = 30;
+	c_project.targetOptions.android.targetSdkVersion = 33;
 }
 else if (platform === Platform.iOS) {
-
-}
-else if (platform === Platform.OSX) {
-
+	c_project.addFile('Sources/ios/ios_file_dialog.mm');
+	c_project.addDefine('IDLE_SLEEP');
 }
 
 if (flags.with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
@@ -179,20 +153,24 @@ if (flags.with_nfd && (platform === Platform.Windows || platform === Platform.Li
 		c_project.addFile('Sources/lib/nfd/nfd_cocoa.m');
 	}
 }
+
 if (flags.with_tinydir) {
 	c_project.addDefine('WITH_TINYDIR');
 	c_project.addIncludeDir("Sources/lib/tinydir");
 }
+
 if (flags.with_zlib) {
 	c_project.addDefine('WITH_ZLIB');
 	c_project.addIncludeDir("Sources/lib/zlib");
 	c_project.addFile("Sources/lib/zlib/*.h");
 	c_project.addFile("Sources/lib/zlib/*.c");
 }
+
 if (flags.with_stb_image_write) {
 	c_project.addDefine('WITH_STB_IMAGE_WRITE');
 	c_project.addIncludeDir("Sources/lib/stb");
 }
+
 if (flags.with_mpeg_write) {
 	c_project.addDefine('WITH_MPEG_WRITE');
 	c_project.addIncludeDir("Sources/lib/jo_mpeg");

@@ -15,8 +15,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Get Submodules
-      run: git submodule update --init --recursive
     - name: Get msbuild
       uses: microsoft/setup-msbuild@v1
     - name: Apply patch

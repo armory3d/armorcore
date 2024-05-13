@@ -14,7 +14,7 @@ function ensureDirSync(dir) {
 }
 fs.ensureDirSync = ensureDirSync;
 
-function sys() {
+function exe_ext() {
 	if (os.platform() === 'win32') {
 		return '.exe';
 	}
@@ -23,7 +23,7 @@ function sys() {
 	}
 }
 
-function sysdir() {
+function sys_dir() {
 	if (os.platform() === 'linux') {
 		if (os.arch() === 'arm64') return 'linux_arm64';
 		else if (os.arch() === 'x64') return 'linux_x64';
@@ -43,7 +43,7 @@ function matches(text, pattern) {
 }
 
 function stringify(path) {
-	return path.replace(/\\/g, '/');
+	return path.replaceAll("\\", '/');
 }
 
 function searchFiles(currentDir, pattern) {
@@ -93,16 +93,11 @@ class Project {
 		this.defines = this.defines.concat(project.defines);
 	}
 
-	unglob(str) {
-		str = str.replace(/\\/g, '/');
-		return str;
-	}
-
 	addAssets(match, options) {
 		if (!options)
 			options = {};
 		if (!path.isAbsolute(match)) {
-			let base = this.unglob(path.resolve(this.scriptdir));
+			let base = stringify(path.resolve(this.scriptdir));
 			if (!base.endsWith('/')) {
 				base += '/';
 			}
@@ -119,7 +114,7 @@ class Project {
 		if (!options)
 			options = {};
 		if (!path.isAbsolute(match)) {
-			let base = this.unglob(path.resolve(this.scriptdir));
+			let base = stringify(path.resolve(this.scriptdir));
 			if (!base.endsWith('/')) {
 				base += '/';
 			}
@@ -192,43 +187,39 @@ class AssetConverter {
 		let files = searchFiles(basedir, pattern);
 		const self = this;
 
-		function convertAssets() {
-			let parsedFiles = [];
-			function convertAsset(file, index) {
-				let fileinfo = path.parse(file);
-				console.log('Exporting asset ' + (index + 1) + ' of ' + files.length + ' (' + fileinfo.base + ').');
-				const ext = fileinfo.ext.toLowerCase();
-				switch (ext) {
-					case '.png':
-					case '.jpg':
-					case '.hdr': {
-						let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
-						let images;
-						if (options.noprocessing) {
-							images = self.exporter.copyBlob(file, exportInfo.destination, options);
-						}
-						else {
-							images = self.exporter.copyImage(file, exportInfo.destination, options);
-						}
-						parsedFiles.push({ name: exportInfo.name, from: file, type: 'image', files: images, original_width: options.original_width, original_height: options.original_height, readable: options.readable, embed: options.embed });
-						break;
+		let parsedFiles = [];
+
+		let index = 0;
+		for (let file of files) {
+			let fileinfo = path.parse(file);
+			console.log('Exporting asset ' + (index + 1) + ' of ' + files.length + ' (' + fileinfo.base + ').');
+			const ext = fileinfo.ext.toLowerCase();
+			switch (ext) {
+				case '.png':
+				case '.jpg':
+				case '.hdr': {
+					let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
+					let images;
+					if (options.noprocessing) {
+						images = self.exporter.copyBlob(file, exportInfo.destination, options);
 					}
-					default: {
-						let exportInfo = AssetConverter.createExportInfo(fileinfo, true, options, self.exporter.options.from);
-						let blobs = self.exporter.copyBlob(file, exportInfo.destination, options);
-						parsedFiles.push({ name: exportInfo.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
-						break;
+					else {
+						images = self.exporter.copyImage(file, exportInfo.destination, options);
 					}
+					parsedFiles.push({ name: exportInfo.name, from: file, type: 'image', files: images, original_width: options.original_width, original_height: options.original_height, readable: options.readable, embed: options.embed });
+					break;
+				}
+				default: {
+					let exportInfo = AssetConverter.createExportInfo(fileinfo, true, options, self.exporter.options.from);
+					let blobs = self.exporter.copyBlob(file, exportInfo.destination, options);
+					parsedFiles.push({ name: exportInfo.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
+					break;
 				}
 			}
-			let index = 0;
-			for (let file of files) {
-				convertAsset(file, index);
-				index += 1;
-			}
-			return parsedFiles;
-		};
-		return convertAssets();
+
+			index += 1;
+		}
+		return parsedFiles;
 	}
 
 	run(temp) {
@@ -297,7 +288,8 @@ class ShaderCompiler {
 
 		let compiledShaders = [];
 
-		function compile(shader, index) {
+		let index = 0;
+		for (let shader of shaders) {
 			let parsed = path.parse(shader);
 			console.log('Compiling shader ' + (index + 1) + ' of ' + shaders.length + ' (' + parsed.base + ').');
 			let compiledShader = null;
@@ -319,18 +311,6 @@ class ShaderCompiler {
 			compiledShader.name = AssetConverter.createExportInfo(parsed, false, options, self.exporter.options.from).name;
 			compiledShaders.push(compiledShader);
 			++index;
-		}
-
-		let index = 0;
-		for (let shader of shaders) {
-			try {
-				compile(shader, index);
-			}
-			catch (err) {
-				reject();
-				return;
-			}
-			index += 1;
 		}
 
 		return compiledShaders;
@@ -397,7 +377,7 @@ class ShaderCompiler {
 }
 
 function convertImage(from, temp, to, root, exe, params) {
-	child_process.spawnSync(path.join(root, 'Kinc', 'Tools', sysdir(), exe), params)
+	child_process.spawnSync(path.join(root, 'Kinc', 'Tools', sys_dir(), exe), params)
 	fs.renameSync(temp, to);
 }
 
@@ -409,7 +389,7 @@ function exportImage(root, from, to) {
 		return outputformat;
 	}
 	fs.ensureDirSync(path.dirname(to));
-	const exe = 'kraffiti' + sys();
+	const exe = 'kraffiti' + exe_ext();
 	let params = ['from=' + from, 'to=' + temp, 'format=lz4'];
 	params.push('filter=nearest');
 	convertImage(from, temp, to, root, exe, params);
@@ -420,12 +400,12 @@ class ArmorCoreExporter {
 	constructor(options) {
 		this.options = options;
 		this.sources = [];
-		this.addSourceDirectory(path.join(options.root, 'Sources'));
+		this.addSourceDirectory(path.join(__dirname, 'Sources'));
 		if (globalThis.flags.with_iron) {
-			this.addSourceDirectory(path.join(options.root, 'Sources/iron'));
+			this.addSourceDirectory(path.join(__dirname, 'Sources/iron'));
 		}
 		if (globalThis.flags.with_zui) {
-			this.addSourceDirectory(path.join(options.root, 'Sources/zui'));
+			this.addSourceDirectory(path.join(__dirname, 'Sources/zui'));
 		}
 		this.projectFiles = !options.noproject;
 	}
@@ -459,28 +439,25 @@ class ArmorCoreExporter {
 		else if (process.platform === 'darwin') {
 			defines.push('krom_darwin');
 		}
-		defines.push('arm_minits');
 		return {
 			from: this.options.from.toString(),
 			sources: this.sources,
-			defines: defines,
-			system: this.systemDirectory,
-			name: name,
+			defines: defines
 		};
 	}
 
 	export(name, tsOptions) {
-		fs.ensureDirSync(path.join(this.options.to, this.systemDirectory));
+		fs.ensureDirSync(path.join(this.options.to, 'krom'));
 	}
 
 	copyImage(from, to, options) {
-		let format = exportImage(this.options.root, from, path.join(this.options.to, this.systemDirectory, to));
+		let format = exportImage(__dirname, from, path.join(this.options.to, 'krom', to));
 		return [to + '.' + format];
 	}
 
 	copyBlob(from, to) {
-		fs.ensureDirSync(path.join(this.options.to, this.systemDirectory, path.dirname(to)));
-		fs.copyFileSync(from.toString(), path.join(this.options.to, this.systemDirectory, to));
+		fs.ensureDirSync(path.join(this.options.to, 'krom', path.dirname(to)));
+		fs.copyFileSync(from.toString(), path.join(this.options.to, 'krom', to));
 		return [to];
 	}
 
@@ -603,6 +580,81 @@ function writeTSProject(projectdir, projectFiles, options) {
 	(1, eval)(fs.readFileSync(minits) + '');
 }
 
+function exportProjectFiles(name, resourceDir, options, exporter, defines, id) {
+	let tsOptions = exporter.tsOptions(name, defines);
+	writeTSProject(options.to, !options.noproject, tsOptions);
+	exporter.export(name, tsOptions);
+
+	console.log('Done.');
+	return name;
+}
+
+function exportArmorCoreProject(options) {
+	console.log('Creating ArmorCore project files.');
+	let project = null;
+	if (fs.existsSync(path.join(options.from, 'project.js'))) {
+		try {
+			project = loadProject(options.from, 'project.js');
+		}
+		catch (x) {
+			console.error(x);
+		}
+	}
+
+	if (project == null) {
+		fs.writeFileSync('build/krom.c', 'int kickstart(int argc, char **argv) { return 0; }\n');
+		return;
+	}
+
+	let temp = path.join(options.to, 'temp');
+
+	let exporter = new ArmorCoreExporter(options);
+	let buildDir = path.join(options.to, 'krom-build');
+	// Create the target build folder
+	// e.g. 'build/krom'
+	fs.ensureDirSync(path.join(options.to, 'krom'));
+
+	for (let source of project.sources) {
+		exporter.addSourceDirectory(source);
+	}
+	project.scriptdir = __dirname;
+
+	let assetConverter = new AssetConverter(exporter, options, project.assetMatchers);
+	let assets = assetConverter.run(temp);
+	let shaderDir = path.join(options.to, 'krom', 'data');
+
+	fs.ensureDirSync(shaderDir);
+
+	let exportedShaders = [];
+	let krafix = path.join(__dirname, 'Kinc', 'Tools', sys_dir(), 'krafix' + exe_ext())
+	let shaderCompiler = new ShaderCompiler(exporter, krafix, shaderDir, temp, buildDir, options, project.shaderMatchers);
+	try {
+		exportedShaders = shaderCompiler.run();
+	}
+	catch (err) {
+		return Promise.reject(err);
+	}
+
+	let embed_files = [];
+	for (let asset of assets) {
+		if (asset.embed) embed_files.push(file);
+	}
+	for (let shader of exportedShaders) {
+		if (shader.embed) embed_files.push(shader);
+	}
+
+	if (embed_files.length > 0) {
+		let embed_string = "";
+		for (let file of embed_files) {
+			embed_string += file.files[0] + '\n';
+		}
+		fs.ensureDirSync(path.join(options.to, 'krom', 'data'));
+		fs.writeFileSync(path.join(options.to, 'krom', 'data', 'embed.txt'), embed_string);
+	}
+
+	exportProjectFiles(project.name, path.join(options.to, 'krom-resources'), options, exporter, project.defines, project.id);
+}
+
 let options = [
 	{
 		full: 'from',
@@ -617,7 +669,7 @@ let options = [
 	{
 		full: 'graphics',
 		short: 'g',
-		description: 'Graphics api to use. Possible parameters are direct3d9, direct3d11, direct3d12, metal, vulkan and opengl.',
+		description: 'Graphics api to use. Possible parameters are direct3d11, direct3d12, metal, vulkan and opengl.',
 		default: 'default'
 	},
 	{
@@ -656,126 +708,11 @@ for (let i = 2; i < args.length; ++i) {
 	}
 }
 
-function fixName(name) {
-	return name;
+console.log('Using ArmorCore from ' + __dirname + ".");
+try {
+	exportArmorCoreProject(parsedOptions);
 }
-
-function exportProjectFiles(name, resourceDir, options, exporter, defines, id) {
-	let tsOptions = exporter.tsOptions(name, defines);
-	writeTSProject(options.to, !options.noproject, tsOptions);
-	exporter.export(name, tsOptions);
-
-	console.log('Done.');
-	return name;
-}
-
-function exportArmorCoreProject(options) {
-	console.log('Creating ArmorCore project files.');
-	let project = null;
-	if (fs.existsSync(path.join(options.from, 'project.js'))) {
-		try {
-			project = loadProject(options.from, 'project.js');
-		}
-		catch (x) {
-			console.error(x);
-		}
-	}
-
-	let temp = path.join(options.to, 'temp');
-
-	let exporter = new ArmorCoreExporter(options);
-	exporter.systemDirectory = 'krom';
-	let buildDir = path.join(options.to, exporter.systemDirectory + '-build');
-	// Create the target build folder
-	// e.g. 'build/krom'
-	fs.ensureDirSync(path.join(options.to, exporter.systemDirectory));
-	exporter.name = project.name;
-	for (let source of project.sources) {
-		exporter.addSourceDirectory(source);
-	}
-	project.scriptdir = options.root;
-
-	let assetConverter = new AssetConverter(exporter, options, project.assetMatchers);
-	let assets = assetConverter.run(temp);
-	let shaderDir = path.join(options.to, exporter.systemDirectory, 'data');
-
-	fs.ensureDirSync(shaderDir);
-	let oldResources = null;
-
-	let exportedShaders = [];
-	let shaderCompiler = new ShaderCompiler(exporter, options.krafix, shaderDir, temp, buildDir, options, project.shaderMatchers);
-	try {
-		exportedShaders = shaderCompiler.run();
-	}
-	catch (err) {
-		return Promise.reject(err);
-	}
-
-	function findShader(name) {
-		let fallback = {};
-		fallback.files = [];
-		try {
-			for (let file of oldResources.files) {
-				if (file.type === 'shader' && file.name === fixName(name)) {
-					return file;
-				}
-			}
-		}
-		catch (error) {
-			return fallback;
-		}
-		return fallback;
-	}
-
-	let files = [];
-	let embed_files = [];
-	for (let asset of assets) {
-		let file = {
-			name: fixName(asset.name),
-			files: asset.files,
-			type: asset.type
-		};
-		if (file.type === 'image') {
-			file.original_width = asset.original_width;
-			file.original_height = asset.original_height;
-			if (asset.readable)
-				file.readable = asset.readable;
-		}
-		if (asset.embed) embed_files.push(file);
-	}
-	for (let shader of exportedShaders) {
-		let oldShader = findShader(shader.name);
-		let file = {
-			name: fixName(shader.name),
-			files: shader.files === null ? oldShader.files : shader.files,
-			type: 'shader'
-		};
-		files.push(file);
-		if (shader.embed) embed_files.push(file);
-	}
-
-	if (embed_files.length > 0) {
-		let embed_string = "";
-		for (let file of embed_files) {
-			embed_string += file.files[0] + '\n';
-		}
-		fs.ensureDirSync(path.join(options.to, exporter.systemDirectory, 'data'));
-		fs.writeFileSync(path.join(options.to, exporter.systemDirectory, 'data', 'embed.txt'), embed_string);
-	}
-
-	return exportProjectFiles(project.name, path.join(options.to, exporter.systemDirectory + '-resources'), options, exporter, project.defines, project.id);
-}
-
-function make_run() {
-	let options = parsedOptions;
-	options.root = __dirname;
-	console.log('Using ArmorCore from ' + options.root + ".");
-	options.krafix = path.join(options.root, 'Kinc', 'Tools', sysdir(), 'krafix' + sys());
-	try {
-		exportArmorCoreProject(options);
-	}
-	catch (error) {
-		console.log(error);
-		process.exit(1);
-	}
+catch (error) {
+	console.log(error);
+	process.exit(1);
 }

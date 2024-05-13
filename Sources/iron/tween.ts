@@ -1,6 +1,5 @@
 
-///if arm_minits
-///else
+///if 0
 
 let _tween_default_overshoot: f32 = 1.70158;
 let _tween_anims: tween_anim_t[] = [];

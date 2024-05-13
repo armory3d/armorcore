@@ -1,6 +1,5 @@
 // @ts-nocheck
-///if arm_minits
-///else
+///if 0
 
 declare type i8 = number;
 declare type i16 = number;
