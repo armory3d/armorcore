@@ -95,17 +95,21 @@ function zui_nodes_PAN_Y(): f32 {
 }
 
 function _zui_image(image: image_t, tint: i32 = 0xffffffff, h: f32 = -1.0, sx: i32 = 0, sy: i32 = 0, sw: i32 = 0, sh: i32 = 0): zui_state_t {
-	let any_image: any;
-	let is_rt: bool;
 	if (image.texture_ != null) {
-		any_image = image.texture_;
-		is_rt = false;
+		return zui_sub_image(image.texture_, false, tint, h, sx, sy, sw, sh);
 	}
 	else {
-		any_image = image.render_target_;
-		is_rt = true;
+		return zui_sub_image(image.render_target_, true, tint, h, sx, sy, sw, sh);
 	}
-	return zui_sub_image(any_image, is_rt, tint, h, sx, sy, sw, sh);
+}
+
+function _zui_tooltip_image(image: image_t, max_width: i32 = 0) {
+	if (image.texture_ != null) {
+		return zui_tooltip_image(image.texture_, max_width);
+	}
+	else {
+		return zui_tooltip_render_target(image.render_target_, max_width);
+	}
 }
 
 function _zui_set_scale(ui: zui_t, factor: f32) {
@@ -222,7 +226,8 @@ declare function zui_hovered_tab_name(): string;
 declare function zui_radio(handle: zui_handle_t, position: i32, text: string, label: string = ""): bool;
 declare function zui_start_text_edit(handle: zui_handle_t, align: zui_align_t = zui_align_t.LEFT): void;
 declare function zui_tooltip(s: string): void;
-declare function zui_tooltip_image(image: image_t, max_width: i32 = 0): void;
+declare function zui_tooltip_image(tex: any, max_width: i32 = 0): void;
+declare function zui_tooltip_render_target(rt: any, max_width: i32 = 0): void;
 declare function zui_separator(h: i32 = 4, fill: bool = true): void;
 declare function zui_text_area(handle: zui_handle_t, align: zui_align_t = zui_align_t.LEFT, editable: bool = true, label: string = "", word_wrap: bool = false): string;
 declare function zui_window(handle: zui_handle_t, x: i32, y: i32, w: i32, h: i32, drag: bool = false): bool;
