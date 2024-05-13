@@ -602,6 +602,7 @@ function exportArmorCoreProject(options) {
 	}
 
 	if (project == null) {
+		fs.ensureDirSync('build');
 		fs.writeFileSync('build/krom.c', 'int kickstart(int argc, char **argv) { return 0; }\n');
 		return;
 	}
