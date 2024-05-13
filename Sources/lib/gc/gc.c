@@ -1,11 +1,10 @@
 #include "gc.h"
 
-#include <errno.h>
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define PTRSIZE sizeof(char*)
+#define PTRSIZE sizeof(char *)
 
 #define GC_TAG_NONE 0x0
 #define GC_TAG_ROOT 0x1
@@ -19,7 +18,7 @@ typedef struct gc_allocation {
 	void *ptr; // mem pointer
 	size_t size; // allocated size in bytes
 	char tag; // the tag for mark-and-sweep
-	void (*dtor)(void *); // destructor
+	char roots; // number of root users
 	struct gc_allocation_t *next; // separate chaining
 } gc_allocation_t;
 
@@ -45,14 +44,17 @@ garbage_collector_t _gc;
 garbage_collector_t *gc = &_gc;
 
 static bool is_prime(size_t n) {
-	if (n <= 3)
+	if (n <= 3) {
 		return n > 1; // as 2 and 3 are prime
-	else if (n % 2 == 0 || n % 3 == 0)
+	}
+	else if (n % 2 == 0 || n % 3 == 0) {
 		return false; // check if n is divisible by 2 or 3
+	}
 	else {
 		for (size_t i = 5; i * i <= n; i += 6) {
-			if (n % i == 0 || n%(i + 2) == 0)
+			if (n % i == 0 || n%(i + 2) == 0) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -63,12 +65,12 @@ static size_t next_prime(size_t n) {
 	return n;
 }
 
-static gc_allocation_t* gc_allocation_new(void *ptr, size_t size, void (*dtor)(void *)) {
-	gc_allocation_t *a = (gc_allocation_t *) malloc(sizeof(gc_allocation_t));
+static gc_allocation_t *gc_allocation_new(void *ptr, size_t size) {
+	gc_allocation_t *a = (gc_allocation_t *)malloc(sizeof(gc_allocation_t));
 	a->ptr = ptr;
 	a->size = size;
 	a->tag = GC_TAG_NONE;
-	a->dtor = dtor;
+	a->roots = 0;
 	a->next = NULL;
 	return a;
 }
@@ -79,15 +81,14 @@ static void gc_allocation_delete(gc_allocation_t *a) {
 
 static gc_allocation_map_t *gc_allocation_map_new(size_t min_capacity, size_t capacity,
 		double sweep_factor, double downsize_factor, double upsize_factor) {
-	gc_allocation_map_t *am = (gc_allocation_map_t *) malloc(sizeof(gc_allocation_map_t));
+	gc_allocation_map_t *am = (gc_allocation_map_t *)malloc(sizeof(gc_allocation_map_t));
 	am->min_capacity = next_prime(min_capacity);
 	am->capacity = next_prime(capacity);
-	if (am->capacity < am->min_capacity) am->capacity = am->min_capacity;
 	am->sweep_factor = sweep_factor;
-	am->sweep_limit = (int) (sweep_factor * am->capacity);
+	am->sweep_limit = (int)(sweep_factor * am->capacity);
 	am->downsize_factor = downsize_factor;
 	am->upsize_factor = upsize_factor;
-	am->allocs = (gc_allocation_t **) calloc(am->capacity, sizeof(gc_allocation_t *));
+	am->allocs = (gc_allocation_t **)calloc(am->capacity, sizeof(gc_allocation_t *));
 	am->size = 0;
 	return am;
 }
@@ -139,7 +140,7 @@ static void gc_allocation_map_resize(gc_allocation_map_t *am, size_t new_capacit
 }
 
 static bool gc_allocation_map_resize_to_fit(gc_allocation_map_t *am) {
-	double load_factor = (double) am->size / (double) am->capacity;
+	double load_factor = (double)am->size / (double)am->capacity;
 	if (load_factor > am->upsize_factor) {
 		gc_allocation_map_resize(am, next_prime(am->capacity * 2));
 		return true;
@@ -163,14 +164,13 @@ static gc_allocation_t *gc_allocation_map_get(gc_allocation_map_t *am, void *ptr
 	return NULL;
 }
 
-static gc_allocation_t *gc_allocation_map_put(gc_allocation_map_t *am,
-		void *ptr, size_t size, void (*dtor)(void *)) {
+static gc_allocation_t *gc_allocation_map_put(gc_allocation_map_t *am, void *ptr, size_t size) {
 	size_t index = gc_hash(ptr) % am->capacity;
-	gc_allocation_t *alloc = gc_allocation_new(ptr, size, dtor);
+	gc_allocation_t *alloc = gc_allocation_new(ptr, size);
 	gc_allocation_t *cur = am->allocs[index];
 	gc_allocation_t *prev = NULL;
-	/* Upsert if ptr is already known (e.g. dtor update). */
-	while(cur != NULL) {
+	/* Upsert if ptr is already known */
+	while (cur != NULL) {
 		if (cur->ptr == ptr) {
 			// found it
 			alloc->next = cur->next;
@@ -207,7 +207,7 @@ static void gc_allocation_map_remove(gc_allocation_map_t *am, void *ptr, bool al
 	gc_allocation_t *cur = am->allocs[index];
 	gc_allocation_t *prev = NULL;
 	gc_allocation_t *next;
-	while(cur != NULL) {
+	while (cur != NULL) {
 		next = cur->next;
 		if (cur->ptr == ptr) {
 			// found it
@@ -234,12 +234,14 @@ static void gc_allocation_map_remove(gc_allocation_map_t *am, void *ptr, bool al
 }
 
 static void* gc_mcalloc(size_t count, size_t size) {
-	if (!count) return malloc(size);
+	if (!count) {
+		return malloc(size);
+	}
 	return calloc(count, size);
 }
 
-static void *gc_allocate(size_t count, size_t size, void(*dtor)(void *)) {
-	/* Allocation logic that generalizes over malloc/calloc. */
+static void *gc_allocate(size_t count, size_t size) {
+	/* Allocation logic that generalizes over malloc/calloc */
 	/* Check if we reached the high-water mark and need to clean up */
 	if (gc->allocs->size > gc->allocs->sweep_limit && !gc->paused) {
 		size_t freed_mem = _gc_run();
@@ -248,13 +250,13 @@ static void *gc_allocate(size_t count, size_t size, void(*dtor)(void *)) {
 	void *ptr = gc_mcalloc(count, size);
 	size_t alloc_size = count ? count * size : size;
 	/* If allocation fails, force an out-of-policy run to free some memory and try again. */
-	if (!ptr && !gc->paused && (errno == EAGAIN || errno == ENOMEM)) {
+	if (!ptr && !gc->paused) {
 		_gc_run();
 		ptr = gc_mcalloc(count, size);
 	}
 	/* Start managing the memory we received from the system */
 	if (ptr) {
-		gc_allocation_t *alloc = gc_allocation_map_put(gc->allocs, ptr, alloc_size, dtor);
+		gc_allocation_t *alloc = gc_allocation_map_put(gc->allocs, ptr, alloc_size);
 		/* Deal with metadata allocation failure */
 		if (alloc) {
 			ptr = alloc->ptr;
@@ -268,10 +270,25 @@ static void *gc_allocate(size_t count, size_t size, void(*dtor)(void *)) {
 	return ptr;
 }
 
-static void gc_make_root(void *ptr) {
+int roots = 0;
+
+void _gc_root(void *ptr) {
 	gc_allocation_t *alloc = gc_allocation_map_get(gc->allocs, ptr);
 	if (alloc) {
+		alloc->roots++;
 		alloc->tag |= GC_TAG_ROOT;
+		roots++;
+	}
+}
+
+void _gc_unroot(void *ptr) {
+	gc_allocation_t *alloc = gc_allocation_map_get(gc->allocs, ptr);
+	if (alloc) {
+		alloc->roots--;
+		roots--;
+		if (alloc->roots == 0) {
+			alloc->tag &= ~GC_TAG_ROOT;
+		}
 	}
 }
 
@@ -336,9 +353,6 @@ static size_t gc_sweep() {
 			else {
 				/* no reference to this chunk, hence delete it */
 				total += chunk->size;
-				if (chunk->dtor) {
-					chunk->dtor(chunk->ptr);
-				}
 				free(chunk->ptr);
 				/* and remove it from the bookkeeping */
 				next = chunk->next;
@@ -367,22 +381,10 @@ void *_gc_calloc(size_t count, size_t size) {
 	return gc_allocate(count, size, NULL);
 }
 
-void *_gc_calloc_static(size_t count, size_t size) {
-	void *ptr = gc_allocate(count, size, NULL);
-	gc_make_root(ptr);
-	return ptr;
-}
-
-void *_gc_make_static(void *ptr) {
-    gc_make_root(ptr);
-    return ptr;
-}
-
 void *_gc_realloc(void *p, size_t size) {
 	gc_allocation_t *alloc = gc_allocation_map_get(gc->allocs, p);
 	if (p && !alloc) {
 		// the user passed an unknown pointer
-		errno = EINVAL;
 		return NULL;
 	}
 	void *q = realloc(p, size);
@@ -401,9 +403,8 @@ void *_gc_realloc(void *p, size_t size) {
 	}
 	else {
 		// successful reallocation w/ copy
-		void (*dtor)(void *) = alloc->dtor;
 		gc_allocation_map_remove(gc->allocs, p, true);
-		gc_allocation_map_put(gc->allocs, q, size, dtor);
+		gc_allocation_map_put(gc->allocs, q, size);
 	}
 	return q;
 }
@@ -411,9 +412,6 @@ void *_gc_realloc(void *p, size_t size) {
 void _gc_free(void *ptr) {
 	gc_allocation_t *alloc = gc_allocation_map_get(gc->allocs, ptr);
 	if (alloc) {
-		if (alloc->dtor) {
-			alloc->dtor(ptr);
-		}
 		free(ptr);
 		gc_allocation_map_remove(gc->allocs, ptr, true);
 	}

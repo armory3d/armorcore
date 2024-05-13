@@ -451,7 +451,7 @@ kinc_g4_shader_t *krom_g4_create_shader(buffer_t *data, i32 shader_type) {
 	return shader;
 }
 
-any krom_g4_create_vertex_shader_from_source(string_t *source) {
+kinc_g4_shader_t *krom_g4_create_vertex_shader_from_source(string_t *source) {
 
 #ifdef WITH_D3DCOMPILER
 
@@ -463,8 +463,15 @@ any krom_g4_create_vertex_shader_from_source(string_t *source) {
 	HRESULT hr = D3DCompile(temp_string_vs, strlen(source) + 1, NULL, NULL, NULL, "main", "vs_5_0", flags, 0, &shader_buffer, &error_message);
 	if (hr != S_OK) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->lpVtbl->GetBufferPointer(error_message));
-		return;
+		return NULL;
 	}
+
+	ID3D11ShaderReflection *reflector = NULL;
+	D3DReflect(shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer), &IID_ID3D11ShaderReflection, (void **)&reflector);
+
+	int size = shader_buffer->lpVtbl->GetBufferSize(shader_buffer);
+	char *file = malloc(size * 2);
+	int output_len = 0;
 
 	bool hasBone = strstr(temp_string_vs, "bone :") != NULL;
 	bool hasCol = strstr(temp_string_vs, "col :") != NULL;
@@ -481,9 +488,6 @@ any krom_g4_create_vertex_shader_from_source(string_t *source) {
 	if (hasTex) i32_map_set(attributes, "tex", index++);
 	if (hasBone) i32_map_set(attributes, "weight", index++);
 
-	char file[2048];
-	size_t output_len = 0;
-
 	file[output_len] = (char)index;
 	output_len += 1;
 
@@ -496,9 +500,6 @@ any krom_g4_create_vertex_shader_from_source(string_t *source) {
 		file[output_len] = i32_map_get(attributes, keys->buffer[i]);
 		output_len += 1;
 	}
-
-	ID3D11ShaderReflection *reflector = NULL;
-	D3DReflect(shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer), &IID_ID3D11ShaderReflection, (void **)&reflector);
 
 	D3D11_SHADER_DESC desc;
 	reflector->lpVtbl->GetDesc(reflector, &desc);
@@ -575,6 +576,7 @@ any krom_g4_create_vertex_shader_from_source(string_t *source) {
 
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 	kinc_g4_shader_init(shader, file, (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
+	free(file);
 
 	#elif defined(KINC_METAL)
 
@@ -603,7 +605,7 @@ any krom_g4_create_vertex_shader_from_source(string_t *source) {
 	return shader;
 }
 
-any krom_g4_create_fragment_shader_from_source(string_t *source) {
+kinc_g4_shader_t *krom_g4_create_fragment_shader_from_source(string_t *source) {
 
 	#ifdef WITH_D3DCOMPILER
 
@@ -615,17 +617,17 @@ any krom_g4_create_fragment_shader_from_source(string_t *source) {
 	HRESULT hr = D3DCompile(temp_string_fs, strlen(source) + 1, NULL, NULL, NULL, "main", "ps_5_0", flags, 0, &shader_buffer, &error_message);
 	if (hr != S_OK) {
 		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->lpVtbl->GetBufferPointer(error_message));
-		return;
+		return NULL;
 	}
-
-	char file[2048];
-	size_t output_len = 0;
-
-	file[output_len] = 0;
-	output_len += 1;
 
 	ID3D11ShaderReflection *reflector = NULL;
 	D3DReflect(shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer), &IID_ID3D11ShaderReflection, (void **)&reflector);
+
+	int size = shader_buffer->lpVtbl->GetBufferSize(shader_buffer);
+	char *file = malloc(size * 2);
+	int output_len = 0;
+	file[output_len] = 0;
+	output_len += 1;
 
 	D3D11_SHADER_DESC desc;
 	reflector->lpVtbl->GetDesc(reflector, &desc);
@@ -698,10 +700,11 @@ any krom_g4_create_fragment_shader_from_source(string_t *source) {
 	output_len += shader_buffer->lpVtbl->GetBufferSize(shader_buffer);
 
 	shader_buffer->lpVtbl->Release(shader_buffer);
-	//reflector->lpVtbl->Release(reflector);
+	reflector->lpVtbl->Release(reflector);
 
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 	kinc_g4_shader_init(shader, file, (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
+	free(file);
 
 	#elif defined(KINC_METAL)
 
@@ -1789,7 +1792,7 @@ char *krom_read_directory(char *path, bool folders_only) {
 	#endif
 
 	#ifdef KINC_WINDOWS
-	wchar_t files[1024];
+	wchar_t *files = malloc(1024 * sizeof(wchar_t));
 	#else
 	char *files = malloc(1024);
 	#endif
@@ -1825,11 +1828,7 @@ char *krom_read_directory(char *path, bool folders_only) {
 	}
 
 	tinydir_close(&dir);
-	#ifdef KINC_WINDOWS
 	return files;
-	#else
-	return files;
-	#endif
 }
 #endif
 

@@ -6,7 +6,8 @@
 #define GC_ALLOC_INIT(type, ...) (type *)memcpy(gc_alloc(sizeof(type)), (type[]){ __VA_ARGS__ }, sizeof(type))
 
 void *gc_alloc(size_t size);
-void *gc_global(void *ptr);
+void gc_root(void *ptr);
+void gc_unroot(void *ptr);
 void *gc_realloc(void *ptr, size_t size);
 void gc_free(void *ptr);
 void gc_pause();

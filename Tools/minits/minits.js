@@ -1344,11 +1344,11 @@ function write_kickstart() {
 		let name = val.split("=")[0];
 		let global_alloc = global_ptrs.indexOf(name) > -1 && !val.endsWith("=null") && !val.endsWith("\"");
 		if (global_alloc) {
-			// write("gc_free(" + name + ");");  // Make sure there are no other users
+			write("gc_unroot(" + name + ");");
 		}
 		write(val + ";");
 		if (global_alloc) {
-			write("gc_global(" + name + ");");
+			write("gc_root(" + name + ");");
 		}
 		write("\n");
 	}
@@ -1375,7 +1375,7 @@ function write_function() {
 
 	tabs = 1;
 	new_line = true;
-	let mark_global = null;
+	let mark_as_root = null;
 	let anon_fn = fn_name;
 	let nested = [];
 
@@ -1453,15 +1453,17 @@ function write_function() {
 		token = array_access(token);
 
 		// Use static alloc for global pointers
-		if (get_token(1) == "=" && token != ":" && get_token(2) != "null") {
+		if (get_token(1) == "=" && token != ":") {
 			if (global_ptrs.indexOf(token) > -1) {
-				mark_global = token;
-				// write("gc_free(" + mark_global + ");"); // Make sure there are no other users
+				write("gc_unroot(" + token + ");");
+				if (get_token(2) != "null") {
+					mark_as_root = token;
+				}
 			}
 		}
-		if (token == ";" && mark_global != null) {
-			write(";gc_global(" + mark_global + ")");
-			mark_global = null;
+		if (token == ";" && mark_as_root != null) {
+			write(";gc_root(" + mark_as_root + ")");
+			mark_as_root = null;
 		}
 
 		// "= { ... }" -> GC_ALLOC_INIT

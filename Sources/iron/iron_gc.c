@@ -8,8 +8,12 @@ void *gc_alloc(size_t size) {
 	return _gc_calloc(size, sizeof(uint8_t));
 }
 
-void *gc_global(void *ptr) {
-	return _gc_make_static(ptr);
+void gc_root(void *ptr) {
+	_gc_root(ptr);
+}
+
+void gc_unroot(void *ptr) {
+	_gc_unroot(ptr);
 }
 
 void *gc_realloc(void *ptr, size_t size) {
