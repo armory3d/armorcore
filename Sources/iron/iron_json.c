@@ -290,7 +290,7 @@ void json_encode_i32_array(char *k, i32_array_t *a) {
 		if (i > 0) {
 			encoded = string_join(encoded, ",");
 		}
-		encoded = string_join(encoded, i32_to_string(i));
+		encoded = string_join(encoded, i32_to_string(a->buffer[i]));
 	}
 	encoded = string_join(encoded, "]");
 }
