@@ -378,7 +378,7 @@ static void gc_unroot_roots() {
 }
 
 void *_gc_calloc(size_t count, size_t size) {
-	return gc_allocate(count, size, NULL);
+	return gc_allocate(count, size);
 }
 
 void *_gc_realloc(void *p, size_t size) {
@@ -394,7 +394,7 @@ void *_gc_realloc(void *p, size_t size) {
 	}
 	if (!p) {
 		// allocation, not reallocation
-		gc_allocation_t *alloc = gc_allocation_map_put(gc->allocs, q, size, NULL);
+		gc_allocation_t *alloc = gc_allocation_map_put(gc->allocs, q, size);
 		return alloc->ptr;
 	}
 	if (p == q) {
