@@ -1,6 +1,6 @@
 
 let project = new Project("minits");
-await project.addProject("../../Kinc");
+project.addProject("../../Kinc");
 project.setDebugDir("Deployment");
 
 project.addIncludeDir("../../Sources");
@@ -13,4 +13,4 @@ project.addFile("test.c");
 project.addDefine("NO_KROM_API");
 
 project.flatten();
-resolve(project);
+return project;

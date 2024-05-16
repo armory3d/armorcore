@@ -40,7 +40,7 @@ catch (e) {
 }
 
 let c_project = new Project(flags.name);
-await c_project.addProject('Kinc');
+c_project.addProject('Kinc');
 c_project.setDebugDir('Deployment');
 
 if (fs.existsSync(process.cwd() + '/icon.png')) {
@@ -177,8 +177,8 @@ if (flags.with_mpeg_write) {
 }
 
 if (flags.on_c_project_created) {
-	await flags.on_c_project_created(c_project, platform, graphics);
+	flags.on_c_project_created(c_project, platform, graphics);
 }
 
 c_project.flatten();
-resolve(c_project);
+return c_project;
