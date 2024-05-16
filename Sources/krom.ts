@@ -125,7 +125,6 @@ declare function i32_to_string_hex(i: i32): string;
 declare function json_parse(s: string): any;
 
 declare function json_parse_to_map(s: string): map_t<string, string>;
-declare function json_stringify(a: any): string;
 declare function json_encode_start(): void;
 declare function json_encode_string(k: string, v: string): void;
 declare function json_encode_string_array(k: string, v: string[]): void;
