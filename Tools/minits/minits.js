@@ -991,7 +991,7 @@ function _t_to_struct(type) {
 //  ╚══╝╚══╝     ╚═╝  ╚═╝    ╚═╝       ╚═╝       ╚══════╝         ╚═════╝
 
 function stream_write(token) {
-	stream.write(token);
+	stream += token;
 }
 
 function string_write(token) {
@@ -1594,9 +1594,9 @@ function kickstart() {
 	}
 
 	tokens = parse();
-	stream = fs.createWriteStream(flags.minits_output);
+	stream = "";
 	write_c();
-	stream.end();
+	fs.writeFileSync(flags.minits_output, stream);
 }
 
 kickstart();
