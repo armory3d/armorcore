@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 
 const project = new Project('Kinc');
 
@@ -13,14 +11,12 @@ let g5 = false;
 project.addFile('Sources/**');
 project.addIncludeDir('Sources');
 
-project.addDefine('KINC_LZ4X');
-
 function addBackend(name) {
 	project.addFile('Backends/' + name + '/Sources/**');
 	project.addIncludeDir('Backends/' + name + '/Sources');
 }
 
-if (platform === Platform.Windows) {
+if (platform === 'windows') {
 	addBackend('System/Windows');
 	addBackend('System/Microsoft');
 	project.addLib('dxguid');
@@ -32,14 +28,14 @@ if (platform === Platform.Windows) {
 	project.addLib('Winhttp');
 	project.addLib('wbemuuid');
 
-	if (graphics === GraphicsApi.Direct3D11) {
+	if (graphics === 'direct3d11') {
 		g4 = true;
 		addBackend('Graphics4/Direct3D11');
 		project.addDefine('KINC_DIRECT3D');
 		project.addDefine('KINC_DIRECT3D11');
 		project.addLib('d3d11');
 	}
-	else if (graphics === GraphicsApi.Direct3D12 || graphics === GraphicsApi.Default) {
+	else if (graphics === 'direct3d12' || graphics === 'default') {
 		g4 = true;
 		g5 = true;
 		addBackend('Graphics5/Direct3D12');
@@ -48,40 +44,35 @@ if (platform === Platform.Windows) {
 		project.addLib('dxgi');
 		project.addLib('d3d12');
 	}
-	else if (graphics === GraphicsApi.Vulkan) {
+	else if (graphics === 'vulkan') {
 		g4 = true;
 		g5 = true;
 		addBackend('Graphics5/Vulkan');
 		project.addDefine('KINC_VULKAN');
 		project.addDefine('VK_USE_PLATFORM_WIN32_KHR');
-		if (!process.env.VULKAN_SDK) {
+		if (!os_env(VULKAN_SDK)) {
 			throw 'Could not find a Vulkan SDK';
 		}
-		project.addLib(path.join(process.env.VULKAN_SDK, 'Lib', 'vulkan-1'));
-		let libs = fs.readdirSync(path.join(process.env.VULKAN_SDK, 'Lib'));
+		project.addLib(path_join(os_env(VULKAN_SDK), 'Lib', 'vulkan-1'));
+		let libs = fs_readdir(path_join(os_env(VULKAN_SDK), 'Lib'));
 		for (const lib of libs) {
 			if (lib.startsWith('VkLayer_')) {
-				project.addLib(path.join(process.env.VULKAN_SDK, 'Lib', lib.substr(0, lib.length - 4)));
+				project.addLib(path_join(os_env(VULKAN_SDK), 'Lib', lib.substr(0, lib.length - 4)));
 			}
 		}
-		project.addIncludeDir(path.join(process.env.VULKAN_SDK, 'Include'));
+		project.addIncludeDir(path_join(os_env(VULKAN_SDK), 'Include'));
 	}
 	else {
 		throw new Error('Graphics API ' + graphics + ' is not available for Windows.');
 	}
 
-	if (audio === AudioApi.WASAPI || audio === AudioApi.Default) {
-		addBackend('Audio2/WASAPI');
-	}
-	else {
-		throw new Error('Audio API ' + audio + ' is not available for Windows.');
-	}
+	addBackend('Audio2/WASAPI');
 }
-else if (platform === Platform.OSX) {
+else if (platform === 'osx') {
 	addBackend('System/Apple');
 	addBackend('System/macOS');
 	addBackend('System/POSIX');
-	if (graphics === GraphicsApi.Metal || graphics === GraphicsApi.Default) {
+	if (graphics === 'metal' || graphics === 'default') {
 		g4 = true;
 		g5 = true;
 		addBackend('Graphics5/Metal');
@@ -89,7 +80,7 @@ else if (platform === Platform.OSX) {
 		project.addLib('Metal');
 		project.addLib('MetalKit');
 	}
-	else if (graphics === GraphicsApi.OpenGL) {
+	else if (graphics === 'opengl') {
 		g4 = true;
 		addBackend('Graphics4/OpenGL');
 		project.addDefine('KINC_OPENGL');
@@ -108,18 +99,18 @@ else if (platform === Platform.OSX) {
 	project.addLib('AVFoundation');
 	project.addLib('Foundation');
 }
-else if (platform === Platform.iOS) {
+else if (platform === 'ios') {
 	addBackend('System/Apple');
 	addBackend('System/iOS');
 	addBackend('System/POSIX');
-	if (graphics === GraphicsApi.Metal || graphics === GraphicsApi.Default) {
+	if (graphics === 'metal' || graphics === 'default') {
 		g4 = true;
 		g5 = true;
 		addBackend('Graphics5/Metal');
 		project.addDefine('KINC_METAL');
 		project.addLib('Metal');
 	}
-	else if (graphics === GraphicsApi.OpenGL) {
+	else if (graphics === 'opengl') {
 		g4 = true;
 		addBackend('Graphics4/OpenGL');
 		project.addDefine('KINC_OPENGL');
@@ -141,11 +132,11 @@ else if (platform === Platform.iOS) {
 	project.addLib('CoreVideo');
 	project.addLib('CoreMedia');
 }
-else if (platform === Platform.Android) {
+else if (platform === 'android') {
 	project.addDefine('KINC_ANDROID');
 	addBackend('System/Android');
 	addBackend('System/POSIX');
-	if (graphics === GraphicsApi.Vulkan || graphics === GraphicsApi.Default) {
+	if (graphics === 'vulkan' || graphics === 'default') {
 		g4 = true;
 		g5 = true;
 		addBackend('Graphics5/Vulkan');
@@ -154,7 +145,7 @@ else if (platform === Platform.Android) {
 		project.addLib('vulkan');
 		project.addDefine('KINC_ANDROID_API=24');
 	}
-	else if (graphics === GraphicsApi.OpenGL) {
+	else if (graphics === 'opengl') {
 		g4 = true;
 		addBackend('Graphics4/OpenGL');
 		project.addDefine('KINC_OPENGL');
@@ -168,27 +159,22 @@ else if (platform === Platform.Android) {
 	project.addLib('log');
 	project.addLib('android');
 	project.addLib('EGL');
-	if (Options.kong) {
-		project.addLib('GLESv3');
-	}
-	else {
-		project.addLib('GLESv2');
-	}
+	project.addLib('GLESv3');
 	project.addLib('OpenSLES');
 	project.addLib('OpenMAXAL');
 }
-else if (platform === Platform.Wasm) {
+else if (platform === 'wasm') {
 	project.addDefine('KINC_WASM');
 	addBackend('System/Wasm');
 	project.addIncludeDir('miniClib');
 	project.addFile('miniClib/**');
-	if (graphics === GraphicsApi.WebGPU) {
+	if (graphics === 'webgpu') {
 		g4 = true;
 		g5 = true;
 		addBackend('Graphics5/WebGPU');
 		project.addDefine('KINC_WEBGPU');
 	}
-	else if (graphics === GraphicsApi.OpenGL || graphics === GraphicsApi.Default) {
+	else if (graphics === 'opengl' || graphics === 'default') {
 		g4 = true;
 		addBackend('Graphics4/OpenGL');
 		project.addDefine('KINC_OPENGL');
@@ -198,7 +184,7 @@ else if (platform === Platform.Wasm) {
 		throw new Error('Graphics API ' + graphics + ' is not available for Wasm.');
 	}
 }
-else if (platform === Platform.Linux) {
+else if (platform === 'linux') {
 	addBackend('System/Linux');
 	addBackend('System/POSIX');
 	project.addLib('asound');
@@ -206,22 +192,20 @@ else if (platform === Platform.Linux) {
 	project.addLib('udev');
 
 	try {
-		if (!fs.existsSync(targetDirectory)) {
-			fs.mkdirSync(targetDirectory);
+		if (!fs_exists(targetDirectory)) {
+			fs_mkdir(targetDirectory);
 		}
-		if (!fs.existsSync(path.join(targetDirectory, 'wayland'))) {
-			fs.mkdirSync(path.join(targetDirectory, 'wayland'));
+		if (!fs_exists(path_join(targetDirectory, 'wayland'))) {
+			fs_mkdir(path_join(targetDirectory, 'wayland'));
 		}
-		const waylandDir = path.join(targetDirectory, 'wayland', 'wayland-generated');
-		if (!fs.existsSync(waylandDir)) {
-			fs.mkdirSync(waylandDir);
+		const waylandDir = path_join(targetDirectory, 'wayland', 'wayland-generated');
+		if (!fs_exists(waylandDir)) {
+			fs_mkdir(waylandDir);
 		}
-
-		const child_process = require('child_process');
 
 		let good_wayland = false;
 
-		const wayland_call = child_process.spawnSync('wayland-scanner', ['--version'], {encoding: 'utf-8'});
+		const wayland_call = os_exec('wayland-scanner', ['--version']);
 		if (wayland_call.status !== 0) {
 			throw 'Could not run wayland-scanner to ask for its version';
 		}
@@ -248,7 +232,7 @@ else if (platform === Platform.Linux) {
 			}
 		}
 		catch (err) {
-			log.error('Could not parse wayland-version ' + wayland_version);
+			console.log('Could not parse wayland-version ' + wayland_version);
 		}
 
 		let c_ending = '.c';
@@ -260,20 +244,20 @@ else if (platform === Platform.Linux) {
 
 		function wl_protocol(protocol, file) {
 			chfiles.push(file);
-			const backend_path = path.resolve(waylandDir);
-			const protocol_path = path.resolve('/usr/share/wayland-protocols', protocol);
-			if (child_process.spawnSync('wayland-scanner', ['private-code', protocol_path, path.resolve(backend_path, file + c_ending)]).status !== 0) {
+			const backend_path = path_resolve(waylandDir);
+			const protocol_path = path_resolve('/usr/share/wayland-protocols', protocol);
+			if (os_exec('wayland-scanner', ['private-code', protocol_path, path_resolve(backend_path, file + c_ending)]).status !== 0) {
 				throw 'Failed to generate wayland protocol files for' + protocol;
 			}
-			if (child_process.spawnSync('wayland-scanner', ['client-header', protocol_path, path.resolve(backend_path, file + '.h')]).status !== 0) {
+			if (os_exec('wayland-scanner', ['client-header', protocol_path, path_resolve(backend_path, file + '.h')]).status !== 0) {
 				throw 'Failed to generate wayland protocol header for' + protocol;
 			}
 		}
 
-		if (child_process.spawnSync('wayland-scanner', ['private-code', '/usr/share/wayland/wayland.xml', path.resolve(waylandDir, 'wayland-protocol' + c_ending)]).status !== 0) {
+		if (os_exec('wayland-scanner', ['private-code', '/usr/share/wayland/wayland.xml', path_resolve(waylandDir, 'wayland-protocol' + c_ending)]).status !== 0) {
 			throw 'Failed to generate wayland protocol files for /usr/share/wayland/wayland.xml';
 		}
-		if (child_process.spawnSync('wayland-scanner', ['client-header', '/usr/share/wayland/wayland.xml', path.resolve(waylandDir, 'wayland-protocol.h')]).status !== 0) {
+		if (os_exec('wayland-scanner', ['client-header', '/usr/share/wayland/wayland.xml', path_resolve(waylandDir, 'wayland-protocol.h')]).status !== 0) {
 			throw 'Failed to generate wayland protocol header for /usr/share/wayland/wayland.xml';
 		}
 		wl_protocol('stable/viewporter/viewporter.xml', 'wayland-viewporter');
@@ -288,26 +272,26 @@ else if (platform === Platform.Linux) {
 			for (const chfile of chfiles) {
 				cfile += '#include "' + chfile + '.c.h"\n';
 			}
-			fs.writeFileSync(path.resolve(waylandDir, 'waylandunit.c'), cfile);
+			fs_writefile(path_resolve(waylandDir, 'waylandunit.c'), cfile);
 		}
 
-		project.addIncludeDir(path.join(targetDirectory, 'wayland'));
-		project.addFile(path.resolve(waylandDir, '**'));
+		project.addIncludeDir(path_join(targetDirectory, 'wayland'));
+		project.addFile(path_resolve(waylandDir, '**'));
 	}
 	catch (err) {
-		log.error('Failed to include wayland-support, setting KINC_NO_WAYLAND.');
-		log.error('Wayland error was: ' + err);
+		console.log('Failed to include wayland-support, setting KINC_NO_WAYLAND.');
+		console.log('Wayland error was: ' + err);
 		project.addDefine('KINC_NO_WAYLAND');
 	}
 
-	if (graphics === GraphicsApi.Vulkan || graphics === GraphicsApi.Default) {
+	if (graphics === 'vulkan' || graphics === 'default') {
 		g4 = true;
 		g5 = true;
 		addBackend('Graphics5/Vulkan');
 		project.addLib('vulkan');
 		project.addDefine('KINC_VULKAN');
 	}
-	else if (graphics === GraphicsApi.OpenGL) {
+	else if (graphics === 'opengl') {
 		g4 = true;
 		addBackend('Graphics4/OpenGL');
 		project.addLib('GL');
