@@ -445,7 +445,6 @@ static size_t kwrite(void* src, size_t size, char* dst, size_t* offset, int maxO
 }
 
 //int decompress()
-#ifdef KINC_LZ4X
 #include <kinc/error.h>
 
 int LZ4_decompress_safe(const char *source, char *buf, int compressedSize, int maxOutputSize)
@@ -530,7 +529,6 @@ int LZ4_decompress_safe(const char *source, char *buf, int compressedSize, int m
 
   return 0;
 }
-#endif
 
 #if 0
 int main(int argc, char** argv)
