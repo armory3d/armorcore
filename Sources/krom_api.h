@@ -32,11 +32,7 @@
 #include <kinc/audio1/sound.h>
 #include <kinc/audio2/audio.h>
 #endif
-#ifdef KINC_LZ4X
 int LZ4_decompress_safe(const char *source, char *dest, int compressed_size, int maxOutputSize);
-#else
-#include <kinc/io/lz4/lz4.h>
-#endif
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
 #ifdef KINC_DIRECT3D11
