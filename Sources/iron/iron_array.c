@@ -4,15 +4,9 @@
 #include <string.h>
 #include "iron_string.h"
 
-#ifdef WITH_MINITS
 void *gc_alloc(size_t size);
 void *gc_realloc(void *ptr, size_t size);
 void gc_free(void *ptr);
-#else
-static void *gc_alloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
-static void *gc_realloc(void *ptr, size_t size) { return realloc(ptr, size); }
-static void gc_free(void *ptr) { free(ptr); }
-#endif
 
 void array_free(void *a) {
 	u8_array_t *tmp = (u8_array_t *)a;

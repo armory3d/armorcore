@@ -4,11 +4,7 @@
 #define STB_DS_IMPLEMENTATION
 #include <stb_ds.h>
 
-#ifdef WITH_MINITS
 void *gc_alloc(size_t size);
-#else
-static void *gc_alloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
-#endif
 
 void i32_map_set(i32_map_t *m, char *k, int v) {
 	shput(m->hash, k, v);

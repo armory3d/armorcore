@@ -13,11 +13,7 @@
 #include <kinc/log.h>
 #include "../g2/g2_ext.h"
 
-#ifdef WITH_MINITS
 void *gc_alloc(size_t size);
-#else
-static void *gc_alloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
-#endif
 
 static zui_t *current = NULL;
 static bool zui_key_repeat = true; // Emulate key repeat for non-character keys

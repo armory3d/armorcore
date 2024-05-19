@@ -5,11 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#ifdef WITH_MINITS
 void *gc_alloc(size_t size);
-#else
-static void *gc_alloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
-#endif
 
 static const int PTR_SIZE = 8;
 static uint32_t di; // Decoded index

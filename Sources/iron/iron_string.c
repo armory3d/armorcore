@@ -5,11 +5,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef WITH_MINITS
 void *gc_alloc(size_t size);
-#else
-static void *gc_alloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
-#endif
 
 char *string_join(char *a, char *b) {
 	char *r = gc_alloc(strlen(a) + strlen(b) + 1);

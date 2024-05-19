@@ -6,11 +6,7 @@
 #include <stdbool.h>
 #include <jsmn.h>
 
-#ifdef WITH_MINITS
 void *gc_alloc(size_t size);
-#else
-static void *gc_alloc(size_t size) { return calloc(size, sizeof(uint8_t)); }
-#endif
 
 static const int PTR_SIZE = 8;
 static char *source;
@@ -223,9 +219,9 @@ any_map_t *json_parse_to_map(char *s) {
 	return NULL;
 }
 
-char *json_stringify(void *a) {
+char *json_stringify(void *a) { ////
 	return NULL;
-}
+} ////
 
 static char *encoded;
 static int keys;
