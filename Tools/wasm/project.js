@@ -5,4 +5,4 @@ flags.package = 'org.armorcore';
 flags.with_g2 = true;
 
 let project = new Project(flags.name);
-resolve(project);
+return project;

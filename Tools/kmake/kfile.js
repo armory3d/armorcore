@@ -10,7 +10,11 @@ project.addLib("m");
 
 project.addDefine("environ=__environ");
 project.addDefine("sighandler_t=__sighandler_t");
-// Undef "#define USE_WORKER" at "quickjs-libc.c#85" otherwise "import * as os from 'os';" crashes
+
+// quickjs-libc.c#85 (fixes "import * as os from 'os';" crash):
+// #define USE_WORKER -> //#define USE_WORKER
+// "quickjs.h#259" (fixes "Maximum call stack size exceeded" in minits):
+// #define JS_DEFAULT_STACK_SIZE (256 * 1024) -> #define JS_DEFAULT_STACK_SIZE (8 * 1024 * 1024)
 
 project.flatten();
 return project;

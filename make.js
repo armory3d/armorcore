@@ -1,34 +1,30 @@
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const child_process = require("child_process");
 
-function ensureDirSync(dir) {
-	const parent = path.normalize(path.join(dir, '..'));
-	if (!fs.existsSync(parent)) {
-		ensureDirSync(parent);
-	}
-	if (!fs.existsSync(dir)) {
-		fs.mkdirSync(dir);
-	}
+function path_extname(p) {
+	return p.substring(p.lastIndexOf("."), p.length);
 }
-fs.ensureDirSync = ensureDirSync;
+
+function path_basename(p) {
+	return p.substring(p.lastIndexOf("/") + 1, p.length);
+}
+
+function path_basename_noext(p) {
+	return p.substring(p.lastIndexOf("/") + 1, p.lastIndexOf("."));
+}
+
+function path_dirname(p) {
+	return p.substring(0, p.lastIndexOf("/"));
+}
 
 function exe_ext() {
-	if (os.platform() === 'win32') {
-		return '.exe';
-	}
-	else {
-		return '';
-	}
+	return os_platform() == 'win32' ? '.exe' : '';
 }
 
 function sys_dir() {
-	if (os.platform() === 'linux') {
-		if (os.arch() === 'arm64') return 'linux_arm64';
-		else if (os.arch() === 'x64') return 'linux_x64';
+	if (os_platform() === 'linux') {
+		// if (os_arch() === 'arm64') return 'linux_arm64';
+		return 'linux_x64';
 	}
-	else if (os.platform() === 'win32') {
+	else if (os_platform() === 'win32') {
 		return 'windows_x64';
 	}
 	else {
@@ -42,32 +38,33 @@ function matches(text, pattern) {
 	return regex.test(text);
 }
 
-function stringify(path) {
-	return path.replaceAll("\\", '/');
+function stringify(p) {
+	return p.replaceAll("\\", '/');
 }
 
 function searchFiles(currentDir, pattern) {
 	let result = [];
-	if (!fs.existsSync(currentDir)) {
+	if (!fs_exists(currentDir)) {
 		return result;
 	}
-	let files = fs.readdirSync(currentDir);
+	currentDir = path_join(currentDir); ////
+	let files = fs_readdir(currentDir);
 	for (let f in files) {
-		let file = path.join(currentDir, files[f]);
-		if (fs.statSync(file).isDirectory())
+		let file = path_join(currentDir, files[f]);
+		if (fs_isdir(file))
 			continue;
-		file = path.relative(currentDir, file);
+		file = path_relative(currentDir, file);
 		if (matches(stringify(file), stringify(pattern))) {
-			result.push(path.join(currentDir, stringify(file)));
+			result.push(path_join(currentDir, stringify(file)));
 		}
 	}
 	if (pattern.endsWith("**")) {
-		let dirs = fs.readdirSync(currentDir);
+		let dirs = fs_readdir(currentDir);
 		for (let d of dirs) {
-			let dir = path.join(currentDir, d);
+			let dir = path_join(currentDir, d);
 			if (d.startsWith('.'))
 				continue;
-			if (!fs.statSync(dir).isDirectory())
+			if (!fs_isdir(dir))
 				continue;
 			result = result.concat(searchFiles(dir, pattern));
 		}
@@ -75,12 +72,12 @@ function searchFiles(currentDir, pattern) {
 	return result;
 }
 
-class Project {
+class Project2 {
 	constructor(name) {
 		this.name = name;
 		this.sources = [];
 		this.defines = [];
-		this.scriptdir = Project.scriptdir;
+		this.scriptdir = Project2.scriptdir;
 		this.assetMatchers = [];
 		this.shaderMatchers = [];
 	}
@@ -96,8 +93,8 @@ class Project {
 	addAssets(match, options) {
 		if (!options)
 			options = {};
-		if (!path.isAbsolute(match)) {
-			let base = stringify(path.resolve(this.scriptdir));
+		if (!path_isabs(match)) {
+			let base = stringify(path_resolve(this.scriptdir));
 			if (!base.endsWith('/')) {
 				base += '/';
 			}
@@ -107,14 +104,14 @@ class Project {
 	}
 
 	addSources(source) {
-		this.sources.push(path.resolve(path.join(this.scriptdir, source)));
+		this.sources.push(path_resolve(path_join(this.scriptdir, source)));
 	}
 
 	addShaders(match, options) {
 		if (!options)
 			options = {};
-		if (!path.isAbsolute(match)) {
-			let base = stringify(path.resolve(this.scriptdir));
+		if (!path_isabs(match)) {
+			let base = stringify(path_resolve(this.scriptdir));
 			if (!base.endsWith('/')) {
 				base += '/';
 			}
@@ -129,10 +126,12 @@ class Project {
 }
 
 function loadProject(from, projectfile) {
-	let data = fs.readFileSync(path.join(from, projectfile));
-	Project.scriptdir = from;
-	let fn = new Function('Project', 'platform', 'require', 'process', data);
-	return fn(Project, platform, require, process);
+	Project2.scriptdir = from;
+	let _Project = globalThis.Project;
+	globalThis.Project = Project2;
+	let r = (1, eval)("function _(){" + fs_readfile(path_join(from, projectfile)) + "} _();");
+	globalThis.Project = _Project;
+	return r;
 }
 
 class AssetConverter {
@@ -142,15 +141,15 @@ class AssetConverter {
 		this.assetMatchers = assetMatchers;
 	}
 
-	static replacePattern(pattern, value, fileinfo, options, from) {
-		let basePath = options.nameBaseDir ? path.join(from, options.nameBaseDir) : from;
-		let dirValue = path.relative(basePath, fileinfo.dir);
-		if (basePath.length > 0 && basePath[basePath.length - 1] === path.sep
-			&& dirValue.length > 0 && dirValue[dirValue.length - 1] !== path.sep) {
-			dirValue += path.sep;
+	static replacePattern(pattern, value, filepath, options, from) {
+		let basePath = options.nameBaseDir ? path_join(from, options.nameBaseDir) : from;
+		let dirValue = path_relative(basePath, path_dirname(filepath));
+		if (basePath.length > 0 && basePath[basePath.length - 1] === path_sep
+			&& dirValue.length > 0 && dirValue[dirValue.length - 1] !== path_sep) {
+			dirValue += path_sep;
 		}
 		if (options.namePathSeparator) {
-			dirValue = dirValue.split(path.sep).join(options.namePathSeparator);
+			dirValue = dirValue.split(path_sep).join(options.namePathSeparator);
 		}
 		const dirRegex = dirValue === ''
 			? /{dir}\//g
@@ -158,30 +157,31 @@ class AssetConverter {
 		return pattern.replace(/{name}/g, value).replace(dirRegex, dirValue);
 	}
 
-	static createExportInfo(fileinfo, keepextension, options, from) {
-		let nameValue = fileinfo.name;
-		let destination = fileinfo.name;
+	static createExportInfo(filepath, keepextension, options, from) {
+		let nameValue = path_basename_noext(filepath);
+		let destination = path_basename_noext(filepath);
 		if (keepextension || options.noprocessing) {
-			destination += fileinfo.ext;
+			destination += path_extname(filepath);
 		}
 		if (options.destination) {
-			destination = AssetConverter.replacePattern(options.destination, destination, fileinfo, options, from);
+			destination = AssetConverter.replacePattern(options.destination, destination, filepath, options, from);
 		}
 		if (keepextension) {
-			nameValue += fileinfo.ext;
+			nameValue += path_extname(filepath);
 		}
 		if (options.name) {
-			nameValue = AssetConverter.replacePattern(options.name, nameValue, fileinfo, options, from);
+			nameValue = AssetConverter.replacePattern(options.name, nameValue, filepath, options, from);
 		}
 		return { name: nameValue, destination: destination };
 	}
 
 	watch(match, temp, options) {
-		let basedir = match.substring(0, match.lastIndexOf("/") + 1);
+		// let basedir = match.substring(0, match.lastIndexOf("/") + 1);////
+		let basedir = match.substring(0, match.lastIndexOf("/"));
 		let pattern = match;
-		if (path.isAbsolute(pattern)) {
+		if (path_isabs(pattern)) {
 			let _pattern = pattern;
-			_pattern = path.relative(basedir, _pattern);
+			_pattern = path_relative(basedir, _pattern);
 			pattern = _pattern;
 		}
 		let files = searchFiles(basedir, pattern);
@@ -191,14 +191,13 @@ class AssetConverter {
 
 		let index = 0;
 		for (let file of files) {
-			let fileinfo = path.parse(file);
-			console.log('Exporting asset ' + (index + 1) + ' of ' + files.length + ' (' + fileinfo.base + ').');
-			const ext = fileinfo.ext.toLowerCase();
+			console.log('Exporting asset ' + (index + 1) + ' of ' + files.length + ' (' + path_basename(file) + ').');
+			const ext = path_extname(file).toLowerCase();
 			switch (ext) {
 				case '.png':
 				case '.jpg':
 				case '.hdr': {
-					let exportInfo = AssetConverter.createExportInfo(fileinfo, false, options, self.exporter.options.from);
+					let exportInfo = AssetConverter.createExportInfo(file, false, options, self.exporter.options.from);
 					let images;
 					if (options.noprocessing) {
 						images = self.exporter.copyBlob(file, exportInfo.destination, options);
@@ -210,7 +209,7 @@ class AssetConverter {
 					break;
 				}
 				default: {
-					let exportInfo = AssetConverter.createExportInfo(fileinfo, true, options, self.exporter.options.from);
+					let exportInfo = AssetConverter.createExportInfo(file, true, options, self.exporter.options.from);
 					let blobs = self.exporter.copyBlob(file, exportInfo.destination, options);
 					parsedFiles.push({ name: exportInfo.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
 					break;
@@ -251,10 +250,10 @@ class ShaderCompiler {
 
 	static findType(options) {
 		if (options.graphics === 'default') {
-			if (process.platform === 'win32') {
+			if (os_platform() === 'win32') {
 				return 'd3d11';
 			}
-			else if (process.platform === 'darwin') {
+			else if (os_platform() === 'darwin') {
 				return 'metal';
 			}
 			else {
@@ -276,11 +275,12 @@ class ShaderCompiler {
 	}
 
 	watch(match, options, recompileAll) {
-		let basedir = match.substring(0, match.lastIndexOf("/") + 1);
+		// let basedir = match.substring(0, match.lastIndexOf("/") + 1);////
+		let basedir = match.substring(0, match.lastIndexOf("/"));
 		let pattern = match;
-		if (path.isAbsolute(pattern)) {
+		if (path_isabs(pattern)) {
 			let _pattern = pattern;
-			_pattern = path.relative(basedir, _pattern);
+			_pattern = path_relative(basedir, _pattern);
 			pattern = _pattern;
 		}
 		let shaders = searchFiles(basedir, pattern);
@@ -290,14 +290,13 @@ class ShaderCompiler {
 
 		let index = 0;
 		for (let shader of shaders) {
-			let parsed = path.parse(shader);
-			console.log('Compiling shader ' + (index + 1) + ' of ' + shaders.length + ' (' + parsed.base + ').');
+			console.log('Compiling shader ' + (index + 1) + ' of ' + shaders.length + ' (' + path_basename(shader) + ').');
 			let compiledShader = null;
 			try {
 				compiledShader = self.compileShader(shader, options, recompileAll);
 			}
 			catch (error) {
-				console.error('Compiling shader ' + (index + 1) + ' of ' + shaders.length + ' (' + parsed.base + ') failed:');
+				console.error('Compiling shader ' + (index + 1) + ' of ' + shaders.length + ' (' + path_basename(shader) + ') failed:');
 				console.error(error);
 			}
 			if (compiledShader === null) {
@@ -306,9 +305,9 @@ class ShaderCompiler {
 				compiledShader.files = null;
 			}
 			if (compiledShader.files != null && compiledShader.files.length === 0) {
-				compiledShader.files.push('data/' + parsed.name + '.' + self.type);
+				compiledShader.files.push('data/' + path_basename_noext(shader) + '.' + self.type);
 			}
-			compiledShader.name = AssetConverter.createExportInfo(parsed, false, options, self.exporter.options.from).name;
+			compiledShader.name = AssetConverter.createExportInfo(shader, false, options, self.exporter.options.from).name;
 			compiledShaders.push(compiledShader);
 			++index;
 		}
@@ -325,32 +324,29 @@ class ShaderCompiler {
 	}
 
 	compileShader(file, options) {
-		let fileinfo = path.parse(file);
 		let from = file;
-		let to = path.join(this.to, fileinfo.name + '.' + this.type);
+		let to = path_join(this.to, path_basename_noext(file) + '.' + this.type);
 
-		let fromStats;
-		if (fs.existsSync(from)) fromStats = fs.statSync(from);
-		let toStats;
-		if (fs.existsSync(to)) toStats = fs.statSync(to);
+		let fromTime = 0;
+		if (fs_exists(from)) fromTime = fs_mtime(from);
+		let toTime;
+		if (fs_exists(to)) toTime = fs_mtime(to);
 
 		if (options.noprocessing) {
-			if (!toStats || toStats.mtime.getTime() < fromStats.mtime.getTime()) {
-				fs.copyFileSync(from, to);
+			if (!toTime || toTime < fromTime) {
+				fs_copyfile(from, to);
 			}
 			let compiledShader = new CompiledShader();
 			compiledShader.embed = options.embed;
 			return compiledShader;
 		}
 
-		let compStats = fs.statSync(this.compiler);
-
-		if (!fromStats || (toStats && toStats.mtime.getTime() > fromStats.mtime.getTime() && toStats.mtime.getTime() > compStats.mtime.getTime())) {
+		if (!fromTime || (toTime && toTime > fromTime)) {
 			return null;
 		}
 		else {
 			let parameters = [this.type, from, to, this.temp, 'krom'];
-			fs.ensureDirSync(this.temp);
+			fs_ensuredir(this.temp);
 			if (this.options.shaderversion) {
 				parameters.push('--version');
 				parameters.push(this.options.shaderversion);
@@ -360,11 +356,11 @@ class ShaderCompiler {
 					parameters.push('-D' + define);
 				}
 			}
-			parameters[1] = path.resolve(parameters[1]);
-			parameters[2] = path.resolve(parameters[2]);
-			parameters[3] = path.resolve(parameters[3]);
+			parameters[1] = path_resolve(parameters[1]);
+			parameters[2] = path_resolve(parameters[2]);
+			parameters[3] = path_resolve(parameters[3]);
 
-			let child = child_process.spawnSync(this.compiler, parameters);
+			let child = os_exec(this.compiler, parameters);
 			if (child.status !== 0) {
 				console.error('Shader compiler error.')
 			}
@@ -377,18 +373,18 @@ class ShaderCompiler {
 }
 
 function convertImage(from, temp, to, root, exe, params) {
-	child_process.spawnSync(path.join(root, 'Kinc', 'Tools', sys_dir(), exe), params)
-	fs.renameSync(temp, to);
+	os_exec(path_join(root, 'Kinc', 'Tools', sys_dir(), exe), params)
+	fs_rename(temp, to);
 }
 
 function exportImage(root, from, to) {
 	to += '.k';
 	let temp = to + '.temp';
 	let outputformat = 'k';
-	if (fs.existsSync(to) && fs.statSync(to).mtime.getTime() > fs.statSync(from.toString()).mtime.getTime()) {
+	if (fs_exists(to) && fs_mtime(to) > fs_mtime(from)) {
 		return outputformat;
 	}
-	fs.ensureDirSync(path.dirname(to));
+	fs_ensuredir(path_dirname(to));
 	const exe = 'kraffiti' + exe_ext();
 	let params = ['from=' + from, 'to=' + temp, 'format=lz4'];
 	params.push('filter=nearest');
@@ -400,12 +396,12 @@ class ArmorCoreExporter {
 	constructor(options) {
 		this.options = options;
 		this.sources = [];
-		this.addSourceDirectory(path.join(__dirname, 'Sources'));
+		this.addSourceDirectory(path_join(__dirname, 'Sources'));
 		if (globalThis.flags.with_iron) {
-			this.addSourceDirectory(path.join(__dirname, 'Sources/iron'));
+			this.addSourceDirectory(path_join(__dirname, 'Sources/iron'));
 		}
 		if (globalThis.flags.with_zui) {
-			this.addSourceDirectory(path.join(__dirname, 'Sources/zui'));
+			this.addSourceDirectory(path_join(__dirname, 'Sources/zui'));
 		}
 		this.projectFiles = !options.noproject;
 	}
@@ -413,10 +409,10 @@ class ArmorCoreExporter {
 	tsOptions(name, defines) {
 		let graphics = this.options.graphics;
 		if (graphics === 'default') {
-			if (process.platform === 'win32') {
+			if (os_platform() === 'win32') {
 				graphics = 'direct3d11';
 			}
-			else if (process.platform === 'darwin') {
+			else if (os_platform() === 'darwin') {
 				graphics = 'metal';
 			}
 			else {
@@ -424,40 +420,40 @@ class ArmorCoreExporter {
 			}
 		}
 		defines.push('krom_' + graphics);
-		if (process.argv.indexOf('android') >= 0) {
+		if (os_argv().indexOf('android') >= 0) {
 			defines.push('krom_android');
 		}
-		else if (process.argv.indexOf('ios') >= 0) {
+		else if (os_argv().indexOf('ios') >= 0) {
 			defines.push('krom_ios');
 		}
-		else if (process.platform === 'win32') {
+		else if (os_platform() === 'win32') {
 			defines.push('krom_windows');
 		}
-		else if (process.platform === 'linux') {
+		else if (os_platform() === 'linux') {
 			defines.push('krom_linux');
 		}
-		else if (process.platform === 'darwin') {
+		else if (os_platform() === 'darwin') {
 			defines.push('krom_darwin');
 		}
 		return {
-			from: this.options.from.toString(),
+			from: this.options.from,
 			sources: this.sources,
 			defines: defines
 		};
 	}
 
 	export(name, tsOptions) {
-		fs.ensureDirSync(path.join(this.options.to, 'krom'));
+		fs_ensuredir(path_join(this.options.to, 'krom'));
 	}
 
 	copyImage(from, to, options) {
-		let format = exportImage(__dirname, from, path.join(this.options.to, 'krom', to));
+		let format = exportImage(__dirname, from, path_join(this.options.to, 'krom', to));
 		return [to + '.' + format];
 	}
 
 	copyBlob(from, to) {
-		fs.ensureDirSync(path.join(this.options.to, 'krom', path.dirname(to)));
-		fs.copyFileSync(from.toString(), path.join(this.options.to, 'krom', to));
+		fs_ensuredir(path_join(this.options.to, 'krom', path_dirname(to)));
+		fs_copyfile(from, path_join(this.options.to, 'krom', to));
 		return [to];
 	}
 
@@ -524,7 +520,7 @@ function ts_preprocessor(file, file_path) {
 			// #define ID__(x, y) x ":" #y
 			// #define ID_(x, y) ID__(x, y)
 			// #define ID ID_(__FILE__, __LINE__)
-			lines[i] = lines[i].replace("__ID__", "\"" + path.basename(file_path) + ":" + i + "\"");
+			lines[i] = lines[i].replace("__ID__", "\"" + path_basename(file_path) + ":" + i + "\"");
 		}
 	}
 	return lines.join("\n");
@@ -538,13 +534,13 @@ function writeTSProject(projectdir, projectFiles, options) {
 	let main_ts = null;
 
 	for (let i = 0; i < options.sources.length; ++i) {
-		if (fs.existsSync(options.sources[i])) {
-			let files = fs.readdirSync(options.sources[i]);
+		if (fs_exists(options.sources[i])) {
+			let files = fs_readdir(options.sources[i]);
 			for (let file of files) {
 				if (file.endsWith(".ts")) {
 					// Prevent duplicates, keep the newly added file
 					for (let included of tsdata.include){
-						if (path.basename(included) == file) {
+						if (path_basename(included) == file) {
 							tsdata.include.splice(tsdata.include.indexOf(included), 1);
 							break;
 						}
@@ -562,22 +558,24 @@ function writeTSProject(projectdir, projectFiles, options) {
 		tsdata.include.push(main_ts);
 	}
 
-	fs.writeFileSync(path.join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
+	fs_ensuredir(projectdir);
+	fs_writefile(path_join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
 
 	// MiniTS compiler
 	globalThis.options = options;
-	globalThis.require = require;
+	globalThis.fs_readfile = fs_readfile;
+	globalThis.fs_writefile = fs_writefile;
 	let source = '';
-	let file_paths = JSON.parse(fs.readFileSync('build/tsconfig.json')).include;
+	let file_paths = tsdata.include;
 	for (let file_path of file_paths) {
-		let file = fs.readFileSync(file_path) + '';
+		let file = fs_readfile(file_path);
 		file = ts_preprocessor(file, file_path);
 		source += file;
 	}
 	globalThis.flags.minits_source = source;
-	globalThis.flags.minits_output = process.cwd() + "/build/krom.c";
+	globalThis.flags.minits_output = os_cwd() + "/build/krom.c";
 	let minits = __dirname + '/Tools/minits/minits.js';
-	(1, eval)(fs.readFileSync(minits) + '');
+	(1, eval)(fs_readfile(minits));
 }
 
 function exportProjectFiles(name, resourceDir, options, exporter, defines, id) {
@@ -592,28 +590,23 @@ function exportProjectFiles(name, resourceDir, options, exporter, defines, id) {
 function exportArmorCoreProject(options) {
 	console.log('Creating ArmorCore project files.');
 	let project = null;
-	if (fs.existsSync(path.join(options.from, 'project.js'))) {
-		try {
-			project = loadProject(options.from, 'project.js');
-		}
-		catch (x) {
-			console.error(x);
-		}
+	if (fs_exists(path_join(options.from, 'project.js'))) {
+		project = loadProject(options.from, 'project.js');
 	}
 
 	if (project == null) {
-		fs.ensureDirSync('build');
-		fs.writeFileSync('build/krom.c', 'int kickstart(int argc, char **argv) { return 0; }\n');
+		fs_ensuredir('build');
+		fs_writefile('build/krom.c', 'int kickstart(int argc, char **argv) { return 0; }\n');
 		return;
 	}
 
-	let temp = path.join(options.to, 'temp');
+	let temp = path_join(options.to, 'temp');
 
 	let exporter = new ArmorCoreExporter(options);
-	let buildDir = path.join(options.to, 'krom-build');
+	let buildDir = path_join(options.to, 'krom-build');
 	// Create the target build folder
 	// e.g. 'build/krom'
-	fs.ensureDirSync(path.join(options.to, 'krom'));
+	fs_ensuredir(path_join(options.to, 'krom'));
 
 	for (let source of project.sources) {
 		exporter.addSourceDirectory(source);
@@ -622,12 +615,12 @@ function exportArmorCoreProject(options) {
 
 	let assetConverter = new AssetConverter(exporter, options, project.assetMatchers);
 	let assets = assetConverter.run(temp);
-	let shaderDir = path.join(options.to, 'krom', 'data');
+	let shaderDir = path_join(options.to, 'krom', 'data');
 
-	fs.ensureDirSync(shaderDir);
+	fs_ensuredir(shaderDir);
 
 	let exportedShaders = [];
-	let krafix = path.join(__dirname, 'Kinc', 'Tools', sys_dir(), 'krafix' + exe_ext())
+	let krafix = path_join(__dirname, 'Kinc', 'Tools', sys_dir(), 'krafix' + exe_ext())
 	let shaderCompiler = new ShaderCompiler(exporter, krafix, shaderDir, temp, buildDir, options, project.shaderMatchers);
 	try {
 		exportedShaders = shaderCompiler.run();
@@ -649,11 +642,11 @@ function exportArmorCoreProject(options) {
 		for (let file of embed_files) {
 			embed_string += file.files[0] + '\n';
 		}
-		fs.ensureDirSync(path.join(options.to, 'krom', 'data'));
-		fs.writeFileSync(path.join(options.to, 'krom', 'data', 'embed.txt'), embed_string);
+		fs_ensuredir(path_join(options.to, 'krom', 'data'));
+		fs_writefile(path_join(options.to, 'krom', 'data', 'embed.txt'), embed_string);
 	}
 
-	exportProjectFiles(project.name, path.join(options.to, 'krom-resources'), options, exporter, project.defines, project.id);
+	exportProjectFiles(project.name, path_join(options.to, 'krom-resources'), options, exporter, project.defines, project.id);
 }
 
 let options = [
@@ -686,7 +679,7 @@ for (let option of options) {
 	parsedOptions[option.full] = option.default;
 }
 
-let args = process.argv;
+let args = os_argv();
 for (let i = 2; i < args.length; ++i) {
 	let arg = args[i];
 	if (arg[0] === '-') {
@@ -711,9 +704,10 @@ for (let i = 2; i < args.length; ++i) {
 
 console.log('Using ArmorCore from ' + __dirname + ".");
 try {
+	parsedOptions.from = ".";
 	exportArmorCoreProject(parsedOptions);
 }
 catch (error) {
 	console.log(error);
-	process.exit(1);
+	os_exit(1);
 }

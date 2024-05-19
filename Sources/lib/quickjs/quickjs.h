@@ -256,7 +256,8 @@ static inline JS_BOOL JS_VALUE_IS_NAN(JSValue v)
 #if defined(__wasi__)
 #define JS_DEFAULT_STACK_SIZE 0
 #else
-#define JS_DEFAULT_STACK_SIZE (256 * 1024)
+// #define JS_DEFAULT_STACK_SIZE (256 * 1024)
+#define JS_DEFAULT_STACK_SIZE (8 * 1024 * 1024)
 #endif
 
 /* JS_Eval() flags */

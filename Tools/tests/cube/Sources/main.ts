@@ -1,4 +1,4 @@
-// ../../../Kinc/make --from ../../../ -g opengl --compiler clang --run
+// ../../../Kinc/make --from ../../../ --graphics opengl --run
 
 function main() {
 	let ops: kinc_sys_ops_t = {

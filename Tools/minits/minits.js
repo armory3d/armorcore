@@ -1,9 +1,4 @@
 
-// ts to c:
-// ../../Kinc/make --kfile minits.js
-// build c:
-// ../../Kinc/make --run
-
 let flags = globalThis.flags;
 if (flags == null) {
 	flags = {};
@@ -1588,15 +1583,14 @@ function write_c() {
 // ╚═╝  ╚═╝    ╚═╝     ╚═════╝    ╚═╝  ╚═╝    ╚══════╝       ╚═╝       ╚═╝  ╚═╝    ╚═╝  ╚═╝       ╚═╝
 
 function kickstart() {
-	let fs = require("fs");
 	if (flags.minits_source == null) {
-		flags.minits_source = fs.readFileSync(flags.minits_input).toString();
+		flags.minits_source = fs_readfile(flags.minits_input);
 	}
 
 	tokens = parse();
 	stream = "";
 	write_c();
-	fs.writeFileSync(flags.minits_output, stream);
+	fs_writefile(flags.minits_output, stream);
 }
 
 kickstart();

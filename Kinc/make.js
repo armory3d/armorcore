@@ -3,6 +3,14 @@
 import * as std from 'std';
 import * as os from 'os';
 
+function getEmbeddedBinaryData() {
+
+}
+
+function getEmbeddedData() {
+
+}
+
 function fs_exists(p) {
 	let f = std.open(p, "rb");
 	let exists = f != null;
@@ -42,8 +50,16 @@ function fs_copyfile(from, to) {
 	f.close();
 }
 
+function fs_rename(from, to) {
+	os.rename(from, to);
+}
+
 function fs_isdir(p) {
 	return (os.stat(p)[0].mode & os.S_IFMT) == os.S_IFDIR;
+}
+
+function fs_mtime(p) {
+	return os.stat(p)[0].mtime;
 }
 
 function fs_readfile(p) {
@@ -60,12 +76,37 @@ function fs_writefile(p, data) {
 	f.close();
 }
 
-function os_exec(exe, params, ops = {}) {
+function parent_dir(dir) {
+	return dir.substring(0, dir.lastIndexOf("/"));
+}
+
+function fs_ensuredir(dir) {
+	if (dir != "" && !fs_exists(dir)) {
+		fs_ensuredir(parent_dir(dir));
+		fs_mkdir(dir);
+	}
+}
+
+function fs_copydir(from, to) {
+	fs_ensuredir(to);
+	const files = fs_readdir(from);
+	for (const file of files) {
+		if (fs_isdir(path_join(from, file))) {
+			fs_copydir(path_join(from, file), path_join(to, file));
+		}
+		else {
+			fs_copyfile(path_join(from, file), path_join(to, file));
+		}
+	}
+}
+
+function os_exec(exe, params = [], ops = {}) {
 	params.unshift(exe);
-	let pipe = os.pipe();
-	ops.stdout = pipe[1];
-	let pid = os.exec(params, ops);
-	os.close(pipe[1]);
+	// let pipe = os.pipe();
+	// ops.stdout = pipe[1];
+	// ops.block = false;
+	let status = os.exec(params, ops);
+	// os.close(pipe[1]);
 
 	// let file = std.fdopen(pipe[0], 'r');
 	// let s = file.readAsString().trim();
@@ -73,7 +114,7 @@ function os_exec(exe, params, ops = {}) {
 	// os.waitpid(pid, 0);
 
 	// let status = os.waitpid(pid, 0)[0];
-	return { status: 0 };
+	return { status: status };
 }
 
 function os_platform() {
@@ -88,6 +129,10 @@ function os_env(s) {
 	return std.getenv(s);
 }
 
+function os_argv() {
+	return scriptArgs;
+}
+
 function os_cpus_length() {
 	// return os.cpus().length;
 	return 8;
@@ -98,6 +143,10 @@ function os_chmod(p, m) {
 		return;
 	}
 	os_exec("chmod", [m, p]);
+}
+
+function os_exit(c) {
+	std.exit(c);
 }
 
 function crypto_random_uuid() {
@@ -131,7 +180,7 @@ function path_join() {
 	return path_normalize(args.join(path_sep));
 }
 
-function path_is_absolute(p) {
+function path_isabs(p) {
 	return p[0] == "/" || p[1] == ":" || (p[0] == "\\" && p[1] == "\\");
 }
 
@@ -151,14 +200,14 @@ function _path_resolve(base, relative) {
 
 function path_resolve() {
 	let args = Array.from(arguments);
-	if (!path_is_absolute(args[0])) {
+	if (!path_isabs(args[0])) {
 		args.unshift(os_cwd());
 	}
 
 	let i = args.length - 1;;
 	let p = args[i];
 	p = path_normalize(p);
-	while (!path_is_absolute(p)) {
+	while (!path_isabs(p)) {
 		i--;
 		p = _path_resolve(args[i], p);
 		p = path_normalize(p);
@@ -186,6 +235,9 @@ function path_relative(from, to) {
 }
 
 function path_normalize(p) {
+	while (p.indexOf(path_sep + path_sep) != -1) {
+		p = p.replaceAll(path_sep + path_sep, path_sep);
+	}
 	if (p.endsWith(path_sep)) {
 		p = p.substring(0, p.length - 1);
 	}
@@ -203,31 +255,12 @@ function path_normalize(p) {
 	return ar.join(path_sep);
 }
 
-function exec_sys() {
+function exe_ext() {
 	return os_platform() == 'win32' ? '.exe' : '';
 }
 
-function fs_ensuredir(dir) {
-	if (!fs_exists(dir)) {
-		fs_mkdir(dir);
-	}
-}
-
-function fs_copydir(from, to) {
-	fs_ensuredir(to);
-	const files = fs_readdir(from);
-	for (const file of files) {
-		if (fs_isdir(path_join(from, file))) {
-			fs_copydir(path_join(from, file), path_join(to, file));
-		}
-		else {
-			fs_copyfile(path_join(from, file), path_join(to, file));
-		}
-	}
-}
-
 function icon_run(from, to, width, height, format, background) {
-	const exe = path_resolve(toolsdir, 'kraffiti' + exec_sys());
+	const exe = path_resolve(toolsdir, 'kraffiti' + exe_ext());
 	let params = ['from=' + from, 'to=' + to, 'format=' + format, 'keepaspect'];
 	if (width > 0)
 		params.push('width=' + width);
@@ -273,24 +306,43 @@ function containsFancyDefine(array, value) {
 
 let scriptdir = '.';
 
-function loadProject(directory, parent, options = {}, korefile = null) {
+function loadProject(directory, korefile = null) {
 	scriptdir = directory;
 	if (!korefile) {
 		if (fs_exists(path_resolve(directory, 'kfile.js'))) {
 			korefile = 'kfile.js';
 		}
 	}
-	let file = fs_readfile(path_resolve(directory, korefile));
-	Project.currentParent = parent;
-	let fn = new Function(
-		'Project', 'platform', 'graphics', '__dirname', 'targetDirectory',
-		'fs_readdir', 'fs_exists', 'fs_mkdir', 'fs_writefile', 'os_env', 'os_exec', 'path_join', 'path_resolve',
-		file
-	);
-	return fn(
-		Project, Project.platform, Options_1.graphics, directory, Project.to,
-		fs_readdir, fs_exists, fs_mkdir, fs_writefile, os_env, os_exec, path_join, path_resolve
-	);
+
+	globalThis.Project = Project;
+	globalThis.platform = Project.platform;
+	globalThis.graphics = Options_1.graphics;
+	globalThis.__dirname = directory;
+	globalThis.targetDirectory = Project.to;
+	globalThis.fs_readdir = fs_readdir;
+	globalThis.fs_exists = fs_exists;
+	globalThis.fs_mtime = fs_mtime;
+	globalThis.fs_isdir = fs_isdir;
+	globalThis.fs_mkdir = fs_mkdir;
+	globalThis.fs_copydir = fs_copydir;
+	globalThis.fs_copyfile = fs_copyfile;
+	globalThis.fs_writefile = fs_writefile;
+	globalThis.fs_readfile = fs_readfile;
+	globalThis.fs_ensuredir = fs_ensuredir;
+	globalThis.fs_rename = fs_rename;
+	globalThis.os_platform = os_platform;
+	globalThis.os_env = os_env;
+	globalThis.os_argv = os_argv;
+	globalThis.os_exec = os_exec;
+	globalThis.os_exit = os_exit;
+	globalThis.os_cwd = os_cwd;
+	globalThis.path_join = path_join;
+	globalThis.path_resolve = path_resolve;
+	globalThis.path_isabs = path_isabs;
+	globalThis.path_sep = path_sep;
+	globalThis.path_relative = path_relative;
+
+	return (1, eval)("function _(){" + fs_readfile(path_resolve(directory, korefile)) + "} _();");
 }
 
 class Project {
@@ -306,7 +358,6 @@ class Project {
 		this.lto = true;
 		this.noFlatten = true;
 		this.name = name;
-		this.parent = Project.currentParent;
 		this.safeName = name.replace(/[^A-z0-9\-\_]/g, '-');
 		this.version = '1.0';
 		this.debugDir = '';
@@ -446,14 +497,14 @@ class Project {
 				}
 				for (let file of sub.files) {
 					let absolute = file.file;
-					if (!path_is_absolute(absolute)) {
+					if (!path_isabs(absolute)) {
 						absolute = path_join(subbasedir, file.file);
 					}
 					this.files.push({ file: absolute.replace(/\\/g, '/'), options: file.options, projectDir: subbasedir, projectName: sub.name });
 				}
 				for (const custom of sub.customs) {
 					let absolute = custom.file;
-					if (!path_is_absolute(absolute)) {
+					if (!path_isabs(absolute)) {
 						absolute = path_join(subbasedir, custom.file);
 					}
 					this.customs.push({ file: absolute.replace(/\\/g, '/'), command: custom.command, output: custom.output });
@@ -550,7 +601,7 @@ class Project {
 				sub.searchFiles(undefined);
 			this.searchFiles(this.basedir);
 			for (let includeobject of this.includes) {
-				if (path_is_absolute(includeobject.file) && includeobject.file.includes('**')) {
+				if (path_isabs(includeobject.file) && includeobject.file.includes('**')) {
 					const starIndex = includeobject.file.indexOf('**');
 					const endIndex = includeobject.file.substring(0, starIndex).replace(/\\/g, '/').lastIndexOf('/');
 					this.searchFiles(includeobject.file.substring(0, endIndex));
@@ -589,7 +640,7 @@ class Project {
 			}
 			for (let includeobject of this.includes) {
 				let include = includeobject.file;
-				if (path_is_absolute(include)) {
+				if (path_isabs(include)) {
 					let inc = include;
 					inc = path_relative(this.basedir, inc);
 					include = inc;
@@ -699,10 +750,10 @@ class Project {
 		}
 	}
 
-	addProject(directory, options = {}, projectFile = null) {
-		let from = path_is_absolute(directory) ? directory : path_join(this.basedir, directory);
+	addProject(directory, projectFile = null) {
+		let from = path_isabs(directory) ? directory : path_join(this.basedir, directory);
 		if (fs_exists(from) && fs_isdir(from)) {
-			const project = loadProject(from, this, options, projectFile);
+			const project = loadProject(from, projectFile);
 			this.subProjects.push(project);
 			return project;
 		}
@@ -714,7 +765,7 @@ class Project {
 	static create(directory, to, platform, korefile) {
 		Project.platform = platform;
 		Project.to = path_resolve(to);
-		let project = loadProject(path_resolve(directory), null, {}, korefile);
+		let project = loadProject(path_resolve(directory), korefile);
 		let defines = [];
 		for (let define of defines) {
 			project.addDefine(define);
@@ -726,8 +777,6 @@ class Project {
 		return this.cmd;
 	}
 }
-
-Project.currentParent = null;
 
 class Exporter {
 	constructor(options) {
@@ -755,7 +804,7 @@ class Exporter {
 
 	nicePath(from, to, filepath) {
 		let absolute = filepath;
-		if (!path_is_absolute(absolute)) {
+		if (!path_isabs(absolute)) {
 			absolute = path_resolve(from, filepath);
 		}
 		return path_relative(to, absolute);
@@ -844,7 +893,7 @@ class VisualStudioExporter extends Exporter {
 
 	getDebugDir(from, project) {
 		let debugDir = project.getDebugDir();
-		if (path_is_absolute(debugDir)) {
+		if (path_isabs(debugDir)) {
 			debugDir = debugDir.replace(/\//g, '\\');
 		}
 		else {
@@ -1013,7 +1062,7 @@ class VisualStudioExporter extends Exporter {
 				lastdir = dir;
 			if (filter(file)) {
 				let filepath = '';
-				if (project.noFlatten && !path_is_absolute(file.file)) {
+				if (project.noFlatten && !path_isabs(file.file)) {
 					filepath = path_resolve(path_join(project.basedir, file.file));
 				}
 				else {
@@ -1430,7 +1479,7 @@ class VisualStudioExporter extends Exporter {
 		this.p('<ItemGroup>', 1);
 		for (let file of project.getFiles()) {
 			let filepath = '';
-			if (project.noFlatten && !path_is_absolute(file.file)) {
+			if (project.noFlatten && !path_isabs(file.file)) {
 				filepath = path_resolve(project.basedir + '/' + file.file);
 			}
 			else {
@@ -1455,7 +1504,7 @@ class VisualStudioExporter extends Exporter {
 					name = name.substr(name.lastIndexOf('/') + 1);
 				name = name.substr(0, name.lastIndexOf('.'));
 				let filepath = '';
-				if (project.noFlatten && !path_is_absolute(file)) {
+				if (project.noFlatten && !path_isabs(file)) {
 					filepath = path_resolve(project.basedir + '/' + file);
 				}
 				else {
@@ -1490,7 +1539,7 @@ class VisualStudioExporter extends Exporter {
 				if (file.file.endsWith('.glsl')) {
 					this.p('<CustomBuild Include="' + this.nicePath(from, to, file.file) + '">', 2);
 					this.p('<FileType>Document</FileType>', 2);
-					const shaderDir = path_is_absolute(project.getDebugDir()) ? project.getDebugDir() : path_join(from, project.getDebugDir());
+					const shaderDir = path_isabs(project.getDebugDir()) ? project.getDebugDir() : path_join(from, project.getDebugDir());
 					const krafix = path_join(toolsdir, 'krafix.exe');
 					this.p('<Command>"' + path_relative(to, krafix) + '" ' + shaderLang('windows') + ' "%(FullPath)" ' + path_relative(to, path_join(shaderDir, '%(Filename)')).replace(/\//g, '\\') + ' .\\ ' + platform + ' --quiet</Command>', 2);
 					this.p('<Outputs>' + path_relative(to, path_join(shaderDir, '%(Filename)')).replace(/\//g, '\\') + ';%(Outputs)</Outputs>', 2);
@@ -2592,8 +2641,8 @@ class AndroidExporter extends Exporter {
 				}
 			}
 		}
-		const binaryData = require('fs').getEmbeddedBinaryData();
-		const textData = require('fs').getEmbeddedData();
+		const binaryData = getEmbeddedBinaryData();
+		const textData = getEmbeddedData();
 		fs_writefile(path_join(outdir, '.gitignore'), textData['android_gitignore']);
 		if (targetOptions.globalBuildGradlePath) {
 			fs_copyfile(targetOptions.globalBuildGradlePath, path_join(outdir, 'build.gradle.kts'));
@@ -2725,7 +2774,7 @@ class AndroidExporter extends Exporter {
 		for (let file of project.getFiles()) {
 			if (file.file.endsWith('.c') || file.file.endsWith('.cc')
 				|| file.file.endsWith('.cpp') || file.file.endsWith('.h')) {
-				if (path_is_absolute(file.file)) {
+				if (path_isabs(file.file)) {
 					files += '  "' + path_resolve(file.file).replace(/\\/g, '/') + '"\n';
 				}
 				else {
@@ -2930,7 +2979,7 @@ function exportKoremakeProject(from, to, platform, korefile, options) {
 
 function compileProject(make, project, options) {
 	if (make.status != 0) {
-		std.exit(1);
+		os_exit(1);
 	}
 	let executableName = project.getSafeName();
 	if (project.getExecutableName()) {
@@ -2947,7 +2996,7 @@ function compileProject(make, project, options) {
 		const from = true
 			? path_join(options.to.toString(), 'x64', options.debug ? 'Debug' : 'Release', executableName + extension)
 			: path_join(options.to.toString(), options.debug ? 'Debug' : 'Release', executableName + extension);
-		const dir = path_is_absolute(project.getDebugDir())
+		const dir = path_isabs(project.getDebugDir())
 			? project.getDebugDir()
 			: path_join(options.from.toString(), project.getDebugDir());
 		fs_copyfile(from, path_join(dir, executableName + extension));

@@ -1,11 +1,9 @@
-const fs = require('fs');
-const path = require('path');
 
 globalThis.flags = {
 	name: 'Armory',
 	package: 'org.armory3d',
 	dirname: __dirname,
-	release: process.argv.indexOf("--debug") == -1,
+	release: os_argv().indexOf("--debug") == -1,
 	with_d3dcompiler: false,
 	with_nfd: false,
 	with_tinydir: false,
@@ -21,19 +19,19 @@ globalThis.flags = {
 };
 
 try {
-	if (process.env.ARM_EMBED) {
-		process.argv.push("--embed");
+	if (os_env('ARM_EMBED')) {
+		os_argv().push("--embed");
 	}
 
-	if (platform === Platform.Android || platform === Platform.Wasm) {
-		process.argv.push("--shaderversion");
-		process.argv.push("300");
+	if (platform === 'android' || platform === 'wasm') {
+		os_argv().push("--shaderversion");
+		os_argv().push("300");
 	}
 
-	eval(fs.readFileSync(__dirname + "/make.js") + "");
+	(1, eval)(fs_readfile(__dirname + "/make.js"));
 
-	if (process.argv.indexOf("--run") >= 0) {
-		fs.cp(process.cwd() + "/build/krom", __dirname + "/Deployment", { recursive: true }, function (err) {});
+	if (os_argv().indexOf("--run") >= 0) {
+		fs_copydir(os_cwd() + "/build/krom", __dirname + "/Deployment");
 	}
 }
 catch (e) {
@@ -43,19 +41,18 @@ let c_project = new Project(flags.name);
 c_project.addProject('Kinc');
 c_project.setDebugDir('Deployment');
 
-if (fs.existsSync(process.cwd() + '/icon.png')) {
-	c_project.icon = path.relative(__dirname, process.cwd()) + '/icon.png';
-	if (platform === Platform.OSX && fs.existsSync(process.cwd() + '/icon_macos.png')) {
-		c_project.icon = path.relative(__dirname, process.cwd()) + '/icon_macos.png';
+if (fs_exists(os_cwd() + '/icon.png')) {
+	c_project.icon = path_relative(__dirname, os_cwd()) + '/icon.png';
+	if (platform === 'osx' && fs_exists(os_cwd() + '/icon_macos.png')) {
+		c_project.icon = path_relative(__dirname, os_cwd()) + '/icon_macos.png';
 	}
 }
 
-c_project.addDefine('WITH_MINITS');
 c_project.addIncludeDir('Sources/lib/gc');
 c_project.addFile('Sources/lib/gc/*.c');
 c_project.addIncludeDir('Sources');
 c_project.addFile('Sources/krom.c');
-let krom_c_path = path.relative(__dirname, process.cwd()) + '/build/krom.c';
+let krom_c_path = path_relative(__dirname, os_cwd()) + '/build/krom.c';
 c_project.addDefine('KROM_C_PATH="../' + krom_c_path + '"');
 
 if (flags.with_audio) {
@@ -91,7 +88,7 @@ if (flags.with_zui) {
 	c_project.addFile('Sources/zui/*.c');
 }
 
-if (platform === Platform.Windows) {
+if (platform === 'windows') {
 	c_project.addLib('Dbghelp'); // Stack walk
 	c_project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
 	if (flags.with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
@@ -100,13 +97,13 @@ if (platform === Platform.Windows) {
 		c_project.addLib("d3dcompiler");
 	}
 }
-else if (platform === Platform.Linux) {
+else if (platform === 'linux') {
 	c_project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
 }
-else if (platform === Platform.OSX) {
+else if (platform === 'osx') {
 
 }
-else if (platform === Platform.Android) {
+else if (platform === 'android') {
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
 
@@ -120,20 +117,20 @@ else if (platform === Platform.Android) {
 	c_project.targetOptions.android.minSdkVersion = 30;
 	c_project.targetOptions.android.targetSdkVersion = 33;
 }
-else if (platform === Platform.iOS) {
+else if (platform === 'ios') {
 	c_project.addFile('Sources/ios/ios_file_dialog.mm');
 	c_project.addDefine('IDLE_SLEEP');
 }
 
-if (flags.with_nfd && (platform === Platform.Windows || platform === Platform.Linux || platform === Platform.OSX)) {
+if (flags.with_nfd && (platform === 'windows' || platform === 'linux' || platform === 'osx')) {
 	c_project.addDefine('WITH_NFD');
 	c_project.addIncludeDir("Sources/lib/nfd");
 	c_project.addFile('Sources/lib/nfd/nfd_common.c');
 
-	if (platform === Platform.Windows) {
+	if (platform === 'windows') {
 		c_project.addFile('Sources/lib/nfd/nfd_win.cpp');
 	}
-	else if (platform === Platform.Linux) {
+	else if (platform === 'linux') {
 		c_project.addFile('Sources/lib/nfd/nfd_gtk.c');
 		c_project.addIncludeDir("/usr/include/gtk-3.0");
 		c_project.addIncludeDir("/usr/include/glib-2.0");
@@ -177,7 +174,7 @@ if (flags.with_mpeg_write) {
 }
 
 if (flags.on_c_project_created) {
-	flags.on_c_project_created(c_project, platform, graphics);
+	flags.on_c_project_created(c_project);
 }
 
 c_project.flatten();
