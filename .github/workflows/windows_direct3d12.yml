@@ -20,4 +20,4 @@ jobs:
     - name: Apply patch
       run: git apply Patches/d3d12_raytrace.diff --directory=Kinc
     - name: Compile
-      run: Kinc/make -g direct3d12 --compile
+      run: Kinc/make --graphics direct3d12 --compile

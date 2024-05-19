@@ -18,4 +18,4 @@ jobs:
     - name: Apply patch
       run: git apply Patches/metal_raytrace.diff --directory=Kinc
     - name: Compile
-      run: Kinc/make -g metal --compile
+      run: Kinc/make --graphics metal --compile
