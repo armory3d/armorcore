@@ -1,5 +1,45 @@
 
 #include "iron_gc.h"
+
+#ifdef NO_GC
+
+#include <malloc.h>
+
+void *gc_alloc(size_t size) {
+	return calloc(size, 1);
+}
+
+void gc_root(void *ptr) {
+}
+
+void gc_unroot(void *ptr) {
+}
+
+void *gc_realloc(void *ptr, size_t size) {
+	return realloc(ptr, size);
+}
+
+void gc_free(void *ptr) {
+	free(ptr);
+}
+
+void gc_pause() {
+}
+
+void gc_resume() {
+}
+
+void gc_run() {
+}
+
+void gc_start(void *bos) {
+}
+
+void gc_stop() {
+}
+
+#else
+
 #include <gc.h>
 
 void *gc_alloc(size_t size) {
@@ -43,3 +83,5 @@ void gc_start(void *bos) {
 void gc_stop() {
     _gc_stop();
 }
+
+#endif
