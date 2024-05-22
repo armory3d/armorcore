@@ -98,6 +98,11 @@ function read_token(): string {
 		}
 
 		if (is_string) {
+			if (c == "\r") {
+				pos++;
+				continue;
+			}
+
 			token += c;
 			pos++;
 
