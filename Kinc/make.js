@@ -314,6 +314,7 @@ function loadProject(directory, korefile = null) {
 		}
 	}
 
+	globalThis.std = std;
 	globalThis.Project = Project;
 	globalThis.platform = Project.platform;
 	globalThis.graphics = Options_1.graphics;
@@ -2565,9 +2566,13 @@ class MakeExporter extends Exporter {
 class LinuxExporter extends Exporter {
 	constructor(options) {
 		super(options);
+		let compilerFlags = '';
 		let linkerFlags = '-static-libgcc -static-libstdc++ -pthread';
-		let outputExtension = '';
-		this.make = new MakeExporter(options, this.getCCompiler(), this.getCPPCompiler(), '', '', linkerFlags, outputExtension);
+		if (this.getCCompiler() == 'gcc') {
+			compilerFlags += '-flto';
+			linkerFlags += ' -flto';
+		}
+		this.make = new MakeExporter(options, this.getCCompiler(), this.getCPPCompiler(), compilerFlags, compilerFlags, linkerFlags, '');
 		this.compileCommands = new CompilerCommandsExporter(options);
 	}
 
