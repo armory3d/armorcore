@@ -5,6 +5,7 @@
 #include "iron_array.h"
 
 char *string_join(char *a, char *b);
+char *string_copy(char *a);
 int string_length(char *str);
 bool string_equals(char *a, char *b);
 char *i32_to_string(int32_t i);

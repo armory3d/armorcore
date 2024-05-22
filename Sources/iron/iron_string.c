@@ -14,6 +14,15 @@ char *string_join(char *a, char *b) {
 	return r;
 }
 
+char *string_copy(char *a) {
+	if (a == NULL) {
+		return NULL;
+	}
+	char *r = gc_alloc(strlen(a) + 1);
+	strcpy(r, a);
+	return r;
+}
+
 int string_length(char *str) {
 	return strlen(str);
 }
