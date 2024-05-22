@@ -73,7 +73,7 @@ function read_token() {
 			if (c === "\n") {
 				is_comment = false;
 				// Remove comments
-				return read_token();
+				return null;
 			}
 
 			// Prevent parsing of comments
@@ -143,12 +143,15 @@ function parse() {
 
 	while (true) {
 		let token = read_token();
+		if (token === "") { // No more tokens
+			break;
+		}
 		if (token === "=" && tokens[tokens.length - 1] === "!") { // Merge "!" and "=" into "!=" token
 			tokens[tokens.length - 1] = "!=";
 			continue;
 		}
-		if (token === "") { // No more tokens
-			break;
+		if (token == null) { // Throw away this token
+			continue;
 		}
 		tokens.push(token);
 	}
