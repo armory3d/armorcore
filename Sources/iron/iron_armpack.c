@@ -312,20 +312,16 @@ static void read_store() {
 	}
 }
 
-void *armpack_decode(void *_encoded, uint32_t len) {
-	capacity = len * 4;
+void *armpack_decode(buffer_t *b) {
+	capacity = b->length * 4;
 	decoded = gc_alloc(capacity);
-	encoded = _encoded;
+	encoded = b->buffer;
 	di = 0;
 	ei = 0;
 	bottom = 0;
 	array_count = 1;
 	read_store();
 	return decoded;
-}
-
-void *armpack_decodeb(buffer_t *b) {
-	return armpack_decode(b->buffer, b->length);
 }
 
 void armpack_encode_start(void *_encoded) {

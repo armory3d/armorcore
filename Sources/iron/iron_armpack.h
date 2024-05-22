@@ -15,8 +15,7 @@
 #define PACK(__Declaration__) __pragma(pack(push, 1)) __Declaration__ __pragma(pack(pop))
 #endif
 
-void *armpack_decode(void *encoded, uint32_t len);
-void *armpack_decodeb(buffer_t *b);
+void *armpack_decode(buffer_t *b);
 
 void armpack_encode_start(void *encoded);
 void armpack_encode_map(uint32_t count);
@@ -81,6 +80,7 @@ int armpack_size_f32();
 		armpack_encode_string("y");
 		armpack_encode_i32(a.y);
 
-		point_t *decoded = armpack_decode(encoded, size);
+		buffer_t b = { .buffer = encoded, .length = size };
+		point_t *decoded = armpack_decode(b);
 	}
 */
