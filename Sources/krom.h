@@ -37,6 +37,7 @@
 #endif
 
 #define i64 int64_t
+#define f64 double
 #define f32 float
 #define i32 int32_t
 #define u32 uint32_t
