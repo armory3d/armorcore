@@ -4,15 +4,15 @@ function path_extname(p) {
 }
 
 function path_basename(p) {
-	return p.substring(p.lastIndexOf("/") + 1, p.length);
+	return p.substring(p.lastIndexOf(path_sep) + 1, p.length);
 }
 
 function path_basename_noext(p) {
-	return p.substring(p.lastIndexOf("/") + 1, p.lastIndexOf("."));
+	return p.substring(p.lastIndexOf(path_sep) + 1, p.lastIndexOf("."));
 }
 
 function path_dirname(p) {
-	return p.substring(0, p.lastIndexOf("/"));
+	return p.substring(0, p.lastIndexOf(path_sep));
 }
 
 function exe_ext() {
@@ -176,8 +176,7 @@ class AssetConverter {
 	}
 
 	watch(match, temp, options) {
-		// let basedir = match.substring(0, match.lastIndexOf("/") + 1);////
-		let basedir = match.substring(0, match.lastIndexOf("/"));
+		let basedir = match.substring(0, match.lastIndexOf(path_sep));
 		let pattern = match;
 		if (path_isabs(pattern)) {
 			let _pattern = pattern;
@@ -275,8 +274,7 @@ class ShaderCompiler {
 	}
 
 	watch(match, options, recompileAll) {
-		// let basedir = match.substring(0, match.lastIndexOf("/") + 1);////
-		let basedir = match.substring(0, match.lastIndexOf("/"));
+		let basedir = match.substring(0, match.lastIndexOf(path_sep));
 		let pattern = match;
 		if (path_isabs(pattern)) {
 			let _pattern = pattern;
@@ -534,20 +532,18 @@ function writeTSProject(projectdir, projectFiles, options) {
 	let main_ts = null;
 
 	for (let i = 0; i < options.sources.length; ++i) {
-		if (fs_exists(options.sources[i])) {
-			let files = fs_readdir(options.sources[i]);
-			for (let file of files) {
-				if (file.endsWith(".ts")) {
-					// Prevent duplicates, keep the newly added file
-					for (let included of tsdata.include){
-						if (path_basename(included) == file) {
-							tsdata.include.splice(tsdata.include.indexOf(included), 1);
-							break;
-						}
+		let files = fs_readdir(options.sources[i]);
+		for (let file of files) {
+			if (file.endsWith(".ts")) {
+				// Prevent duplicates, keep the newly added file
+				for (let included of tsdata.include){
+					if (path_basename(included) == file) {
+						tsdata.include.splice(tsdata.include.indexOf(included), 1);
+						break;
 					}
-					tsdata.include.push(options.sources[i] + "/" + file);
-					if (file == "main.ts") main_ts = options.sources[i] + "/" + file;
 				}
+				tsdata.include.push(options.sources[i] + path_sep + file);
+				if (file == "main.ts") main_ts = options.sources[i] + path_sep + file;
 			}
 		}
 	}
@@ -573,7 +569,7 @@ function writeTSProject(projectdir, projectFiles, options) {
 		source += file;
 	}
 	globalThis.flags.minits_source = source;
-	globalThis.flags.minits_output = os_cwd() + "/build/krom.c";
+	globalThis.flags.minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
 	let minits = __dirname + '/Tools/minits/minits.js';
 	(1, eval)(fs_readfile(minits));
 }

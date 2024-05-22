@@ -167,8 +167,10 @@ function uuidv5(path, namespace) {
 }
 
 let path_sep = '/';
+let other_path_sep = '\\';
 if (os_platform() === 'win32') {
 	path_sep = '\\';
+	other_path_sep = '/';
 }
 
 let binpath = path_resolve(scriptArgs[0]);
@@ -204,7 +206,7 @@ function path_resolve() {
 		args.unshift(os_cwd());
 	}
 
-	let i = args.length - 1;;
+	let i = args.length - 1;
 	let p = args[i];
 	p = path_normalize(p);
 	while (!path_isabs(p)) {
@@ -235,6 +237,7 @@ function path_relative(from, to) {
 }
 
 function path_normalize(p) {
+	p = p.replaceAll(other_path_sep, path_sep);
 	while (p.indexOf(path_sep + path_sep) != -1) {
 		p = p.replaceAll(path_sep + path_sep, path_sep);
 	}
@@ -746,14 +749,11 @@ class Project {
 
 	setDebugDir(debugDir) {
 		this.debugDir = path_resolve(this.basedir, debugDir);
-		if (!fs_exists(this.debugDir)) {
-			throw new Error(`Debug directory ${this.debugDir} does not exist`);
-		}
 	}
 
 	addProject(directory, projectFile = null) {
 		let from = path_isabs(directory) ? directory : path_join(this.basedir, directory);
-		if (fs_exists(from) && fs_isdir(from)) {
+		if (fs_isdir(from)) {
 			const project = loadProject(from, projectFile);
 			this.subProjects.push(project);
 			return project;
