@@ -1,5 +1,23 @@
 #pragma once
+
 #ifdef NO_KROM_API
+
+#include <stdio.h> ////
+buffer_t *krom_load_blob(string_t *file) {
+	kinc_file_reader_t reader;
+	if (!kinc_file_reader_open(&reader, file, KINC_FILE_TYPE_ASSET)) {
+		return NULL;
+	}
+	uint32_t reader_size = (uint32_t)kinc_file_reader_size(&reader);
+	buffer_t *buffer = buffer_create(reader_size);
+	kinc_file_reader_read(&reader, buffer->buffer, reader_size);
+	kinc_file_reader_close(&reader);
+	return buffer;
+}
+void krom_log(string_t *value) {
+	kinc_log(KINC_LOG_LEVEL_INFO, value);
+} ////
+
 #else
 
 #include "krom.h"
@@ -197,19 +215,7 @@ void krom_set_app_name(string_t *name) {
 }
 
 void krom_log(string_t *value) {
-	size_t len = strlen(value);
-	if (len < 2048) {
-		kinc_log(KINC_LOG_LEVEL_INFO, value);
-	}
-	else {
-		int pos = 0;
-		while (pos < len) {
-			strncpy(temp_string, value + pos, 2047);
-			temp_string[2047] = 0;
-			kinc_log(KINC_LOG_LEVEL_INFO, temp_string);
-			pos += 2047;
-		}
-	}
+	kinc_log(KINC_LOG_LEVEL_INFO, value);
 }
 
 void krom_g4_clear(i32 flags, i32 color, f32 depth) {
