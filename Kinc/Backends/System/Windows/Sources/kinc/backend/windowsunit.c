@@ -124,3 +124,4 @@ enum tagPOINTER_INPUT_TYPE {
 #include "mouse.c.h"
 #include "system.c.h"
 #include "window.c.h"
+#include "video.c.h"
