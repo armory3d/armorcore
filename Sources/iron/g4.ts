@@ -160,7 +160,8 @@ function g4_vertex_struct_add(raw: vertex_struct_t, name: string, data: vertex_d
 function g4_vertex_struct_byte_size(raw: vertex_struct_t): i32 {
 	let byte_size: i32 = 0;
 	for (let i: i32 = 0; i < raw.elements.length; ++i) {
-		byte_size += g4_vertex_struct_data_byte_size(raw.elements[i].data);
+		let elem: kinc_vertex_elem_t = raw.elements[i];
+		byte_size += g4_vertex_struct_data_byte_size(elem.data);
 	}
 	return byte_size;
 }
@@ -522,7 +523,7 @@ function image_clear(raw: image_t, x: i32, y: i32, z: i32, width: i32, height: i
 	krom_g4_clear_texture(raw.texture_, x, y, z, width, height, depth, color);
 }
 
-type image_t = {
+declare type image_t = {
 	texture_?: any;
 	render_target_?: any;
 	format?: tex_format_t;
@@ -564,7 +565,7 @@ type vertex_buffer_t = {
 	vertex_count?: i32;
 };
 
-type vertex_struct_t = {
+declare type vertex_struct_t = {
 	elements?: kinc_vertex_elem_t[];
 	instanced?: bool;
 };
@@ -573,7 +574,7 @@ type index_buffer_t = {
 	buffer_?: any;
 };
 
-type kinc_vertex_elem_t = {
+declare type kinc_vertex_elem_t = {
 	name?: string;
 	data?: vertex_data_t;
 };
@@ -581,7 +582,7 @@ type kinc_vertex_elem_t = {
 type kinc_const_loc_t = any;
 type kinc_tex_unit_t = any;
 
-type krom_pipeline_state_t = {
+declare type krom_pipeline_state_t = {
 	cull_mode?: cull_mode_t;
 	depth_write?: bool;
 	depth_mode?: compare_mode_t;
