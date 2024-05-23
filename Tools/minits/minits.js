@@ -19,6 +19,7 @@ let is_comment = false;
 let is_string = false;
 let pos = 0;
 let tokens = [];
+let header = "";
 
 function is_alpha_numeric(code) {
 	return (code > 47 && code < 58) || // 0-9
@@ -72,6 +73,9 @@ function read_token() {
 			// Comment end
 			if (c === "\n") {
 				is_comment = false;
+				if (token.startsWith("///include") || token.startsWith("///define")) {
+					header += "#" + token.substring(3, token.length);
+				}
 				// Remove comments
 				return null;
 			}
@@ -1599,12 +1603,12 @@ function write_functions() {
 }
 
 function write_c() {
-	write('#include <krom.h>\n\n');
+	write("#include <krom.h>\n\n");
+	write(header);
 	write_enums();
 	write_types();
 	write_array_types();
 	write_fn_declarations();
-	write('#include <krom_api.h>\n\n');
 	write_globals();
 	write_kickstart();
 	write_functions();

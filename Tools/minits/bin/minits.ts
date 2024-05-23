@@ -1,9 +1,13 @@
 
 // ../../../Kinc/make --from ../../../ --graphics opengl --compile
 
+///include <stdio.h>
+///include <time.h>
+
 let minits_input: string = "./test.ts";
 let minits_output: string = "./test.c";
 let minits_source: string = null;
+let minits_source_length: i32;
 
 // ██████╗      █████╗     ██████╗     ███████╗    ███████╗
 // ██╔══██╗    ██╔══██╗    ██╔══██╗    ██╔════╝    ██╔════╝
@@ -17,6 +21,7 @@ let is_comment: bool = false;
 let is_string: bool = false;
 let pos: i32 = 0;
 let tokens: string[] = [];
+let header: string = "";
 
 function is_alpha_numeric(code: i32): bool {
 	return (code > 47 && code < 58) || // 0-9
@@ -55,7 +60,7 @@ function read_token(): string {
 	let first: bool = true;
 	let is_anum: bool = false;
 
-	while (pos < minits_source.length) {
+	while (pos < minits_source_length) {
 		let c: string = char_at(minits_source, pos);
 
 		// Comment start
@@ -70,6 +75,9 @@ function read_token(): string {
 			// Comment end
 			if (c == "\n") {
 				is_comment = false;
+				if (starts_with(token, "///include") || starts_with(token, "///define")) {
+					header += "#" + substring(token, 3, token.length);
+				}
 				// Remove comments
 				return read_token();
 			}
@@ -1616,11 +1624,11 @@ function write_functions() {
 
 function write_c() {
 	write("#include <krom.h>\n\n");
+	write(header);
 	write_enums();
 	write_types();
 	write_array_types();
 	write_fn_declarations();
-	write("#include <krom_api.h>\n\n");
 	write_globals();
 	write_kickstart();
 	write_functions();
@@ -1634,15 +1642,26 @@ function write_c() {
 // ╚═╝  ╚═╝    ╚═╝     ╚═════╝    ╚═╝  ╚═╝    ╚══════╝       ╚═╝       ╚═╝  ╚═╝    ╚═╝  ╚═╝       ╚═╝
 
 function main() {
+	let start: i32 = clock();
+
 	if (minits_source == null) {
-		minits_source = krom_load_blob(minits_input).buffer;
+		let reader: kinc_file_reader_t = {};
+		kinc_file_reader_open(reader, minits_input, KINC_FILE_TYPE_ASSET);
+		let reader_size: u32 = kinc_file_reader_size(reader);
+		let buffer: buffer_t = buffer_create(reader_size);
+		kinc_file_reader_read(reader, buffer.buffer, reader_size);
+		kinc_file_reader_close(reader);
+		minits_source = buffer.buffer;
 	}
+	minits_source_length = minits_source.length;
 
 	parse();
-
 	fhandle = fopen(minits_output, "wb");
 	write_c();
 	fclose(fhandle);
+
+	let end: i32 = clock();
+	kinc_log(KINC_LOG_LEVEL_INFO, "minits took %.1fms.", (end - start) / 1000);
 
 	exit(1);
 }
