@@ -44,6 +44,7 @@ void map_delete(any_map_t *m, void *k) {
 
 any_array_t *map_keys(any_map_t *m) {
 	any_array_t *ar = gc_alloc(sizeof(any_array_t));
+	any_array_resize(ar, shlen(m->hash));
 	for (int i = 0; i < shlen(m->hash); ++i) {
 		any_array_push(ar, m->hash[i].key);
 	}

@@ -149,7 +149,6 @@ function read_token(): string {
 }
 
 function parse() {
-	tokens = [];
 	pos = 0;
 
 	while (true) {
@@ -189,6 +188,9 @@ let param_pos_stack: i32[] = [];
 let is_for_loop: bool = false;
 let global_inits: string[] = [];
 let global_ptrs: string[] = [];
+let acontents: string[] = [];
+let fnested: i32[] = [];
+let add_space_keywords: string[] = ["return", "else"];
 
 function handle_tabs(token: string) {
 	// Entering block, add tab
@@ -223,8 +225,6 @@ function handle_new_line(token: string) {
 	}
 }
 
-let add_space_keywords: string[] = ["return", "else"];
-
 function handle_spaces(token: string) {
 	// Add space to separate keywords
 	if (array_index_of(add_space_keywords, token) > -1) {
@@ -233,7 +233,7 @@ function handle_spaces(token: string) {
 }
 
 function get_token(off: i32 = 0): string {
-	if (pos + off >= 0 && pos + off < tokens.length) { ////
+	if (pos + off >= 0 && pos + off < tokens.length) {
 		return tokens[pos + off];
 	}
 	return "";
@@ -504,7 +504,9 @@ function array_type(name: string): string {
 
 function array_contents(type: string): string[] {
 	// [1, 2, ..] or [{a:b}, {a:b}, ..] or [a(), b(), ..]
-	let contents: string[] = [];
+	let contents: string[] = acontents;
+	contents.length = 0;
+
 	let content: string = "";
 	while (true) {
 		pos++;
@@ -1106,7 +1108,6 @@ function null_write(token: string) {
 let write: (token: string)=>void = stream_write;
 
 function write_enums() {
-	enums = [];
 	for (pos = 0; pos < tokens.length; ++pos) {
 		let token: string = get_token();
 
@@ -1351,8 +1352,6 @@ function write_fn_declarations() {
 }
 
 function write_globals() {
-	global_inits = [];
-	global_ptrs = [];
 	for (pos = 0; pos < tokens.length; ++pos) {
 		let token: string = get_token();
 
@@ -1479,7 +1478,7 @@ function write_function() {
 	new_line = true;
 	let mark_as_root: string = null;
 	let anon_fn: string = fn_name;
-	let nested: i32[] = [];
+	fnested.length = 0;
 
 	while (true) {
 		pos++;
@@ -1497,25 +1496,25 @@ function write_function() {
 			array_push(strings, "");
 			let fn_decl: string = map_get(fn_declarations, anon_fn);
 			write(fn_decl + "{\n");
-			array_push(nested, 1);
+			array_push(fnested, 1);
 			continue;
 		}
 
-		if (nested.length > 0) {
+		if (fnested.length > 0) {
 			if (token == "{") {
-				nested[nested.length - 1]++;
+				fnested[fnested.length - 1]++;
 			}
-			else if (token == "}") { // End nested function
-				nested[nested.length - 1]--;
-				if (nested[nested.length - 1] == 0) {
-					array_pop(nested);
+			else if (token == "}") { // End fnested function
+				fnested[fnested.length - 1]--;
+				if (fnested[fnested.length - 1] == 0) {
+					array_pop(fnested);
 					write("}\n\n");
 					if (strings.length > 1) {
 						let s: string = array_pop(strings);
 						strings[strings.length - 1] = s + strings[strings.length - 1];
 					}
 
-					if (nested.length == 0) {
+					if (fnested.length == 0) {
 						write = &stream_write;
 					}
 					continue;
@@ -1648,20 +1647,30 @@ function main() {
 		let reader: kinc_file_reader_t = {};
 		kinc_file_reader_open(reader, minits_input, KINC_FILE_TYPE_ASSET);
 		let reader_size: u32 = kinc_file_reader_size(reader);
-		let buffer: buffer_t = buffer_create(reader_size);
+		let buffer: buffer_t = buffer_create(reader_size + 1);
 		kinc_file_reader_read(reader, buffer.buffer, reader_size);
 		kinc_file_reader_close(reader);
-		minits_source = buffer.buffer;
+		minits_source = (buffer.buffer); // () - no string copy
 	}
 	minits_source_length = minits_source.length;
+
+	// HEAP_SIZE
+	any_array_resize(tokens, 512000);
+	any_array_resize(strings, 32);
+	any_array_resize(enums, 512);
+	any_array_resize(fn_call_stack, 32);
+	i32_array_resize(param_pos_stack, 32);
+	any_array_resize(global_inits, 1024);
+	any_array_resize(global_ptrs, 1024);
+	any_array_resize(acontents, 4096);
+	i32_array_resize(fnested, 32);
+	//
 
 	parse();
 	fhandle = fopen(minits_output, "wb");
 	write_c();
 	fclose(fhandle);
 
-	let end: i32 = clock();
-	kinc_log(KINC_LOG_LEVEL_INFO, "minits took %.1fms.", (end - start) / 1000);
-
+	kinc_log(KINC_LOG_LEVEL_INFO, "minits took %.1fms.", (clock() - start) / 1000);
 	exit(1);
 }

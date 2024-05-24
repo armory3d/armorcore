@@ -85,12 +85,23 @@ int32_t string_last_index_of(char *str, char *search) {
 }
 
 any_array_t *string_split(char *s, char *sep) {
-	char *r = gc_alloc(strlen(s) + 1);
-	strcpy(r, s);
+	char *r = gc_alloc(strlen(s) + 1); // Modified by strtok
 	any_array_t *a = gc_alloc(sizeof(any_array_t));
+
+	strcpy(r, s);
+	int count = 0;
 	char *token = strtok(r, sep);
 	while (token != NULL) {
+		count++;
+		token = strtok(NULL, sep);
+	}
+	any_array_resize(a, count);
+
+	strcpy(r, s);
+	token = strtok(r, sep);
+	while (token != NULL) {
 		any_array_push(a, token);
+		// TODO: this works only for single char sep
 		token = strtok(NULL, sep);
 	}
 	return a;
