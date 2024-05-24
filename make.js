@@ -371,7 +371,7 @@ class ShaderCompiler {
 }
 
 function convertImage(from, temp, to, root, exe, params) {
-	os_exec(path_join(root, 'Kinc', 'Tools', sys_dir(), exe), params)
+	os_exec(path_join(root, 'Kinc', 'Tools', sys_dir(), exe), params);
 	fs_rename(temp, to);
 }
 
@@ -559,8 +559,6 @@ function writeTSProject(projectdir, projectFiles, options) {
 
 	// MiniTS compiler
 	globalThis.options = options;
-	globalThis.fs_readfile = fs_readfile;
-	globalThis.fs_writefile = fs_writefile;
 	let source = '';
 	let file_paths = tsdata.include;
 	for (let file_path of file_paths) {
@@ -568,10 +566,18 @@ function writeTSProject(projectdir, projectFiles, options) {
 		file = ts_preprocessor(file, file_path);
 		source += file;
 	}
-	globalThis.flags.minits_source = source;
-	globalThis.flags.minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
-	let minits = __dirname + '/Tools/minits/minits.js';
-	(1, eval)(fs_readfile(minits));
+	let minits_bin = path_join(__dirname, 'Kinc', 'Tools', sys_dir(), 'minits' + exe_ext());
+	let minits_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
+	let minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
+	fs_writefile(minits_input, source);
+	os_exec(minits_bin, [minits_input, minits_output]);
+
+	// globalThis.fs_readfile = fs_readfile;
+	// globalThis.fs_writefile = fs_writefile;
+	// globalThis.flags.minits_source = source;
+	// globalThis.flags.minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
+	// let minits = __dirname + '/Tools/minits/minits.js';
+	// (1, eval)(fs_readfile(minits));
 }
 
 function exportProjectFiles(name, resourceDir, options, exporter, defines, id) {
@@ -616,7 +622,7 @@ function exportArmorCoreProject(options) {
 	fs_ensuredir(shaderDir);
 
 	let exportedShaders = [];
-	let krafix = path_join(__dirname, 'Kinc', 'Tools', sys_dir(), 'krafix' + exe_ext())
+	let krafix = path_join(__dirname, 'Kinc', 'Tools', sys_dir(), 'krafix' + exe_ext());
 	let shaderCompiler = new ShaderCompiler(exporter, krafix, shaderDir, temp, buildDir, options, project.shaderMatchers);
 	try {
 		exportedShaders = shaderCompiler.run();

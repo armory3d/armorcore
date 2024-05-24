@@ -182,6 +182,14 @@ int kickstart(int argc, char **argv) {
 	return 0;
 }
 
+i32 krom_get_arg_count() {
+	return _argc;
+}
+
+string_t *krom_get_arg(i32 index) {
+	return _argv[index];
+}
+
 #ifndef NO_KROM_API
 
 #include <stdio.h>
@@ -2086,14 +2094,6 @@ i32 krom_sys_command(string_t *cmd) {
 
 string_t *krom_save_path() {
 	return kinc_internal_save_path();
-}
-
-i32 krom_get_arg_count() {
-	return _argc;
-}
-
-string_t *krom_get_arg(i32 index) {
-	return _argv[index];
 }
 
 string_t *krom_get_files_location() {

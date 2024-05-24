@@ -1,5 +1,5 @@
 
-// ../../../Kinc/make --from ../../../ --graphics opengl --compile
+// ../../Kinc/make --from ../../ --graphics opengl --compile
 
 ///include <stdio.h>
 ///include <time.h>
@@ -188,9 +188,11 @@ let param_pos_stack: i32[] = [];
 let is_for_loop: bool = false;
 let global_inits: string[] = [];
 let global_ptrs: string[] = [];
-let acontents: string[] = [];
+type string_array_t = string[];
+let acontents: string_array_t[] = [];
 let fnested: i32[] = [];
 let add_space_keywords: string[] = ["return", "else"];
+let array_contents_depth: i32 = 0;
 
 function handle_tabs(token: string) {
 	// Entering block, add tab
@@ -503,8 +505,10 @@ function array_type(name: string): string {
 }
 
 function array_contents(type: string): string[] {
+
 	// [1, 2, ..] or [{a:b}, {a:b}, ..] or [a(), b(), ..]
-	let contents: string[] = acontents;
+	let contents: string[] = acontents[array_contents_depth];
+	array_contents_depth++;
 	contents.length = 0;
 
 	let content: string = "";
@@ -545,6 +549,9 @@ function array_contents(type: string): string[] {
 		token = string_ops(token);
 		content += token;
 	}
+
+	array_contents_depth--;
+
 	return contents;
 }
 
@@ -1643,6 +1650,13 @@ function write_c() {
 function main() {
 	let start: i32 = clock();
 
+	if (krom_get_arg_count() > 1) {
+		minits_input = krom_get_arg(1);
+	}
+	if (krom_get_arg_count() > 2) {
+		minits_output = krom_get_arg(2);
+	}
+
 	if (minits_source == null) {
 		let reader: kinc_file_reader_t = {};
 		kinc_file_reader_open(reader, minits_input, KINC_FILE_TYPE_ASSET);
@@ -1662,7 +1676,11 @@ function main() {
 	i32_array_resize(param_pos_stack, 32);
 	any_array_resize(global_inits, 1024);
 	any_array_resize(global_ptrs, 1024);
-	any_array_resize(acontents, 4096);
+	any_array_resize(acontents, 2);
+	acontents[0] = [];
+	acontents[1] = [];
+	any_array_resize(acontents[0], 4096);
+	any_array_resize(acontents[1], 4096);
 	i32_array_resize(fnested, 32);
 	//
 
@@ -1671,6 +1689,6 @@ function main() {
 	write_c();
 	fclose(fhandle);
 
-	kinc_log(KINC_LOG_LEVEL_INFO, "minits took %.1fms.", (clock() - start) / 1000);
+	kinc_log(KINC_LOG_LEVEL_INFO, "minits took %dms.", (clock() - start) / 1000);
 	exit(1);
 }
