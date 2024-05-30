@@ -1,42 +1,4 @@
 
-globalThis.flags = {
-	name: 'Armory',
-	package: 'org.armory3d',
-	dirname: __dirname,
-	release: os_argv().indexOf("--debug") == -1,
-	with_d3dcompiler: false,
-	with_nfd: false,
-	with_tinydir: false,
-	with_zlib: false,
-	with_stb_image_write: false,
-	with_mpeg_write: false,
-	with_audio: false,
-	with_g2: false,
-	with_iron: false,
-	with_zui: false,
-	with_eval: true,
-	on_c_project_created: null,
-};
-
-try {
-	if (os_env('ARM_EMBED')) {
-		os_argv().push("--embed");
-	}
-
-	if (platform === 'android' || platform === 'wasm') {
-		os_argv().push("--shaderversion");
-		os_argv().push("300");
-	}
-
-	(1, eval)(fs_readfile(__dirname + "/make.js"));
-
-	if (os_argv().indexOf("--run") >= 0) {
-		fs_copydir(os_cwd() + "/build/krom", __dirname + "/Deployment");
-	}
-}
-catch (e) {
-}
-
 let c_project = new Project(flags.name);
 c_project.addProject('Kinc');
 c_project.setDebugDir('Deployment');
