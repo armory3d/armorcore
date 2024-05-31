@@ -17,6 +17,22 @@ import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import kotlin.system.exitProcess
+import android.content.ContentResolver;
+import android.util.Log
+import android.view.DragAndDropPermissions;
+import android.view.DragEvent;
+import android.webkit.MimeTypeMap;
+import android.view.DragEvent.ACTION_DRAG_STARTED;
+import android.view.DragEvent.ACTION_DROP;
+import androidx.core.database.getStringOrNull
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import kotlin.math.log
 
 class KincActivity: NativeActivity(), KeyEvent.Callback {
 	companion object {
@@ -112,6 +128,13 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
 				kincActivity.hideSystemUI()
 			}
 		}
+
+		@JvmStatic
+		public fun pickFile() {
+			val intent: Intent = Intent(Intent.ACTION_GET_CONTENT)
+			intent.type = "*/*"
+			instance!!.startActivityForResult(Intent.createChooser(intent, "Select File"), 1)
+		}
 	}
 
 	var inputManager: InputMethodManager? = null
@@ -133,6 +156,19 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
 		} catch (e: NullPointerException) {
 			false
 		}
+
+		window.decorView.setOnDragListener(
+				fun (view: View, dragEvent: DragEvent): Boolean {
+					if (dragEvent.action == ACTION_DRAG_STARTED) return true
+					if (dragEvent.action == ACTION_DROP) {
+						val dropPermissions = requestDragAndDropPermissions(dragEvent)
+						importFile(dragEvent.clipData.getItemAt(0).uri)
+						dropPermissions.release()
+						return true
+					}
+					return false
+				}
+		);
 	}
 
     private fun hideSystemUI() {
@@ -162,4 +198,70 @@ class KincActivity: NativeActivity(), KeyEvent.Callback {
 	}
 
 	private external fun nativeKincKeyPress(chars: String)
+
+	private external fun onAndroidFilePicked(pickedPath: String)
+	private external fun getMobileTitle(): String
+
+	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+		super.onActivityResult(requestCode, resultCode, data)
+		if (requestCode == 1 && resultCode == RESULT_OK) {
+			importFile(data.data!!)
+		}
+	}
+
+	private fun importFile(pickedFile: Uri) {
+		val resolver: ContentResolver = applicationContext.contentResolver
+		val inps: InputStream = resolver.openInputStream(pickedFile)!!
+		try {
+			val bis: BufferedInputStream = BufferedInputStream(inps)
+			val dir: File = File(filesDir.absolutePath + "/" + getMobileTitle())
+			dir.mkdirs()
+			var path: List<String> = pickedFile.path!!.split("/")
+
+			// Samsung files app removes extension from fileName
+			val filePath: Array<String> = arrayOf(android.provider.MediaStore.Images.Media.DATA)
+			val cursor: android.database.Cursor = contentResolver.query(pickedFile, filePath, null, null, null)!!
+			cursor.moveToFirst()
+			val pickedPath: String? = cursor.getStringOrNull(cursor.getColumnIndex(filePath[0]))
+			if (pickedPath != null) {
+				path = pickedPath.split("/")
+			}
+			cursor.close()
+
+			var fileName: String = path[path.size - 1]
+
+			// Extension still unknown
+			if (!fileName.contains(".")) {
+				var ext: String = MimeTypeMap.getSingleton().getExtensionFromMimeType(contentResolver.getType(pickedFile))!!
+				// Note: for obj/fbx file, the extension returned is bin..
+				if (ext == "bin") {
+					bis.mark(0)
+					val header: StringBuilder = StringBuilder()
+					for (i in 0..17) {
+						val c: Int = bis.read()
+						if (c == -1) break
+						header.append(c.toChar())
+					}
+					ext = if (header.toString() == "Kaydara FBX Binary") "fbx" else "obj"
+					bis.reset()
+				}
+				fileName += "." + ext
+			}
+
+			val dst: String = filesDir.absolutePath + "/" + getMobileTitle() + "/" + fileName
+			val os: OutputStream = FileOutputStream(dst)
+			try {
+				val buf = ByteArray(1024)
+				var len = bis.read(buf)
+				while (len > 0) {
+					os.write(buf, 0, len)
+					len = bis.read(buf)
+				}
+				onAndroidFilePicked(dst)
+			}
+			catch (e: IOException) {}
+		}
+		catch (e: FileNotFoundException) {}
+		catch (e: IOException) {}
+	}
 }
