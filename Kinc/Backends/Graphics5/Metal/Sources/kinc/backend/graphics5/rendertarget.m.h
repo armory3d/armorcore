@@ -45,7 +45,7 @@ static void render_target_init(kinc_g5_render_target_t *target, int width, int h
 	descriptor.pixelFormat = convert_format(format);
 	descriptor.arrayLength = 1;
 	descriptor.mipmapLevelCount = 1;
-	descriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead;
+	descriptor.usage = MTLTextureUsageRenderTarget | MTLTextureUsageShaderRead | MTLTextureUsageShaderWrite;
 	descriptor.resourceOptions = MTLResourceStorageModePrivate;
 
 	target->impl._tex = (__bridge_retained void *)[device newTextureWithDescriptor:descriptor];

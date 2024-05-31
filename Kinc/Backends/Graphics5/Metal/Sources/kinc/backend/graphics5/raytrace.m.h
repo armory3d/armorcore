@@ -8,7 +8,7 @@
 
 static kinc_raytrace_acceleration_structure_t *accel;
 static kinc_raytrace_pipeline_t *pipeline;
-static kinc_g5_texture_t *output = NULL;
+static kinc_g5_render_target_t *output = NULL;
 static kinc_g5_constant_buffer_t *constant_buf;
 
 id getMetalDevice(void);
@@ -19,9 +19,25 @@ NSMutableArray *_primitive_accels;
 id<MTLAccelerationStructure> _instance_accel;
 dispatch_semaphore_t _sem;
 
+static kinc_g5_render_target_t *_texpaint0;
+static kinc_g5_render_target_t *_texpaint1;
+static kinc_g5_render_target_t *_texpaint2;
+static kinc_g5_texture_t *_texenv;
+static kinc_g5_texture_t *_texsobol;
+static kinc_g5_texture_t *_texscramble;
+static kinc_g5_texture_t *_texrank;
+static kinc_g5_vertex_buffer_t *_vb;
+static kinc_g5_index_buffer_t *_ib;
+
+bool kinc_raytrace_supported() {
+	id<MTLDevice> device = getMetalDevice();
+	return device.supportsRaytracing;
+}
+
 void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_command_list_t *command_list, void *ray_shader, int ray_shader_size,
                                  kinc_g5_constant_buffer_t *constant_buffer) {
 	id<MTLDevice> device = getMetalDevice();
+	if (!device.supportsRaytracing) return;
 	constant_buf = constant_buffer;
 
 	NSError *error = nil;
@@ -73,12 +89,17 @@ id<MTLAccelerationStructure> create_acceleration_sctructure(MTLAccelerationStruc
 }
 
 void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, kinc_g5_command_list_t *command_list, kinc_g5_vertex_buffer_t *vb,
-                                               kinc_g5_index_buffer_t *ib) {
+                                               kinc_g5_index_buffer_t *ib, float scale) {
+	id<MTLDevice> device = getMetalDevice();
+	if (!device.supportsRaytracing) return;
 #if !TARGET_OS_IPHONE
 	MTLResourceOptions options = MTLResourceStorageModeManaged;
 #else
 	MTLResourceOptions options = MTLResourceStorageModeShared;
 #endif
+
+	_vb = vb;
+	_ib = ib;
 
 	MTLAccelerationStructureTriangleGeometryDescriptor *descriptor = [MTLAccelerationStructureTriangleGeometryDescriptor descriptor];
 	descriptor.indexType = MTLIndexTypeUInt32;
@@ -86,6 +107,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 	descriptor.vertexBuffer = (__bridge id<MTLBuffer>)vb->impl.mtlBuffer;
 	descriptor.vertexStride = vb->impl.myStride;
 	descriptor.triangleCount = ib->impl.count / 3;
+	descriptor.vertexFormat = MTLAttributeFormatShort4Normalized;
 
 	MTLPrimitiveAccelerationStructureDescriptor *accel_descriptor = [MTLPrimitiveAccelerationStructureDescriptor descriptor];
 	accel_descriptor.geometryDescriptors = @[ descriptor ];
@@ -93,16 +115,15 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 	_primitive_accels = [[NSMutableArray alloc] init];
 	[_primitive_accels addObject:acceleration_structure];
 
-	id<MTLDevice> device = getMetalDevice();
 	id<MTLBuffer> instance_buffer = [device newBufferWithLength:sizeof(MTLAccelerationStructureInstanceDescriptor) * 1 options:options];
 
 	MTLAccelerationStructureInstanceDescriptor *instance_descriptors = (MTLAccelerationStructureInstanceDescriptor *)instance_buffer.contents;
 	instance_descriptors[0].accelerationStructureIndex = 0;
 	instance_descriptors[0].options = MTLAccelerationStructureInstanceOptionOpaque;
 	instance_descriptors[0].mask = 1;
-	instance_descriptors[0].transformationMatrix.columns[0] = MTLPackedFloat3Make(1, 0, 0);
-	instance_descriptors[0].transformationMatrix.columns[1] = MTLPackedFloat3Make(0, 1, 0);
-	instance_descriptors[0].transformationMatrix.columns[2] = MTLPackedFloat3Make(0, 0, 1);
+	instance_descriptors[0].transformationMatrix.columns[0] = MTLPackedFloat3Make(scale, 0, 0);
+	instance_descriptors[0].transformationMatrix.columns[1] = MTLPackedFloat3Make(0, scale, 0);
+	instance_descriptors[0].transformationMatrix.columns[2] = MTLPackedFloat3Make(0, 0, scale);
 	instance_descriptors[0].transformationMatrix.columns[3] = MTLPackedFloat3Make(0, 0, 0);
 
 #if !TARGET_OS_IPHONE
@@ -118,6 +139,16 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 
 void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_structure_t *accel) {}
 
+void kinc_raytrace_set_textures(kinc_g5_render_target_t *texpaint0, kinc_g5_render_target_t *texpaint1, kinc_g5_render_target_t *texpaint2, kinc_g5_texture_t *texenv, kinc_g5_texture_t *texsobol, kinc_g5_texture_t *texscramble, kinc_g5_texture_t *texrank) {
+	_texpaint0 = texpaint0;
+	_texpaint1 = texpaint1;
+	_texpaint2 = texpaint2;
+	_texenv = texenv;
+	_texsobol = texsobol;
+	_texscramble = texscramble;
+	_texrank = texrank;
+}
+
 void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *_accel) {
 	accel = _accel;
 }
@@ -126,11 +157,13 @@ void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *_pipeline) {
 	pipeline = _pipeline;
 }
 
-void kinc_raytrace_set_target(kinc_g5_texture_t *_output) {
+void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 	output = _output;
 }
 
 void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
+	id<MTLDevice> device = getMetalDevice();
+	if (!device.supportsRaytracing) return;
 	dispatch_semaphore_wait(_sem, DISPATCH_TIME_FOREVER);
 
 	id<MTLCommandQueue> queue = getMetalQueue();
@@ -149,7 +182,16 @@ void kinc_raytrace_dispatch_rays(kinc_g5_command_list_t *command_list) {
 	id<MTLComputeCommandEncoder> compute_encoder = [command_buffer computeCommandEncoder];
 	[compute_encoder setBuffer:(__bridge id<MTLBuffer>)constant_buf->impl._buffer offset:0 atIndex:0];
 	[compute_encoder setAccelerationStructure:_instance_accel atBufferIndex:1];
+	[compute_encoder setBuffer: (__bridge id<MTLBuffer>)_ib->impl.metal_buffer offset:0 atIndex:2];
+	[compute_encoder setBuffer: (__bridge id<MTLBuffer>)_vb->impl.mtlBuffer offset:0 atIndex:3];
 	[compute_encoder setTexture:(__bridge id<MTLTexture>)output->impl._tex atIndex:0];
+	[compute_encoder setTexture:(__bridge id<MTLTexture>)_texpaint0->impl._tex atIndex:1];
+	[compute_encoder setTexture:(__bridge id<MTLTexture>)_texpaint1->impl._tex atIndex:2];
+	[compute_encoder setTexture:(__bridge id<MTLTexture>)_texpaint2->impl._tex atIndex:3];
+	[compute_encoder setTexture:(__bridge id<MTLTexture>)_texenv->impl._tex atIndex:4];
+	[compute_encoder setTexture:(__bridge id<MTLTexture>)_texsobol->impl._tex atIndex:5];
+	[compute_encoder setTexture:(__bridge id<MTLTexture>)_texscramble->impl._tex atIndex:6];
+	[compute_encoder setTexture:(__bridge id<MTLTexture>)_texrank->impl._tex atIndex:7];
 
 	for (id<MTLAccelerationStructure> primitive_accel in _primitive_accels)
 		[compute_encoder useResource:primitive_accel usage:MTLResourceUsageRead];
