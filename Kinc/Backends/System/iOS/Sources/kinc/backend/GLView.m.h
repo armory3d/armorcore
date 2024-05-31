@@ -78,6 +78,14 @@ extern int kinc_ios_gl_framebuffer;
 #endif
 
 #ifdef KINC_METAL
+- (void)hoverGesture:(UIHoverGestureRecognizer *)recognizer {
+	CGPoint point = [recognizer locationInView:self];
+	float x = point.x * self.contentScaleFactor;
+	float y = point.y * self.contentScaleFactor;
+	// Pencil hover
+	kinc_internal_pen_trigger_move(0, x, y, 0.0);
+}
+
 - (id)initWithFrame:(CGRect)frame {
 	self = [super initWithFrame:(CGRect)frame];
 	self.contentScaleFactor = [UIScreen mainScreen].scale;
@@ -100,6 +108,8 @@ extern int kinc_ios_gl_framebuffer;
 
 	metalLayer.opaque = YES;
 	metalLayer.backgroundColor = nil;
+
+	[self addGestureRecognizer:[[UIHoverGestureRecognizer alloc] initWithTarget:self action:@selector(hoverGesture:)]];
 
 	return self;
 }
