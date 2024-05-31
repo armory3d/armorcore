@@ -6,7 +6,7 @@
 #import <CoreMotion/CMMotionManager.h>
 #endif
 
-@interface GLViewController : UIViewController {
+@interface GLViewController : UIViewController <UIDocumentPickerDelegate, UIDropInteractionDelegate> {
 @private
 }
 
