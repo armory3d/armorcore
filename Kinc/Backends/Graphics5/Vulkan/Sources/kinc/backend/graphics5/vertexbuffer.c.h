@@ -29,6 +29,8 @@ void kinc_g5_vertex_buffer_init(kinc_g5_vertex_buffer_t *buffer, int vertexCount
 	buf_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 #ifdef KINC_VKRT
 	buf_info.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	buf_info.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	buf_info.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
 #endif
 	buf_info.flags = 0;
 
