@@ -182,7 +182,7 @@ if (os_platform() === 'win32') {
 
 let binpath = path_resolve(scriptArgs[0]);
 let toolsdir = binpath.substring(0, binpath.lastIndexOf(path_sep));
-let __dirname = path_join(toolsdir, "..", "..");
+let __dirname = path_join(toolsdir, "..");
 
 function path_join() {
 	let args = Array.from(arguments);
@@ -427,9 +427,9 @@ function loadProject(directory, korefile = null) {
 
 			make_armorcore();
 
-			if (os_argv().indexOf("--run") >= 0) {
-				fs_copydir(os_cwd() + "/build/krom", __dirname + "/Deployment");
-			}
+			// if (os_argv().indexOf("--run") >= 0) {
+			// 	fs_copydir(os_cwd() + "/build/krom", __dirname + "/Deployment");
+			// }
 		}
 		catch (e) {
 		}
@@ -3519,7 +3519,7 @@ function make_armorcore() {
 	}
 
 	function convertImage(from, temp, to, root, exe, params) {
-		os_exec(path_join(root, 'Kinc', 'Tools', sys_dir(), exe), params);
+		os_exec(path_join(root, 'Tools', sys_dir(), exe), params);
 		fs_rename(temp, to);
 	}
 
@@ -3714,7 +3714,7 @@ function make_armorcore() {
 			file = ts_preprocessor(file, file_path);
 			source += file;
 		}
-		let minits_bin = path_join(__dirname, 'Kinc', 'Tools', sys_dir(), 'minits' + exe_ext());
+		let minits_bin = path_join(__dirname, 'Tools', sys_dir(), 'minits' + exe_ext());
 		let minits_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
 		let minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
 		fs_writefile(minits_input, source);
@@ -3770,7 +3770,7 @@ function make_armorcore() {
 		fs_ensuredir(shaderDir);
 
 		let exportedShaders = [];
-		let krafix = path_join(__dirname, 'Kinc', 'Tools', sys_dir(), 'krafix' + exe_ext());
+		let krafix = path_join(__dirname, 'Tools', sys_dir(), 'krafix' + exe_ext());
 		let shaderCompiler = new ShaderCompiler(exporter, krafix, shaderDir, temp, buildDir, options, project.shaderMatchers);
 		try {
 			exportedShaders = shaderCompiler.run();

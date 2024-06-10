@@ -1,7 +1,2 @@
 .DS_Store
 build/
-Deployment/*.frag
-Deployment/*.vert
-Deployment/*.comp
-Deployment/*.txt
-Deployment/Armor*
