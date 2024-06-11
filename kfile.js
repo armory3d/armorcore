@@ -13,13 +13,13 @@ let project = new Project(flags.name);
 	project.addIncludeDir('Sources');
 
 	function addBackend(name) {
-		project.addFile('Sources/Backends/' + name + '/Sources/**');
-		project.addIncludeDir('Sources/Backends/' + name + '/Sources');
+		project.addFile('Sources/backends/' + name + '/Sources/**');
+		project.addIncludeDir('Sources/backends/' + name + '/Sources');
 	}
 
 	if (platform === 'windows') {
-		addBackend('System/Windows');
-		addBackend('System/Microsoft');
+		addBackend('system/Windows');
+		addBackend('system/Microsoft');
 		project.addLib('dxguid');
 		project.addLib('dsound');
 		project.addLib('dinput8');
@@ -31,7 +31,7 @@ let project = new Project(flags.name);
 
 		if (graphics === 'direct3d11') {
 			g4 = true;
-			addBackend('Graphics4/Direct3D11');
+			addBackend('graphics4/Direct3D11');
 			project.addDefine('KINC_DIRECT3D');
 			project.addDefine('KINC_DIRECT3D11');
 			project.addLib('d3d11');
@@ -39,7 +39,7 @@ let project = new Project(flags.name);
 		else if (graphics === 'direct3d12' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('Graphics5/Direct3D12');
+			addBackend('graphics5/Direct3D12');
 			project.addDefine('KINC_DIRECT3D');
 			project.addDefine('KINC_DIRECT3D12');
 			project.addLib('dxgi');
@@ -48,7 +48,7 @@ let project = new Project(flags.name);
 		else if (graphics === 'vulkan') {
 			g4 = true;
 			g5 = true;
-			addBackend('Graphics5/Vulkan');
+			addBackend('graphics5/Vulkan');
 			project.addDefine('KINC_VULKAN');
 			project.addDefine('VK_USE_PLATFORM_WIN32_KHR');
 			if (!os_env(VULKAN_SDK)) {
@@ -67,23 +67,23 @@ let project = new Project(flags.name);
 			throw new Error('Graphics API ' + graphics + ' is not available for Windows.');
 		}
 
-		addBackend('Audio2/WASAPI');
+		addBackend('audio2/wasapi');
 	}
 	else if (platform === 'osx') {
-		addBackend('System/Apple');
-		addBackend('System/macOS');
-		addBackend('System/POSIX');
+		addBackend('system/Apple');
+		addBackend('system/macOS');
+		addBackend('system/POSIX');
 		if (graphics === 'metal' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('Graphics5/Metal');
+			addBackend('graphics5/Metal');
 			project.addDefine('KINC_METAL');
 			project.addLib('Metal');
 			project.addLib('MetalKit');
 		}
 		else if (graphics === 'opengl') {
 			g4 = true;
-			addBackend('Graphics4/OpenGL');
+			addBackend('graphics4/OpenGL');
 			project.addDefine('KINC_OPENGL');
 			project.addLib('OpenGL');
 		}
@@ -101,19 +101,19 @@ let project = new Project(flags.name);
 		project.addLib('Foundation');
 	}
 	else if (platform === 'ios') {
-		addBackend('System/Apple');
-		addBackend('System/iOS');
-		addBackend('System/POSIX');
+		addBackend('system/Apple');
+		addBackend('system/iOS');
+		addBackend('system/POSIX');
 		if (graphics === 'metal' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('Graphics5/Metal');
+			addBackend('graphics5/Metal');
 			project.addDefine('KINC_METAL');
 			project.addLib('Metal');
 		}
 		else if (graphics === 'opengl') {
 			g4 = true;
-			addBackend('Graphics4/OpenGL');
+			addBackend('graphics4/OpenGL');
 			project.addDefine('KINC_OPENGL');
 			project.addDefine('KINC_OPENGL_ES');
 			project.addLib('OpenGLES');
@@ -135,12 +135,12 @@ let project = new Project(flags.name);
 	}
 	else if (platform === 'android') {
 		project.addDefine('KINC_ANDROID');
-		addBackend('System/Android');
-		addBackend('System/POSIX');
+		addBackend('system/Android');
+		addBackend('system/POSIX');
 		if (graphics === 'vulkan' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('Graphics5/Vulkan');
+			addBackend('graphics5/Vulkan');
 			project.addDefine('KINC_VULKAN');
 			project.addDefine('VK_USE_PLATFORM_ANDROID_KHR');
 			project.addLib('vulkan');
@@ -148,7 +148,7 @@ let project = new Project(flags.name);
 		}
 		else if (graphics === 'opengl') {
 			g4 = true;
-			addBackend('Graphics4/OpenGL');
+			addBackend('graphics4/OpenGL');
 			project.addDefine('KINC_OPENGL');
 			project.addDefine('KINC_OPENGL_ES');
 			project.addDefine('KINC_ANDROID_API=19');
@@ -166,18 +166,18 @@ let project = new Project(flags.name);
 	}
 	else if (platform === 'wasm') {
 		project.addDefine('KINC_WASM');
-		addBackend('System/Wasm');
+		addBackend('system/Wasm');
 		project.addIncludeDir('miniClib');
 		project.addFile('miniClib/**');
 		if (graphics === 'webgpu') {
 			g4 = true;
 			g5 = true;
-			addBackend('Graphics5/WebGPU');
+			addBackend('graphics5/WebGPU');
 			project.addDefine('KINC_WEBGPU');
 		}
 		else if (graphics === 'opengl' || graphics === 'default') {
 			g4 = true;
-			addBackend('Graphics4/OpenGL');
+			addBackend('graphics4/OpenGL');
 			project.addDefine('KINC_OPENGL');
 			project.addDefine('KINC_OPENGL_ES');
 		}
@@ -186,8 +186,8 @@ let project = new Project(flags.name);
 		}
 	}
 	else if (platform === 'linux') {
-		addBackend('System/Linux');
-		addBackend('System/POSIX');
+		addBackend('system/Linux');
+		addBackend('system/POSIX');
 		project.addLib('asound');
 		project.addLib('dl');
 		project.addLib('udev');
@@ -288,13 +288,13 @@ let project = new Project(flags.name);
 		if (graphics === 'vulkan' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('Graphics5/Vulkan');
+			addBackend('graphics5/Vulkan');
 			project.addLib('vulkan');
 			project.addDefine('KINC_VULKAN');
 		}
 		else if (graphics === 'opengl') {
 			g4 = true;
-			addBackend('Graphics4/OpenGL');
+			addBackend('graphics4/OpenGL');
 			project.addLib('GL');
 			project.addDefine('KINC_OPENGL');
 			project.addLib('EGL');
@@ -317,12 +317,12 @@ let project = new Project(flags.name);
 	if (g5) {
 		project.addDefine('KINC_G5');
 		project.addDefine('KINC_G4ONG5');
-		addBackend('Graphics4/G4onG5');
+		addBackend('graphics4/G4onG5');
 	}
 	else {
 		project.addDefine('KINC_G5');
 		project.addDefine('KINC_G5ONG4');
-		addBackend('Graphics5/G5onG4');
+		addBackend('graphics5/G5onG4');
 	}
 }
 
@@ -352,7 +352,6 @@ if (flags.with_eval) {
 
 if (flags.with_g2) {
 	project.addDefine('WITH_G2');
-	project.addFile('Sources/g2/*');
 }
 
 if (flags.with_iron) {
@@ -393,11 +392,7 @@ else if (platform === 'osx') {
 else if (platform === 'android') {
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
-
-	project.addFile('Sources/android/android_file_dialog.c');
-	project.addFile('Sources/android/android_http_request.c');
 	project.addDefine('IDLE_SLEEP');
-
 	project.targetOptions.android.package = flags.package;
 	project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
 	project.targetOptions.android.screenOrientation = ['sensorLandscape'];
@@ -405,7 +400,6 @@ else if (platform === 'android') {
 	project.targetOptions.android.targetSdkVersion = 33;
 }
 else if (platform === 'ios') {
-	project.addFile('Sources/ios/ios_file_dialog.mm');
 	project.addDefine('IDLE_SLEEP');
 }
 

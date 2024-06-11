@@ -11,7 +11,7 @@
 #include <kinc/system.h>
 #include <kinc/window.h>
 #include <kinc/log.h>
-#include "../g2/g2_ext.h"
+#include <kinc/graphics2/g2_ext.h>
 
 void *gc_alloc(size_t size);
 

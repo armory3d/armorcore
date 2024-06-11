@@ -7,8 +7,8 @@
 #include <kinc/input/keyboard.h>
 #include "zui.h"
 #include "zui_ext.h"
-#include "../g2/g2.h"
-#include "../g2/g2_ext.h"
+#include <kinc/graphics2/g2.h>
+#include <kinc/graphics2/g2_ext.h>
 #include "../iron/iron_armpack.h"
 
 static zui_nodes_t *current_nodes = NULL;

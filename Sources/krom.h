@@ -27,8 +27,8 @@
 #include <unistd.h>
 #endif
 #ifdef WITH_G2
-#include "g2/g2.h"
-#include "g2/g2_ext.h"
+#include <kinc/graphics2/g2.h>
+#include <kinc/graphics2/g2_ext.h>
 #endif
 #ifdef WITH_ZUI
 #include "zui/zui.h"
