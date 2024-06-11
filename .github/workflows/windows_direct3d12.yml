@@ -17,7 +17,5 @@ jobs:
     - uses: actions/checkout@v2
     - name: Get msbuild
       uses: microsoft/setup-msbuild@v1
-    - name: Apply patch
-      run: git apply Patches/d3d12_raytrace.diff --directory=Kinc
     - name: Compile
-      run: Kinc/make --graphics direct3d12 --compile
+      run: ./make --graphics direct3d12 --compile
