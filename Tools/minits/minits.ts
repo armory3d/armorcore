@@ -1,5 +1,5 @@
 
-// ../../Kinc/make --from ../../ --graphics opengl --compile
+// ../../make --from ../../ --graphics opengl --compile
 
 ///include <stdio.h>
 ///include <time.h>

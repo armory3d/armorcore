@@ -1,7 +1,7 @@
 
 // Mini-kmake based on https://github.com/Kode/kmake by RobDangerous
 // gcc has lto enabled:
-// ../../Kinc/make --compiler gcc --compile
+// ../../make --compiler gcc --compile
 
 #include <stdio.h>
 #include <malloc.h>

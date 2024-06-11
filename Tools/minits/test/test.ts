@@ -1,8 +1,8 @@
 
 // ts to c:
-// ../../Kinc/make --kfile minits.js
+// ../../make --kfile minits.js
 // build c:
-// ../../Kinc/make --run
+// ../../make --run
 
 type point_t = {
 	x: f32;

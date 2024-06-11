@@ -1,7 +1,7 @@
 
 **Wasm (Linux, macOS or WSL)**
 ```bash
-../../Kinc/make --from ../.. wasm --compile
+../../make --from ../.. --target wasm --compile
 # Copy resulting armorcore.wasm file to Deployment
 # Copy index.html to Deployment
 # Copy https://github.com/Kode/Kinc/tree/main/Backends/System/Wasm/JS-Sources to Deployment
