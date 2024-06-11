@@ -76,12 +76,12 @@ function _g2_make_glyphs(start: i32, end: i32): i32[] {
 function g2_init() {
 	if (!_g2_initialized) {
 		krom_g2_init(
-			sys_get_shader_buffer("painter-image.vert"),
-			sys_get_shader_buffer("painter-image.frag"),
-			sys_get_shader_buffer("painter-colored.vert"),
-			sys_get_shader_buffer("painter-colored.frag"),
-			sys_get_shader_buffer("painter-text.vert"),
-			sys_get_shader_buffer("painter-text.frag")
+			sys_get_shader_buffer("g2_image.vert"),
+			sys_get_shader_buffer("g2_image.frag"),
+			sys_get_shader_buffer("g2_colored.vert"),
+			sys_get_shader_buffer("g2_colored.frag"),
+			sys_get_shader_buffer("g2_text.vert"),
+			sys_get_shader_buffer("g2_text.frag")
 		);
 		_g2_initialized = true;
 	}
