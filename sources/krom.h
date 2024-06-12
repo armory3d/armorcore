@@ -13,13 +13,13 @@
 #include <kinc/threads/thread.h>
 #include <kinc/graphics4/graphics.h>
 #include <kinc/io/filereader.h>
-#include <iron/iron_string.h>
-#include <iron/iron_array.h>
-#include <iron/iron_map.h>
-#include <iron/iron_armpack.h>
-#include <iron/iron_json.h>
-#include <iron/iron_gc.h>
-#include "iron/io_obj.h"
+#include "iron_string.h"
+#include "iron_array.h"
+#include "iron_map.h"
+#include "iron_armpack.h"
+#include "iron_json.h"
+#include "iron_gc.h"
+#include "io_obj.h"
 #ifdef KINC_WINDOWS
 #include <Windows.h>
 #endif
@@ -31,9 +31,9 @@
 #include <kinc/graphics2/g2_ext.h>
 #endif
 #ifdef WITH_ZUI
-#include "iron/zui.h"
-#include "iron/zui_ext.h"
-#include "iron/zui_nodes.h"
+#include "zui.h"
+#include "zui_ext.h"
+#include "zui_nodes.h"
 #endif
 
 #define i64 int64_t

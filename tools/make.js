@@ -3544,7 +3544,7 @@ function make_armorcore() {
 			this.sources = [];
 			this.addSourceDirectory(path_join(__dirname, 'sources'));
 			if (globalThis.flags.with_iron) {
-				this.addSourceDirectory(path_join(__dirname, 'sources/iron'));
+				// this.addSourceDirectory(path_join(__dirname, 'sources/iron'));
 			}
 			if (globalThis.flags.with_zui) {
 				// this.addSourceDirectory(path_join(__dirname, 'sources/zui'));

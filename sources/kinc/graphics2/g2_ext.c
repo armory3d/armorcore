@@ -2,7 +2,7 @@
 
 #include <math.h>
 #include "g2.h"
-#include "../../iron/iron_vec2.h"
+#include "../../iron_vec2.h"
 
 #define MATH_PI 3.14159265358979323846
 

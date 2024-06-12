@@ -13,13 +13,13 @@ let project = new Project(flags.name);
 	project.addIncludeDir('sources');
 
 	function addBackend(name) {
-		project.addFile('sources/backends/' + name + '/Sources/**');
-		project.addIncludeDir('sources/backends/' + name + '/Sources');
+		project.addFile('sources/backends/' + name + '/**');
+		project.addIncludeDir('sources/backends/' + name);
 	}
 
 	if (platform === 'windows') {
-		addBackend('system/Windows');
-		addBackend('system/Microsoft');
+		addBackend('windows');
+		addBackend('microsoft');
 		project.addLib('dxguid');
 		project.addLib('dsound');
 		project.addLib('dinput8');
@@ -31,7 +31,7 @@ let project = new Project(flags.name);
 
 		if (graphics === 'direct3d11') {
 			g4 = true;
-			addBackend('graphics4/Direct3D11');
+			addBackend('direct3d11');
 			project.addDefine('KINC_DIRECT3D');
 			project.addDefine('KINC_DIRECT3D11');
 			project.addLib('d3d11');
@@ -39,7 +39,7 @@ let project = new Project(flags.name);
 		else if (graphics === 'direct3d12' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('graphics5/Direct3D12');
+			addBackend('direct3d12');
 			project.addDefine('KINC_DIRECT3D');
 			project.addDefine('KINC_DIRECT3D12');
 			project.addLib('dxgi');
@@ -48,7 +48,7 @@ let project = new Project(flags.name);
 		else if (graphics === 'vulkan') {
 			g4 = true;
 			g5 = true;
-			addBackend('graphics5/Vulkan');
+			addBackend('vulkan');
 			project.addDefine('KINC_VULKAN');
 			project.addDefine('VK_USE_PLATFORM_WIN32_KHR');
 			if (!os_env(VULKAN_SDK)) {
@@ -67,23 +67,23 @@ let project = new Project(flags.name);
 			throw new Error('Graphics API ' + graphics + ' is not available for Windows.');
 		}
 
-		addBackend('audio2/wasapi');
+		addBackend('wasapi');
 	}
 	else if (platform === 'osx') {
-		addBackend('system/Apple');
-		addBackend('system/macOS');
-		addBackend('system/POSIX');
+		addBackend('apple');
+		addBackend('macos');
+		addBackend('posix');
 		if (graphics === 'metal' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('graphics5/Metal');
+			addBackend('metal');
 			project.addDefine('KINC_METAL');
 			project.addLib('Metal');
 			project.addLib('MetalKit');
 		}
 		else if (graphics === 'opengl') {
 			g4 = true;
-			addBackend('graphics4/OpenGL');
+			addBackend('opengl');
 			project.addDefine('KINC_OPENGL');
 			project.addLib('OpenGL');
 		}
@@ -101,19 +101,19 @@ let project = new Project(flags.name);
 		project.addLib('Foundation');
 	}
 	else if (platform === 'ios') {
-		addBackend('system/Apple');
-		addBackend('system/iOS');
-		addBackend('system/POSIX');
+		addBackend('apple');
+		addBackend('ios');
+		addBackend('posix');
 		if (graphics === 'metal' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('graphics5/Metal');
+			addBackend('metal');
 			project.addDefine('KINC_METAL');
 			project.addLib('Metal');
 		}
 		else if (graphics === 'opengl') {
 			g4 = true;
-			addBackend('graphics4/OpenGL');
+			addBackend('opengl');
 			project.addDefine('KINC_OPENGL');
 			project.addDefine('KINC_OPENGL_ES');
 			project.addLib('OpenGLES');
@@ -135,12 +135,12 @@ let project = new Project(flags.name);
 	}
 	else if (platform === 'android') {
 		project.addDefine('KINC_ANDROID');
-		addBackend('system/Android');
-		addBackend('system/POSIX');
+		addBackend('android');
+		addBackend('posix');
 		if (graphics === 'vulkan' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('graphics5/Vulkan');
+			addBackend('vulkan');
 			project.addDefine('KINC_VULKAN');
 			project.addDefine('VK_USE_PLATFORM_ANDROID_KHR');
 			project.addLib('vulkan');
@@ -148,7 +148,7 @@ let project = new Project(flags.name);
 		}
 		else if (graphics === 'opengl') {
 			g4 = true;
-			addBackend('graphics4/OpenGL');
+			addBackend('opengl');
 			project.addDefine('KINC_OPENGL');
 			project.addDefine('KINC_OPENGL_ES');
 			project.addDefine('KINC_ANDROID_API=19');
@@ -166,18 +166,18 @@ let project = new Project(flags.name);
 	}
 	else if (platform === 'wasm') {
 		project.addDefine('KINC_WASM');
-		addBackend('system/Wasm');
+		addBackend('wasm');
 		project.addIncludeDir('miniClib');
 		project.addFile('sources/libs/miniClib/**');
 		if (graphics === 'webgpu') {
 			g4 = true;
 			g5 = true;
-			addBackend('graphics5/WebGPU');
+			addBackend('webgpu');
 			project.addDefine('KINC_WEBGPU');
 		}
 		else if (graphics === 'opengl' || graphics === 'default') {
 			g4 = true;
-			addBackend('graphics4/OpenGL');
+			addBackend('opengl');
 			project.addDefine('KINC_OPENGL');
 			project.addDefine('KINC_OPENGL_ES');
 		}
@@ -186,8 +186,8 @@ let project = new Project(flags.name);
 		}
 	}
 	else if (platform === 'linux') {
-		addBackend('system/Linux');
-		addBackend('system/POSIX');
+		addBackend('linux');
+		addBackend('posix');
 		project.addLib('asound');
 		project.addLib('dl');
 		project.addLib('udev');
@@ -288,13 +288,13 @@ let project = new Project(flags.name);
 		if (graphics === 'vulkan' || graphics === 'default') {
 			g4 = true;
 			g5 = true;
-			addBackend('graphics5/Vulkan');
+			addBackend('vulkan');
 			project.addLib('vulkan');
 			project.addDefine('KINC_VULKAN');
 		}
 		else if (graphics === 'opengl') {
 			g4 = true;
-			addBackend('graphics4/OpenGL');
+			addBackend('opengl');
 			project.addLib('GL');
 			project.addDefine('KINC_OPENGL');
 			project.addLib('EGL');
@@ -312,12 +312,12 @@ let project = new Project(flags.name);
 	if (g5) {
 		project.addDefine('KINC_G5');
 		project.addDefine('KINC_G4ONG5');
-		addBackend('graphics4/G4onG5');
+		addBackend('g4ong5');
 	}
 	else {
 		project.addDefine('KINC_G5');
 		project.addDefine('KINC_G5ONG4');
-		addBackend('graphics5/G5onG4');
+		addBackend('g5ong4');
 	}
 }
 
@@ -330,8 +330,8 @@ if (fs_exists(os_cwd() + '/icon.png')) {
 	}
 }
 
-project.addIncludeDir('sources/libs/gc');
-project.addFile('sources/libs/gc/*.c');
+project.addIncludeDir('sources/libs');
+project.addFile('sources/libs/gc.c');
 project.addIncludeDir('sources');
 project.addFile('sources/krom.c');
 let krom_c_path = path_relative(__dirname, os_cwd()) + '/build/krom.c';
@@ -351,24 +351,22 @@ if (flags.with_g2) {
 
 if (flags.with_iron) {
 	project.addDefine('WITH_IRON');
-	// project.addFile('sources/iron/*.c');
-	project.addFile('sources/iron/iron_map.c');
-	project.addFile('sources/iron/iron_array.c');
-	project.addFile('sources/iron/iron_string.c');
-	project.addFile('sources/iron/iron_armpack.c');
-	project.addFile('sources/iron/iron_vec2.c');
-	project.addFile('sources/iron/iron_gc.c');
-	project.addFile('sources/iron/iron_json.c');
-	project.addFile('sources/iron/io_obj.c');
-	project.addIncludeDir("sources/libs/stb"); // iron_map.c -> stb_ds.h
-	project.addIncludeDir('sources/libs/jsmn'); // iron_json.c -> jsmn.h
+	project.addFile('sources/iron_map.c');
+	project.addFile('sources/iron_array.c');
+	project.addFile('sources/iron_string.c');
+	project.addFile('sources/iron_armpack.c');
+	project.addFile('sources/iron_vec2.c');
+	project.addFile('sources/iron_gc.c');
+	project.addFile('sources/iron_json.c');
+	project.addFile('sources/io_obj.c');
+	project.addIncludeDir('sources/libs');
 }
 
 if (flags.with_zui) {
 	project.addDefine('WITH_ZUI');
-	project.addFile('sources/iron/zui.c');
-	project.addFile('sources/iron/zui_ext.c');
-	project.addFile('sources/iron/zui_nodes.c');
+	project.addFile('sources/zui.c');
+	project.addFile('sources/zui_ext.c');
+	project.addFile('sources/zui_nodes.c');
 }
 
 if (platform === 'windows') {
@@ -431,7 +429,7 @@ if (flags.with_nfd && (platform === 'windows' || platform === 'linux' || platfor
 
 if (flags.with_tinydir) {
 	project.addDefine('WITH_TINYDIR');
-	project.addIncludeDir("sources/libs/tinydir");
+	project.addIncludeDir("sources/libs");
 }
 
 if (flags.with_zlib) {
@@ -443,12 +441,12 @@ if (flags.with_zlib) {
 
 if (flags.with_stb_image_write) {
 	project.addDefine('WITH_STB_IMAGE_WRITE');
-	project.addIncludeDir("sources/libs/stb");
+	project.addIncludeDir("sources/libs");
 }
 
 if (flags.with_mpeg_write) {
 	project.addDefine('WITH_MPEG_WRITE');
-	project.addIncludeDir("sources/libs/jo_mpeg");
+	project.addIncludeDir("sources/libs");
 }
 
 if (flags.on_c_project_created) {
