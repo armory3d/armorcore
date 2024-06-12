@@ -6,7 +6,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "../../iron/iron_armpack.h"
+#include "iron/iron_armpack.h"
 #include <kinc/graphics2/g2.h>
 
 #define ZUI_LAYOUT_VERTICAL 0

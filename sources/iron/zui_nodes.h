@@ -1,7 +1,7 @@
 #pragma once
 
 #include "zui.h"
-#include "../iron/iron_armpack.h"
+#include "iron_armpack.h"
 
 typedef struct zui_canvas_control {
 	float pan_x;

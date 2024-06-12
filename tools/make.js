@@ -3037,7 +3037,7 @@ function exportKoremakeProject(from, to, platform, korefile, options) {
 
 	let project = Project.create(from, to, platform, korefile);
 	if (shaderLang(platform) === 'metal') {
-		project.addFile(path_join(to, 'Sources', '*'), {});
+		project.addFile(path_join(to, 'sources', '*'), {});
 	}
 	project.resolveBackends();
 	project.searchFiles(undefined);
@@ -3519,7 +3519,7 @@ function make_armorcore() {
 	}
 
 	function convertImage(from, temp, to, root, exe, params) {
-		os_exec(path_join(root, 'Tools', 'bin', sys_dir(), exe), params);
+		os_exec(path_join(root, 'tools', 'bin', sys_dir(), exe), params);
 		fs_rename(temp, to);
 	}
 
@@ -3542,12 +3542,12 @@ function make_armorcore() {
 		constructor(options) {
 			this.options = options;
 			this.sources = [];
-			this.addSourceDirectory(path_join(__dirname, 'Sources'));
+			this.addSourceDirectory(path_join(__dirname, 'sources'));
 			if (globalThis.flags.with_iron) {
-				this.addSourceDirectory(path_join(__dirname, 'Sources/iron'));
+				this.addSourceDirectory(path_join(__dirname, 'sources/iron'));
 			}
 			if (globalThis.flags.with_zui) {
-				this.addSourceDirectory(path_join(__dirname, 'Sources/zui'));
+				// this.addSourceDirectory(path_join(__dirname, 'sources/zui'));
 			}
 			this.projectFiles = !options.noproject;
 		}
@@ -3714,7 +3714,7 @@ function make_armorcore() {
 			file = ts_preprocessor(file, file_path);
 			source += file;
 		}
-		let minits_bin = path_join(__dirname, 'Tools', 'bin', sys_dir(), 'minits' + exe_ext());
+		let minits_bin = path_join(__dirname, 'tools', 'bin', sys_dir(), 'minits' + exe_ext());
 		let minits_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
 		let minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
 		fs_writefile(minits_input, source);
@@ -3724,7 +3724,7 @@ function make_armorcore() {
 		// globalThis.fs_writefile = fs_writefile;
 		// globalThis.flags.minits_source = source;
 		// globalThis.flags.minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
-		// let minits = __dirname + '/Tools/minits/minits.js';
+		// let minits = __dirname + '/tools/minits/minits.js';
 		// (1, eval)(fs_readfile(minits));
 	}
 
@@ -3770,7 +3770,7 @@ function make_armorcore() {
 		fs_ensuredir(shaderDir);
 
 		let exportedShaders = [];
-		let krafix = path_join(__dirname, 'Tools', 'bin', sys_dir(), 'krafix' + exe_ext());
+		let krafix = path_join(__dirname, 'tools', 'bin', sys_dir(), 'krafix' + exe_ext());
 		let shaderCompiler = new ShaderCompiler(exporter, krafix, shaderDir, temp, buildDir, options, project.shaderMatchers);
 		try {
 			exportedShaders = shaderCompiler.run();

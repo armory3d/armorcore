@@ -1,1 +1,1 @@
-@call "%~dp0Tools\bin\windows_x64\kmake.exe" "%~dp0Tools\make.js" %*
+@call "%~dp0tools\bin\windows_x64\kmake.exe" "%~dp0tools\make.js" %*

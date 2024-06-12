@@ -31,9 +31,9 @@
 #include <kinc/graphics2/g2_ext.h>
 #endif
 #ifdef WITH_ZUI
-#include "zui/zui.h"
-#include "zui/zui_ext.h"
-#include "zui/zui_nodes.h"
+#include "iron/zui.h"
+#include "iron/zui_ext.h"
+#include "iron/zui_nodes.h"
 #endif
 
 #define i64 int64_t
