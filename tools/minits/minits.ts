@@ -1,5 +1,5 @@
 
-// ../../make --from ../../ --graphics opengl --compile
+// ../../make --graphics opengl --compile
 
 ///include <stdio.h>
 ///include <time.h>

@@ -334,8 +334,7 @@ project.addIncludeDir('sources/libs');
 project.addFile('sources/libs/gc.c');
 project.addIncludeDir('sources');
 project.addFile('sources/krom.c');
-let krom_c_path = path_relative(__dirname, os_cwd()) + '/build/krom.c';
-project.addDefine('KROM_C_PATH="../' + krom_c_path + '"');
+project.addDefine('KROM_C_PATH="' + __dirname + '/build/krom.c' + '"');
 
 if (flags.with_audio) {
 	project.addDefine('WITH_AUDIO');
@@ -447,10 +446,6 @@ if (flags.with_stb_image_write) {
 if (flags.with_mpeg_write) {
 	project.addDefine('WITH_MPEG_WRITE');
 	project.addIncludeDir("sources/libs");
-}
-
-if (flags.on_c_project_created) {
-	flags.on_c_project_created(project);
 }
 
 project.flatten();
