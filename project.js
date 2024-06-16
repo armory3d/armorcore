@@ -69,7 +69,7 @@ let project = new Project(flags.name);
 
 		addBackend('wasapi');
 	}
-	else if (platform === 'osx') {
+	else if (platform === 'macos') {
 		addBackend('apple');
 		addBackend('macos');
 		addBackend('posix');
@@ -193,13 +193,13 @@ let project = new Project(flags.name);
 		project.addLib('udev');
 
 		try {
-			if (!fs_exists(targetDirectory)) {
-				fs_mkdir(targetDirectory);
+			if (!fs_exists('build')) {
+				fs_mkdir('build');
 			}
-			if (!fs_exists(path_join(targetDirectory, 'wayland'))) {
-				fs_mkdir(path_join(targetDirectory, 'wayland'));
+			if (!fs_exists(path_join('build', 'wayland'))) {
+				fs_mkdir(path_join('build', 'wayland'));
 			}
-			const waylandDir = path_join(targetDirectory, 'wayland', 'wayland-generated');
+			const waylandDir = path_join('build', 'wayland', 'wayland-generated');
 			if (!fs_exists(waylandDir)) {
 				fs_mkdir(waylandDir);
 			}
@@ -276,7 +276,7 @@ let project = new Project(flags.name);
 				fs_writefile(path_resolve(waylandDir, 'waylandunit.c'), cfile);
 			}
 
-			project.addIncludeDir(path_join(targetDirectory, 'wayland'));
+			project.addIncludeDir(path_join('build', 'wayland'));
 			project.addFile(path_resolve(waylandDir, '**'));
 		}
 		catch (err) {
@@ -321,12 +321,10 @@ let project = new Project(flags.name);
 	}
 }
 
-project.setDebugDir('Deployment');
-
 if (fs_exists(os_cwd() + '/icon.png')) {
-	project.icon = path_relative(__dirname, os_cwd()) + '/icon.png';
-	if (platform === 'osx' && fs_exists(os_cwd() + '/icon_macos.png')) {
-		project.icon = path_relative(__dirname, os_cwd()) + '/icon_macos.png';
+	project.icon = os_cwd() + '/icon.png';
+	if (platform === 'macos' && fs_exists(os_cwd() + '/icon_macos.png')) {
+		project.icon = os_cwd() + '/icon_macos.png';
 	}
 }
 
@@ -334,7 +332,7 @@ project.addIncludeDir('sources/libs');
 project.addFile('sources/libs/gc.c');
 project.addIncludeDir('sources');
 project.addFile('sources/krom.c');
-project.addDefine('KROM_C_PATH="' + __dirname + '/build/krom.c' + '"');
+project.addDefine('KROM_C_PATH="' + os_cwd() + '/build/krom.c' + '"');
 
 if (flags.with_audio) {
 	project.addDefine('WITH_AUDIO');
@@ -380,24 +378,24 @@ if (platform === 'windows') {
 else if (platform === 'linux') {
 	project.addDefine("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
 }
-else if (platform === 'osx') {
+else if (platform === 'macos') {
 
 }
 else if (platform === 'android') {
 	// In app/build.gradle:
 	//   android - defaultconfig - ndk.abiFilters 'arm64-v8a'
 	project.addDefine('IDLE_SLEEP');
-	project.targetOptions.android.package = flags.package;
-	project.targetOptions.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
-	project.targetOptions.android.screenOrientation = ['sensorLandscape'];
-	project.targetOptions.android.minSdkVersion = 30;
-	project.targetOptions.android.targetSdkVersion = 33;
+	project.target_options.android.package = flags.package;
+	project.target_options.android.permissions = ['android.permission.WRITE_EXTERNAL_STORAGE', 'android.permission.READ_EXTERNAL_STORAGE', 'android.permission.INTERNET'];
+	project.target_options.android.screenOrientation = ['sensorLandscape'];
+	project.target_options.android.minSdkVersion = 30;
+	project.target_options.android.targetSdkVersion = 33;
 }
 else if (platform === 'ios') {
 	project.addDefine('IDLE_SLEEP');
 }
 
-if (flags.with_nfd && (platform === 'windows' || platform === 'linux' || platform === 'osx')) {
+if (flags.with_nfd && (platform === 'windows' || platform === 'linux' || platform === 'macos')) {
 	project.addDefine('WITH_NFD');
 	project.addIncludeDir("sources/libs/nfd");
 	project.addFile('sources/libs/nfd/nfd_common.c');

@@ -1,6 +1,5 @@
 
 let project = new Project("kmake");
-project.setDebugDir("Deployment");
 
 project.addIncludeDir("../../sources/libs");
 project.addFile("../../sources/libs/quickjs/*.c");

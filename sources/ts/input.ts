@@ -417,7 +417,7 @@ function keyboard_key_code(key: key_code_t): string {
 	else if (key == key_code_t.CONTROL) {
 		return "control";
 	}
-	///if krom_darwin
+	///if krom_macos
 	else if (key == key_code_t.META) {
 		return "control";
 	}

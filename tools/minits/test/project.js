@@ -1,7 +1,6 @@
 
 let project = new Project("minits");
 project.addProject("../../Kinc");
-project.setDebugDir("Deployment");
 
 project.addIncludeDir("../../sources");
 project.addIncludeDir("../../sources/libs");

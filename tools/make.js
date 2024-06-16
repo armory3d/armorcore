@@ -3,11 +3,24 @@
 import * as std from "std";
 import * as os from "os";
 
-function getEmbeddedBinaryData() {
+let path_sep = "/";
+let other_path_sep = "\\";
+if (os_platform() === "win32") {
+	path_sep = "\\";
+	other_path_sep = "/";
+}
+
+let binpath = path_resolve(scriptArgs[0]);
+let toolsdir = binpath.substring(0, binpath.lastIndexOf(path_sep));
+let makedir = path_join(toolsdir, "..", "..");
+let __dirname = makedir;
+let armorcoredir = path_join(makedir, "..");
+
+function get_embedded_binary_data() {
 
 }
 
-function getEmbeddedData() {
+function get_embedded_data() {
 
 }
 
@@ -89,8 +102,8 @@ function fs_ensuredir(dir) {
 
 function fs_copydir(from, to) {
 	fs_ensuredir(to);
-	const files = fs_readdir(from);
-	for (const file of files) {
+	let files = fs_readdir(from);
+	for (let file of files) {
 		if (fs_isdir(path_join(from, file))) {
 			fs_copydir(path_join(from, file), path_join(to, file));
 		}
@@ -166,25 +179,12 @@ function crypto_random_uuid() {
 var SHA1="undefined"!=typeof exports?exports:{};!function(t){var r=[1518500249,1859775393,-1894007588,-899497514],i={sha1:1};SHA1.createHash=function(t){if(t&&!i[t]&&!i[t.toLowerCase()])throw new Error("Digest method not supported");return new s};var n,s=function(){function t(){this.A=1732584193,this.B=-271733879,this.C=-1732584194,this.D=271733878,this.E=-1009589776,this.t=0,this.i=0,(!n||e>=8e3)&&(n=new ArrayBuffer(8e3),e=0),this.h=new Uint8Array(n,e,80),this.o=new Int32Array(n,e,20),e+=80}return t.prototype.update=function(t){if("string"==typeof t)return this.u(t);if(null==t)throw new TypeError("Invalid type: "+typeof t);var r=t.byteOffset,i=t.byteLength,n=i/64|0,s=0;if(n&&!(3&r)&&!(this.t%64)){for(var h=new Int32Array(t.buffer,r,16*n);n--;)this.v(h,s>>2),s+=64;this.t+=s}if(1!==t.BYTES_PER_ELEMENT&&t.buffer){var e=new Uint8Array(t.buffer,r+s,i-s);return this.p(e)}return s===i?this:this.p(t,s)},t.prototype.p=function(t,r){var i=this.h,n=this.o,s=t.length;for(r|=0;r<s;){for(var h=this.t%64,e=h;r<s&&e<64;)i[e++]=t[r++];e>=64&&this.v(n),this.t+=e-h}return this},t.prototype.u=function(t){for(var r=this.h,i=this.o,n=t.length,s=this.i,h=0;h<n;){for(var e=this.t%64,f=e;h<n&&f<64;){var o=0|t.charCodeAt(h++);o<128?r[f++]=o:o<2048?(r[f++]=192|o>>>6,r[f++]=128|63&o):o<55296||o>57343?(r[f++]=224|o>>>12,r[f++]=128|o>>>6&63,r[f++]=128|63&o):s?(o=((1023&s)<<10)+(1023&o)+65536,r[f++]=240|o>>>18,r[f++]=128|o>>>12&63,r[f++]=128|o>>>6&63,r[f++]=128|63&o,s=0):s=o}f>=64&&(this.v(i),i[0]=i[16]),this.t+=f-e}return this.i=s,this},t.prototype.v=function(t,i){var n=this,s=n.A,e=n.B,f=n.C,w=n.D,y=n.E,A=0;for(i|=0;A<16;)h[A++]=o(t[i++]);for(A=16;A<80;A++)h[A]=u(h[A-3]^h[A-8]^h[A-14]^h[A-16]);for(A=0;A<80;A++){var p=A/20|0,d=a(s)+v(p,e,f,w)+y+h[A]+r[p]|0;y=w,w=f,f=c(e),e=s,s=d}this.A=s+this.A|0,this.B=e+this.B|0,this.C=f+this.C|0,this.D=w+this.D|0,this.E=y+this.E|0},t.prototype.digest=function(t){var r=this.h,i=this.o,n=this.t%64|0;for(r[n++]=128;3&n;)r[n++]=0;if((n>>=2)>14){for(;n<16;)i[n++]=0;n=0,this.v(i)}for(;n<16;)i[n++]=0;var s=8*this.t,h=(4294967295&s)>>>0,e=(s-h)/4294967296;return e&&(i[14]=o(e)),h&&(i[15]=o(h)),this.v(i),"hex"===t?this.I():this.U()},t.prototype.I=function(){var t=this,r=t.A,i=t.B,n=t.C,s=t.D,h=t.E;return f(r)+f(i)+f(n)+f(s)+f(h)},t.prototype.U=function(){var t=this,r=t.A,i=t.B,n=t.C,s=t.D,h=t.E,e=t.h,f=t.o;return f[0]=o(r),f[1]=o(i),f[2]=o(n),f[3]=o(s),f[4]=o(h),e.slice(0,20)},t}(),h=new Int32Array(80),e=0,f=function(t){return(t+4294967296).toString(16).substr(-8)},o=254===new Uint8Array(new Uint16Array([65279]).buffer)[0]?function(t){return t}:function(t){return t<<24&4278190080|t<<8&16711680|t>>8&65280|t>>24&255},u=function(t){return t<<1|t>>>31},a=function(t){return t<<5|t>>>27},c=function(t){return t<<30|t>>>2};function v(t,r,i,n){return 0===t?r&i|~r&n:2===t?r&i|r&n|i&n:r^i^n}}();
 
 function uuidv5(path, namespace) {
-	const hash = SHA1.createHash("sha1");
+	let hash = SHA1.createHash("sha1");
 	hash.update(namespace);
 	hash.update(path);
-	const value = hash.digest("hex");
+	let value = hash.digest("hex");
 	return value.substring(0, 8) + "-" + value.substring(8, 12) + "-" + value.substring(12, 16) + "-" + value.substring(16, 20) + "-" + value.substring(20, 32);
 }
-
-let path_sep = "/";
-let other_path_sep = "\\";
-if (os_platform() === "win32") {
-	path_sep = "\\";
-	other_path_sep = "/";
-}
-
-let binpath = path_resolve(scriptArgs[0]);
-let toolsdir = binpath.substring(0, binpath.lastIndexOf(path_sep));
-let makedir = path_join(toolsdir, "..", "..");
-let __dirname = makedir;
-let armorcoredir = path_join(makedir, "..");
 
 function path_join() {
 	let args = Array.from(arguments);
@@ -199,12 +199,15 @@ function _path_resolve(base, relative) {
 	let stack = base.split("/");
     let parts = relative.split("/");
     for (let i = 0; i < parts.length; i++) {
-        if (parts[i] == ".")
+        if (parts[i] == ".") {
             continue;
-        if (parts[i] == "..")
+		}
+        if (parts[i] == "..") {
             stack.pop();
-        else
+		}
+        else {
             stack.push(parts[i]);
+		}
     }
     return stack.join("/");
 }
@@ -301,8 +304,8 @@ function sys_dir() {
 }
 
 function matches(text, pattern) {
-	const regexstring = pattern.replace(/\./g, "\\.").replace(/\*\*/g, ".?").replace(/\*/g, "[^/]*").replace(/\?/g, "*");
-	const regex = new RegExp("^" + regexstring + "$", "g");
+	let regexstring = pattern.replace(/\./g, "\\.").replace(/\*\*/g, ".?").replace(/\*/g, "[^/]*").replace(/\?/g, "*");
+	let regex = new RegExp("^" + regexstring + "$", "g");
 	return regex.test(text);
 }
 
@@ -311,35 +314,38 @@ function stringify(p) {
 }
 
 function icon_run(from, to, width, height, format, background) {
-	const exe = path_resolve(toolsdir, "kraffiti" + exe_ext());
+	let exe = path_resolve(toolsdir, "kraffiti" + exe_ext());
 	let params = ["from=" + from, "to=" + to, "format=" + format, "keepaspect"];
-	if (width > 0)
+	if (width > 0) {
 		params.push("width=" + width);
-	if (height > 0)
+	}
+	if (height > 0) {
 		params.push("height=" + height);
-	if (background !== undefined)
+	}
+	if (background !== null) {
 		params.push("background=" + background.toString(16));
+	}
 	os_exec(exe, params);
 }
 
 function export_ico(icon, to, from) {
-	icon_run(path_join(from, icon), to.toString(), 0, 0, "ico", undefined);
+	icon_run(path_join(from, icon), to, 0, 0, "ico", null);
 }
 
 function export_png(icon, to, width, height, background, from) {
-	icon_run(path_join(from, icon), to.toString(), width, height, "png", background);
+	icon_run(path_join(from, icon), to, width, height, "png", background);
 }
 
-function containsDefine(array, value) {
+function contains_define(array, value) {
 	return array.indexOf(value) > -1;
 }
 
-function containsFancyDefine(array, value) {
-	const name = value.substring(0, value.indexOf("="));
-	for (const element of array) {
-		const index = element.indexOf("=");
+function contains_fancy_define(array, value) {
+	let name = value.substring(0, value.indexOf("="));
+	for (let element of array) {
+		let index = element.indexOf("=");
 		if (index >= 0) {
-			const otherName = element.substring(0, index);
+			let otherName = element.substring(0, index);
 			if (name === otherName) {
 				return true;
 			}
@@ -348,40 +354,12 @@ function containsFancyDefine(array, value) {
 	return false;
 }
 
-function loadProject(directory) {
+function load_project(directory) {
 	__dirname = path_resolve(directory);
 
 	if (globalThis.flags == null) {
-
-		globalThis.std = std;
-		globalThis.Project = Project;
 		globalThis.platform = Project.platform;
-		globalThis.graphics = Options_1.graphics;
-		globalThis.__dirname = __dirname;
-		globalThis.targetDirectory = Project.to;
-		globalThis.fs_readdir = fs_readdir;
-		globalThis.fs_exists = fs_exists;
-		globalThis.fs_mtime = fs_mtime;
-		globalThis.fs_isdir = fs_isdir;
-		globalThis.fs_mkdir = fs_mkdir;
-		globalThis.fs_copydir = fs_copydir;
-		globalThis.fs_copyfile = fs_copyfile;
-		globalThis.fs_writefile = fs_writefile;
-		globalThis.fs_readfile = fs_readfile;
-		globalThis.fs_ensuredir = fs_ensuredir;
-		globalThis.fs_rename = fs_rename;
-		globalThis.os_platform = os_platform;
-		globalThis.os_env = os_env;
-		globalThis.os_argv = os_argv;
-		globalThis.os_exec = os_exec;
-		globalThis.os_exit = os_exit;
-		globalThis.os_cwd = os_cwd;
-		globalThis.path_join = path_join;
-		globalThis.path_resolve = path_resolve;
-		globalThis.path_isabs = path_isabs;
-		globalThis.path_sep = path_sep;
-		globalThis.path_relative = path_relative;
-
+		globalThis.graphics = goptions.graphics;
 		globalThis.flags = {
 			name: "Armory",
 			package: "org.armory3d",
@@ -401,162 +379,86 @@ function loadProject(directory) {
 		};
 
 		try {
-			if (os_env("ARM_EMBED")) {
-				os_argv().push("--embed");
-			}
-
-			if (platform === "android" || platform === "wasm") {
-				os_argv().push("--shaderversion");
-				os_argv().push("300");
-			}
-
-			{
-				let options = [
-					{
-						full: "from",
-						description: "Location of your project",
-						default: "."
-					},
-					{
-						full: "to",
-						description: "Build location",
-						default: "build"
-					},
-					{
-						full: "graphics",
-						short: "g",
-						description: "Graphics api to use. Possible parameters are direct3d11, direct3d12, metal, vulkan and opengl.",
-						default: "default"
-					},
-					{
-						full: "shaderversion",
-						description: "Set target shader version manually.",
-						default: null
-					},
-				];
-
-				let parsedOptions = {};
-
-				for (let option of options) {
-					parsedOptions[option.full] = option.default;
-				}
-
-				let args = os_argv();
-				for (let i = 2; i < args.length; ++i) {
-					let arg = args[i];
-					if (arg[0] === '-') {
-						if (arg[1] === '-') {
-							for (let option of options) {
-								if (arg.substr(2) === option.full) {
-									++i;
-									parsedOptions[option.full] = args[i];
-								}
-							}
-						}
-						else {
-							for (let option of options) {
-								if (option.short && arg[1] === option.short) {
-									++i;
-									parsedOptions[option.full] = args[i];
-								}
-							}
-						}
-					}
-				}
-
-				try {
-					parsedOptions.from = ".";
-					exportArmorCoreProject(parsedOptions);
-				}
-				catch (error) {
-					console.log(error);
-					os_exit(1);
-				}
-			}
-
-			// if (os_argv().indexOf("--run") >= 0) {
-			// 	fs_copydir(os_cwd() + "/build/krom", __dirname + "/Deployment");
-			// }
+			export_armorcore_project(goptions);
 		}
-		catch (e) {
+		catch (error) {
+			console.log(error);
+			os_exit(1);
 		}
 	}
 
-	return (1, eval)("function _(){" + fs_readfile(path_resolve(directory, "project.js")) + "} _();");
+	return eval("function _(){" + fs_readfile(path_resolve(directory, "project.js")) + "} _();");
 }
 
-function searchFiles2(currentDir, pattern) {
+function search_files2(current_dir, pattern) {
 	let result = [];
-	if (!fs_exists(currentDir)) {
+	if (!fs_exists(current_dir)) {
 		return result;
 	}
-	currentDir = path_join(currentDir); ////
-	let files = fs_readdir(currentDir);
+	current_dir = path_join(current_dir); ////
+	let files = fs_readdir(current_dir);
 	for (let f in files) {
-		let file = path_join(currentDir, files[f]);
+		let file = path_join(current_dir, files[f]);
 		if (fs_isdir(file))
 			continue;
-		file = path_relative(currentDir, file);
+		file = path_relative(current_dir, file);
 		if (matches(stringify(file), stringify(pattern))) {
-			result.push(path_join(currentDir, stringify(file)));
+			result.push(path_join(current_dir, stringify(file)));
 		}
 	}
 	if (pattern.endsWith("**")) {
-		let dirs = fs_readdir(currentDir);
+		let dirs = fs_readdir(current_dir);
 		for (let d of dirs) {
-			let dir = path_join(currentDir, d);
+			let dir = path_join(current_dir, d);
 			if (d.startsWith('.'))
 				continue;
 			if (!fs_isdir(dir))
 				continue;
-			result = result.concat(searchFiles2(dir, pattern));
+			result = result.concat(search_files2(dir, pattern));
 		}
 	}
 	return result;
 }
 
 class AssetConverter {
-	constructor(exporter, options, assetMatchers) {
+	constructor(exporter, options, asset_matchers) {
 		this.exporter = exporter;
 		this.options = options;
-		this.assetMatchers = assetMatchers;
+		this.asset_matchers = asset_matchers;
 	}
 
-	static replacePattern(pattern, value, filepath, options, from) {
-		let basePath = options.nameBaseDir ? path_join(from, options.nameBaseDir) : from;
-		let dirValue = path_relative(basePath, path_dirname(filepath));
-		if (basePath.length > 0 && basePath[basePath.length - 1] === path_sep
-			&& dirValue.length > 0 && dirValue[dirValue.length - 1] !== path_sep) {
-			dirValue += path_sep;
+	static replace_pattern(pattern, value, filepath, from) {
+		let base_path = from;
+		let dir_value = path_relative(base_path, path_dirname(filepath));
+		if (base_path.length > 0 && base_path[base_path.length - 1] === path_sep
+			&& dir_value.length > 0 && dir_value[dir_value.length - 1] !== path_sep) {
+			dir_value += path_sep;
 		}
-		if (options.namePathSeparator) {
-			dirValue = dirValue.split(path_sep).join(options.namePathSeparator);
-		}
-		const dirRegex = dirValue === ''
+		let dir_regex = dir_value === ''
 			? /{dir}\//g
 			: /{dir}/g;
-		return pattern.replace(/{name}/g, value).replace(dirRegex, dirValue);
+		return pattern.replace(/{name}/g, value).replace(dir_regex, dir_value);
 	}
 
-	static createExportInfo(filepath, keepextension, options, from) {
-		let nameValue = path_basename_noext(filepath);
+	static create_export_info(filepath, keep_ext, options, from) {
+		let name_value = path_basename_noext(filepath);
 		let destination = path_basename_noext(filepath);
-		if (keepextension || options.noprocessing) {
+		if (keep_ext || options.noprocessing) {
 			destination += path_extname(filepath);
 		}
 		if (options.destination) {
-			destination = AssetConverter.replacePattern(options.destination, destination, filepath, options, from);
+			destination = AssetConverter.replace_pattern(options.destination, destination, filepath, from);
 		}
-		if (keepextension) {
-			nameValue += path_extname(filepath);
+		if (keep_ext) {
+			name_value += path_extname(filepath);
 		}
 		if (options.name) {
-			nameValue = AssetConverter.replacePattern(options.name, nameValue, filepath, options, from);
+			name_value = AssetConverter.replace_pattern(options.name, name_value, filepath, from);
 		}
-		return { name: nameValue, destination: destination };
+		return { name: name_value, destination: destination };
 	}
 
-	watch(match, temp, options) {
+	watch(match, options) {
 		let basedir = match.substring(0, match.lastIndexOf(path_sep));
 		let pattern = match;
 		if (path_isabs(pattern)) {
@@ -564,47 +466,46 @@ class AssetConverter {
 			_pattern = path_relative(basedir, _pattern);
 			pattern = _pattern;
 		}
-		let files = searchFiles2(basedir, pattern);
-		const self = this;
-
-		let parsedFiles = [];
+		let files = search_files2(basedir, pattern);
+		let self = this;
+		let parsed_files = [];
 
 		let index = 0;
 		for (let file of files) {
 			console.log('Exporting asset ' + (index + 1) + ' of ' + files.length + ' (' + path_basename(file) + ').');
-			const ext = path_extname(file).toLowerCase();
+			let ext = path_extname(file).toLowerCase();
 			switch (ext) {
 				case '.png':
 				case '.jpg':
 				case '.hdr': {
-					let exportInfo = AssetConverter.createExportInfo(file, false, options, self.exporter.options.from);
+					let export_info = AssetConverter.create_export_info(file, false, options, self.exporter.options.from);
 					let images;
 					if (options.noprocessing) {
-						images = self.exporter.copyBlob(file, exportInfo.destination, options);
+						images = self.exporter.copy_blob(file, export_info.destination, options);
 					}
 					else {
-						images = self.exporter.copyImage(file, exportInfo.destination, options);
+						images = self.exporter.copy_image(file, export_info.destination);
 					}
-					parsedFiles.push({ name: exportInfo.name, from: file, type: 'image', files: images, original_width: options.original_width, original_height: options.original_height, readable: options.readable, embed: options.embed });
+					parsed_files.push({ name: export_info.name, from: file, type: 'image', files: images, original_width: options.original_width, original_height: options.original_height, readable: options.readable, embed: options.embed });
 					break;
 				}
 				default: {
-					let exportInfo = AssetConverter.createExportInfo(file, true, options, self.exporter.options.from);
-					let blobs = self.exporter.copyBlob(file, exportInfo.destination, options);
-					parsedFiles.push({ name: exportInfo.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
+					let export_info = AssetConverter.create_export_info(file, true, options, self.exporter.options.from);
+					let blobs = self.exporter.copy_blob(file, export_info.destination, options);
+					parsed_files.push({ name: export_info.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
 					break;
 				}
 			}
 
 			index += 1;
 		}
-		return parsedFiles;
+		return parsed_files;
 	}
 
-	run(temp) {
+	run() {
 		let files = [];
-		for (let matcher of this.assetMatchers) {
-			files = files.concat(this.watch(matcher.match, temp, matcher.options));
+		for (let matcher of this.asset_matchers) {
+			files = files.concat(this.watch(matcher.match, matcher.options));
 		}
 		return files;
 	}
@@ -617,44 +518,100 @@ class CompiledShader {
 	}
 }
 
+function shader_lang(platform) {
+	switch (platform) {
+		case "windows":
+			switch (goptions.graphics) {
+				case "opengl":
+					return "glsl";
+				case "direct3d11":
+				case "direct3d12":
+				case "default":
+					return "d3d11";
+				case "vulkan":
+					return "spirv";
+			}
+		case "ios":
+			switch (goptions.graphics) {
+				case "default":
+				case "metal":
+					return "metal";
+				case "opengl":
+					return "essl";
+			}
+		case "macos":
+			switch (goptions.graphics) {
+				case "default":
+				case "metal":
+					return "metal";
+				case "opengl":
+					return "glsl";
+			}
+		case "android":
+			switch (goptions.graphics) {
+				case "default":
+				case "vulkan":
+					return "spirv";
+				case "opengl":
+					return "essl";
+			}
+		case "linux":
+			switch (goptions.graphics) {
+				case "default":
+				case "vulkan":
+					return "spirv";
+				case "opengl":
+					return "glsl";
+			}
+		case "wasm":
+			switch (goptions.graphics) {
+				case "webgpu":
+					return "spirv";
+				case "opengl":
+				case "default":
+					return "essl";
+			}
+	}
+}
+
+function shader_find_type(options) {
+	if (options.graphics === 'default') {
+		if (os_platform() === 'win32') {
+			return 'd3d11';
+		}
+		else if (os_platform() === 'darwin') {
+			return 'metal';
+		}
+		else {
+			return options.shaderversion == 300 ? 'essl' : 'glsl';
+		}
+	}
+	else if (options.graphics === 'vulkan') {
+		return 'spirv';
+	}
+	else if (options.graphics === 'metal') {
+		return 'metal';
+	}
+	else if (options.graphics === 'opengl') {
+		return options.shaderversion == 300 ? 'essl' : 'glsl';
+	}
+	else if (options.graphics === 'direct3d11' || options.graphics === 'direct3d12') {
+		return 'd3d11';
+	}
+}
+
 class ShaderCompiler {
-	constructor(exporter, compiler, to, temp, builddir, options, shaderMatchers) {
+	constructor(exporter, compiler, to, temp, options, shader_matchers) {
 		this.exporter = exporter;
 		this.compiler = compiler;
-		this.type = ShaderCompiler.findType(options);
+		this.type = shader_find_type(options);
 		this.options = options;
 		this.to = to;
 		this.temp = temp;
-		this.shaderMatchers = shaderMatchers;
+		this.shader_matchers = shader_matchers;
 	}
 
-	static findType(options) {
-		if (options.graphics === 'default') {
-			if (os_platform() === 'win32') {
-				return 'd3d11';
-			}
-			else if (os_platform() === 'darwin') {
-				return 'metal';
-			}
-			else {
-				return options.shaderversion == 300 ? 'essl' : 'glsl';
-			}
-		}
-		else if (options.graphics === 'vulkan') {
-			return 'spirv';
-		}
-		else if (options.graphics === 'metal') {
-			return 'metal';
-		}
-		else if (options.graphics === 'opengl') {
-			return options.shaderversion == 300 ? 'essl' : 'glsl';
-		}
-		else if (options.graphics === 'direct3d11' || options.graphics === 'direct3d12') {
-			return 'd3d11';
-		}
-	}
-
-	watch(match, options, recompileAll) {
+	watch(match, options) {
 		let basedir = match.substring(0, match.lastIndexOf(path_sep));
 		let pattern = match;
 		if (path_isabs(pattern)) {
@@ -662,65 +619,64 @@ class ShaderCompiler {
 			_pattern = path_relative(basedir, _pattern);
 			pattern = _pattern;
 		}
-		let shaders = searchFiles2(basedir, pattern);
-		const self = this;
-
-		let compiledShaders = [];
+		let shaders = search_files2(basedir, pattern);
+		let self = this;
+		let compiled_shaders = [];
 
 		let index = 0;
 		for (let shader of shaders) {
 			console.log('Compiling shader ' + (index + 1) + ' of ' + shaders.length + ' (' + path_basename(shader) + ').');
-			let compiledShader = null;
+			let compiled_shader = null;
 			try {
-				compiledShader = self.compileShader(shader, options, recompileAll);
+				compiled_shader = self.compile_shader(shader, options);
 			}
 			catch (error) {
 				console.error('Compiling shader ' + (index + 1) + ' of ' + shaders.length + ' (' + path_basename(shader) + ') failed:');
 				console.error(error);
 			}
-			if (compiledShader === null) {
-				compiledShader = new CompiledShader();
-				compiledShader.embed = options.embed;
-				compiledShader.files = null;
+			if (compiled_shader === null) {
+				compiled_shader = new CompiledShader();
+				compiled_shader.embed = options.embed;
+				compiled_shader.files = null;
 			}
-			if (compiledShader.files != null && compiledShader.files.length === 0) {
-				compiledShader.files.push('data/' + path_basename_noext(shader) + '.' + self.type);
+			if (compiled_shader.files != null && compiled_shader.files.length === 0) {
+				compiled_shader.files.push('data/' + path_basename_noext(shader) + '.' + self.type);
 			}
-			compiledShader.name = AssetConverter.createExportInfo(shader, false, options, self.exporter.options.from).name;
-			compiledShaders.push(compiledShader);
+			compiled_shader.name = AssetConverter.create_export_info(shader, false, options, self.exporter.options.from).name;
+			compiled_shaders.push(compiled_shader);
 			++index;
 		}
 
-		return compiledShaders;
+		return compiled_shaders;
 	}
 
 	run() {
 		let shaders = [];
-		for (let matcher of this.shaderMatchers) {
+		for (let matcher of this.shader_matchers) {
 			shaders = shaders.concat(this.watch(matcher.match, matcher.options));
 		}
 		return shaders;
 	}
 
-	compileShader(file, options) {
+	compile_shader(file, options) {
 		let from = file;
 		let to = path_join(this.to, path_basename_noext(file) + '.' + this.type);
 
-		let fromTime = 0;
-		if (fs_exists(from)) fromTime = fs_mtime(from);
-		let toTime;
-		if (fs_exists(to)) toTime = fs_mtime(to);
+		let from_time = 0;
+		let to_time;
+		if (fs_exists(from)) from_time = fs_mtime(from);
+		if (fs_exists(to)) to_time = fs_mtime(to);
 
 		if (options.noprocessing) {
-			if (!toTime || toTime < fromTime) {
+			if (!to_time || to_time < from_time) {
 				fs_copyfile(from, to);
 			}
-			let compiledShader = new CompiledShader();
-			compiledShader.embed = options.embed;
-			return compiledShader;
+			let compiled_shader = new CompiledShader();
+			compiled_shader.embed = options.embed;
+			return compiled_shader;
 		}
 
-		if (!fromTime || (toTime && toTime > fromTime)) {
+		if (!from_time || (to_time && to_time > from_time)) {
 			return null;
 		}
 		else {
@@ -744,19 +700,19 @@ class ShaderCompiler {
 				console.error('Shader compiler error.')
 			}
 
-			let compiledShader = new CompiledShader();
-			compiledShader.embed = options.embed;
-			return compiledShader;
+			let compiled_shader = new CompiledShader();
+			compiled_shader.embed = options.embed;
+			return compiled_shader;
 		}
 	}
 }
 
-function convertImage(from, temp, to, root, exe, params) {
+function convert_image(temp, to, root, exe, params) {
 	os_exec(path_join(root, 'tools', 'bin', sys_dir(), exe), params);
 	fs_rename(temp, to);
 }
 
-function exportImage(root, from, to) {
+function export_image(root, from, to) {
 	to += ".k";
 	let temp = to + ".temp";
 	let outputformat = "k";
@@ -764,10 +720,10 @@ function exportImage(root, from, to) {
 		return outputformat;
 	}
 	fs_ensuredir(path_dirname(to));
-	const exe = "kraffiti" + exe_ext();
+	let exe = "kraffiti" + exe_ext();
 	let params = ["from=" + from, "to=" + temp, "format=lz4"];
 	params.push("filter=nearest");
-	convertImage(from, temp, to, root, exe, params);
+	convert_image(temp, to, root, exe, params);
 	return outputformat;
 }
 
@@ -775,11 +731,10 @@ class ArmorCoreExporter {
 	constructor(options) {
 		this.options = options;
 		this.sources = [];
-		this.addSourceDirectory(path_join(__dirname, "sources", "ts"));
-		this.projectFiles = !options.noproject;
+		this.add_source_directory(path_join(__dirname, "sources", "ts"));
 	}
 
-	tsOptions(name, defines) {
+	ts_options(defines) {
 		let graphics = this.options.graphics;
 		if (graphics === "default") {
 			if (os_platform() === "win32") {
@@ -793,21 +748,7 @@ class ArmorCoreExporter {
 			}
 		}
 		defines.push("krom_" + graphics);
-		if (os_argv().indexOf("android") >= 0) {
-			defines.push("krom_android");
-		}
-		else if (os_argv().indexOf("ios") >= 0) {
-			defines.push("krom_ios");
-		}
-		else if (os_platform() === "win32") {
-			defines.push("krom_windows");
-		}
-		else if (os_platform() === "linux") {
-			defines.push("krom_linux");
-		}
-		else if (os_platform() === "darwin") {
-			defines.push("krom_darwin");
-		}
+		defines.push("krom_" + goptions.target);
 		return {
 			from: this.options.from,
 			sources: this.sources,
@@ -815,41 +756,41 @@ class ArmorCoreExporter {
 		};
 	}
 
-	export(name, tsOptions) {
+	export() {
 		fs_ensuredir(path_join(this.options.to, "krom"));
 	}
 
-	copyImage(from, to, options) {
-		let format = exportImage(__dirname, from, path_join(this.options.to, "krom", to));
+	copy_image(from, to) {
+		let format = export_image(__dirname, from, path_join(this.options.to, "krom", to));
 		return [to + "." + format];
 	}
 
-	copyBlob(from, to) {
+	copy_blob(from, to) {
 		fs_ensuredir(path_join(this.options.to, "krom", path_dirname(to)));
 		fs_copyfile(from, path_join(this.options.to, "krom", to));
 		return [to];
 	}
 
-	addSourceDirectory(path) {
+	add_source_directory(path) {
 		this.sources.push(path);
 	}
 }
 
-function ts_preprocessor(file, file_path) {
-	let contains_define = (define) => {
-		let b = false;
-		for (let s of globalThis.options.defines) {
-			if (define.includes(s)) {
-				b = true;
-				break;
-			};
-		}
-		if (define.includes("!")) {
-			b = !b;
-		}
-		return b;
+function ts_contains_define(define) {
+	let b = false;
+	for (let s of globalThis.options.defines) {
+		if (define.includes(s)) {
+			b = true;
+			break;
+		};
 	}
+	if (define.includes("!")) {
+		b = !b;
+	}
+	return b;
+}
 
+function ts_preprocessor(file, file_path) {
 	let stack = [];
 	let found = [];
 	let lines = file.split("\n");
@@ -857,12 +798,12 @@ function ts_preprocessor(file, file_path) {
 		let line = lines[i].trimStart();
 		if (line.startsWith("///if")) {
 			let define = line.substr(6);
-			stack.push(contains_define(define));
+			stack.push(ts_contains_define(define));
 			found.push(stack[stack.length - 1]);
 		}
 		else if (line.startsWith("///elseif")) {
 			let define = line.substr(10);
-			if (!found[found.length - 1] && contains_define(define)) {
+			if (!found[found.length - 1] && ts_contains_define(define)) {
 				stack[stack.length - 1] = true;
 				found[found.length - 1] = true;
 			}
@@ -899,7 +840,7 @@ function ts_preprocessor(file, file_path) {
 	return lines.join("\n");
 }
 
-function writeTSProject(projectdir, projectFiles, options) {
+function write_ts_project(projectdir, options) {
 	let tsdata = {
 		include: []
 	};
@@ -955,20 +896,20 @@ function writeTSProject(projectdir, projectFiles, options) {
 	// (1, eval)(fs_readfile(minits));
 }
 
-function exportProjectFiles(name, resourceDir, options, exporter, defines, id) {
-	let tsOptions = exporter.tsOptions(name, defines);
-	writeTSProject(options.to, !options.noproject, tsOptions);
-	exporter.export(name, tsOptions);
+function export_project_files(name, options, exporter, defines) {
+	let ts_options = exporter.ts_options(defines);
+	write_ts_project(options.to, ts_options);
+	exporter.export();
 
 	console.log('Done.');
 	return name;
 }
 
-function exportArmorCoreProject(options) {
+function export_armorcore_project(options) {
 	console.log('Creating ArmorCore project files.');
 	let project = null;
 	if (fs_exists(path_join(options.from, 'project.js'))) {
-		project = loadProject(options.from);
+		project = load_project(options.from);
 	}
 
 	if (project == null) {
@@ -980,37 +921,32 @@ function exportArmorCoreProject(options) {
 	let temp = path_join(options.to, 'temp');
 
 	let exporter = new ArmorCoreExporter(options);
-	let buildDir = path_join(options.to, 'krom-build');
-	// Create the target build folder
-	// e.g. 'build/krom'
 	fs_ensuredir(path_join(options.to, 'krom'));
 
 	for (let source of project.sources) {
-		exporter.addSourceDirectory(source);
+		exporter.add_source_directory(source);
 	}
 
-	let assetConverter = new AssetConverter(exporter, options, project.assetMatchers);
-	let assets = assetConverter.run(temp);
-	let shaderDir = path_join(options.to, 'krom', 'data');
+	let asset_converter = new AssetConverter(exporter, options, project.asset_matchers);
+	let assets = asset_converter.run();
+	let shaderdir = path_join(options.to, 'krom', 'data');
+	fs_ensuredir(shaderdir);
 
-	fs_ensuredir(shaderDir);
-
-	let exportedShaders = [];
+	let exported_shaders = [];
 	let krafix = path_join(__dirname, 'tools', 'bin', sys_dir(), 'krafix' + exe_ext());
-	let shaderCompiler = new ShaderCompiler(exporter, krafix, shaderDir, temp, buildDir, options, project.shaderMatchers);
-	try {
-		exportedShaders = shaderCompiler.run();
-	}
-	catch (err) {
-		return Promise.reject(err);
-	}
+	let shader_compiler = new ShaderCompiler(exporter, krafix, shaderdir, temp, options, project.shader_matchers);
+	exported_shaders = shader_compiler.run();
 
 	let embed_files = [];
 	for (let asset of assets) {
-		if (asset.embed) embed_files.push(file);
+		if (asset.embed) {
+			embed_files.push(file);
+		}
 	}
-	for (let shader of exportedShaders) {
-		if (shader.embed) embed_files.push(shader);
+	for (let shader of exported_shaders) {
+		if (shader.embed) {
+			embed_files.push(shader);
+		}
 	}
 
 	if (embed_files.length > 0) {
@@ -1022,7 +958,7 @@ function exportArmorCoreProject(options) {
 		fs_writefile(path_join(options.to, 'krom', 'data', 'embed.txt'), embed_string);
 	}
 
-	exportProjectFiles(project.name, path_join(options.to, 'krom-resources'), options, exporter, project.defines, project.id);
+	export_project_files(project.name, options, exporter, project.defines);
 }
 
 class Project {
@@ -1033,110 +969,59 @@ class Project {
 		this.cFlags = [];
 		this.cppFlags = [];
 		this.icon = "icon.png";
-		this.additionalBackends = [];
-		this.vsdeploy = false;
 		this.lto = true;
 		this.noFlatten = true;
 		this.name = name;
-		this.safeName = name.replace(/[^A-z0-9\-\_]/g, "-");
+		this.safe_name = name.replace(/[^A-z0-9\-\_]/g, "-");
 		this.version = "1.0";
-		this.debugDir = "";
+		this.debugdir = "Deployment";
 		this.basedir = __dirname;
 		this.uuid = crypto_random_uuid();
 		this.files = [];
 		this.customs = [];
 		this.javadirs = [];
 		this.subProjects = [];
-		this.includeDirs = [];
+		this.includedirs = [];
 		this.defines = [];
 		this.libs = [];
-		this.kongDirs = [];
 		this.includes = [];
-		this.excludes = [];
-		this.cppStd = "";
-		this.cStd = "";
-		this.targetOptions = {
+		this.target_options = {
 			android: {},
 		};
-		this.cmd = false;
-		this.executableName = null;
+		this.executable_name = null;
 		this.sources = [];
-		this.assetMatchers = [];
-		this.shaderMatchers = [];
+		this.asset_matchers = [];
+		this.shader_matchers = [];
 	}
 
-	getExecutableName() {
-		return this.executableName;
+	get_executable_name() {
+		return this.executable_name;
 	}
 
-	addBackend(name) {
-		this.additionalBackends.push(name);
-	}
-
-	findAdditionalBackends(additionalBackends) {
-		for (const backend of this.additionalBackends) {
-			additionalBackends.push(backend);
-		}
-		for (let sub of this.subProjects) {
-			sub.findAdditionalBackends(additionalBackends);
-		}
-	}
-
-	findKincProject() {
-		if (this.name === "Kinc") {
-			return this;
-		}
-		for (let sub of this.subProjects) {
-			let kinc = sub.findKincProject();
-			if (kinc != null) {
-				return kinc;
-			}
-		}
-		return null;
-	}
-
-	resolveBackends() {
-		let additionalBackends = [];
-		this.findAdditionalBackends(additionalBackends);
-		let kinc = this.findKincProject();
-		for (const backend of additionalBackends) {
-			kinc.addFile("Backends/" + backend + "/Sources/**", null);
-			kinc.addIncludeDir("Backends/" + backend + "/Sources");
-		}
-	}
-
-	flattenSubProjects() {
+	flatten_subprojects() {
 		for (let sub of this.subProjects) {
 			sub.noFlatten = false;
-			sub.flattenSubProjects();
+			sub.flatten_subprojects();
 		}
 	}
 
 	flatten() {
 		this.noFlatten = false;
-		this.flattenSubProjects();
+		this.flatten_subprojects();
 	}
 
-	internalFlatten() {
+	internal_flatten() {
 		let out = [];
-		for (let sub of this.subProjects)
-			sub.internalFlatten();
+		for (let sub of this.subProjects) {
+			sub.internal_flatten();
+		}
 		for (let sub of this.subProjects) {
 			if (sub.noFlatten) {
 				out.push(sub);
 			}
 			else {
-				if (sub.cppStd !== "") {
-					this.cppStd = sub.cppStd;
-				}
 				if (sub.cStd !== "") {
 					this.cStd = sub.cStd;
-				}
-				if (sub.cmd) {
-					this.cmd = true;
-				}
-				if (sub.vsdeploy) {
-					this.vsdeploy = true;
 				}
 				if (!sub.lto) {
 					this.lto = false;
@@ -1150,11 +1035,11 @@ class Project {
 					this.shaderVersion = sub.shaderVersion;
 				}
 				let subbasedir = sub.basedir;
-				for (let tkey of Object.keys(sub.targetOptions)) {
-					const target = sub.targetOptions[tkey];
+				for (let tkey of Object.keys(sub.target_options)) {
+					let target = sub.target_options[tkey];
 					for (let key of Object.keys(target)) {
-						const options = this.targetOptions[tkey];
-						const option = target[key];
+						let options = this.target_options[tkey];
+						let option = target[key];
 						if (options[key] == null)
 							options[key] = option;
 						// push library properties to current array instead
@@ -1168,12 +1053,12 @@ class Project {
 				}
 				for (let d of sub.defines) {
 					if (d.indexOf("=") >= 0) {
-						if (!containsFancyDefine(this.defines, d)) {
+						if (!contains_fancy_define(this.defines, d)) {
 							this.defines.push(d);
 						}
 					}
 					else {
-						if (!containsDefine(this.defines, d)) {
+						if (!contains_define(this.defines, d)) {
 							this.defines.push(d);
 						}
 					}
@@ -1185,22 +1070,19 @@ class Project {
 					}
 					this.files.push({ file: absolute.replace(/\\/g, "/"), options: file.options, projectDir: subbasedir, projectName: sub.name });
 				}
-				for (const custom of sub.customs) {
+				for (let custom of sub.customs) {
 					let absolute = custom.file;
 					if (!path_isabs(absolute)) {
 						absolute = path_join(subbasedir, custom.file);
 					}
 					this.customs.push({ file: absolute.replace(/\\/g, "/"), command: custom.command, output: custom.output });
 				}
-				for (let i of sub.includeDirs)
-					if (!this.includeDirs.includes(path_resolve(subbasedir, i)))
-						this.includeDirs.push(path_resolve(subbasedir, i));
+				for (let i of sub.includedirs)
+					if (!this.includedirs.includes(path_resolve(subbasedir, i)))
+						this.includedirs.push(path_resolve(subbasedir, i));
 				for (let j of sub.javadirs)
 					if (!this.javadirs.includes(path_resolve(subbasedir, j)))
 						this.javadirs.push(path_resolve(subbasedir, j));
-				for (let k of sub.kongDirs)
-					if (!this.kongDirs.includes(path_resolve(subbasedir, k)))
-						this.kongDirs.push(path_resolve(subbasedir, k));
 				for (let lib of sub.libs) {
 					if (lib.indexOf("/") < 0 && lib.indexOf("\\") < 0) {
 						if (!this.libs.includes(lib))
@@ -1230,20 +1112,12 @@ class Project {
 		return this.name;
 	}
 
-	getSafeName() {
-		return this.safeName;
+	get_safe_name() {
+		return this.safe_name;
 	}
 
-	getUuid() {
+	get_uuid() {
 		return this.uuid;
-	}
-
-	matchesAllSubdirs(dir, pattern) {
-		if (pattern.endsWith("/**")) {
-			return matches(stringify(dir), pattern.substr(0, pattern.length - 3));
-		}
-		else
-			return false;
 	}
 
 	addCFlag(flag) {
@@ -1258,7 +1132,7 @@ class Project {
 		}
 	}
 
-	addFileForReal(file, options) {
+	add_file_for_real(file, options) {
 		for (let index in this.files) {
 			if (this.files[index].file === file) {
 				this.files[index] = { file: file, options: options, projectDir: this.basedir, projectName: this.name };
@@ -1268,29 +1142,29 @@ class Project {
 		this.files.push({ file: file, options: options, projectDir: this.basedir, projectName: this.name });
 	}
 
-	searchFiles(current) {
+	search_files(current) {
 		if (current === undefined) {
 			for (let sub of this.subProjects)
-				sub.searchFiles(undefined);
-			this.searchFiles(this.basedir);
+				sub.search_files(undefined);
+			this.search_files(this.basedir);
 			for (let includeobject of this.includes) {
 				if (path_isabs(includeobject.file) && includeobject.file.includes("**")) {
-					const starIndex = includeobject.file.indexOf("**");
-					const endIndex = includeobject.file.substring(0, starIndex).replace(/\\/g, "/").lastIndexOf("/");
-					this.searchFiles(includeobject.file.substring(0, endIndex));
+					let starIndex = includeobject.file.indexOf("**");
+					let endIndex = includeobject.file.substring(0, starIndex).replace(/\\/g, "/").lastIndexOf("/");
+					this.search_files(includeobject.file.substring(0, endIndex));
 				}
 				if (includeobject.file.startsWith("../")) {
 					let start = "../";
 					while (includeobject.file.startsWith(start)) {
 						start += "../";
 					}
-					this.searchFiles(path_resolve(this.basedir, start));
+					this.search_files(path_resolve(this.basedir, start));
 				}
 			}
 			return;
 		}
 		let files = fs_readdir(current);
-		nextfile: for (let f in files) {
+		for (let f in files) {
 			let file = path_join(current, files[f]);
 			let follow = true;
 			try {
@@ -1306,11 +1180,6 @@ class Project {
 			}
 
 			file = path_relative(this.basedir, file);
-			for (let exclude of this.excludes) {
-				if (matches(stringify(file), exclude)) {
-					continue nextfile;
-				}
-			}
 			for (let includeobject of this.includes) {
 				let include = includeobject.file;
 				if (path_isabs(include)) {
@@ -1319,12 +1188,12 @@ class Project {
 					include = inc;
 				}
 				if (matches(stringify(file), stringify(include))) {
-					this.addFileForReal(stringify(file), includeobject.options);
+					this.add_file_for_real(stringify(file), includeobject.options);
 				}
 			}
 		}
 		let dirs = fs_readdir(current);
-		nextdir: for (let d of dirs) {
+		for (let d of dirs) {
 			let dir = path_join(current, d);
 			if (d.startsWith("."))
 				continue;
@@ -1340,12 +1209,7 @@ class Project {
 			if (!follow) {
 				continue;
 			}
-			for (let exclude of this.excludes) {
-				if (this.matchesAllSubdirs(path_relative(this.basedir, dir), exclude)) {
-					continue nextdir;
-				}
-			}
-			this.searchFiles(dir);
+			this.search_files(dir);
 		}
 	}
 
@@ -1353,30 +1217,21 @@ class Project {
 		this.includes.push({ file: file, options: options });
 	}
 
-	addExclude(exclude) {
-		this.excludes.push(exclude);
-	}
-
 	addDefine(define) {
-		if (containsDefine(this.defines, define)) {
+		if (contains_define(this.defines, define)) {
 			return;
 		}
 		this.defines.push(define);
 	}
 
 	addIncludeDir(include) {
-		if (this.includeDirs.includes(include))
+		if (this.includedirs.includes(include))
 			return;
-		this.includeDirs.push(include);
+		this.includedirs.push(include);
 	}
 
 	addLib(lib) {
 		this.libs.push(lib);
-	}
-
-	addKongDir(dir) {
-		this.kongDirs.push(dir);
-		this.addDefine("KINC_KONG");
 	}
 
 	addAssets(match, options) {
@@ -1389,7 +1244,7 @@ class Project {
 			}
 			match = base + match.replace(/\\/g, '/');
 		}
-		this.assetMatchers.push({ match: match, options: options });
+		this.asset_matchers.push({ match: match, options: options });
 	}
 
 	addSources(source) {
@@ -1406,7 +1261,7 @@ class Project {
 			}
 			match = base + match.replace(/\\/g, '/');
 		}
-		this.shaderMatchers.push({ match: match, options: options });
+		this.shader_matchers.push({ match: match, options: options });
 	}
 
 	getFiles() {
@@ -1417,20 +1272,12 @@ class Project {
 		return this.javadirs;
 	}
 
-	getKongDirs() {
-		return this.kongDirs;
-	}
-
-	getBasedir() {
-		return this.basedir;
-	}
-
 	getSubProjects() {
 		return this.subProjects;
 	}
 
 	getIncludeDirs() {
-		return this.includeDirs;
+		return this.includedirs;
 	}
 
 	getDefines() {
@@ -1441,47 +1288,30 @@ class Project {
 		return this.libs;
 	}
 
-	getDebugDir() {
-		return this.debugDir;
-	}
-
-	setDebugDir(debugDir) {
-		this.debugDir = path_resolve(this.basedir, debugDir);
+	get_debug_dir() {
+		return this.debugdir;
 	}
 
 	addProject(directory) {
 		let from = path_isabs(directory) ? directory : path_join(this.basedir, directory);
-
-		if (fs_isdir(from)) {
-
-			let project = loadProject(from);
-			this.subProjects.push(project);
-
-			this.assetMatchers = this.assetMatchers.concat(project.assetMatchers);
-			this.sources = this.sources.concat(project.sources);
-			this.shaderMatchers = this.shaderMatchers.concat(project.shaderMatchers);
-			this.defines = this.defines.concat(project.defines);
-
-			return project;
-		}
-		else {
-			throw "Project directory " + from + " not found";
-		}
+		let project = load_project(from);
+		this.subProjects.push(project);
+		this.asset_matchers = this.asset_matchers.concat(project.asset_matchers);
+		this.sources = this.sources.concat(project.sources);
+		this.shader_matchers = this.shader_matchers.concat(project.shader_matchers);
+		this.defines = this.defines.concat(project.defines);
+		return project;
 	}
 
-	static create(directory, to, platform, korefile) {
+	static create(directory, to, platform) {
 		Project.platform = platform;
 		Project.to = path_resolve(to);
-		let project = loadProject(path_resolve(directory));
+		let project = load_project(path_resolve(directory));
 		let defines = [];
 		for (let define of defines) {
 			project.addDefine(define);
 		}
 		return project;
-	}
-
-	isCmd() {
-		return this.cmd;
 	}
 }
 
@@ -1491,12 +1321,12 @@ class Exporter {
 		this.outFile = null;
 	}
 
-	writeFile(file) {
+	write_file(file) {
 		this.path = file;
 		this.outFile = "";
 	}
 
-	closeFile() {
+	close_file() {
 		fs_writefile(this.path, this.outFile);
 		this.outFile = "";
 	}
@@ -1509,8 +1339,7 @@ class Exporter {
 		this.outFile += tabs + line + "\n";
 	}
 
-	nicePath(from, to, filepath) {
-		// let absolute = filepath;
+	nice_path(from, to, filepath) {
 		let absolute = path_normalize(filepath);
 		if (!path_isabs(absolute)) {
 			absolute = path_resolve(from, filepath);
@@ -1519,11 +1348,7 @@ class Exporter {
 	}
 }
 
-function isGitPath(p) {
-	return p.indexOf("/.git/") >= 0 || p.indexOf("\\.git\\") >= 0 || p.endsWith("/.git") || p.endsWith("\\.git");
-}
-
-function getDirFromString(file, base) {
+function get_dir_from_string(file, base) {
 	file = file.replace(/\\/g, '/');
 	if (file.indexOf("/") >= 0) {
 		let dir = file.substr(0, file.lastIndexOf("/"));
@@ -1534,64 +1359,8 @@ function getDirFromString(file, base) {
 	}
 }
 
-function getDir(file) {
-	return getDirFromString(file.file, file.projectName);
-}
-
-function shaderLang(platform) {
-	switch (platform) {
-		case "windows":
-			switch (Options_1.graphics) {
-				case "opengl":
-					return "glsl";
-				case "direct3d11":
-				case "direct3d12":
-				case "default":
-					return "d3d11";
-				case "vulkan":
-					return "spirv";
-			}
-		case "ios":
-			switch (Options_1.graphics) {
-				case "default":
-				case "metal":
-					return "metal";
-				case "opengl":
-					return "essl";
-			}
-		case "osx":
-			switch (Options_1.graphics) {
-				case "default":
-				case "metal":
-					return "metal";
-				case "opengl":
-					return "glsl";
-			}
-		case "android":
-			switch (Options_1.graphics) {
-				case "default":
-				case "vulkan":
-					return "spirv";
-				case "opengl":
-					return "essl";
-			}
-		case "linux":
-			switch (Options_1.graphics) {
-				case "default":
-				case "vulkan":
-					return "spirv";
-				case "opengl":
-					return "glsl";
-			}
-		case "wasm":
-			switch (Options_1.graphics) {
-				case "webgpu":
-					return "spirv";
-				case "opengl":
-				case "default":
-					return "essl";
-			}
-	}
+function get_dir(file) {
+	return get_dir_from_string(file.file, file.projectName);
 }
 
 class VisualStudioExporter extends Exporter {
@@ -1599,26 +1368,26 @@ class VisualStudioExporter extends Exporter {
 		super(options);
 	}
 
-	getDebugDir(from, project) {
-		let debugDir = project.getDebugDir();
-		if (path_isabs(debugDir)) {
-			debugDir = debugDir.replace(/\//g, "\\");
+	get_debug_dir(from, project) {
+		let debugdir = project.get_debug_dir();
+		if (path_isabs(debugdir)) {
+			debugdir = debugdir.replace(/\//g, "\\");
 		}
 		else {
-			debugDir = path_resolve(from, debugDir).replace(/\//g, "\\");
+			debugdir = path_resolve(from, debugdir).replace(/\//g, "\\");
 		}
-		return debugDir;
+		return debugdir;
 	}
 
-	exportUserFile(from, to, project, platform) {
-		if (project.getDebugDir() === "")
+	export_user_file(from, to, project, platform) {
+		if (project.get_debug_dir() === "")
 			return;
-		this.writeFile(path_resolve(to, project.getSafeName() + ".vcxproj.user"));
+		this.write_file(path_resolve(to, project.get_safe_name() + ".vcxproj.user"));
 		this.p('<?xml version="1.0" encoding="utf-8"?>');
 		this.p('<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">');
 		this.p('<PropertyGroup>', 1);
 		if (platform === "windows") {
-			this.p('<LocalDebuggerWorkingDirectory>' + this.getDebugDir(from, project) + '</LocalDebuggerWorkingDirectory>', 2);
+			this.p('<LocalDebuggerWorkingDirectory>' + this.get_debug_dir(from, project) + '</LocalDebuggerWorkingDirectory>', 2);
 			this.p('<DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>', 2);
 			if (project.cmdArgs.length > 0) {
 				this.p('<LocalDebuggerCommandArguments>' + project.cmdArgs.join(' ') + '</LocalDebuggerCommandArguments>', 2);
@@ -1626,146 +1395,96 @@ class VisualStudioExporter extends Exporter {
 		}
 		this.p('</PropertyGroup>', 1);
 		this.p('</Project>');
-		this.closeFile();
+		this.close_file();
 	}
 
-	writeProjectDeclarations(project, solutionUuid) {
-		this.p('Project("{' + solutionUuid.toUpperCase() + '}") = "' + project.getSafeName() + '", "' + project.getSafeName() + '.vcxproj", "{' + project.getUuid().toString().toUpperCase() + '}"');
+	write_project_declarations(project, solutionUuid) {
+		this.p('Project("{' + solutionUuid.toUpperCase() + '}") = "' + project.get_safe_name() + '", "' + project.get_safe_name() + '.vcxproj", "{' + project.get_uuid().toString().toUpperCase() + '}"');
 		if (project.getSubProjects().length > 0) {
 			this.p('ProjectSection(ProjectDependencies) = postProject', 1);
 			for (let proj of project.getSubProjects()) {
-				this.p('{' + proj.getUuid().toString().toUpperCase() + '} = {' + proj.getUuid().toString().toUpperCase() + '}', 2);
+				this.p('{' + proj.get_uuid().toString().toUpperCase() + '} = {' + proj.get_uuid().toString().toUpperCase() + '}', 2);
 			}
 			this.p('EndProjectSection', 1);
 		}
 		this.p('EndProject');
 		for (let proj of project.getSubProjects())
-			this.writeProjectDeclarations(proj, solutionUuid);
+			this.write_project_declarations(proj, solutionUuid);
 	}
 
-	getConfigs(platform) {
+	get_configs() {
 		return ["Debug", "Develop", "Release"];
 	}
 
-	getSystems(platform) {
+	get_systems() {
 		return ["x64"];
 	}
 
-	writeProjectBuilds(project, platform) {
-		for (let config of this.getConfigs(platform)) {
-			for (let system of this.getSystems(platform)) {
-				this.p('{' + project.getUuid().toString().toUpperCase() + '}.' + config + '|' + system + '.ActiveCfg = ' + config + '|' + system, 2);
-				this.p('{' + project.getUuid().toString().toUpperCase() + '}.' + config + '|' + system + '.Build.0 = ' + config + '|' + system, 2);
-				if (project.vsdeploy) {
-					this.p('{' + project.getUuid().toString().toUpperCase() + '}.' + config + '|' + system + '.Deploy.0 = ' + config + '|' + system, 2);
-				}
+	write_project_builds(project, platform) {
+		for (let config of this.get_configs()) {
+			for (let system of this.get_systems()) {
+				this.p('{' + project.get_uuid().toString().toUpperCase() + '}.' + config + '|' + system + '.ActiveCfg = ' + config + '|' + system, 2);
+				this.p('{' + project.get_uuid().toString().toUpperCase() + '}.' + config + '|' + system + '.Build.0 = ' + config + '|' + system, 2);
 			}
 		}
 		for (let proj of project.getSubProjects())
-			this.writeProjectBuilds(proj, platform);
+			this.write_project_builds(proj, platform);
 	}
 
-	exportSolution(project, from, to, platform, options) {
-		this.writeFile(path_resolve(to, project.getSafeName() + '.sln'));
-		if (Options_1.visualstudio === 'vs2022') {
+	export_solution(project, from, to, platform, options) {
+		this.write_file(path_resolve(to, project.get_safe_name() + '.sln'));
+		if (goptions.visualstudio === 'vs2022') {
 			this.p('Microsoft Visual Studio Solution File, Format Version 12.00');
 			this.p('# Visual Studio Version 17');
 			this.p('VisualStudioVersion = 17.0.31903.59');
 			this.p('MinimumVisualStudioVersion = 10.0.40219.1');
 		}
-		const solutionUuid = crypto_random_uuid();
-		this.writeProjectDeclarations(project, solutionUuid);
+		let solutionUuid = crypto_random_uuid();
+		this.write_project_declarations(project, solutionUuid);
 		this.p('Global');
 		this.p('GlobalSection(SolutionConfigurationPlatforms) = preSolution', 1);
-		for (let config of this.getConfigs(platform)) {
-			for (let system of this.getSystems(platform)) {
+		for (let config of this.get_configs()) {
+			for (let system of this.get_systems()) {
 				this.p(config + '|' + system + ' = ' + config + '|' + system, 2);
 			}
 		}
 		this.p('EndGlobalSection', 1);
 		this.p('GlobalSection(ProjectConfigurationPlatforms) = postSolution', 1);
-		this.writeProjectBuilds(project, platform);
+		this.write_project_builds(project, platform);
 		this.p('EndGlobalSection', 1);
 		this.p('GlobalSection(SolutionProperties) = preSolution', 1);
 		this.p('HideSolutionNode = FALSE', 2);
 		this.p('EndGlobalSection', 1);
 		this.p('EndGlobal');
-		this.closeFile();
-		this.exportProject(from, to, project, platform, project.isCmd(), options);
-		this.exportFilters(from, to, project, platform);
-		this.exportUserFile(from, to, project, platform);
+		this.close_file();
+		this.export_project(from, to, project, platform, false, options);
+		this.export_filters(from, to, project, platform);
+		this.export_user_file(from, to, project, platform);
 		if (platform === 'windows') {
-			this.exportResourceScript(to);
+			this.export_resource_script(to);
 			export_ico(project.icon, path_resolve(to, 'icon.ico'), from);
 		}
 	}
 
-	exportManifest(to, project) {
-		this.writeFile(path_resolve(to, 'Package.appxmanifest'));
-		this.p('<?xml version="1.0" encoding="utf-8"?>');
-		this.p('<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">');
-		this.p('<Identity Name="b2714d6a-f52b-4943-b735-9b5777019bc9" Publisher="CN=Robert" Version="1.0.0.0" />', 1);
-		this.p('<mp:PhoneIdentity PhoneProductId="b2714d6a-f52b-4943-b735-9b5777019bc9" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>', 1);
-		this.p('<Properties>', 1);
-		this.p('<DisplayName>' + project.getName() + '</DisplayName>', 2);
-		this.p('<PublisherDisplayName>Robert</PublisherDisplayName>', 2);
-		this.p('<Logo>StoreLogo.png</Logo>', 2);
-		this.p('</Properties>', 1);
-		this.p('<Dependencies>', 1);
-		this.p('<TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.0.0" MaxVersionTested="10.0.0.0" />', 2);
-		this.p('</Dependencies>', 1);
-		this.p('<Resources>', 1);
-		this.p('<Resource Language="x-generate"/>', 2);
-		this.p('</Resources>', 1);
-		this.p('<Applications>', 1);
-		this.p('<Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="' + project.getSafeName() + '.App">', 2);
-		this.p('<uap:VisualElements DisplayName="' + project.getName() + '" Square150x150Logo="Logo.png" Square44x44Logo="SmallLogo.png" Description="' + project.getName() + '" BackgroundColor="#464646">', 3);
-		this.p('<uap:SplashScreen Image="SplashScreen.png" />', 4);
-		this.p('</uap:VisualElements>', 3);
-		this.p('</Application>', 2);
-		this.p('</Applications>', 1);
-		this.p('<Capabilities>', 1);
-		this.p('<Capability Name="internetClient" />', 2);
-		this.p('</Capabilities>', 1);
-		this.p('</Package>');
-		this.closeFile();
-	}
-
-	exportResourceScript(to) {
-		this.writeFile(path_resolve(to, "resources.rc"));
+	export_resource_script(to) {
+		this.write_file(path_resolve(to, "resources.rc"));
 		this.p('107       ICON         "icon.ico"');
-		this.closeFile();
+		this.close_file();
 	}
 
-	exportAssetPathFilter(assetPath, dirs, assets) {
-		if (isGitPath(assetPath))
-			return;
-		let dir = getDirFromString(path_join(assetPath, "whatever"), "Deployment").trim();
-		if (!dirs.includes(dir)) {
-			dirs.push(dir);
+	pretty_dir(dir) {
+		let pretty_dir = dir;
+		while (pretty_dir.startsWith("../")) {
+			pretty_dir = pretty_dir.substring(3);
 		}
-		let paths = fs_readdir(assetPath);
-		for (let p of paths) {
-			if (fs_isdir(path_join(assetPath, p)))
-				this.exportAssetPathFilter(path_join(assetPath, p), dirs, assets);
-			else
-				assets.push(path_join(assetPath, p).replace(/\//g, "\\"));
-		}
+		return pretty_dir.replace(/\//g, "\\");
 	}
 
-	prettyDir(dir) {
-		let prettyDir = dir;
-		while (prettyDir.startsWith("../")) {
-			prettyDir = prettyDir.substring(3);
-		}
-		return prettyDir.replace(/\//g, "\\");
-	}
-
-	itemGroup(from, to, project, type, prefix, filter) {
+	item_group(from, to, project, type, filter) {
 		let lastdir = "";
 		this.p('<ItemGroup>', 1);
 		for (let file of project.getFiles()) {
-			let dir = getDir(file);
+			let dir = get_dir(file);
 			if (dir !== lastdir)
 				lastdir = dir;
 			if (filter(file)) {
@@ -1774,26 +1493,26 @@ class VisualStudioExporter extends Exporter {
 					filepath = path_resolve(path_join(project.basedir, file.file));
 				}
 				else {
-					filepath = this.nicePath(from, to, file.file);
+					filepath = this.nice_path(from, to, file.file);
 				}
 				this.p('<' + type + ' Include="' + filepath + '">', 2);
-				this.p('<Filter>' + this.prettyDir(dir) + '</Filter>', 3);
+				this.p('<Filter>' + this.pretty_dir(dir) + '</Filter>', 3);
 				this.p('</' + type + '>', 2);
 			}
 		}
 		this.p('</ItemGroup>', 1);
 	}
 
-	exportFilters(from, to, project, platform) {
+	export_filters(from, to, project, platform) {
 		for (let proj of project.getSubProjects())
-			this.exportFilters(from, to, proj, platform);
-		this.writeFile(path_resolve(to, project.getSafeName() + '.vcxproj.filters'));
+			this.export_filters(from, to, proj, platform);
+		this.write_file(path_resolve(to, project.get_safe_name() + '.vcxproj.filters'));
 		this.p('<?xml version="1.0" encoding="utf-8"?>');
 		this.p('<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">');
 		let lastdir = '';
 		let dirs = [];
 		for (let file of project.getFiles()) {
-			let dir = getDir(file);
+			let dir = get_dir(file);
 			if (dir !== lastdir) {
 				let subdir = dir;
 				while (subdir.indexOf('/') >= 0) {
@@ -1806,11 +1525,9 @@ class VisualStudioExporter extends Exporter {
 			}
 		}
 		let assets = [];
-		if (project.vsdeploy)
-			this.exportAssetPathFilter(path_resolve(from, project.getDebugDir()), dirs, assets);
 		this.p('<ItemGroup>', 1);
 		for (let dir of dirs) {
-			const pretty = this.prettyDir(dir);
+			let pretty = this.pretty_dir(dir);
 			if (pretty !== '..') {
 				this.p('<Filter Include="' + pretty + '">', 2);
 				this.p('<UniqueIdentifier>{' + crypto_random_uuid().toString().toUpperCase() + '}</UniqueIdentifier>', 3);
@@ -1818,65 +1535,33 @@ class VisualStudioExporter extends Exporter {
 			}
 		}
 		this.p('</ItemGroup>', 1);
-		this.itemGroup(from, to, project, 'ClInclude', () => { }, (file) => {
+		this.item_group(from, to, project, 'ClInclude', (file) => {
 			return file.file.endsWith(".h");
 		});
-		this.itemGroup(from, to, project, 'ClCompile', () => { }, (file) => {
+		this.item_group(from, to, project, 'ClCompile', (file) => {
 			return file.file.endsWith(".cpp") || file.file.endsWith(".c") || file.file.endsWith(".cc");
 		});
-		this.itemGroup(from, to, project, 'CustomBuild', () => { }, (file) => {
+		this.item_group(from, to, project, 'CustomBuild', (file) => {
 			return file.file.endsWith(".hlsl") || file.file.endsWith(".glsl");
 		});
-		if (project.vsdeploy) {
-			lastdir = '';
-			this.p('<ItemGroup>', 1);
-			for (let file of assets) {
-				if (file.indexOf("\\") >= 0 && !isGitPath(file)) {
-					let dir = getDirFromString(file, "Deployment");
-					if (dir !== lastdir)
-						lastdir = dir;
-					this.p('<None Include="' + this.nicePath(from, to, file) + '">', 2);
-					this.p('<Filter>' + dir.replace(/\//g, '\\') + '</Filter>', 3);
-					this.p('</None>', 2);
-				}
-			}
-			this.p('</ItemGroup>', 1);
-		}
 		if (platform === "windows") {
-			this.itemGroup(from, to, project, "ResourceCompile", () => {
-				this.p('<None Include="icon.ico">', 2);
-				this.p('<Filter>Ressourcendateien</Filter>', 3);
-				this.p('</None>', 2);
-				this.p('</ItemGroup>', 1);
-				this.p('<ItemGroup>', 1);
-				this.p('<ResourceCompile Include="resources.rc">', 2);
-				this.p('<Filter>Ressourcendateien</Filter>', 3);
-				this.p('</ResourceCompile>', 2);
-			}, (file) => {
+			this.item_group(from, to, project, "ResourceCompile", (file) => {
 				return file.file.endsWith(".rc");
 			});
 		}
 		this.p('</Project>');
-		this.closeFile();
+		this.close_file();
 	}
 
-	addPropertyGroup(buildType, wholeProgramOptimization, platform, project, options) {
-		this.p('<PropertyGroup Condition="\'$(Configuration)|$(Platform)\'==\'' + buildType + '|' + this.getSystems(platform)[0] + '\'" Label="Configuration">', 1);
-		this.p('<ConfigurationType>Application</ConfigurationType>', 2);
-		this.p('<WholeProgramOptimization>' + ((wholeProgramOptimization && project.lto) ? 'true' : 'false') + '</WholeProgramOptimization>', 2);
-		this.p('<CharacterSet>MultiByte</CharacterSet>', 2);
-		this.p('</PropertyGroup>', 1);
-	}
-
-	getPlatformToolset() {
+	get_platform_toolset() {
 		return 'v143';
 	}
 
-	configuration(config, system, indent, project, options) {
+	configuration(config, indent, project) {
 		this.p('<PropertyGroup Condition="\'$(Configuration)\'==\'' + config + '\'" Label="Configuration">', indent);
 		this.p('<ConfigurationType>Application</ConfigurationType>', indent + 1);
 		this.p('<UseDebugLibraries>' + (config === "Release" ? "false" : "true") + '</UseDebugLibraries>', indent + 1);
-		this.p('<PlatformToolset>' + this.getPlatformToolset() + '</PlatformToolset>', indent + 1);
+		this.p('<PlatformToolset>' + this.get_platform_toolset() + '</PlatformToolset>', indent + 1);
 		this.p('<PreferredToolArchitecture>x64</PreferredToolArchitecture>', indent + 1);
 		if (config === "Release" && project.lto) {
 			this.p('<WholeProgramOptimization>true</WholeProgramOptimization>', indent + 1);
@@ -1885,7 +1570,7 @@ class VisualStudioExporter extends Exporter {
 		this.p('</PropertyGroup>', indent);
 	}
 
-	getOptimization(config) {
+	get_optimization(config) {
 		switch (config) {
 			case "Debug":
 			default:
@@ -1899,62 +1584,39 @@ class VisualStudioExporter extends Exporter {
 
 	cStd(project) {
 		switch (project.cStd.toLowerCase()) {
-			case "gnu9x":
-			case "gnu99":
-			case "c9x":
 			case "c99":
 				return "";
-			case "gnu1x":
-			case "gnu11":
-			case "c1x":
 			case "c11":
 				return "stdc11";
-			case "gnu18":
-			case "gnu17":
-			case "c18":
 			case "c17":
 				return "stdc17";
-			case "gnu2x":
 			case "c2x":
-				console.log("C 2x is not yet supported in Visual Studio, using stdc17.");
 				return "stdc17";
 		}
 	}
 
 	cppStd(project) {
 		switch (project.cppStd.toLowerCase()) {
-			case "gnu++03":
-			case "c++03":
-			case "gnu++11":
 			case "c++11":
 				return "";
-			case "gnu++14":
 			case "c++14":
 				return "stdcpp14";
-			case "gnu++17":
 			case "c++17":
 				return "stdcpp17";
-			case "gnu++2a":
-			case "c++2a":
-			case "gnu++20":
 			case "c++20":
 				return "stdcpp20";
-			case "gnu++2b":
-			case "c++2b":
-			case "gnu++23":
 			case "c++23":
-				console.log("C++ 23 is not yet supported in Visual Studio, using stdcpplatest.");
 				return "stdcpplatest";
 		}
 	}
 
-	itemDefinition(config, system, includes, debugDefines, releaseDefines, indent, debuglibs, releaselibs, from, project) {
+	item_definition(config, system, includes, debugDefines, releaseDefines, indent, debuglibs, releaselibs, project) {
 		this.p('<ItemDefinitionGroup Condition="\'$(Configuration)|$(Platform)\'==\'' + config + '|' + system + '\'">', indent);
 		this.p('<ClCompile>', indent + 1);
 		this.p('<AdditionalIncludeDirectories>' + includes + '</AdditionalIncludeDirectories>', indent + 2);
 		this.p('<AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>', indent + 2);
 		this.p('<WarningLevel>Level3</WarningLevel>', indent + 2);
-		this.p('<Optimization>' + this.getOptimization(config) + '</Optimization>', indent + 2);
+		this.p('<Optimization>' + this.get_optimization(config) + '</Optimization>', indent + 2);
 		if (config === 'Release') {
 			this.p('<FunctionLevelLinking>true</FunctionLevelLinking>', indent + 2);
 			this.p('<IntrinsicFunctions>true</IntrinsicFunctions>', indent + 2);
@@ -1967,23 +1629,20 @@ class VisualStudioExporter extends Exporter {
 			this.p('<BasicRuntimeChecks>Default</BasicRuntimeChecks>', indent + 2);
 		}
 		if (project.cStd !== '') {
-			const cStd = this.cStd(project);
+			let cStd = this.cStd(project);
 			if (cStd !== '') {
 				this.p('<LanguageStandard_C>' + cStd + '</LanguageStandard_C>', indent + 2);
 			}
 		}
 		if (project.cppStd !== '') {
-			const cppStd = this.cppStd(project);
+			let cppStd = this.cppStd(project);
 			if (cppStd !== '') {
 				this.p('<LanguageStandard>' + cppStd + '</LanguageStandard>', indent + 2);
 			}
 		}
 		this.p('</ClCompile>', indent + 1);
 		this.p('<Link>', indent + 1);
-		if (project.isCmd())
-			this.p('<SubSystem>Console</SubSystem>', indent + 2);
-		else
-			this.p('<SubSystem>Windows</SubSystem>', indent + 2);
+		this.p('<SubSystem>Windows</SubSystem>', indent + 2);
 		this.p('<GenerateDebugInformation>true</GenerateDebugInformation>', indent + 2);
 		if (config === 'Release') {
 			this.p('<EnableCOMDATFolding>true</EnableCOMDATFolding>', indent + 2);
@@ -2020,7 +1679,7 @@ class VisualStudioExporter extends Exporter {
 	}
 
 	findWindowsSdk() {
-		const sdks = windowsSDKs();
+		let sdks = windowsSDKs();
 		let best = [0, 0, 0, 0];
 		for (let key of sdks) {
 			let elements = key.split('\\');
@@ -2059,31 +1718,31 @@ class VisualStudioExporter extends Exporter {
 		}
 	}
 
-	globals(platform, indent) {
-		if (Options_1.visualstudio === 'vs2022') {
+	globals(indent) {
+		if (goptions.visualstudio === 'vs2022') {
 			this.p('<VCProjectVersion>16.0</VCProjectVersion>', indent);
 			this.p('<WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>', indent);
 		}
 	}
 
-	extensionSettings(indent) {
-		this.p('<Import Project="$(VCTargetsPath)\\BuildCustomizations\\masm.props" />');
+	extension_settings(indent) {
+		this.p('<Import Project="$(VCTargetsPath)\\BuildCustomizations\\masm.props" />', indent);
 	}
 
-	extensionTargets(indent) {
+	extension_targets(indent) {
 		this.p('<Import Project="$(VCTargetsPath)\\BuildCustomizations\\masm.targets"/>', indent);
 	}
 
-	exportProject(from, to, project, platform, cmd, options) {
+	export_project(from, to, project, platform, cmd, options) {
 		for (let proj of project.getSubProjects()) {
-			this.exportProject(from, to, proj, platform, cmd, options);
+			this.export_project(from, to, proj, platform, cmd, options);
 		}
-		this.writeFile(path_resolve(to, project.getSafeName() + '.vcxproj'));
+		this.write_file(path_resolve(to, project.get_safe_name() + '.vcxproj'));
 		this.p('<?xml version="1.0" encoding="utf-8"?>');
 		this.p('<Project DefaultTargets="Build" ' + 'xmlns="http://schemas.microsoft.com/developer/msbuild/2003">');
 		this.p('<ItemGroup Label="ProjectConfigurations">', 1);
-		for (let system of this.getSystems(platform)) {
-			for (let config of this.getConfigs(platform)) {
+		for (let system of this.get_systems()) {
+			for (let config of this.get_configs()) {
 				this.p('<ProjectConfiguration Include="' + config + '|' + system + '">', 2);
 				this.p('<Configuration>' + config + '</Configuration>', 3);
 				this.p('<Platform>' + system + '</Platform>', 3);
@@ -2092,27 +1751,27 @@ class VisualStudioExporter extends Exporter {
 		}
 		this.p('</ItemGroup>', 1);
 		this.p('<PropertyGroup Label="Globals">', 1);
-		this.p('<ProjectGuid>{' + project.getUuid().toString().toUpperCase() + '}</ProjectGuid>', 2);
-		this.globals(platform, 2);
+		this.p('<ProjectGuid>{' + project.get_uuid().toString().toUpperCase() + '}</ProjectGuid>', 2);
+		this.globals(2);
 		this.p('</PropertyGroup>', 1);
 		this.p('<Import Project="$(VCTargetsPath)\\Microsoft.Cpp.Default.props" />', 1);
-		for (let config of this.getConfigs(platform)) {
-			for (let system of this.getSystems(platform)) {
-				this.configuration(config, system, 1, project, options);
+		for (let config of this.get_configs()) {
+			for (let system of this.get_systems()) {
+				this.configuration(config, 1, project);
 			}
 		}
 		this.p('<Import Project="$(VCTargetsPath)\\Microsoft.Cpp.props" />', 1);
 		this.p('<ImportGroup Label="ExtensionSettings">', 1);
-		this.extensionSettings(2);
+		this.extension_settings(2);
 		this.p('</ImportGroup>', 1);
 		this.p('<PropertyGroup Label="UserMacros" />', 1);
-		if (project.getExecutableName()) {
+		if (project.get_executable_name()) {
 			this.p('<PropertyGroup>', 1);
-			this.p('<TargetName>' + project.getExecutableName() + '</TargetName>', 2);
+			this.p('<TargetName>' + project.get_executable_name() + '</TargetName>', 2);
 			this.p('</PropertyGroup>', 1);
 		}
 		if (platform === 'windows') {
-			for (let system of this.getSystems(platform)) {
+			for (let system of this.get_systems()) {
 				this.p('<ImportGroup Label="PropertySheets" Condition="\'$(Platform)\'==\'' + system + '\'">', 1);
 				this.p('<Import Project="$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props" Condition="exists(\'$(UserRootDir)\\Microsoft.Cpp.$(Platform).user.props\')" Label="LocalAppDataPlatform" />', 2);
 				this.p('</ImportGroup>', 1);
@@ -2120,13 +1779,13 @@ class VisualStudioExporter extends Exporter {
 		}
 		let debugDefines = "_DEBUG;";
 		let releaseDefines = "NDEBUG;";
-		for (const define of project.getDefines()) {
+		for (let define of project.getDefines()) {
 			debugDefines += define + ";";
 			releaseDefines += define + ";";
 		}
 		let incstring = "";
-		let includeDirs = project.getIncludeDirs();
-		for (let include of includeDirs) {
+		let includedirs = project.getIncludeDirs();
+		for (let include of includedirs) {
 			let relativized = path_relative(to, path_resolve(from, include));
 			if (relativized === "") {
 				relativized = ".";
@@ -2138,10 +1797,10 @@ class VisualStudioExporter extends Exporter {
 		let debuglibs = "";
 		for (let proj of project.getSubProjects()) {
 			if (proj.noFlatten) {
-				debuglibs += project.basedir + "\\build\\x64\\Debug\\" + proj.getSafeName() + ".lib;";
+				debuglibs += project.basedir + "\\build\\x64\\Debug\\" + proj.get_safe_name() + ".lib;";
 			}
 			else {
-				debuglibs += "Debug\\" + proj.getSafeName() + ".lib;";
+				debuglibs += "Debug\\" + proj.get_safe_name() + ".lib;";
 			}
 		}
 		for (let lib of project.getLibs()) {
@@ -2155,14 +1814,14 @@ class VisualStudioExporter extends Exporter {
 		let releaselibs = "";
 		for (let proj of project.getSubProjects()) {
 			if (proj.noFlatten) {
-				releaselibs += project.basedir + "\\build\\x64\\Release\\" + proj.getSafeName() + ".lib;";
+				releaselibs += project.basedir + "\\build\\x64\\Release\\" + proj.get_safe_name() + ".lib;";
 			}
 			else {
-				releaselibs += "Release\\" + proj.getSafeName() + ".lib;";
+				releaselibs += "Release\\" + proj.get_safe_name() + ".lib;";
 			}
 		}
 		for (let proj of project.getSubProjects())
-			releaselibs += "Release\\" + proj.getSafeName() + ".lib;";
+			releaselibs += "Release\\" + proj.get_safe_name() + ".lib;";
 		for (let lib of project.getLibs()) {
 			if (fs_exists(path_resolve(from, lib + ".lib"))) {
 				releaselibs += path_relative(to, path_resolve(from, lib)) + ".lib;";
@@ -2171,9 +1830,9 @@ class VisualStudioExporter extends Exporter {
 				releaselibs += lib + ".lib;";
 			}
 		}
-		for (let config of this.getConfigs(platform)) {
-			for (let system of this.getSystems(platform)) {
-				this.itemDefinition(config, system, incstring, debugDefines, releaseDefines, 2, debuglibs, releaselibs, from, project);
+		for (let config of this.get_configs()) {
+			for (let system of this.get_systems()) {
+				this.item_definition(config, system, incstring, debugDefines, releaseDefines, 2, debuglibs, releaselibs, project);
 			}
 		}
 		this.p('<ItemGroup>', 1);
@@ -2183,17 +1842,12 @@ class VisualStudioExporter extends Exporter {
 				filepath = path_resolve(project.basedir + "/" + file.file);
 			}
 			else {
-				filepath = this.nicePath(from, to, file.file);
+				filepath = this.nice_path(from, to, file.file);
 			}
 			if (file.file.endsWith(".h"))
 				this.p('<ClInclude Include="' + filepath + '" />', 2);
 		}
 		this.p('</ItemGroup>', 1);
-		if (project.vsdeploy) {
-			this.p('<ItemGroup>', 1);
-			this.exportAssetPath(project, from, to, path_resolve(from, project.getDebugDir()));
-			this.p('</ItemGroup>', 1);
-		}
 		this.p('<ItemGroup>', 1);
 		let objects = {};
 		for (let fileobject of project.getFiles()) {
@@ -2208,7 +1862,7 @@ class VisualStudioExporter extends Exporter {
 					filepath = path_resolve(project.basedir + "/" + file);
 				}
 				else {
-					filepath = this.nicePath(from, to, file);
+					filepath = this.nice_path(from, to, file);
 				}
 				if (!objects[name]) {
 					this.p('<ClCompile Include="' + filepath + '" />', 2);
@@ -2229,7 +1883,7 @@ class VisualStudioExporter extends Exporter {
 		this.p('<ItemGroup>', 1);
 		for (let file of project.getFiles()) {
 			if (file.file.endsWith('.natvis')) {
-				this.p('<Natvis Include="' + this.nicePath(from, to, file.file) + '"/>', 2);
+				this.p('<Natvis Include="' + this.nice_path(from, to, file.file) + '"/>', 2);
 			}
 		}
 		this.p('</ItemGroup>', 1);
@@ -2237,12 +1891,12 @@ class VisualStudioExporter extends Exporter {
 			this.p('<ItemGroup>', 1);
 			for (let file of project.getFiles()) {
 				if (file.file.endsWith(".glsl")) {
-					this.p('<CustomBuild Include="' + this.nicePath(from, to, file.file) + '">', 2);
+					this.p('<CustomBuild Include="' + this.nice_path(from, to, file.file) + '">', 2);
 					this.p('<FileType>Document</FileType>', 2);
-					const shaderDir = path_isabs(project.getDebugDir()) ? project.getDebugDir() : path_join(from, project.getDebugDir());
-					const krafix = path_join(toolsdir, "krafix.exe");
-					this.p('<Command>"' + path_relative(to, krafix) + '" ' + shaderLang("windows") + ' "%(FullPath)" ' + path_relative(to, path_join(shaderDir, '%(Filename)')).replace(/\//g, '\\') + ' .\\ ' + platform + ' --quiet</Command>', 2);
-					this.p('<Outputs>' + path_relative(to, path_join(shaderDir, '%(Filename)')).replace(/\//g, '\\') + ';%(Outputs)</Outputs>', 2);
+					let shaderdir = path_isabs(project.get_debug_dir()) ? project.get_debug_dir() : path_join(from, project.get_debug_dir());
+					let krafix = path_join(toolsdir, "krafix.exe");
+					this.p('<Command>"' + path_relative(to, krafix) + '" ' + shader_lang("windows") + ' "%(FullPath)" ' + path_relative(to, path_join(shaderdir, '%(Filename)')).replace(/\//g, '\\') + ' .\\ ' + platform + ' --quiet</Command>', 2);
+					this.p('<Outputs>' + path_relative(to, path_join(shaderdir, '%(Filename)')).replace(/\//g, '\\') + ';%(Outputs)</Outputs>', 2);
 					this.p('<Message>%(Filename)%(Extension)</Message>', 2);
 					this.p('</CustomBuild>', 2);
 				}
@@ -2250,7 +1904,7 @@ class VisualStudioExporter extends Exporter {
 			this.p('</ItemGroup>', 1);
 			this.p('<ItemGroup>', 1);
 			for (let file of project.customs) {
-				this.p('<CustomBuild Include="' + this.nicePath(from, to, file.file) + '">', 2);
+				this.p('<CustomBuild Include="' + this.nice_path(from, to, file.file) + '">', 2);
 				this.p('<FileType>Document</FileType>', 2);
 				this.p('<Command>' + file.command + '</Command>', 2);
 				this.p('<Outputs>' + file.output + '</Outputs>', 2);
@@ -2265,59 +1919,40 @@ class VisualStudioExporter extends Exporter {
 			this.p('<ResourceCompile Include="resources.rc" />', 2);
 			for (let file of project.getFiles()) {
 				if (file.file.endsWith('.rc')) {
-					this.p('<ResourceCompile Include="' + this.nicePath(from, to, file.file) + '" />', 2);
+					this.p('<ResourceCompile Include="' + this.nice_path(from, to, file.file) + '" />', 2);
 				}
 			}
 			this.p('</ItemGroup>', 1);
 		}
 		this.p('<Import Project="$(VCTargetsPath)\\Microsoft.Cpp.targets" />', 1);
 		this.p('<ImportGroup Label="ExtensionTargets">', 1);
-		this.extensionTargets(2);
+		this.extension_targets(2);
 		this.p('</ImportGroup>', 1);
 		this.p('</Project>');
-		this.closeFile();
-	}
-
-	exportAssetPath(project, from, to, assetPath) {
-		if (isGitPath(assetPath))
-			return;
-		let paths = fs_readdir(assetPath);
-		for (let p of paths) {
-			if (isGitPath(p))
-				continue;
-			if (fs_isdir(path_join(assetPath, p))) {
-				this.exportAssetPath(project, from, to, path_join(assetPath, p));
-			}
-			else {
-				this.p('<None Include="' + this.nicePath(from, to, path_join(assetPath, p)) + '">', 2);
-				this.p('<DeploymentContent>true</DeploymentContent>', 3);
-				this.p('<Link>' + path_relative(project.getDebugDir(), path_join(assetPath, p)) + '</Link>', 3);
-				this.p('</None>', 2);
-			}
-		}
+		this.close_file();
 	}
 }
 
 class WasmExporter extends Exporter {
 	constructor(options) {
 		super(options);
-		this.compileCommands = new CompilerCommandsExporter(options);
-		const compiler = "clang";
-		const compilerFlags = "--target=wasm32 -nostdlib -matomics -mbulk-memory";
+		this.compile_commands = new CompilerCommandsExporter(options);
+		let compiler = "clang";
+		let compilerFlags = "--target=wasm32 -nostdlib -matomics -mbulk-memory";
 		this.make = new MakeExporter(options, compiler, compiler, compilerFlags, compilerFlags, '--target=wasm32 -nostdlib -matomics -mbulk-memory "-Wl,--import-memory,--shared-memory"', '.wasm');
 	}
 
-	exportSolution(project, from, to, platform, options) {
-		this.make.exportSolution(project, from, to, platform, options);
-		this.compileCommands.exportSolution(project, from, to, platform, options);
+	export_solution(project, from, to, platform, options) {
+		this.make.export_solution(project, from, to, platform, options);
+		this.compile_commands.export_solution(project, from, to, platform, options);
 	}
 }
 
-function newPathId(path) {
+function new_path_id(path) {
 	return uuidv5(path, "7448ebd8-cfc8-4f45-8b3d-5df577ceea6d").toUpperCase();
 }
 
-function getDir2(file) {
+function get_dir2(file) {
 	if (file.file.indexOf("/") >= 0) {
 		let dir = file.file.substr(0, file.file.lastIndexOf("/"));
 		return path_join(file.projectName, path_relative(file.projectDir, dir)).replace(/\\/g, "/");
@@ -2330,7 +1965,7 @@ function getDir2(file) {
 class Directory {
 	constructor(dirname) {
 		this.dirname = dirname;
-		this.id = newPathId(dirname);
+		this.id = new_path_id(dirname);
 	}
 
 	getName() {
@@ -2352,8 +1987,8 @@ class File {
 	constructor(filename, dir) {
 		this.filename = filename;
 		this.dir = dir;
-		this.buildid = newPathId(dir + filename + "_buildid");
-		this.fileid = newPathId(dir + filename + "_fileid");
+		this.buildid = new_path_id(dir + filename + "_buildid");
+		this.fileid = new_path_id(dir + filename + "_fileid");
 	}
 
 	getBuildId() {
@@ -2378,7 +2013,7 @@ class File {
 		return this.filename.substr(this.filename.lastIndexOf("/") + 1);
 	}
 
-	getDir() {
+	get_dir() {
 		return this.dir;
 	}
 
@@ -2390,8 +2025,8 @@ class File {
 class Framework {
 	constructor(name) {
 		this.name = name;
-		this.buildid = newPathId(name + "_buildid");
-		this.fileid = newPathId(name + "_fileid");
+		this.buildid = new_path_id(name + "_buildid");
+		this.fileid = new_path_id(name + "_fileid");
 		this.localPath = null;
 	}
 
@@ -2434,7 +2069,7 @@ function addDirectory(dirname, directories) {
 }
 
 class IconImage {
-	constructor(idiom, size, scale, background = undefined) {
+	constructor(idiom, size, scale, background = null) {
 		this.idiom = idiom;
 		this.size = size;
 		this.scale = scale;
@@ -2448,21 +2083,21 @@ class XCodeExporter extends Exporter {
 	}
 
 	exportWorkspace(to, project) {
-		const dir = path_resolve(to, project.getSafeName() + ".xcodeproj", "project.xcworkspace");
+		let dir = path_resolve(to, project.get_safe_name() + ".xcodeproj", "project.xcworkspace");
 		fs_ensuredir(dir);
-		this.writeFile(path_resolve(to, project.getSafeName() + ".xcodeproj", "project.xcworkspace", "contents.xcworkspacedata"));
+		this.write_file(path_resolve(to, project.get_safe_name() + ".xcodeproj", "project.xcworkspace", "contents.xcworkspacedata"));
 		this.p('<?xml version="1.0" encoding="UTF-8"?>');
 		this.p('<Workspace');
 		this.p('version = "1.0">');
 		this.p('<FileRef');
-		this.p('location = "self:' + project.getSafeName() + '.xcodeproj">');
+		this.p('location = "self:' + project.get_safe_name() + '.xcodeproj">');
 		this.p('</FileRef>');
 		this.p('</Workspace>');
-		this.closeFile();
+		this.close_file();
 	}
 
-	exportSolution(project, from, to, platform, options) {
-		const xdir = path_resolve(to, project.getSafeName() + ".xcodeproj");
+	export_solution(project, from, to, platform, options) {
+		let xdir = path_resolve(to, project.get_safe_name() + ".xcodeproj");
 		fs_ensuredir(xdir);
 		this.exportWorkspace(to, project);
 		function add_icons(icons, idiom, sizes, scales) {
@@ -2479,13 +2114,13 @@ class XCodeExporter extends Exporter {
 		else {
 			add_icons(icons, "mac", [16, 16, 32, 32, 128, 128, 256, 256, 512, 512], [1, 2, 1, 2, 1, 2, 1, 2, 1, 2]);
 		}
-		const iconsdir = path_resolve(to, "Images.xcassets", "AppIcon.appiconset");
+		let iconsdir = path_resolve(to, "Images.xcassets", "AppIcon.appiconset");
 		fs_ensuredir(iconsdir);
-		this.writeFile(path_resolve(to, "Images.xcassets", "AppIcon.appiconset", "Contents.json"));
+		this.write_file(path_resolve(to, "Images.xcassets", "AppIcon.appiconset", "Contents.json"));
 		this.p('{');
 		this.p('"images" : [', 1);
 		for (let i = 0; i < icons.length; ++i) {
-			const icon = icons[i];
+			let icon = icons[i];
 			this.p('{', 2);
 			this.p('"idiom" : "' + icon.idiom + '",', 3);
 			this.p('"size" : "' + icon.size + 'x' + icon.size + '",', 3);
@@ -2502,9 +2137,9 @@ class XCodeExporter extends Exporter {
 		this.p('"author" : "xcode"', 2);
 		this.p('}', 1);
 		this.p('}');
-		this.closeFile();
+		this.close_file();
 		for (let i = 0; i < icons.length; ++i) {
-			const icon = icons[i];
+			let icon = icons[i];
 			export_png(project.icon, path_resolve(to, 'Images.xcassets', 'AppIcon.appiconset', icon.idiom + icon.scale + 'x' + icon.size + '.png'), icon.size * icon.scale, icon.size * icon.scale, icon.background, from);
 		}
 		let plistname = "";
@@ -2514,7 +2149,7 @@ class XCodeExporter extends Exporter {
 			let filename = fileobject.file;
 			if (filename.endsWith(".plist"))
 				plistname = filename;
-			let dir = addDirectory(getDir2(fileobject), directories);
+			let dir = addDirectory(get_dir2(fileobject), directories);
 			let file = new File(filename, dir);
 			files.push(file);
 		}
@@ -2524,46 +2159,46 @@ class XCodeExporter extends Exporter {
 		for (let lib of project.getLibs()) {
 			frameworks.push(new Framework(lib));
 		}
-		let targetOptions = {
+		let target_options = {
 			bundle: 'tech.kode.$(PRODUCT_NAME:rfc1034identifier)',
 			version: "1.0",
 			build: "1",
 			organizationName: "the Kore Development Team",
 			developmentTeam: ""
 		};
-		if (project.targetOptions && project.targetOptions.ios) {
-			let userOptions = project.targetOptions.ios;
+		if (project.target_options && project.target_options.ios) {
+			let userOptions = project.target_options.ios;
 			if (userOptions.bundle)
-				targetOptions.bundle = userOptions.bundle;
+				target_options.bundle = userOptions.bundle;
 			if (userOptions.version)
-				targetOptions.version = userOptions.version;
+				target_options.version = userOptions.version;
 			if (userOptions.build)
-				targetOptions.build = userOptions.build;
+				target_options.build = userOptions.build;
 			if (userOptions.organizationName)
-				targetOptions.organizationName = userOptions.organizationName;
+				target_options.organizationName = userOptions.organizationName;
 			if (userOptions.developmentTeam)
-				targetOptions.developmentTeam = userOptions.developmentTeam;
+				target_options.developmentTeam = userOptions.developmentTeam;
 		}
-		const projectId = newPathId("_projectId");
-		const appFileId = newPathId("_appFileId");
-		const frameworkBuildId = newPathId("_frameworkBuildId");
-		const sourceBuildId = newPathId("_sourceBuildId");
-		const frameworksGroupId = newPathId("_frameworksGroupId");
-		const productsGroupId = newPathId("_productsGroupId");
-		const mainGroupId = newPathId("_mainGroupId");
-		const targetId = newPathId("_targetId");
-		const nativeBuildConfigListId = newPathId("_nativeBuildConfigListId");
-		const projectBuildConfigListId = newPathId("_projectBuildConfigListId");
-		const debugId = newPathId("_debugId");
-		const releaseId = newPathId("_releaseId");
-		const nativeDebugId = newPathId("_nativeDebugId");
-		const nativeReleaseId = newPathId("_nativeReleaseId");
-		const debugDirFileId = newPathId("_debugDirFileId");
-		const debugDirBuildId = newPathId("_debugDirBuildId");
-		const resourcesBuildId = newPathId("_resourcesBuildId");
-		const iconFileId = newPathId("_iconFileId");
-		const iconBuildId = newPathId("_iconBuildId");
-		this.writeFile(path_resolve(to, project.getSafeName() + ".xcodeproj", "project.pbxproj"));
+		let projectId = new_path_id("_projectId");
+		let appFileId = new_path_id("_appFileId");
+		let frameworkBuildId = new_path_id("_frameworkBuildId");
+		let sourceBuildId = new_path_id("_sourceBuildId");
+		let frameworksGroupId = new_path_id("_frameworksGroupId");
+		let productsGroupId = new_path_id("_productsGroupId");
+		let mainGroupId = new_path_id("_mainGroupId");
+		let targetId = new_path_id("_targetId");
+		let nativeBuildConfigListId = new_path_id("_nativeBuildConfigListId");
+		let projectBuildConfigListId = new_path_id("_projectBuildConfigListId");
+		let debugId = new_path_id("_debugId");
+		let releaseId = new_path_id("_releaseId");
+		let nativeDebugId = new_path_id("_nativeDebugId");
+		let nativeReleaseId = new_path_id("_nativeReleaseId");
+		let debugDirFileId = new_path_id("_debugDirFileId");
+		let debugDirBuildId = new_path_id("_debugDirBuildId");
+		let resourcesBuildId = new_path_id("_resourcesBuildId");
+		let iconFileId = new_path_id("_iconFileId");
+		let iconBuildId = new_path_id("_iconBuildId");
+		this.write_file(path_resolve(to, project.get_safe_name() + ".xcodeproj", "project.pbxproj"));
 		this.p('// !$*UTF8*$!');
 		this.p('{');
 		this.p('archiveVersion = 1;', 1);
@@ -2586,11 +2221,11 @@ class XCodeExporter extends Exporter {
 		this.p('/* End PBXBuildFile section */');
 		this.p();
 		this.p('/* Begin PBXFileReference section */');
-		let executableName = project.getSafeName();
-		if (project.getExecutableName()) {
-			executableName = project.getExecutableName();
+		let executable_name = project.get_safe_name();
+		if (project.get_executable_name()) {
+			executable_name = project.get_executable_name();
 		}
-		this.p(appFileId + ' /* ' + project.getSafeName() + '.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "' + executableName + '.app"; sourceTree = BUILT_PRODUCTS_DIR; };', 2);
+		this.p(appFileId + ' /* ' + project.get_safe_name() + '.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "' + executable_name + '.app"; sourceTree = BUILT_PRODUCTS_DIR; };', 2);
 		for (let framework of frameworks) {
 			if (framework.toString().endsWith('.framework')) {
 				// Local framework - a directory is specified
@@ -2618,7 +2253,7 @@ class XCodeExporter extends Exporter {
 				this.p(framework.getFileId() + ' /* ' + framework.toString() + ' */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = ' + framework.toString() + '; path = ' + framework.localPath + '; sourceTree = "<group>"; };', 2);
 			}
 		}
-		this.p(debugDirFileId + ' /* Deployment */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Deployment; path = "' + path_resolve(from, project.getDebugDir()) + '"; sourceTree = "<group>"; };', 2);
+		this.p(debugDirFileId + ' /* Deployment */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Deployment; path = "' + path_resolve(from, project.get_debug_dir()) + '"; sourceTree = "<group>"; };', 2);
 		for (let file of files) {
 			let filetype = "unknown";
 			let fileencoding = "";
@@ -2680,7 +2315,7 @@ class XCodeExporter extends Exporter {
 		this.p(productsGroupId + ' /* Products */ = {', 2);
 		this.p('isa = PBXGroup;', 3);
 		this.p('children = (', 3);
-		this.p(appFileId + ' /* ' + project.getSafeName() + '.app */,', 4);
+		this.p(appFileId + ' /* ' + project.get_safe_name() + '.app */,', 4);
 		this.p(');', 3);
 		this.p('name = Products;', 3);
 		this.p('sourceTree = "<group>";', 3);
@@ -2708,7 +2343,7 @@ class XCodeExporter extends Exporter {
 				}
 			}
 			for (let file of files) {
-				if (file.getDir() === dir && !file.getName().endsWith('.DS_Store'))
+				if (file.get_dir() === dir && !file.getName().endsWith('.DS_Store'))
 					this.p(file.getFileId() + ' /* ' + file.toString() + ' */,', 4);
 			}
 			this.p(');', 3);
@@ -2724,9 +2359,9 @@ class XCodeExporter extends Exporter {
 		this.p('/* End PBXGroup section */');
 		this.p();
 		this.p('/* Begin PBXNativeTarget section */');
-		this.p(targetId + ' /* ' + project.getSafeName() + ' */ = {', 2);
+		this.p(targetId + ' /* ' + project.get_safe_name() + ' */ = {', 2);
 		this.p('isa = PBXNativeTarget;', 3);
-		this.p('buildConfigurationList = ' + nativeBuildConfigListId + ' /* Build configuration list for PBXNativeTarget "' + project.getSafeName() + '" */;', 3);
+		this.p('buildConfigurationList = ' + nativeBuildConfigListId + ' /* Build configuration list for PBXNativeTarget "' + project.get_safe_name() + '" */;', 3);
 		this.p('buildPhases = (', 3);
 		this.p(sourceBuildId + ' /* Sources */,', 4);
 		this.p(frameworkBuildId + ' /* Frameworks */,', 4);
@@ -2738,8 +2373,8 @@ class XCodeExporter extends Exporter {
 		this.p(');', 3);
 		this.p('name = "' + project.getName() + '";', 3);
 		this.p('productName = "' + project.getName() + '";', 3);
-		this.p('productReference = ' + appFileId + ' /* ' + project.getSafeName() + '.app */;', 3);
-		this.p('productType = "com.apple.product-type.' + (project.isCmd() ? 'tool' : 'application') + '";', 3);
+		this.p('productReference = ' + appFileId + ' /* ' + project.get_safe_name() + '.app */;', 3);
+		this.p('productType = "com.apple.product-type.application";', 3);
 		this.p('};', 2);
 		this.p('/* End PBXNativeTarget section */');
 		this.p();
@@ -2748,17 +2383,17 @@ class XCodeExporter extends Exporter {
 		this.p('isa = PBXProject;', 3);
 		this.p('attributes = {', 3);
 		this.p('LastUpgradeCheck = 1230;', 4);
-		this.p('ORGANIZATIONNAME = "' + targetOptions.organizationName + '";', 4);
+		this.p('ORGANIZATIONNAME = "' + target_options.organizationName + '";', 4);
 		this.p('TargetAttributes = {', 4);
 		this.p(targetId + ' = {', 5);
 		this.p('CreatedOnToolsVersion = 6.1.1;', 6);
-		if (targetOptions.developmentTeam) {
-			this.p('DevelopmentTeam = ' + targetOptions.developmentTeam + ';', 6);
+		if (target_options.developmentTeam) {
+			this.p('DevelopmentTeam = ' + target_options.developmentTeam + ';', 6);
 		}
 		this.p('};', 5);
 		this.p('};', 4);
 		this.p('};', 3);
-		this.p('buildConfigurationList = ' + projectBuildConfigListId + ' /* Build configuration list for PBXProject "' + project.getSafeName() + '" */;', 3);
+		this.p('buildConfigurationList = ' + projectBuildConfigListId + ' /* Build configuration list for PBXProject "' + project.get_safe_name() + '" */;', 3);
 		this.p('compatibilityVersion = "Xcode 3.2";', 3);
 		this.p('developmentRegion = en;', 3);
 		this.p('hasScannedForEncodings = 0;', 3);
@@ -2771,7 +2406,7 @@ class XCodeExporter extends Exporter {
 		this.p('projectDirPath = "";', 3);
 		this.p('projectRoot = "";', 3);
 		this.p('targets = (', 3);
-		this.p(targetId + ' /* ' + project.getSafeName() + ' */,', 4);
+		this.p(targetId + ' /* ' + project.get_safe_name() + ' */,', 4);
 		this.p(');', 3);
 		this.p('};', 2);
 		this.p('/* End PBXProject section */');
@@ -2807,7 +2442,7 @@ class XCodeExporter extends Exporter {
 		this.p('isa = XCBuildConfiguration;', 3);
 		this.p('buildSettings = {', 3);
 		this.p('ALWAYS_SEARCH_USER_PATHS = NO;', 4);
-		if (project.cppStd !== '' && project.cppStd !== 'gnu++14') {
+		if (project.cppStd !== '') {
 			this.p('CLANG_CXX_LANGUAGE_STANDARD = "' + project.cppStd + '";', 4);
 		}
 		else {
@@ -2856,7 +2491,7 @@ class XCodeExporter extends Exporter {
 		this.p('GCC_OPTIMIZATION_LEVEL = 0;', 4);
 		this.p('GCC_PREPROCESSOR_DEFINITIONS = (', 4);
 		this.p('"DEBUG=1",', 5);
-		for (const define of project.getDefines()) {
+		for (let define of project.getDefines()) {
 			if (define.indexOf('=') >= 0)
 				this.p('"' + define.replace(/\"/g, '\\\\\\"') + '",', 5);
 			else
@@ -2893,7 +2528,7 @@ class XCodeExporter extends Exporter {
 		this.p('isa = XCBuildConfiguration;', 3);
 		this.p('buildSettings = {', 3);
 		this.p('ALWAYS_SEARCH_USER_PATHS = NO;', 4);
-		if (project.cppStd !== '' && project.cppStd !== 'gnu++14') {
+		if (project.cppStd !== '') {
 			this.p('CLANG_CXX_LANGUAGE_STANDARD = "' + project.cppStd + '";', 4);
 		}
 		else {
@@ -2929,7 +2564,7 @@ class XCodeExporter extends Exporter {
 			this.p('CODE_SIGN_IDENTITY = "-";', 4);
 		}
 		this.p('COPY_PHASE_STRIP = YES;', 4);
-		if (platform === 'osx') {
+		if (platform === 'macos') {
 			this.p('DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";', 4);
 		}
 		this.p('ENABLE_NS_ASSERTIONS = NO;', 4);
@@ -2943,7 +2578,7 @@ class XCodeExporter extends Exporter {
 		this.p('GCC_NO_COMMON_BLOCKS = YES;', 4);
 		this.p('GCC_PREPROCESSOR_DEFINITIONS = (', 4);
 		this.p('NDEBUG,', 5);
-		for (const define of project.getDefines()) {
+		for (let define of project.getDefines()) {
 			if (define.indexOf('=') >= 0)
 				this.p('"' + define.replace(/\"/g, '\\\\\\"') + '",', 5);
 			else
@@ -2980,7 +2615,7 @@ class XCodeExporter extends Exporter {
 		this.p('buildSettings = {', 3);
 		this.p('ARCHS = arm64;', 4);
 		this.p('ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;', 4);
-		if (platform === 'osx') {
+		if (platform === 'macos') {
 			this.p('COMBINE_HIDPI_IMAGES = YES;', 4);
 		}
 		this.p('FRAMEWORK_SEARCH_PATHS = (', 4);
@@ -3031,9 +2666,9 @@ class XCodeExporter extends Exporter {
 			}
 			this.p(');', 4);
 		}
-		this.p('PRODUCT_BUNDLE_IDENTIFIER = "' + targetOptions.bundle + '";', 4);
-		this.p('BUNDLE_VERSION = "' + targetOptions.version + '";', 4);
-		this.p('BUILD_VERSION = "' + targetOptions.build + '";', 4);
+		this.p('PRODUCT_BUNDLE_IDENTIFIER = "' + target_options.bundle + '";', 4);
+		this.p('BUNDLE_VERSION = "' + target_options.version + '";', 4);
+		this.p('BUILD_VERSION = "' + target_options.build + '";', 4);
 		this.p('CODE_SIGN_IDENTITY = "-";', 4);
 		this.p('PRODUCT_NAME = "$(TARGET_NAME)";', 4);
 		this.p('};', 3);
@@ -3044,7 +2679,7 @@ class XCodeExporter extends Exporter {
 		this.p('buildSettings = {', 3);
 		this.p('ARCHS = arm64;', 4);
 		this.p('ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;', 4);
-		if (platform === 'osx') {
+		if (platform === 'macos') {
 			this.p('COMBINE_HIDPI_IMAGES = YES;', 4);
 		}
 		this.p('FRAMEWORK_SEARCH_PATHS = (', 4);
@@ -3095,9 +2730,9 @@ class XCodeExporter extends Exporter {
 			}
 			this.p(');', 4);
 		}
-		this.p('PRODUCT_BUNDLE_IDENTIFIER = "' + targetOptions.bundle + '";', 4);
-		this.p('BUNDLE_VERSION = "' + targetOptions.version + '";', 4);
-		this.p('BUILD_VERSION = "' + targetOptions.build + '";', 4);
+		this.p('PRODUCT_BUNDLE_IDENTIFIER = "' + target_options.bundle + '";', 4);
+		this.p('BUNDLE_VERSION = "' + target_options.version + '";', 4);
+		this.p('BUILD_VERSION = "' + target_options.build + '";', 4);
 		this.p('CODE_SIGN_IDENTITY = "-";', 4);
 		this.p('PRODUCT_NAME = "$(TARGET_NAME)";', 4);
 		this.p('};', 3);
@@ -3106,7 +2741,7 @@ class XCodeExporter extends Exporter {
 		this.p('/* End XCBuildConfiguration section */');
 		this.p();
 		this.p('/* Begin XCConfigurationList section */');
-		this.p(projectBuildConfigListId + ' /* Build configuration list for PBXProject "' + project.getSafeName() + '" */ = {', 2);
+		this.p(projectBuildConfigListId + ' /* Build configuration list for PBXProject "' + project.get_safe_name() + '" */ = {', 2);
 		this.p('isa = XCConfigurationList;', 3);
 		this.p('buildConfigurations = (', 3);
 		this.p(debugId + ' /* Debug */,', 4);
@@ -3115,7 +2750,7 @@ class XCodeExporter extends Exporter {
 		this.p('defaultConfigurationIsVisible = 0;', 3);
 		this.p('defaultConfigurationName = Release;', 3);
 		this.p('};', 2);
-		this.p(nativeBuildConfigListId + ' /* Build configuration list for PBXNativeTarget "' + project.getSafeName() + '" */ = {', 2);
+		this.p(nativeBuildConfigListId + ' /* Build configuration list for PBXNativeTarget "' + project.get_safe_name() + '" */ = {', 2);
 		this.p('isa = XCConfigurationList;', 3);
 		this.p('buildConfigurations = (', 3);
 		this.p(nativeDebugId + ' /* Debug */,', 4);
@@ -3128,7 +2763,7 @@ class XCodeExporter extends Exporter {
 		this.p('};', 1);
 		this.p('rootObject = ' + projectId + ' /* Project object */;', 1);
 		this.p('}');
-		this.closeFile();
+		this.close_file();
 	}
 }
 
@@ -3154,17 +2789,18 @@ class MakeExporter extends Exporter {
 		return libs;
 	}
 
-	exportSolution(project, from, to, platform, options) {
+	export_solution(project, from, to, platform, options) {
 		let objects = {};
 		let ofiles = {};
-		let outputPath = path_resolve(to, options.buildPath);
-		fs_ensuredir(outputPath);
+		let output_path = path_resolve(to, options.build_path);
+		fs_ensuredir(output_path);
 		for (let fileobject of project.getFiles()) {
 			let file = fileobject.file;
 			if (file.endsWith(".cpp") || file.endsWith(".c") || file.endsWith(".cc")) {
 				let name = file.toLowerCase();
-				if (name.indexOf("/") >= 0)
+				if (name.indexOf("/") >= 0) {
 					name = name.substr(name.lastIndexOf("/") + 1);
+				}
 				name = name.substr(0, name.lastIndexOf("."));
 				if (!objects[name]) {
 					objects[name] = true;
@@ -3183,16 +2819,16 @@ class MakeExporter extends Exporter {
 		for (let o in objects) {
 			ofilelist += o + ".o ";
 		}
-		this.writeFile(path_resolve(outputPath, "makefile"));
+		this.write_file(path_resolve(output_path, "makefile"));
 		let incline = "-I./ "; // local directory to pick up the precompiled headers
 		for (let inc of project.getIncludeDirs()) {
-			inc = path_relative(outputPath, path_resolve(from, inc));
+			inc = path_relative(output_path, path_resolve(from, inc));
 			incline += "-I" + inc + " ";
 		}
 		this.p("INC=" + incline);
 		this.p("LIB=" + this.linkerFlags + this.libsLine(project));
 		let defline = "";
-		for (const def of project.getDefines()) {
+		for (let def of project.getDefines()) {
 			defline += "-D" + def.replace(/\"/g, '\\"') + " ";
 		}
 		if (!options.debug) {
@@ -3222,19 +2858,19 @@ class MakeExporter extends Exporter {
 		}
 		else
 			optimization = "-g";
-		let executableName = project.getSafeName();
-		if (project.getExecutableName()) {
-			executableName = project.getExecutableName();
+		let executable_name = project.get_safe_name();
+		if (project.get_executable_name()) {
+			executable_name = project.get_executable_name();
 		}
-		this.p(executableName + this.outputExtension + ": " + ofilelist);
-		let output = '-o "' + executableName + this.outputExtension + '"';
+		this.p(executable_name + this.outputExtension + ": " + ofilelist);
+		let output = '-o "' + executable_name + this.outputExtension + '"';
 		this.p('\t' + this.cppCompiler + ' ' + output + ' ' + optimization + ' ' + ofilelist + ' $(LIB)');
 		for (let fileobject of project.getFiles()) {
 			let file = fileobject.file;
 			if (file.endsWith(".c") || file.endsWith(".cpp") || file.endsWith(".cc")) {
 				this.p();
 				let name = ofiles[file];
-				let realfile = path_relative(outputPath, path_resolve(from, file));
+				let realfile = path_relative(output_path, path_resolve(from, file));
 				this.p("-include " + name + ".d");
 				this.p(name + ".o: " + realfile);
 				let compiler = this.cppCompiler;
@@ -3246,7 +2882,7 @@ class MakeExporter extends Exporter {
 				this.p('\t' + compiler + ' ' + optimization + ' $(INC) $(DEF) -MD ' + flags + ' -c ' + realfile + ' -o ' + name + '.o');
 			}
 		}
-		this.closeFile();
+		this.close_file();
 	}
 }
 
@@ -3260,16 +2896,16 @@ class LinuxExporter extends Exporter {
 			linkerFlags += " -flto";
 		}
 		this.make = new MakeExporter(options, this.getCCompiler(), this.getCPPCompiler(), compilerFlags, compilerFlags, linkerFlags, '');
-		this.compileCommands = new CompilerCommandsExporter(options);
+		this.compile_commands = new CompilerCommandsExporter(options);
 	}
 
-	exportSolution(project, from, to, platform, options) {
-		this.make.exportSolution(project, from, to, platform, options);
-		this.compileCommands.exportSolution(project, from, to, platform, options);
+	export_solution(project, from, to, platform, options) {
+		this.make.export_solution(project, from, to, platform, options);
+		this.compile_commands.export_solution(project, from, to, platform, options);
 	}
 
 	getCCompiler() {
-		switch (Options_1.compiler) {
+		switch (goptions.compiler) {
 			case "default":
 			case "clang":
 				return "clang";
@@ -3279,7 +2915,7 @@ class LinuxExporter extends Exporter {
 	}
 
 	getCPPCompiler() {
-		switch (Options_1.compiler) {
+		switch (goptions.compiler) {
 			case "default":
 			case "clang":
 				return "clang++";
@@ -3292,13 +2928,14 @@ class LinuxExporter extends Exporter {
 class AndroidExporter extends Exporter {
 	constructor(options) {
 		super(options);
-		this.compileCommands = new CompilerCommandsExporter(options);
+		this.compile_commands = new CompilerCommandsExporter(options);
 	}
-	exportSolution(project, from, to, platform, options) {
-		this.safeName = project.getSafeName();
-		const outdir = path_join(to.toString(), this.safeName);
+
+	export_solution(project, from, to, platform, options) {
+		this.safe_name = project.get_safe_name();
+		let outdir = path_join(to.toString(), this.safe_name);
 		fs_ensuredir(outdir);
-		const targetOptions = {
+		let target_options = {
 			package: "tech.kinc",
 			installLocation: "internalOnly",
 			versionCode: 1,
@@ -3315,8 +2952,8 @@ class AndroidExporter extends Exporter {
 			proguardRulesPath: null,
 			abiFilters: []
 		};
-		if (project.targetOptions != null && project.targetOptions.android != null) {
-			const userOptions = project.targetOptions.android;
+		if (project.target_options != null && project.target_options.android != null) {
+			let userOptions = project.target_options.android;
 			for (let key in userOptions) {
 				if (userOptions[key] == null)
 					continue;
@@ -3325,19 +2962,19 @@ class AndroidExporter extends Exporter {
 					case "globalBuildGradlePath":
 					case "proguardRulesPath":
 						// fix path slashes and normalize
-						const p = userOptions[key].split("/").join(path_sep);
-						targetOptions[key] = path_join(from, p);
+						let p = userOptions[key].split("/").join(path_sep);
+						target_options[key] = path_join(from, p);
 						break;
 					default:
-						targetOptions[key] = userOptions[key];
+						target_options[key] = userOptions[key];
 				}
 			}
 		}
-		const binaryData = getEmbeddedBinaryData();
-		const textData = getEmbeddedData();
+		let binaryData = get_embedded_binary_data();
+		let textData = get_embedded_data();
 		fs_writefile(path_join(outdir, '.gitignore'), textData['android_gitignore']);
-		if (targetOptions.globalBuildGradlePath) {
-			fs_copyfile(targetOptions.globalBuildGradlePath, path_join(outdir, 'build.gradle.kts'));
+		if (target_options.globalBuildGradlePath) {
+			fs_copyfile(target_options.globalBuildGradlePath, path_join(outdir, 'build.gradle.kts'));
 		}
 		else {
 			fs_writefile(path_join(outdir, 'build.gradle.kts'), textData['android_build_gradle']);
@@ -3353,31 +2990,32 @@ class AndroidExporter extends Exporter {
 		fs_writefile(path_join(outdir, 'settings.gradle.kts'), settings);
 		fs_ensuredir(path_join(outdir, 'app'));
 		fs_writefile(path_join(outdir, 'app', '.gitignore'), textData['android_app_gitignore']);
-		if (targetOptions.proguardRulesPath) {
-			fs_copyfile(targetOptions.proguardRulesPath, path_join(outdir, 'app', 'proguard-rules.pro'));
+		if (target_options.proguardRulesPath) {
+			fs_copyfile(target_options.proguardRulesPath, path_join(outdir, 'app', 'proguard-rules.pro'));
 		}
 		else {
 			fs_writefile(path_join(outdir, 'app', 'proguard-rules.pro'), textData['android_app_proguard_rules_pro']);
 		}
-		this.writeAppGradle(project, outdir, from, targetOptions, textData);
-		this.writeCMakeLists(project, outdir, from, targetOptions, textData);
+		this.write_app_gradle(project, outdir, from, target_options, textData);
+		this.write_cmake_lists(project, outdir, from, textData);
 		fs_ensuredir(path_join(outdir, 'app', 'src'));
 		fs_ensuredir(path_join(outdir, 'app', 'src', 'main'));
-		this.writeManifest(outdir, targetOptions, textData);
+		this.write_manifest(outdir, target_options, textData);
 		let strings = textData['android_main_res_values_strings_xml'];
 		strings = strings.replace(/{name}/g, project.getName());
 		fs_ensuredir(path_join(outdir, 'app', 'src', 'main', 'res', 'values'));
 		fs_writefile(path_join(outdir, 'app', 'src', 'main', 'res', 'values', 'strings.xml'), strings);
-		this.exportIcons(project.icon, outdir, from, to);
+		this.export_icons(project.icon, outdir, from, to);
 		fs_ensuredir(path_join(outdir, 'gradle', 'wrapper'));
 		fs_writefile(path_join(outdir, 'gradle', 'wrapper', 'gradle-wrapper.jar'), binaryData['android_gradle_wrapper_gradle_wrapper_jar']);
 		fs_writefile(path_join(outdir, 'gradle', 'wrapper', 'gradle-wrapper.properties'), textData['android_gradle_wrapper_gradle_wrapper_properties']);
-		if (project.getDebugDir().length > 0)
-			fs_copydir(path_resolve(from, project.getDebugDir()), path_resolve(to, this.safeName, 'app', 'src', 'main', 'assets'));
-		this.compileCommands.exportSolution(project, from, to, platform, options);
+		if (project.get_debug_dir().length > 0) {
+			fs_copydir(path_resolve(from, project.get_debug_dir()), path_resolve(to, this.safe_name, 'app', 'src', 'main', 'assets'));
+		}
+		this.compile_commands.export_solution(project, from, to, platform, options);
 	}
 
-	writeAppGradle(project, outdir, from, targetOptions, textData) {
+	write_app_gradle(project, outdir, from, target_options, textData) {
 		let cflags = '';
 		for (let flag of project.cFlags)
 			cflags += flag + ' ';
@@ -3385,21 +3023,21 @@ class AndroidExporter extends Exporter {
 		for (let flag of project.cppFlags)
 			cppflags += flag + ' ';
 		let gradle = null;
-		if (targetOptions.buildGradlePath) {
-			gradle = fs_readfile(targetOptions.buildGradlePath);
+		if (target_options.buildGradlePath) {
+			gradle = fs_readfile(target_options.buildGradlePath);
 		}
 		else {
 			gradle = textData['android_app_build_gradle'];
 		}
-		gradle = gradle.replace(/{package}/g, targetOptions.package);
-		gradle = gradle.replace(/{versionCode}/g, targetOptions.versionCode.toString());
-		gradle = gradle.replace(/{versionName}/g, targetOptions.versionName);
-		gradle = gradle.replace(/{compileSdkVersion}/g, targetOptions.compileSdkVersion.toString());
-		gradle = gradle.replace(/{minSdkVersion}/g, targetOptions.minSdkVersion.toString());
-		gradle = gradle.replace(/{targetSdkVersion}/g, targetOptions.targetSdkVersion.toString());
+		gradle = gradle.replace(/{package}/g, target_options.package);
+		gradle = gradle.replace(/{versionCode}/g, target_options.versionCode.toString());
+		gradle = gradle.replace(/{versionName}/g, target_options.versionName);
+		gradle = gradle.replace(/{compileSdkVersion}/g, target_options.compileSdkVersion.toString());
+		gradle = gradle.replace(/{minSdkVersion}/g, target_options.minSdkVersion.toString());
+		gradle = gradle.replace(/{targetSdkVersion}/g, target_options.targetSdkVersion.toString());
 		let arch = '';
-		if (targetOptions.abiFilters.length > 0) {
-			for (let item of targetOptions.abiFilters) {
+		if (target_options.abiFilters.length > 0) {
+			for (let item of target_options.abiFilters) {
 				if (arch.length === 0) {
 					arch = '"' + item + '"';
 				}
@@ -3410,18 +3048,15 @@ class AndroidExporter extends Exporter {
 			arch = `ndk { abiFilters += listOf(${arch}) }`;
 		}
 		else {
-			switch (Options_1.arch) {
+			switch (goptions.arch) {
 				case 'default':
 					arch = '';
 					break;
 				case 'arm8':
 					arch = 'arm64-v8a';
 					break;
-				case 'x86_64':
-					arch = 'x86_64';
-					break;
 			}
-			if (Options_1.arch !== 'default') {
+			if (goptions.arch !== 'default') {
 				arch = `ndk {abiFilters += listOf("${arch}")}`;
 			}
 		}
@@ -3441,15 +3076,15 @@ class AndroidExporter extends Exporter {
 		fs_writefile(path_join(outdir, 'app', 'build.gradle.kts'), gradle);
 	}
 
-	writeCMakeLists(project, outdir, from, targetOptions, textData) {
+	write_cmake_lists(project, outdir, from, textData) {
 		let cmake = textData['android_app_cmakelists_txt'];
 		let debugDefines = '';
-		for (const def of project.getDefines()) {
+		for (let def of project.getDefines()) {
 			debugDefines += ' -D' + def.value.replace(/\"/g, '\\\\\\\"');
 		}
 		cmake = cmake.replace(/{debug_defines}/g, debugDefines);
 		let releaseDefines = '';
-		for (const def of project.getDefines()) {
+		for (let def of project.getDefines()) {
 			releaseDefines += ' -D' + def.value.replace(/\"/g, '\\\\\\\"');
 		}
 		cmake = cmake.replace(/{release_defines}/g, releaseDefines);
@@ -3479,21 +3114,21 @@ class AndroidExporter extends Exporter {
 		}
 		cmake = cmake.replace(/{libraries1}/g, libraries1)
 			.replace(/{libraries2}/g, libraries2);
-		const cmakePath = path_join(outdir, 'app', 'CMakeLists.txt');
+		let cmakePath = path_join(outdir, 'app', 'CMakeLists.txt');
 		fs_writefile(cmakePath, cmake);
 	}
 
-	writeManifest(outdir, targetOptions, textData) {
+	write_manifest(outdir, target_options, textData) {
 		let manifest = textData['android_main_androidmanifest_xml'];
-		manifest = manifest.replace(/{package}/g, targetOptions.package);
-		manifest = manifest.replace(/{installLocation}/g, targetOptions.installLocation);
-		manifest = manifest.replace(/{versionCode}/g, targetOptions.versionCode.toString());
-		manifest = manifest.replace(/{versionName}/g, targetOptions.versionName);
-		manifest = manifest.replace(/{screenOrientation}/g, targetOptions.screenOrientation);
-		manifest = manifest.replace(/{targetSdkVersion}/g, targetOptions.targetSdkVersion);
-		manifest = manifest.replace(/{permissions}/g, targetOptions.permissions.map((p) => { return '\n\t<uses-permission android:name="' + p + '"/>'; }).join(''));
-		let metadata = targetOptions.disableStickyImmersiveMode ? '\n\t\t<meta-data android:name="disableStickyImmersiveMode" android:value="true"/>' : '';
-		for (const meta of targetOptions.metadata) {
+		manifest = manifest.replace(/{package}/g, target_options.package);
+		manifest = manifest.replace(/{installLocation}/g, target_options.installLocation);
+		manifest = manifest.replace(/{versionCode}/g, target_options.versionCode.toString());
+		manifest = manifest.replace(/{versionName}/g, target_options.versionName);
+		manifest = manifest.replace(/{screenOrientation}/g, target_options.screenOrientation);
+		manifest = manifest.replace(/{targetSdkVersion}/g, target_options.targetSdkVersion);
+		manifest = manifest.replace(/{permissions}/g, target_options.permissions.map((p) => { return '\n\t<uses-permission android:name="' + p + '"/>'; }).join(''));
+		let metadata = target_options.disableStickyImmersiveMode ? '\n\t\t<meta-data android:name="disableStickyImmersiveMode" android:value="true"/>' : '';
+		for (let meta of target_options.metadata) {
 			metadata += '\n\t\t' + meta;
 		}
 		manifest = manifest.replace(/{metadata}/g, metadata);
@@ -3501,15 +3136,15 @@ class AndroidExporter extends Exporter {
 		fs_writefile(path_join(outdir, 'app', 'src', 'main', 'AndroidManifest.xml'), manifest);
 	}
 
-	exportIcons(icon, outdir, from, to) {
-		const folders = ['mipmap-mdpi', 'mipmap-hdpi', 'mipmap-xhdpi', 'mipmap-xxhdpi', 'mipmap-xxxhdpi'];
-		const dpis = [48, 72, 96, 144, 192];
+	export_icons(icon, outdir, from, to) {
+		let folders = ['mipmap-mdpi', 'mipmap-hdpi', 'mipmap-xhdpi', 'mipmap-xxhdpi', 'mipmap-xxxhdpi'];
+		let dpis = [48, 72, 96, 144, 192];
 		for (let i = 0; i < dpis.length; ++i) {
-			const folder = folders[i];
-			const dpi = dpis[i];
+			let folder = folders[i];
+			let dpi = dpis[i];
 			fs_ensuredir(path_join(outdir, 'app', 'src', 'main', 'res', folder));
-			export_png(icon, path_resolve(to, this.safeName, 'app', 'src', 'main', 'res', folder, 'ic_launcher.png'), dpi, dpi, undefined, from);
-			export_png(icon, path_resolve(to, this.safeName, 'app', 'src', 'main', 'res', folder, 'ic_launcher_round.png'), dpi, dpi, undefined, from);
+			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher.png'), dpi, dpi, undefined, from);
+			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher_round.png'), dpi, dpi, undefined, from);
 		}
 	}
 }
@@ -3519,9 +3154,9 @@ class CompilerCommandsExporter extends Exporter {
 		super(options);
 	}
 
-	exportSolution(project, _from, to, platform, options) {
+	export_solution(project, _from, to, platform, options) {
 		let from = path_resolve(os_cwd(), _from);
-		this.writeFile(path_resolve(to, 'compile_commands.json'));
+		this.write_file(path_resolve(to, 'compile_commands.json'));
 		let includes = [];
 		for (let inc of project.getIncludeDirs()) {
 			includes.push('-I');
@@ -3555,12 +3190,12 @@ class CompilerCommandsExporter extends Exporter {
 			}
 		}
 
-		let defaultArgs = [];
+		let default_args = [];
 		if (platform === 'android') {
-			defaultArgs.push('--target=aarch64-none-linux-android21');
-			defaultArgs.push('-DANDROID');
+			default_args.push('--target=aarch64-none-linux-android21');
+			default_args.push('-DANDROID');
 			function ndkFromSdkRoot() {
-				var _a;
+				let _a;
 				let sdkEnv = (_a = os_env('ANDROID_HOME')) !== null && _a !== void 0 ? _a : os_env('ANDROID_SDK_ROOT');
 				if (!sdkEnv)
 					return null;
@@ -3591,8 +3226,8 @@ class CompilerCommandsExporter extends Exporter {
 				}
 				let ndk_toolchain = path_join(android_ndk, `toolchains/llvm/prebuilt/${host_tag}`);
 				if (host_tag !== '' && fs_exists(ndk_toolchain)) {
-					defaultArgs.push(`--gcc-toolchain=${ndk_toolchain}`);
-					defaultArgs.push(`--sysroot=${ndk_toolchain}/sysroot`);
+					default_args.push(`--gcc-toolchain=${ndk_toolchain}`);
+					default_args.push(`--sysroot=${ndk_toolchain}/sysroot`);
 				}
 				else {
 					// fallback to the first found toolchain
@@ -3600,8 +3235,8 @@ class CompilerCommandsExporter extends Exporter {
 					if (toolchains.length > 0) {
 						let host_tag = toolchains[0];
 						let ndk_toolchain = path_join(android_ndk, `toolchains/llvm/prebuilt/${host_tag}`);
-						defaultArgs.push(`--gcc-toolchain=${ndk_toolchain}`);
-						defaultArgs.push(`--sysroot=${ndk_toolchain}/sysroot`);
+						default_args.push(`--gcc-toolchain=${ndk_toolchain}`);
+						default_args.push(`--sysroot=${ndk_toolchain}/sysroot`);
 						console.log(`Found android ndk toolchain in ${ndk_toolchain}.`);
 					}
 				}
@@ -3616,7 +3251,7 @@ class CompilerCommandsExporter extends Exporter {
 				if (file.endsWith('.c')) {
 					args.push('-std=c99');
 				}
-				args.push(...defaultArgs);
+				args.push(...default_args);
 				args.push(path_resolve(from, file));
 				let command = {
 					directory: from,
@@ -3628,116 +3263,120 @@ class CompilerCommandsExporter extends Exporter {
 			}
 		}
 		this.p(JSON.stringify(commands));
-		this.closeFile();
+		this.close_file();
 	}
 }
 
-function exportKoremakeProject(from, to, platform, korefile, options) {
+function export_koremake_project(from, to, platform, options) {
 	console.log('Creating ' + platform + ' project files.');
 	Project.root = path_resolve(from);
 
-	let project = Project.create(from, to, platform, korefile);
-	if (shaderLang(platform) === 'metal') {
+	let project = Project.create(from, to, platform);
+	if (shader_lang(platform) === 'metal') {
 		project.addFile(path_join(to, 'sources', '*'), {});
 	}
-	project.resolveBackends();
-	project.searchFiles(undefined);
-	project.internalFlatten();
+	project.search_files(undefined);
+	project.internal_flatten();
 	fs_ensuredir(to);
 
 	// Run again to find new shader files for Metal
-	project.searchFiles(undefined);
-	project.internalFlatten();
+	project.search_files(undefined);
+	project.internal_flatten();
 
 	let exporter = null;
-	if (platform === 'ios' || platform === 'osx')
+	if (platform === 'ios' || platform === 'macos') {
 		exporter = new XCodeExporter(options);
-	else if (platform === 'android')
+	}
+	else if (platform === 'android') {
 		exporter = new AndroidExporter(options);
-	else if (platform === 'wasm')
+	}
+	else if (platform === 'wasm') {
 		exporter = new WasmExporter(options);
-	else if (platform === 'linux')
+	}
+	else if (platform === 'linux') {
 		exporter = new LinuxExporter(options);
-	else
+	}
+	else {
 		exporter = new VisualStudioExporter(options);
+	}
 
-	exporter.exportSolution(project, from, to, platform, options);
+	exporter.export_solution(project, from, to, platform, options);
 	return project;
 }
 
-function compileProject(make, project, options) {
+function compile_project(make, project, options) {
 	if (make.status != 0) {
 		os_exit(1);
 	}
-	let executableName = project.getSafeName();
-	if (project.getExecutableName()) {
-		executableName = project.getExecutableName();
+	let executable_name = project.get_safe_name();
+	if (project.get_executable_name()) {
+		executable_name = project.get_executable_name();
 	}
 	if (options.target === 'linux') {
-		let from = path_resolve(path_join(options.to.toString(), options.buildPath), executableName);
-		let to = path_resolve(options.from.toString(), project.getDebugDir(), executableName);
+		let from = path_resolve(path_join(options.to, options.build_path), executable_name);
+		let to = path_resolve(options.from, project.get_debug_dir(), executable_name);
 		fs_copyfile(from, to);
 		os_chmod(to, "+x");
 	}
 	else if (options.target === 'windows') {
-		const extension = '.exe';
-		const from = true
-			? path_join(options.to.toString(), 'x64', options.debug ? 'Debug' : 'Release', executableName + extension)
-			: path_join(options.to.toString(), options.debug ? 'Debug' : 'Release', executableName + extension);
-		const dir = path_isabs(project.getDebugDir())
-			? project.getDebugDir()
-			: path_join(options.from.toString(), project.getDebugDir());
-		fs_copyfile(from, path_join(dir, executableName + extension));
+		let extension = '.exe';
+		let from = true
+			? path_join(options.to, 'x64', options.debug ? 'Debug' : 'Release', executable_name + extension)
+			: path_join(options.to, options.debug ? 'Debug' : 'Release', executable_name + extension);
+		let dir = path_isabs(project.get_debug_dir())
+			? project.get_debug_dir()
+			: path_join(options.from, project.get_debug_dir());
+		fs_copyfile(from, path_join(dir, executable_name + extension));
 	}
 	if (options.run) {
-		if (options.target === 'osx') {
+		if (options.target === 'macos') {
 			os_exec('build/' + (options.debug ? 'Debug' : 'Release') + '/' + project.name + '.app/Contents/MacOS/' + project.name, [], { cwd: options.to });
 		}
 		else if (options.target === 'linux' || options.target === 'windows') {
-			os_exec(path_resolve(options.from.toString(), project.getDebugDir(), executableName), [], { cwd: path_resolve(options.from.toString(), project.getDebugDir()) });
+			os_exec(path_resolve(options.from, project.get_debug_dir(), executable_name), [], { cwd: path_resolve(options.from.toString(), project.get_debug_dir()) });
 		}
 	}
 }
 
 function main() {
-	Options_1.from = path_resolve(Options_1.from);
-	Options_1.to = path_resolve(Options_1.to);
+	goptions.from = path_resolve(goptions.from);
+	goptions.to = path_resolve(goptions.to);
 	console.log('Using ArmorCore from ' + armorcoredir);
-	Options_1.buildPath = Options_1.debug ? 'Debug' : 'Release';
-	let project = exportKoremakeProject(Options_1.from, Options_1.to, Options_1.target, Options_1.kfile, Options_1);
+	goptions.build_path = goptions.debug ? 'Debug' : 'Release';
+	let project = export_koremake_project(goptions.from, goptions.to, goptions.target, goptions);
 
-	let solutionName = project.getSafeName();
-	if (Options_1.compile && solutionName !== '') {
+	let solution_name = project.get_safe_name();
+	if (goptions.compile && solution_name !== '') {
 		console.log('Compiling...');
 		let make = null;
-		if (Options_1.target == 'linux' || Options_1.target == 'wasm') {
+		if (goptions.target == 'linux' || goptions.target == 'wasm') {
 			let cores = os_cpus_length();
-			make = os_exec('make', ['-j', cores.toString()], { cwd: path_join(Options_1.to, Options_1.buildPath) });
+			make = os_exec('make', ['-j', cores.toString()], { cwd: path_join(goptions.to, goptions.build_path) });
 		}
-		else if (Options_1.target == 'osx' || Options_1.target == 'ios') {
-			let xcodeOptions = ['-configuration', Options_1.debug ? 'Debug' : 'Release', '-project', solutionName + '.xcodeproj'];
-			if (Options_1.nosigning) {
-				xcodeOptions.push('CODE_SIGN_IDENTITY=""');
-				xcodeOptions.push('CODE_SIGNING_REQUIRED=NO');
-				xcodeOptions.push('CODE_SIGNING_ALLOWED=NO');
+		else if (goptions.target == 'macos' || goptions.target == 'ios') {
+			let xcode_options = ['-configuration', goptions.debug ? 'Debug' : 'Release', '-project', solution_name + '.xcodeproj'];
+			if (goptions.nosigning) {
+				xcode_options.push('CODE_SIGN_IDENTITY=""');
+				xcode_options.push('CODE_SIGNING_REQUIRED=NO');
+				xcode_options.push('CODE_SIGNING_ALLOWED=NO');
 			}
-			make = os_exec('xcodebuild', xcodeOptions, { cwd: Options_1.to });
+			make = os_exec('xcodebuild', xcode_options, { cwd: goptions.to });
 		}
-		else if (Options_1.target == 'windows') {
-			const vswhere = path_join(os_env('ProgramFiles(x86)'), 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
+		else if (goptions.target == 'windows') {
+			let vswhere = path_join(os_env('ProgramFiles(x86)'), 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
 			let vsvars = os_exec(vswhere, ['-products', '*', '-latest', '-find', 'VC\\Auxiliary\\Build\\vcvars64.bat']).stdout.trim();
-			fs_writefile(path_join(Options_1.to, 'build.bat'), '@call "' + vsvars + '"\n' + '@MSBuild.exe "' + path_resolve(Options_1.to, solutionName + '.vcxproj') + '" /m /clp:ErrorsOnly /p:Configuration=' + (Options_1.debug ? 'Debug' : 'Release') + ',Platform=x64');
-			make = os_exec('build.bat', [], { cwd: Options_1.to });
+			fs_writefile(path_join(goptions.to, 'build.bat'), '@call "' + vsvars + '"\n' + '@MSBuild.exe "' + path_resolve(goptions.to, solution_name + '.vcxproj') + '" /m /clp:ErrorsOnly /p:Configuration=' + (goptions.debug ? 'Debug' : 'Release') + ',Platform=x64');
+			make = os_exec('build.bat', [], { cwd: goptions.to });
 		}
-		else if (Options_1.target == 'android') {
+		else if (goptions.target == 'android') {
 			let gradlew = (os_platform() === 'win32') ? 'gradlew.bat' : 'bash';
 			let args = (os_platform() === 'win32') ? [] : ['gradlew'];
-			args.push('assemble' + (Options_1.debug ? 'Debug' : 'Release'));
-			make = os_exec(gradlew, args, { cwd: path_join(Options_1.to, solutionName) });
+			args.push('assemble' + (goptions.debug ? 'Debug' : 'Release'));
+			make = os_exec(gradlew, args, { cwd: path_join(goptions.to, solution_name) });
 		}
 		if (make !== null) {
-			compileProject(make, project, Options_1);
-			return solutionName;
+			compile_project(make, project, goptions);
+			return solution_name;
 		}
 	}
 }
@@ -3750,11 +3389,11 @@ function default_target() {
 		return 'windows';
 	}
 	else {
-		return 'osx';
+		return 'macos';
 	}
 }
 
-let Options_1 = {
+let goptions = {
 	from: '.',
 	to: 'build',
 	target: default_target(),
@@ -3766,7 +3405,12 @@ let Options_1 = {
 	kfile: 'project.js',
 	compiler: 'default',
 	arch: 'default',
+	shaderversion: null,
 };
+
+if (os_env("ARM_EMBED")) {
+	os_argv().push("--embed");
+}
 
 let args = scriptArgs;
 for (let i = 1; i < args.length; ++i) {
@@ -3778,12 +3422,16 @@ for (let i = 1; i < args.length; ++i) {
 			++i;
 			value = args[i];
 		}
-		Options_1[name] = value;
+		goptions[name] = value;
 	}
 }
 
-if (Options_1.run) {
-	Options_1.compile = true;
+if (goptions.run) {
+	goptions.compile = true;
+}
+
+if (goptions.target === "android" || goptions.target === "wasm") {
+	goptions.shaderversion = 300;
 }
 
 main();
