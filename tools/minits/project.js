@@ -1,9 +1,8 @@
 
-let flags = globalThis.flags;
-
 let project = new Project("minits");
 
 {
+	project.addProject("../../");
     project.addDefine("NO_KROM_API");
 	project.addDefine("NO_GC");
 

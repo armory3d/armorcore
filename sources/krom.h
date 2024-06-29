@@ -2965,7 +2965,7 @@ obj_part_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_po
 	// }
 }
 
-#ifdef WITH_ZUI
+#ifdef WITH_EVAL
 float krom_js_eval(char *str) {
 	return 0.0;
 }

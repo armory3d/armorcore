@@ -1,6 +1,6 @@
 
 // Red triangle test
-// ../../../make --from ../../../ --graphics opengl --run
+// ../../../make --graphics opengl --run
 
 let vs: string = "#version 330\n\
 in vec3 pos; \

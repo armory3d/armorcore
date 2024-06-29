@@ -354,10 +354,10 @@ function contains_fancy_define(array, value) {
 	return false;
 }
 
-function load_project(directory) {
+function load_project(directory, is_root_project) {
 	__dirname = path_resolve(directory);
 
-	if (globalThis.flags == null) {
+	if (is_root_project) {
 		globalThis.platform = Project.platform;
 		globalThis.graphics = goptions.graphics;
 		globalThis.flags = {
@@ -377,9 +377,13 @@ function load_project(directory) {
 			with_zui: false,
 			with_eval: true,
 		};
+	}
 
+	let project = eval("function _(){" + fs_readfile(path_resolve(directory, "project.js")) + "} _();");
+
+	if (is_root_project) {
 		try {
-			export_armorcore_project(goptions);
+			export_armorcore_project(project, goptions);
 		}
 		catch (error) {
 			console.log(error);
@@ -387,7 +391,7 @@ function load_project(directory) {
 		}
 	}
 
-	return eval("function _(){" + fs_readfile(path_resolve(directory, "project.js")) + "} _();");
+	return project;
 }
 
 function search_files2(current_dir, pattern) {
@@ -631,8 +635,8 @@ class ShaderCompiler {
 				compiled_shader = self.compile_shader(shader, options);
 			}
 			catch (error) {
-				console.error('Compiling shader ' + (index + 1) + ' of ' + shaders.length + ' (' + path_basename(shader) + ') failed:');
-				console.error(error);
+				console.log('Compiling shader ' + (index + 1) + ' of ' + shaders.length + ' (' + path_basename(shader) + ') failed:');
+				console.log(error);
 			}
 			if (compiled_shader === null) {
 				compiled_shader = new CompiledShader();
@@ -697,7 +701,7 @@ class ShaderCompiler {
 
 			let child = os_exec(this.compiler, parameters);
 			if (child.status !== 0) {
-				console.error('Shader compiler error.')
+				console.log('Shader compiler error.')
 			}
 
 			let compiled_shader = new CompiledShader();
@@ -707,12 +711,12 @@ class ShaderCompiler {
 	}
 }
 
-function convert_image(temp, to, root, exe, params) {
-	os_exec(path_join(root, 'tools', 'bin', sys_dir(), exe), params);
+function convert_image(temp, to, exe, params) {
+	os_exec(path_join(armorcoredir, 'tools', 'bin', sys_dir(), exe), params);
 	fs_rename(temp, to);
 }
 
-function export_image(root, from, to) {
+function export_image(from, to) {
 	to += ".k";
 	let temp = to + ".temp";
 	let outputformat = "k";
@@ -723,15 +727,17 @@ function export_image(root, from, to) {
 	let exe = "kraffiti" + exe_ext();
 	let params = ["from=" + from, "to=" + temp, "format=lz4"];
 	params.push("filter=nearest");
-	convert_image(temp, to, root, exe, params);
+	convert_image(temp, to, exe, params);
 	return outputformat;
 }
 
 class ArmorCoreExporter {
-	constructor(options) {
+	constructor(project, options) {
 		this.options = options;
 		this.sources = [];
-		this.add_source_directory(path_join(__dirname, "sources", "ts"));
+		if (project.defines.indexOf("NO_KROM_API") == -1) {
+			this.add_source_directory(path_join(armorcoredir, "sources", "ts"));
+		}
 	}
 
 	ts_options(defines) {
@@ -761,7 +767,7 @@ class ArmorCoreExporter {
 	}
 
 	copy_image(from, to) {
-		let format = export_image(__dirname, from, path_join(this.options.to, "krom", to));
+		let format = export_image(from, path_join(this.options.to, "krom", to));
 		return [to + "." + format];
 	}
 
@@ -882,7 +888,7 @@ function write_ts_project(projectdir, options) {
 		file = ts_preprocessor(file, file_path);
 		source += file;
 	}
-	let minits_bin = path_join(__dirname, 'tools', 'bin', sys_dir(), 'minits' + exe_ext());
+	let minits_bin = path_join(armorcoredir, 'tools', 'bin', sys_dir(), 'minits' + exe_ext());
 	let minits_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
 	let minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
 	fs_writefile(minits_input, source);
@@ -892,7 +898,7 @@ function write_ts_project(projectdir, options) {
 	// globalThis.fs_writefile = fs_writefile;
 	// globalThis.flags.minits_source = source;
 	// globalThis.flags.minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
-	// let minits = __dirname + '/tools/minits/minits.js';
+	// let minits = armorcoredir + '/tools/minits/minits.js';
 	// (1, eval)(fs_readfile(minits));
 }
 
@@ -900,27 +906,15 @@ function export_project_files(name, options, exporter, defines) {
 	let ts_options = exporter.ts_options(defines);
 	write_ts_project(options.to, ts_options);
 	exporter.export();
-
-	console.log('Done.');
 	return name;
 }
 
-function export_armorcore_project(options) {
+function export_armorcore_project(project, options) {
 	console.log('Creating ArmorCore project files.');
-	let project = null;
-	if (fs_exists(path_join(options.from, 'project.js'))) {
-		project = load_project(options.from);
-	}
-
-	if (project == null) {
-		fs_ensuredir('build');
-		fs_writefile('build/krom.c', 'int kickstart(int argc, char **argv) { return 0; }\n');
-		return;
-	}
 
 	let temp = path_join(options.to, 'temp');
 
-	let exporter = new ArmorCoreExporter(options);
+	let exporter = new ArmorCoreExporter(project, options);
 	fs_ensuredir(path_join(options.to, 'krom'));
 
 	for (let source of project.sources) {
@@ -933,7 +927,7 @@ function export_armorcore_project(options) {
 	fs_ensuredir(shaderdir);
 
 	let exported_shaders = [];
-	let krafix = path_join(__dirname, 'tools', 'bin', sys_dir(), 'krafix' + exe_ext());
+	let krafix = path_join(armorcoredir, 'tools', 'bin', sys_dir(), 'krafix' + exe_ext());
 	let shader_compiler = new ShaderCompiler(exporter, krafix, shaderdir, temp, options, project.shader_matchers);
 	exported_shaders = shader_compiler.run();
 
@@ -974,7 +968,7 @@ class Project {
 		this.name = name;
 		this.safe_name = name.replace(/[^A-z0-9\-\_]/g, "-");
 		this.version = "1.0";
-		this.debugdir = "Deployment";
+		this.debugdir = "build/krom";
 		this.basedir = __dirname;
 		this.uuid = crypto_random_uuid();
 		this.files = [];
@@ -1294,7 +1288,7 @@ class Project {
 
 	addProject(directory) {
 		let from = path_isabs(directory) ? directory : path_join(this.basedir, directory);
-		let project = load_project(from);
+		let project = load_project(from, false);
 		this.subProjects.push(project);
 		this.asset_matchers = this.asset_matchers.concat(project.asset_matchers);
 		this.sources = this.sources.concat(project.sources);
@@ -1306,7 +1300,7 @@ class Project {
 	static create(directory, to, platform) {
 		Project.platform = platform;
 		Project.to = path_resolve(to);
-		let project = load_project(path_resolve(directory));
+		let project = load_project(path_resolve(directory), true);
 		let defines = [];
 		for (let define of defines) {
 			project.addDefine(define);
