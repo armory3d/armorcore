@@ -892,7 +892,10 @@ function write_ts_project(projectdir, options) {
 	let minits_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
 	let minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
 	fs_writefile(minits_input, source);
+
+	let start = Date.now()
 	os_exec(minits_bin, [minits_input, minits_output]);
+	console.log("minits took " + (Date.now() - start) + "ms.");
 
 	// globalThis.fs_readfile = fs_readfile;
 	// globalThis.fs_writefile = fs_writefile;

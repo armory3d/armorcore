@@ -2,7 +2,6 @@
 // ../../make --graphics opengl --compile
 
 ///include <stdio.h>
-///include <time.h>
 
 let minits_input: string = "./test.ts";
 let minits_output: string = "./test.c";
@@ -1648,8 +1647,6 @@ function write_c() {
 // ╚═╝  ╚═╝    ╚═╝     ╚═════╝    ╚═╝  ╚═╝    ╚══════╝       ╚═╝       ╚═╝  ╚═╝    ╚═╝  ╚═╝       ╚═╝
 
 function main() {
-	let start: i32 = clock();
-
 	if (krom_get_arg_count() > 1) {
 		minits_input = krom_get_arg(1);
 	}
@@ -1689,6 +1686,5 @@ function main() {
 	write_c();
 	fclose(fhandle);
 
-	kinc_log(KINC_LOG_LEVEL_INFO, "minits took %dms.", (clock() - start) / 1000);
 	exit(1);
 }
