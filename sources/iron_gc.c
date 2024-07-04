@@ -6,7 +6,7 @@
 #include <malloc.h>
 #include <stdint.h>
 
-#define HEAP_SIZE 256 * 1024 * 1024
+#define HEAP_SIZE 512 * 1024 * 1024
 static uint8_t *heap = NULL;
 static size_t heap_top = 0;
 
