@@ -894,6 +894,7 @@ function write_ts_project(projectdir, options) {
 	fs_writefile(minits_input, source);
 
 	let start = Date.now()
+	console.log(minits_bin + ": " + minits_input + ", " + minits_output);
 	os_exec(minits_bin, [minits_input, minits_output]);
 	console.log("minits took " + (Date.now() - start) + "ms.");
 
