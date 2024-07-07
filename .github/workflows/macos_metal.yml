@@ -16,4 +16,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Compile
-      run: ./make --graphics metal --compile
+      run: |
+        cd tools/tests/cube
+        ../../../make --graphics metal --compile

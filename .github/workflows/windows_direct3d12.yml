@@ -18,4 +18,6 @@ jobs:
     - name: Get msbuild
       uses: microsoft/setup-msbuild@v1
     - name: Compile
-      run: ./make --graphics direct3d12 --compile
+      run: |
+        cd tools/tests/cube
+        ../../../make --graphics direct3d12 --compile

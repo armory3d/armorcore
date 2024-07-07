@@ -20,4 +20,6 @@ jobs:
     - name: Apt Install
       run: sudo apt-get install libasound2-dev libxrandr-dev libxinerama-dev libgl1-mesa-dev libxi-dev libxcursor-dev libudev-dev libgtk-3-dev --yes --quiet
     - name: Compile
-      run: ./make --graphics opengl --compile
+      run: |
+        cd tools/tests/cube
+        ../../../make --graphics opengl --compile
