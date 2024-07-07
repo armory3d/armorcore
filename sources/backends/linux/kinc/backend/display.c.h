@@ -8,8 +8,10 @@ void kinc_display_init() {
 	}
 
 	kinc_linux_init_procs();
-	procs.display_init();
-	display_initialized = true;
+	if (procs.display_init != NULL) {
+		procs.display_init();
+		display_initialized = true;
+	}
 }
 
 kinc_display_mode_t kinc_display_available_mode(int display, int mode) {

@@ -146,7 +146,6 @@ void kinc_linux_init_procs() {
 #endif
 	{
 		kinc_log(KINC_LOG_LEVEL_ERROR, "Neither wayland nor X11 found.");
-		exit(1);
 	}
 }
 
