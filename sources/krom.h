@@ -235,7 +235,7 @@ bool waitAfterNextDraw;
 #ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
-//struct HWND__ *kinc_windows_window_handle(int window_index); // KINC/Windows.h
+struct HWND__ *kinc_windows_window_handle(int window_index);
 // Enable visual styles for ui controls
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif

@@ -34,7 +34,7 @@
 #define GC_TAG_ROOT 0x1
 #define GC_TAG_MARK 0x2
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
 #define __builtin_frame_address(x)  ((void)(x), _AddressOfReturnAddress())
 #endif
 
