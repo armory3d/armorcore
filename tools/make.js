@@ -25,10 +25,7 @@ function get_embedded_data() {
 }
 
 function fs_exists(p) {
-	let f = std.open(p, "rb");
-	let exists = f != null;
-	if (f != null) f.close();
-	return exists;
+	return os.stat(p)[0] != null;
 }
 
 function fs_mkdir(p) {
@@ -463,12 +460,11 @@ class AssetConverter {
 	}
 
 	watch(match, options) {
+		match = path_normalize(match);
 		let basedir = match.substring(0, match.lastIndexOf(path_sep));
 		let pattern = match;
 		if (path_isabs(pattern)) {
-			let _pattern = pattern;
-			_pattern = path_relative(basedir, _pattern);
-			pattern = _pattern;
+			pattern = path_relative(basedir, pattern);
 		}
 		let files = search_files2(basedir, pattern);
 		let self = this;
@@ -616,13 +612,13 @@ class ShaderCompiler {
 	}
 
 	watch(match, options) {
+		match = path_normalize(match);
 		let basedir = match.substring(0, match.lastIndexOf(path_sep));
 		let pattern = match;
 		if (path_isabs(pattern)) {
-			let _pattern = pattern;
-			_pattern = path_relative(basedir, _pattern);
-			pattern = _pattern;
+			pattern = path_relative(basedir, pattern);
 		}
+
 		let shaders = search_files2(basedir, pattern);
 		let self = this;
 		let compiled_shaders = [];

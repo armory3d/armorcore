@@ -8,6 +8,7 @@
 #include "quickjs/quickjs-libc.h"
 
 #ifdef _WIN32
+#include <Windows.h>
 static JSValue js_os_exec_win(JSContext *ctx, JSValue this_val, int argc, JSValue *argv) {
     JSValue args = argv[0];
     JSValue val = JS_GetPropertyStr(ctx, args, "length");
@@ -33,7 +34,26 @@ static JSValue js_os_exec_win(JSContext *ctx, JSValue this_val, int argc, JSValu
         }
     }
 
-    _execv(exec_argv[0], (char **)exec_argv);
+    // _execv(exec_argv[0], (char **)exec_argv);
+
+    char cmd[1024];
+    cmd[0] = 0;
+    for (int i = 0; i < exec_argc; ++i) {
+        strcat(cmd, exec_argv[i]);
+        strcat(cmd, " ");
+    }
+
+    WinExec(cmd, SW_HIDE);
+
+    // STARTUPINFO si;
+    // PROCESS_INFORMATION pi;
+    // ZeroMemory(&si, sizeof(si));
+    // si.cb = sizeof(si);
+    // ZeroMemory(&pi, sizeof(pi));
+    // CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    // WaitForSingleObject(pi.hProcess, INFINITE);
+    // CloseHandle(pi.hProcess);
+    // CloseHandle(pi.hThread);
     return JS_UNDEFINED;
 }
 #endif
