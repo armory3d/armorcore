@@ -369,7 +369,7 @@ if (flags.with_zui) {
 if (platform === 'windows') {
 	project.addLib('Dbghelp'); // Stack walk
 	project.addLib('Dwmapi'); // DWMWA_USE_IMMERSIVE_DARK_MODE
-	if (flags.with_d3dcompiler && (graphics === GraphicsApi.Direct3D11 || graphics === GraphicsApi.Direct3D12)) {
+	if (flags.with_d3dcompiler && (graphics === "direct3d11" || graphics === "direct3d12")) {
 		project.addDefine('WITH_D3DCOMPILER');
 		project.addLib("d3d11");
 		project.addLib("d3dcompiler");
