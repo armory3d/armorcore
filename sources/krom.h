@@ -1144,16 +1144,10 @@ kinc_g4_shader_t *krom_g4_create_vertex_shader_from_source(string_t *source) {
 				file[output_len] = 0;
 				output_len += 1;
 
-				file[output_len] = (char *)(&variableDesc.StartOffset)[0];
-				file[output_len + 1] = (char *)(&variableDesc.StartOffset)[1];
-				file[output_len + 2] = (char *)(&variableDesc.StartOffset)[2];
-				file[output_len + 3] = (char *)(&variableDesc.StartOffset)[3];
+				*(uint32_t *)(file + output_len) = variableDesc.StartOffset;
 				output_len += 4;
 
-				file[output_len] = (char *)(&variableDesc.Size)[0];
-				file[output_len + 1] = (char *)(&variableDesc.Size)[1];
-				file[output_len + 2] = (char *)(&variableDesc.Size)[2];
-				file[output_len + 3] = (char *)(&variableDesc.Size)[3];
+				*(uint32_t *)(file + output_len) = variableDesc.Size;
 				output_len += 4;
 
 				D3D11_SHADER_TYPE_DESC typeDesc;
@@ -1272,16 +1266,10 @@ kinc_g4_shader_t *krom_g4_create_fragment_shader_from_source(string_t *source) {
 				file[output_len] = 0;
 				output_len += 1;
 
-				file[output_len] = (char *)(&variableDesc.StartOffset)[0];
-				file[output_len + 1] = (char *)(&variableDesc.StartOffset)[1];
-				file[output_len + 2] = (char *)(&variableDesc.StartOffset)[2];
-				file[output_len + 3] = (char *)(&variableDesc.StartOffset)[3];
+				*(uint32_t *)(file + output_len) = variableDesc.StartOffset;
 				output_len += 4;
 
-				file[output_len] = (char *)(&variableDesc.Size)[0];
-				file[output_len + 1] = (char *)(&variableDesc.Size)[1];
-				file[output_len + 2] = (char *)(&variableDesc.Size)[2];
-				file[output_len + 3] = (char *)(&variableDesc.Size)[3];
+				*(uint32_t *)(file + output_len) = variableDesc.Size;
 				output_len += 4;
 
 				D3D11_SHADER_TYPE_DESC typeDesc;
