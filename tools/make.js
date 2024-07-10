@@ -55,7 +55,7 @@ function fs_copyfile(from, to) {
 	f.read(u8.buffer, 0, size);
     f.close();
 
-	f = std.open(to, "w");
+	f = std.open(to, "wb");
 	f.write(u8.buffer, 0, size);
 	f.close();
 }
@@ -87,7 +87,7 @@ function fs_writefile(p, data) {
 }
 
 function parent_dir(dir) {
-	return dir.substring(0, dir.lastIndexOf("/"));
+	return dir.substring(0, dir.lastIndexOf(path_sep));
 }
 
 function fs_ensuredir(dir) {
@@ -326,6 +326,10 @@ function icon_run(from, to, width, height, format, background) {
 }
 
 function export_ico(icon, to, from) {
+	if (!fs_exists(path_join(from, icon))) {
+		from = makedir;
+		icon = "icon.png";
+	}
 	icon_run(path_join(from, icon), to, 0, 0, "ico", null);
 }
 
@@ -456,7 +460,7 @@ class AssetConverter {
 		if (options.name) {
 			name_value = AssetConverter.replace_pattern(options.name, name_value, filepath, from);
 		}
-		return { name: name_value, destination: destination };
+		return { name: name_value, destination: path_normalize(destination) };
 	}
 
 	watch(match, options) {
@@ -707,23 +711,16 @@ class ShaderCompiler {
 	}
 }
 
-function convert_image(temp, to, exe, params) {
-	os_exec(path_join(armorcoredir, 'tools', 'bin', sys_dir(), exe), params);
-	fs_rename(temp, to);
-}
-
 function export_image(from, to) {
 	to += ".k";
-	let temp = to + ".temp";
 	let outputformat = "k";
 	if (fs_exists(to) && fs_mtime(to) > fs_mtime(from)) {
 		return outputformat;
 	}
 	fs_ensuredir(path_dirname(to));
 	let exe = "kraffiti" + exe_ext();
-	let params = ["from=" + from, "to=" + temp, "format=lz4"];
-	params.push("filter=nearest");
-	convert_image(temp, to, exe, params);
+	let params = ["from=" + from, "to=" + to, "format=lz4", "filter=nearest"];
+	os_exec(path_join(armorcoredir, 'tools', 'bin', sys_dir(), exe), params);
 	return outputformat;
 }
 

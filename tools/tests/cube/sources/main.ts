@@ -5,9 +5,9 @@ function main() {
 		title: "Empty",
 		width: 1280,
 		height: 720,
-		x: 0,
-		y: 0,
-		features: window_features_t.NONE,
+		x: -1,
+		y: -1,
+		features: window_features_t.RESIZABLE | window_features_t.MINIMIZABLE | window_features_t.MAXIMIZABLE,
 		mode: window_mode_t.WINDOWED,
 		frequency: 60,
 		vsync: true
@@ -63,7 +63,7 @@ function app_ready() {
 						name: "mesh",
 						bind_textures: [
 							{
-								name: "MyTexture",
+								name: "myTexture",
 								file: "texture.k"
 							}
 						]
@@ -101,7 +101,7 @@ function app_ready() {
 						],
 						texture_units: [
 							{
-								name: "MyTexture"
+								name: "myTexture"
 							}
 						]
 					}
