@@ -169,6 +169,7 @@ static uint32_t get_struct_length() {
 }
 
 static void read_store_map(int count) {
+	// TODO: Map containing another map
 	ei -= 5; // u8 map, i32 count
 	bottom += get_struct_length() * array_count;
 	ei += 5;
@@ -243,7 +244,7 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 			uint32_t strings_length = 0;
 			for (int i = 0; i < count; ++i) {
 				store_ptr(bottom + count * PTR_SIZE + strings_length);
-				if (i < count -1) {
+				if (i < count - 1) {
 					ei += 1; // String flag
 					uint32_t length = read_u32(); // String length
 					ei += length;
