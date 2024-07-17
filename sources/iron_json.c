@@ -49,21 +49,24 @@ static bool is_key(char *s, jsmntok_t *t) {
 	return t->type == JSMN_STRING && s[t->end + 1] == ':';
 }
 
-static int token_size(bool with_contents, bool root) {
+static jsmntok_t get_token() {
 	jsmntok_t t = tokens[ti];
 	while (is_key(source, &t)) {
 		ti++;
 		t = tokens[ti];
 	}
+	return t;
+}
 
+static int traverse() {
+	jsmntok_t t = get_token();
 	if (t.type == JSMN_OBJECT) {
 		ti++;
-		int size = root ? 0 : PTR_SIZE;
-		int size_contents = 0;
+		int size = 0;
 		for (int i = 0; i < t.size; ++i) {
-			size_contents += token_size(with_contents, false);
+			size += traverse();
 		}
-		return (with_contents || root) ? size + size_contents : size;
+		return size;
 	}
 	else if (t.type == JSMN_PRIMITIVE) {
 		ti++;
@@ -79,29 +82,24 @@ static int token_size(bool with_contents, bool root) {
 	}
 	else if (t.type == JSMN_ARRAY) {
 		ti++;
-		// Store in any/i32/../_array_t format
-		int size = PTR_SIZE; // Pointer to array struct
-		// Put array contents at the bottom
-		int size_contents = PTR_SIZE; // Pointer to buffer contents
-		size_contents += 4; // Element count
-		size_contents += 4; // Capacity
 		for (int i = 0; i < t.size; ++i) {
-			size_contents += token_size(true, false);
+			traverse();
 		}
-		return with_contents ? size + size_contents : size;
+		return PTR_SIZE;
 	}
 	else if (t.type == JSMN_STRING) {
 		ti++;
-		// Put string at the bottom and store a pointer to it
-		int size = PTR_SIZE; // Pointer to string
-		if (with_contents) {
-			size += t.end - t.start; // String contents
-			size += 1; // '\0'
-		}
-		return size;
+		return PTR_SIZE;
 	}
 
 	return 0;
+}
+
+static int token_size() {
+	uint32_t _ti = ti;
+	uint32_t len = traverse();
+	ti = _ti;
+	return len;
 }
 
 static bool has_dot(char *str, int len) {
@@ -113,39 +111,24 @@ static bool has_dot(char *str, int len) {
 	return false;
 }
 
-static void token_write(bool root) {
-	jsmntok_t t = tokens[ti];
-	while (is_key(source, &t)) {
-		ti++;
-		t = tokens[ti];
-	}
+static void token_write() {
+	jsmntok_t t = get_token();
 
 	if (t.type == JSMN_OBJECT) {
-		if (root) {
-			int _ti = ti;
-			bottom += token_size(false, true) * array_count;
-			ti = _ti;
-			ti++;
-			for (int i = 0; i < t.size; ++i) {
-				token_write(false);
-			}
-		}
-		else {
-			store_ptr(bottom);
-
-			uint32_t _wi = wi;
-			wi = bottom;
-			token_write(true);
-			bottom = wi;
-			wi = _wi;
+		// TODO: Object containing another object
+		// Write object contents
+		bottom += token_size() * array_count;
+		ti++;
+		for (int i = 0; i < t.size; ++i) {
+			token_write();
 		}
 	}
 	else if (t.type == JSMN_PRIMITIVE) {
 		ti++;
-		if (source[t.start] == 't' || source[t.start] == 'f') {
+		if (source[t.start] == 't' || source[t.start] == 'f') { // bool
 			store_u8(source[t.start] == 't' ? 1 : 0);
 		}
-		else if (source[t.start] == 'n') {
+		else if (source[t.start] == 'n') { // null
 			store_i32(0);
 			store_i32(0);
 		}
@@ -161,9 +144,9 @@ static void token_write(bool root) {
 
 		uint32_t _wi = wi;
 		wi = bottom;
-		store_ptr(wi + PTR_SIZE + 4 + 4); // Pointer to buffer contents
+		store_ptr(bottom + PTR_SIZE + 4 + 4); // Pointer to buffer contents
 		store_i32(t.size); // Element count
-		store_i32(t.size); // Capacity
+		store_i32(0); // Capacity = 0 -> do not free on first realloc
 		bottom = wi;
 
 		if (t.size == 0) {
@@ -171,13 +154,56 @@ static void token_write(bool root) {
 			return;
 		}
 
-		// array_count = t.size;
-		for (int i = 0; i < t.size; ++i) {
-			token_write(false);
+		int count = t.size;
+		array_count = count;
+		t = get_token();
+
+		if (t.type == JSMN_OBJECT) {
+			// Struct pointers
+			uint32_t size = token_size();
+			for (int i = 0; i < count; ++i) {
+				store_ptr(bottom + count * PTR_SIZE + i * size);
+			}
+
+			// Struct contents
+			bottom = wi;
+			for (int i = 0; i < count; ++i) {
+				token_write();
+			}
 		}
-		bottom = wi;
-		array_count = 1;
+		else if (t.type == JSMN_STRING) {
+			// String pointers
+			uint32_t _ti = ti;
+			uint32_t strings_length = 0;
+			for (int i = 0; i < count; ++i) {
+				store_ptr(bottom + count * PTR_SIZE + strings_length);
+				uint32_t length = t.end - t.start; // String length
+				strings_length += length;
+				strings_length += 1; // '\0'
+				ti++;
+				t = get_token();
+			}
+			ti = _ti;
+			t = get_token();
+
+			// String bytes
+			for (int i = 0; i < count; ++i) {
+				store_string_bytes(source + t.start, t.end - t.start);
+				ti++;
+				t = get_token();
+			}
+			bottom = wi;
+		}
+		else {
+			// Array contents
+			for (int i = 0; i < count; ++i) {
+				token_write();
+			}
+			bottom = wi;
+		}
+
 		wi = _wi;
+		array_count = 1;
 	}
 	else if (t.type == JSMN_STRING) {
 		ti++;
@@ -202,14 +228,14 @@ void *json_parse(char *s) {
 
 	source = s;
 	ti = 0;
-	int out_size = token_size(true, true);
+	int out_size = strlen(s) * 2;
 
 	decoded = gc_alloc(out_size);
 	ti = 0;
 	wi = 0;
 	bottom = 0;
 	array_count = 1;
-	token_write(true);
+	token_write();
 
 	free(tokens);
 	return decoded;
