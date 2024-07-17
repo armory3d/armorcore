@@ -142,8 +142,13 @@ void *array_shift(any_array_t *ar) {
 }
 
 void array_splice(any_array_t *ar, int32_t start, int32_t delete_count) {
-	for (int i = start; i < delete_count; ++i) {
-		ar->buffer[i] = ar->buffer[i + delete_count];
+	for (int i = start; i <= start + delete_count; ++i) {
+		if (i + delete_count >= ar->length) {
+			ar->buffer[i] = NULL;
+		}
+		else {
+			ar->buffer[i] = ar->buffer[i + delete_count];
+		}
 	}
 	ar->length -= delete_count;
 }
@@ -173,10 +178,10 @@ any_array_t *array_slice(any_array_t *a, int32_t begin, int32_t end) {
 
 void array_insert(any_array_t *a, int at, void *e) {
 	array_alloc(a, sizeof(uintptr_t));
-	a->length++;
 	for (int i = a->length; i > at; --i) {
 		a->buffer[i] = a->buffer[i - 1];
 	}
+	a->length++;
 	a->buffer[at] = e;
 }
 
