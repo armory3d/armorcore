@@ -47,7 +47,10 @@
 #define u8 uint8_t
 #define string_t char
 #define any void *
+#define u8_ptr u8 *
+#define u32_ptr u32 *
 #define null NULL
+#define DEREFERENCE *
 
 void _kickstart();
 
@@ -819,7 +822,12 @@ void krom_set_app_name(string_t *name) {
 }
 
 void krom_log(string_t *value) {
-	kinc_log(KINC_LOG_LEVEL_INFO, value);
+	if (value != NULL) {
+		kinc_log(KINC_LOG_LEVEL_INFO, value);
+	}
+	else {
+		kinc_log(KINC_LOG_LEVEL_INFO, "null");
+	}
 }
 
 void krom_g4_clear(i32 flags, i32 color, f32 depth) {
