@@ -15,8 +15,9 @@ function add(a: point_t, b: point_t) {
 }
 
 function main() {
-	let p: point_t = { x: 1.5, y: 3.5 };
-	add(p);
+	let a: point_t = { x: 1.0, y: 2.0 };
+	let b: point_t = { x: 3.0, y: 4.0 };
+	add(a, b);
 }
 ```
 
@@ -35,7 +36,8 @@ void add(point_t *a, point_t *b) {
 }
 
 void main() {
-	point_t *p = GC_ALLOC_INIT(point_t, { x: 1.5, y: 3.5 });
-	add(p);
+	point_t *a = GC_ALLOC_INIT(point_t, { x: 1.0, y: 2.0 });
+	point_t *b = GC_ALLOC_INIT(point_t, { x: 3.0, y: 4.0 });
+	add(a, b);
 }
 ```
