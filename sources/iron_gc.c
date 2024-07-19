@@ -28,6 +28,7 @@ void gc_unroot(void *ptr) {
 
 void *gc_realloc(void *ptr, size_t size) {
 	#ifdef HEAP_SIZE
+	// NOTE: gc_realloc is not implemented when HEAP_SIZE is defined
 	return gc_alloc(size);
 	#else
 	return realloc(ptr, size);
@@ -76,7 +77,7 @@ void gc_unroot(void *ptr) {
 }
 
 void *gc_realloc(void *ptr, size_t size) {
-	return _gc_realloc(ptr, size);
+	return ptr == NULL ? gc_alloc(size) : _gc_realloc(ptr, size);
 }
 
 void gc_free(void *ptr) {
