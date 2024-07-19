@@ -180,8 +180,8 @@ let enums: string[] = [];
 let value_types: map_t<string, string> = map_create();
 type string_map_t = map_t<string, string>;
 let struct_types: map_t<string, string_map_t> = map_create();
-let fn_declarations: map_t<string, string> = map_create();
-let fn_default_params: map_t<string, string> = map_create();
+let fn_declarations: map_t<string, string>;
+let fn_default_params: map_t<string, string>;
 let fn_call_stack: string[] = [];
 let param_pos_stack: i32[] = [];
 let is_for_loop: bool = false;
@@ -1010,6 +1010,12 @@ function array_ops(token: string): string {
 		else if (type == "string_t_array_t *") {
 			token = "char_ptr_array_index_of";
 		}
+		else {
+			let fn: string = map_get(fn_declarations, value);
+			if (fn != null && starts_with(fn, "string_t_array_t *")) {
+				token = "char_ptr_array_index_of";
+			}
+		}
 	}
 
 	return token;
@@ -1201,6 +1207,9 @@ function write_types() {
 			write("typedef PACK(struct " + stuct_name_short + "{\n");
 
 			let struct_value_types: map_t<string, string> = map_create();
+			any_array_resize(struct_value_types.keys, 512 * 2);
+			any_array_resize(struct_value_types.values, 512 * 2);
+
 			map_set(struct_types, struct_name + " *", struct_value_types);
 
 			while (true) {
@@ -1260,6 +1269,9 @@ function write_types() {
 function write_array_types() {
 	// Array structs (any_array_t -> scene_t_array_t)
 	let array_structs: map_t<string, string> = map_create();
+	any_array_resize(array_structs.keys, 256 * 2);
+	any_array_resize(array_structs.values, 256 * 2);
+
 	for (pos = 0; pos < tokens.length; ++pos) {
 		let token: string = get_token();
 		if (get_token(1) == "[") {
@@ -1285,12 +1297,19 @@ function write_array_types() {
 		write(as);
 		write("\n");
 	}
+
 	write("\n");
 }
 
 function write_fn_declarations() {
 	fn_declarations = map_create();
+	any_array_resize(fn_declarations.keys, 4096 * 2);
+	any_array_resize(fn_declarations.values, 4096 * 2);
+
 	fn_default_params = map_create();
+	any_array_resize(fn_default_params.keys, 1024 * 2);
+	any_array_resize(fn_default_params.values, 1024 * 2);
+
 	let last_fn_name: string = "";
 	for (pos = 0; pos < tokens.length; ++pos) {
 		let token: string = get_token();
@@ -1679,6 +1698,10 @@ function main() {
 	any_array_resize(acontents[0], 4096);
 	any_array_resize(acontents[1], 4096);
 	i32_array_resize(fnested, 32);
+	any_array_resize(value_types.keys, 4096 * 2);
+	any_array_resize(value_types.values, 4096 * 2);
+	any_array_resize(struct_types.keys, 512 * 2);
+	any_array_resize(struct_types.values, 512 * 2);
 	//
 
 	parse();

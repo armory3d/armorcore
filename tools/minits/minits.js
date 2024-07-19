@@ -986,6 +986,12 @@ function array_ops(token) {
 		else if (type === "string_t_array_t *") {
 			token = "char_ptr_array_index_of";
 		}
+		else {
+			let fn = fn_declarations.get(value);
+			if (fn != null && fn.startsWith("string_t_array_t *")) {
+				token = "char_ptr_array_index_of";
+			}
+		}
 	}
 
 	return token;
