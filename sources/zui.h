@@ -27,7 +27,7 @@
 // 	ZUI_LINK_STYLE_CUBIC_BEZIER
 // } zui_link_style_t;
 
-typedef struct zui_theme {
+typedef PACK(struct zui_theme {
 	int WINDOW_BG_COL;
 	int WINDOW_TINT_COL;
 	int ACCENT_COL;
@@ -55,13 +55,13 @@ typedef struct zui_theme {
 	int SCROLL_MINI_W;
 	int TEXT_OFFSET;
 	int TAB_W; // Indentation
-	bool FILL_WINDOW_BG;
-	bool FILL_BUTTON_BG;
-	bool FILL_ACCENT_BG;
+	/*bool*/int FILL_WINDOW_BG;
+	/*bool*/int FILL_BUTTON_BG;
+	/*bool*/int FILL_ACCENT_BG;
 	int LINK_STYLE;
-	bool FULL_TABS; // Make tabs take full window width
-	bool ROUND_CORNERS;
-} zui_theme_t;
+	/*bool*/int FULL_TABS; // Make tabs take full window width
+	/*bool*/int ROUND_CORNERS;
+}) zui_theme_t;
 
 typedef struct zui_options {
 	g2_font_t *font;
