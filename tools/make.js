@@ -890,12 +890,15 @@ function write_ts_project(projectdir, options) {
 	os_exec(minits_bin, [minits_input, minits_output]);
 	console.log("minits took " + (Date.now() - start) + "ms.");
 
-	// globalThis.fs_readfile = fs_readfile;
-	// globalThis.fs_writefile = fs_writefile;
-	// globalThis.flags.minits_source = source;
-	// globalThis.flags.minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
-	// let minits = armorcoredir + '/tools/minits/minits.js';
-	// (1, eval)(fs_readfile(minits));
+	if (goptions.minitsjs) {
+		globalThis.std = std;
+		globalThis.fs_readfile = fs_readfile;
+		globalThis.fs_writefile = fs_writefile;
+		globalThis.flags.minits_source = source;
+		globalThis.flags.minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
+		let minits = armorcoredir + '/tools/minits/minits.js';
+		(1, eval)(fs_readfile(minits));
+	}
 }
 
 function export_project_files(name, options, exporter, defines) {
@@ -3396,6 +3399,7 @@ let goptions = {
 	compiler: 'default',
 	arch: 'default',
 	shaderversion: null,
+	minitsjs: false,
 };
 
 if (os_env("ARM_EMBED")) {
