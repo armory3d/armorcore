@@ -4,16 +4,18 @@
 #include "iron_array.h"
 
 typedef struct i32_map {
-	struct { char *key; int value; } *hash;
+	char_ptr_array_t *keys;
+	i32_array_t *values;
 } i32_map_t;
 
 typedef struct f32_map {
-	struct { char *key; float value; } *hash;
+	char_ptr_array_t *keys;
+	f32_array_t *values;
 } f32_map_t;
 
 typedef struct any_map {
-	struct { char *key; void *value; } *hash;
-	any_array_t *gc; // gc reference
+	char_ptr_array_t *keys;
+	any_array_t *values;
 } any_map_t;
 
 void i32_map_set(i32_map_t *m, char *k, int v);
@@ -24,7 +26,7 @@ int32_t i32_map_get(i32_map_t *m, char *k);
 float f32_map_get(f32_map_t *m, char *k);
 void *any_map_get(any_map_t *m, char *k);
 
-void map_delete(any_map_t *m, void *k);
+void map_delete(any_map_t *m, char *k);
 any_array_t *map_keys(any_map_t *m);
 
 i32_map_t *i32_map_create();
@@ -33,12 +35,13 @@ any_map_t *any_map_create();
 // imap
 
 typedef struct i32_imap {
-	struct { int key; int value; } *hash;
+	i32_array_t *keys;
+	i32_array_t *values;
 } i32_imap_t;
 
 typedef struct any_imap {
-	struct { int key; void *value; } *hash;
-	any_array_t *gc; // gc reference
+	i32_array_t *keys;
+	any_array_t *values;
 } any_imap_t;
 
 void i32_imap_set(i32_imap_t *m, int k, int v);
