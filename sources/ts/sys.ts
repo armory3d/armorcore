@@ -352,20 +352,15 @@ function sys_display_frequency(): i32 {
 }
 
 function sys_buffer_to_string(b: buffer_t): string {
-	let str: string = "";
-	let u8a: u8_array_t = u8_array_create_from_buffer(b);
-	for (let i: i32 = 0; i < u8a.length; ++i) {
-		str += string_from_char_code(u8a[i]);
-	}
-	return str;
+	let str: u8_array_t = u8_array_create(b.length + 1);
+	memcpy(str.buffer, b.buffer, b.length);
+	return (any_ptr)str.buffer;
 }
 
 function sys_string_to_buffer(str: string): buffer_t {
-	let u8a: u8_array_t = u8_array_create(str.length);
-	for (let i: i32 = 0; i < str.length; ++i) {
-		u8a[i] = char_code_at(str, i);
-	}
-	return u8a;
+	let b: u8_array_t = u8_array_create(str.length);
+	memcpy(b.buffer, str, str.length);
+	return b;
 }
 
 function sys_shader_ext(): string {
