@@ -217,7 +217,7 @@ static void token_write() {
 	}
 }
 
-void *json_parse(char *s) {
+static void load_tokens(char *s) {
 	jsmn_parser parser;
 	jsmn_init(&parser);
 	num_tokens = jsmn_parse(&parser, s, strlen(s), NULL, 0);
@@ -228,10 +228,13 @@ void *json_parse(char *s) {
 
 	source = s;
 	ti = 0;
-	int out_size = strlen(s) * 2;
+}
 
+void *json_parse(char *s) {
+	load_tokens(s);
+
+	int out_size = strlen(s) * 2;
 	decoded = gc_alloc(out_size);
-	ti = 0;
 	wi = 0;
 	bottom = 0;
 	array_count = 1;
@@ -241,8 +244,39 @@ void *json_parse(char *s) {
 	return decoded;
 }
 
+static void token_write_to_map(any_map_t *m) {
+	jsmntok_t t = get_token();
+
+	if (t.type == JSMN_OBJECT) {
+		// TODO: Object containing another object
+		ti++;
+		for (int i = 0; i < t.size; ++i) {
+			token_write_to_map(m);
+		}
+	}
+	else if (t.type == JSMN_PRIMITIVE) {
+		jsmntok_t tkey = tokens[ti - 1];
+		ti++;
+		any_map_set(m, substring(source, tkey.start, tkey.end), substring(source, t.start, t.end));
+	}
+	else if (t.type == JSMN_ARRAY) {
+		ti++;
+	}
+	else if (t.type == JSMN_STRING) {
+		jsmntok_t tkey = tokens[ti - 1];
+		ti++;
+		any_map_set(m, substring(source, tkey.start, tkey.end), substring(source, t.start, t.end));
+	}
+}
+
 any_map_t *json_parse_to_map(char *s) {
-	return NULL;
+	load_tokens(s);
+
+	any_map_t *m = any_map_create();
+	token_write_to_map(m);
+
+	free(tokens);
+	return m;
 }
 
 char *json_stringify(void *a) { ////
