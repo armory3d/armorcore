@@ -11,6 +11,7 @@ declare type u32 = number;
 declare type f32 = number;
 declare type f64 = number;
 declare type bool = boolean;
+declare type any_ptr = any;
 declare type u8_ptr = any;
 declare type u32_ptr = any;
 declare let __ID__: string; // file:line - ts preprocessor
