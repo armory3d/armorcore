@@ -1544,9 +1544,9 @@ function write_function() {
 		token = array_access(token);
 
 		// Use static alloc for global pointers
-		if (global_ptrs.indexOf(token) > -1) {
-			let is_assign = get_token(1) === "=" || get_token(1) === "+="; // += for string_join
-			if (is_assign && token != ":") {
+		let is_assign = get_token(1) === "=" || get_token(1) === "+="; // += for string_join
+		if (is_assign && token != ":") {
+			if (global_ptrs.indexOf(token) > -1) {
 				write("gc_unroot(" + token + ");");
 				if (get_token(2) != "null") {
 					mark_as_root = token;
