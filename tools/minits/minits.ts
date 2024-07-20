@@ -1,5 +1,5 @@
 
-// ../../make --graphics opengl --compile
+// ../../make --graphics opengl --compile --minitsjs
 
 ///include <stdio.h>
 
@@ -1582,8 +1582,9 @@ function write_function() {
 		token = array_access(token);
 
 		// Use static alloc for global pointers
-		if (get_token(1) == "=" && token != ":") {
-			if (array_index_of(global_ptrs, token) > -1) {
+		if (array_index_of(global_ptrs, token) > -1) {
+			let is_assign: bool = get_token(1) == "=" || get_token(1) == "+="; // += for string_join
+			if (is_assign && token != ":") {
 				write("gc_unroot(" + token + ");");
 				if (get_token(2) != "null") {
 					mark_as_root = token;
