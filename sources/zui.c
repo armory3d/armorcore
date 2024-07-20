@@ -116,6 +116,7 @@ zui_handle_t *zui_handle_create() {
 	memset(h, 0, sizeof(zui_handle_t));
 	h->redraws = 2;
 	h->color = 0xffffffff;
+	h->text = "";
 	h->init = true;
 	return h;
 }

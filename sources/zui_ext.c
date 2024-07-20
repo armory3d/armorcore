@@ -5,6 +5,7 @@
 #include <kinc/input/keyboard.h>
 #include <kinc/io/filereader.h>
 #include <kinc/system.h>
+#include "iron_string.h"
 
 #define MATH_PI 3.14159265358979323846
 
@@ -89,31 +90,6 @@ void zui_init_path(zui_handle_t *handle, const char *system_id) {
 	// ~
 }
 
-char *zui_str_replace(char *str, char *what, char *with) {
-	char *result = str;
-	int what_len = strlen(what);
-	int with_len = strlen(with);
-	char *ins = str;
-	char *tmp;
-	int count;
-	for (count = 0; (tmp = strstr(ins, what)); ++count) {
-		ins = tmp + what_len;
-	}
-
-	char buf[512];
-	tmp = &buf[0];
-	while (count--) {
-		ins = strstr(str, what);
-		int len_front = ins - str;
-		tmp = strncpy(tmp, str, len_front) + len_front;
-		tmp = strcpy(tmp, with) + with_len;
-		str += len_front + what_len;
-	}
-	strcpy(tmp, str);
-	strcpy(result, buf);
-	return result;
-}
-
 char *zui_file_browser(zui_handle_t *handle, bool folders_only) {
 	zui_t *current = zui_get_current();
 	const char *sep = "/";
@@ -125,8 +101,8 @@ char *zui_file_browser(zui_handle_t *handle, bool folders_only) {
 		strcpy(cmd, "dir /b ");
 		if (folders_only) strcat(cmd, "/ad ");
 		sep = "\\";
-		zui_str_replace(handle->text, "\\\\", "\\");
-		zui_str_replace(handle->text, "\r", "");
+		handle->text = string_replace_all(handle->text, "\\\\", "\\");
+		handle->text = string_replace_all(handle->text, "\r", "");
 	}
 	if (handle->text[0] == '\0') zui_init_path(handle, system_id);
 
@@ -503,7 +479,7 @@ static int zui_line_pos(char *str, int line) {
 
 char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label, bool word_wrap) {
 	zui_t *current = zui_get_current();
-	zui_str_replace(handle->text, "\t", "    ");
+	handle->text = string_replace_all(handle->text, "\t", "    ");
 	bool selected = current->text_selected_handle == handle; // Text being edited
 
 	char lines[512];
@@ -671,7 +647,7 @@ char *zui_text_area(zui_handle_t *handle, int align, bool editable, char *label,
 
 	current->highlight_on_select = true;
 	current->tab_switch_enabled = true;
-	strcpy(handle->text, lines);
+	handle->text = string_copy(lines);
 	return handle->text;
 }
 
