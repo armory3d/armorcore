@@ -100,10 +100,15 @@ any_array_t *string_split(char *s, char *sep) {
 	strcpy(r, s);
 	token = strtok(r, sep);
 	while (token != NULL) {
-		any_array_push(a, token);
+		any_array_push(a, string_copy(token)); // Make a copy to keep gc ref
 		// TODO: this works only for single char sep
 		token = strtok(NULL, sep);
 	}
+
+	if (a->length == 0) { // Separator not found
+		any_array_push(a, r);
+	}
+
 	return a;
 }
 
