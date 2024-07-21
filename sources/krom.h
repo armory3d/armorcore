@@ -36,8 +36,9 @@
 #include "zui_nodes.h"
 #endif
 
-#define i64 int64_t
 #define f64 double
+#define i64 int64_t
+#define u64 uint64_t
 #define f32 float
 #define i32 int32_t
 #define u32 uint32_t
@@ -650,12 +651,15 @@ void _drop_files(wchar_t *file_path, void *data) {
 #endif
 }
 
+#ifdef WITH_EVAL
 f32 js_eval(const char *js, const char *context) {
 	return 0.0;
 }
+#endif
 
 char *uri_decode(const char *src) {
-	char *dst = gc_alloc(1024);
+	char *res = gc_alloc(1024);
+	char *dst = res;
 	char a, b;
 	while (*src) {
 		if ((*src == '%') && ((a = src[1]) && (b = src[2])) && (isxdigit(a) && isxdigit(b))) {
@@ -689,7 +693,7 @@ char *uri_decode(const char *src) {
 		}
 	}
 	*dst++ = '\0';
-	return dst;
+	return res;
 }
 
 f32 math_floor(f32 x) { return floorf(x); }
@@ -2944,8 +2948,8 @@ char *krom_language() {
 	return kinc_language();
 }
 
-obj_part_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_pos, bool udim) {
-	obj_part_t *part = io_obj_parse(file_bytes->buffer, split_code, start_pos, udim);
+raw_mesh_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, u64 start_pos, bool udim) {
+	raw_mesh_t *part = io_obj_parse(file_bytes, split_code, start_pos, udim);
 	return part;
 
 	// if (udim) {
@@ -2961,11 +2965,5 @@ obj_part_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, i32 start_po
 	// 	obj->udims = udims;
 	// }
 }
-
-#ifdef WITH_EVAL
-float krom_js_eval(char *str) {
-	return 0.0;
-}
-#endif
 
 #endif

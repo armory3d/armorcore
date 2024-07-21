@@ -186,16 +186,20 @@ function render_path_gen_mipmaps(target: string) {
 	image_gen_mipmaps(rt._image, 1000);
 }
 
-function _render_path_sort_dist(a: mesh_object_t, b: mesh_object_t): i32 {
-	return a.camera_dist >= b.camera_dist ? 1 : -1;
+function _render_path_sort_dist(a: any_ptr, b: any_ptr): i32 {
+	let ma: mesh_object_t = DEREFERENCE(a);
+	let mb: mesh_object_t = DEREFERENCE(b);
+	return ma.camera_dist >= mb.camera_dist ? 1 : -1;
 }
 
 function render_path_sort_meshes_dist(meshes: mesh_object_t[]) {
 	array_sort(meshes, _render_path_sort_dist);
 }
 
-function _render_path_sort_shader(a: mesh_object_t, b: mesh_object_t): i32 {
-	return a.materials[0].name >= b.materials[0].name ? 1 : -1;
+function _render_path_sort_shader(a: any_ptr, b: any_ptr): i32 {
+	let ma: mesh_object_t = DEREFERENCE(a);
+	let mb: mesh_object_t = DEREFERENCE(b);
+	return strcmp(ma.materials[0].name, mb.materials[0].name);
 }
 
 function render_path_sort_meshes_shader(meshes: mesh_object_t[]) {

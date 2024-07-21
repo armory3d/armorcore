@@ -84,9 +84,18 @@ function g4_pipeline_compile(raw: pipeline_t) {
 	let structure2: vertex_struct_t = raw.input_layout.length > 2 ? raw.input_layout[2] : null;
 	let structure3: vertex_struct_t = raw.input_layout.length > 3 ? raw.input_layout[3] : null;
 	let gs: any = raw.geometry_shader != null ? raw.geometry_shader.shader_ : null;
-	let color_attachments: i32[] = [];
-	for (let i: i32 = 0; i < 8; ++i) {
-		array_push(color_attachments, raw.color_attachments[i]);
+
+	for (let i: i32 = raw.color_write_masks_red.length; i < 8; ++i) {
+		array_push(raw.color_write_masks_red, true);
+	}
+	for (let i: i32 = raw.color_write_masks_green.length; i < 8; ++i) {
+		array_push(raw.color_write_masks_green, true);
+	}
+	for (let i: i32 = raw.color_write_masks_blue.length; i < 8; ++i) {
+		array_push(raw.color_write_masks_blue, true);
+	}
+	for (let i: i32 = raw.color_write_masks_alpha.length; i < 8; ++i) {
+		array_push(raw.color_write_masks_alpha, true);
 	}
 
 	let state: krom_pipeline_state_t = {};

@@ -933,6 +933,7 @@ function string_ops(token: string): string {
 		pos++;
 		pos++; // =
 		let t2: string = read_piece();
+		// TODO: let s: string = str;
 		if (get_token(1) == ";" && !starts_with(t2, "\"")) { // str = str;
 			token = t1 + "=string_copy(" + t2 + ")"; // Copy string
 		}

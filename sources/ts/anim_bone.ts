@@ -142,7 +142,9 @@ function anim_bone_num_parents(b: obj_t): i32 {
 
 let _anim_bone_sort_data: any;
 
-function anim_bone_sort(a: i32, b: i32) {
+function anim_bone_sort(pa: any_ptr, pb: any_ptr) {
+	let a: i32 = DEREFERENCE(pa);
+	let b: i32 = DEREFERENCE(pb);
 	let i: i32 = anim_bone_num_parents(_anim_bone_sort_data[a]);
 	let j: i32 = anim_bone_num_parents(_anim_bone_sort_data[b]);
 	return i < j ? -1 : i > j ? 1 : 0;
