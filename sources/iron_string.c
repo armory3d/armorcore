@@ -209,9 +209,9 @@ char *to_upper_case(char *s) {
 }
 
 char *trim_end(char *str) {
-	int pos = string_length(str);
-	while (pos > 0 && str[pos] == ' ' || str[pos] == '\n') {
+	int pos = string_length(str) - 1;
+	while (pos >= 0 && (str[pos] == ' ' || str[pos] == '\n')) {
 		pos--;
 	}
-	return substring(str, 0, pos);
+	return substring(str, 0, pos + 1);
 }
