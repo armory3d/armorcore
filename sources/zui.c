@@ -24,7 +24,6 @@ static char zui_text_to_copy[1024];
 static zui_t *zui_copy_receiver = NULL;
 static int zui_copy_frame = 0;
 static bool zui_combo_first = true;
-static char temp[1024];
 static zui_handle_t *zui_combo_search_handle = NULL;
 zui_t *zui_instances[ZUI_MAX_INSTANCES];
 int zui_instances_count;
@@ -40,7 +39,7 @@ void (*zui_on_text_hover)(void) = NULL; // Mouse over text input, use to set I-c
 void (*zui_on_deselect_text)(void) = NULL; // Text editing finished
 void (*zui_on_tab_drop)(zui_handle_t *, int, zui_handle_t *, int) = NULL; // Tab reorder via drag and drop
 #ifdef WITH_EVAL
-float krom_js_eval(char *str);
+float js_eval(char *str);
 #endif
 
 float ZUI_SCALE() {
@@ -268,6 +267,7 @@ zui_text_extract_t zui_extract_coloring(char *text, zui_coloring_t *col) {
 }
 
 void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool truncation) {
+	static char temp[1024];
 	if (text == NULL) {
 		return;
 	}
@@ -500,6 +500,7 @@ int zui_line_count(char *str) {
 }
 
 char *zui_extract_line(char *str, int line) {
+	static char temp[1024];
 	int pos = 0;
 	int len = strlen(str);
 	int line_i = 0;
@@ -583,6 +584,7 @@ void zui_draw_tooltip_rt(bool bind_global_g) {
 }
 
 void zui_draw_tooltip(bool bind_global_g) {
+	static char temp[1024];
 	if (current->slider_tooltip) {
 		if (bind_global_g) arm_g2_restore_render_target();
 		arm_g2_set_font(current->ops->font->font_, current->font_size * 2);
@@ -2050,6 +2052,7 @@ static void strip_trailing_zeros(char *str) {
 }
 
 float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool filled, float precision, bool display_value, int align, bool text_edit) {
+	static char temp[1024];
 	if (!zui_is_visible(ZUI_ELEMENT_H())) {
 		zui_end_element();
 		return handle->value;
@@ -2103,7 +2106,7 @@ float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool fi
 	if (current->submit_text_handle == handle) {
 		zui_submit_text_edit();
 		#ifdef WITH_EVAL
-		handle->value = krom_js_eval(handle->text);
+		handle->value = js_eval(handle->text);
 		#else
 		handle->value = atof(handle->text);
 		#endif

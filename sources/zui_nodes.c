@@ -56,7 +56,7 @@ void zui_nodes_init(zui_nodes_t *nodes) {
 	current_nodes->snap_from_id = -1;
 	current_nodes->snap_to_id = -1;
 	current_nodes->link_drag_id = -1;
-	current_nodes->nodes_selected_id = malloc(sizeof(i32_array_t));
+	current_nodes->nodes_selected_id = calloc(sizeof(i32_array_t), 1);
 }
 
 float ZUI_NODES_SCALE() {
