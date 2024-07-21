@@ -32,7 +32,8 @@
 
 #define GC_TAG_NONE 0x0
 #define GC_TAG_ROOT 0x1
-#define GC_TAG_MARK 0x2
+#define GC_TAG_LEAF 0x2
+#define GC_TAG_MARK 0x4
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #define __builtin_frame_address(x)  ((void)(x), _AddressOfReturnAddress())
@@ -85,7 +86,9 @@ static bool is_prime(size_t n) {
 }
 
 static size_t next_prime(size_t n) {
-	while (!is_prime(n)) ++n;
+	while (!is_prime(n)) {
+		++n;
+	}
 	return n;
 }
 
@@ -119,7 +122,8 @@ static gc_allocation_map_t *gc_allocation_map_new(size_t min_capacity, size_t ca
 
 static void gc_allocation_map_delete(gc_allocation_map_t *am) {
 	// Iterate over the map
-	gc_allocation_t *alloc, *tmp;
+	gc_allocation_t *alloc;
+	gc_allocation_t *tmp;
 	for (size_t i = 0; i < am->capacity; ++i) {
 		if ((alloc = am->allocs[i])) {
 			// Make sure to follow the chain inside a bucket
@@ -294,14 +298,18 @@ static void *gc_allocate(size_t count, size_t size) {
 	return ptr;
 }
 
-int roots = 0;
+void _gc_leaf(void *ptr) {
+	gc_allocation_t *alloc = gc_allocation_map_get(gc->allocs, ptr);
+	if (alloc) {
+		alloc->tag |= GC_TAG_LEAF;
+	}
+}
 
 void _gc_root(void *ptr) {
 	gc_allocation_t *alloc = gc_allocation_map_get(gc->allocs, ptr);
 	if (alloc) {
 		alloc->roots++;
 		alloc->tag |= GC_TAG_ROOT;
-		roots++;
 	}
 }
 
@@ -309,7 +317,6 @@ void _gc_unroot(void *ptr) {
 	gc_allocation_t *alloc = gc_allocation_map_get(gc->allocs, ptr);
 	if (alloc) {
 		alloc->roots--;
-		roots--;
 		if (alloc->roots == 0) {
 			alloc->tag &= ~GC_TAG_ROOT;
 		}
@@ -321,9 +328,11 @@ static void gc_mark_alloc(void *ptr) {
 	/* Mark if alloc exists and is not tagged already, otherwise skip */
 	if (alloc && !(alloc->tag & GC_TAG_MARK)) {
 		alloc->tag |= GC_TAG_MARK;
-		/* Iterate over allocation contents and mark them as well */
-		for (char *p = (char *)alloc->ptr; p <= (char *)alloc->ptr + alloc->size - PTRSIZE; ++p) {
-			gc_mark_alloc(*(void **)p);
+		if (!(alloc->tag & GC_TAG_LEAF)) {
+			/* Iterate over allocation contents and mark them as well */
+			for (char *p = (char *)alloc->ptr; p <= (char *)alloc->ptr + alloc->size - PTRSIZE; ++p) {
+				gc_mark_alloc(*(void **)p);
+			}
 		}
 	}
 }
@@ -444,7 +453,7 @@ void _gc_free(void *ptr) {
 void _gc_start(void *bos) {
 	gc->paused = false;
 	gc->bos = bos;
-	gc->allocs = gc_allocation_map_new(1024 * 16, 1024 * 1024, 0.5, 0.2, 0.8);
+	gc->allocs = gc_allocation_map_new(1024 * 1024, 1024 * 1024, 0.5, 0.2, 0.8);
 }
 
 void _gc_pause() {

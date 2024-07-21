@@ -20,6 +20,9 @@ void *gc_alloc(size_t size) {
 	#endif
 }
 
+void gc_leaf(void *ptr) {
+}
+
 void gc_root(void *ptr) {
 }
 
@@ -66,6 +69,11 @@ void gc_stop() {
 
 void *gc_alloc(size_t size) {
 	return _gc_calloc(size, sizeof(uint8_t));
+}
+
+void gc_leaf(void *ptr) {
+	// TODO: mark strings as leaves
+	_gc_leaf(ptr);
 }
 
 void gc_root(void *ptr) {
