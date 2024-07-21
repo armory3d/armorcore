@@ -5,8 +5,10 @@
 #include <string.h>
 #include "iron_array.h"
 #include "iron_vec4.h"
+#include "iron_string.h"
+#include "iron_gc.h"
 
-static obj_part_t *part = NULL;
+static raw_mesh_t *part = NULL;
 static f32_array_t pos_temp;
 static f32_array_t uv_temp;
 static f32_array_t nor_temp;
@@ -205,20 +207,17 @@ kinc_vector4_t calc_normal(kinc_vector4_t a, kinc_vector4_t b, kinc_vector4_t c)
 }
 
 // 'o' for object split, 'g' for groups, 'u'semtl for materials
-obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_pos, bool udim) {
-	bytes = file_bytes;
-	bytes_length = strlen((char *)file_bytes);
+raw_mesh_t *io_obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_pos, bool udim) {
+	bytes = file_bytes->buffer;
+	bytes_length = file_bytes->length;
 
-	part = (obj_part_t *)malloc(sizeof(obj_part_t));
+	part = gc_alloc(sizeof(raw_mesh_t));
 	part->scale_pos = 1.0;
 	part->scale_tex = 1.0;
 	part->pos = start_pos;
 	part->udims_u = 1;
 	part->udims_v = 1;
-	part->udims = NULL;
-	part->has_next = false;
-	part->texa = NULL;
-	part->name = str;
+	part->name = string_copy(str);
 
 	i32_array_t pos_indices = {0};
 	i32_array_t uv_indices = {0};
@@ -439,7 +438,7 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 			if (!udim) {
 				reading_object = true;
 			}
-			part->name = read_string();
+			part->name = string_copy(read_string());
 		}
 		next_line();
 	}
@@ -478,13 +477,13 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	}
 	float inv = 32767 * (1 / part->scale_pos);
 
-	part->posa = malloc(sizeof(i16_array_t));
-	i16_array_resize(part->posa, pos_indices.length * 4);
-	part->posa->length = pos_indices.length * 4;
+	part->posa = calloc(sizeof(i16_array_t), 1);
+	part->posa->length = part->posa->capacity = pos_indices.length * 4;
+	part->posa->buffer = malloc(part->posa->capacity * sizeof(int16_t));
 
-	part->inda = malloc(sizeof(u32_array_t));
-	u32_array_resize(part->inda, pos_indices.length);
-	part->inda->length = pos_indices.length;
+	part->inda = calloc(sizeof(u32_array_t), 1);
+	part->inda->length = part->inda->capacity = pos_indices.length;
+	part->inda->buffer = malloc(part->inda->capacity * sizeof(uint32_t));
 
 	part->vertex_count = pos_indices.length;
 	part->index_count = pos_indices.length;
@@ -497,9 +496,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	}
 
 	if (nor_indices.length > 0) {
-		part->nora = malloc(sizeof(i16_array_t));
-		i16_array_resize(part->nora, nor_indices.length * 2);
-		part->nora->length = nor_indices.length * 2;
+		part->nora = calloc(sizeof(i16_array_t), 1);
+		part->nora->length = part->nora->capacity = nor_indices.length * 2;
+		part->nora->buffer = malloc(part->nora->capacity * sizeof(int16_t));
 
 		for (int i = 0; i < pos_indices.length; ++i) {
 			part->nora->buffer[i * 2    ] = (int)( nor_temp.buffer[nor_indices.buffer[i] * 3    ] * 32767);
@@ -509,9 +508,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	}
 	else {
 		// Calc normals
-		part->nora = malloc(sizeof(i16_array_t));
-		i16_array_resize(part->nora, inda_length * 2);
-		part->nora->length = inda_length * 2;
+		part->nora = calloc(sizeof(i16_array_t), 1);
+		part->nora->length = part->nora->capacity = inda_length * 2;
+		part->nora->buffer = malloc(part->nora->capacity * sizeof(int16_t));
 
 		for (int i = 0; i < (int)(inda_length / 3); ++i) {
 			int i1 = part->inda->buffer[i * 3    ];
@@ -595,9 +594,9 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 			free(uvtiles);
 		}
 
-		part->texa = malloc(sizeof(i16_array_t));
-		i16_array_resize(part->texa, uv_indices.length * 2);
-		part->texa->length = uv_indices.length * 2;
+		part->texa = calloc(sizeof(i16_array_t), 1);
+		part->texa->length = part->texa->capacity = uv_indices.length * 2;
+		part->texa->buffer = malloc(part->texa->capacity * sizeof(int16_t));
 
 		for (int i = 0; i < pos_indices.length; ++i) {
 			float uvx = uv_temp.buffer[uv_indices.buffer[i] * 2];
@@ -627,7 +626,7 @@ obj_part_t *io_obj_parse(uint8_t *file_bytes, char split_code, uint32_t start_po
 	return part;
 }
 
-void io_obj_destroy(obj_part_t *part) {
+void io_obj_destroy(raw_mesh_t *part) {
 	if (part->udims != NULL) {
 		for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
 			free(part->udims[i]);
@@ -640,5 +639,5 @@ void io_obj_destroy(obj_part_t *part) {
 	free(part->nora);
 	free(part->texa);
 	free(part->inda);
-	free(part);
+	gc_free(part);
 }
