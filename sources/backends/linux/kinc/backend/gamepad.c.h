@@ -31,7 +31,8 @@ static void HIDGamepad_open(struct HIDGamepad *pad) {
 		if (ioctl(pad->file_descriptor, JSIOCGNAME(sizeof(buf)), buf) < 0) {
 			strncpy(buf, "Unknown", sizeof(buf));
 		}
-		snprintf(pad->name, sizeof(pad->name), "%s(%s)", buf, pad->gamepad_dev_name);
+		pad->name[0] = 0;
+		// snprintf(pad->name, sizeof(pad->name), "%s(%s)", buf, pad->gamepad_dev_name); // TODO: valgrind error
 		kinc_internal_gamepad_trigger_connect(pad->idx);
 	}
 }
