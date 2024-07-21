@@ -3,10 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "iron_string.h"
-
-void *gc_alloc(size_t size);
-void *gc_realloc(void *ptr, size_t size);
-void gc_free(void *ptr);
+#include "iron_gc.h"
 
 void array_free(void *a) {
 	u8_array_t *tmp = (u8_array_t *)a;
@@ -81,36 +78,43 @@ void any_array_push(any_array_t *a, void *e) {
 void i8_array_resize(i8_array_t *a, int32_t size) {
 	a->capacity = size;
 	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(int8_t));
+	gc_leaf(a->buffer);
 }
 
 void u8_array_resize(u8_array_t *a, int32_t size) {
 	a->capacity = size;
 	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(uint8_t));
+	gc_leaf(a->buffer);
 }
 
 void i16_array_resize(i16_array_t *a, int32_t size) {
 	a->capacity = size;
 	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(int16_t));
+	gc_leaf(a->buffer);
 }
 
 void u16_array_resize(u16_array_t *a, int32_t size) {
 	a->capacity = size;
 	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(uint16_t));
+	gc_leaf(a->buffer);
 }
 
 void i32_array_resize(i32_array_t *a, int32_t size) {
 	a->capacity = size;
 	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(int32_t));
+	gc_leaf(a->buffer);
 }
 
 void u32_array_resize(u32_array_t *a, int32_t size) {
 	a->capacity = size;
 	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(uint32_t));
+	gc_leaf(a->buffer);
 }
 
 void f32_array_resize(f32_array_t *a, int32_t size) {
 	a->capacity = size;
 	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(float));
+	gc_leaf(a->buffer);
 }
 
 void any_array_resize(any_array_t *a, int32_t size) {
@@ -121,6 +125,7 @@ void any_array_resize(any_array_t *a, int32_t size) {
 void buffer_resize(buffer_t *b, int32_t size) {
 	b->length = size;
 	b->buffer = gc_realloc(b->buffer, b->length * sizeof(uint8_t));
+	gc_leaf(b->buffer);
 }
 
 void array_sort(any_array_t *ar, int (*compare)(const void *, const void *)) {
@@ -142,7 +147,7 @@ void *array_shift(any_array_t *ar) {
 }
 
 void array_splice(any_array_t *ar, int32_t start, int32_t delete_count) {
-	for (int i = start; i <= start + delete_count; ++i) {
+	for (int i = start; i < ar->length; ++i) {
 		if (i + delete_count >= ar->length) {
 			ar->buffer[i] = NULL;
 		}
