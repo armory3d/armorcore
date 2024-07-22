@@ -61,7 +61,7 @@ function g2_set_transformation(m: mat3_t) {
 		_g2_mat[6] = m.m[6];
 		_g2_mat[7] = m.m[7];
 		_g2_mat[8] = m.m[8];
-		krom_g2_set_transform(_g2_mat.buffer);
+		krom_g2_set_transform(_g2_mat);
 	}
 }
 

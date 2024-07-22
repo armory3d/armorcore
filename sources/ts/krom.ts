@@ -140,7 +140,7 @@ declare function json_encode_bool(k: string, v: bool): void;
 declare function json_encode_end(): string;
 declare function uri_decode(s: string): string;
 
-declare function js_eval(js: string, context: string = ""): any;
+declare function js_eval(js: string): any;
 declare function array_remove(ar: any[], e: any): void;
 declare function trim_end(str: string): string;
 

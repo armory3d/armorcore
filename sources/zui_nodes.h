@@ -123,7 +123,7 @@ extern char_ptr_array_t *zui_nodes_exclude_remove;
 extern bool zui_nodes_socket_released;
 extern char **(*zui_nodes_enum_texts)(char *);
 extern void (*zui_nodes_on_custom_button)(int, char *);
-extern zui_canvas_control_t (*zui_nodes_on_canvas_control)(void);
+extern zui_canvas_control_t *(*zui_nodes_on_canvas_control)(void);
 extern void (*zui_nodes_on_canvas_released)(void);
 extern void (*zui_nodes_on_socket_released)(int);
 extern void (*zui_nodes_on_link_drag)(int, bool);

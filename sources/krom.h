@@ -35,6 +35,12 @@
 #include "zui_ext.h"
 #include "zui_nodes.h"
 #endif
+#ifdef WITH_EVAL
+#include "quickjs/quickjs.h"
+#include "quickjs/quickjs-libc.h"
+static JSRuntime *js_runtime;
+static JSContext *js_ctx;
+#endif
 
 #define f64 double
 #define i64 int64_t
@@ -113,6 +119,24 @@ char *_substring(char *s, int32_t start, int32_t end) {
 	return buffer;
 }
 
+#ifdef WITH_EVAL
+void console_log(char *s);
+static JSValue js_console_log(JSContext *ctx, JSValue this_val, int argc, JSValue *argv) {
+	console_log(JS_ToCString(ctx, argv[0]));
+	return JS_UNDEFINED;
+}
+
+f32 js_eval(const char *js) {
+	JSValue ret = JS_Eval(js_ctx, js, strlen(js), "armorcore", JS_EVAL_TYPE_GLOBAL);
+    if (JS_IsException(ret)) {
+        js_std_dump_error(js_ctx);
+        JS_ResetUncatchableError(js_ctx);
+    }
+    JS_RunGC(js_runtime);
+	return JS_VALUE_GET_FLOAT64(ret);
+}
+#endif
+
 int kickstart(int argc, char **argv) {
 	_argc = argc;
 	_argv = argv;
@@ -170,6 +194,18 @@ int kickstart(int argc, char **argv) {
 	// #ifdef WITH_PLUGIN_EMBED
 	// plugin_embed(isolate, global);
 	// #endif
+
+	#ifdef WITH_EVAL
+	js_runtime = JS_NewRuntime();
+    js_ctx = JS_NewContext(js_runtime);
+    js_std_add_helpers(js_ctx, argc, argv);
+    js_init_module_std(js_ctx, "std");
+    js_init_module_os(js_ctx, "os");
+
+	JSValue global_obj = JS_GetGlobalObject(js_ctx);
+    JS_SetPropertyStr(js_ctx, global_obj, "console_log", JS_NewCFunction(js_ctx, js_console_log, "console_log", 1));
+    JS_FreeValue(js_ctx, global_obj);
+	#endif
 
 	gc_start(&argc);
 	_kickstart();
@@ -650,12 +686,6 @@ void _drop_files(wchar_t *file_path, void *data) {
 	paused_frames = 0;
 #endif
 }
-
-#ifdef WITH_EVAL
-f32 js_eval(const char *js, const char *context) {
-	return 0.0;
-}
-#endif
 
 char *uri_decode(const char *src) {
 	char *res = gc_alloc(1024);
@@ -1541,6 +1571,9 @@ kinc_g4_texture_t *krom_load_image(string_t *file, bool readable) {
 		kinc_image_destroy(image);
 		free(image);
 	}
+	else {
+		texture->image = image;
+	}
 
 	return texture;
 }
@@ -1833,9 +1866,9 @@ kinc_g4_texture_t *krom_g4_create_texture_from_bytes(buffer_t *data, i32 width, 
 		kinc_image_destroy(image);
 		free(image);
 	}
-	// else {
-	// 	obj->SetInternalField(1, External::New(isolate, image));
-	// }
+	else {
+		texture->image = image;
+	}
 	return texture;
 }
 
@@ -1858,9 +1891,9 @@ kinc_g4_texture_t *krom_g4_create_texture_from_bytes3d(buffer_t *data, i32 width
 		kinc_image_destroy(image);
 		free(image);
 	}
-	// else {
-	// 	obj->SetInternalField(1, External::New(isolate, image));
-	// }
+	else {
+		texture->image = image;
+	}
 	return texture;
 }
 
@@ -1916,9 +1949,9 @@ kinc_g4_texture_t *krom_g4_create_texture_from_encoded_bytes(buffer_t *data, str
 		kinc_image_destroy(image);
 		free(image);
 	}
-	// else {
-	// 	obj->SetInternalField(1, External::New(isolate, image));
-	// }
+	else {
+		texture->image = image;
+	}
 
 	return texture;
 }
@@ -2000,9 +2033,8 @@ void krom_g4_generate_render_target_mipmaps(kinc_g4_render_target_t *render_targ
 void krom_g4_set_mipmaps(kinc_g4_texture_t *texture, any_array_t *mipmaps) {
 	for (int32_t i = 0; i < mipmaps->length; ++i) {
 		image_t *img = mipmaps->buffer[i];
-		kinc_g4_texture_t *mipmapobj = img->texture_;
-		// kinc_image_t *mipmap = (kinc_image_t *)mipmapobj internal
-		// kinc_g4_texture_set_mipmap(texture, mipmap, i + 1);
+		kinc_g4_texture_t *img_tex = img->texture_;
+		kinc_g4_texture_set_mipmap(texture, img_tex->image, i + 1);
 	}
 }
 

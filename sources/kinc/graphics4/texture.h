@@ -20,6 +20,7 @@ typedef struct kinc_g4_texture {
 	int tex_height;
 	int tex_depth;
 	kinc_image_format_t format;
+	kinc_image_t *image;
 	kinc_g4_texture_impl_t impl;
 } kinc_g4_texture_t;
 

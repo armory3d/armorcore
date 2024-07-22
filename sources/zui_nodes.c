@@ -5,11 +5,12 @@
 #include <math.h>
 #include <kinc/graphics4/graphics.h>
 #include <kinc/input/keyboard.h>
-#include "zui.h"
-#include "zui_ext.h"
 #include <kinc/graphics2/g2.h>
 #include <kinc/graphics2/g2_ext.h>
+#include "zui.h"
+#include "zui_ext.h"
 #include "iron_armpack.h"
+#include "iron_gc.h"
 
 static zui_nodes_t *current_nodes = NULL;
 static bool zui_nodes_elements_baked = false;
@@ -19,7 +20,7 @@ static bool zui_box_select = false;
 static int zui_box_select_x = 0;
 static int zui_box_select_y = 0;
 static const int zui_max_buttons = 9;
-static zui_handle_t handle;
+static zui_handle_t *handle = NULL;
 static void (*zui_on_header_released)(zui_node_t *) = NULL;
 static void (*zui_nodes_on_node_remove)(zui_node_t *) = NULL;
 static int zui_node_id = -1;
@@ -28,7 +29,7 @@ char_ptr_array_t *zui_nodes_exclude_remove = NULL; // No removal for listed node
 bool zui_nodes_socket_released = false;
 char **(*zui_nodes_enum_texts)(char *) = NULL; // Retrieve combo items for buttons of type ENUM
 void (*zui_nodes_on_custom_button)(int, char *) = NULL; // Call external function
-zui_canvas_control_t (*zui_nodes_on_canvas_control)(void) = NULL;
+zui_canvas_control_t *(*zui_nodes_on_canvas_control)(void) = NULL;
 void (*zui_nodes_on_canvas_released)(void) = NULL;
 void (*zui_nodes_on_socket_released)(int) = NULL;
 void (*zui_nodes_on_link_drag)(int, bool) = NULL;
@@ -57,6 +58,10 @@ void zui_nodes_init(zui_nodes_t *nodes) {
 	current_nodes->snap_to_id = -1;
 	current_nodes->link_drag_id = -1;
 	current_nodes->nodes_selected_id = calloc(sizeof(i32_array_t), 1);
+	if (handle == NULL) {
+		handle = zui_handle_create();
+		gc_root(handle);
+	}
 }
 
 float ZUI_NODES_SCALE() {
@@ -238,13 +243,13 @@ void zui_nodes_bake_elements() {
 	zui_nodes_elements_baked = true;
 }
 
-zui_canvas_control_t zui_on_default_canvas_control() {
+zui_canvas_control_t *zui_on_default_canvas_control() {
 	zui_t *current = zui_get_current();
-	zui_canvas_control_t c;
+	static zui_canvas_control_t c;
 	c.pan_x = current->input_down_r ? current->input_dx : 0.0;
 	c.pan_y = current->input_down_r ? current->input_dy : 0.0;
 	c.zoom = -current->input_wheel_delta / 10.0;
-	return c;
+	return &c;
 }
 
 void zui_draw_link(float x1, float y1, float x2, float y2, bool highlight) {
@@ -429,7 +434,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	}
 
 	// Buttons
-	zui_handle_t *nhandle = zui_nest(&handle, node->id);
+	zui_handle_t *nhandle = zui_nest(handle, node->id);
 	ny -= lineh / 3.0; // Fix align
 	for (int buti = 0; buti < node->buttons->length; ++buti) {
 		zui_node_button_t *but = node->buttons->buffer[buti];
@@ -701,18 +706,18 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	float wy = current->_window_y;
 	bool _input_enabled = current->input_enabled;
 	current->input_enabled = _input_enabled && zui_popup_commands == NULL;
-	zui_canvas_control_t controls = zui_nodes_on_canvas_control != NULL ? zui_nodes_on_canvas_control() : zui_on_default_canvas_control();
+	zui_canvas_control_t *controls = zui_nodes_on_canvas_control != NULL ? zui_nodes_on_canvas_control() : zui_on_default_canvas_control();
 	zui_nodes_socket_released = false;
 
 	// Pan canvas
-	if (current->input_enabled && (controls.pan_x != 0.0 || controls.pan_y != 0.0)) {
-		current_nodes->pan_x += controls.pan_x / ZUI_NODES_SCALE();
-		current_nodes->pan_y += controls.pan_y / ZUI_NODES_SCALE();
+	if (current->input_enabled && (controls->pan_x != 0.0 || controls->pan_y != 0.0)) {
+		current_nodes->pan_x += controls->pan_x / ZUI_NODES_SCALE();
+		current_nodes->pan_y += controls->pan_y / ZUI_NODES_SCALE();
 	}
 
 	// Zoom canvas
-	if (current->input_enabled && controls.zoom != 0.0) {
-		current_nodes->zoom += controls.zoom;
+	if (current->input_enabled && controls->zoom != 0.0) {
+		current_nodes->zoom += controls->zoom;
 		if (current_nodes->zoom < 0.1) {
 			current_nodes->zoom = 0.1;
 		}
@@ -724,8 +729,8 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 		current_nodes->uih = current->_h;
 		if (zui_touch_scroll) {
 			// Zoom to finger location
-			current_nodes->pan_x -= (current->input_x - current->_window_x - current->_window_w / 2.0) * controls.zoom * 5.0 * (1.0 - current_nodes->zoom);
-			current_nodes->pan_y -= (current->input_y - current->_window_y - current->_window_h / 2.0) * controls.zoom * 5.0 * (1.0 - current_nodes->zoom);
+			current_nodes->pan_x -= (current->input_x - current->_window_x - current->_window_w / 2.0) * controls->zoom * 5.0 * (1.0 - current_nodes->zoom);
+			current_nodes->pan_y -= (current->input_y - current->_window_y - current->_window_h / 2.0) * controls->zoom * 5.0 * (1.0 - current_nodes->zoom);
 		}
 	}
 	current_nodes->scale_factor = ZUI_SCALE();

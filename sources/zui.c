@@ -120,12 +120,12 @@ zui_handle_t *zui_handle_create() {
 	return h;
 }
 
-zui_handle_t *zui_nest(zui_handle_t *handle, int pos) {
-	while(handle->children == NULL || pos >= handle->children->length) {
+zui_handle_t *zui_nest(zui_handle_t *handle, int  pos) {
+	if (handle->children == NULL) {
+		handle->children = any_array_create(0);
+	}
+	while(pos >= handle->children->length) {
 		zui_handle_t *h = zui_handle_create();
-		if (handle->children == NULL) {
-			handle->children = any_array_create(0);
-		}
 		any_array_push(handle->children, h);
 		if (pos == handle->children->length - 1) {
 			// Return now so init stays true
