@@ -4,22 +4,21 @@ let project = new Project("kmake");
 project.addIncludeDir("../../sources/libs");
 project.addFile("../../sources/libs/quickjs/*.c");
 project.addFile("main.c");
-
 project.addDefine("environ=__environ");
 project.addDefine("sighandler_t=__sighandler_t");
 
-project.addDefine("WIN32_LEAN_AND_MEAN");
-project.addDefine("_WIN32_WINNT=0x0602");
-
 if (platform === 'linux') {
 	project.addLib("m");
+	project.addDefine("_GNU_SOURCE");
 }
-
-// Windows:
-// C/C++ - Command Line:
-// /experimental:c11atomics /std:c11
-// Linker - Command Line:
-// /subsystem:console
+else if (platform === "windows") {
+	project.addDefine("WIN32_LEAN_AND_MEAN");
+	project.addDefine("_WIN32_WINNT=0x0602");
+	// C/C++ - Command Line:
+	// /experimental:c11atomics /std:c11
+	// Linker - Command Line:
+	// /subsystem:console
+}
 
 // QuickJS changes:
 // quickjs-libc.c#85 (fixes "import * as os from 'os';" crash):
