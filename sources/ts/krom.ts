@@ -130,7 +130,7 @@ declare function i32_to_string_hex(i: i32): string;
 declare function json_parse(s: string): any;
 
 declare function json_parse_to_map(s: string): map_t<string, string>;
-declare function json_encode_start(): void;
+declare function json_encode_begin(): void;
 declare function json_encode_string(k: string, v: string): void;
 declare function json_encode_string_array(k: string, v: string[]): void;
 declare function json_encode_i32(k: string, v: i32): void;
@@ -138,6 +138,11 @@ declare function json_encode_i32_array(k: string, v: i32[]): void;
 declare function json_encode_f32(k: string, v: f32): void;
 declare function json_encode_bool(k: string, v: bool): void;
 declare function json_encode_end(): string;
+declare function json_encode_begin_array(k: string): void;
+declare function json_encode_end_array(): void;
+declare function json_encode_begin_object(): void;
+declare function json_encode_end_object(): void;
+declare function json_encode_map(m: map<string, string>): void;
 declare function uri_decode(s: string): string;
 
 declare function js_eval(js: string): any;
