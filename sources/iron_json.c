@@ -279,14 +279,10 @@ any_map_t *json_parse_to_map(char *s) {
 	return m;
 }
 
-char *json_stringify(void *a) { ////
-	return NULL;
-} ////
-
 static char *encoded;
 static int keys;
 
-void json_encode_start() {
+void json_encode_begin() {
 	encoded = "{";
 	keys = 0;
 }
@@ -318,15 +314,14 @@ void json_encode_string(char *k, char *v) {
 }
 
 void json_encode_string_array(char *k, char_ptr_array_t *a) {
-	json_encode_key(k);
-	encoded = string_join(encoded, "[");
+	json_encode_begin_array(k);
 	for (int i = 0; i < a->length; ++i) {
 		if (i > 0) {
 			encoded = string_join(encoded, ",");
 		}
 		json_encode_string_value(a->buffer[i]);
 	}
-	encoded = string_join(encoded, "]");
+	json_encode_end_array();
 }
 
 void json_encode_f32(char *k, float f) {
@@ -340,18 +335,41 @@ void json_encode_i32(char *k, int i) {
 }
 
 void json_encode_i32_array(char *k, i32_array_t *a) {
-	json_encode_key(k);
-	encoded = string_join(encoded, "[");
+	json_encode_begin_array(k);
 	for (int i = 0; i < a->length; ++i) {
 		if (i > 0) {
 			encoded = string_join(encoded, ",");
 		}
 		encoded = string_join(encoded, i32_to_string(a->buffer[i]));
 	}
-	encoded = string_join(encoded, "]");
+	json_encode_end_array();
 }
 
 void json_encode_bool(char *k, bool b) {
 	json_encode_key(k);
 	encoded = string_join(encoded, b ? "true" : "false");
+}
+
+void json_encode_begin_array(char *k) {
+	json_encode_key(k);
+	encoded = string_join(encoded, "[");
+}
+
+void json_encode_end_array() {
+	encoded = string_join(encoded, "]");
+}
+
+void json_encode_begin_object() {
+	encoded = string_join(encoded, "{");
+}
+
+void json_encode_end_object() {
+	encoded = string_join(encoded, "}");
+}
+
+void json_encode_map(any_map_t *m) {
+	any_array_t *keys = map_keys(m);
+	for (int i = 0; i < keys->length; i++) {
+		json_encode_string(keys->buffer[i], any_map_get(m, keys->buffer[i]));
+	}
 }
