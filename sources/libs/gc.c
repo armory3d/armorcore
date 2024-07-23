@@ -77,7 +77,7 @@ static bool is_prime(size_t n) {
 	}
 	else {
 		for (size_t i = 5; i * i <= n; i += 6) {
-			if (n % i == 0 || n%(i + 2) == 0) {
+			if (n % i == 0 || n % (i + 2) == 0) {
 				return false;
 			}
 		}
