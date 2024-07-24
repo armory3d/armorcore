@@ -19,6 +19,9 @@ else if (platform === "windows") {
 	// Linker - Command Line:
 	// /subsystem:console
 }
+else if (platform === "macos") {
+	project.addFile("../../sources/backends/macos/kinc/backend/mac.plist");
+}
 
 // QuickJS changes:
 // quickjs-libc.c#85 (fixes "import * as os from 'os';" crash):
@@ -26,5 +29,4 @@ else if (platform === "windows") {
 // "quickjs.h#259" (fixes "Maximum call stack size exceeded" in minits):
 // #define JS_DEFAULT_STACK_SIZE (256 * 1024) -> #define JS_DEFAULT_STACK_SIZE (8 * 1024 * 1024)
 
-project.flatten();
 return project;

@@ -3,7 +3,7 @@
 
 #ifdef NO_GC
 
-#include <malloc.h>
+#include <stdlib.h>
 #include <stdint.h>
 
 #define HEAP_SIZE 512 * 1024 * 1024

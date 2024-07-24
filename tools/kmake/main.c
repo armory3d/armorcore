@@ -3,7 +3,7 @@
 // ../../make --compiler gcc --compile (gcc has lto enabled)
 
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include "quickjs/quickjs.h"
 #include "quickjs/quickjs-libc.h"
 
