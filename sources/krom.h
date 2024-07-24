@@ -340,7 +340,7 @@ int krafix_compile(const char *source, char *output, int *length, const char *ta
 #endif
 
 #if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
-kinc_g5_command_list_t commandList;
+extern kinc_g5_command_list_t commandList;
 static kinc_g5_constant_buffer_t constant_buffer;
 static kinc_g4_render_target_t *render_target;
 static kinc_raytrace_pipeline_t pipeline;
@@ -1233,7 +1233,7 @@ kinc_g4_shader_t *krom_g4_create_vertex_shader_from_source(string_t *source) {
 
 	#elif defined(KINC_VULKAN) && defined(KRAFIX_LIBRARY)
 
-	char *output = new char[1024 * 1024];
+	char *output = malloc(1024 * 1024);
 	int length;
 	krafix_compile(source, output, &length, "spirv", "windows", "vert", -1);
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
@@ -1355,7 +1355,7 @@ kinc_g4_shader_t *krom_g4_create_fragment_shader_from_source(string_t *source) {
 
 	#elif defined(KINC_VULKAN) && defined(KRAFIX_LIBRARY)
 
-	char *output = new char[1024 * 1024];
+	char *output = malloc(1024 * 1024);
 	int length;
 	krafix_compile(source, output, &length, "spirv", "windows", "frag", -1);
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
@@ -2852,14 +2852,13 @@ void krom_raytrace_init(buffer_t *shader, kinc_g4_vertex_buffer_t *vb, kinc_g4_i
 	kinc_g5_vertex_buffer_t *vertex_buffer = &vb->impl._buffer;
 	kinc_g5_index_buffer_t *index_buffer = &ib->impl._buffer;
 
-	float scale = TO_F32(args[3]);
 	kinc_g5_constant_buffer_init(&constant_buffer, constant_buffer_size * 4);
-	kinc_raytrace_pipeline_init(&pipeline, &commandList, shader->data, (int)shader->length, &constant_buffer);
+	kinc_raytrace_pipeline_init(&pipeline, &commandList, shader->buffer, (int)shader->length, &constant_buffer);
 	kinc_raytrace_acceleration_structure_init(&accel, &commandList, vertex_buffer, index_buffer, scale);
 	accel_created = true;
 }
 
-void krom_raytrace_set_textures(image_t *tex0, image_t *tex1, image_t *tex2, kinc_g4_texture_t *texenv, kinc_g4_texture_t *tex_sobol, kinc_g4_texture_t *tex_scramble, kinc_g4_texture_t *tex_rank) {
+void krom_raytrace_set_textures(image_t *tex0, image_t *tex1, image_t *tex2, kinc_g4_texture_t *texenv, kinc_g4_texture_t *texsobol, kinc_g4_texture_t *texscramble, kinc_g4_texture_t *texrank) {
 	kinc_g4_render_target_t *texpaint0;
 	kinc_g4_render_target_t *texpaint1;
 	kinc_g4_render_target_t *texpaint2;
@@ -2952,7 +2951,7 @@ void krom_raytrace_set_textures(image_t *tex0, image_t *tex1, image_t *tex2, kin
 }
 
 void krom_raytrace_dispatch_rays(kinc_g4_render_target_t *render_target, buffer_t *buffer) {
-	float *cb = (float *)buffer->data;
+	float *cb = (float *)buffer->buffer;
 	kinc_g5_constant_buffer_lock_all(&constant_buffer);
 	for (int i = 0; i < constant_buffer_size; ++i) {
 		kinc_g5_constant_buffer_set_float(&constant_buffer, i * 4, cb[i]);
