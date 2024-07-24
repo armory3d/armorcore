@@ -376,7 +376,7 @@ function load_project(directory, is_root_project) {
 			with_g2: false,
 			with_iron: false,
 			with_zui: false,
-			with_eval: true,
+			with_eval: false,
 		};
 	}
 
