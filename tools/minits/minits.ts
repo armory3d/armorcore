@@ -209,7 +209,7 @@ function handle_tabs(token: string) {
 	// New line, add tabs
 	if (new_line) {
 		for (let i: i32 = 0; i < tabs; ++i) {
-			write("\t");
+			out("\t");
 		}
 	}
 }
@@ -222,14 +222,14 @@ function handle_new_line(token: string) {
 	// Insert new line
 	new_line = token == ";" || token == "{" || token == "}";
 	if (new_line) {
-		write("\n");
+		out("\n");
 	}
 }
 
 function handle_spaces(token: string) {
 	// Add space to separate keywords
 	if (array_index_of(add_space_keywords, token) > -1) {
-		write(" ");
+		out(" ");
 	}
 }
 
@@ -1118,7 +1118,7 @@ function null_write(token: string) {
 	return;
 }
 
-let write: (token: string)=>void = stream_write;
+let out: (token: string)=>void = stream_write;
 
 function write_enums() {
 	for (pos = 0; pos < tokens.length; ++pos) {
@@ -1127,13 +1127,13 @@ function write_enums() {
 		// Turn "enum name {}" into "typedef enum {} name;"
 		if (token == "enum") {
 
-			write = get_token(-1) == "declare" ? &null_write : &stream_write;
+			out = get_token(-1) == "declare" ? &null_write : &stream_write;
 
 			pos++;
 			let enum_name: string = get_token();
 			array_push(enums, enum_name);
 
-			write("typedef enum{\n");
+			out("typedef enum{\n");
 			pos++; // {
 
 			while (true) {
@@ -1142,11 +1142,11 @@ function write_enums() {
 				token = get_token(); // Item name
 
 				if (token == "}") { // Enum end
-					write("}" + enum_name + ";\n");
+					out("}" + enum_name + ";\n");
 					break;
 				}
 
-				write("\t" + enum_name + "_" + token);
+				out("\t" + enum_name + "_" + token);
 
 				pos++; // = or ,
 				token = get_token();
@@ -1154,19 +1154,19 @@ function write_enums() {
 				if (token == "=") { // Enum value
 					pos++; // n
 					token = get_token();
-					write("=" + token);
+					out("=" + token);
 					pos++; // ,
 				}
 
-				write(",\n");
+				out(",\n");
 			}
 
-			write("\n");
+			out("\n");
 			continue;
 		}
 	}
 
-	write = &stream_write;
+	out = &stream_write;
 }
 
 function write_types() {
@@ -1177,7 +1177,7 @@ function write_types() {
 		// Turn "type x = y;" into "typedef x y;"
 		if (token == "type") {
 
-			write = get_token(-1) == "declare" ? &null_write : &stream_write;
+			out = get_token(-1) == "declare" ? &null_write : &stream_write;
 
 			pos++;
 			let struct_name: string = get_token();
@@ -1198,14 +1198,14 @@ function write_types() {
 				let type: string = read_type();
 				type = _t_to_struct(type);
 
-				write("typedef " + type + " " + struct_name + ";\n\n");
+				out("typedef " + type + " " + struct_name + ";\n\n");
 				skip_until(";");
 				continue;
 			}
 
 			// "type x = {};"
 			// Use PACK() for armpack support (use only when " _: " is present?)
-			write("typedef PACK(struct " + stuct_name_short + "{\n");
+			out("typedef PACK(struct " + stuct_name_short + "{\n");
 
 			let struct_value_types: map_t<string, string> = map_create();
 			any_array_resize(struct_value_types.keys, 512 * 2);
@@ -1219,7 +1219,7 @@ function write_types() {
 				let name: string = get_token();
 
 				if (name == "}") { // Struct end
-					write("})" + struct_name + ";\n");
+					out("})" + struct_name + ";\n");
 					break;
 				}
 
@@ -1255,16 +1255,16 @@ function write_types() {
 
 				skip_until(";");
 
-				write("\t" + join_type_name(type, name) + ";\n");
+				out("\t" + join_type_name(type, name) + ";\n");
 				map_set(struct_value_types, name, type);
 			}
 
-			write("\n");
+			out("\n");
 			continue;
 		}
 	}
 
-	write = &stream_write;
+	out = &stream_write;
 }
 
 function write_array_types() {
@@ -1295,11 +1295,11 @@ function write_array_types() {
 	let keys: string[] = map_keys(array_structs);
 	for (let i: i32 = 0; i < keys.length; ++i) {
 		let as: string = map_get(array_structs, keys[i]);
-		write(as);
-		write("\n");
+		out(as);
+		out("\n");
 	}
 
-	write("\n");
+	out("\n");
 }
 
 function write_fn_declarations() {
@@ -1317,7 +1317,7 @@ function write_fn_declarations() {
 
 		if (token == "function") {
 
-			write = get_token(-1) == "declare" ? &null_write : &stream_write;
+			out = get_token(-1) == "declare" ? &null_write : &stream_write;
 
 			// Return type + name
 			pos++;
@@ -1367,14 +1367,14 @@ function write_fn_declarations() {
 			params += ")";
 
 			let fn_decl: string = ret + " " + fn_name + params;
-			write(fn_decl + ";\n");
+			out(fn_decl + ";\n");
 
 			map_set(fn_declarations, fn_name, fn_decl);
 		}
 	}
-	write("\n");
+	out("\n");
 
-	write = &stream_write;
+	out = &stream_write;
 }
 
 function write_globals() {
@@ -1383,7 +1383,7 @@ function write_globals() {
 
 		if (token == "let") {
 
-			write = get_token(-1) == "declare" ? &null_write : &stream_write;
+			out = get_token(-1) == "declare" ? &null_write : &stream_write;
 
 			pos++;
 			let name: string = get_token();
@@ -1403,7 +1403,7 @@ function write_globals() {
 				array_push(global_ptrs, name);
 			}
 
-			write(join_type_name(type, name) + ";");
+			out(join_type_name(type, name) + ";");
 
 			// Init this var in _kickstart()
 			let is_initialized: bool = get_token(1) == "=";
@@ -1448,7 +1448,7 @@ function write_globals() {
 				array_push(global_inits, init);
 			}
 
-			write("\n");
+			out("\n");
 		}
 
 		// Skip function blocks
@@ -1458,30 +1458,30 @@ function write_globals() {
 		}
 	}
 
-	write = &stream_write;
+	out = &stream_write;
 }
 
 function write_kickstart() {
 	// Start function
-	write("\nvoid _kickstart() {\n");
+	out("\nvoid _kickstart() {\n");
 	// Init globals
 	for (let i: i32 = 0; i < global_inits.length; ++i) {
 		let val: string = global_inits[i];
-		write("\t");
+		out("\t");
 		let name: string = string_split(val, "=")[0];
 		let global_alloc: bool = array_index_of(global_ptrs, name) > -1 && !ends_with(val, "=null") && !ends_with(val, "\"");
 		if (global_alloc) {
-			write("gc_unroot(" + name + ");");
+			out("gc_unroot(" + name + ");");
 		}
-		write(val + ";");
+		out(val + ";");
 		if (global_alloc) {
-			write("gc_root(" + name + ");");
+			out("gc_root(" + name + ");");
 		}
-		write("\n");
+		out("\n");
 	}
-	write("\t_main();\n");
-	write("\tkinc_start();\n");
-	write("}\n\n");
+	out("\t_main();\n");
+	out("\tkinc_start();\n");
+	out("}\n\n");
 }
 
 function write_function() {
@@ -1493,7 +1493,7 @@ function write_function() {
 	}
 
 	let fn_decl: string = map_get(fn_declarations, fn_name);
-	write(fn_decl + "{\n");
+	out(fn_decl + "{\n");
 
 	// Function body
 	// Re-set function param types into value_types map
@@ -1512,16 +1512,16 @@ function write_function() {
 
 		if (token == "function") { // Begin nested function
 			anon_fn += "_1";
-			write("&" + anon_fn);
+			out("&" + anon_fn);
 			if (get_token(-1) == "=") {
-				write(";\n");
+				out(";\n");
 			}
 
 			skip_until("{");
-			write = &string_write;
+			out = &string_write;
 			array_push(strings, "");
 			let fn_decl: string = map_get(fn_declarations, anon_fn);
-			write(fn_decl + "{\n");
+			out(fn_decl + "{\n");
 			array_push(fnested, 1);
 			continue;
 		}
@@ -1534,14 +1534,14 @@ function write_function() {
 				fnested[fnested.length - 1]--;
 				if (fnested[fnested.length - 1] == 0) {
 					array_pop(fnested);
-					write("}\n\n");
+					out("}\n\n");
 					if (strings.length > 1) {
 						let s: string = array_pop(strings);
 						strings[strings.length - 1] = s + strings[strings.length - 1];
 					}
 
 					if (fnested.length == 0) {
-						write = &stream_write;
+						out = &stream_write;
 					}
 					continue;
 				}
@@ -1550,7 +1550,7 @@ function write_function() {
 
 		// Function end
 		if (token == "}" && tabs == 1) {
-			write("}\n\n");
+			out("}\n\n");
 			break;
 		}
 
@@ -1568,7 +1568,7 @@ function write_function() {
 			let name: string = get_token();
 			pos++; // :
 			let type: string = read_type();
-			write(join_type_name(type, name));
+			out(join_type_name(type, name));
 			// = or ;
 			pos++;
 			token = get_token();
@@ -1586,14 +1586,14 @@ function write_function() {
 		let is_assign: bool = get_token(1) == "=" || get_token(1) == "+="; // += for string_join
 		if (is_assign && token != ":") {
 			if (array_index_of(global_ptrs, token) > -1) {
-				write("gc_unroot(" + token + ");");
+				out("gc_unroot(" + token + ");");
 				if (get_token(2) != "null") {
 					mark_as_root = token;
 				}
 			}
 		}
 		if (token == ";" && mark_as_root != null) {
-			write(";gc_root(" + mark_as_root + ")");
+			out(";gc_root(" + mark_as_root + ")");
 			mark_as_root = null;
 		}
 
@@ -1622,7 +1622,7 @@ function write_function() {
 		token = fill_fn_params(token);
 
 		// Write token
-		write(token);
+		out(token);
 
 		handle_spaces(token);
 		handle_new_line(token);
@@ -1643,14 +1643,14 @@ function write_functions() {
 		// Write anonymous function body
 		while (strings.length > 0) {
 			let s: string = array_pop(strings);
-			write(s);
+			out(s);
 		}
 	}
 }
 
-function write_c() {
-	write("#include <krom.h>\n\n");
-	write(header);
+function write_krom_c() {
+	out("#include <krom.h>\n\n");
+	out(header);
 	write_enums();
 	write_types();
 	write_array_types();
@@ -1708,7 +1708,7 @@ function main() {
 
 	parse();
 	fhandle = fopen(minits_output, "wb");
-	write_c();
+	write_krom_c();
 	fclose(fhandle);
 
 	exit(1);
