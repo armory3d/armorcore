@@ -126,7 +126,7 @@ function mesh_data_get_vertex_data(data: string): vertex_data_t {
 	}
 }
 
-function mesh_data_build_vertices(vertices: buffer_view_t, vertex_arrays: vertex_array_t[], offset: i32 = 0, fake_uvs: bool = false, uvs_index: i32 = -1) {
+function mesh_data_build_vertices(vertices: buffer_t, vertex_arrays: vertex_array_t[], offset: i32 = 0, fake_uvs: bool = false, uvs_index: i32 = -1) {
 	let size: i32 = mesh_data_get_vertex_size(vertex_arrays[0].data);
 	let num_verts: i32 = vertex_arrays[0].values.length / size;
 	let di: i32 = -1 + offset;
@@ -135,12 +135,12 @@ function mesh_data_build_vertices(vertices: buffer_view_t, vertex_arrays: vertex
 			let l: i32 = mesh_data_get_vertex_size(vertex_arrays[va].data);
 			if (fake_uvs && va == uvs_index) { // Add fake uvs if uvs where "asked" for but not found
 				for (let j: i32 = 0; j < l; ++j) {
-					buffer_view_set_i16(vertices, ++di * 2, 0);
+					buffer_set_i16(vertices, ++di * 2, 0);
 				}
 				continue;
 			}
 			for (let o: i32 = 0; o < l; ++o) {
-				buffer_view_set_i16(vertices, ++di * 2, vertex_arrays[va].values[i * l + o]);
+				buffer_set_i16(vertices, ++di * 2, vertex_arrays[va].values[i * l + o]);
 			}
 		}
 	}
@@ -182,9 +182,9 @@ function mesh_data_setup_inst(raw: mesh_data_t, data: f32_array_t, inst_type: i3
 
 	raw._.instance_count = math_floor(data.length / math_floor(g4_vertex_struct_byte_size(structure) / 4));
 	raw._.instanced_vb = g4_vertex_buffer_create(raw._.instance_count, structure, usage_t.STATIC, 1);
-	let vertices: buffer_view_t = g4_vertex_buffer_lock(raw._.instanced_vb);
-	for (let i: i32 = 0; i < math_floor(buffer_view_size(vertices) / 4); ++i) {
-		buffer_view_set_f32(vertices, i * 4, data[i]);
+	let vertices: buffer_t = g4_vertex_buffer_lock(raw._.instanced_vb);
+	for (let i: i32 = 0; i < math_floor((vertices.length) / 4); ++i) {
+		buffer_set_f32(vertices, i * 4, data[i]);
 	}
 	g4_vertex_buffer_unlock(raw._.instanced_vb);
 }

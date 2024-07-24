@@ -140,8 +140,8 @@ function g4_vertex_buffer_delete(raw: vertex_buffer_t) {
 	krom_g4_delete_vertex_buffer(raw.buffer_);
 }
 
-function g4_vertex_buffer_lock(raw: vertex_buffer_t): buffer_view_t {
-	return buffer_view_create(krom_g4_lock_vertex_buffer(raw.buffer_));
+function g4_vertex_buffer_lock(raw: vertex_buffer_t): buffer_t {
+	return krom_g4_lock_vertex_buffer(raw.buffer_);
 }
 
 function g4_vertex_buffer_unlock(raw: vertex_buffer_t) {

@@ -111,9 +111,9 @@ function main() {
 	krom_g4_compile_pipeline(pipeline, structure0, null, null, null, 1, vert, frag, null, state);
 
 	vb = krom_g4_create_vertex_buffer(vertices.length / 3, structure0.elements, 0, 0);
-	let vb_data: buffer_view_t = buffer_view_create(krom_g4_lock_vertex_buffer(vb));
+	let vb_data: buffer_t = krom_g4_lock_vertex_buffer(vb);
 	for (let i: i32 = 0; i < vertices.length; i++) {
-		buffer_view_set_f32(vb_data, i * 4, vertices[i]);
+		buffer_set_f32(vb_data, i * 4, vertices[i]);
 	}
 	krom_g4_unlock_vertex_buffer(vb);
 

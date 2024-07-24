@@ -237,84 +237,70 @@ buffer_t *buffer_slice(buffer_t *a, int32_t begin, int32_t end) {
 	return b;
 }
 
-int32_t buffer_size(buffer_t *b) {
-	return b->length;
+uint8_t buffer_get_u8(buffer_t *b, int32_t p) {
+	return *(uint8_t *)(b->buffer + p);
 }
 
-int32_t buffer_view_size(buffer_view_t *v) {
-	return v->buffer->length;
+int8_t buffer_get_i8(buffer_t *b, int32_t p) {
+	return *(int8_t *)(b->buffer + p);
 }
 
-uint8_t buffer_view_get_u8(buffer_view_t *v, int32_t p) {
-	return *(uint8_t *)(v->buffer->buffer + p);
+uint16_t buffer_get_u16(buffer_t *b, int32_t p) {
+	return *(uint16_t *)(b->buffer + p);
 }
 
-int8_t buffer_view_get_i8(buffer_view_t *v, int32_t p) {
-	return *(int8_t *)(v->buffer->buffer + p);
+int16_t buffer_get_i16(buffer_t *b, int32_t p) {
+	return *(int16_t *)(b->buffer + p);
 }
 
-uint16_t buffer_view_get_u16(buffer_view_t *v, int32_t p) {
-	return *(uint16_t *)(v->buffer->buffer + p);
+uint32_t buffer_get_u32(buffer_t *b, int32_t p) {
+	return *(uint32_t *)(b->buffer + p);
 }
 
-int16_t buffer_view_get_i16(buffer_view_t *v, int32_t p) {
-	return *(int16_t *)(v->buffer->buffer + p);
+int32_t buffer_get_i32(buffer_t *b, int32_t p) {
+	return *(int32_t *)(b->buffer + p);
 }
 
-uint32_t buffer_view_get_u32(buffer_view_t *v, int32_t p) {
-	return *(uint32_t *)(v->buffer->buffer + p);
+float buffer_get_f32(buffer_t *b, int32_t p) {
+	return *(float *)(b->buffer + p);
 }
 
-int32_t buffer_view_get_i32(buffer_view_t *v, int32_t p) {
-	return *(int32_t *)(v->buffer->buffer + p);
+int64_t buffer_get_i64(buffer_t *b, int32_t p) {
+	return *(int64_t *)(b->buffer + p);
 }
 
-float buffer_view_get_f32(buffer_view_t *v, int32_t p) {
-	return *(float *)(v->buffer->buffer + p);
+void buffer_set_u8(buffer_t *b, int32_t p, uint8_t n) {
+	*(uint8_t *)(b->buffer + p) = n;
 }
 
-int64_t buffer_view_get_i64(buffer_view_t *v, int32_t p) {
-	return *(int64_t *)(v->buffer->buffer + p);
+void buffer_set_i8(buffer_t *b, int32_t p, int8_t n) {
+	*(int8_t *)(b->buffer + p) = n;
 }
 
-void buffer_view_set_u8(buffer_view_t *v, int32_t p, uint8_t n) {
-	*(uint8_t *)(v->buffer->buffer + p) = n;
+void buffer_set_u16(buffer_t *b, int32_t p, uint16_t n) {
+	*(uint16_t *)(b->buffer + p) = n;
 }
 
-void buffer_view_set_i8(buffer_view_t *v, int32_t p, int8_t n) {
-	*(int8_t *)(v->buffer->buffer + p) = n;
+void buffer_set_i16(buffer_t *b, int32_t p, uint16_t n) {
+	*(int16_t *)(b->buffer + p) = n;
 }
 
-void buffer_view_set_u16(buffer_view_t *v, int32_t p, uint16_t n) {
-	*(uint16_t *)(v->buffer->buffer + p) = n;
+void buffer_set_u32(buffer_t *b, int32_t p, uint32_t n) {
+	*(uint32_t *)(b->buffer + p) = n;
 }
 
-void buffer_view_set_i16(buffer_view_t *v, int32_t p, uint16_t n) {
-	*(int16_t *)(v->buffer->buffer + p) = n;
+void buffer_set_i32(buffer_t *b, int32_t p, int32_t n) {
+	*(int32_t *)(b->buffer + p) = n;
 }
 
-void buffer_view_set_u32(buffer_view_t *v, int32_t p, uint32_t n) {
-	*(uint32_t *)(v->buffer->buffer + p) = n;
-}
-
-void buffer_view_set_i32(buffer_view_t *v, int32_t p, int32_t n) {
-	*(int32_t *)(v->buffer->buffer + p) = n;
-}
-
-void buffer_view_set_f32(buffer_view_t *v, int32_t p, float n) {
-	*(float *)(v->buffer->buffer + p) = n;
+void buffer_set_f32(buffer_t *b, int32_t p, float n) {
+	*(float *)(b->buffer + p) = n;
 }
 
 buffer_t *buffer_create(int32_t length) {
 	buffer_t * b = gc_alloc(sizeof(buffer_t));
 	buffer_resize(b, length);
 	return b;
-}
-
-buffer_view_t *buffer_view_create(buffer_t *b) {
-	buffer_view_t *view = gc_alloc(sizeof(buffer_view_t));
-	view->buffer = b;
-	return view;
 }
 
 f32_array_t *f32_array_create(int32_t length) {
@@ -488,14 +474,6 @@ u8_array_t *u8_array_create(int32_t length) {
 		u8_array_resize(a, length);
 		a->length = length;
 	}
-	return a;
-}
-
-u8_array_t *u8_array_create_from_buffer(buffer_t *b) {
-	u8_array_t *a = gc_alloc(sizeof(u8_array_t));
-	a->buffer = b->buffer;
-	a->length = b->length;
-	a->capacity = b->length;
 	return a;
 }
 

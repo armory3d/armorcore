@@ -28,7 +28,7 @@ function lz4_encode_bound(size: u32): u32 {
 }
 
 function lz4_encode(b: buffer_t): buffer_t {
-	let ibuf: u8_array_t = u8_array_create_from_buffer(b);
+	let ibuf: u8_array_t = b;
 	let ilen: u32 = ibuf.length;
 	if (ilen >= 0x7e000000) {
 		krom_log("LZ4 range error");
@@ -152,11 +152,11 @@ function lz4_encode(b: buffer_t): buffer_t {
 		obuf[opos++] = ibuf[anchor_pos++];
 	}
 
-	return buffer_slice(obuf.buffer, 0, opos);
+	return buffer_slice(obuf, 0, opos);
 }
 
 function lz4_decode(b: buffer_t, olen: u32): buffer_t {
-	let ibuf: u8_array_t = u8_array_create_from_buffer(b);
+	let ibuf: u8_array_t = b;
 	let ilen: u32 = ibuf.length;
 	let obuf: u8_array_t = u8_array_create(olen);
 	let ipos: u32 = 0;
@@ -221,5 +221,5 @@ function lz4_decode(b: buffer_t, olen: u32): buffer_t {
 		}
 	}
 
-	return obuf.buffer;
+	return obuf;
 }
