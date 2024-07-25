@@ -810,10 +810,10 @@ function value_type(value: string): string {
 	if (arrow > -1) {
 		let base: string = substring(value, 0, arrow);
 		let type: string = map_get(value_types, base);
-		value = substring(value, arrow + 2, value.length);
+		let member: string = substring(value, arrow + 2, value.length);
 		let struct_value_types: map_t<string, string> = map_get(struct_types, type);
 		if (struct_value_types != null) {
-			return map_get(struct_value_types, value);
+			return map_get(struct_value_types, member);
 		}
 	}
 	return map_get(value_types, value);
@@ -1324,15 +1324,16 @@ function write_fn_declarations() {
 			let fn_name: string = get_token();
 			let ret: string = function_return_type();
 
-			if (fn_name == "main") {
-				fn_name = "_main";
-			}
-			else if (fn_name == "(") { // Anonymous function
-				fn_name = last_fn_name + "_1";
+			if (fn_name == "(") { // Anonymous function
 				pos--;
+				fn_name = last_fn_name + "_" + pos;
 			}
-
-			last_fn_name = fn_name;
+			else {
+				if (fn_name == "main") {
+					fn_name = "_main";
+				}
+				last_fn_name = fn_name;
+			}
 
 			// Params
 			let _param_pos: i32 = 0;
@@ -1503,7 +1504,6 @@ function write_function() {
 	tabs = 1;
 	new_line = true;
 	let mark_as_root: string = null;
-	let anon_fn: string = fn_name;
 	fnested.length = 0;
 
 	while (true) {
@@ -1511,7 +1511,7 @@ function write_function() {
 		let token: string = get_token();
 
 		if (token == "function") { // Begin nested function
-			anon_fn += "_1";
+			let anon_fn: string = fn_name + "_" + pos;
 			out("&" + anon_fn);
 			if (get_token(-1) == "=") {
 				out(";\n");
@@ -1522,6 +1522,14 @@ function write_function() {
 			array_push(strings, "");
 			let fn_decl: string = map_get(fn_declarations, anon_fn);
 			out(fn_decl + "{\n");
+
+			let find: string = substring(fn_decl, 0, string_index_of(fn_decl, "("));
+			let fn_pos: i32 = parse_int(substring(find, string_last_index_of(find, "_") + 1, find.length));
+			let _pos: i32 = pos;
+			pos = fn_pos;
+			set_fn_param_types();
+			pos = _pos;
+
 			array_push(fnested, 1);
 			continue;
 		}

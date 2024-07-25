@@ -787,10 +787,10 @@ function value_type(value) {
 	if (arrow > -1) {
 		let base = value.substring(0, arrow);
 		let type = value_types.get(base);
-		value = value.substring(arrow + 2, value.length);
+		let member = value.substring(arrow + 2, value.length);
 		let struct_value_types = struct_types.get(type);
 		if (struct_value_types != null) {
-			return struct_value_types.get(value);
+			return struct_value_types.get(member);
 		}
 	}
 	return value_types.get(value);
@@ -1284,15 +1284,16 @@ function write_fn_declarations() {
 			let fn_name = get_token();
 			let ret = function_return_type();
 
-			if (fn_name === "main") {
-				fn_name = "_main";
-			}
-			else if (fn_name === "(") { // Anonymous function
-				fn_name = last_fn_name + "_1";
+			if (fn_name === "(") { // Anonymous function
+				fn_name = last_fn_name + "_" + (pos - 1);
 				pos--;
 			}
-
-			last_fn_name = fn_name;
+			else {
+				if (fn_name === "main") {
+					fn_name = "_main";
+				}
+				last_fn_name = fn_name;
+			}
 
 			// Params
 			let _param_pos = 0;
@@ -1464,7 +1465,6 @@ function write_function() {
 	tabs = 1;
 	new_line = true;
 	let mark_as_root = null;
-	let anon_fn = fn_name;
 	let nested = [];
 
 	while (true) {
@@ -1472,7 +1472,7 @@ function write_function() {
 		let token = get_token();
 
 		if (token === "function") { // Begin nested function
-			anon_fn += "_1";
+			let anon_fn = fn_name + "_" + pos;
 			out("&" + anon_fn);
 			if (get_token(-1) === "=") {
 				out(";\n");
@@ -1483,6 +1483,14 @@ function write_function() {
 			strings.push("");
 			let fn_decl = fn_declarations.get(anon_fn);
 			out(fn_decl + "{\n");
+
+			let find = fn_decl.substring(0, fn_decl.indexOf("("));
+			let fn_pos = parseInt(find.substring(find.lastIndexOf("_") + 1, find.length));
+			let _pos = pos;
+			pos = fn_pos;
+			set_fn_param_types();
+			pos = _pos;
+
 			nested.push(1);
 			continue;
 		}
