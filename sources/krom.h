@@ -292,7 +292,8 @@ struct HWND__ *kinc_windows_window_handle(int window_index);
 #include "android/android_file_dialog.h"
 #include "android/android_http_request.h"
 #elif defined(KINC_IOS)
-#include "ios/ios_file_dialog.h"
+#include <wchar.h>
+#include <kinc/backend/ios_file_dialog.h>
 #endif
 #ifdef WITH_TINYDIR
 #include <tinydir.h>
@@ -1740,7 +1741,7 @@ i32 krom_window_height() {
 void krom_set_window_title(string_t *title) {
 	kinc_window_set_title(0, title);
 	#if defined(KINC_IOS) || defined(KINC_ANDROID)
-	strcpy(mobile_title, *title);
+	strcpy(mobile_title, title);
 	#endif
 }
 
