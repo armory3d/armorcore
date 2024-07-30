@@ -330,18 +330,27 @@ void armpack_encode_start(void *_encoded) {
 	ei = 0;
 }
 
-static void armpack_write_u8(uint8_t u8) {
-	*(uint8_t *)(encoded + ei) = u8;
+int armpack_encode_end() {
+	return ei;
+}
+
+static void armpack_write_u8(uint8_t i) {
+	*(uint8_t *)(encoded + ei) = i;
 	ei += 1;
 }
 
-static void armpack_write_i32(int32_t i32) {
-	*(int32_t *)(encoded + ei) = i32;
+static void armpack_write_i16(int16_t i) {
+	*(int16_t *)(encoded + ei) = i;
+	ei += 2;
+}
+
+static void armpack_write_i32(int32_t i) {
+	*(int32_t *)(encoded + ei) = i;
 	ei += 4;
 }
 
-static void armpack_write_f32(float f32) {
-	*(float *)(encoded + ei) = f32;
+static void armpack_write_f32(float i) {
+	*(float *)(encoded + ei) = i;
 	ei += 4;
 }
 
@@ -355,33 +364,75 @@ void armpack_encode_array(uint32_t count) { // any
 	armpack_write_i32(count);
 }
 
-void armpack_encode_array_f32(float *f32, uint32_t count) {
-	if (f32 == NULL) {
+void armpack_encode_array_f32(f32_array_t *f32a) {
+	if (f32a == NULL) {
 		armpack_write_u8(0xc0); // NULL
 		return;
 	}
 	armpack_write_u8(0xdd);
-	armpack_write_i32(count);
+	armpack_write_i32(f32a->length);
 	armpack_write_u8(0xca);
-	for (int i = 0; i < count; ++i) {
-		armpack_write_f32(f32[i]);
+	for (int i = 0; i < f32a->length; ++i) {
+		armpack_write_f32(f32a->buffer[i]);
 	}
 }
 
-void armpack_encode_array_u8(uint8_t *u8, uint32_t count) {
-	if (u8 == NULL) {
+void armpack_encode_array_i32(i32_array_t *i32a) {
+	if (i32a == NULL) {
 		armpack_write_u8(0xc0); // NULL
 		return;
 	}
 	armpack_write_u8(0xdd);
-	armpack_write_i32(count);
+	armpack_write_i32(i32a->length);
+	armpack_write_u8(0xd2);
+	for (int i = 0; i < i32a->length; ++i) {
+		armpack_write_i32(i32a->buffer[i]);
+	}
+}
+
+void armpack_encode_array_i16(i16_array_t *i16a) {
+	if (i16a == NULL) {
+		armpack_write_u8(0xc0); // NULL
+		return;
+	}
+	armpack_write_u8(0xdd);
+	armpack_write_i32(i16a->length);
+	armpack_write_u8(0xd1);
+	for (int i = 0; i < i16a->length; ++i) {
+		armpack_write_i16(i16a->buffer[i]);
+	}
+}
+
+void armpack_encode_array_u8(u8_array_t *u8a) {
+	if (u8a == NULL) {
+		armpack_write_u8(0xc0); // NULL
+		return;
+	}
+	armpack_write_u8(0xdd);
+	armpack_write_i32(u8a->length);
 	armpack_write_u8(0xc4);
-	for (int i = 0; i < count; ++i) {
-		armpack_write_u8(u8[i]);
+	for (int i = 0; i < u8a->length; ++i) {
+		armpack_write_u8(u8a->buffer[i]);
+	}
+}
+
+void armpack_encode_array_string(char_ptr_array_t *strings) {
+	if (strings == NULL) {
+		armpack_write_u8(0xc0); // NULL
+		return;
+	}
+	armpack_write_u8(0xdd);
+	armpack_write_i32(strings->length);
+	for (int i = 0; i < strings->length; ++i) {
+		armpack_encode_string(strings->buffer[i]);
 	}
 }
 
 void armpack_encode_string(char *str) {
+	if (str == NULL) {
+		armpack_write_u8(0xc0); // NULL
+		return;
+	}
 	armpack_write_u8(0xdb);
 	size_t len = strlen(str);
 	armpack_write_i32(len);
@@ -390,14 +441,22 @@ void armpack_encode_string(char *str) {
 	}
 }
 
-void armpack_encode_i32(int32_t i32) {
+void armpack_encode_i32(int32_t i) {
 	armpack_write_u8(0xd2);
-	armpack_write_i32(i32);
+	armpack_write_i32(i);
 }
 
-void armpack_encode_f32(float f32) {
+void armpack_encode_f32(float f) {
 	armpack_write_u8(0xca);
-	armpack_write_f32(f32);
+	armpack_write_f32(f);
+}
+
+void armpack_encode_bool(bool b) {
+	armpack_write_u8(b ? 0xc3 : 0xc2);
+}
+
+void armpack_encode_null() {
+	armpack_write_u8(0xc0);
 }
 
 int armpack_size_map() {
@@ -408,12 +467,12 @@ int armpack_size_array() {
 	return 1 + 4; // u8 tag + i32 count
 }
 
-int armpack_size_array_f32(uint32_t count) {
-	return 1 + 4 + 1 + count * 4; // u8 tag + i32 count + u8 flag + f32* contents
+int armpack_size_array_f32(f32_array_t *f32a) {
+	return 1 + 4 + 1 + f32a->length * 4; // u8 tag + i32 count + u8 flag + f32* contents
 }
 
-int armpack_size_array_u8(uint32_t count) {
-	return 1 + 4 + 1 + count; // u8 tag + i32 count + u8 flag + u8* contents
+int armpack_size_array_u8(u8_array_t *u8a) {
+	return 1 + 4 + 1 + u8a->length; // u8 tag + i32 count + u8 flag + u8* contents
 }
 
 int armpack_size_string(char *str) {
@@ -426,4 +485,8 @@ int armpack_size_i32() {
 
 int armpack_size_f32() {
 	return 1 + 4; // u8 tag + f32
+}
+
+int armpack_size_bool() {
+	return 1; // u8 tag
 }

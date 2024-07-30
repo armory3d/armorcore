@@ -340,5 +340,27 @@ declare function krom_language(): string;
 declare function krom_io_obj_parse(file_bytes: buffer_t, split_code: i32, start_pos: i32, udim: bool): any;
 
 declare function armpack_decode(b: buffer_t): any;
+declare function armpack_encode_start(encoded: any): void;
+declare function armpack_encode_end(): i32;
+declare function armpack_encode_map(count: u32): void;
+declare function armpack_encode_array(count: u32): void;
+declare function armpack_encode_array_f32(f32a: f32_array_t): void;
+declare function armpack_encode_array_i32(i32a: i32_array_t): void;
+declare function armpack_encode_array_i16(i16a: i16_array_t): void;
+declare function armpack_encode_array_u8(u8a: u8_array_t): void;
+declare function armpack_encode_array_string(strings: string[]): void;
+declare function armpack_encode_string(str: string): void;
+declare function armpack_encode_i32(i: i32): void;
+declare function armpack_encode_f32(f: f32): void;
+declare function armpack_encode_bool(b: bool): void;
+declare function armpack_encode_null(): void;
+declare function armpack_size_map(): i32;
+declare function armpack_size_array(): i32;
+declare function armpack_size_array_f32(f32a: f32_array_t): i32;
+declare function armpack_size_array_u8(u8a: u8_array_t): i32;
+declare function armpack_size_string(str: string): i32;
+declare function armpack_size_i32(): i32;
+declare function armpack_size_f32(): i32;
+declare function armpack_size_bool(): i32;
 
 ///end

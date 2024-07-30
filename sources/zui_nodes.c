@@ -1171,8 +1171,8 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	}
 }
 
-void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
-	armpack_encode_start(encoded);
+void zui_node_canvas_encode(zui_node_canvas_t *canvas) {
+	// armpack_encode_start(encoded);
 	armpack_encode_map(3);
 	armpack_encode_string("name");
 	armpack_encode_string(canvas->name);
@@ -1209,7 +1209,7 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("color");
 			armpack_encode_i32(canvas->nodes->buffer[i]->inputs->buffer[j]->color);
 			armpack_encode_string("default_value");
-			armpack_encode_array_f32(canvas->nodes->buffer[i]->inputs->buffer[j]->default_value->buffer, canvas->nodes->buffer[i]->inputs->buffer[j]->default_value->length);
+			armpack_encode_array_f32(canvas->nodes->buffer[i]->inputs->buffer[j]->default_value);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes->buffer[i]->inputs->buffer[j]->min);
 			armpack_encode_string("max");
@@ -1235,7 +1235,7 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("color");
 			armpack_encode_i32(canvas->nodes->buffer[i]->outputs->buffer[j]->color);
 			armpack_encode_string("default_value");
-			armpack_encode_array_f32(canvas->nodes->buffer[i]->outputs->buffer[j]->default_value->buffer, canvas->nodes->buffer[i]->outputs->buffer[j]->default_value->length);
+			armpack_encode_array_f32(canvas->nodes->buffer[i]->outputs->buffer[j]->default_value);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes->buffer[i]->outputs->buffer[j]->min);
 			armpack_encode_string("max");
@@ -1257,10 +1257,10 @@ void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas) {
 			armpack_encode_string("output");
 			armpack_encode_i32(canvas->nodes->buffer[i]->buttons->buffer[j]->output);
 			armpack_encode_string("default_value");
-			armpack_encode_array_f32(canvas->nodes->buffer[i]->buttons->buffer[j]->default_value->buffer, canvas->nodes->buffer[i]->buttons->buffer[j]->default_value->length);
+			armpack_encode_array_f32(canvas->nodes->buffer[i]->buttons->buffer[j]->default_value);
 			armpack_encode_string("data");
 			u8_array_t *u8 = canvas->nodes->buffer[i]->buttons->buffer[j]->data;
-			armpack_encode_array_u8(u8 != NULL ? u8->buffer : NULL, u8 != NULL ? u8->length : 0);
+			armpack_encode_array_u8(u8);
 			armpack_encode_string("min");
 			armpack_encode_f32(canvas->nodes->buffer[i]->buttons->buffer[j]->min);
 			armpack_encode_string("max");
@@ -1330,7 +1330,7 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("color");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array_f32(canvas->nodes->buffer[i]->inputs->buffer[j]->default_value->length);
+			size += armpack_size_array_f32(canvas->nodes->buffer[i]->inputs->buffer[j]->default_value);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");
@@ -1356,7 +1356,7 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("color");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array_f32(canvas->nodes->buffer[i]->outputs->buffer[j]->default_value->length);
+			size += armpack_size_array_f32(canvas->nodes->buffer[i]->outputs->buffer[j]->default_value);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");
@@ -1378,10 +1378,10 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 			size += armpack_size_string("output");
 			size += armpack_size_i32();
 			size += armpack_size_string("default_value");
-			size += armpack_size_array_f32(canvas->nodes->buffer[i]->buttons->buffer[j]->default_value->length);
+			size += armpack_size_array_f32(canvas->nodes->buffer[i]->buttons->buffer[j]->default_value);
 			size += armpack_size_string("data");
 			u8_array_t *u8 = canvas->nodes->buffer[i]->buttons->buffer[j]->data;
-			size += armpack_size_array_u8(u8 != NULL ? u8->length : 0);
+			size += armpack_size_array_u8(u8);
 			size += armpack_size_string("min");
 			size += armpack_size_f32();
 			size += armpack_size_string("max");

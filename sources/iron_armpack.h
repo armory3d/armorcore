@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "iron_array.h"
 
 #ifdef __GNUC__
@@ -18,21 +19,28 @@
 void *armpack_decode(buffer_t *b);
 
 void armpack_encode_start(void *encoded);
+int armpack_encode_end();
 void armpack_encode_map(uint32_t count);
 void armpack_encode_array(uint32_t count);
-void armpack_encode_array_f32(float *f32, uint32_t count);
-void armpack_encode_array_u8(uint8_t *u8, uint32_t count);
+void armpack_encode_array_f32(f32_array_t *f32a);
+void armpack_encode_array_i32(i32_array_t *i32a);
+void armpack_encode_array_i16(i16_array_t *i16a);
+void armpack_encode_array_u8(u8_array_t *u8a);
+void armpack_encode_array_string(char_ptr_array_t *strings);
 void armpack_encode_string(char *str);
-void armpack_encode_i32(int32_t i32);
-void armpack_encode_f32(float f32);
+void armpack_encode_i32(int32_t i);
+void armpack_encode_f32(float f);
+void armpack_encode_bool(bool b);
+void armpack_encode_null();
 
 int armpack_size_map();
 int armpack_size_array();
-int armpack_size_array_f32(uint32_t count);
-int armpack_size_array_u8(uint32_t count);
+int armpack_size_array_f32(f32_array_t *f32a);
+int armpack_size_array_u8(u8_array_t *u8a);
 int armpack_size_string(char *str);
 int armpack_size_i32();
 int armpack_size_f32();
+int armpack_size_bool();
 
 /* JS object:
 

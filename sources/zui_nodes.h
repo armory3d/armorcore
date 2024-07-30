@@ -128,7 +128,7 @@ extern void (*zui_nodes_on_canvas_released)(void);
 extern void (*zui_nodes_on_socket_released)(int);
 extern void (*zui_nodes_on_link_drag)(int, bool);
 
-void zui_node_canvas_encode(void *encoded, zui_node_canvas_t *canvas);
+void zui_node_canvas_encode(zui_node_canvas_t *canvas);
 uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas);
 
 float ZUI_NODE_X(zui_node_t *node);
