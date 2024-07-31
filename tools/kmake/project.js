@@ -4,12 +4,12 @@ let project = new Project("kmake");
 project.addIncludeDir("../../sources/libs");
 project.addFile("../../sources/libs/quickjs/*.c");
 project.addFile("main.c");
-project.addDefine("environ=__environ");
-project.addDefine("sighandler_t=__sighandler_t");
 
 if (platform === 'linux') {
 	project.addLib("m");
 	project.addDefine("_GNU_SOURCE");
+	project.addDefine("environ=__environ");
+	project.addDefine("sighandler_t=__sighandler_t");
 }
 else if (platform === "windows") {
 	project.addDefine("WIN32_LEAN_AND_MEAN");

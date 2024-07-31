@@ -289,8 +289,8 @@ struct HWND__ *kinc_windows_window_handle(int window_index);
 #ifdef WITH_NFD
 #include <nfd.h>
 #elif defined(KINC_ANDROID)
-#include "android/android_file_dialog.h"
-#include "android/android_http_request.h"
+#include "kinc/backend/android_file_dialog.h"
+#include "kinc/backend/android_http_request.h"
 #elif defined(KINC_IOS)
 #include <wchar.h>
 #include <kinc/backend/ios_file_dialog.h>

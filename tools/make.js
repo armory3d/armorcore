@@ -23,12 +23,12 @@ let makedir = path_join(toolsdir, "..", "..");
 let __dirname = makedir;
 let armorcoredir = path_join(makedir, "..");
 
-function get_embedded_binary_data() {
-
+function get_binary_data(p) {
+	return fs_readfile(armorcoredir + "/sources/backends/data/" + p);
 }
 
-function get_embedded_data() {
-
+function get_text_data(p) {
+	return fs_readfile(armorcoredir + "/sources/backends/data/" + p);
 }
 
 function fs_exists(p) {
@@ -1964,9 +1964,6 @@ class AndroidExporter extends Exporter {
 			permissions: ["android.permission.VIBRATE"],
 			disableStickyImmersiveMode: false,
 			metadata: [],
-			buildGradlePath: null,
-			globalBuildGradlePath: null,
-			proguardRulesPath: null,
 			abiFilters: []
 		};
 		if (project.target_options != null && project.target_options.android != null) {
@@ -1975,77 +1972,48 @@ class AndroidExporter extends Exporter {
 				if (userOptions[key] == null)
 					continue;
 				switch (key) {
-					case "buildGradlePath":
-					case "globalBuildGradlePath":
-					case "proguardRulesPath":
-						// fix path slashes and normalize
-						let p = userOptions[key].split("/").join(path_sep);
-						target_options[key] = path_join(from, p);
-						break;
 					default:
 						target_options[key] = userOptions[key];
 				}
 			}
 		}
-		let binaryData = get_embedded_binary_data();
-		let textData = get_embedded_data();
-		fs_writefile(path_join(outdir, '.gitignore'), textData['android_gitignore']);
-		if (target_options.globalBuildGradlePath) {
-			fs_copyfile(target_options.globalBuildGradlePath, path_join(outdir, 'build.gradle.kts'));
-		}
-		else {
-			fs_writefile(path_join(outdir, 'build.gradle.kts'), textData['android_build_gradle']);
-		}
-		fs_writefile(path_join(outdir, 'gradle.properties'), textData['android_gradle_properties']);
-		fs_writefile(path_join(outdir, 'gradlew'), textData['android_gradlew']);
+		fs_writefile(path_join(outdir, 'build.gradle.kts'), get_text_data('android/build.gradle.kts'));
+		fs_writefile(path_join(outdir, 'gradle.properties'), get_text_data('android/gradle.properties'));
+		fs_writefile(path_join(outdir, 'gradlew'), get_text_data('android/gradlew'));
 		if (os_platform() !== 'win32') {
-			os_chmod(path_join(outdir, 'gradlew'), 0o755);
+			os_chmod(path_join(outdir, 'gradlew'), "+x");
 		}
-		fs_writefile(path_join(outdir, 'gradlew.bat'), textData['android_gradlew_bat']);
-		let settings = textData['android_settings_gradle'];
+		fs_writefile(path_join(outdir, 'gradlew.bat'), get_text_data('android/gradlew.bat'));
+		let settings = get_text_data('android/settings.gradle.kts');
 		settings = settings.replace(/{name}/g, project.getName());
 		fs_writefile(path_join(outdir, 'settings.gradle.kts'), settings);
 		fs_ensuredir(path_join(outdir, 'app'));
-		fs_writefile(path_join(outdir, 'app', '.gitignore'), textData['android_app_gitignore']);
-		if (target_options.proguardRulesPath) {
-			fs_copyfile(target_options.proguardRulesPath, path_join(outdir, 'app', 'proguard-rules.pro'));
-		}
-		else {
-			fs_writefile(path_join(outdir, 'app', 'proguard-rules.pro'), textData['android_app_proguard_rules_pro']);
-		}
-		this.write_app_gradle(project, outdir, from, target_options, textData);
-		this.write_cmake_lists(project, outdir, from, textData);
+		fs_writefile(path_join(outdir, 'app', 'proguard-rules.pro'), get_text_data('android/app/proguard-rules.pro'));
+		this.write_app_gradle(project, outdir, from, target_options);
+		this.write_cmake_lists(project, outdir, from);
 		fs_ensuredir(path_join(outdir, 'app', 'src'));
 		fs_ensuredir(path_join(outdir, 'app', 'src', 'main'));
-		this.write_manifest(outdir, target_options, textData);
-		let strings = textData['android_main_res_values_strings_xml'];
+		this.write_manifest(outdir, target_options);
+		let strings = get_text_data('android/main/res/values/strings.xml');
 		strings = strings.replace(/{name}/g, project.getName());
 		fs_ensuredir(path_join(outdir, 'app', 'src', 'main', 'res', 'values'));
 		fs_writefile(path_join(outdir, 'app', 'src', 'main', 'res', 'values', 'strings.xml'), strings);
 		this.export_icons(project.icon, outdir, from, to);
 		fs_ensuredir(path_join(outdir, 'gradle', 'wrapper'));
-		fs_writefile(path_join(outdir, 'gradle', 'wrapper', 'gradle-wrapper.jar'), binaryData['android_gradle_wrapper_gradle_wrapper_jar']);
-		fs_writefile(path_join(outdir, 'gradle', 'wrapper', 'gradle-wrapper.properties'), textData['android_gradle_wrapper_gradle_wrapper_properties']);
-		if (project.get_debug_dir().length > 0) {
-			fs_copydir(path_resolve(from, project.get_debug_dir()), path_resolve(to, this.safe_name, 'app', 'src', 'main', 'assets'));
-		}
+		fs_writefile(path_join(outdir, 'gradle', 'wrapper', 'gradle-wrapper.jar'), get_binary_data('android/gradle/wrapper/gradle-wrapper.jar'));
+		fs_writefile(path_join(outdir, 'gradle', 'wrapper', 'gradle-wrapper.properties'), get_text_data('android/gradle/wrapper/gradle-wrapper.properties'));
+		fs_copydir(path_resolve(from, project.get_debug_dir()), path_resolve(to, this.safe_name, 'app', 'src', 'main', 'assets'));
 		this.compile_commands.export_solution(project);
 	}
 
-	write_app_gradle(project, outdir, from, target_options, textData) {
+	write_app_gradle(project, outdir, from, target_options) {
 		let cflags = '';
 		for (let flag of project.cFlags)
 			cflags += flag + ' ';
 		let cppflags = '';
 		for (let flag of project.cppFlags)
 			cppflags += flag + ' ';
-		let gradle = null;
-		if (target_options.buildGradlePath) {
-			gradle = fs_readfile(target_options.buildGradlePath);
-		}
-		else {
-			gradle = textData['android_app_build_gradle'];
-		}
+		let gradle = get_text_data('android/app/build.gradle.kts');
 		gradle = gradle.replace(/{package}/g, target_options.package);
 		gradle = gradle.replace(/{versionCode}/g, target_options.versionCode.toString());
 		gradle = gradle.replace(/{versionName}/g, target_options.versionName);
@@ -2088,21 +2056,21 @@ class AndroidExporter extends Exporter {
 		for (let dir of project.getJavaDirs()) {
 			javasources += '"' + path_relative(path_join(outdir, 'app'), path_resolve(from, dir)).replace(/\\/g, '/') + '", ';
 		}
-		javasources += '"' + path_relative(path_join(outdir, 'app'), path_join(armorcoredir.toString(), 'Backends', 'System', 'Android', 'Java-Sources')).replace(/\\/g, '/') + '"';
+		javasources += '"' + path_join(armorcoredir, 'sources', 'backends', 'android', 'java').replace(/\\/g, '/') + '"';
 		gradle = gradle.replace(/{javasources}/g, javasources);
 		fs_writefile(path_join(outdir, 'app', 'build.gradle.kts'), gradle);
 	}
 
-	write_cmake_lists(project, outdir, from, textData) {
-		let cmake = textData['android_app_cmakelists_txt'];
+	write_cmake_lists(project, outdir, from) {
+		let cmake = get_text_data('android/app/CMakeLists.txt');
 		let debugDefines = '';
 		for (let def of project.getDefines()) {
-			debugDefines += ' -D' + def.value.replace(/\"/g, '\\\\\\\"');
+			debugDefines += ' -D' + def.replace(/\"/g, '\\\\\\\"');
 		}
 		cmake = cmake.replace(/{debug_defines}/g, debugDefines);
 		let releaseDefines = '';
 		for (let def of project.getDefines()) {
-			releaseDefines += ' -D' + def.value.replace(/\"/g, '\\\\\\\"');
+			releaseDefines += ' -D' + def.replace(/\"/g, '\\\\\\\"');
 		}
 		cmake = cmake.replace(/{release_defines}/g, releaseDefines);
 		let includes = '';
@@ -2135,8 +2103,8 @@ class AndroidExporter extends Exporter {
 		fs_writefile(cmakePath, cmake);
 	}
 
-	write_manifest(outdir, target_options, textData) {
-		let manifest = textData['android_main_androidmanifest_xml'];
+	write_manifest(outdir, target_options) {
+		let manifest = get_text_data('android/main/AndroidManifest.xml');
 		manifest = manifest.replace(/{package}/g, target_options.package);
 		manifest = manifest.replace(/{installLocation}/g, target_options.installLocation);
 		manifest = manifest.replace(/{versionCode}/g, target_options.versionCode.toString());
@@ -2160,8 +2128,8 @@ class AndroidExporter extends Exporter {
 			let folder = folders[i];
 			let dpi = dpis[i];
 			fs_ensuredir(path_join(outdir, 'app', 'src', 'main', 'res', folder));
-			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher.png'), dpi, dpi, undefined, from);
-			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher_round.png'), dpi, dpi, undefined, from);
+			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher.png'), dpi, dpi, null, from);
+			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher_round.png'), dpi, dpi, null, from);
 		}
 	}
 }
@@ -2215,8 +2183,8 @@ class CompilerCommandsExporter extends Exporter {
 			default_args.push('--target=aarch64-none-linux-android21');
 			default_args.push('-DANDROID');
 			function ndkFromSdkRoot() {
-				let _a;
-				let sdkEnv = (_a = os_env('ANDROID_HOME')) !== null && _a !== void 0 ? _a : os_env('ANDROID_SDK_ROOT');
+				let _a = os_env('ANDROID_HOME');
+				let sdkEnv = _a !== null ? _a : os_env('ANDROID_SDK_ROOT');
 				if (!sdkEnv)
 					return null;
 				let ndk_dir = path_join(sdkEnv, 'ndk');
@@ -2230,7 +2198,8 @@ class CompilerCommandsExporter extends Exporter {
 				}
 				return path_join(ndk_dir, ndks[0]);
 			}
-			let android_ndk = (_a = os_env('ANDROID_NDK')) !== null && _a !== void 0 ? _a : ndkFromSdkRoot();
+			let _a = os_env('ANDROID_NDK');
+			let android_ndk = _a !== null ? _a : ndkFromSdkRoot();
 			if (android_ndk) {
 				let host_tag = '';
 				switch (os_platform()) {
