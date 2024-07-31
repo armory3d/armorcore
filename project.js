@@ -401,6 +401,8 @@ else if (platform === 'android') {
 	project.target_options.android.screenOrientation = ['sensorLandscape'];
 	project.target_options.android.minSdkVersion = 30;
 	project.target_options.android.targetSdkVersion = 33;
+	project.target_options.android.versionCode = 240000;
+	project.target_options.android.versionName = "1.0 alpha";
 }
 else if (platform === 'ios') {
 	project.addDefine('IDLE_SLEEP');

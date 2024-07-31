@@ -13,8 +13,10 @@ android {
         targetSdk = {targetSdkVersion}
         versionCode = {versionCode}
         versionName = "{versionName}"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters.add("arm64-v8a")
+        }
     }
     sourceSets.getByName("main") {
         java.setSrcDirs(listOf({javasources}))
