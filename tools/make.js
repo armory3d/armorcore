@@ -563,7 +563,8 @@ class VisualStudioExporter extends Exporter {
 	}
 
 	get_platform_toolset() {
-		return 'v143';
+		// return 'v143';
+		return 'ClangCL';
 	}
 
 	configuration(config, indent, project) {
