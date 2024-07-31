@@ -41,7 +41,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	descriptorsAllocated = 0;
 	pipeline->_constant_buffer = constant_buffer;
 	// Descriptor heap
-	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {0};
+	D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
 	// Allocate a heap for 3 descriptors:
 	// 2 - bottom and top level acceleration structure
 	// 1 - raytracing output texture SRV
@@ -182,32 +182,32 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	device->CreateRootSignature(1, blob->GetBufferPointer(), blob->GetBufferSize(), IID_GRAPHICS_PPV_ARGS(&dxrRootSignature));
 
 	// Pipeline
-	D3D12_STATE_OBJECT_DESC raytracingPipeline = {0};
+	D3D12_STATE_OBJECT_DESC raytracingPipeline = {};
 	raytracingPipeline.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
 
-	D3D12_SHADER_BYTECODE shaderBytecode = {0};
+	D3D12_SHADER_BYTECODE shaderBytecode = {};
 	shaderBytecode.pShaderBytecode = ray_shader;
 	shaderBytecode.BytecodeLength = ray_shader_size;
 
-	D3D12_DXIL_LIBRARY_DESC dxilLibrary = {0};
+	D3D12_DXIL_LIBRARY_DESC dxilLibrary = {};
 	dxilLibrary.DXILLibrary = shaderBytecode;
-	D3D12_EXPORT_DESC exports[3] = {0};
+	D3D12_EXPORT_DESC exports[3] = {};
 	exports[0].Name = raygen_shader_name;
 	exports[1].Name = closesthit_shader_name;
 	exports[2].Name = miss_shader_name;
 	dxilLibrary.pExports = exports;
 	dxilLibrary.NumExports = 3;
 
-	D3D12_HIT_GROUP_DESC hitGroup = {0};
+	D3D12_HIT_GROUP_DESC hitGroup = {};
 	hitGroup.ClosestHitShaderImport = closesthit_shader_name;
 	hitGroup.HitGroupExport = hit_group_name;
 	hitGroup.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
 
-	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {0};
+	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig = {};
 	shaderConfig.MaxPayloadSizeInBytes = 10 * sizeof(float); // float4 color
 	shaderConfig.MaxAttributeSizeInBytes = 8 * sizeof(float); // float2 barycentrics
 
-	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {0};
+	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig = {};
 	pipelineConfig.MaxTraceRecursionDepth = 1; // ~ primary rays only
 
 	D3D12_STATE_SUBOBJECT subobjects[5] = {};
@@ -240,7 +240,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	{
 		UINT size = shaderIdSize + constant_buffer->impl.mySize;
 		UINT shaderRecordSize = (size + (align - 1)) & ~(align - 1);
-		D3D12_RESOURCE_DESC bufferDesc = {0};
+		D3D12_RESOURCE_DESC bufferDesc = {};
 		bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 		bufferDesc.Width = shaderRecordSize;
 		bufferDesc.Height = 1;
@@ -250,7 +250,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 		bufferDesc.SampleDesc.Count = 1;
 		bufferDesc.SampleDesc.Quality = 0;
 		bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-		D3D12_HEAP_PROPERTIES uploadHeapProperties = {0};
+		D3D12_HEAP_PROPERTIES uploadHeapProperties = {};
 		uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
 		uploadHeapProperties.CreationNodeMask = 1;
 		uploadHeapProperties.VisibleNodeMask = 1;
@@ -258,13 +258,13 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 		device->CreateCommittedResource(&uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL,
 		                                IID_GRAPHICS_PPV_ARGS(&pipeline->impl.raygen_shader_table));
 
-		D3D12_RANGE rstRange = {0};
+		D3D12_RANGE rstRange = {};
 		rstRange.Begin = 0;
 		rstRange.End = 0;
 		uint8_t *byteDest;
 		pipeline->impl.raygen_shader_table->Map(0, &rstRange, (void **)(&byteDest));
 
-		D3D12_RANGE cbRange = {0};
+		D3D12_RANGE cbRange = {};
 		cbRange.Begin = 0;
 		cbRange.End = constant_buffer->impl.mySize;
 		void *constantBufferData;
@@ -278,7 +278,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	{
 		UINT size = shaderIdSize;
 		UINT shaderRecordSize = (size + (align - 1)) & ~(align - 1);
-		D3D12_RESOURCE_DESC bufferDesc = {0};
+		D3D12_RESOURCE_DESC bufferDesc = {};
 		bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 		bufferDesc.Width = shaderRecordSize;
 		bufferDesc.Height = 1;
@@ -288,7 +288,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 		bufferDesc.SampleDesc.Count = 1;
 		bufferDesc.SampleDesc.Quality = 0;
 		bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-		D3D12_HEAP_PROPERTIES uploadHeapProperties = {0};
+		D3D12_HEAP_PROPERTIES uploadHeapProperties = {};
 		uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
 		uploadHeapProperties.CreationNodeMask = 1;
 		uploadHeapProperties.VisibleNodeMask = 1;
@@ -296,7 +296,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 		device->CreateCommittedResource(&uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL,
 		                                IID_GRAPHICS_PPV_ARGS(&pipeline->impl.miss_shader_table));
 
-		D3D12_RANGE mstRange = {0};
+		D3D12_RANGE mstRange = {};
 		mstRange.Begin = 0;
 		mstRange.End = 0;
 		uint8_t *byteDest;
@@ -309,7 +309,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 	{
 		UINT size = shaderIdSize;
 		UINT shaderRecordSize = (size + (align - 1)) & ~(align - 1);
-		D3D12_RESOURCE_DESC bufferDesc = {0};
+		D3D12_RESOURCE_DESC bufferDesc = {};
 		bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 		bufferDesc.Width = shaderRecordSize;
 		bufferDesc.Height = 1;
@@ -319,7 +319,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 		bufferDesc.SampleDesc.Count = 1;
 		bufferDesc.SampleDesc.Quality = 0;
 		bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-		D3D12_HEAP_PROPERTIES uploadHeapProperties = {0};
+		D3D12_HEAP_PROPERTIES uploadHeapProperties = {};
 		uploadHeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
 		uploadHeapProperties.CreationNodeMask = 1;
 		uploadHeapProperties.VisibleNodeMask = 1;
@@ -327,7 +327,7 @@ void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, kinc_g5_com
 		device->CreateCommittedResource(&uploadHeapProperties, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL,
 		                                IID_GRAPHICS_PPV_ARGS(&pipeline->impl.hitgroup_shader_table));
 
-		D3D12_RANGE hstRange = {0};
+		D3D12_RANGE hstRange = {};
 		hstRange.Begin = 0;
 		hstRange.End = 0;
 		uint8_t *byteDest;
@@ -351,7 +351,7 @@ void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline) {
 }
 
 UINT create_srv_vb(kinc_g5_vertex_buffer_t *vb, UINT numElements, UINT elementSize) {
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {0};
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Buffer.NumElements = numElements;
@@ -377,7 +377,7 @@ UINT create_srv_vb(kinc_g5_vertex_buffer_t *vb, UINT numElements, UINT elementSi
 }
 
 UINT create_srv_ib(kinc_g5_index_buffer_t *ib, UINT numElements, UINT elementSize) {
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {0};
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Buffer.NumElements = numElements;
@@ -443,7 +443,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 	{
 		UINT64 tlSize = topLevelPrebuildInfo.ScratchDataSizeInBytes;
 		UINT64 blSize = bottomLevelPrebuildInfo.ScratchDataSizeInBytes;
-		D3D12_RESOURCE_DESC bufferDesc = {0};
+		D3D12_RESOURCE_DESC bufferDesc = {};
 		bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 		bufferDesc.Width = tlSize > blSize ? tlSize : blSize;
 		bufferDesc.Height = 1;
@@ -454,7 +454,7 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 		bufferDesc.SampleDesc.Quality = 0;
 		bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 		bufferDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-		D3D12_HEAP_PROPERTIES uploadHeapProperties = {0};
+		D3D12_HEAP_PROPERTIES uploadHeapProperties = {};
 		uploadHeapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 		uploadHeapProperties.CreationNodeMask = 1;
 		uploadHeapProperties.VisibleNodeMask = 1;
@@ -509,12 +509,12 @@ void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_struct
 
 	// Create an instance desc for the bottom-level acceleration structure
 	ID3D12Resource *instanceDescs;
-	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc = {0};
+	D3D12_RAYTRACING_INSTANCE_DESC instanceDesc = {};
 	instanceDesc.Transform[0][0] = instanceDesc.Transform[1][1] = instanceDesc.Transform[2][2] = scale;
 	instanceDesc.InstanceMask = 1;
 	instanceDesc.AccelerationStructure = accel->impl.bottom_level_accel->GetGPUVirtualAddress();
 
-	D3D12_RESOURCE_DESC bufferDesc = {0};
+	D3D12_RESOURCE_DESC bufferDesc = {};
 	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
 	bufferDesc.Width = sizeof(instanceDesc);
 	bufferDesc.Height = 1;
@@ -623,11 +623,11 @@ void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 		_output->impl.renderTargetDescriptorHeap->Release();
 		_output->impl.srvDescriptorHeap->Release();
 
-		D3D12_HEAP_PROPERTIES heapProperties = {0};
+		D3D12_HEAP_PROPERTIES heapProperties = {};
 		heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
 		heapProperties.CreationNodeMask = 1;
 		heapProperties.VisibleNodeMask = 1;
-		D3D12_RESOURCE_DESC desc = {0};
+		D3D12_RESOURCE_DESC desc = {};
 		desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		desc.Width = _output->texWidth;
 		desc.Height = _output->texHeight;
@@ -653,7 +653,7 @@ void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 		view.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 		view.Texture2D.MipSlice = 0;
 		view.Texture2D.PlaneSlice = 0;
-		D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {0};
+		D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
 		heapDesc.NumDescriptors = 1;
 		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
@@ -661,14 +661,14 @@ void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 		device->CreateRenderTargetView(_output->impl.renderTarget, &view,
 		                               _output->impl.renderTargetDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-		D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {0};
+		D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
 		descriptorHeapDesc.NumDescriptors = 1;
 		descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		descriptorHeapDesc.NodeMask = 0;
 		descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 		device->CreateDescriptorHeap(&descriptorHeapDesc, IID_GRAPHICS_PPV_ARGS(&_output->impl.srvDescriptorHeap));
 
-		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc = {0};
+		D3D12_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc = {};
 		shaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 		shaderResourceViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		shaderResourceViewDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
@@ -678,7 +678,7 @@ void kinc_raytrace_set_target(kinc_g5_render_target_t *_output) {
 		device->CreateShaderResourceView(_output->impl.renderTarget, &shaderResourceViewDesc,
 		                                 _output->impl.srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-		D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {0};
+		D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc = {};
 		UAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 		device->CreateUnorderedAccessView(_output->impl.renderTarget, NULL, &UAVDesc, outputCpuDescriptor);
 	}

@@ -265,7 +265,7 @@ int LZ4_decompress_safe(const char *source, char *dest, int compressed_size, int
 #endif
 #ifdef KINC_DIRECT3D12
 #include <d3d12.h>
-bool waitAfterNextDraw;
+extern bool waitAfterNextDraw;
 #endif
 #if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
 #include <kinc/graphics5/constantbuffer.h>
