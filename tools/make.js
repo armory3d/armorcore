@@ -3395,6 +3395,7 @@ let goptions = {
 	arch: 'default',
 	shaderversion: null,
 	minitsjs: false,
+	js: false,
 };
 
 if (os_env("ARM_EMBED")) {
@@ -3413,6 +3414,16 @@ for (let i = 1; i < args.length; ++i) {
 		}
 		goptions[name] = value;
 	}
+}
+
+if (goptions.js) {
+	globalThis.std = std;
+	globalThis.fs_readfile = fs_readfile;
+	globalThis.fs_writefile = fs_writefile;
+	globalThis.fs_exists = fs_exists;
+	globalThis.fs_readdir = fs_readdir;
+	(1, eval)(fs_readfile(goptions.js));
+	std.exit();
 }
 
 if (goptions.run) {
