@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         tools:targetApi="{targetSdkVersion}">
         <activity
-            android:name="tech.kinc.KincActivity" android:label="@string/app_name" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|screenLayout|smallestScreenSiz"
+            android:name="tech.kinc.KincActivity" android:label="@string/app_name" android:configChanges="orientation|keyboardHidden|keyboard|screenSize|screenLayout|smallestScreenSize"
             android:exported="true" android:screenOrientation="{screenOrientation}"
             android:launchMode="singleTask"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
