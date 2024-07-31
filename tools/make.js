@@ -345,11 +345,12 @@ class Exporter {
 	}
 
 	nice_path(from, to, filepath) {
-		let absolute = path_normalize(filepath);
-		if (!path_isabs(absolute)) {
-			absolute = path_resolve(from, filepath);
-		}
-		return path_relative(to, absolute);
+		return filepath;
+		// let absolute = path_normalize(filepath);
+		// if (!path_isabs(absolute)) {
+		// 	absolute = path_resolve(from, filepath);
+		// }
+		// return path_relative(to, absolute);
 	}
 }
 
@@ -794,11 +795,12 @@ class VisualStudioExporter extends Exporter {
 		let incstring = "";
 		let includedirs = project.getIncludeDirs();
 		for (let include of includedirs) {
-			let relativized = path_relative(to, path_resolve(from, include));
-			if (relativized === "") {
-				relativized = ".";
-			}
-			incstring += relativized + ";";
+			// let relativized = path_relative(to, path_resolve(from, include));
+			// if (relativized === "") {
+			// 	relativized = ".";
+			// }
+			// incstring += relativized + ";";
+			incstring += include + ";";
 		}
 		if (incstring.length > 0)
 			incstring = incstring.substr(0, incstring.length - 1);
@@ -3350,8 +3352,9 @@ function main() {
 			make = os_exec('xcodebuild', xcode_options, { cwd: "build" });
 		}
 		else if (goptions.target == 'windows') {
-			let vswhere = path_join(os_env('ProgramFiles(x86)'), 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
-			let vsvars = os_exec(vswhere, ['-products', '*', '-latest', '-find', 'VC\\Auxiliary\\Build\\vcvars64.bat']).stdout.trim();
+			// let vswhere = path_join(os_env('ProgramFiles(x86)'), 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
+			// let vsvars = os_exec(vswhere, ['-products', '*', '-latest', '-find', 'VC\\Auxiliary\\Build\\vcvars64.bat']).trim();
+			let vsvars = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat";
 			fs_writefile(path_join("build", 'build.bat'), '@call "' + vsvars + '"\n' + '@MSBuild.exe "' + path_resolve("build", project_name + '.vcxproj') + '" /m /clp:ErrorsOnly /p:Configuration=' + (goptions.debug ? 'Debug' : 'Release') + ',Platform=x64');
 			make = os_exec('build.bat', [], { cwd: "build" });
 		}

@@ -823,6 +823,7 @@ void krom_init(string_t *title, i32 width, i32 height, bool vsync, i32 window_mo
 	frame.color_bits = 32;
 	frame.depth_bits = 0;
 	frame.stencil_bits = 0;
+	frame.samples_per_pixel = 1;
 	kinc_init(title, win.width, win.height, &win, &frame);
 	kinc_random_init((int)(kinc_time() * 1000));
 
@@ -1132,7 +1133,7 @@ kinc_g4_shader_t *krom_g4_create_vertex_shader_from_source(string_t *source) {
 	bool hasPos = strstr(temp_string_vs, "pos :") != NULL;
 	bool hasTex = strstr(temp_string_vs, "tex :") != NULL;
 
-	i32_map_t *attributes = calloc(sizeof(i32_map_t), 1);
+	i32_map_t *attributes = i32_map_create();
 	int index = 0;
 	if (hasBone) i32_map_set(attributes, "bone", index++);
 	if (hasCol) i32_map_set(attributes, "col", index++);
