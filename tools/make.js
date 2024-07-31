@@ -395,6 +395,7 @@ class VisualStudioExporter extends Exporter {
 		if (platform === "windows") {
 			this.p('<LocalDebuggerWorkingDirectory>' + this.get_debug_dir(from, project) + '</LocalDebuggerWorkingDirectory>', 2);
 			this.p('<DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>', 2);
+			project.cmdArgs.push(this.get_debug_dir(from, project));
 			if (project.cmdArgs.length > 0) {
 				this.p('<LocalDebuggerCommandArguments>' + project.cmdArgs.join(' ') + '</LocalDebuggerCommandArguments>', 2);
 			}
