@@ -82,6 +82,7 @@ void array_sort(any_array_t *ar, int (*compare)(const void *, const void *));
 void *array_pop(any_array_t *ar);
 void *array_shift(any_array_t *ar);
 void array_splice(any_array_t *ar, int32_t start, int32_t delete_count);
+void i32_array_splice(i32_array_t *ar, int32_t start, int32_t delete_count);
 any_array_t *array_concat(any_array_t *a, any_array_t *b);
 any_array_t *array_slice(any_array_t *a, int32_t begin, int32_t end);
 void array_insert(any_array_t *a, int at, void *e);

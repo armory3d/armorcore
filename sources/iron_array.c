@@ -158,6 +158,18 @@ void array_splice(any_array_t *ar, int32_t start, int32_t delete_count) {
 	ar->length -= delete_count;
 }
 
+void i32_array_splice(i32_array_t *ar, int32_t start, int32_t delete_count) {
+	for (int i = start; i < ar->length; ++i) {
+		if (i + delete_count >= ar->length) {
+			ar->buffer[i] = 0;
+		}
+		else {
+			ar->buffer[i] = ar->buffer[i + delete_count];
+		}
+	}
+	ar->length -= delete_count;
+}
+
 any_array_t *array_concat(any_array_t *a, any_array_t *b) {
 	any_array_t *ar = gc_alloc(sizeof(any_array_t));
 	ar->length = a->length + b->length;
@@ -195,7 +207,7 @@ void array_remove(any_array_t *ar, void *e) {
 }
 
 void i32_array_remove(i32_array_t *ar, int e) {
-	array_splice((any_array_t *)ar, i32_array_index_of(ar, e), 1);
+	i32_array_splice(ar, i32_array_index_of(ar, e), 1);
 }
 
 int array_index_of(any_array_t *ar, void *e) {
@@ -217,7 +229,12 @@ int char_ptr_array_index_of(char_ptr_array_t *ar, char *e) {
 }
 
 int i32_array_index_of(i32_array_t *ar, int e) {
-	return array_index_of((any_array_t *)ar, (void *)e);
+	for (int i = 0; i < ar->length; ++i) {
+		if (ar->buffer[i] == e) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 void array_reverse(any_array_t *ar) {
