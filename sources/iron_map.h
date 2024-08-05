@@ -49,4 +49,5 @@ void any_imap_set(any_imap_t *m, int k, void *v);
 int i32_imap_get(i32_imap_t *m, int k);
 void *any_imap_get(any_imap_t *m, int k);
 void imap_delete(any_imap_t *m, int k);
+i32_array_t *imap_keys(any_imap_t *m);
 any_imap_t *any_imap_create();

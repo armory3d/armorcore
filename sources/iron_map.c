@@ -187,6 +187,10 @@ void imap_delete(any_imap_t *m, int k) {
 	}
 }
 
+i32_array_t *imap_keys(any_imap_t *m) {
+	return m->keys;
+}
+
 i32_imap_t *i32_imap_create() {
 	i32_imap_t *r = gc_alloc(sizeof(i32_imap_t));
 	r->keys = gc_alloc(sizeof(i32_array_t));
