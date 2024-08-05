@@ -3034,14 +3034,14 @@ class Project {
 					if (!this.javadirs.includes(path_resolve(subbasedir, j)))
 						this.javadirs.push(path_resolve(subbasedir, j));
 				for (let lib of sub.libs) {
-					if (lib.indexOf("/") < 0 && lib.indexOf("\\") < 0) {
+					// if (lib.indexOf("/") < 0 && lib.indexOf("\\") < 0) {
 						if (!this.libs.includes(lib))
 							this.libs.push(lib);
-					}
-					else {
-						if (!this.libs.includes(path_resolve(subbasedir, lib)))
-							this.libs.push(path_resolve(subbasedir, lib));
-					}
+					// }
+					// else {
+						// if (!this.libs.includes(path_resolve(subbasedir, lib)))
+							// this.libs.push(path_resolve(subbasedir, lib));
+					// }
 				}
 				for (let flag of sub.cFlags) {
 					if (!this.cFlags.includes(flag)) {
