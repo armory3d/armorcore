@@ -55,7 +55,6 @@ float js_eval(const char *js) {
 
 #ifdef WITH_PLUGINS
 void plugin_api_init();
-void plugin_embed();
 #endif
 
 #define f64 double
@@ -199,7 +198,6 @@ int kickstart(int argc, char **argv) {
 
 	#ifdef WITH_PLUGINS
 	plugin_api_init();
-	// plugin_embed();
 	#endif
 
 	gc_start(&argc);
