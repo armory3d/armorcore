@@ -15,6 +15,7 @@ declare type bool = boolean;
 declare type any_ptr = any;
 declare type u8_ptr = any;
 declare type u32_ptr = any;
+declare type f32_ptr = any;
 declare let __ID__: string; // file:line - ts preprocessor
 
 declare type map_t<K, V> = any;
@@ -28,6 +29,7 @@ declare type u8_array_t = any;
 declare type i8_array_t = any;
 
 declare function DEREFERENCE(a: any): any;
+declare function ADDRESS(a: any): any;
 declare function map_create<K, V>(): map_t<K, V>;
 declare function buffer_create(length: i32): buffer_t;
 declare function f32_array_create(length: i32): f32_array_t;

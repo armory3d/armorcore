@@ -72,8 +72,10 @@ void plugin_api_init();
 #define any_ptr void **
 #define u8_ptr u8 *
 #define u32_ptr u32 *
+#define f32_ptr f32 *
 #define null NULL
 #define DEREFERENCE *
+#define ADDRESS &
 
 void _kickstart();
 
