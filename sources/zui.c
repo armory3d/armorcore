@@ -323,19 +323,18 @@ void zui_draw_string(char *text, float x_offset, float y_offset, int align, bool
 	}
 	else {
 		// Monospace fonts only for now
-		char tmp[512];
-		strcpy(tmp, text);
+		strcpy(temp, text);
 		for (int i = 0; i < current->text_coloring->colorings->length; ++i) {
 			zui_coloring_t *coloring = current->text_coloring->colorings->buffer[i];
-			zui_text_extract_t result = zui_extract_coloring(tmp, coloring);
+			zui_text_extract_t result = zui_extract_coloring(temp, coloring);
 			if (result.colored[0] != '\0') {
 				arm_g2_set_color(coloring->color);
 				arm_g2_draw_string(result.colored, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
 			}
-			strcpy(tmp, result.uncolored);
+			strcpy(temp, result.uncolored);
 		}
 		arm_g2_set_color(current->text_coloring->default_color);
-		arm_g2_draw_string(tmp, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
+		arm_g2_draw_string(temp, current->_x + x_offset, current->_y + current->font_offset_y + y_offset);
 	}
 }
 
@@ -1703,7 +1702,7 @@ bool zui_tab(zui_handle_t *handle, char *text, bool vertical, uint32_t color) {
 	return handle->position == current->tab_count - 1;
 }
 
-bool zui_panel(zui_handle_t *handle, char *text, bool is_tree, bool filled, bool pack) {
+bool zui_panel(zui_handle_t *handle, char *text, bool is_tree, bool filled) {
 	if (!zui_is_visible(ZUI_ELEMENT_H())) {
 		zui_end_element();
 		return handle->selected;
@@ -1728,8 +1727,6 @@ bool zui_panel(zui_handle_t *handle, char *text, bool is_tree, bool filled, bool
 	zui_draw_string(text, current->title_offset_x, 0, ZUI_ALIGN_LEFT, true);
 
 	zui_end_element();
-	if (pack && !handle->selected) current->_y -= ZUI_ELEMENT_OFFSET();
-
 	return handle->selected;
 }
 

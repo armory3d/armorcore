@@ -254,7 +254,7 @@ declare function zui_begin_region(ui: zui_t, x: i32, y: i32, w: i32): void;
 declare function zui_end_region(last: bool): void;
 declare function zui_inline_radio(handle: zui_handle_t, texts: string[], align: i32): int;
 declare function zui_end_input(): void;
-declare function zui_panel(handle: zui_handle_t, text: string, is_tree: bool, filled: bool, pack: bool): bool;
+declare function zui_panel(handle: zui_handle_t, text: string, is_tree: bool, filled: bool): bool;
 declare function zui_nodes_rgba_popup(nhandle: zui_handle_t, val: f32[], x: i32, y: i32): void;
 declare function zui_get_link(links: zui_node_link_t[], id: i32): zui_node_link_t;
 declare function zui_get_node(nodes: zui_node_t[], id: i32): zui_node_t;

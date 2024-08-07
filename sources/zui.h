@@ -280,7 +280,7 @@ bool zui_window(zui_handle_t *handle, int x, int y, int w, int h, bool drag); //
 bool zui_button(char *text, int align, char *label);
 int zui_text(char *text, int align, int bg);
 bool zui_tab(zui_handle_t *handle, char *text, bool vertical, uint32_t color);
-bool zui_panel(zui_handle_t *handle, char *text, bool is_tree, bool filled, bool pack);
+bool zui_panel(zui_handle_t *handle, char *text, bool is_tree, bool filled);
 int zui_sub_image(/*kinc_g4_texture_t kinc_g4_render_target_t*/ void *image, bool is_rt, uint32_t tint, int h, int sx, int sy, int sw, int sh);
 int zui_image(/*kinc_g4_texture_t kinc_g4_render_target_t*/ void *image, bool is_rt, uint32_t tint, int h);
 char *zui_text_input(zui_handle_t *handle, char *label, int align, bool editable, bool live_update);
