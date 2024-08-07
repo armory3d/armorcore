@@ -87,6 +87,7 @@ any_array_t *array_concat(any_array_t *a, any_array_t *b);
 any_array_t *array_slice(any_array_t *a, int32_t begin, int32_t end);
 void array_insert(any_array_t *a, int at, void *e);
 void array_remove(any_array_t *ar, void *e);
+void char_ptr_array_remove(char_ptr_array_t *ar, char *e);
 void i32_array_remove(i32_array_t *ar, int e);
 int array_index_of(any_array_t *ar, void *e);
 int char_ptr_array_index_of(char_ptr_array_t *ar, char *e);

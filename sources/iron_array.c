@@ -206,6 +206,10 @@ void array_remove(any_array_t *ar, void *e) {
 	array_splice(ar, array_index_of(ar, e), 1);
 }
 
+void char_ptr_array_remove(char_ptr_array_t *ar, char *e) {
+	array_splice(ar, char_ptr_array_index_of(ar, e), 1);
+}
+
 void i32_array_remove(i32_array_t *ar, int e) {
 	i32_array_splice(ar, i32_array_index_of(ar, e), 1);
 }
