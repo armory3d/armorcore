@@ -32,6 +32,11 @@
 #if defined(_WIN32)
 #include <windows.h>
 #endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(_MSC_VER)
 #include <winsock2.h>
 #include <malloc.h>
@@ -203,9 +208,16 @@ static inline int clz32(unsigned int a)
 static inline int clz64(uint64_t a)
 {
 #if defined(_MSC_VER) && !defined(__clang__)
+#if INTPTR_MAX == INT64_MAX
     unsigned long index;
     _BitScanReverse64(&index, a);
     return 63 - index;
+#else
+    if (a >> 32)
+        return clz32((unsigned)(a >> 32));
+    else
+        return clz32((unsigned)a) + 32;
+#endif
 #else
     return __builtin_clzll(a);
 #endif
@@ -387,10 +399,26 @@ static inline void dbuf_set_error(DynBuf *s)
     s->error = TRUE;
 }
 
-#define UTF8_CHAR_LEN_MAX 6
+/*---- UTF-8 and UTF-16 handling ----*/
 
-int unicode_to_utf8(uint8_t *buf, unsigned int c);
-int unicode_from_utf8(const uint8_t *p, int max_len, const uint8_t **pp);
+#define UTF8_CHAR_LEN_MAX 4
+
+enum {
+    UTF8_PLAIN_ASCII  = 0,  // 7-bit ASCII plain text
+    UTF8_NON_ASCII    = 1,  // has non ASCII code points (8-bit or more)
+    UTF8_HAS_16BIT    = 2,  // has 16-bit code points
+    UTF8_HAS_NON_BMP1 = 4,  // has non-BMP1 code points, needs UTF-16 surrogate pairs
+    UTF8_HAS_ERRORS   = 8,  // has encoding errors
+};
+int utf8_scan(const char *buf, size_t len, size_t *plen);
+size_t utf8_encode_len(uint32_t c);
+size_t utf8_encode(uint8_t *buf, uint32_t c);
+uint32_t utf8_decode_len(const uint8_t *p, size_t max_len, const uint8_t **pp);
+uint32_t utf8_decode(const uint8_t *p, const uint8_t **pp);
+size_t utf8_decode_buf8(uint8_t *dest, size_t dest_len, const char *src, size_t src_len);
+size_t utf8_decode_buf16(uint16_t *dest, size_t dest_len, const char *src, size_t src_len);
+size_t utf8_encode_buf8(char *dest, size_t dest_len, const uint8_t *src, size_t src_len);
+size_t utf8_encode_buf16(char *dest, size_t dest_len, const uint16_t *src, size_t src_len);
 
 static inline BOOL is_surrogate(uint32_t c)
 {
@@ -448,6 +476,7 @@ size_t i32toa(char buf[minimum_length(12)], int32_t n);
 size_t u64toa(char buf[minimum_length(21)], uint64_t n);
 size_t i64toa(char buf[minimum_length(22)], int64_t n);
 size_t u32toa_radix(char buf[minimum_length(33)], uint32_t n, unsigned int base);
+size_t i32toa_radix(char buf[minimum_length(34)], int32_t n, unsigned base);
 size_t u64toa_radix(char buf[minimum_length(65)], uint64_t n, unsigned int base);
 size_t i64toa_radix(char buf[minimum_length(66)], int64_t n, unsigned int base);
 
@@ -502,5 +531,9 @@ void js_cond_wait(js_cond_t *cond, js_mutex_t *mutex);
 int js_cond_timedwait(js_cond_t *cond, js_mutex_t *mutex, uint64_t timeout);
 
 #endif /* !defined(EMSCRIPTEN) && !defined(__wasi__) */
+
+#ifdef __cplusplus
+} /* extern "C" { */
+#endif
 
 #endif  /* CUTILS_H */

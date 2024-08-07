@@ -82,7 +82,7 @@ extern char **environ;
 
 #if !defined(_WIN32) && !defined(__wasi__)
 /* enable the os.Worker API. IT relies on POSIX threads */
-// #define USE_WORKER ////
+//#define USE_WORKER
 #endif
 
 #ifdef USE_WORKER
@@ -184,8 +184,7 @@ static JSValue js_printf_internal(JSContext *ctx,
     int64_t int64_arg;
     double double_arg;
     const char *string_arg;
-    /* Use indirect call to dbuf_printf to prevent gcc warning */
-    int (*dbuf_printf_fun)(DynBuf *s, const char *fmt, ...) = (void*)dbuf_printf;
+    int (*dbuf_printf_fun)(DynBuf *s, const char *fmt, ...) = dbuf_printf;
 
     js_std_dbuf_init(ctx, &dbuf);
 
@@ -272,20 +271,21 @@ static JSValue js_printf_internal(JSContext *ctx,
                 if (i >= argc)
                     goto missing;
                 if (JS_IsString(argv[i])) {
+                    // TODO(chqrlie) need an API to wrap charCodeAt and codePointAt */
                     string_arg = JS_ToCString(ctx, argv[i++]);
                     if (!string_arg)
                         goto fail;
-                    int32_arg = unicode_from_utf8((const uint8_t *)string_arg, UTF8_CHAR_LEN_MAX, &p);
+                    int32_arg = utf8_decode((const uint8_t *)string_arg, &p);
                     JS_FreeCString(ctx, string_arg);
                 } else {
                     if (JS_ToInt32(ctx, &int32_arg, argv[i++]))
                         goto fail;
                 }
-                /* handle utf-8 encoding explicitly */
+                // XXX: throw an exception?
                 if ((unsigned)int32_arg > 0x10FFFF)
                     int32_arg = 0xFFFD;
                 /* ignore conversion flags, width and precision */
-                len = unicode_to_utf8(cbuf, int32_arg);
+                len = utf8_encode(cbuf, int32_arg);
                 dbuf_put(&dbuf, cbuf, len);
                 break;
 
@@ -517,7 +517,7 @@ static JSModuleDef *js_module_loader_so(JSContext *ctx,
         goto fail;
     }
 
-    init = dlsym(hd, "js_init_module");
+    *(void **) (&init) = dlsym(hd, "js_init_module");
     if (!init) {
         JS_ThrowReferenceError(ctx, "could not load module filename '%s': js_init_module not found",
                                module_name);
@@ -777,12 +777,16 @@ static JSValue js_evalScript(JSContext *ctx, JSValue this_val,
     JSValue ret;
     JSValue options_obj;
     BOOL backtrace_barrier = FALSE;
+    BOOL is_async = FALSE;
     int flags;
 
     if (argc >= 2) {
         options_obj = argv[1];
         if (get_bool_option(ctx, &backtrace_barrier, options_obj,
                             "backtrace_barrier"))
+            return JS_EXCEPTION;
+        if (get_bool_option(ctx, &is_async, options_obj,
+                            "async"))
             return JS_EXCEPTION;
     }
 
@@ -796,6 +800,8 @@ static JSValue js_evalScript(JSContext *ctx, JSValue this_val,
     flags = JS_EVAL_TYPE_GLOBAL;
     if (backtrace_barrier)
         flags |= JS_EVAL_FLAG_BACKTRACE_BARRIER;
+    if (is_async)
+        flags |= JS_EVAL_FLAG_ASYNC;
     ret = JS_Eval(ctx, str, len, "<evalScript>", flags);
     JS_FreeCString(ctx, str);
     if (!ts->recv_pipe && --ts->eval_script_recurse == 0) {
@@ -2113,6 +2119,38 @@ static JSClassDef js_os_timer_class = {
     .gc_mark = js_os_timer_mark,
 };
 
+/* return a promise */
+static JSValue js_os_sleepAsync(JSContext *ctx, JSValueConst this_val,
+                                int argc, JSValueConst *argv)
+{
+    JSRuntime *rt = JS_GetRuntime(ctx);
+    JSThreadState *ts = JS_GetRuntimeOpaque(rt);
+    int64_t delay;
+    JSOSTimer *th;
+    JSValue promise, resolving_funcs[2];
+
+    if (JS_ToInt64(ctx, &delay, argv[0]))
+        return JS_EXCEPTION;
+    promise = JS_NewPromiseCapability(ctx, resolving_funcs);
+    if (JS_IsException(promise))
+        return JS_EXCEPTION;
+
+    th = js_mallocz(ctx, sizeof(*th));
+    if (!th) {
+        JS_FreeValue(ctx, promise);
+        JS_FreeValue(ctx, resolving_funcs[0]);
+        JS_FreeValue(ctx, resolving_funcs[1]);
+        return JS_EXCEPTION;
+    }
+    th->has_object = FALSE;
+    th->timeout = js__hrtime_ms() + delay;
+    th->func = JS_DupValue(ctx, resolving_funcs[0]);
+    list_add_tail(&th->link, &ts->os_timers);
+    JS_FreeValue(ctx, resolving_funcs[0]);
+    JS_FreeValue(ctx, resolving_funcs[1]);
+    return promise;
+}
+
 static void call_handler(JSContext *ctx, JSValue func)
 {
     JSValue ret, func1;
@@ -3192,7 +3230,7 @@ typedef struct {
 
 typedef struct {
     int ref_count;
-    uint64_t buf[0];
+    uint64_t buf[];
 } JSSABHeader;
 
 static JSClassID js_worker_class_id;
@@ -3328,6 +3366,7 @@ static void *worker_func(void *opaque)
     JSRuntime *rt;
     JSThreadState *ts;
     JSContext *ctx;
+    JSValue val;
 
     rt = JS_NewRuntime();
     if (rt == NULL) {
@@ -3354,11 +3393,14 @@ static void *worker_func(void *opaque)
 
     js_std_add_helpers(ctx, -1, NULL);
 
-    if (!JS_RunModule(ctx, args->basename, args->filename))
-        js_std_dump_error(ctx);
+    val = JS_LoadModule(ctx, args->basename, args->filename);
     free(args->filename);
     free(args->basename);
     free(args);
+    val = js_std_await(ctx, val);
+    if (JS_IsException(val))
+        js_std_dump_error(ctx);
+    JS_FreeValue(ctx, val);
 
     js_std_loop(ctx);
 
@@ -3489,17 +3531,17 @@ static JSValue js_worker_postMessage(JSContext *ctx, JSValue this_val,
 {
     JSWorkerData *worker = JS_GetOpaque2(ctx, this_val, js_worker_class_id);
     JSWorkerMessagePipe *ps;
-    size_t data_len, sab_tab_len, i;
+    size_t data_len, i;
     uint8_t *data;
     JSWorkerMessage *msg;
-    uint8_t **sab_tab;
+    JSSABTab sab_tab;
 
     if (!worker)
         return JS_EXCEPTION;
 
     data = JS_WriteObject2(ctx, &data_len, argv[0],
                            JS_WRITE_OBJ_SAB | JS_WRITE_OBJ_REFERENCE,
-                           &sab_tab, &sab_tab_len);
+                           &sab_tab);
     if (!data)
         return JS_EXCEPTION;
 
@@ -3516,16 +3558,16 @@ static JSValue js_worker_postMessage(JSContext *ctx, JSValue this_val,
     memcpy(msg->data, data, data_len);
     msg->data_len = data_len;
 
-    if (sab_tab_len > 0) {
-        msg->sab_tab = malloc(sizeof(msg->sab_tab[0]) * sab_tab_len);
+    if (sab_tab.len > 0) {
+        msg->sab_tab = malloc(sizeof(msg->sab_tab[0]) * sab_tab.len);
         if (!msg->sab_tab)
             goto fail;
-        memcpy(msg->sab_tab, sab_tab, sizeof(msg->sab_tab[0]) * sab_tab_len);
+        memcpy(msg->sab_tab, sab_tab.tab, sizeof(msg->sab_tab[0]) * sab_tab.len);
     }
-    msg->sab_tab_len = sab_tab_len;
+    msg->sab_tab_len = sab_tab.len;
 
     js_free(ctx, data);
-    js_free(ctx, sab_tab);
+    js_free(ctx, sab_tab.tab);
 
     /* increment the SAB reference counts */
     for(i = 0; i < msg->sab_tab_len; i++) {
@@ -3556,7 +3598,7 @@ static JSValue js_worker_postMessage(JSContext *ctx, JSValue this_val,
         free(msg);
     }
     js_free(ctx, data);
-    js_free(ctx, sab_tab);
+    js_free(ctx, sab_tab.tab);
     return JS_EXCEPTION;
 
 }
@@ -3701,6 +3743,7 @@ static const JSCFunctionListEntry js_os_funcs[] = {
     // per spec: both functions can cancel timeouts and intervals
     JS_CFUNC_DEF("clearTimeout", 1, js_os_clearTimeout ),
     JS_CFUNC_DEF("clearInterval", 1, js_os_clearTimeout ),
+    JS_CFUNC_DEF("sleepAsync", 1, js_os_sleepAsync ),
     JS_PROP_STRING_DEF("platform", OS_PLATFORM, 0 ),
     JS_CFUNC_DEF("getcwd", 0, js_os_getcwd ),
     JS_CFUNC_DEF("chdir", 0, js_os_chdir ),
@@ -3979,6 +4022,42 @@ void js_std_loop(JSContext *ctx)
     }
 }
 
+/* Wait for a promise and execute pending jobs while waiting for
+   it. Return the promise result or JS_EXCEPTION in case of promise
+   rejection. */
+JSValue js_std_await(JSContext *ctx, JSValue obj)
+{
+    JSValue ret;
+    int state;
+
+    for(;;) {
+        state = JS_PromiseState(ctx, obj);
+        if (state == JS_PROMISE_FULFILLED) {
+            ret = JS_PromiseResult(ctx, obj);
+            JS_FreeValue(ctx, obj);
+            break;
+        } else if (state == JS_PROMISE_REJECTED) {
+            ret = JS_Throw(ctx, JS_PromiseResult(ctx, obj));
+            JS_FreeValue(ctx, obj);
+            break;
+        } else if (state == JS_PROMISE_PENDING) {
+            JSContext *ctx1;
+            int err;
+            err = JS_ExecutePendingJob(JS_GetRuntime(ctx), &ctx1);
+            if (err < 0) {
+                js_std_dump_error(ctx1);
+            }
+            if (os_poll_func)
+                os_poll_func(ctx);
+        } else {
+            /* not a promise */
+            ret = obj;
+            break;
+        }
+    }
+    return ret;
+}
+
 void js_std_eval_binary(JSContext *ctx, const uint8_t *buf, size_t buf_len,
                         int load_only)
 {
@@ -3997,8 +4076,11 @@ void js_std_eval_binary(JSContext *ctx, const uint8_t *buf, size_t buf_len,
                 goto exception;
             }
             js_module_set_import_meta(ctx, obj, FALSE, TRUE);
+            val = JS_EvalFunction(ctx, obj);
+            val = js_std_await(ctx, val);
+        } else {
+            val = JS_EvalFunction(ctx, obj);
         }
-        val = JS_EvalFunction(ctx, obj);
         if (JS_IsException(val)) {
         exception:
             js_std_dump_error(ctx);

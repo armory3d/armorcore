@@ -24,7 +24,12 @@
 #ifndef LIBUNICODE_H
 #define LIBUNICODE_H
 
+#include <stddef.h>
 #include <inttypes.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define LRE_BOOL  int       /* for documentation purposes */
 
@@ -113,5 +118,9 @@ int unicode_general_category(CharRange *cr, const char *gc_name);
 int unicode_prop(CharRange *cr, const char *prop_name);
 
 #undef LRE_BOOL
+
+#ifdef __cplusplus
+} /* extern "C" { */
+#endif
 
 #endif /* LIBUNICODE_H */

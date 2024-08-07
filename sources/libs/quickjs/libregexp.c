@@ -109,7 +109,7 @@ static const REOpCode reopcode_info[REOP_COUNT] = {
 
 #define RE_HEADER_LEN 8
 
-static inline int is_digit(int c) {
+static inline int lre_is_digit(int c) {
     return c >= '0' && c <= '9';
 }
 
@@ -577,7 +577,7 @@ int lre_parse_escape(const uint8_t **pp, int allow_utf16)
         c -= '0';
         if (allow_utf16 == 2) {
             /* only accept \0 not followed by digit */
-            if (c != 0 || is_digit(*p))
+            if (c != 0 || lre_is_digit(*p))
                 return -1;
         } else {
             /* parse a legacy octal sequence */
@@ -712,7 +712,7 @@ static int parse_unicode_property(REParseState *s, CharRange *cr,
 static int get_class_atom(REParseState *s, CharRange *cr,
                           const uint8_t **pp, BOOL inclass)
 {
-    const uint8_t *p;
+    const uint8_t *p, *p_next;
     uint32_t c;
     int ret;
 
@@ -804,15 +804,18 @@ static int get_class_atom(REParseState *s, CharRange *cr,
         /* fall thru */
     default:
     normal_char:
-        /* normal char */
-        if (c >= 128) {
-            c = unicode_from_utf8(p, UTF8_CHAR_LEN_MAX, &p);
-            if ((unsigned)c > 0xffff && !s->is_unicode) {
-                /* XXX: should handle non BMP-1 code points */
+        p++;
+        if (c >= 0x80) {
+            c = utf8_decode(p - 1, &p_next);
+            if (p_next == p)
+                return re_parse_error(s, "invalid UTF-8 sequence");
+            p = p_next;
+            if (c > 0xFFFF && !s->is_unicode) {
+                // TODO(chqrlie): should handle non BMP-1 code points in
+                //   the calling function and no require the source string
+                //   to be CESU-8 encoded if not s->is_unicode
                 return re_parse_error(s, "malformed unicode char");
             }
-        } else {
-            p++;
         }
         break;
     }
@@ -1105,35 +1108,35 @@ static int re_is_simple_quantifier(const uint8_t *bc_buf, int bc_buf_len)
 /* '*pp' is the first char after '<' */
 static int re_parse_group_name(char *buf, int buf_size, const uint8_t **pp)
 {
-    const uint8_t *p, *p1;
+    const uint8_t *p, *p_next;
     uint32_t c, d;
     char *q;
 
     p = *pp;
     q = buf;
     for(;;) {
-        c = *p;
+        c = *p++;
         if (c == '\\') {
-            p++;
             if (*p != 'u')
                 return -1;
             c = lre_parse_escape(&p, 2); // accept surrogate pairs
+            if ((int)c < 0)
+                return -1;
         } else if (c == '>') {
             break;
-        } else if (c >= 128) {
-            c = unicode_from_utf8(p, UTF8_CHAR_LEN_MAX, &p);
+        } else if (c >= 0x80) {
+            c = utf8_decode(p - 1, &p_next);
+            if (p_next == p)
+                return -1;
+            p = p_next;
             if (is_hi_surrogate(c)) {
-                d = unicode_from_utf8(p, UTF8_CHAR_LEN_MAX, &p1);
+                d = utf8_decode(p, &p_next);
                 if (is_lo_surrogate(d)) {
                     c = from_surrogate(c, d);
-                    p = p1;
+                    p = p_next;
                 }
             }
-        } else {
-            p++;
         }
-        if (c > 0x10FFFF)
-            return -1;
         if (q == buf) {
             if (!lre_js_is_ident_first(c))
                 return -1;
@@ -1143,16 +1146,15 @@ static int re_parse_group_name(char *buf, int buf_size, const uint8_t **pp)
         }
         if ((q - buf + UTF8_CHAR_LEN_MAX + 1) > buf_size)
             return -1;
-        if (c < 128) {
+        if (c < 0x80) {
             *q++ = c;
         } else {
-            q += unicode_to_utf8((uint8_t*)q, c);
+            q += utf8_encode((uint8_t*)q, c);
         }
     }
     if (q == buf)
         return -1;
     *q = '\0';
-    p++;
     *pp = p;
     return 0;
 }
@@ -1283,7 +1285,7 @@ static int re_parse_term(REParseState *s, BOOL is_backward_dir)
     case '{':
         if (s->is_unicode) {
             return re_parse_error(s, "syntax error");
-        } else if (!is_digit(p[1])) {
+        } else if (!lre_is_digit(p[1])) {
             /* Annex B: we accept '{' not followed by digits as a
                normal atom */
             goto parse_class_atom;
@@ -1293,7 +1295,7 @@ static int re_parse_term(REParseState *s, BOOL is_backward_dir)
             parse_digits(&p1, TRUE);
             if (*p1 == ',') {
                 p1++;
-                if (is_digit(*p1)) {
+                if (lre_is_digit(*p1)) {
                     parse_digits(&p1, TRUE);
                 }
             }
@@ -1441,7 +1443,7 @@ static int re_parse_term(REParseState *s, BOOL is_backward_dir)
             p += 2;
             c = 0;
             if (s->is_unicode) {
-                if (is_digit(*p)) {
+                if (lre_is_digit(*p)) {
                     return re_parse_error(s, "invalid decimal escape in regular expression");
                 }
             } else {
@@ -1563,7 +1565,7 @@ static int re_parse_term(REParseState *s, BOOL is_backward_dir)
                 const uint8_t *p1 = p;
                 /* As an extension (see ES6 annex B), we accept '{' not
                    followed by digits as a normal atom */
-                if (!is_digit(p[1])) {
+                if (!lre_is_digit(p[1])) {
                     if (s->is_unicode)
                         goto invalid_quant_count;
                     break;
@@ -1573,7 +1575,7 @@ static int re_parse_term(REParseState *s, BOOL is_backward_dir)
                 quant_max = quant_min;
                 if (*p == ',') {
                     p++;
-                    if (is_digit(*p)) {
+                    if (lre_is_digit(*p)) {
                         quant_max = parse_digits(&p, TRUE);
                         if (quant_max < quant_min) {
                         invalid_quant_count:
@@ -1631,11 +1633,13 @@ static int re_parse_term(REParseState *s, BOOL is_backward_dir)
 
                 if (dbuf_error(&s->byte_code))
                     goto out_of_memory;
-                add_zero_advance_check = (re_check_advance(s->byte_code.buf + last_atom_start,
-                                                           s->byte_code.size - last_atom_start) == 0);
-            } else {
-                add_zero_advance_check = FALSE;
             }
+            /* the spec tells that if there is no advance when
+               running the atom after the first quant_min times,
+               then there is no match. We remove this test when we
+               are sure the atom always advances the position. */
+            add_zero_advance_check = (re_check_advance(s->byte_code.buf + last_atom_start,
+                                                       s->byte_code.size - last_atom_start) == 0);
 
             {
                 int len, pos;
@@ -1810,7 +1814,7 @@ static int re_parse_disjunction(REParseState *s, BOOL is_backward_dir)
 }
 
 /* the control flow is recursive so the analysis can be linear */
-static int compute_stack_size(const uint8_t *bc_buf, int bc_buf_len)
+static int lre_compute_stack_size(const uint8_t *bc_buf, int bc_buf_len)
 {
     int stack_size, stack_size_max, pos, opcode, len;
     uint32_t val;
@@ -1923,7 +1927,7 @@ uint8_t *lre_compile(int *plen, char *error_msg, int error_msg_size,
         goto error;
     }
 
-    stack_size = compute_stack_size(s->byte_code.buf, s->byte_code.size);
+    stack_size = lre_compute_stack_size(s->byte_code.buf, s->byte_code.size);
     if (stack_size < 0) {
         re_parse_error(s, "too many imbricated quantifiers");
         goto error;
@@ -2062,7 +2066,7 @@ typedef struct REExecState {
     size_t count; /* only used for RE_EXEC_STATE_GREEDY_QUANT */
     const uint8_t *cptr;
     const uint8_t *pc;
-    void *buf[0];
+    void *buf[];
 } REExecState;
 
 typedef struct {

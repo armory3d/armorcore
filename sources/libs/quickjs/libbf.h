@@ -27,6 +27,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if INTPTR_MAX >= INT64_MAX && !defined(_WIN32) && !defined(__TINYC__)
 #define LIMB_LOG2_BITS 6
 #else
@@ -36,8 +40,10 @@
 #define LIMB_BITS (1 << LIMB_LOG2_BITS)
 
 #if LIMB_BITS == 64
-typedef __int128 int128_t;
-typedef unsigned __int128 uint128_t;
+#ifndef INT128_MAX
+__extension__ typedef __int128 int128_t;
+__extension__ typedef unsigned __int128 uint128_t;
+#endif
 typedef int64_t slimb_t;
 typedef uint64_t limb_t;
 typedef uint128_t dlimb_t;
@@ -531,5 +537,9 @@ static inline int bfdec_resize(bfdec_t *r, limb_t len)
     return bf_resize((bf_t *)r, len);
 }
 int bfdec_normalize_and_round(bfdec_t *r, limb_t prec1, bf_flags_t flags);
+
+#ifdef __cplusplus
+} /* extern "C" { */
+#endif
 
 #endif /* LIBBF_H */
