@@ -143,6 +143,7 @@ declare function json_encode_map(m: map<string, string>): void;
 declare function uri_decode(s: string): string;
 
 declare function js_eval(js: string): any;
+declare function js_call(f: any): void;
 declare function array_remove(ar: any[], e: any): void;
 declare function trim_end(str: string): string;
 

@@ -43,13 +43,25 @@ JSRuntime *js_runtime;
 JSContext *js_ctx;
 
 float js_eval(const char *js) {
-	JSValue ret = JS_Eval(js_ctx, js, strlen(js), "armorcore", JS_EVAL_TYPE_GLOBAL);
+	JSValue ret = JS_Eval(js_ctx, js, strlen(js), "armorcore", JS_EVAL_TYPE_MODULE);
     if (JS_IsException(ret)) {
         js_std_dump_error(js_ctx);
         JS_ResetUncatchableError(js_ctx);
     }
     JS_RunGC(js_runtime);
 	return JS_VALUE_GET_FLOAT64(ret);
+}
+
+void js_call(void *p) {
+    JSValue fn = *(JSValue *)p;
+	JSValue argv[] = {};
+    JSValue global_obj = JS_GetGlobalObject(js_ctx);
+    JSValue result = JS_Call(js_ctx, fn, global_obj, sizeof(argv) / sizeof(JSValue), argv);
+    if (JS_IsException(result)) {
+        js_std_dump_error(js_ctx);
+        JS_ResetUncatchableError(js_ctx);
+    }
+    JS_FreeValue(js_ctx, global_obj);
 }
 #endif
 
