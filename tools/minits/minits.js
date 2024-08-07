@@ -959,16 +959,20 @@ function array_ops(token) {
 		token = type + "_array_push";
 	}
 
-	// array_remove -> i32_array_remove
+	// array_remove -> i32_array_remove / char_ptr_array_remove
 	else if (token === "array_remove") {
 		let value = get_token(2);
-
-		if (value.lastIndexOf(".") > -1) {
-			value = value.substring(value.lastIndexOf(".") + 1, value.length);
+		value = struct_access(value);
+		let type = value_type(value);
+		if (type != null && type.startsWith("struct ")) { // struct u8_array * -> u8_array_t *
+			type = type.substring(7, type.length - 2) + "_t *";
 		}
-		let type = array_type(value);
-		if (type === "i32") {
-			token = type + "_array_remove";
+
+		if (type === "i32_array_t *") {
+			token = "i32_array_remove";
+		}
+		else if (type === "string_t_array_t *") {
+			token = "char_ptr_array_remove";
 		}
 	}
 
@@ -980,6 +984,7 @@ function array_ops(token) {
 		if (type != null && type.startsWith("struct ")) { // struct u8_array * -> u8_array_t *
 			type = type.substring(7, type.length - 2) + "_t *";
 		}
+
 		if (type === "i32_array_t *") {
 			token = "i32_array_index_of";
 		}

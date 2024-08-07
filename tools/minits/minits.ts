@@ -984,16 +984,20 @@ function array_ops(token: string): string {
 		token = type + "_array_push";
 	}
 
-	// array_remove -> i32_array_remove
+	// array_remove -> i32_array_remove / char_ptr_array_remove
 	else if (token == "array_remove") {
 		let value: string = get_token(2);
-
-		if (string_last_index_of(value, ".") > -1) {
-			value = substring(value, string_last_index_of(value, ".") + 1, value.length);
+		value = struct_access(value);
+		let type: string = value_type(value);
+		if (type != null && starts_with(type, "struct ")) { // struct u8_array * -> u8_array_t *
+			type = substring(type, 7, type.length - 2) + "_t *";
 		}
-		let type: string = array_type(value);
-		if (type == "i32") {
-			token = type + "_array_remove";
+
+		if (type == "i32_array_t *") {
+			token = "i32_array_remove";
+		}
+		else if (type == "string_t_array_t *") {
+			token = "char_ptr_array_remove";
 		}
 	}
 
@@ -1005,6 +1009,7 @@ function array_ops(token: string): string {
 		if (type != null && starts_with(type, "struct ")) { // struct u8_array * -> u8_array_t *
 			type = substring(type, 7, type.length - 2) + "_t *";
 		}
+
 		if (type == "i32_array_t *") {
 			token = "i32_array_index_of";
 		}
