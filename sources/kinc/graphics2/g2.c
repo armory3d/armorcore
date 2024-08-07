@@ -847,7 +847,7 @@ bool arm_g2_font_get_baked_quad(arm_g2_font_t *font, int size, arm_g2_font_align
 // Per Lowgren, CC BY-SA 3.0
 // https://stackoverflow.com/a/35332046
 #define is_unicode(c) (((c) & 0xc0) == 0xc0)
-int utf8_decode(const char *str, int *i) {
+static int utf8_decode(const char *str, int *i) {
 	const unsigned char *s = (const unsigned char *)str;
 	int u = *s, l = 1;
 	if (is_unicode(u)) {
