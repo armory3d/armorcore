@@ -52,16 +52,19 @@ float js_eval(const char *js) {
 	return JS_VALUE_GET_FLOAT64(ret);
 }
 
-void js_call(void *p) {
+void js_call_arg(void *p, int argc, JSValue *argv) {
     JSValue fn = *(JSValue *)p;
-	JSValue argv[] = {};
     JSValue global_obj = JS_GetGlobalObject(js_ctx);
-    JSValue result = JS_Call(js_ctx, fn, global_obj, sizeof(argv) / sizeof(JSValue), argv);
+    JSValue result = JS_Call(js_ctx, fn, global_obj, argc, argv);
     if (JS_IsException(result)) {
         js_std_dump_error(js_ctx);
         JS_ResetUncatchableError(js_ctx);
     }
     JS_FreeValue(js_ctx, global_obj);
+}
+
+void js_call(void *p) {
+	js_call_arg(p, 0, NULL);
 }
 #endif
 
