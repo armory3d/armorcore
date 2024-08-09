@@ -1,5 +1,4 @@
 
-// Mini-kmake based on https://github.com/Kode/kmake by RobDangerous
 // ../../make --compiler gcc --compile (gcc has lto enabled)
 
 #include <stdio.h>
