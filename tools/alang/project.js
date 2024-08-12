@@ -1,5 +1,5 @@
 
-let project = new Project("minits");
+let project = new Project("alang");
 
 flags.with_g2 = true;
 flags.with_iron = true;

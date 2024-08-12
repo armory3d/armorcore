@@ -2,9 +2,9 @@
 let flags = globalThis.flags;
 if (flags === null) {
 	flags = {};
-	flags.minits_source = null;
-	flags.minits_input = "./test.ts";
-	flags.minits_output = "./test.c";
+	flags.alang_source = null;
+	flags.alang_input = "./test.ts";
+	flags.alang_output = "./test.c";
 }
 
 // ██████╗      █████╗     ██████╗     ███████╗    ███████╗
@@ -50,7 +50,7 @@ function is_white_space(code) {
 
 function read_token() {
 	// Skip white space
-	while (is_white_space(flags.minits_source.charCodeAt(pos))) {
+	while (is_white_space(flags.alang_source.charCodeAt(pos))) {
 		pos++;
 	}
 
@@ -58,8 +58,8 @@ function read_token() {
 	let first = true;
 	let is_anum = false;
 
-	while (pos < flags.minits_source.length) {
-		let c = flags.minits_source.charAt(pos);
+	while (pos < flags.alang_source.length) {
+		let c = flags.alang_source.charAt(pos);
 
 		// Comment start
 		if (token === "//") {
@@ -117,7 +117,7 @@ function read_token() {
 		}
 
 		// Token end
-		if (is_white_space(flags.minits_source.charCodeAt(pos))) {
+		if (is_white_space(flags.alang_source.charCodeAt(pos))) {
 			break;
 		}
 
@@ -1642,16 +1642,16 @@ function write_krom_c() {
 // ╚═╝  ╚═╝    ╚═╝     ╚═════╝    ╚═╝  ╚═╝    ╚══════╝       ╚═╝       ╚═╝  ╚═╝    ╚═╝  ╚═╝       ╚═╝
 
 function kickstart() {
-	if (flags.minits_source === null) {
-		flags.minits_source = fs_readfile(flags.minits_input);
+	if (flags.alang_source === null) {
+		flags.alang_source = fs_readfile(flags.alang_input);
 	}
 
 	parse();
-	fhandle = std.open(flags.minits_output, "w");
+	fhandle = std.open(flags.alang_output, "w");
 	write_krom_c();
 	fhandle.close();
 }
 
 let t = Date.now();
 kickstart();
-console.log("minits took " + (Date.now() - t) + "ms.");
+console.log("alang took " + (Date.now() - t) + "ms.");

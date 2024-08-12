@@ -1,6 +1,6 @@
-# minits
+# alang
 
-minits is a TypeScript to C transpiler. A small subset of TypeScript is supported which maps well with C in order to achieve the best performance.
+alang is a TypeScript to C transpiler. A small subset of TypeScript is supported which maps well with C in order to achieve the best performance.
 
 ```ts
 // TS

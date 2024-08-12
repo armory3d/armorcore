@@ -1,12 +1,12 @@
 
-// ../../make --graphics opengl --compile --minitsjs
+// ../../make --graphics opengl --compile --alangjs
 
 ///include <stdio.h>
 
-let minits_input: string = "./test.ts";
-let minits_output: string = "./test.c";
-let minits_source: string = null;
-let minits_source_length: i32;
+let alang_input: string = "./test.ts";
+let alang_output: string = "./test.c";
+let alang_source: string = null;
+let alang_source_length: i32;
 
 // ██████╗      █████╗     ██████╗     ███████╗    ███████╗
 // ██╔══██╗    ██╔══██╗    ██╔══██╗    ██╔════╝    ██╔════╝
@@ -51,7 +51,7 @@ function is_white_space(code: i32): bool {
 
 function read_token(): string {
 	// Skip white space
-	while (is_white_space(char_code_at(minits_source, pos))) {
+	while (is_white_space(char_code_at(alang_source, pos))) {
 		pos++;
 	}
 
@@ -59,8 +59,8 @@ function read_token(): string {
 	let first: bool = true;
 	let is_anum: bool = false;
 
-	while (pos < minits_source_length) {
-		let c: string = char_at(minits_source, pos);
+	while (pos < alang_source_length) {
+		let c: string = char_at(alang_source, pos);
 
 		// Comment start
 		if (token == "//") {
@@ -118,7 +118,7 @@ function read_token(): string {
 		}
 
 		// Token end
-		if (is_white_space(char_code_at(minits_source, pos))) {
+		if (is_white_space(char_code_at(alang_source, pos))) {
 			break;
 		}
 
@@ -1682,22 +1682,22 @@ function write_krom_c() {
 
 function main() {
 	if (krom_get_arg_count() > 1) {
-		minits_input = krom_get_arg(1);
+		alang_input = krom_get_arg(1);
 	}
 	if (krom_get_arg_count() > 2) {
-		minits_output = krom_get_arg(2);
+		alang_output = krom_get_arg(2);
 	}
 
-	if (minits_source == null) {
+	if (alang_source == null) {
 		let reader: kinc_file_reader_t = {};
-		kinc_file_reader_open(reader, minits_input, KINC_FILE_TYPE_ASSET);
+		kinc_file_reader_open(reader, alang_input, KINC_FILE_TYPE_ASSET);
 		let reader_size: u32 = kinc_file_reader_size(reader);
 		let buffer: buffer_t = buffer_create(reader_size + 1);
 		kinc_file_reader_read(reader, buffer.buffer, reader_size);
 		kinc_file_reader_close(reader);
-		minits_source = (buffer.buffer); // () - no string copy
+		alang_source = (buffer.buffer); // () - no string copy
 	}
-	minits_source_length = minits_source.length;
+	alang_source_length = alang_source.length;
 
 	// HEAP_SIZE
 	any_array_resize(tokens, 512000);
@@ -1720,7 +1720,7 @@ function main() {
 	//
 
 	parse();
-	fhandle = fopen(minits_output, "wb");
+	fhandle = fopen(alang_output, "wb");
 	write_krom_c();
 	fclose(fhandle);
 
