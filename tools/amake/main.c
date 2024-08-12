@@ -46,7 +46,7 @@ static image_t read_hdr(const char *filename) {
 static void *scale_image(image_t img, int width, int height) {
     unsigned char *scaled = malloc(width * height * 4);
     stbir_resize_uint8_generic(img.data, img.width, img.height, img.width * 4, scaled, width, height, width * 4, 4, 3, 0,
-                               STBIR_EDGE_CLAMP, /*STBIR_FILTER_BOX*/ STBIR_FILTER_CUBICBSPLINE, STBIR_COLORSPACE_SRGB, 0);
+                               STBIR_EDGE_CLAMP, STBIR_FILTER_BOX, STBIR_COLORSPACE_SRGB, 0);
     return scaled;
 }
 
@@ -61,7 +61,7 @@ static void write_ico_header(FILE *file) {
     fwrite(&img_count, 1, 2, file);
 }
 
-static void write_ico_entry(FILE *file, int width, int height, int offset) {
+static void write_ico_entry(FILE *file, int width, int height, int size, int offset) {
 	fputc(width == 256 ? 0 : width, file);
 	fputc(height == 256 ? 0 : height, file);
 	fputc(0, file);
@@ -70,7 +70,6 @@ static void write_ico_entry(FILE *file, int width, int height, int offset) {
     fwrite(&color_planes, 1, 2, file);
     short bpp = 32;
     fwrite(&bpp, 1, 2, file);
-    int size = width * height * 4 + 40;
     fwrite(&size, 1, 4, file);
     fwrite(&offset, 1, 4, file);
 }
@@ -101,16 +100,16 @@ static JSValue js_export_ico(JSContext *ctx, JSValue this_val, int argc, JSValue
     write_ico_header(file);
     const int ico_header_size = 6;
     const int ico_entry_size = 16;
-	int ico_offset = ico_header_size + ico_entry_size * 8;
-	write_ico_entry(file, 16, 16, ico_offset);
+	int ico_offset = ico_header_size + ico_entry_size * 5;
+	write_ico_entry(file, 16, 16, png16_len, ico_offset);
 	ico_offset += png16_len;
-	write_ico_entry(file, 24, 24, ico_offset);
+	write_ico_entry(file, 24, 24, png24_len, ico_offset);
 	ico_offset += png24_len;
-	write_ico_entry(file, 32, 32, ico_offset);
+	write_ico_entry(file, 32, 32, png32_len, ico_offset);
 	ico_offset += png32_len;
-	write_ico_entry(file, 48, 48, ico_offset);
+	write_ico_entry(file, 48, 48, png48_len, ico_offset);
 	ico_offset += png48_len;
-	write_ico_entry(file, 256, 256, ico_offset);
+	write_ico_entry(file, 256, 256, png256_len, ico_offset);
 
     fwrite(png16, 1, png16_len, file);
     fwrite(png24, 1, png24_len, file);
@@ -187,6 +186,7 @@ static JSValue js_export_k(JSContext *ctx, JSValue this_val, int argc, JSValue *
 
 #ifdef _WIN32
 #include <Windows.h>
+#include <direct.h>
 static JSValue js_os_exec_win(JSContext *ctx, JSValue this_val, int argc, JSValue *argv) {
     JSValue args = argv[0];
     JSValue val = JS_GetPropertyStr(ctx, args, "length");
