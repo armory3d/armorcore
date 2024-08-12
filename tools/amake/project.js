@@ -14,8 +14,6 @@ if (platform === 'linux') {
 else if (platform === "windows") {
 	project.addDefine("WIN32_LEAN_AND_MEAN");
 	project.addDefine("_WIN32_WINNT=0x0602");
-	// C/C++ - Command Line:
-	// /experimental:c11atomics /std:c11
 	// Linker - Command Line:
 	// /subsystem:console
 }
