@@ -1,4 +1,4 @@
-// Mini-kmake based on https://github.com/Kode/kmake by RobDangerous
+// Based on https://github.com/Kode/kmake by RobDangerous
 
 // ██╗     ██╗██████╗
 // ██║     ██║██╔══██╗
@@ -118,7 +118,7 @@ function os_exec(exe, params = [], ops = {}) {
 
 	let status;
 	if (os_platform() === "win32") {
-		status = kmake.os_exec_win(params, ops);
+		status = amake.os_exec_win(params, ops);
 		status = 0;
 	}
 	else {
@@ -1081,11 +1081,10 @@ function addDirectory(dirname, directories) {
 }
 
 class IconImage {
-	constructor(idiom, size, scale, background = null) {
+	constructor(idiom, size, scale) {
 		this.idiom = idiom;
 		this.size = size;
 		this.scale = scale;
-		this.background = background;
 	}
 }
 
@@ -1124,7 +1123,7 @@ class XCodeExporter extends Exporter {
 		if (platform === "ios") {
 			add_icons(icons, "iphone", [20, 20, 29, 29, 40, 40, 60, 60], [2, 3, 2, 3, 2, 3, 2, 3]);
 			add_icons(icons, "ipad", [20, 20, 29, 29, 40, 40, 76, 76, 83.5], [1, 2, 1, 2, 1, 2, 1, 2, 2]);
-			icons.push(new IconImage("ios-marketing", 1024, 1, 0x000000ff));
+			icons.push(new IconImage("ios-marketing", 1024, 1));
 		}
 		else {
 			add_icons(icons, "mac", [16, 16, 32, 32, 128, 128, 256, 256, 512, 512], [1, 2, 1, 2, 1, 2, 1, 2, 1, 2]);
@@ -1155,7 +1154,7 @@ class XCodeExporter extends Exporter {
 		this.close_file();
 		for (let i = 0; i < icons.length; ++i) {
 			let icon = icons[i];
-			export_png(project.icon, path_resolve(to, 'Images.xcassets', 'AppIcon.appiconset', icon.idiom + icon.scale + 'x' + icon.size + '.png'), icon.size * icon.scale, icon.size * icon.scale, icon.background, from);
+			export_png(project.icon, path_resolve(to, 'Images.xcassets', 'AppIcon.appiconset', icon.idiom + icon.scale + 'x' + icon.size + '.png'), icon.size * icon.scale, icon.size * icon.scale, from);
 		}
 		let plistname = "";
 		let files = [];
@@ -1807,8 +1806,8 @@ class MakeExporter extends Exporter {
 	}
 
 	export_solution(project) {
-		let from = ".";
-		let to = "build";
+		let from = path_resolve(".");
+		let to = path_resolve("build");
 		let objects = {};
 		let ofiles = {};
 		let output_path = path_resolve(to, goptions.build_path);
@@ -2132,8 +2131,8 @@ class AndroidExporter extends Exporter {
 			let folder = folders[i];
 			let dpi = dpis[i];
 			fs_ensuredir(path_join(outdir, 'app', 'src', 'main', 'res', folder));
-			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher.png'), dpi, dpi, null, from);
-			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher_round.png'), dpi, dpi, null, from);
+			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher.png'), dpi, dpi, from);
+			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher_round.png'), dpi, dpi, from);
 		}
 	}
 }
@@ -2267,31 +2266,16 @@ class CompilerCommandsExporter extends Exporter {
 // ██║ ╚═╝ ██║██║  ██║██║  ██╗███████╗
 // ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
 
-function icon_run(from, to, width, height, format, background) {
-	let exe = path_resolve(toolsdir, "kraffiti" + exe_ext());
-	let params = ["from=" + from, "to=" + to, "format=" + format, "keepaspect"];
-	if (width > 0) {
-		params.push("width=" + width);
-	}
-	if (height > 0) {
-		params.push("height=" + height);
-	}
-	if (background !== null) {
-		params.push("background=" + background.toString(16));
-	}
-	os_exec(exe, params);
-}
-
 function export_ico(icon, to, from) {
 	if (!fs_exists(path_join(from, icon))) {
 		from = makedir;
 		icon = "icon.png";
 	}
-	icon_run(path_join(from, icon), to, 0, 0, "ico", null);
+	amake.export_ico(path_join(from, icon), to);
 }
 
-function export_png(icon, to, width, height, background, from) {
-	icon_run(path_join(from, icon), to, width, height, "png", background);
+function export_png(icon, to, width, height, from) {
+	amake.export_png(path_join(from, icon), to, width, height);
 }
 
 function contains_define(array, value) {
@@ -2668,17 +2652,13 @@ class ShaderCompiler {
 	}
 }
 
-function export_image(from, to) {
+function export_k(from, to) {
 	to += ".k";
-	let outputformat = "k";
 	if (fs_exists(to) && fs_mtime(to) > fs_mtime(from)) {
-		return outputformat;
+		return "k";
 	}
 	fs_ensuredir(path_dirname(to));
-	let exe = "kraffiti" + exe_ext();
-	let params = ["from=" + from, "to=" + to, "format=lz4", "filter=nearest"];
-	os_exec(path_join(armorcoredir, 'tools', 'bin', sys_dir(), exe), params);
-	return outputformat;
+	amake.export_k(from, to);
 }
 
 class ArmorCoreExporter {
@@ -2717,8 +2697,8 @@ class ArmorCoreExporter {
 	}
 
 	copy_image(from, to) {
-		let format = export_image(from, path_join("build", "krom", to));
-		return [to + "." + format];
+		export_k(from, path_join("build", "krom", to));
+		return [to + ".k"];
 	}
 
 	copy_blob(from, to) {
@@ -2829,7 +2809,7 @@ function write_ts_project(projectdir, options) {
 	fs_ensuredir(projectdir);
 	fs_writefile(path_join(projectdir, 'tsconfig.json'), JSON.stringify(tsdata, null, 4));
 
-	// MiniTS compiler
+	// alang compiler
 	globalThis.options = options;
 	let source = '';
 	let file_paths = tsdata.include;
@@ -2838,23 +2818,23 @@ function write_ts_project(projectdir, options) {
 		file = ts_preprocessor(file, file_path);
 		source += file;
 	}
-	let minits_bin = path_join(armorcoredir, 'tools', 'bin', sys_dir(), 'minits' + exe_ext());
-	let minits_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
-	let minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
-	fs_writefile(minits_input, source);
+	let alang_bin = path_join(armorcoredir, 'tools', 'bin', sys_dir(), 'alang' + exe_ext());
+	let alang_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
+	let alang_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
+	fs_writefile(alang_input, source);
 
 	let start = Date.now();
-	os_exec(minits_bin, [minits_input, minits_output]);
-	console.log("minits took " + (Date.now() - start) + "ms.");
+	os_exec(alang_bin, [alang_input, alang_output]);
+	console.log("alang took " + (Date.now() - start) + "ms.");
 
-	if (goptions.minitsjs) {
+	if (goptions.alangjs) {
 		globalThis.std = std;
 		globalThis.fs_readfile = fs_readfile;
 		globalThis.fs_writefile = fs_writefile;
-		globalThis.flags.minits_source = source;
-		globalThis.flags.minits_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
-		let minits = armorcoredir + '/tools/minits/minits.js';
-		(1, eval)(fs_readfile(minits));
+		globalThis.flags.alang_source = source;
+		globalThis.flags.alang_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
+		let alang = armorcoredir + '/tools/alang/alang.js';
+		(1, eval)(fs_readfile(alang));
 	}
 }
 
@@ -3394,7 +3374,7 @@ let goptions = {
 	compiler: 'default',
 	arch: 'default',
 	shaderversion: null,
-	minitsjs: false,
+	alangjs: false,
 	js: false,
 };
 
