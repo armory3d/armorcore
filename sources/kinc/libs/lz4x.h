@@ -62,19 +62,6 @@ static size_t kwrite(void* src, size_t size, char* dst, size_t* offset, int maxO
 	return realSize;
 }
 
-// int readData(void *ptr, int size, const char *input, int &inputIndex, int inputSize) {
-// 	int availableSize = MIN(size, inputSize - inputIndex);
-// 	memcpy(ptr, &input[inputIndex], availableSize);
-// 	inputIndex += availableSize;
-// 	return availableSize;
-// }
-
-// int writeData(const void *input, int size, char *output, int &outputIndex) {
-// 	memcpy(&output[outputIndex], input, size);
-// 	outputIndex += size;
-// 	return size;
-// }
-
 static inline void wild_copy(int d, int s, int n) {
 	COPY_32(d, s);
 	COPY_32(d+4, s+4);
