@@ -439,8 +439,8 @@ class VisualStudioExporter extends Exporter {
 	}
 
 	export_solution(project) {
-		let from = ".";
-		let to = "build";
+		let from = path_resolve(".");
+		let to = path_resolve("build");
 		let platform = goptions.target;
 		this.write_file(path_resolve(to, project.get_safe_name() + '.sln'));
 		if (goptions.visualstudio === 'vs2022') {
@@ -653,7 +653,12 @@ class VisualStudioExporter extends Exporter {
 		}
 		this.p('</ClCompile>', indent + 1);
 		this.p('<Link>', indent + 1);
-		this.p('<SubSystem>Windows</SubSystem>', indent + 2);
+		if (project.name == "amake") { // TODO
+			this.p('<SubSystem>Console</SubSystem>', indent + 2);
+		}
+		else {
+			this.p('<SubSystem>Windows</SubSystem>', indent + 2);
+		}
 		this.p('<GenerateDebugInformation>true</GenerateDebugInformation>', indent + 2);
 		if (config === 'Release') {
 			this.p('<EnableCOMDATFolding>true</EnableCOMDATFolding>', indent + 2);
@@ -797,12 +802,11 @@ class VisualStudioExporter extends Exporter {
 		let incstring = "";
 		let includedirs = project.getIncludeDirs();
 		for (let include of includedirs) {
-			// let relativized = path_relative(to, path_resolve(from, include));
-			// if (relativized === "") {
-			// 	relativized = ".";
-			// }
-			// incstring += relativized + ";";
-			incstring += include + ";";
+			let relativized = path_relative(to, path_resolve(from, include));
+			if (relativized === "") {
+				relativized = ".";
+			}
+			incstring += relativized + ";";
 		}
 		if (incstring.length > 0)
 			incstring = incstring.substr(0, incstring.length - 1);
@@ -2267,6 +2271,9 @@ class CompilerCommandsExporter extends Exporter {
 // ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
 
 function export_ico(icon, to, from) {
+	if (fs_exists(to) && fs_mtime(to) > fs_mtime(from)) {
+		return;
+	}
 	if (!fs_exists(path_join(from, icon))) {
 		from = makedir;
 		icon = "icon.png";
@@ -2846,8 +2853,6 @@ function export_project_files(name, options, exporter, defines) {
 }
 
 function export_armorcore_project(project, options) {
-	console.log('Creating ArmorCore project files.');
-
 	let temp = path_join("build", 'temp');
 
 	let exporter = new ArmorCoreExporter(project, options);
@@ -3414,5 +3419,6 @@ if (goptions.target === "android" || goptions.target === "wasm") {
 	goptions.shaderversion = 300;
 }
 
+let start = Date.now();
 main();
-console.log('Done.');
+console.log("Done in " + (Date.now() - start) + "ms.");
