@@ -117,6 +117,7 @@ static JSValue js_export_ico(JSContext *ctx, JSValue this_val, int argc, JSValue
     fwrite(png48, 1, png48_len, file);
     fwrite(png256, 1, png256_len, file);
 	fclose(file);
+    return JS_UNDEFINED;
 }
 
 static JSValue js_export_png(JSContext *ctx, JSValue this_val, int argc, JSValue *argv) {
@@ -141,8 +142,8 @@ static JSValue js_export_png(JSContext *ctx, JSValue this_val, int argc, JSValue
 
     int comp = 4;
     stbi_write_png(to, width, height, comp, (unsigned char *)img.data, width * comp);
-
     free(img.data);
+    return JS_UNDEFINED;
 }
 
 static void write_k(int width, int height, const char *format, char *data, int size, const char *filename) {
@@ -182,6 +183,7 @@ static JSValue js_export_k(JSContext *ctx, JSValue this_val, int argc, JSValue *
     write_k(img.width, img.height, img.is_hdr ? "LZ4F" : "LZ4 ", compressed, compressed_size, to);
     free(compressed);
     free(img.data);
+    return JS_UNDEFINED;
 }
 
 #ifdef _WIN32
