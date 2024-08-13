@@ -1112,8 +1112,8 @@ class XCodeExporter extends Exporter {
 	}
 
 	export_solution(project) {
-		let from = ".";
-		let to = "build";
+		let from = path_resolve(".");
+		let to = path_resolve("build");
 		let platform = goptions.target;
 		let xdir = path_resolve(to, project.get_safe_name() + ".xcodeproj");
 		fs_ensuredir(xdir);
@@ -1158,7 +1158,7 @@ class XCodeExporter extends Exporter {
 		this.close_file();
 		for (let i = 0; i < icons.length; ++i) {
 			let icon = icons[i];
-			export_png(project.icon, path_resolve(to, 'Images.xcassets', 'AppIcon.appiconset', icon.idiom + icon.scale + 'x' + icon.size + '.png'), icon.size * icon.scale, icon.size * icon.scale, from);
+			export_png_icon(project.icon, path_resolve(to, 'Images.xcassets', 'AppIcon.appiconset', icon.idiom + icon.scale + 'x' + icon.size + '.png'), icon.size * icon.scale, icon.size * icon.scale, from);
 		}
 		let plistname = "";
 		let files = [];
@@ -1394,7 +1394,12 @@ class XCodeExporter extends Exporter {
 		this.p('name = "' + project.getName() + '";', 3);
 		this.p('productName = "' + project.getName() + '";', 3);
 		this.p('productReference = ' + appFileId + ' /* ' + project.get_safe_name() + '.app */;', 3);
-		this.p('productType = "com.apple.product-type.application";', 3);
+		if (project.name == "amake") { // TODO
+			this.p('productType = "com.apple.product-type.tool";', 3);
+		}
+		else {
+			this.p('productType = "com.apple.product-type.application";', 3);
+		}
 		this.p('};', 2);
 		this.p('/* End PBXNativeTarget section */');
 		this.p();
@@ -1954,8 +1959,8 @@ class AndroidExporter extends Exporter {
 	}
 
 	export_solution(project) {
-		let from = ".";
-		let to = "build";
+		let from = path_resolve(".");
+		let to = path_resolve("build");
 		this.safe_name = project.get_safe_name();
 		let outdir = path_join(to.toString(), this.safe_name);
 		fs_ensuredir(outdir);
@@ -2135,8 +2140,8 @@ class AndroidExporter extends Exporter {
 			let folder = folders[i];
 			let dpi = dpis[i];
 			fs_ensuredir(path_join(outdir, 'app', 'src', 'main', 'res', folder));
-			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher.png'), dpi, dpi, from);
-			export_png(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher_round.png'), dpi, dpi, from);
+			export_png_icon(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher.png'), dpi, dpi, from);
+			export_png_icon(icon, path_resolve(to, this.safe_name, 'app', 'src', 'main', 'res', folder, 'ic_launcher_round.png'), dpi, dpi, from);
 		}
 	}
 }
@@ -2147,8 +2152,8 @@ class CompilerCommandsExporter extends Exporter {
 	}
 
 	export_solution(project) {
-		let from = ".";
-		let to = "build";
+		let from = path_resolve(".");
+		let to = path_resolve("build");
 		let platform = goptions.target;
 		from = path_resolve(os_cwd(), from);
 		this.write_file(path_resolve(to, 'compile_commands.json'));
@@ -2281,7 +2286,14 @@ function export_ico(icon, to, from) {
 	amake.export_ico(path_join(from, icon), to);
 }
 
-function export_png(icon, to, width, height, from) {
+function export_png_icon(icon, to, width, height, from) {
+	if (fs_exists(to) && fs_mtime(to) > fs_mtime(from)) {
+		return;
+	}
+	if (!fs_exists(path_join(from, icon))) {
+		from = makedir;
+		icon = "icon.png";
+	}
 	amake.export_png(path_join(from, icon), to, width, height);
 }
 
