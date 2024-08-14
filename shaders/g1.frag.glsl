@@ -1,9 +1,9 @@
 #version 450
 
 uniform sampler2D texy;
-in vec2 texCoord;
-out vec4 FragColor;
+in vec2 tex_coord;
+out vec4 frag_color;
 
 void main() {
-	FragColor = texture(texy, texCoord);
+	frag_color = texture(texy, tex_coord);
 }

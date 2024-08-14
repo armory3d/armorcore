@@ -1,14 +1,14 @@
 #version 450
 
-in vec3 vertexPosition;
-in vec2 vertexUV;
-in vec4 vertexColor;
-uniform mat4 projectionMatrix;
-out vec2 texCoord;
+in vec3 pos;
+in vec2 tex;
+in vec4 col;
+uniform mat4 P;
+out vec2 tex_coord;
 out vec4 color;
 
 void main() {
-	gl_Position = projectionMatrix * vec4(vertexPosition, 1.0);
-	texCoord = vertexUV;
-	color = vertexColor;
+	gl_Position = P * vec4(pos, 1.0);
+	tex_coord = tex;
+	color = col;
 }

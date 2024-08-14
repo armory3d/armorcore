@@ -1,11 +1,11 @@
 #version 450
 
-in vec3 vertexPosition;
-in vec4 vertexColor;
-uniform mat4 projectionMatrix;
-out vec4 fragmentColor;
+in vec3 pos;
+in vec4 col;
+uniform mat4 P;
+out vec4 fragment_color;
 
 void main() {
-	gl_Position = projectionMatrix * vec4(vertexPosition, 1.0);
-	fragmentColor = vertexColor;
+	gl_Position = P * vec4(pos, 1.0);
+	fragment_color = col;
 }
