@@ -3,8 +3,7 @@
 
 ///include <stdio.h>
 
-let alang_input: string = "./test.ts";
-let alang_output: string = "./test.c";
+let alang_output: string = null;
 let alang_source: string = null;
 let alang_source_length: i32;
 
@@ -1486,7 +1485,9 @@ function write_kickstart() {
 		out("\n");
 	}
 	out("\t_main();\n");
+	out("\t#ifndef NO_KINC_START\n");
 	out("\tkinc_start();\n");
+	out("\t#endif\n");
 	out("}\n\n");
 }
 
@@ -1680,24 +1681,14 @@ function write_krom_c() {
 // ██║  ██╗    ██║    ╚██████╗    ██║  ██╗    ███████║       ██║       ██║  ██║    ██║  ██║       ██║
 // ╚═╝  ╚═╝    ╚═╝     ╚═════╝    ╚═╝  ╚═╝    ╚══════╝       ╚═╝       ╚═╝  ╚═╝    ╚═╝  ╚═╝       ╚═╝
 
-function main() {
-	if (krom_get_arg_count() > 1) {
-		alang_input = krom_get_arg(1);
-	}
-	if (krom_get_arg_count() > 2) {
-		alang_output = krom_get_arg(2);
-	}
+function main() {}
 
-	if (alang_source == null) {
-		let reader: kinc_file_reader_t = {};
-		kinc_file_reader_open(reader, alang_input, KINC_FILE_TYPE_ASSET);
-		let reader_size: u32 = kinc_file_reader_size(reader);
-		let buffer: buffer_t = buffer_create(reader_size + 1);
-		kinc_file_reader_read(reader, buffer.buffer, reader_size);
-		kinc_file_reader_close(reader);
-		alang_source = (buffer.buffer); // () - no string copy
-	}
+function alang(_alang_source: string, _alang_output: string) {
+	kickstart();
+
+	alang_source = (_alang_source); // () - no string copy
 	alang_source_length = alang_source.length;
+	alang_output = (_alang_output);
 
 	// HEAP_SIZE
 	any_array_resize(tokens, 512000);
@@ -1723,6 +1714,4 @@ function main() {
 	fhandle = fopen(alang_output, "wb");
 	write_krom_c();
 	fclose(fhandle);
-
-	exit(1);
 }

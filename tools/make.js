@@ -2837,14 +2837,6 @@ function write_ts_project(projectdir, options) {
 		file = ts_preprocessor(file, file_path);
 		source += file;
 	}
-	let alang_bin = path_join(armorcoredir, 'tools', 'bin', sys_dir(), 'alang' + exe_ext());
-	let alang_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
-	let alang_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
-	fs_writefile(alang_input, source);
-
-	let start = Date.now();
-	os_exec(alang_bin, [alang_input, alang_output]);
-	console.log("alang took " + (Date.now() - start) + "ms.");
 
 	if (goptions.alangjs) {
 		globalThis.std = std;
@@ -2852,8 +2844,16 @@ function write_ts_project(projectdir, options) {
 		globalThis.fs_writefile = fs_writefile;
 		globalThis.flags.alang_source = source;
 		globalThis.flags.alang_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
-		let alang = armorcoredir + '/tools/alang/alang.js';
+		let alang = armorcoredir + '/tools/amake/alang.js';
 		(1, eval)(fs_readfile(alang));
+	}
+	else {
+		// let alang_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
+		// fs_writefile(alang_input, source);
+		let alang_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
+		let start = Date.now();
+		amake.alang(source, alang_output);
+		console.log("alang took " + (Date.now() - start) + "ms.");
 	}
 }
 

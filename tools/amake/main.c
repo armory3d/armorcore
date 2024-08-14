@@ -32,14 +32,14 @@ static bool ends_with(const char *s, const char *end) {
 static image_t read_png_jpg(const char *filename) {
     int width, height, n;
     char *data = stbi_load(filename, &width, &height, &n, 4);
-    image_t img = { data: data, width: width, height: height, is_hdr: false };
+    image_t img = { .data = data, .width = width, .height = height, .is_hdr = false };
     return img;
 }
 
 static image_t read_hdr(const char *filename) {
 	int width, height, n;
     float *data = stbi_loadf(filename, &width, &height, &n, 4);
-    image_t img = { data: data, width: width, height: height, is_hdr: true };
+    image_t img = { .data = data, .width = width, .height = height, .is_hdr = true };
     return img;
 }
 
@@ -230,10 +230,17 @@ static JSValue js_os_exec_win(JSContext *ctx, JSValue this_val, int argc, JSValu
     WaitForSingleObject(pi.hProcess, INFINITE);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-
     return JS_UNDEFINED;
 }
 #endif
+
+void alang(char *source, char *output);
+static JSValue js_alang(JSContext *ctx, JSValue this_val, int argc, JSValue *argv) {
+    const char *source = JS_ToCString(ctx, argv[0]);
+    const char *output = JS_ToCString(ctx, argv[1]);
+    alang(source, output);
+    return JS_UNDEFINED;
+}
 
 int main(int argc, char **argv) {
     FILE *fp = fopen(argv[1], "rb");
@@ -260,6 +267,7 @@ int main(int argc, char **argv) {
     #ifdef _WIN32
     JS_SetPropertyStr(ctx, amake, "os_exec_win", JS_NewCFunction(ctx, js_os_exec_win, "os_exec_win", 1));
     #endif
+    JS_SetPropertyStr(ctx, amake, "alang", JS_NewCFunction(ctx, js_alang, "alang", 2));
 
     JS_SetPropertyStr(ctx, global_obj, "amake", amake);
     JS_FreeValue(ctx, global_obj);

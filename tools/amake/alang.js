@@ -3,7 +3,6 @@ let flags = globalThis.flags;
 if (flags === null) {
 	flags = {};
 	flags.alang_source = null;
-	flags.alang_input = "./test.ts";
 	flags.alang_output = "./test.c";
 }
 
@@ -1447,7 +1446,9 @@ function write_kickstart() {
 		out("\n");
 	}
 	out("\t_main();\n");
+	out("\t#ifndef NO_KINC_START\n");
 	out("\tkinc_start();\n");
+	out("\t#endif\n");
 	out("}\n\n");
 }
 
@@ -1641,11 +1642,7 @@ function write_krom_c() {
 // ██║  ██╗    ██║    ╚██████╗    ██║  ██╗    ███████║       ██║       ██║  ██║    ██║  ██║       ██║
 // ╚═╝  ╚═╝    ╚═╝     ╚═════╝    ╚═╝  ╚═╝    ╚══════╝       ╚═╝       ╚═╝  ╚═╝    ╚═╝  ╚═╝       ╚═╝
 
-function kickstart() {
-	if (flags.alang_source === null) {
-		flags.alang_source = fs_readfile(flags.alang_input);
-	}
-
+function alang() {
 	parse();
 	fhandle = std.open(flags.alang_output, "w");
 	write_krom_c();
@@ -1653,5 +1650,5 @@ function kickstart() {
 }
 
 let t = Date.now();
-kickstart();
+alang();
 console.log("alang took " + (Date.now() - t) + "ms.");

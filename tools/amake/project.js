@@ -1,6 +1,22 @@
 
 let project = new Project("amake");
 
+{
+	project.addDefine("NO_GC");
+	project.addDefine("NO_KROM_API");
+	project.addDefine("NO_KINC_START");
+	project.addSources("./"); // alang.ts
+	project.addIncludeDir("./"); // krom.h
+	project.addFile("build/krom.c");
+	project.addIncludeDir("../../sources");
+	project.addFile("../../sources/iron_string.c");
+	project.addFile("../../sources/iron_array.c");
+	project.addFile("../../sources/iron_map.c");
+	project.addFile("../../sources/iron_armpack.c");
+	project.addFile("../../sources/iron_json.c");
+	project.addFile("../../sources/iron_gc.c");
+}
+
 project.addIncludeDir("../../sources/libs");
 project.addFile("../../sources/libs/quickjs/*.c");
 project.addFile("main.c");
