@@ -3393,6 +3393,7 @@ let goptions = {
 	shaderversion: null,
 	alangjs: false,
 	js: false,
+	hlslbin: false,
 };
 
 if (os_env("ARM_EMBED")) {
@@ -3421,6 +3422,12 @@ if (goptions.js) {
 	globalThis.fs_readdir = fs_readdir;
 	(1, eval)(fs_readfile(goptions.js));
 	std.exit();
+}
+
+if (goptions.hlslbin) {
+	let from = args[3];
+	let to = args[4];
+	amake.hlslbin(from, to);
 }
 
 if (goptions.run) {

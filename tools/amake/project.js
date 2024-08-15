@@ -2,6 +2,7 @@
 let project = new Project("amake");
 
 {
+	// alang
 	project.addDefine("NO_GC");
 	project.addDefine("NO_KROM_API");
 	project.addDefine("NO_KINC_START");
@@ -22,14 +23,20 @@ project.addFile("../../sources/libs/quickjs/*.c");
 project.addFile("main.c");
 
 if (platform === 'linux') {
+	// quickjs
 	project.addLib("m");
 	project.addDefine("_GNU_SOURCE");
 	project.addDefine("environ=__environ");
 	project.addDefine("sighandler_t=__sighandler_t");
 }
 else if (platform === "windows") {
+	// quickjs
 	project.addDefine("WIN32_LEAN_AND_MEAN");
 	project.addDefine("_WIN32_WINNT=0x0602");
+
+	// hlslbin
+	project.addLib("d3d11");
+	project.addLib("d3dcompiler");
 }
 else if (platform === "macos") {
 	project.addFile("../../sources/backends/macos/kinc/backend/mac.plist");

@@ -232,6 +232,149 @@ static JSValue js_os_exec_win(JSContext *ctx, JSValue this_val, int argc, JSValu
     CloseHandle(pi.hThread);
     return JS_UNDEFINED;
 }
+
+#include <d3d11.h>
+#include <D3Dcompiler.h>
+static JSValue js_hlslbin(JSContext *ctx, JSValue this_val, int argc, JSValue *argv) {
+    const char *from = JS_ToCString(ctx, argv[0]);
+    const char *to = JS_ToCString(ctx, argv[1]);
+
+    FILE *fp = fopen(argv[1], "rb");
+    fseek(fp , 0, SEEK_END);
+    int size = ftell(fp);
+    rewind(fp);
+    char *source = malloc(size + 1);
+    buffer[size] = 0;
+    fread(buffer, size, 1, fp);
+    fclose(fp);
+
+    char *type;
+    if (strstr(from, ".vert.")) {
+        type = "vs_5_0";
+    }
+    else if (strstr(from, ".frag.")) {
+        type = "ps_5_0";
+    }
+    else {
+        type = "gs_5_0";
+    }
+
+	ID3DBlob *error_message;
+	ID3DBlob *shader_buffer;
+	UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
+	HRESULT hr = D3DCompile(source, strlen(source) + 1, NULL, NULL, NULL, "main", type, flags, 0, &shader_buffer, &error_message);
+	if (hr != S_OK) {
+		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->lpVtbl->GetBufferPointer(error_message));
+		return NULL;
+	}
+
+	ID3D11ShaderReflection *reflector = NULL;
+	D3DReflect(shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer), &IID_ID3D11ShaderReflection, (void **)&reflector);
+
+	int size = shader_buffer->lpVtbl->GetBufferSize(shader_buffer);
+	char *file = malloc(size * 2);
+	int output_len = 0;
+
+	bool has_bone = strstr(source, " bone :") != NULL;
+	bool has_col = strstr(source, " col :") != NULL;
+	bool has_nor = strstr(source, " nor :") != NULL;
+	bool has_pos = strstr(source, " pos :") != NULL;
+	bool has_tex = strstr(source, " tex :") != NULL;
+
+	i32_map_t *attributes = i32_map_create();
+	int index = 0;
+	if (has_bone) i32_map_set(attributes, "bone", index++);
+	if (has_col) i32_map_set(attributes, "col", index++);
+	if (has_nor) i32_map_set(attributes, "nor", index++);
+	if (has_pos) i32_map_set(attributes, "pos", index++);
+	if (has_tex) i32_map_set(attributes, "tex", index++);
+	if (has_bone) i32_map_set(attributes, "weight", index++);
+
+	file[output_len] = (char)index;
+	output_len += 1;
+
+	any_array_t *keys = map_keys(attributes);
+	for (int i = 0; i < keys->length; ++i) {
+		strcpy(file + output_len, keys->buffer[i]);
+		output_len += strlen(keys->buffer[i]);
+		file[output_len] = 0;
+		output_len += 1;
+		file[output_len] = i32_map_get(attributes, keys->buffer[i]);
+		output_len += 1;
+	}
+
+	D3D11_SHADER_DESC desc;
+	reflector->lpVtbl->GetDesc(reflector, &desc);
+
+	file[output_len] = desc.BoundResources;
+	output_len += 1;
+	for (int i = 0; i < desc.BoundResources; ++i) {
+		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+		reflector->lpVtbl->GetResourceBindingDesc(reflector, i, &bindDesc);
+		strcpy(file + output_len, bindDesc.Name);
+		output_len += strlen(bindDesc.Name);
+		file[output_len] = 0;
+		output_len += 1;
+		file[output_len] = bindDesc.BindPoint;
+		output_len += 1;
+	}
+
+	ID3D11ShaderReflectionConstantBuffer *constants = reflector->lpVtbl->GetConstantBufferByName(reflector, "$Globals");
+	D3D11_SHADER_BUFFER_DESC buffer_desc;
+	hr = constants->lpVtbl->GetDesc(constants, &buffer_desc);
+	if (hr == S_OK) {
+		file[output_len] = buffer_desc.Variables;
+		output_len += 1;
+		for (int i = 0; i < buffer_desc.Variables; ++i) {
+			ID3D11ShaderReflectionVariable *variable = constants->lpVtbl->GetVariableByIndex(constants, i);
+			D3D11_SHADER_VARIABLE_DESC variable_desc;
+			hr = variable->lpVtbl->GetDesc(variable, &variable_desc);
+			if (hr == S_OK) {
+				strcpy(file + output_len, variable_desc.Name);
+				output_len += strlen(variable_desc.Name);
+				file[output_len] = 0;
+				output_len += 1;
+
+				*(uint32_t *)(file + output_len) = variable_desc.StartOffset;
+				output_len += 4;
+
+				*(uint32_t *)(file + output_len) = variable_desc.Size;
+				output_len += 4;
+
+				D3D11_SHADER_TYPE_DESC type_desc;
+				ID3D11ShaderReflectionType *type = variable->lpVtbl->GetType(variable);
+				hr = type->lpVtbl->GetDesc(type, &type_desc);
+				if (hr == S_OK) {
+					file[output_len] = type_desc.Columns;
+					output_len += 1;
+					file[output_len] = type_desc.Rows;
+					output_len += 1;
+				}
+				else {
+					file[output_len] = 0;
+					output_len += 1;
+					file[output_len] = 0;
+					output_len += 1;
+				}
+			}
+		}
+	}
+	else {
+		file[output_len] = 0;
+		output_len += 1;
+	}
+
+	memcpy(file + output_len, (char *)shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer));
+	output_len += shader_buffer->lpVtbl->GetBufferSize(shader_buffer);
+
+	shader_buffer->lpVtbl->Release(shader_buffer);
+	reflector->lpVtbl->Release(reflector);
+
+    fp = fopen(to, "wb");
+    fwrite(file, 1, output_len, fp);
+	fclose(fp);
+	free(file);
+}
 #endif
 
 void alang(char *source, char *output);
@@ -266,6 +409,7 @@ int main(int argc, char **argv) {
     JS_SetPropertyStr(ctx, amake, "export_png", JS_NewCFunction(ctx, js_export_png, "export_png", 4));
     #ifdef _WIN32
     JS_SetPropertyStr(ctx, amake, "os_exec_win", JS_NewCFunction(ctx, js_os_exec_win, "os_exec_win", 1));
+    JS_SetPropertyStr(ctx, amake, "hlslbin", JS_NewCFunction(ctx, js_hlslbin, "hlslbin", 1));
     #endif
     JS_SetPropertyStr(ctx, amake, "alang", JS_NewCFunction(ctx, js_alang, "alang", 2));
 
