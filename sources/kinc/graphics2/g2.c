@@ -164,7 +164,7 @@ void arm_g2_init(void *image_vert, int image_vert_size, void *image_frag, int im
 		image_pipeline.alpha_blend_destination = KINC_G4_BLEND_INV_SOURCE_ALPHA;
 		kinc_g4_pipeline_compile(&image_pipeline);
 
-		image_tex_unit = kinc_g4_pipeline_get_texture_unit(&image_pipeline, "stex");
+		image_tex_unit = kinc_g4_pipeline_get_texture_unit(&image_pipeline, "tex");
 		image_proj_loc = kinc_g4_pipeline_get_constant_location(&image_pipeline, "P");
 
 		kinc_g4_vertex_buffer_init(&image_vertex_buffer, G2_BUFFER_SIZE * 4, &structure, KINC_G4_USAGE_DYNAMIC, 0);
@@ -255,7 +255,7 @@ void arm_g2_init(void *image_vert, int image_vert_size, void *image_frag, int im
 		text_pipeline.alpha_blend_source = KINC_G4_BLEND_SOURCE_ALPHA;
 		text_pipeline.alpha_blend_destination = KINC_G4_BLEND_INV_SOURCE_ALPHA;
 		kinc_g4_pipeline_compile(&text_pipeline);
-		text_tex_unit = kinc_g4_pipeline_get_texture_unit(&text_pipeline, "stex");
+		text_tex_unit = kinc_g4_pipeline_get_texture_unit(&text_pipeline, "tex");
 		text_proj_loc = kinc_g4_pipeline_get_constant_location(&text_pipeline, "P");
 
 		kinc_g4_pipeline_init(&text_pipeline_rt);
@@ -268,7 +268,7 @@ void arm_g2_init(void *image_vert, int image_vert_size, void *image_frag, int im
 		text_pipeline_rt.alpha_blend_source = KINC_G4_BLEND_ONE;
 		text_pipeline_rt.alpha_blend_destination = KINC_G4_BLEND_INV_SOURCE_ALPHA;
 		kinc_g4_pipeline_compile(&text_pipeline_rt);
-		// text_tex_unit_rt = kinc_g4_pipeline_get_texture_unit(&text_pipeline_rt, "stex");
+		// text_tex_unit_rt = kinc_g4_pipeline_get_texture_unit(&text_pipeline_rt, "tex");
 		// text_proj_loc_rt = kinc_g4_pipeline_get_constant_location(&text_pipeline_rt, "P");
 
 		kinc_g4_vertex_buffer_init(&text_vertex_buffer, G2_BUFFER_SIZE * 4, &structure, KINC_G4_USAGE_DYNAMIC, 0);

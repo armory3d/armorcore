@@ -10,9 +10,9 @@ void main() { \
 ";
 
 let fs: string = "#version 330\n\
-out vec4 fragColor; \
+out vec4 frag_color; \
 void main() { \
-	fragColor = vec4(1.0, 0.0, 0.0, 1.0); \
+	frag_color = vec4(1.0, 0.0, 0.0, 1.0); \
 } \
 ";
 
@@ -41,9 +41,9 @@ void main() { \
 // let fs: string = "#version 300 es\n\
 // precision highp float; \
 // precision highp int; \
-// out vec4 fragColor; \
+// out vec4 frag_color; \
 // void main() { \
-// 	fragColor = vec4(1.0, 0.0, 0.0, 1.0); \
+// 	frag_color = vec4(1.0, 0.0, 0.0, 1.0); \
 // } \
 // ";
 

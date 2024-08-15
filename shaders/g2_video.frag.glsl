@@ -1,12 +1,12 @@
 #version 450
 
-uniform samplerVideo stex;
+uniform samplerVideo tex;
 in vec2 tex_coord;
 in vec4 color;
 out vec4 frag_color;
 
 void main() {
-	vec4 texcolor = texture(stex, tex_coord) * color;
+	vec4 texcolor = texture(tex, tex_coord) * color;
 	texcolor.rgb *= color.a;
 	frag_color = texcolor;
 }

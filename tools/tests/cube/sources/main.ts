@@ -63,7 +63,7 @@ function app_ready() {
 						name: "mesh",
 						bind_textures: [
 							{
-								name: "myTexture",
+								name: "my_texture",
 								file: "texture.k"
 							}
 						]
@@ -101,7 +101,7 @@ function app_ready() {
 						],
 						texture_units: [
 							{
-								name: "myTexture"
+								name: "my_texture"
 							}
 						]
 					}

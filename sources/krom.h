@@ -1142,20 +1142,20 @@ kinc_g4_shader_t *krom_g4_create_vertex_shader_from_source(string_t *source) {
 	char *file = malloc(size * 2);
 	int output_len = 0;
 
-	bool hasBone = strstr(temp_string_vs, "bone :") != NULL;
-	bool hasCol = strstr(temp_string_vs, "col :") != NULL;
-	bool hasNor = strstr(temp_string_vs, "nor :") != NULL;
-	bool hasPos = strstr(temp_string_vs, "pos :") != NULL;
-	bool hasTex = strstr(temp_string_vs, "tex :") != NULL;
+	bool has_bone = strstr(temp_string_vs, " bone :") != NULL;
+	bool has_col = strstr(temp_string_vs, " col :") != NULL;
+	bool has_nor = strstr(temp_string_vs, " nor :") != NULL;
+	bool has_pos = strstr(temp_string_vs, " pos :") != NULL;
+	bool has_tex = strstr(temp_string_vs, " tex :") != NULL;
 
 	i32_map_t *attributes = i32_map_create();
 	int index = 0;
-	if (hasBone) i32_map_set(attributes, "bone", index++);
-	if (hasCol) i32_map_set(attributes, "col", index++);
-	if (hasNor) i32_map_set(attributes, "nor", index++);
-	if (hasPos) i32_map_set(attributes, "pos", index++);
-	if (hasTex) i32_map_set(attributes, "tex", index++);
-	if (hasBone) i32_map_set(attributes, "weight", index++);
+	if (has_bone) i32_map_set(attributes, "bone", index++);
+	if (has_col) i32_map_set(attributes, "col", index++);
+	if (has_nor) i32_map_set(attributes, "nor", index++);
+	if (has_pos) i32_map_set(attributes, "pos", index++);
+	if (has_tex) i32_map_set(attributes, "tex", index++);
+	if (has_bone) i32_map_set(attributes, "weight", index++);
 
 	file[output_len] = (char)index;
 	output_len += 1;
@@ -1187,34 +1187,34 @@ kinc_g4_shader_t *krom_g4_create_vertex_shader_from_source(string_t *source) {
 	}
 
 	ID3D11ShaderReflectionConstantBuffer *constants = reflector->lpVtbl->GetConstantBufferByName(reflector, "$Globals");
-	D3D11_SHADER_BUFFER_DESC bufferDesc;
-	hr = constants->lpVtbl->GetDesc(constants, &bufferDesc);
+	D3D11_SHADER_BUFFER_DESC buffer_desc;
+	hr = constants->lpVtbl->GetDesc(constants, &buffer_desc);
 	if (hr == S_OK) {
-		file[output_len] = bufferDesc.Variables;
+		file[output_len] = buffer_desc.Variables;
 		output_len += 1;
-		for (int i = 0; i < bufferDesc.Variables; ++i) {
+		for (int i = 0; i < buffer_desc.Variables; ++i) {
 			ID3D11ShaderReflectionVariable *variable = constants->lpVtbl->GetVariableByIndex(constants, i);
-			D3D11_SHADER_VARIABLE_DESC variableDesc;
-			hr = variable->lpVtbl->GetDesc(variable, &variableDesc);
+			D3D11_SHADER_VARIABLE_DESC variable_desc;
+			hr = variable->lpVtbl->GetDesc(variable, &variable_desc);
 			if (hr == S_OK) {
-				strcpy(file + output_len, variableDesc.Name);
-				output_len += strlen(variableDesc.Name);
+				strcpy(file + output_len, variable_desc.Name);
+				output_len += strlen(variable_desc.Name);
 				file[output_len] = 0;
 				output_len += 1;
 
-				*(uint32_t *)(file + output_len) = variableDesc.StartOffset;
+				*(uint32_t *)(file + output_len) = variable_desc.StartOffset;
 				output_len += 4;
 
-				*(uint32_t *)(file + output_len) = variableDesc.Size;
+				*(uint32_t *)(file + output_len) = variable_desc.Size;
 				output_len += 4;
 
-				D3D11_SHADER_TYPE_DESC typeDesc;
+				D3D11_SHADER_TYPE_DESC type_desc;
 				ID3D11ShaderReflectionType *type = variable->lpVtbl->GetType(variable);
-				hr = type->lpVtbl->GetDesc(type, &typeDesc);
+				hr = type->lpVtbl->GetDesc(type, &type_desc);
 				if (hr == S_OK) {
-					file[output_len] = typeDesc.Columns;
+					file[output_len] = type_desc.Columns;
 					output_len += 1;
-					file[output_len] = typeDesc.Rows;
+					file[output_len] = type_desc.Rows;
 					output_len += 1;
 				}
 				else {
@@ -1309,34 +1309,34 @@ kinc_g4_shader_t *krom_g4_create_fragment_shader_from_source(string_t *source) {
 	}
 
 	ID3D11ShaderReflectionConstantBuffer *constants = reflector->lpVtbl->GetConstantBufferByName(reflector, "$Globals");
-	D3D11_SHADER_BUFFER_DESC bufferDesc;
-	hr = constants->lpVtbl->GetDesc(constants, &bufferDesc);
+	D3D11_SHADER_BUFFER_DESC buffer_desc;
+	hr = constants->lpVtbl->GetDesc(constants, &buffer_desc);
 	if (hr == S_OK) {
-		file[output_len] = bufferDesc.Variables;
+		file[output_len] = buffer_desc.Variables;
 		output_len += 1;
-		for (int i = 0; i < bufferDesc.Variables; ++i) {
+		for (int i = 0; i < buffer_desc.Variables; ++i) {
 			ID3D11ShaderReflectionVariable *variable = constants->lpVtbl->GetVariableByIndex(constants, i);
-			D3D11_SHADER_VARIABLE_DESC variableDesc;
-			hr = variable->lpVtbl->GetDesc(variable, &variableDesc);
+			D3D11_SHADER_VARIABLE_DESC variable_desc;
+			hr = variable->lpVtbl->GetDesc(variable, &variable_desc);
 			if (hr == S_OK) {
-				strcpy(file + output_len, variableDesc.Name);
-				output_len += strlen(variableDesc.Name);
+				strcpy(file + output_len, variable_desc.Name);
+				output_len += strlen(variable_desc.Name);
 				file[output_len] = 0;
 				output_len += 1;
 
-				*(uint32_t *)(file + output_len) = variableDesc.StartOffset;
+				*(uint32_t *)(file + output_len) = variable_desc.StartOffset;
 				output_len += 4;
 
-				*(uint32_t *)(file + output_len) = variableDesc.Size;
+				*(uint32_t *)(file + output_len) = variable_desc.Size;
 				output_len += 4;
 
-				D3D11_SHADER_TYPE_DESC typeDesc;
+				D3D11_SHADER_TYPE_DESC type_desc;
 				ID3D11ShaderReflectionType *type = variable->lpVtbl->GetType(variable);
-				hr = type->lpVtbl->GetDesc(type, &typeDesc);
+				hr = type->lpVtbl->GetDesc(type, &type_desc);
 				if (hr == S_OK) {
-					file[output_len] = typeDesc.Columns;
+					file[output_len] = type_desc.Columns;
 					output_len += 1;
-					file[output_len] = typeDesc.Rows;
+					file[output_len] = type_desc.Rows;
 					output_len += 1;
 				}
 				else {
