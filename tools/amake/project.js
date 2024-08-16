@@ -35,8 +35,8 @@ else if (platform === "windows") {
 	project.addDefine("_WIN32_WINNT=0x0602");
 
 	// hlslbin
-	project.addLib("d3d11");
 	project.addLib("d3dcompiler");
+	project.addLib("dxguid");
 }
 else if (platform === "macos") {
 	project.addFile("../../sources/backends/macos/kinc/backend/mac.plist");

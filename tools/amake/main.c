@@ -235,17 +235,19 @@ static JSValue js_os_exec_win(JSContext *ctx, JSValue this_val, int argc, JSValu
 
 #include <d3d11.h>
 #include <D3Dcompiler.h>
+#include <iron_array.h>
+#include <iron_map.h>
 static JSValue js_hlslbin(JSContext *ctx, JSValue this_val, int argc, JSValue *argv) {
     const char *from = JS_ToCString(ctx, argv[0]);
     const char *to = JS_ToCString(ctx, argv[1]);
 
-    FILE *fp = fopen(argv[1], "rb");
+    FILE *fp = fopen(from, "rb");
     fseek(fp , 0, SEEK_END);
     int size = ftell(fp);
     rewind(fp);
     char *source = malloc(size + 1);
-    buffer[size] = 0;
-    fread(buffer, size, 1, fp);
+    source[size] = 0;
+    fread(source, size, 1, fp);
     fclose(fp);
 
     char *type;
@@ -264,14 +266,14 @@ static JSValue js_hlslbin(JSContext *ctx, JSValue this_val, int argc, JSValue *a
 	UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
 	HRESULT hr = D3DCompile(source, strlen(source) + 1, NULL, NULL, NULL, "main", type, flags, 0, &shader_buffer, &error_message);
 	if (hr != S_OK) {
-		kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->lpVtbl->GetBufferPointer(error_message));
-		return NULL;
+		printf("%s", (char *)error_message->lpVtbl->GetBufferPointer(error_message));
+        return JS_UNDEFINED;
 	}
 
 	ID3D11ShaderReflection *reflector = NULL;
 	D3DReflect(shader_buffer->lpVtbl->GetBufferPointer(shader_buffer), shader_buffer->lpVtbl->GetBufferSize(shader_buffer), &IID_ID3D11ShaderReflection, (void **)&reflector);
 
-	int size = shader_buffer->lpVtbl->GetBufferSize(shader_buffer);
+	size = shader_buffer->lpVtbl->GetBufferSize(shader_buffer);
 	char *file = malloc(size * 2);
 	int output_len = 0;
 
@@ -374,6 +376,7 @@ static JSValue js_hlslbin(JSContext *ctx, JSValue this_val, int argc, JSValue *a
     fwrite(file, 1, output_len, fp);
 	fclose(fp);
 	free(file);
+    return JS_UNDEFINED;
 }
 #endif
 
