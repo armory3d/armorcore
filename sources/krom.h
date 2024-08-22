@@ -36,40 +36,70 @@
 #include "zui_nodes.h"
 #endif
 
+int _argc;
+char **_argv;
+
 #ifdef WITH_EVAL
 #include "quickjs/quickjs.h"
 #include "quickjs/quickjs-libc.h"
-JSRuntime *js_runtime;
+JSRuntime *js_runtime = NULL;
 JSContext *js_ctx;
+#ifdef WITH_PLUGINS
+void plugin_api_init();
+#endif
+
+void js_init() {
+	js_runtime = JS_NewRuntime();
+	js_ctx = JS_NewContext(js_runtime);
+	js_std_add_helpers(js_ctx, _argc, _argv);
+	js_init_module_std(js_ctx, "std");
+	js_init_module_os(js_ctx, "os");
+	#ifdef WITH_PLUGINS
+	plugin_api_init();
+	#endif
+}
 
 float js_eval(const char *js) {
+	if (js_runtime == NULL) {
+		js_init();
+	}
 	JSValue ret = JS_Eval(js_ctx, js, strlen(js), "armorcore", JS_EVAL_TYPE_MODULE);
-    if (JS_IsException(ret)) {
-        js_std_dump_error(js_ctx);
-        JS_ResetUncatchableError(js_ctx);
-    }
-    JS_RunGC(js_runtime);
+	if (JS_IsException(ret)) {
+		js_std_dump_error(js_ctx);
+		JS_ResetUncatchableError(js_ctx);
+	}
+	JS_RunGC(js_runtime);
 	return JS_VALUE_GET_FLOAT64(ret);
 }
 
-void js_call_arg(void *p, int argc, JSValue *argv) {
-    JSValue fn = *(JSValue *)p;
-    JSValue global_obj = JS_GetGlobalObject(js_ctx);
-    JSValue result = JS_Call(js_ctx, fn, global_obj, argc, argv);
-    if (JS_IsException(result)) {
-        js_std_dump_error(js_ctx);
-        JS_ResetUncatchableError(js_ctx);
-    }
-    JS_FreeValue(js_ctx, global_obj);
+char *js_call_arg(void *p, int argc, JSValue *argv) {
+	if (js_runtime == NULL) {
+		js_init();
+	}
+	JSValue fn = *(JSValue *)p;
+	JSValue global_obj = JS_GetGlobalObject(js_ctx);
+	JSValue result = JS_Call(js_ctx, fn, global_obj, argc, argv);
+	if (JS_IsException(result)) {
+		js_std_dump_error(js_ctx);
+		JS_ResetUncatchableError(js_ctx);
+	}
+	JS_FreeValue(js_ctx, global_obj);
+	return (char *)JS_ToCString(js_ctx, result);
 }
 
-void js_call(void *p) {
-	js_call_arg(p, 0, NULL);
+char *js_call_ptr(void *p, void *arg) {
+	JSValue argv[] = { JS_NewInt64(js_ctx, (int64_t)arg) };
+	return js_call_arg(p, 1, argv);
 }
-#endif
 
-#ifdef WITH_PLUGINS
-void plugin_api_init();
+char *js_call_ptr_str(void *p, void *arg0, char *arg1) {
+	JSValue argv[] = { JS_NewInt64(js_ctx, (int64_t)arg0), JS_NewString(js_ctx, arg1) };
+	return js_call_arg(p, 2, argv);
+}
+
+char *js_call(void *p) {
+	return js_call_arg(p, 0, NULL);
+}
 #endif
 
 #define f64 double
@@ -94,8 +124,6 @@ void plugin_api_init();
 
 void _kickstart();
 
-int _argc;
-char **_argv;
 bool enable_window = true;
 bool in_background = false;
 int paused_frames = 0;
@@ -204,18 +232,6 @@ int kickstart(int argc, char **argv) {
 
 	kinc_threads_init();
 	kinc_display_init();
-
-	#ifdef WITH_EVAL
-	js_runtime = JS_NewRuntime();
-    js_ctx = JS_NewContext(js_runtime);
-    js_std_add_helpers(js_ctx, argc, argv);
-    js_init_module_std(js_ctx, "std");
-    js_init_module_os(js_ctx, "os");
-	#endif
-
-	#ifdef WITH_PLUGINS
-	plugin_api_init();
-	#endif
 
 	gc_start(&argc);
 	_kickstart();
