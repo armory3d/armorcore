@@ -113,28 +113,40 @@ function fs_copydir(from, to) {
 	}
 }
 
+function os_popen(exe, params = [], ops = {}) {
+	params.unshift(exe);
+	let res = { stdout: "" };
+
+	let cwd;
+	if (ops.cwd) {
+		cwd = os_cwd();
+		os.chdir(ops.cwd);
+	}
+
+	let p = std.popen(params.join(" "), "r");
+	res.stdout = p.readAsString();
+	p.close();
+
+	if (ops.cwd) {
+		os.chdir(cwd);
+	}
+
+	return res;
+}
+
 function os_exec(exe, params = [], ops = {}) {
 	params.unshift(exe);
+	let res = { status: 0 };
 
-	let status;
 	if (os_platform() === "win32") {
-		status = amake.os_exec_win(params, ops);
-		status = 0;
+		res.status = amake.os_exec_win(params, ops);
+		res.status = 0;
 	}
 	else {
-		// let pipe = os.pipe();
-		// ops.stdout = pipe[1];
-		// ops.block = false;
-		status = os.exec(params, ops);
-		// os.close(pipe[1]);
-		// let file = std.fdopen(pipe[0], "r");
-		// let s = file.readAsString().trim();
-		// file.close();
-		// os.waitpid(pid, 0);
-		// let status = os.waitpid(pid, 0)[0];
+		res.status = os.exec(params, ops);
 	}
 
-	return { status: status };
+	return res;
 }
 
 function os_platform() {
