@@ -326,7 +326,7 @@ void json_encode_string_array(char *k, char_ptr_array_t *a) {
 
 void json_encode_f32(char *k, float f) {
 	json_encode_key(k);
-	encoded = string_join(encoded, f32_to_string(f));
+	encoded = string_join(encoded, f32_to_string_with_zeros(f));
 }
 
 void json_encode_i32(char *k, int i) {
