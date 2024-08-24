@@ -144,9 +144,9 @@ declare function uri_decode(s: string): string;
 
 declare function js_eval(js: string): f32;
 declare function js_call(f: any): string;
-declare function js_call_arg(f: any, argc: i32, argv: any): string;
 declare function js_call_ptr(f: any, arg: any): string;
 declare function js_call_ptr_str(f: any, arg0: any, arg1: string): string;
+declare function js_pcall_str(f: any, arg0: string): any;
 declare function array_remove(ar: any[], e: any): void;
 declare function trim_end(str: string): string;
 
