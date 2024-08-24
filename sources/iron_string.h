@@ -11,6 +11,7 @@ bool string_equals(char *a, char *b);
 char *i32_to_string(int32_t i);
 char *i32_to_string_hex(int32_t i);
 char *f32_to_string(float f);
+char *f32_to_string_with_zeros(float f);
 
 void string_strip_trailing_zeros(char *str);
 int32_t string_index_of(char *s, char *search);

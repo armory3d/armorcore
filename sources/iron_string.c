@@ -48,10 +48,15 @@ char *i32_to_string_hex(int32_t i) {
 	return r;
 }
 
-char *f32_to_string(float f) {
-	int l = snprintf(NULL, 0, "%.2f", f);
+char *f32_to_string_with_zeros(float f) {
+	int l = snprintf(NULL, 0, "%f", f);
 	char *r = gc_alloc(l + 1);
-	sprintf(r, "%.2f", f);
+	sprintf(r, "%f", f);
+	return r;
+}
+
+char *f32_to_string(float f) {
+	char *r = f32_to_string_with_zeros(f);
 	string_strip_trailing_zeros(r);
 	return r;
 }
