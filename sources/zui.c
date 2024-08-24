@@ -2038,16 +2038,6 @@ int zui_combo(zui_handle_t *handle, char_ptr_array_t *texts, char *label, bool s
 	return handle->position;
 }
 
-static void strip_trailing_zeros(char *str) {
-	int len = strlen(str);
-	while (str[--len] == '0') {
-		str[len] = '\0';
-	}
-	if (str[len] == '.') {
-		str[len] = '\0';
-	}
-}
-
 float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool filled, float precision, bool display_value, int align, bool text_edit) {
 	static char temp[1024];
 	if (!zui_is_visible(ZUI_ELEMENT_H())) {
@@ -2092,7 +2082,7 @@ float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool fi
 		char tmp[256];
 		sprintf(tmp, "%.2f", handle->value);
 		handle->text = string_copy(tmp);
-		strip_trailing_zeros(handle->text);
+		string_strip_trailing_zeros(handle->text);
 		zui_start_text_edit(handle, ZUI_ALIGN_LEFT);
 		handle->changed = current->changed = true;
 	}
@@ -2117,7 +2107,7 @@ float zui_slider(zui_handle_t *handle, char *text, float from, float to, bool fi
 		arm_g2_set_color(current->ops->theme->TEXT_COL); // Value
 		if (current->text_selected_handle != handle) {
 			sprintf(temp, "%.2f", round(handle->value * precision) / precision);
-			strip_trailing_zeros(temp);
+			string_strip_trailing_zeros(temp);
 			zui_draw_string(temp, current->ops->theme->TEXT_OFFSET, 0, lalign, true);
 		}
 		else {

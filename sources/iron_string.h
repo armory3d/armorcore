@@ -12,6 +12,7 @@ char *i32_to_string(int32_t i);
 char *i32_to_string_hex(int32_t i);
 char *f32_to_string(float f);
 
+void string_strip_trailing_zeros(char *str);
 int32_t string_index_of(char *s, char *search);
 int32_t string_index_of_pos(char *s, char *search, int pos);
 int32_t string_last_index_of(char *s, char *search);

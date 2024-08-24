@@ -49,10 +49,21 @@ char *i32_to_string_hex(int32_t i) {
 }
 
 char *f32_to_string(float f) {
-	int l = snprintf(NULL, 0, "%f", f);
+	int l = snprintf(NULL, 0, "%.2f", f);
 	char *r = gc_alloc(l + 1);
-	sprintf(r, "%f", f);
+	sprintf(r, "%.2f", f);
+	string_strip_trailing_zeros(r);
 	return r;
+}
+
+void string_strip_trailing_zeros(char *str) {
+	int len = strlen(str);
+	while (str[--len] == '0') {
+		str[len] = '\0';
+	}
+	if (str[len] == '.') {
+		str[len] = '\0';
+	}
 }
 
 int32_t string_index_of_pos(char *s, char *search, int pos) {
