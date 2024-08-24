@@ -928,15 +928,21 @@ void zui_submit_text_edit() {
 }
 
 void zui_deselect_text(zui_t *ui) {
-	if (ui->text_selected_handle == NULL) return;
+	if (ui->text_selected_handle == NULL) {
+		return;
+	}
 	ui->submit_text_handle = ui->text_selected_handle;
 	strcpy(ui->text_to_submit, ui->text_selected);
 	ui->text_selected_handle = NULL;
 	ui->is_typing = false;
-	if (ui->current_window != NULL) ui->current_window->redraws = 2;
+	if (ui->current_window != NULL) {
+		ui->current_window->redraws = 2;
+	}
 	kinc_keyboard_hide();
 	ui->highlight_anchor = ui->cursor_x;
-	if (zui_on_deselect_text != NULL) zui_on_deselect_text();
+	if (zui_on_deselect_text != NULL) {
+		zui_on_deselect_text();
+	}
 }
 
 void zui_remove_char_at(char *str, int at) {
