@@ -192,98 +192,98 @@ let project = new Project(flags.name);
 		project.addLib('dl');
 		project.addLib('udev');
 
-		try {
-			if (!fs_exists('build')) {
-				fs_mkdir('build');
-			}
-			if (!fs_exists(path_join('build', 'wayland'))) {
-				fs_mkdir(path_join('build', 'wayland'));
-			}
-			const waylandDir = path_join('build', 'wayland', 'wayland-generated');
-			if (!fs_exists(waylandDir)) {
-				fs_mkdir(waylandDir);
-			}
+		// try {
+		// 	if (!fs_exists('build')) {
+		// 		fs_mkdir('build');
+		// 	}
+		// 	if (!fs_exists(path_join('build', 'wayland'))) {
+		// 		fs_mkdir(path_join('build', 'wayland'));
+		// 	}
+		// 	const waylandDir = path_join('build', 'wayland', 'wayland-generated');
+		// 	if (!fs_exists(waylandDir)) {
+		// 		fs_mkdir(waylandDir);
+		// 	}
 
-			let good_wayland = false;
+		// 	let good_wayland = false;
 
-			const wayland_call = os_exec('wayland-scanner', ['--version']);
-			if (wayland_call.status !== 0) {
-				throw 'Could not run wayland-scanner to ask for its version';
-			}
-			const wayland_version = wayland_call.stderr;
+		// 	const wayland_call = os_exec('wayland-scanner', ['--version']);
+		// 	if (wayland_call.status !== 0) {
+		// 		throw 'Could not run wayland-scanner to ask for its version';
+		// 	}
+		// 	const wayland_version = wayland_call.stderr;
 
-			try {
-				const scanner_versions = wayland_version.split(' ')[1].split('.');
-				const w_x = parseInt(scanner_versions[0]);
-				const w_y = parseInt(scanner_versions[1]);
-				const w_z = parseInt(scanner_versions[2]);
+		// 	try {
+		// 		const scanner_versions = wayland_version.split(' ')[1].split('.');
+		// 		const w_x = parseInt(scanner_versions[0]);
+		// 		const w_y = parseInt(scanner_versions[1]);
+		// 		const w_z = parseInt(scanner_versions[2]);
 
-				if (w_x > 1) {
-					good_wayland = true;
-				}
-				else if (w_x === 1) {
-					if (w_y > 17) {
-						good_wayland = true;
-					}
-					else if (w_y === 17) {
-						if (w_z >= 91) {
-							good_wayland = true;
-						}
-					}
-				}
-			}
-			catch (err) {
-				console.log('Could not parse wayland-version ' + wayland_version);
-			}
+		// 		if (w_x > 1) {
+		// 			good_wayland = true;
+		// 		}
+		// 		else if (w_x === 1) {
+		// 			if (w_y > 17) {
+		// 				good_wayland = true;
+		// 			}
+		// 			else if (w_y === 17) {
+		// 				if (w_z >= 91) {
+		// 					good_wayland = true;
+		// 				}
+		// 			}
+		// 		}
+		// 	}
+		// 	catch (err) {
+		// 		console.log('Could not parse wayland-version ' + wayland_version);
+		// 	}
 
-			let c_ending = '.c';
-			if (good_wayland) {
-				c_ending = '.c.h';
-			}
+		// 	let c_ending = '.c';
+		// 	if (good_wayland) {
+		// 		c_ending = '.c.h';
+		// 	}
 
-			let chfiles = [];
+		// 	let chfiles = [];
 
-			function wl_protocol(protocol, file) {
-				chfiles.push(file);
-				const backend_path = path_resolve(waylandDir);
-				const protocol_path = path_resolve('/usr/share/wayland-protocols', protocol);
-				if (os_exec('wayland-scanner', ['private-code', protocol_path, path_resolve(backend_path, file + c_ending)]).status !== 0) {
-					throw 'Failed to generate wayland protocol files for' + protocol;
-				}
-				if (os_exec('wayland-scanner', ['client-header', protocol_path, path_resolve(backend_path, file + '.h')]).status !== 0) {
-					throw 'Failed to generate wayland protocol header for' + protocol;
-				}
-			}
+		// 	function wl_protocol(protocol, file) {
+		// 		chfiles.push(file);
+		// 		const backend_path = path_resolve(waylandDir);
+		// 		const protocol_path = path_resolve('/usr/share/wayland-protocols', protocol);
+		// 		if (os_exec('wayland-scanner', ['private-code', protocol_path, path_resolve(backend_path, file + c_ending)]).status !== 0) {
+		// 			throw 'Failed to generate wayland protocol files for' + protocol;
+		// 		}
+		// 		if (os_exec('wayland-scanner', ['client-header', protocol_path, path_resolve(backend_path, file + '.h')]).status !== 0) {
+		// 			throw 'Failed to generate wayland protocol header for' + protocol;
+		// 		}
+		// 	}
 
-			if (os_exec('wayland-scanner', ['private-code', '/usr/share/wayland/wayland.xml', path_resolve(waylandDir, 'wayland-protocol' + c_ending)]).status !== 0) {
-				throw 'Failed to generate wayland protocol files for /usr/share/wayland/wayland.xml';
-			}
-			if (os_exec('wayland-scanner', ['client-header', '/usr/share/wayland/wayland.xml', path_resolve(waylandDir, 'wayland-protocol.h')]).status !== 0) {
-				throw 'Failed to generate wayland protocol header for /usr/share/wayland/wayland.xml';
-			}
-			wl_protocol('stable/viewporter/viewporter.xml', 'wayland-viewporter');
-			wl_protocol('stable/xdg-shell/xdg-shell.xml', 'xdg-shell');
-			wl_protocol('unstable/xdg-decoration/xdg-decoration-unstable-v1.xml', 'xdg-decoration');
-			wl_protocol('unstable/tablet/tablet-unstable-v2.xml', 'wayland-tablet');
-			wl_protocol('unstable/pointer-constraints/pointer-constraints-unstable-v1.xml', 'wayland-pointer-constraint');
-			wl_protocol('unstable/relative-pointer/relative-pointer-unstable-v1.xml', 'wayland-relative-pointer');
+		// 	if (os_exec('wayland-scanner', ['private-code', '/usr/share/wayland/wayland.xml', path_resolve(waylandDir, 'wayland-protocol' + c_ending)]).status !== 0) {
+		// 		throw 'Failed to generate wayland protocol files for /usr/share/wayland/wayland.xml';
+		// 	}
+		// 	if (os_exec('wayland-scanner', ['client-header', '/usr/share/wayland/wayland.xml', path_resolve(waylandDir, 'wayland-protocol.h')]).status !== 0) {
+		// 		throw 'Failed to generate wayland protocol header for /usr/share/wayland/wayland.xml';
+		// 	}
+		// 	wl_protocol('stable/viewporter/viewporter.xml', 'wayland-viewporter');
+		// 	wl_protocol('stable/xdg-shell/xdg-shell.xml', 'xdg-shell');
+		// 	wl_protocol('unstable/xdg-decoration/xdg-decoration-unstable-v1.xml', 'xdg-decoration');
+		// 	wl_protocol('unstable/tablet/tablet-unstable-v2.xml', 'wayland-tablet');
+		// 	wl_protocol('unstable/pointer-constraints/pointer-constraints-unstable-v1.xml', 'wayland-pointer-constraint');
+		// 	wl_protocol('unstable/relative-pointer/relative-pointer-unstable-v1.xml', 'wayland-relative-pointer');
 
-			if (good_wayland) {
-				let cfile = '#include "wayland-protocol.c.h"\n';
-				for (const chfile of chfiles) {
-					cfile += '#include "' + chfile + '.c.h"\n';
-				}
-				fs_writefile(path_resolve(waylandDir, 'waylandunit.c'), cfile);
-			}
+		// 	if (good_wayland) {
+		// 		let cfile = '#include "wayland-protocol.c.h"\n';
+		// 		for (const chfile of chfiles) {
+		// 			cfile += '#include "' + chfile + '.c.h"\n';
+		// 		}
+		// 		fs_writefile(path_resolve(waylandDir, 'waylandunit.c'), cfile);
+		// 	}
 
-			project.addIncludeDir(path_join('build', 'wayland'));
-			project.addFile(path_resolve(waylandDir, '**'));
-		}
-		catch (err) {
-			console.log('Failed to include wayland-support, setting KINC_NO_WAYLAND.');
-			console.log('Wayland error was: ' + err);
-			project.addDefine('KINC_NO_WAYLAND');
-		}
+		// 	project.addIncludeDir(path_join('build', 'wayland'));
+		// 	project.addFile(path_resolve(waylandDir, '**'));
+		// }
+		// catch (err) {
+		// 	console.log('Failed to include wayland-support, setting KINC_NO_WAYLAND.');
+		// 	console.log('Wayland error was: ' + err);
+		// 	project.addDefine('KINC_NO_WAYLAND');
+		// }
 
 		if (graphics === 'vulkan' || graphics === 'default') {
 			g4 = true;
