@@ -552,13 +552,11 @@ raw_mesh_t *io_obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_p
 			}
 
 			// Split indices per tile
-			part->udims = (uint32_t **)malloc(tiles_u * tiles_v * sizeof(uint32_t *));
-			part->udims_count = (int *)malloc(tiles_u * tiles_v * sizeof(int));
+			part->udims = any_array_create(tiles_u * tiles_v);
 			part->udims_u = tiles_u;
 			part->udims_v = tiles_v;
 			for (int i = 0; i < tiles_u * tiles_v; ++i) {
-				part->udims[i] = (uint32_t *)malloc(num[i] * sizeof(uint32_t));
-				part->udims_count[i] = num[i];
+				part->udims->buffer[i] = u32_array_create(num[i]);
 				num[i] = 0;
 			}
 
@@ -567,9 +565,10 @@ raw_mesh_t *io_obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_p
 				int i2 = part->inda->buffer[i * 3 + 1];
 				int i3 = part->inda->buffer[i * 3 + 2];
 				int tile = get_tile(i1, i2, i3, &uv_indices, tiles_u);
-				part->udims[tile][num[tile]++] = i1;
-				part->udims[tile][num[tile]++] = i2;
-				part->udims[tile][num[tile]++] = i3;
+				u32_array_t *a = part->udims->buffer[tile];
+				a->buffer[num[tile]++] = i1;
+				a->buffer[num[tile]++] = i2;
+				a->buffer[num[tile]++] = i3;
 			}
 
 			// Normalize uvs to 0-1 range
@@ -592,6 +591,7 @@ raw_mesh_t *io_obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_p
 				uv_temp.buffer[i] -= uvtiles[i];
 			}
 			free(uvtiles);
+			free(num);
 		}
 
 		part->texa = calloc(sizeof(i16_array_t), 1);
@@ -627,13 +627,12 @@ raw_mesh_t *io_obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_p
 }
 
 void io_obj_destroy(raw_mesh_t *part) {
-	if (part->udims != NULL) {
-		for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
-			free(part->udims[i]);
-		}
-		free(part->udims);
-		free(part->udims_count);
-	}
+	// if (part->udims != NULL) {
+	// 	for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
+	// 		free(part->udims[i]);
+	// 	}
+	// 	free(part->udims);
+	// }
 
 	free(part->posa);
 	free(part->nora);

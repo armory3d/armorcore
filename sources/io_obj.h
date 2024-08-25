@@ -18,8 +18,7 @@ typedef struct raw_mesh {
 	char *name;
 	bool has_next; // File contains multiple objects
 	uint64_t pos;
-	uint32_t **udims; // Indices split per udim tile
-	int *udims_count;
+	struct any_array *udims; // u32_array_t[] - Indices split per udim tile
 	int udims_u; // Number of horizontal udim tiles
 	int udims_v;
 	void *vertex_arrays; // vertex_array_t[]

@@ -3035,19 +3035,6 @@ char *krom_language() {
 raw_mesh_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, u64 start_pos, bool udim) {
 	raw_mesh_t *part = io_obj_parse(file_bytes, split_code, start_pos, udim);
 	return part;
-
-	// if (udim) {
-	// 	obj->udims_u = part->udims_u;
-	// 	any_array_t *udims = any_array_create(part->udims_u * part->udims_v);
-	// 	for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
-	// 		u32_array_t *data = malloc(sizeof(u32_array_t));
-	// 		data->buffer = part->udims[i];
-	// 		data->length = part->udims_count[i];
-	// 		data->capacity = part->udims_count[i];
-	// 		udims->buffer[i] = data;
-	// 	}
-	// 	obj->udims = udims;
-	// }
 }
 
 #endif
