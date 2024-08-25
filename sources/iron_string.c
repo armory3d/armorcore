@@ -48,6 +48,20 @@ char *i32_to_string_hex(int32_t i) {
 	return r;
 }
 
+char *i64_to_string(int64_t i) {
+	int l = snprintf(NULL, 0, "%ld", i);
+	char *r = gc_alloc(l + 1);
+	sprintf(r, "%ld", i);
+	return r;
+}
+
+char *u64_to_string(uint64_t i) {
+	int l = snprintf(NULL, 0, "%lu", i);
+	char *r = gc_alloc(l + 1);
+	sprintf(r, "%lu", i);
+	return r;
+}
+
 char *f32_to_string_with_zeros(float f) {
 	int l = snprintf(NULL, 0, "%f", f);
 	char *r = gc_alloc(l + 1);

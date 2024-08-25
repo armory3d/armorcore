@@ -10,6 +10,8 @@ int string_length(char *str);
 bool string_equals(char *a, char *b);
 char *i32_to_string(int32_t i);
 char *i32_to_string_hex(int32_t i);
+char *i64_to_string(int64_t i);
+char *u64_to_string(uint64_t i);
 char *f32_to_string(float f);
 char *f32_to_string_with_zeros(float f);
 
