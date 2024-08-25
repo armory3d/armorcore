@@ -174,7 +174,7 @@ let fhandle: any;
 let strings: string[] = [];
 let tabs: i32 = 0;
 let new_line: bool = false;
-let basic_types: string[] = ["i8", "u8", "i16", "u16", "i32", "u32", "f32", "bool"];
+let basic_types: string[] = ["i8", "u8", "i16", "u16", "i32", "u32", "f32", "i64", "u64", "f64", "bool"];
 let enums: string[] = [];
 let value_types: map_t<string, string> = map_create();
 type string_map_t = map_t<string, string>;
@@ -1396,14 +1396,7 @@ function write_globals() {
 			pos++; // :
 			let type: string = read_type();
 
-			if (type != "f32" &&
-				type != "i32" &&
-				type != "u32" &&
-				type != "i16" &&
-				type != "u16" &&
-				type != "i8" &&
-				type != "u8" &&
-				type != "bool" &&
+			if (array_index_of(basic_types, type) == -1 &&
 				array_index_of(enums, type) == -1) {
 				array_push(global_ptrs, name);
 			}
