@@ -13,9 +13,16 @@ declare type f32 = number;
 declare type f64 = number;
 declare type bool = boolean;
 declare type any_ptr = any;
+declare type i8_ptr = any;
+declare type i16_ptr = any;
+declare type i32_ptr = any;
+declare type i64_ptr = any;
 declare type u8_ptr = any;
+declare type u16_ptr = any;
 declare type u32_ptr = any;
+declare type u64_ptr = any;
 declare type f32_ptr = any;
+declare type f64_ptr = any;
 declare let __ID__: string; // file:line - ts preprocessor
 
 declare type map_t<K, V> = any;
@@ -30,6 +37,7 @@ declare type i8_array_t = any;
 
 declare function DEREFERENCE(a: any): any;
 declare function ADDRESS(a: any): any;
+declare function ARRAY_ACCESS(a: any, i: i32): any;
 declare function map_create<K, V>(): map_t<K, V>;
 declare function buffer_create(length: i32): buffer_t;
 declare function f32_array_create(length: i32): f32_array_t;
@@ -111,6 +119,7 @@ declare function buffer_get_i16(b: buffer_t, p: i32): i16;
 declare function buffer_get_u32(b: buffer_t, p: i32): u32;
 declare function buffer_get_i32(b: buffer_t, p: i32): i32;
 declare function buffer_get_f32(b: buffer_t, p: i32): f32;
+declare function buffer_get_f64(b: buffer_t, p: i32): f64;
 declare function buffer_get_i64(b: buffer_t, p: i32): i32;
 declare function buffer_set_u8(b: buffer_t, p: i32, n: u8): void;
 declare function buffer_set_i8(b: buffer_t, p: i32, n: i8): void;
@@ -124,6 +133,9 @@ declare function parse_int_hex(s: string): i32;
 declare function parse_float(s: string): i32;
 declare function i32_to_string(i: i32): string;
 declare function i32_to_string_hex(i: i32): string;
+declare function i64_to_string(i: i64): string;
+declare function u64_to_string(i: u64): string;
+declare function f32_to_string(f: f32): string;
 declare function json_parse(s: string): any;
 
 declare function json_parse_to_map(s: string): map_t<string, string>;

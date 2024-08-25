@@ -129,12 +129,20 @@ char *js_call(void *p) {
 #define string_t char
 #define any void *
 #define any_ptr void **
-#define u8_ptr u8 *
-#define u32_ptr u32 *
+#define f64_ptr f64 *
+#define i64_ptr i64 *
+#define u64_ptr u64 *
 #define f32_ptr f32 *
+#define i32_ptr i32 *
+#define u32_ptr u32 *
+#define i16_ptr i16 *
+#define u16_ptr u16 *
+#define i8_ptr i8 *
+#define u8_ptr u8 *
 #define null NULL
 #define DEREFERENCE *
 #define ADDRESS &
+#define ARRAY_ACCESS(a, i) a[i]
 
 void _kickstart();
 
