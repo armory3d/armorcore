@@ -102,6 +102,7 @@ int16_t buffer_get_i16(buffer_t *b, int32_t p);
 uint32_t buffer_get_u32(buffer_t *b, int32_t p);
 int32_t buffer_get_i32(buffer_t *b, int32_t p);
 float buffer_get_f32(buffer_t *b, int32_t p);
+double buffer_get_f64(buffer_t *b, int32_t p);
 int64_t buffer_get_i64(buffer_t *b, int32_t p);
 void buffer_set_u8(buffer_t *b, int32_t p, uint8_t n);
 void buffer_set_i8(buffer_t *b, int32_t p, int8_t n);

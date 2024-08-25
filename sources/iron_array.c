@@ -286,6 +286,10 @@ float buffer_get_f32(buffer_t *b, int32_t p) {
 	return *(float *)(b->buffer + p);
 }
 
+double buffer_get_f64(buffer_t *b, int32_t p) {
+	return *(double *)(b->buffer + p);
+}
+
 int64_t buffer_get_i64(buffer_t *b, int32_t p) {
 	return *(int64_t *)(b->buffer + p);
 }
