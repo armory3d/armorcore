@@ -423,9 +423,9 @@ void _update(void *data) {
 		paused_frames = 0;
 	}
 	#if defined(KINC_IOS) || defined(KINC_ANDROID)
-	int start_sleep = 1200;
+	const int start_sleep = 1200;
 	#else
-	int start_sleep = 120;
+	const int start_sleep = 120;
 	#endif
 	if (++paused_frames > start_sleep && !input_down) {
 		#ifdef KINC_WINDOWS
@@ -434,6 +434,9 @@ void _update(void *data) {
 		usleep(1000);
 		#endif
 		return;
+	}
+	if (paused_frames == 30) {
+		gc_run();
 	}
 	#endif
 
