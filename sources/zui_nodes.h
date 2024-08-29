@@ -119,6 +119,7 @@ void zui_remove_node(zui_node_t *n, zui_node_canvas_t *canvas);
 float ZUI_NODES_SCALE();
 float ZUI_NODES_PAN_X();
 float ZUI_NODES_PAN_Y();
+extern char *zui_clipboard;
 extern char_ptr_array_t *zui_nodes_exclude_remove;
 extern bool zui_nodes_socket_released;
 extern char_ptr_array_t *(*zui_nodes_enum_texts)(char *);
@@ -130,6 +131,7 @@ extern void (*zui_nodes_on_link_drag)(int, bool);
 
 void zui_node_canvas_encode(zui_node_canvas_t *canvas);
 uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas);
+char *zui_node_canvas_to_json(zui_node_canvas_t *canvas);
 
 float ZUI_NODE_X(zui_node_t *node);
 float ZUI_NODE_Y(zui_node_t *node);

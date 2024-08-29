@@ -10,12 +10,12 @@
 #include "zui.h"
 #include "zui_ext.h"
 #include "iron_armpack.h"
+#include "iron_json.h"
 #include "iron_gc.h"
 
 static zui_nodes_t *current_nodes = NULL;
 static bool zui_nodes_elements_baked = false;
 static kinc_g4_render_target_t zui_socket_image;
-static char *zui_clipboard = "";
 static bool zui_box_select = false;
 static int zui_box_select_x = 0;
 static int zui_box_select_y = 0;
@@ -25,6 +25,7 @@ static void (*zui_on_header_released)(zui_node_t *) = NULL;
 static void (*zui_nodes_on_node_remove)(zui_node_t *) = NULL;
 static int zui_node_id = -1;
 
+char *zui_clipboard = "";
 char_ptr_array_t *zui_nodes_exclude_remove = NULL; // No removal for listed node types
 bool zui_nodes_socket_released = false;
 char_ptr_array_t *(*zui_nodes_enum_texts)(char *) = NULL; // Retrieve combo items for buttons of type ENUM
@@ -57,7 +58,7 @@ void zui_nodes_init(zui_nodes_t *nodes) {
 	current_nodes->snap_from_id = -1;
 	current_nodes->snap_to_id = -1;
 	current_nodes->link_drag_id = -1;
-	current_nodes->nodes_selected_id = calloc(sizeof(i32_array_t), 1);
+	current_nodes->nodes_selected_id = gc_alloc(sizeof(i32_array_t));
 	if (handle == NULL) {
 		handle = zui_handle_create();
 		gc_root(handle);
@@ -509,7 +510,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			current->_w = w;
 			zui_node_socket_t *soc = but->output >= 0 ? node->outputs->buffer[but->output] : NULL;
 			zui_handle_t *h = zui_nest(nhandle, buti);
-			if (h->init) strcpy(h->text, soc != NULL ? soc->default_value->buffer : but->default_value->buffer != NULL ? but->default_value->buffer : "");
+			if (h->init) h->text = soc != NULL ? soc->default_value->buffer : but->default_value->buffer != NULL ? but->default_value->buffer : "";
 			but->default_value->buffer = zui_text_input(h, zui_tr(but->name), ZUI_ALIGN_LEFT, true, false);
 			but->default_value->length = strlen(but->default_value->buffer) + 1;
 			if (soc != NULL) {
@@ -525,12 +526,11 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 			zui_handle_t *but_handle = zui_nest(nhandle, buti);
 			but_handle->position = ((float *)but->default_value->buffer)[0];
 
-			bool combo_selected = current->combo_selected_handle == but_handle;
-
-			char *label = combo_selected ? temp_label : enum_label;
-			char (*texts_data)[64] = combo_selected ? temp_texts_data : enum_texts_data;
-			char **texts = combo_selected ? temp_texts : enum_texts;
-			char_ptr_array_t *ar = combo_selected ? &temp_ar : &enum_ar;
+			bool combo_select = current->combo_selected_handle == NULL && zui_get_released(ZUI_ELEMENT_H());
+			char *label = combo_select ? temp_label : enum_label;
+			char (*texts_data)[64] = combo_select ? temp_texts_data : enum_texts_data;
+			char **texts = combo_select ? temp_texts : enum_texts;
+			char_ptr_array_t *ar = combo_select ? &temp_ar : &enum_ar;
 
 			int texts_count = 0;
 			if (but->data != NULL && but->data->length > 1) {
@@ -539,6 +539,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 					char c = ((char *)but->data->buffer)[i];
 					if (c == '\0') {
 						texts_data[texts_count][wi] = '\0';
+						texts_count++;
 						break;
 					}
 					if (c == '\n') {
@@ -712,7 +713,8 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 		zui_nodes_bake_elements();
 	}
 	if (zui_nodes_exclude_remove == NULL) {
-		zui_nodes_exclude_remove = malloc(sizeof(char_ptr_array_t));
+		zui_nodes_exclude_remove = gc_alloc(sizeof(char_ptr_array_t));
+		gc_root(zui_nodes_exclude_remove);
 	}
 
 	float wx = current->_window_x;
@@ -988,7 +990,10 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 		arm_g2_draw_rect(zui_box_select_x, zui_box_select_y, current->input_x - zui_box_select_x - current->_window_x, current->input_y - zui_box_select_y - current->_window_y, 1);
 		arm_g2_set_color(0xffffffff);
 	}
-	if (current->input_enabled && current->input_started && !current->is_alt_down && current_nodes->link_drag_id == -1 && !current_nodes->nodes_drag && !current->changed) {
+	if (current->input_enabled && current->input_started && !current->is_alt_down &&
+		current_nodes->link_drag_id == -1 && !current_nodes->nodes_drag && !current->changed &&
+		zui_input_in_rect(current->_window_x, current->_window_y, current->_window_w, current->_window_h)) {
+
 		zui_box_select = true;
 		zui_box_select_x = current->input_x - current->_window_x;
 		zui_box_select_y = current->input_y - current->_window_y;
@@ -1042,7 +1047,7 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 
 	// Node copy & paste
 	bool cut_selected = false;
-	if (zui_is_copy) {
+	if (zui_is_copy && !current->is_typing) {
 		zui_node_t *copy_nodes[32];
 		int copy_nodes_count = 0;
 		for (int i = 0; i < current_nodes->nodes_selected_id->length; ++i) {
@@ -1080,22 +1085,40 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 			}
 		}
 		if (copy_nodes_count > 0) {
-			zui_node_canvas_t copy_canvas;
+			zui_node_canvas_t copy_canvas = {};
 			copy_canvas.name = canvas->name;
-			copy_canvas.nodes = copy_nodes;
-			copy_canvas.nodes->length = copy_nodes_count;
-			copy_canvas.links = copy_links;
-			copy_canvas.links->length = copy_links_count;
-			// zui_clipboard = haxe.Json.stringify(copy_canvas);
+			zui_node_array_t nodes = { .buffer = copy_nodes, .length = copy_nodes_count };
+			zui_node_link_array_t links = { .buffer = copy_links, .length = copy_links_count };
+			copy_canvas.nodes = &nodes;
+			copy_canvas.links = &links;
+			gc_unroot(zui_clipboard);
+			zui_clipboard = zui_node_canvas_to_json(&copy_canvas);
+			gc_root(zui_clipboard);
 		}
 		cut_selected = zui_is_cut;
+		zui_is_copy = false;
+		zui_is_cut = false;
 	}
 
 	if (zui_is_paste && !current->is_typing) {
-		zui_node_canvas_t *paste_canvas = NULL;
-		// Try: clipboard can contain non-json data
-		// paste_canvas = haxe.Json.parse(zui_clipboard);
-		if (paste_canvas != NULL) {
+		zui_is_paste = false;
+
+		bool is_json = zui_clipboard[0] == '{';
+		if (is_json) {
+
+			zui_node_canvas_t *paste_canvas = json_parse(zui_clipboard);
+			gc_root(paste_canvas); // TODO
+
+			// Convert button data from string to u8 array
+			for (int i = 0; i < paste_canvas->nodes->length; ++i) {
+				for (int j = 0; j < paste_canvas->nodes->buffer[i]->buttons->length; ++j) {
+					zui_node_button_t *but = paste_canvas->nodes->buffer[i]->buttons->buffer[j];
+					if (but->data != NULL) {
+						but->data = u8_array_create_from_raw(but->data, strlen(but->data) + 1);
+					}
+				}
+			}
+
 			for (int i = 0; i < paste_canvas->links->length; ++i) {
 				zui_node_link_t *l = paste_canvas->links->buffer[i];
 				// Assign unique link id
@@ -1147,14 +1170,12 @@ void zui_node_canvas(zui_nodes_t *nodes, zui_node_canvas_t *canvas) {
 	}
 
 	// Node removal
-	if (current->input_enabled && (current->is_backspace_down || current->is_delete_down || cut_selected) && !current->is_typing) {
+	bool node_removal = current->input_enabled && (current->is_backspace_down || current->is_delete_down) && !current->is_typing;
+	if (node_removal || cut_selected) {
 		int i = current_nodes->nodes_selected_id->length - 1;
 		while (i >= 0) {
 			int nid = current_nodes->nodes_selected_id->buffer[i--];
 			zui_node_t *n = zui_get_node(canvas->nodes, nid);
-			if (n == NULL) {
-				continue; ////
-			}
 			if (zui_is_node_type_excluded(n->type)) {
 				continue;
 			}
@@ -1426,4 +1447,94 @@ uint32_t zui_node_canvas_encoded_size(zui_node_canvas_t *canvas) {
 	}
 
 	return size;
+}
+
+char *zui_node_canvas_to_json(zui_node_canvas_t *canvas) {
+	json_encode_begin();
+	json_encode_string("name", canvas->name);
+
+	json_encode_begin_array("nodes");
+	for (int i = 0; i < canvas->nodes->length; ++i) {
+		json_encode_begin_object();
+		json_encode_i32("id", canvas->nodes->buffer[i]->id);
+		json_encode_string("name", canvas->nodes->buffer[i]->name);
+		json_encode_string("type", canvas->nodes->buffer[i]->type);
+		json_encode_i32("x", canvas->nodes->buffer[i]->x);
+		json_encode_i32("y", canvas->nodes->buffer[i]->y);
+		json_encode_i32("color", canvas->nodes->buffer[i]->color);
+
+		json_encode_begin_array("inputs");
+		for (int j = 0; j < canvas->nodes->buffer[i]->inputs->length; ++j) {
+			json_encode_begin_object();
+			json_encode_i32("id", canvas->nodes->buffer[i]->inputs->buffer[j]->id);
+			json_encode_i32("node_id", canvas->nodes->buffer[i]->inputs->buffer[j]->node_id);
+			json_encode_string("name", canvas->nodes->buffer[i]->inputs->buffer[j]->name);
+			json_encode_string("type", canvas->nodes->buffer[i]->inputs->buffer[j]->type);
+			json_encode_i32("color", canvas->nodes->buffer[i]->inputs->buffer[j]->color);
+			json_encode_f32_array("default_value", canvas->nodes->buffer[i]->inputs->buffer[j]->default_value);
+			json_encode_f32("min", canvas->nodes->buffer[i]->inputs->buffer[j]->min);
+			json_encode_f32("max", canvas->nodes->buffer[i]->inputs->buffer[j]->max);
+			json_encode_f32("precision", canvas->nodes->buffer[i]->inputs->buffer[j]->precision);
+			json_encode_i32("display", canvas->nodes->buffer[i]->inputs->buffer[j]->display);
+			json_encode_end_object();
+		}
+		json_encode_end_array();
+
+		json_encode_begin_array("outputs");
+		for (int j = 0; j < canvas->nodes->buffer[i]->outputs->length; ++j) {
+			json_encode_begin_object();
+			json_encode_i32("id", canvas->nodes->buffer[i]->outputs->buffer[j]->id);
+			json_encode_i32("node_id", canvas->nodes->buffer[i]->outputs->buffer[j]->node_id);
+			json_encode_string("name", canvas->nodes->buffer[i]->outputs->buffer[j]->name);
+			json_encode_string("type", canvas->nodes->buffer[i]->outputs->buffer[j]->type);
+			json_encode_i32("color", canvas->nodes->buffer[i]->outputs->buffer[j]->color);
+			json_encode_f32_array("default_value", canvas->nodes->buffer[i]->outputs->buffer[j]->default_value);
+			json_encode_f32("min", canvas->nodes->buffer[i]->outputs->buffer[j]->min);
+			json_encode_f32("max", canvas->nodes->buffer[i]->outputs->buffer[j]->max);
+			json_encode_f32("precision", canvas->nodes->buffer[i]->outputs->buffer[j]->precision);
+			json_encode_i32("display", canvas->nodes->buffer[i]->outputs->buffer[j]->display);
+			json_encode_end_object();
+		}
+		json_encode_end_array();
+
+		json_encode_begin_array("buttons");
+		for (int j = 0; j < canvas->nodes->buffer[i]->buttons->length; ++j) {
+			json_encode_begin_object();
+			json_encode_string("name", canvas->nodes->buffer[i]->buttons->buffer[j]->name);
+			json_encode_string("type", canvas->nodes->buffer[i]->buttons->buffer[j]->type);
+			json_encode_i32("output", canvas->nodes->buffer[i]->buttons->buffer[j]->output);
+			json_encode_f32_array("default_value", canvas->nodes->buffer[i]->buttons->buffer[j]->default_value);
+			u8_array_t *data = canvas->nodes->buffer[i]->buttons->buffer[j]->data;
+			if (data != NULL) {
+				json_encode_string("data", data->buffer);
+			}
+			else {
+				json_encode_null("data");
+			}
+			json_encode_f32("min", canvas->nodes->buffer[i]->buttons->buffer[j]->min);
+			json_encode_f32("max", canvas->nodes->buffer[i]->buttons->buffer[j]->max);
+			json_encode_f32("precision", canvas->nodes->buffer[i]->buttons->buffer[j]->precision);
+			json_encode_f32("height", canvas->nodes->buffer[i]->buttons->buffer[j]->height);
+			json_encode_end_object();
+		}
+		json_encode_end_array();
+
+		json_encode_i32("width", canvas->nodes->buffer[i]->width);
+		json_encode_end_object();
+	}
+	json_encode_end_array();
+
+	json_encode_begin_array("links");
+	for (int i = 0; i < canvas->links->length; ++i) {
+		json_encode_begin_object();
+		json_encode_i32("id", canvas->links->buffer[i]->id);
+		json_encode_i32("from_id", canvas->links->buffer[i]->from_id);
+		json_encode_i32("from_socket", canvas->links->buffer[i]->from_socket);
+		json_encode_i32("to_id", canvas->links->buffer[i]->to_id);
+		json_encode_i32("to_socket", canvas->links->buffer[i]->to_socket);
+		json_encode_end_object();
+	}
+	json_encode_end_array();
+
+	return json_encode_end();
 }

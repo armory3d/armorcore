@@ -3,7 +3,6 @@
 
 let zui_children: map_t<string, zui_handle_t> = map_create();
 // let zui_tr: (id: string, vars: map_t<string, string>)=>string;
-let zui_clipboard: string = "";
 
 function zui_SCALE(ui: zui_t): f32 {
 	let current: zui_t = zui_get_current();
@@ -151,17 +150,22 @@ function zui_theme_create(): zui_theme_t {
 	return raw;
 }
 
+let zui_nodes_custom_buttons: map_t<string, (i: i32)=>void>;
+
 function nodes_on_custom_button(node_id: i32, button_name: string) {
-	// eval(button_name + "(Zui.current, current, current.getNode(currentCanvas.nodes, node_id))");
+	let f: (i: i32) => void = map_get(zui_nodes_custom_buttons, button_name);
+	f(node_id);
 }
 
 function zui_nodes_create(): zui_nodes_t {
 	let raw: zui_nodes_t = {};
 	zui_nodes_init(raw);
-	// zui_nodes_exclude_remove[0] = "OUTPUT_MATERIAL_PBR";
-	// zui_nodes_exclude_remove[1] = "GROUP_OUTPUT";
-	// zui_nodes_exclude_remove[2] = "GROUP_INPUT";
-	// zui_nodes_exclude_remove[3] = "BrushOutputNode";
+	zui_nodes_exclude_remove = [
+		"OUTPUT_MATERIAL_PBR",
+		"GROUP_OUTPUT",
+		"GROUP_INPUT",
+		"BrushOutputNode"
+	];
 	zui_nodes_on_custom_button = nodes_on_custom_button;
 	return raw;
 }
@@ -211,6 +215,7 @@ declare let zui_is_cut: bool;
 declare let zui_is_copy: bool;
 declare let zui_is_paste: bool;
 declare let zui_nodes_exclude_remove: string[];
+declare let zui_clipboard: string;
 
 declare function zui_nest(handle: zui_handle_t, pos: i32): zui_handle_t;
 declare function zui_theme_default(theme: zui_theme_t): void;
@@ -255,7 +260,7 @@ declare function zui_end_region(last: bool): void;
 declare function zui_inline_radio(handle: zui_handle_t, texts: string[], align: i32): int;
 declare function zui_end_input(): void;
 declare function zui_panel(handle: zui_handle_t, text: string, is_tree: bool, filled: bool): bool;
-declare function zui_nodes_rgba_popup(nhandle: zui_handle_t, val: f32[], x: i32, y: i32): void;
+declare function zui_nodes_rgba_popup(nhandle: zui_handle_t, val: f32_ptr, x: i32, y: i32): void;
 declare function zui_get_link(links: zui_node_link_t[], id: i32): zui_node_link_t;
 declare function zui_get_node(nodes: zui_node_t[], id: i32): zui_node_t;
 declare function zui_input_in_rect(x: f32, y: f32, w: f32, h: f32): bool;

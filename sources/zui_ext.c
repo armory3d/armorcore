@@ -363,6 +363,8 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 		handle->color = zui_color(ar[0] * 255.0, ar[1] * 255.0, ar[2] * 255.0, 255.0);
 	}
 	else if (pos == 2) {
+		char tmp[16];
+		handle->text = tmp;
 		sprintf(handle->text, "%x", handle->color);
 		char *hex_code = zui_text_input(handle, "#", ZUI_ALIGN_LEFT, true, false);
 		if (strlen(hex_code) >= 1 && hex_code[0] == '#') { // Allow # at the beginning
