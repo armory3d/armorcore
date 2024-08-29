@@ -13,6 +13,8 @@ void json_encode_string(char *k, char *v);
 void json_encode_string_array(char *k, char_ptr_array_t *a);
 void json_encode_f32(char *k, float f);
 void json_encode_i32(char *k, int i);
+void json_encode_null(char *k);
+void json_encode_f32_array(char *k, f32_array_t *a);
 void json_encode_i32_array(char *k, i32_array_t *a);
 void json_encode_bool(char *k, bool b);
 void json_encode_begin_array(char *k);

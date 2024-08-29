@@ -334,6 +334,22 @@ void json_encode_i32(char *k, int i) {
 	encoded = string_join(encoded, i32_to_string(i));
 }
 
+void json_encode_null(char *k) {
+	json_encode_key(k);
+	encoded = string_join(encoded, "null");
+}
+
+void json_encode_f32_array(char *k, f32_array_t *a) {
+	json_encode_begin_array(k);
+	for (int i = 0; i < a->length; ++i) {
+		if (i > 0) {
+			encoded = string_join(encoded, ",");
+		}
+		encoded = string_join(encoded, f32_to_string(a->buffer[i]));
+	}
+	json_encode_end_array();
+}
+
 void json_encode_i32_array(char *k, i32_array_t *a) {
 	json_encode_begin_array(k);
 	for (int i = 0; i < a->length; ++i) {
@@ -360,6 +376,7 @@ void json_encode_end_array() {
 }
 
 void json_encode_begin_object() {
+	keys = 0;
 	encoded = string_join(encoded, "{");
 }
 
