@@ -140,7 +140,9 @@ static void gc_allocation_map_delete(gc_allocation_map_t *am) {
 }
 
 static size_t gc_hash(void *ptr) {
-	return ((uintptr_t)ptr) >> 3;
+	// return ((uintptr_t)ptr) >> 3;
+	uintptr_t ad = (uintptr_t)ptr;
+	return (size_t)((13 * ad) ^ (ad >> 15));
 }
 
 static void gc_allocation_map_resize(gc_allocation_map_t *am, size_t new_capacity) {
@@ -453,7 +455,8 @@ void _gc_free(void *ptr) {
 void _gc_start(void *bos) {
 	gc->paused = false;
 	gc->bos = bos;
-	gc->allocs = gc_allocation_map_new(1024 * 1024, 1024 * 1024, 0.5, 0.2, 0.8);
+	// Create allocation map with no downsizing
+	gc->allocs = gc_allocation_map_new(1024 * 1024, 1024 * 1024, 0.5, 0.0, 0.8);
 }
 
 void _gc_pause() {
