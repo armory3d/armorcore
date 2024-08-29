@@ -167,9 +167,9 @@ bool show_window = false;
 
 void (*krom_update)(void);
 void (*krom_drop_files)(char *);
-// void (*krom_cut)(void);
-// void (*krom_copy])(void);
-// void (*krom_paste)(void);
+char *(*krom_cut)(void *);
+char *(*krom_copy)(void *);
+void (*krom_paste)(char *, void *);
 void (*krom_foreground)(void);
 void (*krom_resume)(void);
 void (*krom_pause)(void);
@@ -448,8 +448,7 @@ void _update(void *data) {
 }
 
 char *_copy(void *data) {
-	// result = krom_copy();
-	// strcpy(temp_string, result);
+	// strcpy(temp_string, krom_copy());
 
 	#ifdef WITH_ZUI
 	strcpy(temp_string, zui_copy());
@@ -458,8 +457,7 @@ char *_copy(void *data) {
 }
 
 char *_cut(void *data) {
-	// result = krom_cut();
-	// strcpy(temp_string, result);
+	// strcpy(temp_string, krom_cut());
 
 	#ifdef WITH_ZUI
 	strcpy(temp_string, zui_cut());
@@ -932,13 +930,13 @@ void krom_set_drop_files_callback(void (*callback)(char *)) {
 	kinc_set_drop_files_callback(_drop_files, NULL);
 }
 
-void krom_set_cut_copy_paste_callback(any on_cut, any on_copy, any on_paste) {
-	// kinc_set_cut_callback(_cut, NULL);
-	// kinc_set_copy_callback(_copy, NULL);
-	// kinc_set_paste_callback(_paste, NULL);
-	// krom_cut = on_cut;
-	// krom_copy = on_copy;
-	// krom_paste = on_paste;
+void krom_set_cut_copy_paste_callback(char *(*on_cut)(void *), char *(*on_copy)(void *), void (*on_paste)(char *, void *)) {
+	kinc_set_cut_callback(_cut, NULL);
+	kinc_set_copy_callback(_copy, NULL);
+	kinc_set_paste_callback(_paste, NULL);
+	krom_cut = on_cut;
+	krom_copy = on_copy;
+	krom_paste = on_paste;
 }
 
 void krom_set_application_state_callback(void (*on_foreground)(void), void (*on_resume)(void), void (*on_pause)(void), void (*on_background)(void), void (*on_shutdown)(void)) {
@@ -2441,25 +2439,18 @@ char_ptr_array_t *krom_open_dialog(char *filter_list, char *default_path, bool o
 		}
 		return result;
 	}
-	else if (result == NFD_CANCEL) {
-	}
-	else {
-		kinc_log(KINC_LOG_LEVEL_INFO, "Error: %s\n", NFD_GetError());
-	}
 	return NULL;
 }
+
+static char krom_save_dialog_path[512];
 
 char *krom_save_dialog(char *filter_list, char *default_path) {
 	nfdchar_t *out_path = NULL;
 	nfdresult_t result = NFD_SaveDialog(filter_list, default_path, &out_path);
 	if (result == NFD_OKAY) {
-		// free(out_path);
-		return out_path;
-	}
-	else if (result == NFD_CANCEL) {
-	}
-	else {
-		kinc_log(KINC_LOG_LEVEL_INFO, "Error: %s\n", NFD_GetError());
+		strcpy(krom_save_dialog_path, out_path);
+		free(out_path);
+		return krom_save_dialog_path;
 	}
 	return NULL;
 }
