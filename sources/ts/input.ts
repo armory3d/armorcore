@@ -692,23 +692,24 @@ let gamepad_buttons: string[] = gamepad_buttons_ps;
 let gamepad_raws: gamepad_t[];
 
 function gamepad_end_frame() {
-	for (let i: i32 = 0; i < gamepad_raws.length; ++i) {
-		let g: gamepad_t = gamepad_raws[i];
-		if (g.buttons_frame.length > 0) {
-			for (let j: i32 = 0; j < g.buttons_frame.length; ++j) {
-				let b: i32 = g.buttons_frame[j];
-				g.buttons_started[b] = false;
-				g.buttons_released[b] = false;
-			}
-			array_splice(g.buttons_frame, 0, g.buttons_frame.length);
-		}
-		g.left_stick.moved = false;
-		g.left_stick.movement_x = 0;
-		g.left_stick.movement_y = 0;
-		g.right_stick.moved = false;
-		g.right_stick.movement_x = 0;
-		g.right_stick.movement_y = 0;
-	}
+	// TODO: check valgrind error
+	// for (let i: i32 = 0; i < gamepad_raws.length; ++i) {
+	// 	let g: gamepad_t = gamepad_raws[i];
+	// 	if (g.buttons_frame.length > 0) {
+	// 		for (let j: i32 = 0; j < g.buttons_frame.length; ++j) {
+	// 			let b: i32 = g.buttons_frame[j];
+	// 			g.buttons_started[b] = false;
+	// 			g.buttons_released[b] = false;
+	// 		}
+	// 		array_splice(g.buttons_frame, 0, g.buttons_frame.length);
+	// 	}
+	// 	g.left_stick.moved = false;
+	// 	g.left_stick.movement_x = 0;
+	// 	g.left_stick.movement_y = 0;
+	// 	g.right_stick.moved = false;
+	// 	g.right_stick.movement_x = 0;
+	// 	g.right_stick.movement_y = 0;
+	// }
 }
 
 function gamepad_stick_create(): gamepad_stick_t {
@@ -791,15 +792,15 @@ function gamepad_axis_listener(i: i32, axis: i32, value: f32) {
 }
 
 function gamepad_button_listener(i: i32, button: i32, value: f32) {
-	array_push(gamepad_raws[i].buttons_frame, button);
+	// array_push(gamepad_raws[i].buttons_frame, button);
 
-	gamepad_raws[i].buttons_down[button] = value;
-	if (value > 0) {
-		gamepad_raws[i].buttons_started[button] = true; // Will trigger L2/R2 multiple times..
-	}
-	else {
-		gamepad_raws[i].buttons_released[button] = true;
-	}
+	// gamepad_raws[i].buttons_down[button] = value;
+	// if (value > 0) {
+	// 	gamepad_raws[i].buttons_started[button] = true; // Will trigger L2/R2 multiple times..
+	// }
+	// else {
+	// 	gamepad_raws[i].buttons_released[button] = true;
+	// }
 }
 
 type gamepad_stick_t = {
