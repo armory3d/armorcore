@@ -18,7 +18,9 @@ function tween_to(anim: tween_anim_t): tween_anim_t {
 		_tween_register();
 	}
 	let f32_target: f32_ptr = anim.target;
-	anim._from = DEREFERENCE(f32_target);
+	if (f32_target != null) {
+		anim._from = DEREFERENCE(f32_target);
+	}
 	array_push(_tween_anims, anim);
 	return anim;
 }
