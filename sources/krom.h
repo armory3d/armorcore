@@ -2741,6 +2741,7 @@ unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_l
 
 #ifdef WITH_MPEG_WRITE
 buffer_t *krom_write_mpeg() {
+	return NULL;
 }
 #endif
 
