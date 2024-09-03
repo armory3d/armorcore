@@ -1,5 +1,3 @@
-// @ts-nocheck
-// Externs for Zui in C
 
 let zui_children: map_t<string, zui_handle_t> = map_create();
 // let zui_tr: (id: string, vars: map_t<string, string>)=>string;
@@ -488,4 +486,5 @@ let zui_theme_keys: string[] = [
 	"LINK_STYLE",
 	"FULL_TABS",
 	"ROUND_CORNERS",
+	"SHADOWS",
 ];
