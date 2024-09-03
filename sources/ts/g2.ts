@@ -15,13 +15,13 @@ let _g2_mat: f32_array_t = f32_array_create(9);
 let _g2_initialized: bool = false;
 
 function g2_set_color(c: color_t) {
-	krom_g2_set_color(c);
+	iron_g2_set_color(c);
 	_g2_color = c;
 }
 
 function g2_set_font_and_size(font: g2_font_t, font_size: i32) {
 	g2_font_init(font);
-	krom_g2_set_font(font.font_, font_size);
+	iron_g2_set_font(font.font_, font_size);
 }
 
 function g2_set_font(f: g2_font_t) {
@@ -39,17 +39,17 @@ function g2_set_font_size(i: i32) {
 }
 
 function g2_set_pipeline(p: pipeline_t) {
-	krom_g2_set_pipeline(p == null ? null : p.pipeline_);
+	iron_g2_set_pipeline(p == null ? null : p.pipeline_);
 	_g2_pipeline = p;
 }
 
 function g2_set_bilinear_filter(bilinear: bool) {
-	krom_g2_set_bilinear_filter(bilinear);
+	iron_g2_set_bilinear_filter(bilinear);
 }
 
 function g2_set_transformation(m: mat3_t) {
 	if (m == null) {
-		krom_g2_set_transform(null);
+		iron_g2_set_transform(null);
 	}
 	else {
 		_g2_mat[0] = m.m[0];
@@ -61,7 +61,7 @@ function g2_set_transformation(m: mat3_t) {
 		_g2_mat[6] = m.m[6];
 		_g2_mat[7] = m.m[7];
 		_g2_mat[8] = m.m[8];
-		krom_g2_set_transform(_g2_mat);
+		iron_g2_set_transform(_g2_mat);
 	}
 }
 
@@ -75,7 +75,7 @@ function _g2_make_glyphs(start: i32, end: i32): i32[] {
 
 function g2_init() {
 	if (!_g2_initialized) {
-		krom_g2_init(
+		iron_g2_init(
 			sys_get_shader_buffer("g2_image.vert"),
 			sys_get_shader_buffer("g2_image.frag"),
 			sys_get_shader_buffer("g2_colored.vert"),
@@ -88,7 +88,7 @@ function g2_init() {
 }
 
 function g2_draw_scaled_sub_image(img: image_t, sx: f32, sy: f32, sw: f32, sh: f32, dx: f32, dy: f32, dw: f32, dh: f32) {
-	krom_g2_draw_scaled_sub_image(img, sx, sy, sw, sh, dx, dy, dw, dh);
+	iron_g2_draw_scaled_sub_image(img, sx, sy, sw, sh, dx, dy, dw, dh);
 }
 
 function g2_draw_sub_image(img: image_t, x: f32, y: f32, sx: f32, sy: f32, sw: f32, sh: f32) {
@@ -104,62 +104,62 @@ function g2_draw_image(img: image_t, x: f32, y: f32) {
 }
 
 function g2_draw_rect(x: f32, y: f32, width: f32, height: f32, strength: f32 = 1.0) {
-	krom_g2_draw_rect(x, y, width, height, strength);
+	iron_g2_draw_rect(x, y, width, height, strength);
 }
 
 function g2_fill_rect(x: f32, y: f32, width: f32, height: f32) {
-	krom_g2_fill_rect(x, y, width, height);
+	iron_g2_fill_rect(x, y, width, height);
 }
 
 function g2_draw_string(text: string, x: f32, y: f32) {
-	krom_g2_draw_string(text, x, y);
+	iron_g2_draw_string(text, x, y);
 }
 
 function g2_draw_line(x0: f32, y0: f32, x1: f32, y1: f32, strength: f32 = 1.0) {
-	krom_g2_draw_line(x0, y0, x1, y1, strength);
+	iron_g2_draw_line(x0, y0, x1, y1, strength);
 }
 
 function g2_fill_triangle(x0: f32, y0: f32, x1: f32, y1: f32, x2: f32, y2: f32) {
-	krom_g2_fill_triangle(x0, y0, x1, y1, x2, y2);
+	iron_g2_fill_triangle(x0, y0, x1, y1, x2, y2);
 }
 
 function g2_scissor(x: i32, y: i32, width: i32, height: i32) {
-	krom_g2_end(); // flush
+	iron_g2_end(); // flush
 	g4_scissor(x, y, width, height);
 }
 
 function g2_disable_scissor() {
-	krom_g2_end(); // flush
+	iron_g2_end(); // flush
 	g4_disable_scissor();
 }
 
 function g2_begin(render_target: image_t = null) {
 	if (_g2_in_use && !_g2_thrown) {
 		_g2_thrown = true;
-		krom_log("End before you begin");
+		iron_log("End before you begin");
 	}
 	_g2_in_use = true;
 	_g2_current = render_target;
 
-	krom_g2_begin();
+	iron_g2_begin();
 
 	if (render_target != null) {
-		krom_g2_set_render_target(render_target.render_target_);
+		iron_g2_set_render_target(render_target.render_target_);
 	}
 	else {
-		krom_g2_restore_render_target();
+		iron_g2_restore_render_target();
 	}
 }
 
 function g2_end() {
 	if (!_g2_in_use && !_g2_thrown) {
 		_g2_thrown = true;
-		krom_log("Begin before you end");
+		iron_log("Begin before you end");
 	}
 	_g2_in_use = false;
 	_g2_current = null;
 
-	krom_g2_end();
+	iron_g2_end();
 }
 
 function g2_clear(color: color_t = 0x00000000) {
@@ -167,25 +167,25 @@ function g2_clear(color: color_t = 0x00000000) {
 }
 
 function g2_fill_circle(cx: f32, cy: f32, radius: f32, segments: i32 = 0) {
-	krom_g2_fill_circle(cx, cy, radius, segments);
+	iron_g2_fill_circle(cx, cy, radius, segments);
 }
 
 function g2_draw_circle(cx: f32, cy: f32, radius: f32, segments: i32 = 0, strength: f32 = 1.0) {
-	krom_g2_draw_circle(cx, cy, radius, segments, strength);
+	iron_g2_draw_circle(cx, cy, radius, segments, strength);
 }
 
 function g2_draw_cubic_bezier(x: f32[], y: f32[], segments: i32 = 20, strength: f32 = 1.0) {
-	krom_g2_draw_cubic_bezier(x, y, segments, strength);
+	iron_g2_draw_cubic_bezier(x, y, segments, strength);
 }
 
 function g2_font_init(raw: g2_font_t) {
 	if (_g2_font_glyphs_last != _g2_font_glyphs) {
 		_g2_font_glyphs_last = _g2_font_glyphs;
-		krom_g2_font_set_glyphs(_g2_font_glyphs);
+		iron_g2_font_set_glyphs(_g2_font_glyphs);
 	}
 	if (raw.glyphs != _g2_font_glyphs) {
 		raw.glyphs = _g2_font_glyphs;
-		raw.font_ = krom_g2_font_init(raw.blob, raw.index);
+		raw.font_ = iron_g2_font_init(raw.blob, raw.index);
 	}
 }
 
@@ -198,12 +198,12 @@ function g2_font_create(blob: buffer_t, index: i32 = 0): g2_font_t {
 
 function g2_font_height(raw: g2_font_t, size: i32): f32 {
 	g2_font_init(raw);
-	return krom_g2_font_height(raw.font_, size);
+	return iron_g2_font_height(raw.font_, size);
 }
 
 function g2_font_width(raw: g2_font_t, size: i32, str: string): f32 {
 	g2_font_init(raw);
-	return krom_g2_string_width(raw.font_, size, str);
+	return iron_g2_string_width(raw.font_, size, str);
 }
 
 function g2_font_unload(raw: g2_font_t) {

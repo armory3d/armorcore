@@ -15,7 +15,7 @@ extern "C" {
 #endif
 
 #ifndef KINC_DEBUGDIR
-#define KINC_DEBUGDIR "krom"
+#define KINC_DEBUGDIR "out"
 #endif
 
 #ifdef KINC_ANDROID

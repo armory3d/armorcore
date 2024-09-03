@@ -1271,7 +1271,6 @@ class XCodeExporter extends Exporter {
 				}
 			}
 			else if (framework.toString().endsWith('.dylib')) {
-				// Local dylib, e.g. V8 in Krom - a directory is specified
 				if (framework.toString().indexOf('/') >= 0) {
 					framework.localPath = path_resolve(from, framework.toString());
 					this.p(framework.getFileId() + ' /* ' + framework.toString() + ' */ = {isa = PBXFileReference; lastKnownFileType = compiled.mach-o.dylib; name = ' + framework.toString() + '; path = ' + framework.localPath + '; sourceTree = "<absolute>"; };', 2);
@@ -2656,7 +2655,7 @@ class ShaderCompiler {
 			return null;
 		}
 		else {
-			let parameters = [this.type, from, to, this.temp, 'krom'];
+			let parameters = [this.type, from, to, this.temp, ''];
 			fs_ensuredir(this.temp);
 			if (this.options.shaderversion) {
 				parameters.push('--version');
@@ -2696,7 +2695,7 @@ class ArmorCoreExporter {
 	constructor(project, options) {
 		this.options = options;
 		this.sources = [];
-		if (project.defines.indexOf("NO_KROM_API") == -1) {
+		if (project.defines.indexOf("NO_IRON_API") == -1) {
 			this.add_source_directory(path_join(armorcoredir, "sources", "ts"));
 		}
 	}
@@ -2714,8 +2713,8 @@ class ArmorCoreExporter {
 				graphics = "opengl";
 			}
 		}
-		defines.push("krom_" + graphics);
-		defines.push("krom_" + goptions.target);
+		defines.push("iron_" + graphics);
+		defines.push("iron_" + goptions.target);
 		return {
 			from: ".",
 			sources: this.sources,
@@ -2724,17 +2723,17 @@ class ArmorCoreExporter {
 	}
 
 	export() {
-		fs_ensuredir(path_join("build", "krom"));
+		fs_ensuredir(path_join("build", "out"));
 	}
 
 	copy_image(from, to) {
-		export_k(from, path_join("build", "krom", to));
+		export_k(from, path_join("build", "out", to));
 		return [to + ".k"];
 	}
 
 	copy_blob(from, to) {
-		fs_ensuredir(path_join("build", "krom", path_dirname(to)));
-		fs_copyfile(from, path_join("build", "krom", to));
+		fs_ensuredir(path_join("build", "out", path_dirname(to)));
+		fs_copyfile(from, path_join("build", "out", to));
 		return [to];
 	}
 
@@ -2855,14 +2854,14 @@ function write_ts_project(projectdir, options) {
 		globalThis.fs_readfile = fs_readfile;
 		globalThis.fs_writefile = fs_writefile;
 		globalThis.flags.alang_source = source;
-		globalThis.flags.alang_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
+		globalThis.flags.alang_output = os_cwd() + path_sep + "build" + path_sep + "iron.c";
 		let alang = armorcoredir + '/tools/amake/alang.js';
 		(1, eval)(fs_readfile(alang));
 	}
 	else {
-		// let alang_input = os_cwd() + path_sep + "build" + path_sep + "krom.ts";
+		// let alang_input = os_cwd() + path_sep + "build" + path_sep + "iron.ts";
 		// fs_writefile(alang_input, source);
-		let alang_output = os_cwd() + path_sep + "build" + path_sep + "krom.c";
+		let alang_output = os_cwd() + path_sep + "build" + path_sep + "iron.c";
 		let start = Date.now();
 		amake.alang(source, alang_output);
 		console.log("alang took " + (Date.now() - start) + "ms.");
@@ -2880,7 +2879,7 @@ function export_armorcore_project(project, options) {
 	let temp = path_join("build", 'temp');
 
 	let exporter = new ArmorCoreExporter(project, options);
-	fs_ensuredir(path_join("build", 'krom'));
+	fs_ensuredir(path_join("build", 'out'));
 
 	for (let source of project.sources) {
 		exporter.add_source_directory(source);
@@ -2888,7 +2887,7 @@ function export_armorcore_project(project, options) {
 
 	let asset_converter = new AssetConverter(exporter, options, project.asset_matchers);
 	let assets = asset_converter.run();
-	let shaderdir = path_join("build", 'krom', 'data');
+	let shaderdir = path_join("build", 'out', 'data');
 	fs_ensuredir(shaderdir);
 
 	let exported_shaders = [];
@@ -2913,8 +2912,8 @@ function export_armorcore_project(project, options) {
 		for (let file of embed_files) {
 			embed_string += file.files[0] + '\n';
 		}
-		fs_ensuredir(path_join("build", 'krom', 'data'));
-		fs_writefile(path_join("build", 'krom', 'data', 'embed.txt'), embed_string);
+		fs_ensuredir(path_join("build", 'out', 'data'));
+		fs_writefile(path_join("build", 'out', 'data', 'embed.txt'), embed_string);
 	}
 
 	export_project_files(project.name, options, exporter, project.defines);
@@ -2933,7 +2932,7 @@ class Project {
 		this.name = name;
 		this.safe_name = name.replace(/[^A-z0-9\-\_]/g, "-");
 		this.version = "1.0";
-		this.debugdir = "build/krom";
+		this.debugdir = "build/out";
 		this.basedir = __dirname;
 		this.uuid = crypto_random_uuid();
 		this.files = [];

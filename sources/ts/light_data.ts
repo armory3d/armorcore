@@ -3,7 +3,7 @@ function light_data_parse(name: string, id: string): light_data_t {
 	let format: scene_t = data_get_scene_raw(name);
 	let raw: light_data_t = light_data_get_raw_by_name(format.light_datas, id);
 	if (raw == null) {
-		krom_log("Light data '" + id + "' not found!");
+		iron_log("Light data '" + id + "' not found!");
 	}
 	return raw;
 }

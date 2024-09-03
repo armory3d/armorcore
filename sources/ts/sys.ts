@@ -23,29 +23,29 @@ let _sys_window_title: string;
 let _sys_shaders: map_t<string, shader_t> = map_create();
 
 function sys_start(ops: kinc_sys_ops_t) {
-	krom_init(ops.title, ops.width, ops.height, ops.vsync, ops.mode, ops.features, ops.x, ops.y, ops.frequency);
+	iron_init(ops.title, ops.width, ops.height, ops.vsync, ops.mode, ops.features, ops.x, ops.y, ops.frequency);
 
-	_sys_start_time = krom_get_time();
+	_sys_start_time = iron_get_time();
 	g2_init();
-	krom_set_update_callback(sys_render_callback);
-	krom_set_drop_files_callback(sys_drop_files_callback);
-	krom_set_cut_copy_paste_callback(sys_cut_callback, sys_copy_callback, sys_paste_callback);
-	krom_set_application_state_callback(sys_foreground_callback, sys_resume_callback, sys_pause_callback, sys_background_callback, sys_shutdown_callback);
-	krom_set_keyboard_down_callback(sys_keyboard_down_callback);
-	krom_set_keyboard_up_callback(sys_keyboard_up_callback);
-	krom_set_keyboard_press_callback(sys_keyboard_press_callback);
-	krom_set_mouse_down_callback(sys_mouse_down_callback);
-	krom_set_mouse_up_callback(sys_mouse_up_callback);
-	krom_set_mouse_move_callback(sys_mouse_move_callback);
-	krom_set_mouse_wheel_callback(sys_mouse_wheel_callback);
-	krom_set_touch_down_callback(sys_touch_down_callback);
-	krom_set_touch_up_callback(sys_touch_up_callback);
-	krom_set_touch_move_callback(sys_touch_move_callback);
-	krom_set_pen_down_callback(sys_pen_down_callback);
-	krom_set_pen_up_callback(sys_pen_up_callback);
-	krom_set_pen_move_callback(sys_pen_move_callback);
-	krom_set_gamepad_axis_callback(sys_gamepad_axis_callback);
-	krom_set_gamepad_button_callback(sys_gamepad_button_callback);
+	iron_set_update_callback(sys_render_callback);
+	iron_set_drop_files_callback(sys_drop_files_callback);
+	iron_set_cut_copy_paste_callback(sys_cut_callback, sys_copy_callback, sys_paste_callback);
+	iron_set_application_state_callback(sys_foreground_callback, sys_resume_callback, sys_pause_callback, sys_background_callback, sys_shutdown_callback);
+	iron_set_keyboard_down_callback(sys_keyboard_down_callback);
+	iron_set_keyboard_up_callback(sys_keyboard_up_callback);
+	iron_set_keyboard_press_callback(sys_keyboard_press_callback);
+	iron_set_mouse_down_callback(sys_mouse_down_callback);
+	iron_set_mouse_up_callback(sys_mouse_up_callback);
+	iron_set_mouse_move_callback(sys_mouse_move_callback);
+	iron_set_mouse_wheel_callback(sys_mouse_wheel_callback);
+	iron_set_touch_down_callback(sys_touch_down_callback);
+	iron_set_touch_up_callback(sys_touch_up_callback);
+	iron_set_touch_move_callback(sys_touch_move_callback);
+	iron_set_pen_down_callback(sys_pen_down_callback);
+	iron_set_pen_up_callback(sys_pen_up_callback);
+	iron_set_pen_move_callback(sys_pen_move_callback);
+	iron_set_gamepad_axis_callback(sys_gamepad_axis_callback);
+	iron_set_gamepad_button_callback(sys_gamepad_button_callback);
 	input_register();
 }
 
@@ -126,23 +126,23 @@ function sys_drop_files(file_path: string) {
 }
 
 function sys_time(): f32 {
-	return krom_get_time() - _sys_start_time;
+	return iron_get_time() - _sys_start_time;
 }
 
 function sys_system_id(): string {
-	return krom_system_id();
+	return iron_system_id();
 }
 
 function sys_language(): string {
-	return krom_language();
+	return iron_language();
 }
 
 function sys_stop() {
-	krom_request_shutdown();
+	iron_request_shutdown();
 }
 
 function sys_load_url(url: string) {
-	krom_load_url(url);
+	iron_load_url(url);
 }
 
 function sys_render_callback() {
@@ -224,19 +224,19 @@ function sys_mouse_wheel_callback(delta: i32) {
 }
 
 function sys_touch_down_callback(index: i32, x: i32, y: i32) {
-	///if (krom_android || krom_ios)
+	///if (iron_android || iron_ios)
 	mouse_on_touch_down(index, x, y);
 	///end
 }
 
 function sys_touch_up_callback(index: i32, x: i32, y: i32) {
-	///if (krom_android || krom_ios)
+	///if (iron_android || iron_ios)
 	mouse_on_touch_up(index, x, y);
 	///end
 }
 
 function sys_touch_move_callback(index: i32, x: i32, y: i32) {
-	///if (krom_android || krom_ios)
+	///if (iron_android || iron_ios)
 	mouse_on_touch_move(index, x, y);
 	///end
 }
@@ -263,62 +263,62 @@ function sys_gamepad_button_callback(gamepad: i32, button: i32, value: f32) {
 
 function sys_lock_mouse() {
 	if (!sys_is_mouse_locked()) {
-		krom_lock_mouse();
+		iron_lock_mouse();
 	}
 }
 
 function sys_unlock_mouse() {
 	if (sys_is_mouse_locked()) {
-		krom_unlock_mouse();
+		iron_unlock_mouse();
 	}
 }
 
 function sys_can_lock_mouse(): bool {
-	return krom_can_lock_mouse();
+	return iron_can_lock_mouse();
 }
 
 function sys_is_mouse_locked(): bool {
-	return krom_is_mouse_locked();
+	return iron_is_mouse_locked();
 }
 
 function sys_hide_system_cursor() {
-	krom_show_mouse(false);
+	iron_show_mouse(false);
 }
 
 function sys_show_system_cursor() {
-	krom_show_mouse(true);
+	iron_show_mouse(true);
 }
 
 function sys_resize(width: i32, height: i32) {
-	krom_resize_window(width, height);
+	iron_resize_window(width, height);
 }
 
 function sys_move(x: i32, y: i32) {
-	krom_move_window(x, y);
+	iron_move_window(x, y);
 }
 
 function sys_x(): i32 {
-	return krom_window_x();
+	return iron_window_x();
 }
 
 function sys_y(): i32 {
-	return krom_window_y();
+	return iron_window_y();
 }
 
 function sys_width(): i32 {
-	return krom_window_width();
+	return iron_window_width();
 }
 
 function sys_height(): i32 {
-	return krom_window_height();
+	return iron_window_height();
 }
 
 function sys_mode(): window_mode_t {
-	return krom_get_window_mode();
+	return iron_get_window_mode();
 }
 
 function sys_mode_set(mode: window_mode_t) {
-	krom_set_window_mode(mode);
+	iron_set_window_mode(mode);
 }
 
 function sys_title(): string {
@@ -326,13 +326,13 @@ function sys_title(): string {
 }
 
 function sys_title_set(value: string) {
-	krom_set_window_title(value);
+	iron_set_window_title(value);
 	_sys_window_title = value;
 }
 
 function sys_display_primary_id(): i32 {
-	for (let i: i32 = 0; i < krom_display_count(); ++i) {
-		if (krom_display_is_primary(i)) {
+	for (let i: i32 = 0; i < iron_display_count(); ++i) {
+		if (iron_display_is_primary(i)) {
 			return i;
 		}
 	}
@@ -340,15 +340,15 @@ function sys_display_primary_id(): i32 {
 }
 
 function sys_display_width(): i32 {
-	return krom_display_width(sys_display_primary_id());
+	return iron_display_width(sys_display_primary_id());
 }
 
 function sys_display_height(): i32 {
-	return krom_display_height(sys_display_primary_id());
+	return iron_display_height(sys_display_primary_id());
 }
 
 function sys_display_frequency(): i32 {
-	return krom_display_frequency(sys_display_primary_id());
+	return iron_display_frequency(sys_display_primary_id());
 }
 
 function sys_buffer_to_string(b: buffer_t): string {
@@ -364,13 +364,13 @@ function sys_string_to_buffer(str: string): buffer_t {
 }
 
 function sys_shader_ext(): string {
-	///if krom_vulkan
+	///if iron_vulkan
 	return ".spirv";
-	///elseif (krom_android || krom_wasm)
+	///elseif (iron_android || iron_wasm)
 	return ".essl";
-	///elseif krom_opengl
+	///elseif iron_opengl
 	return ".glsl";
-	///elseif krom_metal
+	///elseif iron_metal
 	return ".metal";
 	///else
 	return ".d3d11";
@@ -382,7 +382,7 @@ function sys_get_shader_buffer(name: string): buffer_t {
 	let global: any = globalThis;
 	return global["data/" + name + sys_shader_ext()];
 	///else
-	return krom_load_blob("data/" + name + sys_shader_ext());
+	return iron_load_blob("data/" + name + sys_shader_ext());
 	///end
 }
 
@@ -407,7 +407,7 @@ function sound_create(sound_: any): sound_t {
 }
 
 function sound_unload(raw: sound_t) {
-	krom_unload_sound(raw.sound_);
+	iron_unload_sound(raw.sound_);
 }
 ///end
 

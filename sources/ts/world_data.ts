@@ -5,7 +5,7 @@ function world_data_parse(name: string, id: string): world_data_t {
 	let format: scene_t = data_get_scene_raw(name);
 	let raw: world_data_t = world_data_get_raw_by_name(format.world_datas, id);
 	if (raw == null) {
-		krom_log("World data '" + id + "' not found!");
+		iron_log("World data '" + id + "' not found!");
 		return null;
 	}
 

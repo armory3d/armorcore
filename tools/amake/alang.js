@@ -1616,8 +1616,8 @@ function write_functions() {
 	}
 }
 
-function write_krom_c() {
-	out("#include <krom.h>\n\n");
+function write_iron_c() {
+	out("#include <iron.h>\n\n");
 	out(header);
 	write_enums();
 	write_types();
@@ -1638,7 +1638,7 @@ function write_krom_c() {
 function alang() {
 	parse();
 	fhandle = std.open(flags.alang_output, "w");
-	write_krom_c();
+	write_iron_c();
 	fhandle.close();
 }
 

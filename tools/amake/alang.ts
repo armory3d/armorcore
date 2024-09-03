@@ -1655,8 +1655,8 @@ function write_functions() {
 	}
 }
 
-function write_krom_c() {
-	out("#include <krom.h>\n\n");
+function write_iron_c() {
+	out("#include <iron.h>\n\n");
 	out(header);
 	write_enums();
 	write_types();
@@ -1705,6 +1705,6 @@ function alang(_alang_source: string, _alang_output: string) {
 
 	parse();
 	fhandle = fopen(alang_output, "wb");
-	write_krom_c();
+	write_iron_c();
 	fclose(fhandle);
 }

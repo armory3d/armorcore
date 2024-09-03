@@ -331,8 +331,8 @@ if (fs_exists(os_cwd() + '/icon.png')) {
 project.addIncludeDir('sources/libs');
 project.addFile('sources/libs/gc.c');
 project.addIncludeDir('sources');
-project.addFile('sources/krom.c');
-project.addDefine('KROM_C_PATH="' + os_cwd() + '/build/krom.c' + '"');
+project.addFile('sources/iron.c');
+project.addDefine('IRON_C_PATH="' + os_cwd() + '/build/iron.c' + '"');
 
 if (flags.with_audio) {
 	project.addDefine('WITH_AUDIO');

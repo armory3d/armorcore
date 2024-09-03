@@ -4,11 +4,11 @@ let project = new Project("amake");
 {
 	// alang
 	project.addDefine("NO_GC");
-	project.addDefine("NO_KROM_API");
+	project.addDefine("NO_IRON_API");
 	project.addDefine("NO_KINC_START");
 	project.addSources("./"); // alang.ts
-	project.addIncludeDir("./"); // krom.h
-	project.addFile("build/krom.c");
+	project.addIncludeDir("./"); // iron.h
+	project.addFile("build/iron.c");
 	project.addIncludeDir("../../sources");
 	project.addFile("../../sources/iron_string.c");
 	project.addFile("../../sources/iron_array.c");

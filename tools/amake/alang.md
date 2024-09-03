@@ -23,7 +23,7 @@ function main() {
 
 ```c
 // C
-#include <krom.h>
+#include <iron.h>
 
 typedef struct point {
 	f32 x;

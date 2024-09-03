@@ -2,7 +2,7 @@
 function g4_shader_create(buffer: buffer_t, type: shader_type_t): shader_t {
 	let raw: shader_t = {};
 	if (buffer != null) {
-		raw.shader_ = krom_g4_create_shader(buffer, type);
+		raw.shader_ = iron_g4_create_shader(buffer, type);
 	}
 	return raw;
 }
@@ -10,16 +10,16 @@ function g4_shader_create(buffer: buffer_t, type: shader_type_t): shader_t {
 function g4_shader_from_source(source: string, type: shader_type_t): shader_t {
 	let shader: shader_t = g4_shader_create(null, 0);
 	if (type == shader_type_t.VERTEX) {
-		shader.shader_ = krom_g4_create_vertex_shader_from_source(source);
+		shader.shader_ = iron_g4_create_vertex_shader_from_source(source);
 	}
 	else if (type == shader_type_t.FRAGMENT) {
-		shader.shader_ = krom_g4_create_fragment_shader_from_source(source);
+		shader.shader_ = iron_g4_create_fragment_shader_from_source(source);
 	}
 	return shader;
 }
 
 function g4_shader_delete(raw: shader_t) {
-	krom_g4_delete_shader(raw.shader_);
+	iron_g4_delete_shader(raw.shader_);
 }
 
 function g4_pipeline_create(): pipeline_t {
@@ -57,7 +57,7 @@ function g4_pipeline_create(): pipeline_t {
 	}
 	raw.depth_attachment = depth_format_t.NO_DEPTH;
 
-	raw.pipeline_ = krom_g4_create_pipeline();
+	raw.pipeline_ = iron_g4_create_pipeline();
 	return raw;
 }
 
@@ -75,7 +75,7 @@ function g4_pipeline_get_depth_buffer_bits(format: depth_format_t): i32 {
 }
 
 function g4_pipeline_delete(raw: pipeline_t) {
-	krom_g4_delete_pipeline(raw.pipeline_);
+	iron_g4_delete_pipeline(raw.pipeline_);
 }
 
 function g4_pipeline_compile(raw: pipeline_t) {
@@ -98,7 +98,7 @@ function g4_pipeline_compile(raw: pipeline_t) {
 		array_push(raw.color_write_masks_alpha, true);
 	}
 
-	let state: krom_pipeline_state_t = {};
+	let state: iron_pipeline_state_t = {};
 	state.cull_mode = raw.cull_mode;
 	state.depth_write = raw.depth_write;
 	state.depth_mode = raw.depth_mode;
@@ -114,42 +114,42 @@ function g4_pipeline_compile(raw: pipeline_t) {
 	state.color_attachments = raw.color_attachments;
 	state.depth_attachment_bits = g4_pipeline_get_depth_buffer_bits(raw.depth_attachment);
 
-	krom_g4_compile_pipeline(raw.pipeline_, structure0, structure1, structure2, structure3, raw.input_layout.length, raw.vertex_shader.shader_, raw.fragment_shader.shader_, gs, state);
+	iron_g4_compile_pipeline(raw.pipeline_, structure0, structure1, structure2, structure3, raw.input_layout.length, raw.vertex_shader.shader_, raw.fragment_shader.shader_, gs, state);
 }
 
 function g4_pipeline_set(raw: pipeline_t) {
-	krom_g4_set_pipeline(raw.pipeline_);
+	iron_g4_set_pipeline(raw.pipeline_);
 }
 
 function g4_pipeline_get_const_loc(raw: pipeline_t, name: string): kinc_const_loc_t {
-	return krom_g4_get_constant_location(raw.pipeline_, name);
+	return iron_g4_get_constant_location(raw.pipeline_, name);
 }
 
 function g4_pipeline_get_tex_unit(raw: pipeline_t, name: string): kinc_tex_unit_t {
-	return krom_g4_get_texture_unit(raw.pipeline_, name);
+	return iron_g4_get_texture_unit(raw.pipeline_, name);
 }
 
 function g4_vertex_buffer_create(vertex_count: i32, structure: vertex_struct_t, usage: usage_t, inst_data_step_rate: i32 = 0): vertex_buffer_t {
 	let raw: vertex_buffer_t = {};
 	raw.vertex_count = vertex_count;
-	raw.buffer_ = krom_g4_create_vertex_buffer(vertex_count, structure.elements, usage, inst_data_step_rate);
+	raw.buffer_ = iron_g4_create_vertex_buffer(vertex_count, structure.elements, usage, inst_data_step_rate);
 	return raw;
 }
 
 function g4_vertex_buffer_delete(raw: vertex_buffer_t) {
-	krom_g4_delete_vertex_buffer(raw.buffer_);
+	iron_g4_delete_vertex_buffer(raw.buffer_);
 }
 
 function g4_vertex_buffer_lock(raw: vertex_buffer_t): buffer_t {
-	return krom_g4_lock_vertex_buffer(raw.buffer_);
+	return iron_g4_lock_vertex_buffer(raw.buffer_);
 }
 
 function g4_vertex_buffer_unlock(raw: vertex_buffer_t) {
-	krom_g4_unlock_vertex_buffer(raw.buffer_);
+	iron_g4_unlock_vertex_buffer(raw.buffer_);
 }
 
 function g4_vertex_buffer_set(raw: vertex_buffer_t) {
-	krom_g4_set_vertex_buffer(raw.buffer_);
+	iron_g4_set_vertex_buffer(raw.buffer_);
 }
 
 function g4_vertex_struct_create(): vertex_struct_t {
@@ -202,40 +202,40 @@ function g4_vertex_struct_data_byte_size(data: vertex_data_t): i32 {
 
 function g4_index_buffer_create(index_count: i32): index_buffer_t {
 	let raw: index_buffer_t = {};
-	raw.buffer_ = krom_g4_create_index_buffer(index_count);
+	raw.buffer_ = iron_g4_create_index_buffer(index_count);
 	return raw;
 }
 
 function g4_index_buffer_delete(raw: index_buffer_t) {
-	krom_g4_delete_index_buffer(raw.buffer_);
+	iron_g4_delete_index_buffer(raw.buffer_);
 }
 
 function g4_index_buffer_lock(raw: index_buffer_t): u32_array_t {
-	return krom_g4_lock_index_buffer(raw.buffer_);
+	return iron_g4_lock_index_buffer(raw.buffer_);
 }
 
 function g4_index_buffer_unlock(raw: index_buffer_t) {
-	krom_g4_unlock_index_buffer(raw.buffer_);
+	iron_g4_unlock_index_buffer(raw.buffer_);
 }
 
 function g4_index_buffer_set(raw: index_buffer_t) {
-	krom_g4_set_index_buffer(raw.buffer_);
+	iron_g4_set_index_buffer(raw.buffer_);
 }
 
 function g4_begin(render_target: image_t, additional_targets: image_t[] = null) {
-	krom_g4_begin(render_target, additional_targets);
+	iron_g4_begin(render_target, additional_targets);
 }
 
 function g4_end() {
-	krom_g4_end();
+	iron_g4_end();
 }
 
 function g4_clear(color: color_t = 0x00000000, depth: f32 = 0.0, flags: i32 = clear_flag_t.COLOR) {
-	krom_g4_clear(flags, color, depth);
+	iron_g4_clear(flags, color, depth);
 }
 
 function g4_viewport(x: i32, y: i32, width: i32, height: i32) {
-	krom_g4_viewport(x, y, width, height);
+	iron_g4_viewport(x, y, width, height);
 }
 
 function g4_set_vertex_buffer(vb: vertex_buffer_t) {
@@ -243,7 +243,7 @@ function g4_set_vertex_buffer(vb: vertex_buffer_t) {
 }
 
 function g4_set_vertex_buffers(vbs: vertex_buffer_t[]) {
-	krom_g4_set_vertex_buffers(vbs);
+	iron_g4_set_vertex_buffers(vbs);
 }
 
 function g4_set_index_buffer(ib: index_buffer_t) {
@@ -254,29 +254,29 @@ function g4_set_tex(unit: kinc_tex_unit_t, tex: image_t) {
 	if (tex == null) {
 		return;
 	}
-	tex.texture_ != null ? krom_g4_set_texture(unit, tex.texture_) : krom_g4_set_render_target(unit, tex.render_target_);
+	tex.texture_ != null ? iron_g4_set_texture(unit, tex.texture_) : iron_g4_set_render_target(unit, tex.render_target_);
 }
 
 function g4_set_tex_depth(unit: kinc_tex_unit_t, tex: image_t) {
 	if (tex == null) {
 		return;
 	}
-	krom_g4_set_texture_depth(unit, tex.render_target_);
+	iron_g4_set_texture_depth(unit, tex.render_target_);
 }
 
 function g4_set_image_tex(unit: kinc_tex_unit_t, tex: image_t) {
 	if (tex == null) {
 		return;
 	}
-	krom_g4_set_image_texture(unit, tex.texture_);
+	iron_g4_set_image_texture(unit, tex.texture_);
 }
 
 function g4_set_tex_params(tex_unit: kinc_tex_unit_t, u_addressing: tex_addressing_t, v_addressing: tex_addressing_t, minification_filter: tex_filter_t, magnification_filter: tex_filter_t, mipmap_filter: mip_map_filter_t) {
-	krom_g4_set_texture_parameters(tex_unit, u_addressing, v_addressing, minification_filter, magnification_filter, mipmap_filter);
+	iron_g4_set_texture_parameters(tex_unit, u_addressing, v_addressing, minification_filter, magnification_filter, mipmap_filter);
 }
 
 function g4_set_tex_3d_params(tex_unit: kinc_tex_unit_t, u_addressing: tex_addressing_t, v_addressing: tex_addressing_t, w_addressing: tex_addressing_t, minification_filter: tex_filter_t, magnification_filter: tex_filter_t, mipmap_filter: mip_map_filter_t) {
-	krom_g4_set_texture3d_parameters(tex_unit, u_addressing, v_addressing, w_addressing, minification_filter, magnification_filter, mipmap_filter);
+	iron_g4_set_texture3d_parameters(tex_unit, u_addressing, v_addressing, w_addressing, minification_filter, magnification_filter, mipmap_filter);
 }
 
 function g4_set_pipeline(pipe: pipeline_t) {
@@ -284,27 +284,27 @@ function g4_set_pipeline(pipe: pipeline_t) {
 }
 
 function g4_set_bool(loc: kinc_const_loc_t, value: bool) {
-	krom_g4_set_bool(loc, value);
+	iron_g4_set_bool(loc, value);
 }
 
 function g4_set_int(loc: kinc_const_loc_t, value: i32) {
-	krom_g4_set_int(loc, value);
+	iron_g4_set_int(loc, value);
 }
 
 function g4_set_float(loc: kinc_const_loc_t, value: f32) {
-	krom_g4_set_float(loc, value);
+	iron_g4_set_float(loc, value);
 }
 
 function g4_set_float2(loc: kinc_const_loc_t, value1: f32, value2: f32) {
-	krom_g4_set_float2(loc, value1, value2);
+	iron_g4_set_float2(loc, value1, value2);
 }
 
 function g4_set_float3(loc: kinc_const_loc_t, value1: f32, value2: f32, value3: f32) {
-	krom_g4_set_float3(loc, value1, value2, value3);
+	iron_g4_set_float3(loc, value1, value2, value3);
 }
 
 function g4_set_float4(loc: kinc_const_loc_t, value1: f32, value2: f32, value3: f32, value4: f32) {
-	krom_g4_set_float4(loc, value1, value2, value3, value4);
+	iron_g4_set_float4(loc, value1, value2, value3, value4);
 }
 
 function g4_set_floats(loc: kinc_const_loc_t, values: f32_array_t) {
@@ -312,43 +312,43 @@ function g4_set_floats(loc: kinc_const_loc_t, values: f32_array_t) {
 		buffer: values.buffer,
 		length: values.length * 4
 	};
-	krom_g4_set_floats(loc, b);
+	iron_g4_set_floats(loc, b);
 }
 
 function g4_set_vec2(loc: kinc_const_loc_t, v: vec2_t) {
-	krom_g4_set_float2(loc, v.x, v.y);
+	iron_g4_set_float2(loc, v.x, v.y);
 }
 
 function g4_set_vec3(loc: kinc_const_loc_t, v: vec3_t) {
-	krom_g4_set_float3(loc, v.x, v.y, v.z);
+	iron_g4_set_float3(loc, v.x, v.y, v.z);
 }
 
 function g4_set_vec4(loc: kinc_const_loc_t, v: vec4_t) {
-	krom_g4_set_float4(loc, v.x, v.y, v.z, v.w);
+	iron_g4_set_float4(loc, v.x, v.y, v.z, v.w);
 }
 
 function g4_set_mat(loc: kinc_const_loc_t, mat: mat4_t) {
-	krom_g4_set_matrix4(loc, mat.m.buffer);
+	iron_g4_set_matrix4(loc, mat.m.buffer);
 }
 
 function g4_set_mat3(loc: kinc_const_loc_t, mat: mat3_t) {
-	krom_g4_set_matrix3(loc, mat.m.buffer);
+	iron_g4_set_matrix3(loc, mat.m.buffer);
 }
 
 function g4_draw(start: i32 = 0, count: i32 = -1) {
-	krom_g4_draw_indexed_vertices(start, count);
+	iron_g4_draw_indexed_vertices(start, count);
 }
 
 function g4_draw_inst(inst_count: i32, start: i32 = 0, count: i32 = -1) {
-	krom_g4_draw_indexed_vertices_instanced(inst_count, start, count);
+	iron_g4_draw_indexed_vertices_instanced(inst_count, start, count);
 }
 
 function g4_scissor(x: i32, y: i32, width: i32, height: i32) {
-	krom_g4_scissor(x, y, width, height);
+	iron_g4_scissor(x, y, width, height);
 }
 
 function g4_disable_scissor() {
-	krom_g4_disable_scissor();
+	iron_g4_disable_scissor();
 }
 
 function _image_create(tex: any): image_t {
@@ -412,7 +412,7 @@ function image_from_bytes(buffer: buffer_t, width: i32, height: i32, format: tex
 	let readable: bool = true;
 	let image: image_t = _image_create(null);
 	image.format = format;
-	image.texture_ = krom_g4_create_texture_from_bytes(buffer, width, height, image_get_tex_format(format), readable);
+	image.texture_ = iron_g4_create_texture_from_bytes(buffer, width, height, image_get_tex_format(format), readable);
 	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
@@ -421,14 +421,14 @@ function image_from_bytes_3d(buffer: buffer_t, width: i32, height: i32, depth: i
 	let readable: bool = true;
 	let image: image_t = _image_create(null);
 	image.format = format;
-	image.texture_ = krom_g4_create_texture_from_bytes3d(buffer, width, height, depth, image_get_tex_format(format), readable);
+	image.texture_ = iron_g4_create_texture_from_bytes3d(buffer, width, height, depth, image_get_tex_format(format), readable);
 	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
 
 function image_from_encoded_bytes(buffer: buffer_t, format: string, readable: bool = false): image_t {
 	let image: image_t = _image_create(null);
-	image.texture_ = krom_g4_create_texture_from_encoded_bytes(buffer, format, readable);
+	image.texture_ = iron_g4_create_texture_from_encoded_bytes(buffer, format, readable);
 	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
@@ -436,7 +436,7 @@ function image_from_encoded_bytes(buffer: buffer_t, format: string, readable: bo
 function image_create(width: i32, height: i32, format: tex_format_t = tex_format_t.RGBA32): image_t {
 	let image: image_t = _image_create(null);
 	image.format = format;
-	image.texture_ = krom_g4_create_texture(width, height, image_get_tex_format(format));
+	image.texture_ = iron_g4_create_texture(width, height, image_get_tex_format(format));
 	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
@@ -444,7 +444,7 @@ function image_create(width: i32, height: i32, format: tex_format_t = tex_format
 function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format_t = tex_format_t.RGBA32): image_t {
 	let image: image_t = _image_create(null);
 	image.format = format;
-	image.texture_ = krom_g4_create_texture3d(width, height, depth, image_get_tex_format(format));
+	image.texture_ = iron_g4_create_texture3d(width, height, depth, image_get_tex_format(format));
 	_image_set_size_from_texture(image, image.texture_);
 	return image;
 }
@@ -452,13 +452,13 @@ function image_create_3d(width: i32, height: i32, depth: i32, format: tex_format
 function image_create_render_target(width: i32, height: i32, format: tex_format_t = tex_format_t.RGBA32, depth_format: depth_format_t = depth_format_t.NO_DEPTH): image_t {
 	let image: image_t = _image_create(null);
 	image.format = format;
-	image.render_target_ = krom_g4_create_render_target(width, height, format, image_get_depth_buffer_bits(depth_format), 0);
+	image.render_target_ = iron_g4_create_render_target(width, height, format, image_get_depth_buffer_bits(depth_format), 0);
 	_image_set_size_from_render_target(image, image.render_target_);
 	return image;
 }
 
 function image_render_targets_inv_y(): bool {
-	return krom_g4_render_targets_inverted_y();
+	return iron_g4_render_targets_inverted_y();
 }
 
 function image_format_byte_size(format: tex_format_t): i32 {
@@ -487,17 +487,17 @@ function image_format_byte_size(format: tex_format_t): i32 {
 }
 
 function image_unload(raw: image_t) {
-	krom_unload_image(raw);
+	iron_unload_image(raw);
 	raw.texture_ = null;
 	raw.render_target_ = null;
 }
 
 function image_lock(raw: image_t, level: i32 = 0): buffer_t {
-	return krom_g4_lock_texture(raw.texture_, level);
+	return iron_g4_lock_texture(raw.texture_, level);
 }
 
 function image_unlock(raw: image_t) {
-	krom_g4_unlock_texture(raw.texture_);
+	iron_g4_unlock_texture(raw.texture_);
 }
 
 function image_get_pixels(raw: image_t): buffer_t {
@@ -508,28 +508,28 @@ function image_get_pixels(raw: image_t): buffer_t {
 		if (raw.pixels == null) {
 			raw.pixels = buffer_create(image_format_byte_size(raw.format) * pixels_w * pixels_h);
 		}
-		krom_g4_get_render_target_pixels(raw.render_target_, raw.pixels);
+		iron_g4_get_render_target_pixels(raw.render_target_, raw.pixels);
 		return raw.pixels;
 	}
 	else {
-		return krom_g4_get_texture_pixels(raw.texture_);
+		return iron_g4_get_texture_pixels(raw.texture_);
 	}
 }
 
 function image_gen_mipmaps(raw: image_t, levels: i32) {
-	raw.texture_ == null ? krom_g4_generate_render_target_mipmaps(raw.render_target_, levels) : krom_g4_generate_texture_mipmaps(raw.texture_, levels);
+	raw.texture_ == null ? iron_g4_generate_render_target_mipmaps(raw.render_target_, levels) : iron_g4_generate_texture_mipmaps(raw.texture_, levels);
 }
 
 function image_set_mipmaps(raw: image_t, mipmaps: image_t[]) {
-	krom_g4_set_mipmaps(raw.texture_, mipmaps);
+	iron_g4_set_mipmaps(raw.texture_, mipmaps);
 }
 
 function image_set_depth_from(raw: image_t, image: image_t) {
-	krom_g4_set_depth_from(raw.render_target_, image.render_target_);
+	iron_g4_set_depth_from(raw.render_target_, image.render_target_);
 }
 
 function image_clear(raw: image_t, x: i32, y: i32, z: i32, width: i32, height: i32, depth: i32, color: color_t) {
-	krom_g4_clear_texture(raw.texture_, x, y, z, width, height, depth, color);
+	iron_g4_clear_texture(raw.texture_, x, y, z, width, height, depth, color);
 }
 
 declare type image_t = {
@@ -591,7 +591,7 @@ declare type kinc_vertex_elem_t = {
 type kinc_const_loc_t = any;
 type kinc_tex_unit_t = any;
 
-declare type krom_pipeline_state_t = {
+declare type iron_pipeline_state_t = {
 	cull_mode?: cull_mode_t;
 	depth_write?: bool;
 	depth_mode?: compare_mode_t;
@@ -608,7 +608,7 @@ declare type krom_pipeline_state_t = {
 	depth_attachment_bits?: i32;
 };
 
-type krom_texture_t = {
+type iron_texture_t = {
 	width?: i32;
 	height?: i32;
 	depth?: i32;

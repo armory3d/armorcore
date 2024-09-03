@@ -130,7 +130,7 @@ function data_get_blob(file: string): buffer_t {
 		return cached;
 	}
 
-	let b: buffer_t = krom_load_blob(data_resolve_path(file));
+	let b: buffer_t = iron_load_blob(data_resolve_path(file));
 	map_set(data_cached_blobs, file, b);
 	data_assets_loaded++;
 	return b;
@@ -152,7 +152,7 @@ function data_get_image(file: string, readable: bool = false): image_t {
 	}
 	///end
 
-	let image_: any = krom_load_image(data_resolve_path(file), readable);
+	let image_: any = iron_load_image(data_resolve_path(file), readable);
 	if (image_ == null) {
 		return null;
 	}
@@ -170,7 +170,7 @@ function data_get_video(file: string): video_t {
 		return cached;
 	}
 
-	// let b: video_t = krom_load_video(data_resolve_path(file));
+	// let b: video_t = iron_load_video(data_resolve_path(file));
 	// map_set(data_cached_videos, file, b);
 	// data_assets_loaded++;
 	// return b;
@@ -183,7 +183,7 @@ function data_get_font(file: string): g2_font_t {
 		return cached;
 	}
 
-	let blob: buffer_t = krom_load_blob(data_resolve_path(file));
+	let blob: buffer_t = iron_load_blob(data_resolve_path(file));
 	let b: g2_font_t = g2_font_create(blob);
 	map_set(data_cached_fonts, file, b);
 	data_assets_loaded++;
@@ -197,7 +197,7 @@ function data_get_sound(file: string): sound_t {
 		return cached;
 	}
 
-	let b: sound_t = sound_create(krom_load_sound(data_resolve_path(file)));
+	let b: sound_t = sound_create(iron_load_sound(data_resolve_path(file)));
 	map_set(data_cached_sounds, file, b);
 	data_assets_loaded++;
 	return b;
@@ -315,7 +315,7 @@ function data_delete_all() {
 }
 
 function data_sep(): string {
-	///if krom_windows
+	///if iron_windows
 	return "\\";
 	///else
 	return "/";
@@ -323,7 +323,7 @@ function data_sep(): string {
 }
 
 function data_path(): string {
-	///if krom_android
+	///if iron_android
 	return "data" + data_sep();
 	///else
 	return "." + data_sep() + "data" + data_sep();

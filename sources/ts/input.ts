@@ -128,7 +128,7 @@ function mouse_down_listener(index: i32, x: i32, y: i32) {
 	_mouse_buttons_started[index] = true;
 	mouse_x = x;
 	mouse_y = y;
-	///if (krom_android || krom_ios) // For movement delta using touch
+	///if (iron_android || iron_ios) // For movement delta using touch
 	if (index == 0) {
 		mouse_last_x = x;
 		mouse_last_y = y;
@@ -172,7 +172,7 @@ function mouse_wheel_listener(delta: i32) {
 	mouse_wheel_delta = delta;
 }
 
-///if (krom_android || krom_ios)
+///if (iron_android || iron_ios)
 function mouse_on_touch_down(index: i32, x: i32, y: i32) {
 	if (index == 1) { // Two fingers down - right mouse button
 		_mouse_buttons_down[0] = false;
@@ -280,13 +280,13 @@ function pen_down_listener(x: i32, y: i32, pressure: f32) {
 	pen_y = y;
 	pen_pressure = pressure;
 
-	///if (!krom_android && !krom_ios)
+	///if (!iron_android && !iron_ios)
 	mouse_down_listener(0, x, y);
 	///end
 }
 
 function pen_up_listener(x: i32, y: i32, pressure: f32) {
-	///if (!krom_android && !krom_ios)
+	///if (!iron_android && !iron_ios)
 	if (pen_buttons_started[0]) {
 		pen_buttons_started[0] = false;
 		pen_in_use = true;
@@ -300,14 +300,14 @@ function pen_up_listener(x: i32, y: i32, pressure: f32) {
 	pen_y = y;
 	pen_pressure = pressure;
 
-	///if (!krom_android && !krom_ios)
+	///if (!iron_android && !iron_ios)
 	mouse_up_listener(0, x, y);
 	pen_in_use = true; // On pen release, additional mouse down & up events are fired at once - filter those out
 	///end
 }
 
 function pen_move_listener(x: i32, y: i32, pressure: f32) {
-	///if krom_ios
+	///if iron_ios
 	// Listen to pen hover if no other input is active
 	if (!pen_buttons_down[0] && pressure == 0.0) {
 		if (!mouse_down_any()) {
@@ -417,7 +417,7 @@ function keyboard_key_code(key: key_code_t): string {
 	else if (key == key_code_t.CONTROL) {
 		return "control";
 	}
-	///if krom_macos
+	///if iron_macos
 	else if (key == key_code_t.META) {
 		return "control";
 	}
@@ -662,7 +662,7 @@ function keyboard_down_listener(code: key_code_t) {
 	map_set(keyboard_keys_down, s, true);
 	keyboard_repeat_time = time_time() + 0.4;
 
-	///if krom_android_rmb // Detect right mouse button on Android..
+	///if iron_android_rmb // Detect right mouse button on Android..
 	if (code == key_code_t.BACK) {
 		if (!_mouse_buttons_down[1]) {
 			mouse_down_listener(1, math_floor(mouse_x), math_floor(mouse_y));
@@ -677,7 +677,7 @@ function keyboard_up_listener(code: key_code_t) {
 	map_set(keyboard_keys_released, s, true);
 	map_set(keyboard_keys_down, s, false);
 
-	///if krom_android_rmb
+	///if iron_android_rmb
 	if (code == key_code_t.BACK) {
 		mouse_up_listener(1, math_floor(mouse_x), math_floor(mouse_y));
 	}

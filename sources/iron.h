@@ -165,33 +165,33 @@ wchar_t temp_wstring[1024];
 bool show_window = false;
 #endif
 
-void (*krom_update)(void);
-void (*krom_drop_files)(char *);
-char *(*krom_cut)(void *);
-char *(*krom_copy)(void *);
-void (*krom_paste)(char *, void *);
-void (*krom_foreground)(void);
-void (*krom_resume)(void);
-void (*krom_pause)(void);
-void (*krom_background)(void);
-void (*krom_shutdown)(void);
-void (*krom_pause)(void);
-void (*krom_key_down)(int);
-void (*krom_key_up)(int);
-void (*krom_key_press)(int);
-void (*krom_mouse_down)(int, int, int);
-void (*krom_mouse_up)(int, int, int);
-void (*krom_mouse_move)(int, int, int, int);
-void (*krom_mouse_wheel)(int);
-void (*krom_touch_down)(int, int, int);
-void (*krom_touch_up)(int, int, int);
-void (*krom_touch_move)(int, int, int);
-void (*krom_pen_down)(int, int, float);
-void (*krom_pen_up)(int, int, float);
-void (*krom_pen_move)(int, int, float);
-void (*krom_gamepad_axis)(int, int, float);
-void (*krom_gamepad_button)(int, int, float);
-void (*krom_save_and_quit)(bool);
+void (*iron_update)(void);
+void (*iron_drop_files)(char *);
+char *(*iron_cut)(void *);
+char *(*iron_copy)(void *);
+void (*iron_paste)(char *, void *);
+void (*iron_foreground)(void);
+void (*iron_resume)(void);
+void (*iron_pause)(void);
+void (*iron_background)(void);
+void (*iron_shutdown)(void);
+void (*iron_pause)(void);
+void (*iron_key_down)(int);
+void (*iron_key_up)(int);
+void (*iron_key_press)(int);
+void (*iron_mouse_down)(int, int, int);
+void (*iron_mouse_up)(int, int, int);
+void (*iron_mouse_move)(int, int, int, int);
+void (*iron_mouse_wheel)(int);
+void (*iron_touch_down)(int, int, int);
+void (*iron_touch_up)(int, int, int);
+void (*iron_touch_move)(int, int, int);
+void (*iron_pen_down)(int, int, float);
+void (*iron_pen_up)(int, int, float);
+void (*iron_pen_move)(int, int, float);
+void (*iron_gamepad_axis)(int, int, float);
+void (*iron_gamepad_button)(int, int, float);
+void (*iron_save_and_quit)(bool);
 
 char *_substring(char *s, int32_t start, int32_t end) {
 	char *buffer = calloc(1, end - start + 1);
@@ -271,22 +271,22 @@ int kickstart(int argc, char **argv) {
 	return 0;
 }
 
-i32 krom_get_arg_count() {
+i32 iron_get_arg_count() {
 	return _argc;
 }
 
-string_t *krom_get_arg(i32 index) {
+string_t *iron_get_arg(i32 index) {
 	return _argv[index];
 }
 
-// ██╗  ██╗██████╗  ██████╗ ███╗   ███╗     █████╗ ██████╗ ██╗
-// ██║ ██╔╝██╔══██╗██╔═══██╗████╗ ████║    ██╔══██╗██╔══██╗██║
-// █████╔╝ ██████╔╝██║   ██║██╔████╔██║    ███████║██████╔╝██║
-// ██╔═██╗ ██╔══██╗██║   ██║██║╚██╔╝██║    ██╔══██║██╔═══╝ ██║
-// ██║  ██╗██║  ██║╚██████╔╝██║ ╚═╝ ██║    ██║  ██║██║     ██║
-// ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝    ╚═╝  ╚═╝╚═╝     ╚═╝
+// ██╗██████╗  ██████╗ ███╗   ██╗     █████╗ ██████╗ ██╗
+// ██║██╔══██╗██╔═══██╗████╗  ██║    ██╔══██╗██╔══██╗██║
+// ██║██████╔╝██║   ██║██╔██╗ ██║    ███████║██████╔╝██║
+// ██║██╔══██╗██║   ██║██║╚██╗██║    ██╔══██║██╔═══╝ ██║
+// ██║██║  ██║╚██████╔╝██║ ╚████║    ██║  ██║██║     ██║
+// ╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝    ╚═╝  ╚═╝╚═╝     ╚═╝
 
-#ifndef NO_KROM_API
+#ifndef NO_IRON_API
 
 #include <stdio.h>
 #include <kinc/io/filewriter.h>
@@ -445,13 +445,13 @@ void _update(void *data) {
 	#endif
 
 	kinc_g4_begin(0);
-	krom_update();
+	iron_update();
 	kinc_g4_end(0);
 	kinc_g4_swap_buffers();
 }
 
 char *_copy(void *data) {
-	// strcpy(temp_string, krom_copy());
+	// strcpy(temp_string, iron_copy());
 
 	#ifdef WITH_UI
 	strcpy(temp_string, ui_copy());
@@ -460,7 +460,7 @@ char *_copy(void *data) {
 }
 
 char *_cut(void *data) {
-	// strcpy(temp_string, krom_cut());
+	// strcpy(temp_string, iron_cut());
 
 	#ifdef WITH_UI
 	strcpy(temp_string, ui_cut());
@@ -469,7 +469,7 @@ char *_cut(void *data) {
 }
 
 void _paste(char *text, void *data) {
-	// krom_paste(text);
+	// iron_paste(text);
 
 	#ifdef WITH_UI
 	ui_paste(text);
@@ -477,30 +477,30 @@ void _paste(char *text, void *data) {
 }
 
 void _foreground(void *data) {
-	krom_foreground();
+	iron_foreground();
 	in_background = false;
 }
 
 void _resume(void *data) {
-	krom_resume();
+	iron_resume();
 }
 
 void _pause(void *data) {
-	krom_pause();
+	iron_pause();
 }
 
 void _background(void *data) {
-	krom_background();
+	iron_background();
 	in_background = true;
 	paused_frames = 0;
 }
 
 void _shutdown(void *data) {
-	krom_shutdown();
+	iron_shutdown();
 }
 
 void _key_down(int code, void *data) {
-	krom_key_down(code);
+	iron_key_down(code);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -515,7 +515,7 @@ void _key_down(int code, void *data) {
 }
 
 void _key_up(int code, void *data) {
-	krom_key_up(code);
+	iron_key_up(code);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -530,7 +530,7 @@ void _key_up(int code, void *data) {
 }
 
 void _key_press(unsigned int character, void *data) {
-	krom_key_press(character);
+	iron_key_press(character);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -544,7 +544,7 @@ void _key_press(unsigned int character, void *data) {
 }
 
 void _mouse_down(int window, int button, int x, int y, void *data) {
-	krom_mouse_down(button, x, y);
+	iron_mouse_down(button, x, y);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -559,7 +559,7 @@ void _mouse_down(int window, int button, int x, int y, void *data) {
 }
 
 void _mouse_up(int window, int button, int x, int y, void *data) {
-	krom_mouse_up(button, x, y);
+	iron_mouse_up(button, x, y);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -574,7 +574,7 @@ void _mouse_up(int window, int button, int x, int y, void *data) {
 }
 
 void _mouse_move(int window, int x, int y, int mx, int my, void *data) {
-	krom_mouse_move(x, y, mx, my);
+	iron_mouse_move(x, y, mx, my);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -588,7 +588,7 @@ void _mouse_move(int window, int x, int y, int mx, int my, void *data) {
 }
 
 void _mouse_wheel(int window, int delta, void *data) {
-	krom_mouse_wheel(delta);
+	iron_mouse_wheel(delta);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -602,7 +602,7 @@ void _mouse_wheel(int window, int delta, void *data) {
 }
 
 void _touch_move(int index, int x, int y) {
-	krom_touch_move(index, x, y);
+	iron_touch_move(index, x, y);
 
 	#ifdef WITH_UI
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
@@ -618,7 +618,7 @@ void _touch_move(int index, int x, int y) {
 }
 
 void _touch_down(int index, int x, int y) {
-	krom_touch_down(index, x, y);
+	iron_touch_down(index, x, y);
 
 	#ifdef WITH_UI
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
@@ -635,7 +635,7 @@ void _touch_down(int index, int x, int y) {
 }
 
 void _touch_up(int index, int x, int y) {
-	krom_touch_up(index, x, y);
+	iron_touch_up(index, x, y);
 
 	#ifdef WITH_UI
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
@@ -652,7 +652,7 @@ void _touch_up(int index, int x, int y) {
 }
 
 void _pen_down(int window, int x, int y, float pressure) {
-	krom_pen_down(x, y, pressure);
+	iron_pen_down(x, y, pressure);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -667,7 +667,7 @@ void _pen_down(int window, int x, int y, float pressure) {
 }
 
 void _pen_up(int window, int x, int y, float pressure) {
-	krom_pen_up(x, y, pressure);
+	iron_pen_up(x, y, pressure);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -682,7 +682,7 @@ void _pen_up(int window, int x, int y, float pressure) {
 }
 
 void _pen_move(int window, int x, int y, float pressure) {
-	krom_pen_move(x, y, pressure);
+	iron_pen_move(x, y, pressure);
 
 	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
@@ -696,7 +696,7 @@ void _pen_move(int window, int x, int y, float pressure) {
 }
 
 void _gamepad_axis(int gamepad, int axis, float value, void *data) {
-	krom_gamepad_axis(gamepad, axis, value);
+	iron_gamepad_axis(gamepad, axis, value);
 
 	#ifdef IDLE_SLEEP
 	paused_frames = 0;
@@ -704,7 +704,7 @@ void _gamepad_axis(int gamepad, int axis, float value, void *data) {
 }
 
 void _gamepad_button(int gamepad, int button, float value, void *data) {
-	krom_gamepad_button(gamepad, button, value);
+	iron_gamepad_button(gamepad, button, value);
 
 	#ifdef IDLE_SLEEP
 	paused_frames = 0;
@@ -732,7 +732,7 @@ void _drop_files(wchar_t *file_path, void *data) {
 
 	char buffer[512];
 	wcstombs(buffer, file_path, sizeof(buffer));
-	krom_drop_files(buffer);
+	iron_drop_files(buffer);
 	in_background = false;
 
 #ifdef IDLE_SLEEP
@@ -855,7 +855,7 @@ OrtSessionOptions *ort_session_options;
 OrtSession *session = NULL;
 #endif
 
-void krom_init(string_t *title, i32 width, i32 height, bool vsync, i32 window_mode, i32 window_features, i32 x, i32 y, i32 frequency) {
+void iron_init(string_t *title, i32 width, i32 height, bool vsync, i32 window_mode, i32 window_features, i32 x, i32 y, i32 frequency) {
 	kinc_window_options_t win;
 	kinc_framebuffer_options_t frame;
 	win.title = title;
@@ -906,11 +906,11 @@ void krom_init(string_t *title, i32 width, i32 height, bool vsync, i32 window_mo
 	#endif
 }
 
-void krom_set_app_name(string_t *name) {
+void iron_set_app_name(string_t *name) {
 	kinc_set_application_name(name);
 }
 
-void krom_log(string_t *value) {
+void iron_log(string_t *value) {
 	if (value != NULL) {
 		kinc_log(KINC_LOG_LEVEL_INFO, value);
 	}
@@ -919,158 +919,158 @@ void krom_log(string_t *value) {
 	}
 }
 
-void krom_g4_clear(i32 flags, i32 color, f32 depth) {
+void iron_g4_clear(i32 flags, i32 color, f32 depth) {
 	kinc_g4_clear(flags, color, depth, 0);
 }
 
-void krom_set_update_callback(void (*callback)(void)) {
-	krom_update = callback;
+void iron_set_update_callback(void (*callback)(void)) {
+	iron_update = callback;
 	kinc_set_update_callback(_update, NULL);
 }
 
-void krom_set_drop_files_callback(void (*callback)(char *)) {
-	krom_drop_files = callback;
+void iron_set_drop_files_callback(void (*callback)(char *)) {
+	iron_drop_files = callback;
 	kinc_set_drop_files_callback(_drop_files, NULL);
 }
 
-void krom_set_cut_copy_paste_callback(char *(*on_cut)(void *), char *(*on_copy)(void *), void (*on_paste)(char *, void *)) {
+void iron_set_cut_copy_paste_callback(char *(*on_cut)(void *), char *(*on_copy)(void *), void (*on_paste)(char *, void *)) {
 	kinc_set_cut_callback(_cut, NULL);
 	kinc_set_copy_callback(_copy, NULL);
 	kinc_set_paste_callback(_paste, NULL);
-	krom_cut = on_cut;
-	krom_copy = on_copy;
-	krom_paste = on_paste;
+	iron_cut = on_cut;
+	iron_copy = on_copy;
+	iron_paste = on_paste;
 }
 
-void krom_set_application_state_callback(void (*on_foreground)(void), void (*on_resume)(void), void (*on_pause)(void), void (*on_background)(void), void (*on_shutdown)(void)) {
+void iron_set_application_state_callback(void (*on_foreground)(void), void (*on_resume)(void), void (*on_pause)(void), void (*on_background)(void), void (*on_shutdown)(void)) {
 	kinc_set_foreground_callback(on_foreground != NULL ? _foreground : NULL, NULL);
 	kinc_set_resume_callback(on_resume != NULL ? _resume : NULL, NULL);
 	kinc_set_pause_callback(on_pause != NULL ? _pause : NULL, NULL);
 	kinc_set_background_callback(on_background != NULL ? _background : NULL, NULL);
 	kinc_set_shutdown_callback(on_shutdown != NULL ? _shutdown : NULL, NULL);
-	krom_foreground = on_foreground;
-	krom_resume = on_resume;
-	krom_pause = on_pause;
-	krom_background = on_background;
-	krom_shutdown = on_shutdown;
+	iron_foreground = on_foreground;
+	iron_resume = on_resume;
+	iron_pause = on_pause;
+	iron_background = on_background;
+	iron_shutdown = on_shutdown;
 }
 
-void krom_set_keyboard_down_callback(void (*callback)(int)) {
-	krom_key_down = callback;
+void iron_set_keyboard_down_callback(void (*callback)(int)) {
+	iron_key_down = callback;
 	kinc_keyboard_set_key_down_callback(_key_down, NULL);
 }
 
-void krom_set_keyboard_up_callback(void (*callback)(int)) {
-	krom_key_up = callback;
+void iron_set_keyboard_up_callback(void (*callback)(int)) {
+	iron_key_up = callback;
 	kinc_keyboard_set_key_up_callback(_key_up, NULL);
 }
 
-void krom_set_keyboard_press_callback(void (*callback)(int)) {
-	krom_key_press = callback;
+void iron_set_keyboard_press_callback(void (*callback)(int)) {
+	iron_key_press = callback;
 	kinc_keyboard_set_key_press_callback(_key_press, NULL);
 }
 
-void krom_set_mouse_down_callback(void (*callback)(int, int, int)) {
-	krom_mouse_down = callback;
+void iron_set_mouse_down_callback(void (*callback)(int, int, int)) {
+	iron_mouse_down = callback;
 	kinc_mouse_set_press_callback(_mouse_down, NULL);
 }
 
-void krom_set_mouse_up_callback(void (*callback)(int, int, int)) {
-	krom_mouse_up = callback;
+void iron_set_mouse_up_callback(void (*callback)(int, int, int)) {
+	iron_mouse_up = callback;
 	kinc_mouse_set_release_callback(_mouse_up, NULL);
 }
 
-void krom_set_mouse_move_callback(void (*callback)(int, int, int, int)) {
-	krom_mouse_move = callback;
+void iron_set_mouse_move_callback(void (*callback)(int, int, int, int)) {
+	iron_mouse_move = callback;
 	kinc_mouse_set_move_callback(_mouse_move, NULL);
 }
 
-void krom_set_mouse_wheel_callback(void (*callback)(int)) {
-	krom_mouse_wheel = callback;
+void iron_set_mouse_wheel_callback(void (*callback)(int)) {
+	iron_mouse_wheel = callback;
 	kinc_mouse_set_scroll_callback(_mouse_wheel, NULL);
 }
 
-void krom_set_touch_down_callback(void (*callback)(int, int, int)) {
-	krom_touch_down = callback;
+void iron_set_touch_down_callback(void (*callback)(int, int, int)) {
+	iron_touch_down = callback;
 	kinc_surface_set_touch_start_callback(_touch_down);
 }
 
-void krom_set_touch_up_callback(void (*callback)(int, int, int)) {
-	krom_touch_up = callback;
+void iron_set_touch_up_callback(void (*callback)(int, int, int)) {
+	iron_touch_up = callback;
 	kinc_surface_set_touch_end_callback(_touch_up);
 }
 
-void krom_set_touch_move_callback(void (*callback)(int, int, int)) {
-	krom_touch_move = callback;
+void iron_set_touch_move_callback(void (*callback)(int, int, int)) {
+	iron_touch_move = callback;
 	kinc_surface_set_move_callback(_touch_move);
 }
 
-void krom_set_pen_down_callback(void (*callback)(int, int, float)) {
-	krom_pen_down = callback;
+void iron_set_pen_down_callback(void (*callback)(int, int, float)) {
+	iron_pen_down = callback;
 	kinc_pen_set_press_callback(_pen_down);
 }
 
-void krom_set_pen_up_callback(void (*callback)(int, int, float)) {
-	krom_pen_up = callback;
+void iron_set_pen_up_callback(void (*callback)(int, int, float)) {
+	iron_pen_up = callback;
 	kinc_pen_set_release_callback(_pen_up);
 }
 
-void krom_set_pen_move_callback(void (*callback)(int, int, float)) {
-	krom_pen_move = callback;
+void iron_set_pen_move_callback(void (*callback)(int, int, float)) {
+	iron_pen_move = callback;
 	kinc_pen_set_move_callback(_pen_move);
 }
 
-void krom_set_gamepad_axis_callback(void (*callback)(int, int, float)) {
-	krom_gamepad_axis = callback;
+void iron_set_gamepad_axis_callback(void (*callback)(int, int, float)) {
+	iron_gamepad_axis = callback;
 	kinc_gamepad_set_axis_callback(_gamepad_axis, NULL);
 }
 
-void krom_set_gamepad_button_callback(void (*callback)(int, int, float)) {
-	krom_gamepad_button = callback;
+void iron_set_gamepad_button_callback(void (*callback)(int, int, float)) {
+	iron_gamepad_button = callback;
 	kinc_gamepad_set_button_callback(_gamepad_button, NULL);
 }
 
-void krom_lock_mouse() {
+void iron_lock_mouse() {
 	kinc_mouse_lock(0);
 }
 
-void krom_unlock_mouse() {
+void iron_unlock_mouse() {
 	kinc_mouse_unlock();
 }
 
-bool krom_can_lock_mouse() {
+bool iron_can_lock_mouse() {
 	return kinc_mouse_can_lock();
 }
 
-bool krom_is_mouse_locked() {
+bool iron_is_mouse_locked() {
 	return kinc_mouse_is_locked();
 }
 
-void krom_set_mouse_position(i32 x, i32 y) {
+void iron_set_mouse_position(i32 x, i32 y) {
 	kinc_mouse_set_position(0, x, y);
 }
 
-void krom_show_mouse(bool show) {
+void iron_show_mouse(bool show) {
 	show ? kinc_mouse_show() : kinc_mouse_hide();
 }
 
-void krom_show_keyboard(bool show) {
+void iron_show_keyboard(bool show) {
 	show ? kinc_keyboard_show() : kinc_keyboard_hide();
 }
 
 
-any krom_g4_create_index_buffer(i32 count) {
+any iron_g4_create_index_buffer(i32 count) {
 	kinc_g4_index_buffer_t *buffer = (kinc_g4_index_buffer_t *)malloc(sizeof(kinc_g4_index_buffer_t));
 	kinc_g4_index_buffer_init(buffer, count, KINC_G4_INDEX_BUFFER_FORMAT_32BIT, KINC_G4_USAGE_STATIC);
 	return buffer;
 }
 
-void krom_g4_delete_index_buffer(kinc_g4_index_buffer_t *buffer) {
+void iron_g4_delete_index_buffer(kinc_g4_index_buffer_t *buffer) {
 	kinc_g4_index_buffer_destroy(buffer);
 	free(buffer);
 }
 
-u32_array_t *krom_g4_lock_index_buffer(kinc_g4_index_buffer_t *buffer) {
+u32_array_t *iron_g4_lock_index_buffer(kinc_g4_index_buffer_t *buffer) {
 	void *vertices = kinc_g4_index_buffer_lock_all(buffer);
 	u32_array_t *ar = (u32_array_t *)malloc(sizeof(u32_array_t));
 	ar->buffer = vertices;
@@ -1078,11 +1078,11 @@ u32_array_t *krom_g4_lock_index_buffer(kinc_g4_index_buffer_t *buffer) {
 	return ar;
 }
 
-void krom_g4_unlock_index_buffer(kinc_g4_index_buffer_t *buffer) {
+void iron_g4_unlock_index_buffer(kinc_g4_index_buffer_t *buffer) {
 	kinc_g4_index_buffer_unlock_all(buffer);
 }
 
-void krom_g4_set_index_buffer(kinc_g4_index_buffer_t *buffer) {
+void iron_g4_set_index_buffer(kinc_g4_index_buffer_t *buffer) {
 	kinc_g4_set_index_buffer(buffer);
 }
 
@@ -1091,7 +1091,7 @@ typedef struct kinc_vertex_elem {
 	int data; // vertex_data_t
 } kinc_vertex_elem_t;
 
-any krom_g4_create_vertex_buffer(i32 count, any_array_t *elements, i32 usage, i32 inst_data_step_rate) {
+any iron_g4_create_vertex_buffer(i32 count, any_array_t *elements, i32 usage, i32 inst_data_step_rate) {
 	kinc_g4_vertex_structure_t structure;
 	kinc_g4_vertex_structure_init(&structure);
 	for (int32_t i = 0; i < elements->length; ++i) {
@@ -1106,12 +1106,12 @@ any krom_g4_create_vertex_buffer(i32 count, any_array_t *elements, i32 usage, i3
 	return buffer;
 }
 
-void krom_g4_delete_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
+void iron_g4_delete_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
 	kinc_g4_vertex_buffer_destroy(buffer);
 	free(buffer);
 }
 
-buffer_t *krom_g4_lock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
+buffer_t *iron_g4_lock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
 	float *vertices = kinc_g4_vertex_buffer_lock_all(buffer);
 	buffer_t *b = (buffer_t *)malloc(sizeof(buffer_t));
 	b->buffer = vertices;
@@ -1119,19 +1119,19 @@ buffer_t *krom_g4_lock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
 	return b;
 }
 
-void krom_g4_unlock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
+void iron_g4_unlock_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
 	kinc_g4_vertex_buffer_unlock_all(buffer);
 }
 
-void krom_g4_set_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
+void iron_g4_set_vertex_buffer(kinc_g4_vertex_buffer_t *buffer) {
 	kinc_g4_set_vertex_buffer(buffer);
 }
 
-void krom_g4_set_vertex_buffers(any_array_t *vertex_buffers) {
+void iron_g4_set_vertex_buffers(any_array_t *vertex_buffers) {
 	kinc_g4_set_vertex_buffers(vertex_buffers->buffer, vertex_buffers->length);
 }
 
-void krom_g4_draw_indexed_vertices(i32 start, i32 count) {
+void iron_g4_draw_indexed_vertices(i32 start, i32 count) {
 	#ifdef KINC_DIRECT3D12
 	// TODO: Prevent heapIndex overflow in texture.c.h/kinc_g5_internal_set_textures
 	waitAfterNextDraw = true;
@@ -1144,7 +1144,7 @@ void krom_g4_draw_indexed_vertices(i32 start, i32 count) {
 	}
 }
 
-void krom_g4_draw_indexed_vertices_instanced(i32 instance_count, i32 start, i32 count) {
+void iron_g4_draw_indexed_vertices_instanced(i32 instance_count, i32 start, i32 count) {
 	if (count < 0) {
 		kinc_g4_draw_indexed_vertices_instanced(instance_count);
 	}
@@ -1153,13 +1153,13 @@ void krom_g4_draw_indexed_vertices_instanced(i32 instance_count, i32 start, i32 
 	}
 }
 
-kinc_g4_shader_t *krom_g4_create_shader(buffer_t *data, i32 shader_type) {
+kinc_g4_shader_t *iron_g4_create_shader(buffer_t *data, i32 shader_type) {
 	kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 	kinc_g4_shader_init(shader, data->buffer, data->length, (kinc_g4_shader_type_t)shader_type);
 	return shader;
 }
 
-kinc_g4_shader_t *krom_g4_create_vertex_shader_from_source(string_t *source) {
+kinc_g4_shader_t *iron_g4_create_vertex_shader_from_source(string_t *source) {
 
 #ifdef WITH_D3DCOMPILER
 
@@ -1307,7 +1307,7 @@ kinc_g4_shader_t *krom_g4_create_vertex_shader_from_source(string_t *source) {
 	return shader;
 }
 
-kinc_g4_shader_t *krom_g4_create_fragment_shader_from_source(string_t *source) {
+kinc_g4_shader_t *iron_g4_create_fragment_shader_from_source(string_t *source) {
 
 	#ifdef WITH_D3DCOMPILER
 
@@ -1429,17 +1429,17 @@ kinc_g4_shader_t *krom_g4_create_fragment_shader_from_source(string_t *source) {
 	return shader;
 }
 
-void krom_g4_delete_shader(kinc_g4_shader_t *shader) {
+void iron_g4_delete_shader(kinc_g4_shader_t *shader) {
 	kinc_g4_shader_destroy(shader);
 }
 
-kinc_g4_pipeline_t *krom_g4_create_pipeline() {
+kinc_g4_pipeline_t *iron_g4_create_pipeline() {
 	kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)malloc(sizeof(kinc_g4_pipeline_t));
 	kinc_g4_pipeline_init(pipeline);
 	return pipeline;
 }
 
-void krom_g4_delete_pipeline(kinc_g4_pipeline_t *pipeline) {
+void iron_g4_delete_pipeline(kinc_g4_pipeline_t *pipeline) {
 	kinc_g4_pipeline_destroy(pipeline);
 	free(pipeline);
 }
@@ -1449,7 +1449,7 @@ typedef struct vertex_struct {
 	bool instanced;
 } vertex_struct_t;
 
-typedef struct krom_pipeline_state {
+typedef struct iron_pipeline_state {
 	int cull_mode; // cull_mode_t;
 	bool depth_write;
 	int depth_mode; // compare_mode_t;
@@ -1464,9 +1464,9 @@ typedef struct krom_pipeline_state {
 	int color_attachment_count;
 	i32_array_t *color_attachments; // tex_format_t
 	int depth_attachment_bits;
-} krom_pipeline_state_t;
+} iron_pipeline_state_t;
 
-void krom_g4_compile_pipeline(kinc_g4_pipeline_t *pipeline, vertex_struct_t *structure0, vertex_struct_t *structure1, vertex_struct_t *structure2, vertex_struct_t *structure3, i32 length, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader, kinc_g4_shader_t *geometry_shader, krom_pipeline_state_t *state) {
+void iron_g4_compile_pipeline(kinc_g4_pipeline_t *pipeline, vertex_struct_t *structure0, vertex_struct_t *structure1, vertex_struct_t *structure2, vertex_struct_t *structure3, i32 length, kinc_g4_shader_t *vertex_shader, kinc_g4_shader_t *fragment_shader, kinc_g4_shader_t *geometry_shader, iron_pipeline_state_t *state) {
 	kinc_g4_vertex_structure_t s0, s1, s2, s3;
 	kinc_g4_vertex_structure_init(&s0);
 	kinc_g4_vertex_structure_init(&s1);
@@ -1528,7 +1528,7 @@ void krom_g4_compile_pipeline(kinc_g4_pipeline_t *pipeline, vertex_struct_t *str
 	kinc_g4_pipeline_compile(pipeline);
 }
 
-void krom_g4_set_pipeline(kinc_g4_pipeline_t *pipeline) {
+void iron_g4_set_pipeline(kinc_g4_pipeline_t *pipeline) {
 	kinc_g4_set_pipeline(pipeline);
 }
 
@@ -1599,7 +1599,7 @@ bool _load_image(kinc_file_reader_t *reader, const char *filename, unsigned char
 	return success;
 }
 
-kinc_g4_texture_t *krom_load_image(string_t *file, bool readable) {
+kinc_g4_texture_t *iron_load_image(string_t *file, bool readable) {
 	kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 	kinc_file_reader_t reader;
 	if (kinc_file_reader_open(&reader, file, KINC_FILE_TYPE_ASSET)) {
@@ -1643,7 +1643,7 @@ typedef struct image {
 	int depth;
 } image_t;
 
-void krom_unload_image(image_t *image) {
+void iron_unload_image(image_t *image) {
 	if (image == NULL) {
 		return;
 	}
@@ -1658,25 +1658,25 @@ void krom_unload_image(image_t *image) {
 }
 
 #ifdef WITH_AUDIO
-any krom_load_sound(string_t *file) {
+any iron_load_sound(string_t *file) {
 	kinc_a1_sound_t *sound = kinc_a1_sound_create(file);
 	return sound;
 }
 
-void krom_unload_sound(kinc_a1_sound_t *sound) {
+void iron_unload_sound(kinc_a1_sound_t *sound) {
 	kinc_a1_sound_destroy(sound);
 }
 
-void krom_play_sound(kinc_a1_sound_t *sound, bool loop) {
+void iron_play_sound(kinc_a1_sound_t *sound, bool loop) {
 	kinc_a1_play_sound(sound, loop, 1.0, false);
 }
 
-void krom_stop_sound(kinc_a1_sound_t *sound) {
+void iron_stop_sound(kinc_a1_sound_t *sound) {
 	kinc_a1_stop_sound(sound);
 }
 #endif
 
-buffer_t *krom_load_blob(string_t *file) {
+buffer_t *iron_load_blob(string_t *file) {
 	kinc_file_reader_t reader;
 	if (!kinc_file_reader_open(&reader, file, KINC_FILE_TYPE_ASSET)) {
 		return NULL;
@@ -1688,46 +1688,46 @@ buffer_t *krom_load_blob(string_t *file) {
 	return buffer;
 }
 
-void krom_load_url(string_t *url) {
+void iron_load_url(string_t *url) {
 	kinc_load_url(url);
 }
 
-void krom_copy_to_clipboard(string_t *text) {
+void iron_copy_to_clipboard(string_t *text) {
 	kinc_copy_to_clipboard(text);
 }
 
 
-kinc_g4_constant_location_t *krom_g4_get_constant_location(kinc_g4_pipeline_t *pipeline, string_t *name) {
+kinc_g4_constant_location_t *iron_g4_get_constant_location(kinc_g4_pipeline_t *pipeline, string_t *name) {
 	kinc_g4_constant_location_t location = kinc_g4_pipeline_get_constant_location(pipeline, name);
 	kinc_g4_constant_location_t *location_copy = (kinc_g4_constant_location_t *)malloc(sizeof(kinc_g4_constant_location_t));
 	memcpy(location_copy, &location, sizeof(kinc_g4_constant_location_t)); // TODO
 	return location_copy;
 }
 
-kinc_g4_texture_unit_t *krom_g4_get_texture_unit(kinc_g4_pipeline_t *pipeline, string_t *name) {
+kinc_g4_texture_unit_t *iron_g4_get_texture_unit(kinc_g4_pipeline_t *pipeline, string_t *name) {
 	kinc_g4_texture_unit_t unit = kinc_g4_pipeline_get_texture_unit(pipeline, name);
 	kinc_g4_texture_unit_t *unit_copy = (kinc_g4_texture_unit_t *)malloc(sizeof(kinc_g4_texture_unit_t));
 	memcpy(unit_copy, &unit, sizeof(kinc_g4_texture_unit_t)); // TODO
 	return unit_copy;
 }
 
-void krom_g4_set_texture(kinc_g4_texture_unit_t *unit, kinc_g4_texture_t *texture) {
+void iron_g4_set_texture(kinc_g4_texture_unit_t *unit, kinc_g4_texture_t *texture) {
 	kinc_g4_set_texture(*unit, texture);
 }
 
-void krom_g4_set_render_target(kinc_g4_texture_unit_t *unit, kinc_g4_render_target_t *render_target) {
+void iron_g4_set_render_target(kinc_g4_texture_unit_t *unit, kinc_g4_render_target_t *render_target) {
 	kinc_g4_render_target_use_color_as_texture(render_target, *unit);
 }
 
-void krom_g4_set_texture_depth(kinc_g4_texture_unit_t *unit, kinc_g4_render_target_t *render_target) {
+void iron_g4_set_texture_depth(kinc_g4_texture_unit_t *unit, kinc_g4_render_target_t *render_target) {
 	kinc_g4_render_target_use_depth_as_texture(render_target, *unit);
 }
 
-void krom_g4_set_image_texture(kinc_g4_texture_unit_t *unit, kinc_g4_texture_t *texture) {
+void iron_g4_set_image_texture(kinc_g4_texture_unit_t *unit, kinc_g4_texture_t *texture) {
 	kinc_g4_set_image_texture(*unit, texture);
 }
 
-void krom_g4_set_texture_parameters(kinc_g4_texture_unit_t *unit, i32 u_addr, i32 v_addr, i32 min_filter, i32 mag_filter, i32 mip_filter) {
+void iron_g4_set_texture_parameters(kinc_g4_texture_unit_t *unit, i32 u_addr, i32 v_addr, i32 min_filter, i32 mag_filter, i32 mip_filter) {
 	kinc_g4_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)u_addr);
 	kinc_g4_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)v_addr);
 	kinc_g4_set_texture_minification_filter(*unit, (kinc_g4_texture_filter_t)min_filter);
@@ -1735,7 +1735,7 @@ void krom_g4_set_texture_parameters(kinc_g4_texture_unit_t *unit, i32 u_addr, i3
 	kinc_g4_set_texture_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)mip_filter);
 }
 
-void krom_g4_set_texture3d_parameters(kinc_g4_texture_unit_t *unit, i32 u_addr, i32 v_addr, i32 w_addr, i32 min_filter, i32 mag_filter, i32 mip_filter) {
+void iron_g4_set_texture3d_parameters(kinc_g4_texture_unit_t *unit, i32 u_addr, i32 v_addr, i32 w_addr, i32 min_filter, i32 mag_filter, i32 mip_filter) {
 	kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)u_addr);
 	kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)v_addr);
 	kinc_g4_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_W, (kinc_g4_texture_addressing_t)w_addr);
@@ -1744,87 +1744,87 @@ void krom_g4_set_texture3d_parameters(kinc_g4_texture_unit_t *unit, i32 u_addr, 
 	kinc_g4_set_texture3d_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)mip_filter);
 }
 
-void krom_g4_set_bool(kinc_g4_constant_location_t *location, bool value) {
+void iron_g4_set_bool(kinc_g4_constant_location_t *location, bool value) {
 	kinc_g4_set_bool(*location, value != 0);
 }
 
-void krom_g4_set_int(kinc_g4_constant_location_t *location, i32 value) {
+void iron_g4_set_int(kinc_g4_constant_location_t *location, i32 value) {
 	kinc_g4_set_int(*location, value);
 }
 
-void krom_g4_set_float(kinc_g4_constant_location_t *location, f32 value) {
+void iron_g4_set_float(kinc_g4_constant_location_t *location, f32 value) {
 	kinc_g4_set_float(*location, value);
 }
 
-void krom_g4_set_float2(kinc_g4_constant_location_t *location, f32 value1, f32 value2) {
+void iron_g4_set_float2(kinc_g4_constant_location_t *location, f32 value1, f32 value2) {
 	kinc_g4_set_float2(*location, value1, value2);
 }
 
-void krom_g4_set_float3(kinc_g4_constant_location_t *location, f32 value1, f32 value2, f32 value3) {
+void iron_g4_set_float3(kinc_g4_constant_location_t *location, f32 value1, f32 value2, f32 value3) {
 	kinc_g4_set_float3(*location, value1, value2, value3);
 }
 
-void krom_g4_set_float4(kinc_g4_constant_location_t *location, f32 value1, f32 value2, f32 value3, f32 value4) {
+void iron_g4_set_float4(kinc_g4_constant_location_t *location, f32 value1, f32 value2, f32 value3, f32 value4) {
 	kinc_g4_set_float4(*location, value1, value2, value3, value4);
 }
 
-void krom_g4_set_floats(kinc_g4_constant_location_t *location, buffer_t *values) {
+void iron_g4_set_floats(kinc_g4_constant_location_t *location, buffer_t *values) {
 	kinc_g4_set_floats(*location, (float *)values->buffer, (int)(values->length / 4));
 }
 
-void krom_g4_set_matrix4(kinc_g4_constant_location_t *location, /*buffer_t*/ float *matrix) {
+void iron_g4_set_matrix4(kinc_g4_constant_location_t *location, /*buffer_t*/ float *matrix) {
 	kinc_g4_set_matrix4(*location, (kinc_matrix4x4_t *)matrix);
 }
 
-void krom_g4_set_matrix3(kinc_g4_constant_location_t *location, /*buffer_t*/ float *matrix) {
+void iron_g4_set_matrix3(kinc_g4_constant_location_t *location, /*buffer_t*/ float *matrix) {
 	kinc_g4_set_matrix3(*location, (kinc_matrix3x3_t *)matrix);
 }
 
 
-f32 krom_get_time() {
+f32 iron_get_time() {
 	return kinc_time();
 }
 
-i32 krom_window_width() {
+i32 iron_window_width() {
 	return kinc_window_width(0);
 }
 
-i32 krom_window_height() {
+i32 iron_window_height() {
 	return kinc_window_height(0);
 }
 
-void krom_set_window_title(string_t *title) {
+void iron_set_window_title(string_t *title) {
 	kinc_window_set_title(0, title);
 	#if defined(KINC_IOS) || defined(KINC_ANDROID)
 	strcpy(mobile_title, title);
 	#endif
 }
 
-i32 krom_get_window_mode() {
+i32 iron_get_window_mode() {
 	return kinc_window_get_mode(0);
 }
 
-void krom_set_window_mode(i32 mode) {
+void iron_set_window_mode(i32 mode) {
 	kinc_window_change_mode(0, (kinc_window_mode_t)mode);
 }
 
-void krom_resize_window(i32 width, i32 height) {
+void iron_resize_window(i32 width, i32 height) {
 	kinc_window_resize(0, width, height);
 }
 
-void krom_move_window(i32 x, i32 y) {
+void iron_move_window(i32 x, i32 y) {
 	kinc_window_move(0, x, y);
 }
 
-i32 krom_screen_dpi() {
+i32 iron_screen_dpi() {
 	return kinc_display_current_mode(kinc_primary_display()).pixels_per_inch;
 }
 
-string_t *krom_system_id() {
+string_t *iron_system_id() {
 	return kinc_system_id();
 }
 
-void krom_request_shutdown() {
+void iron_request_shutdown() {
 	kinc_stop();
 
 	#ifdef KINC_LINUX
@@ -1832,31 +1832,31 @@ void krom_request_shutdown() {
 	#endif
 }
 
-i32 krom_display_count() {
+i32 iron_display_count() {
 	return kinc_count_displays();
 }
 
-i32 krom_display_width(i32 index) {
+i32 iron_display_width(i32 index) {
 	return kinc_display_current_mode(index).width;
 }
 
-i32 krom_display_height(i32 index) {
+i32 iron_display_height(i32 index) {
 	return kinc_display_current_mode(index).height;
 }
 
-i32 krom_display_x(i32 index) {
+i32 iron_display_x(i32 index) {
 	return kinc_display_current_mode(index).x;
 }
 
-i32 krom_display_y(i32 index) {
+i32 iron_display_y(i32 index) {
 	return kinc_display_current_mode(index).y;
 }
 
-i32 krom_display_frequency(i32 index) {
+i32 iron_display_frequency(i32 index) {
 	return kinc_display_current_mode(index).frequency;
 }
 
-bool krom_display_is_primary(i32 index) {
+bool iron_display_is_primary(i32 index) {
 	#ifdef KINC_LINUX // TODO: Primary display detection broken in Kinc
 	return true;
 	#else
@@ -1864,14 +1864,14 @@ bool krom_display_is_primary(i32 index) {
 	#endif
 }
 
-void krom_write_storage(string_t *name, buffer_t *data) {
+void iron_write_storage(string_t *name, buffer_t *data) {
 	kinc_file_writer_t writer;
 	kinc_file_writer_open(&writer, name);
 	kinc_file_writer_write(&writer, data->buffer, data->length);
 	kinc_file_writer_close(&writer);
 }
 
-buffer_t *krom_read_storage(string_t *name) {
+buffer_t *iron_read_storage(string_t *name) {
 	kinc_file_reader_t reader;
 	if (!kinc_file_reader_open(&reader, name, KINC_FILE_TYPE_SAVE)) {
 		return NULL;
@@ -1884,25 +1884,25 @@ buffer_t *krom_read_storage(string_t *name) {
 }
 
 
-kinc_g4_render_target_t *krom_g4_create_render_target(i32 width, i32 height, i32 format, i32 depth_buffer_bits, i32 stencil_buffer_bits) {
+kinc_g4_render_target_t *iron_g4_create_render_target(i32 width, i32 height, i32 format, i32 depth_buffer_bits, i32 stencil_buffer_bits) {
 	kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
 	kinc_g4_render_target_init(render_target, width, height, (kinc_g4_render_target_format_t)format, depth_buffer_bits, stencil_buffer_bits);
 	return render_target;
 }
 
-kinc_g4_texture_t *krom_g4_create_texture(i32 width, i32 height, i32 format) {
+kinc_g4_texture_t *iron_g4_create_texture(i32 width, i32 height, i32 format) {
 	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 	kinc_g4_texture_init(texture, width, height, (kinc_image_format_t)format);
 	return texture;
 }
 
-kinc_g4_texture_t *krom_g4_create_texture3d(i32 width, i32 height, i32 depth, i32 format) {
+kinc_g4_texture_t *iron_g4_create_texture3d(i32 width, i32 height, i32 depth, i32 format) {
 	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 	kinc_g4_texture_init3d(texture, width, height, depth, (kinc_image_format_t)format);
 	return texture;
 }
 
-kinc_g4_texture_t *krom_g4_create_texture_from_bytes(buffer_t *data, i32 width, i32 height, i32 format, bool readable) {
+kinc_g4_texture_t *iron_g4_create_texture_from_bytes(buffer_t *data, i32 width, i32 height, i32 format, bool readable) {
 	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 	kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 	void *image_data;
@@ -1926,7 +1926,7 @@ kinc_g4_texture_t *krom_g4_create_texture_from_bytes(buffer_t *data, i32 width, 
 	return texture;
 }
 
-kinc_g4_texture_t *krom_g4_create_texture_from_bytes3d(buffer_t *data, i32 width, i32 height, i32 depth, i32 format, bool readable) {
+kinc_g4_texture_t *iron_g4_create_texture_from_bytes3d(buffer_t *data, i32 width, i32 height, i32 depth, i32 format, bool readable) {
 	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 	kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 	void *image_data;
@@ -1951,7 +1951,7 @@ kinc_g4_texture_t *krom_g4_create_texture_from_bytes3d(buffer_t *data, i32 width
 	return texture;
 }
 
-kinc_g4_texture_t *krom_g4_create_texture_from_encoded_bytes(buffer_t *data, string_t *format, bool readable) {
+kinc_g4_texture_t *iron_g4_create_texture_from_encoded_bytes(buffer_t *data, string_t *format, bool readable) {
 	kinc_g4_texture_t *texture = (kinc_g4_texture_t *)malloc(sizeof(kinc_g4_texture_t));
 	kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
@@ -2031,7 +2031,7 @@ int _format_byte_size(kinc_image_format_t format) {
 	}
 }
 
-buffer_t *krom_g4_get_texture_pixels(kinc_image_t *image) {
+buffer_t *iron_g4_get_texture_pixels(kinc_image_t *image) {
 	uint8_t *data = kinc_image_get_pixels(image);
 	int byte_length = _format_byte_size(image->format) * image->width * image->height * image->depth;
 	buffer_t *buffer = malloc(sizeof(buffer_t));
@@ -2040,7 +2040,7 @@ buffer_t *krom_g4_get_texture_pixels(kinc_image_t *image) {
 	return buffer;
 }
 
-void krom_g4_get_render_target_pixels(kinc_g4_render_target_t *rt, buffer_t *data) {
+void iron_g4_get_render_target_pixels(kinc_g4_render_target_t *rt, buffer_t *data) {
 	uint8_t *b = (uint8_t *)data->buffer;
 	kinc_g4_render_target_get_pixels(rt, b);
 
@@ -2058,7 +2058,7 @@ void krom_g4_get_render_target_pixels(kinc_g4_render_target_t *rt, buffer_t *dat
 	#endif
 }
 
-buffer_t *krom_g4_lock_texture(kinc_g4_texture_t *texture, i32 level) {
+buffer_t *iron_g4_lock_texture(kinc_g4_texture_t *texture, i32 level) {
 	uint8_t *tex = kinc_g4_texture_lock(texture);
 	int stride = kinc_g4_texture_stride(texture);
 	int byte_length = stride * texture->tex_height * texture->tex_depth;
@@ -2068,23 +2068,23 @@ buffer_t *krom_g4_lock_texture(kinc_g4_texture_t *texture, i32 level) {
 	return buffer;
 }
 
-void krom_g4_unlock_texture(kinc_g4_texture_t *texture) {
+void iron_g4_unlock_texture(kinc_g4_texture_t *texture) {
 	kinc_g4_texture_unlock(texture);
 }
 
-void krom_g4_clear_texture(kinc_g4_texture_t *texture, i32 x, i32 y, i32 z, i32 width, i32 height, i32 depth, i32 color) {
+void iron_g4_clear_texture(kinc_g4_texture_t *texture, i32 x, i32 y, i32 z, i32 width, i32 height, i32 depth, i32 color) {
 	kinc_g4_texture_clear(texture, x, y, z, width, height, depth, color);
 }
 
-void krom_g4_generate_texture_mipmaps(kinc_g4_texture_t *texture, i32 levels) {
+void iron_g4_generate_texture_mipmaps(kinc_g4_texture_t *texture, i32 levels) {
 	kinc_g4_texture_generate_mipmaps(texture, levels);
 }
 
-void krom_g4_generate_render_target_mipmaps(kinc_g4_render_target_t *render_target, i32 levels) {
+void iron_g4_generate_render_target_mipmaps(kinc_g4_render_target_t *render_target, i32 levels) {
 	kinc_g4_render_target_generate_mipmaps(render_target, levels);
 }
 
-void krom_g4_set_mipmaps(kinc_g4_texture_t *texture, any_array_t *mipmaps) {
+void iron_g4_set_mipmaps(kinc_g4_texture_t *texture, any_array_t *mipmaps) {
 	for (int32_t i = 0; i < mipmaps->length; ++i) {
 		image_t *img = mipmaps->buffer[i];
 		kinc_g4_texture_t *img_tex = img->texture_;
@@ -2092,27 +2092,27 @@ void krom_g4_set_mipmaps(kinc_g4_texture_t *texture, any_array_t *mipmaps) {
 	}
 }
 
-void krom_g4_set_depth_from(kinc_g4_render_target_t *target, kinc_g4_render_target_t *source) {
+void iron_g4_set_depth_from(kinc_g4_render_target_t *target, kinc_g4_render_target_t *source) {
 	kinc_g4_render_target_set_depth_stencil_from(target, source);
 }
 
-void krom_g4_viewport(i32 x, i32 y, i32 width, i32 height) {
+void iron_g4_viewport(i32 x, i32 y, i32 width, i32 height) {
 	kinc_g4_viewport(x, y, width, height);
 }
 
-void krom_g4_scissor(i32 x, i32 y, i32 width, i32 height) {
+void iron_g4_scissor(i32 x, i32 y, i32 width, i32 height) {
 	kinc_g4_scissor(x, y, width, height);
 }
 
-void krom_g4_disable_scissor() {
+void iron_g4_disable_scissor() {
 	kinc_g4_disable_scissor();
 }
 
-bool krom_g4_render_targets_inverted_y() {
+bool iron_g4_render_targets_inverted_y() {
 	return kinc_g4_render_targets_inverted_y();
 }
 
-void krom_g4_begin(image_t *render_target, any_array_t *additional) {
+void iron_g4_begin(image_t *render_target, any_array_t *additional) {
 	if (render_target == NULL) {
 		kinc_g4_restore_render_target();
 	}
@@ -2135,17 +2135,17 @@ void krom_g4_begin(image_t *render_target, any_array_t *additional) {
 	}
 }
 
-void krom_g4_end() {
+void iron_g4_end() {
 
 }
 
-void krom_g4_swap_buffers() {
+void iron_g4_swap_buffers() {
 	kinc_g4_end(0);
 	kinc_g4_swap_buffers();
 	kinc_g4_begin(0);
 }
 
-void krom_file_save_bytes(string_t *path, buffer_t *bytes, i32 length) {
+void iron_file_save_bytes(string_t *path, buffer_t *bytes, i32 length) {
 	int byte_length = length > 0 ? length : (int)bytes->length;
 	if (byte_length > (int)bytes->length) {
 		byte_length = (int)bytes->length;
@@ -2164,7 +2164,7 @@ void krom_file_save_bytes(string_t *path, buffer_t *bytes, i32 length) {
 	fclose(file);
 }
 
-i32 krom_sys_command(string_t *cmd) {
+i32 iron_sys_command(string_t *cmd) {
 	#ifdef KINC_WINDOWS
 	int wlen = MultiByteToWideChar(CP_UTF8, 0, cmd, -1, NULL, 0);
 	wchar_t *wstr = malloc(sizeof(wchar_t) * wlen);
@@ -2179,11 +2179,11 @@ i32 krom_sys_command(string_t *cmd) {
 	return result;
 }
 
-string_t *krom_save_path() {
+string_t *iron_save_path() {
 	return kinc_internal_save_path();
 }
 
-string_t *krom_get_files_location() {
+string_t *iron_get_files_location() {
 	#ifdef KINC_MACOS
 	char path[1024];
 	strcpy(path, macgetresourcepath());
@@ -2221,7 +2221,7 @@ void _http_callback(int error, int response, const char *body, void *callback_da
 	free(cbd);
 }
 
-void krom_http_request(string_t *url, i32 size, void (*callback)(char *, buffer_t *)) {
+void iron_http_request(string_t *url, i32 size, void (*callback)(char *, buffer_t *)) {
 	_callback_data_t *cbd = malloc(sizeof(_callback_data_t));
 	cbd->size = size;
 	strcpy(cbd->url, url);
@@ -2257,19 +2257,19 @@ void krom_http_request(string_t *url, i32 size, void (*callback)(char *, buffer_
 }
 
 #ifdef WITH_G2
-void krom_g2_init(buffer_t *image_vert, buffer_t *image_frag, buffer_t *colored_vert, buffer_t *colored_frag, buffer_t *text_vert, buffer_t *text_frag) {
+void iron_g2_init(buffer_t *image_vert, buffer_t *image_frag, buffer_t *colored_vert, buffer_t *colored_frag, buffer_t *text_vert, buffer_t *text_frag) {
 	arm_g2_init(image_vert->buffer, image_vert->length, image_frag->buffer, image_frag->length, colored_vert->buffer, colored_vert->length, colored_frag->buffer, colored_frag->length, text_vert->buffer, text_vert->length, text_frag->buffer, text_frag->length);
 }
 
-void krom_g2_begin() {
+void iron_g2_begin() {
 	arm_g2_begin();
 }
 
-void krom_g2_end() {
+void iron_g2_end() {
 	arm_g2_end();
 }
 
-void krom_g2_draw_scaled_sub_image(image_t *image, f32 sx, f32 sy, f32 sw, f32 sh, f32 dx, f32 dy, f32 dw, f32 dh) {
+void iron_g2_draw_scaled_sub_image(image_t *image, f32 sx, f32 sy, f32 sw, f32 sh, f32 dx, f32 dy, f32 dw, f32 dh) {
 	#ifdef KINC_DIRECT3D12
 	waitAfterNextDraw = true;
 	#endif
@@ -2283,91 +2283,91 @@ void krom_g2_draw_scaled_sub_image(image_t *image, f32 sx, f32 sy, f32 sw, f32 s
 	}
 }
 
-void krom_g2_fill_triangle(f32 x0, f32 y0, f32 x1, f32 y1, f32 x2, f32 y2) {
+void iron_g2_fill_triangle(f32 x0, f32 y0, f32 x1, f32 y1, f32 x2, f32 y2) {
 	arm_g2_fill_triangle(x0, y0, x1, y1, x2, y2);
 }
 
-void krom_g2_fill_rect(f32 x, f32 y, f32 width, f32 height) {
+void iron_g2_fill_rect(f32 x, f32 y, f32 width, f32 height) {
 	arm_g2_fill_rect(x, y, width, height);
 }
 
-void krom_g2_draw_rect(f32 x, f32 y, f32 width, f32 height, f32 strength) {
+void iron_g2_draw_rect(f32 x, f32 y, f32 width, f32 height, f32 strength) {
 	arm_g2_draw_rect(x, y, width, height, strength);
 }
 
-void krom_g2_draw_line(f32 x0, f32 y0, f32 x1, f32 y1, f32 strength) {
+void iron_g2_draw_line(f32 x0, f32 y0, f32 x1, f32 y1, f32 strength) {
 	arm_g2_draw_line(x0, y0, x1, y1, strength);
 }
 
-void krom_g2_draw_string(string_t *text, f32 x, f32 y) {
+void iron_g2_draw_string(string_t *text, f32 x, f32 y) {
 	arm_g2_draw_string(text, x, y);
 }
 
-void krom_g2_set_font(arm_g2_font_t *font, i32 size) {
+void iron_g2_set_font(arm_g2_font_t *font, i32 size) {
 	arm_g2_set_font(font, size);
 }
 
-arm_g2_font_t *krom_g2_font_init(buffer_t *blob, i32 font_index) {
+arm_g2_font_t *iron_g2_font_init(buffer_t *blob, i32 font_index) {
 	arm_g2_font_t *font = (arm_g2_font_t *)malloc(sizeof(arm_g2_font_t));
 	arm_g2_font_init(font, blob->buffer, font_index);
 	return font;
 }
 
-arm_g2_font_t *krom_g2_font_13(buffer_t *blob) {
+arm_g2_font_t *iron_g2_font_13(buffer_t *blob) {
 	arm_g2_font_t *font = (arm_g2_font_t *)malloc(sizeof(arm_g2_font_t));
 	arm_g2_font_13(font, blob->buffer);
 	return font;
 }
 
-void krom_g2_font_set_glyphs(i32_array_t *glyphs) {
+void iron_g2_font_set_glyphs(i32_array_t *glyphs) {
 	arm_g2_font_set_glyphs(glyphs->buffer, glyphs->length);
 }
 
-i32 krom_g2_font_count(arm_g2_font_t *font) {
+i32 iron_g2_font_count(arm_g2_font_t *font) {
 	return arm_g2_font_count(font);
 }
 
-i32 krom_g2_font_height(arm_g2_font_t *font, i32 size) {
+i32 iron_g2_font_height(arm_g2_font_t *font, i32 size) {
 	return (int)arm_g2_font_height(font, size);
 }
 
-i32 krom_g2_string_width(arm_g2_font_t *font, i32 size, string_t *text) {
+i32 iron_g2_string_width(arm_g2_font_t *font, i32 size, string_t *text) {
 	return (int)arm_g2_string_width(font, size, text);
 }
 
-void krom_g2_set_bilinear_filter(bool bilinear) {
+void iron_g2_set_bilinear_filter(bool bilinear) {
 	arm_g2_set_bilinear_filter(bilinear);
 }
 
-void krom_g2_restore_render_target() {
+void iron_g2_restore_render_target() {
 	arm_g2_restore_render_target();
 }
 
-void krom_g2_set_render_target(kinc_g4_render_target_t *render_target) {
+void iron_g2_set_render_target(kinc_g4_render_target_t *render_target) {
 	arm_g2_set_render_target(render_target);
 }
 
-void krom_g2_set_color(i32 color) {
+void iron_g2_set_color(i32 color) {
 	arm_g2_set_color(color);
 }
 
-void krom_g2_set_pipeline(kinc_g4_pipeline_t *pipeline) {
+void iron_g2_set_pipeline(kinc_g4_pipeline_t *pipeline) {
 	arm_g2_set_pipeline(pipeline);
 }
 
-void krom_g2_set_transform(buffer_t *matrix) {
+void iron_g2_set_transform(buffer_t *matrix) {
 	arm_g2_set_transform(matrix != NULL ? (kinc_matrix3x3_t *)matrix->buffer : NULL);
 }
 
-void krom_g2_fill_circle(f32 cx, f32 cy, f32 radius, i32 segments) {
+void iron_g2_fill_circle(f32 cx, f32 cy, f32 radius, i32 segments) {
 	arm_g2_fill_circle(cx, cy, radius, segments);
 }
 
-void krom_g2_draw_circle(f32 cx, f32 cy, f32 radius, i32 segments, f32 strength) {
+void iron_g2_draw_circle(f32 cx, f32 cy, f32 radius, i32 segments, f32 strength) {
 	arm_g2_draw_circle(cx, cy, radius, segments, strength);
 }
 
-void krom_g2_draw_cubic_bezier(f32_array_t *x, f32_array_t *y, i32 segments, f32 strength) {
+void iron_g2_draw_cubic_bezier(f32_array_t *x, f32_array_t *y, i32 segments, f32 strength) {
 	arm_g2_draw_cubic_bezier(x->buffer, y->buffer, segments, strength);
 }
 
@@ -2392,20 +2392,20 @@ bool _window_close_callback(void *data) {
 		}
 	}
 	//if (save_and_quit_func_set) {
-	//	krom_save_and_quit(save);
+	//	iron_save_and_quit(save);
 	//	return false;
 	//}
 	#endif
 	return true;
 }
 
-void krom_set_save_and_quit_callback(void (*callback)(bool)) {
-	krom_save_and_quit = callback;
+void iron_set_save_and_quit_callback(void (*callback)(bool)) {
+	iron_save_and_quit = callback;
 	save_and_quit_callback_set = true;
 	kinc_window_set_close_callback(0, _window_close_callback, NULL);
 }
 
-void krom_set_mouse_cursor(i32 id) {
+void iron_set_mouse_cursor(i32 id) {
 	kinc_mouse_set_cursor(id);
 	#ifdef KINC_WINDOWS
 	// Set hand icon for drag even when mouse button is pressed
@@ -2415,12 +2415,12 @@ void krom_set_mouse_cursor(i32 id) {
 	#endif
 }
 
-void krom_delay_idle_sleep() {
+void iron_delay_idle_sleep() {
 	paused_frames = 0;
 }
 
 #ifdef WITH_NFD
-char_ptr_array_t *krom_open_dialog(char *filter_list, char *default_path, bool open_multiple) {
+char_ptr_array_t *iron_open_dialog(char *filter_list, char *default_path, bool open_multiple) {
 	nfdpathset_t out_paths;
 	nfdchar_t* out_path;
 	nfdresult_t result = open_multiple ? NFD_OpenDialogMultiple(filter_list, default_path, &out_paths) : NFD_OpenDialog(filter_list, default_path, &out_path);
@@ -2445,27 +2445,27 @@ char_ptr_array_t *krom_open_dialog(char *filter_list, char *default_path, bool o
 	return NULL;
 }
 
-static char krom_save_dialog_path[512];
+static char iron_save_dialog_path[512];
 
-char *krom_save_dialog(char *filter_list, char *default_path) {
+char *iron_save_dialog(char *filter_list, char *default_path) {
 	nfdchar_t *out_path = NULL;
 	nfdresult_t result = NFD_SaveDialog(filter_list, default_path, &out_path);
 	if (result == NFD_OKAY) {
-		strcpy(krom_save_dialog_path, out_path);
+		strcpy(iron_save_dialog_path, out_path);
 		free(out_path);
-		return krom_save_dialog_path;
+		return iron_save_dialog_path;
 	}
 	return NULL;
 }
 
 #elif defined(KINC_ANDROID)
 
-char_ptr_array_t *krom_open_dialog(char *filter_list, char *default_path, bool open_multiple) {
+char_ptr_array_t *iron_open_dialog(char *filter_list, char *default_path, bool open_multiple) {
 	AndroidFileDialogOpen();
 	return NULL;
 }
 
-char *krom_save_dialog(char *filter_list, char *default_path) {
+char *iron_save_dialog(char *filter_list, char *default_path) {
 	wchar_t *out_path = AndroidFileDialogSave();
 	size_t len = wcslen(out_path);
 	uint16_t *str = malloc(sizeof(uint16_t) * (len + 1));
@@ -2479,13 +2479,13 @@ char *krom_save_dialog(char *filter_list, char *default_path) {
 
 #elif defined(KINC_IOS)
 
-char_ptr_array_t *krom_open_dialog(char *filter_list, char *default_path, bool open_multiple) {
+char_ptr_array_t *iron_open_dialog(char *filter_list, char *default_path, bool open_multiple) {
 	// Once finished drop_files callback is called
 	IOSFileDialogOpen();
 	return NULL;
 }
 
-char *krom_save_dialog(char *filter_list, char *default_path) {
+char *iron_save_dialog(char *filter_list, char *default_path) {
 	// Path to app document directory
 	wchar_t *out_path = IOSFileDialogSave();
 	size_t len = wcslen(out_path);
@@ -2500,7 +2500,7 @@ char *krom_save_dialog(char *filter_list, char *default_path) {
 #endif
 
 #ifdef WITH_TINYDIR
-char *krom_read_directory(char *path, bool folders_only) {
+char *iron_read_directory(char *path, bool folders_only) {
 	tinydir_dir dir;
 	#ifdef KINC_WINDOWS
 	MultiByteToWideChar(CP_UTF8, 0, path, -1, temp_wstring, 1023);
@@ -2550,7 +2550,7 @@ char *krom_read_directory(char *path, bool folders_only) {
 }
 #endif
 
-bool krom_file_exists(char *path) {
+bool iron_file_exists(char *path) {
 	kinc_file_reader_t reader;
 	if (kinc_file_reader_open(&reader, path, KINC_FILE_TYPE_ASSET)) {
 		kinc_file_reader_close(&reader);
@@ -2559,7 +2559,7 @@ bool krom_file_exists(char *path) {
 	return false;
 }
 
-void krom_delete_file(char *path) {
+void iron_delete_file(char *path) {
 	#ifdef KINC_IOS
 	IOSDeleteFile(path);
 	#elif defined(KINC_WINDOWS)
@@ -2567,18 +2567,18 @@ void krom_delete_file(char *path) {
 	strcpy(cmd, "del /f \"");
 	strcat(cmd, path);
 	strcat(cmd, "\"");
-	krom_sys_command(cmd);
+	iron_sys_command(cmd);
 	#else
 	char cmd[1024];
 	strcpy(cmd, "rm \"");
 	strcat(cmd, path);
 	strcat(cmd, "\"");
-	krom_sys_command(cmd);
+	iron_sys_command(cmd);
 	#endif
 }
 
 #ifdef WITH_ZLIB
-buffer_t *krom_inflate(buffer_t *bytes, bool raw) {
+buffer_t *iron_inflate(buffer_t *bytes, bool raw) {
 	unsigned char *inflated = (unsigned char *)malloc(bytes->length);
 	z_stream infstream;
 	infstream.zalloc = Z_NULL;
@@ -2611,7 +2611,7 @@ buffer_t *krom_inflate(buffer_t *bytes, bool raw) {
 	return output;
 }
 
-buffer_t *krom_deflate(buffer_t *bytes, bool raw) {
+buffer_t *iron_deflate(buffer_t *bytes, bool raw) {
 	int deflated_size = compressBound((uInt)bytes->length);
 	void *deflated = malloc(deflated_size);
 	z_stream defstream;
@@ -2682,12 +2682,12 @@ void _write_image(char *path, buffer_t *bytes, i32 w, i32 h, i32 format, int ima
 	}
 }
 
-void krom_write_jpg(char *path, buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality) {
+void iron_write_jpg(char *path, buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality) {
 	// RGBA, R, RGB1, RRR1, GGG1, BBB1, AAA1
 	_write_image(path, bytes, w, h, format, 0, quality);
 }
 
-void krom_write_png(char *path, buffer_t *bytes, i32 w, i32 h, i32 format) {
+void iron_write_png(char *path, buffer_t *bytes, i32 w, i32 h, i32 format) {
 	_write_image(path, bytes, w, h, format, 1, 100);
 }
 
@@ -2710,11 +2710,11 @@ buffer_t *_encode_image(buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality) 
 	return buffer;
 }
 
-buffer_t *krom_encode_jpg(buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality) {
+buffer_t *iron_encode_jpg(buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality) {
 	return _encode_image(bytes, w, h, 0, quality);
 }
 
-buffer_t *krom_encode_png(buffer_t *bytes, i32 w, i32 h, i32 format) {
+buffer_t *iron_encode_png(buffer_t *bytes, i32 w, i32 h, i32 format) {
 	return _encode_image(bytes, w, h, 1, 100);
 }
 
@@ -2740,13 +2740,13 @@ unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_l
 #endif
 
 #ifdef WITH_MPEG_WRITE
-buffer_t *krom_write_mpeg() {
+buffer_t *iron_write_mpeg() {
 	return NULL;
 }
 #endif
 
 #ifdef WITH_ONNX
-buffer_t *krom_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]*/ any_array_t *input_shape, i32_array_t output_shape, bool use_gpu) {
+buffer_t *iron_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]*/ any_array_t *input_shape, i32_array_t output_shape, bool use_gpu) {
 	OrtStatus *onnx_status = NULL;
 	static bool use_gpu_last = false;
 	if (ort == NULL || use_gpu_last != use_gpu) {
@@ -2875,7 +2875,7 @@ buffer_t *krom_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]
 	return output;
 }
 
-void krom_ml_unload() {
+void iron_ml_unload() {
 	if (session != NULL) {
 		ort->ReleaseSession(session);
 		session = NULL;
@@ -2884,7 +2884,7 @@ void krom_ml_unload() {
 #endif
 
 #if defined(KINC_DIRECT3D12) || defined(KINC_VULKAN) || defined(KINC_METAL)
-bool krom_raytrace_supported() {
+bool iron_raytrace_supported() {
 	#ifdef KINC_METAL
 	return kinc_raytrace_supported();
 	#else
@@ -2892,7 +2892,7 @@ bool krom_raytrace_supported() {
 	#endif
 }
 
-void krom_raytrace_init(buffer_t *shader, kinc_g4_vertex_buffer_t *vb, kinc_g4_index_buffer_t *ib, f32 scale) {
+void iron_raytrace_init(buffer_t *shader, kinc_g4_vertex_buffer_t *vb, kinc_g4_index_buffer_t *ib, f32 scale) {
 	if (accel_created) {
 		kinc_g5_constant_buffer_destroy(&constant_buffer);
 		kinc_raytrace_acceleration_structure_destroy(&accel);
@@ -2908,7 +2908,7 @@ void krom_raytrace_init(buffer_t *shader, kinc_g4_vertex_buffer_t *vb, kinc_g4_i
 	accel_created = true;
 }
 
-void krom_raytrace_set_textures(image_t *tex0, image_t *tex1, image_t *tex2, kinc_g4_texture_t *texenv, kinc_g4_texture_t *texsobol, kinc_g4_texture_t *texscramble, kinc_g4_texture_t *texrank) {
+void iron_raytrace_set_textures(image_t *tex0, image_t *tex1, image_t *tex2, kinc_g4_texture_t *texenv, kinc_g4_texture_t *texsobol, kinc_g4_texture_t *texscramble, kinc_g4_texture_t *texrank) {
 	kinc_g4_render_target_t *texpaint0;
 	kinc_g4_render_target_t *texpaint1;
 	kinc_g4_render_target_t *texpaint2;
@@ -3000,7 +3000,7 @@ void krom_raytrace_set_textures(image_t *tex0, image_t *tex1, image_t *tex2, kin
 	}
 }
 
-void krom_raytrace_dispatch_rays(kinc_g4_render_target_t *render_target, buffer_t *buffer) {
+void iron_raytrace_dispatch_rays(kinc_g4_render_target_t *render_target, buffer_t *buffer) {
 	float *cb = (float *)buffer->buffer;
 	kinc_g5_constant_buffer_lock_all(&constant_buffer);
 	for (int i = 0; i < constant_buffer_size; ++i) {
@@ -3015,19 +3015,19 @@ void krom_raytrace_dispatch_rays(kinc_g4_render_target_t *render_target, buffer_
 }
 #endif
 
-i32 krom_window_x() {
+i32 iron_window_x() {
 	return kinc_window_x(0);
 }
 
-i32 krom_window_y() {
+i32 iron_window_y() {
 	return kinc_window_y(0);
 }
 
-char *krom_language() {
+char *iron_language() {
 	return kinc_language();
 }
 
-raw_mesh_t *krom_obj_parse(buffer_t *file_bytes, i32 split_code, u64 start_pos, bool udim) {
+raw_mesh_t *iron_obj_parse(buffer_t *file_bytes, i32 split_code, u64 start_pos, bool udim) {
 	raw_mesh_t *part = obj_parse(file_bytes, split_code, start_pos, udim);
 	return part;
 }

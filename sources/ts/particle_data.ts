@@ -3,7 +3,7 @@ function particle_data_parse(name: string, id: string): particle_data_t {
 	let format: scene_t = data_get_scene_raw(name);
 	let raw: particle_data_t = particle_data_get_raw_by_name(format.particle_datas, id);
 	if (raw == null) {
-		krom_log("Particle data '" + id + "' not found!");
+		iron_log("Particle data '" + id + "' not found!");
 	}
 	return raw;
 }
