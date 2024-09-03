@@ -1,4 +1,4 @@
-#include "io_obj.h"
+#include "iron_obj.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -207,7 +207,7 @@ kinc_vector4_t calc_normal(kinc_vector4_t a, kinc_vector4_t b, kinc_vector4_t c)
 }
 
 // 'o' for object split, 'g' for groups, 'u'semtl for materials
-raw_mesh_t *io_obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_pos, bool udim) {
+raw_mesh_t *obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_pos, bool udim) {
 	bytes = file_bytes->buffer;
 	bytes_length = file_bytes->length;
 
@@ -626,7 +626,7 @@ raw_mesh_t *io_obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_p
 	return part;
 }
 
-void io_obj_destroy(raw_mesh_t *part) {
+void obj_destroy(raw_mesh_t *part) {
 	// if (part->udims != NULL) {
 	// 	for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
 	// 		free(part->udims[i]);

@@ -25,5 +25,5 @@ typedef struct raw_mesh {
 	void *index_arrays; // index_array_t[]
 } raw_mesh_t;
 
-raw_mesh_t *io_obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_pos, bool udim);
-void io_obj_destroy(raw_mesh_t *part);
+raw_mesh_t *obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_pos, bool udim);
+void obj_destroy(raw_mesh_t *part);

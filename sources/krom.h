@@ -19,7 +19,7 @@
 #include "iron_armpack.h"
 #include "iron_json.h"
 #include "iron_gc.h"
-#include "io_obj.h"
+#include "iron_obj.h"
 #ifdef KINC_WINDOWS
 #include <Windows.h>
 #endif
@@ -3027,8 +3027,8 @@ char *krom_language() {
 	return kinc_language();
 }
 
-raw_mesh_t *krom_io_obj_parse(buffer_t *file_bytes, i32 split_code, u64 start_pos, bool udim) {
-	raw_mesh_t *part = io_obj_parse(file_bytes, split_code, start_pos, udim);
+raw_mesh_t *krom_obj_parse(buffer_t *file_bytes, i32 split_code, u64 start_pos, bool udim) {
+	raw_mesh_t *part = obj_parse(file_bytes, split_code, start_pos, udim);
 	return part;
 }
 

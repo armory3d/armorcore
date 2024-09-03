@@ -355,7 +355,7 @@ declare function krom_raytrace_dispatch_rays(target: any, cb: buffer_t): void;
 declare function krom_window_x(): i32;
 declare function krom_window_y(): i32;
 declare function krom_language(): string;
-declare function krom_io_obj_parse(file_bytes: buffer_t, split_code: i32, start_pos: i32, udim: bool): any;
+declare function krom_obj_parse(file_bytes: buffer_t, split_code: i32, start_pos: i32, udim: bool): any;
 
 declare function armpack_decode(b: buffer_t): any;
 declare function armpack_encode_start(encoded: any): void;

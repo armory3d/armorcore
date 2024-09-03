@@ -366,7 +366,7 @@ if (flags.with_iron) {
 	project.addFile('sources/iron_vec2.c');
 	project.addFile('sources/iron_gc.c');
 	project.addFile('sources/iron_json.c');
-	project.addFile('sources/io_obj.c');
+	project.addFile('sources/iron_obj.c');
 	project.addIncludeDir('sources/libs');
 }
 
