@@ -2347,7 +2347,7 @@ function load_project(directory, is_root_project) {
 			with_audio: false,
 			with_g2: false,
 			with_iron: false,
-			with_zui: false,
+			with_ui: false,
 			with_eval: false,
 		};
 	}

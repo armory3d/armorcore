@@ -370,11 +370,11 @@ if (flags.with_iron) {
 	project.addIncludeDir('sources/libs');
 }
 
-if (flags.with_zui) {
-	project.addDefine('WITH_ZUI');
-	project.addFile('sources/zui.c');
-	project.addFile('sources/zui_ext.c');
-	project.addFile('sources/zui_nodes.c');
+if (flags.with_ui) {
+	project.addDefine('WITH_UI');
+	project.addFile('sources/iron_ui.c');
+	project.addFile('sources/iron_ui_ext.c');
+	project.addFile('sources/iron_ui_nodes.c');
 }
 
 if (platform === 'windows') {

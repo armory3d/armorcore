@@ -30,10 +30,10 @@
 #include <kinc/graphics2/g2.h>
 #include <kinc/graphics2/g2_ext.h>
 #endif
-#ifdef WITH_ZUI
-#include "zui.h"
-#include "zui_ext.h"
-#include "zui_nodes.h"
+#ifdef WITH_UI
+#include "iron_ui.h"
+#include "iron_ui_ext.h"
+#include "iron_ui_nodes.h"
 #endif
 
 int _argc;
@@ -453,8 +453,8 @@ void _update(void *data) {
 char *_copy(void *data) {
 	// strcpy(temp_string, krom_copy());
 
-	#ifdef WITH_ZUI
-	strcpy(temp_string, zui_copy());
+	#ifdef WITH_UI
+	strcpy(temp_string, ui_copy());
 	#endif
 	return temp_string;
 }
@@ -462,8 +462,8 @@ char *_copy(void *data) {
 char *_cut(void *data) {
 	// strcpy(temp_string, krom_cut());
 
-	#ifdef WITH_ZUI
-	strcpy(temp_string, zui_cut());
+	#ifdef WITH_UI
+	strcpy(temp_string, ui_cut());
 	#endif
 	return temp_string;
 }
@@ -471,8 +471,8 @@ char *_cut(void *data) {
 void _paste(char *text, void *data) {
 	// krom_paste(text);
 
-	#ifdef WITH_ZUI
-	zui_paste(text);
+	#ifdef WITH_UI
+	ui_paste(text);
 	#endif
 }
 
@@ -502,9 +502,9 @@ void _shutdown(void *data) {
 void _key_down(int code, void *data) {
 	krom_key_down(code);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_key_down(zui_instances[i], code);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_key_down(ui_instances[i], code);
 	}
 	#endif
 
@@ -517,9 +517,9 @@ void _key_down(int code, void *data) {
 void _key_up(int code, void *data) {
 	krom_key_up(code);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_key_up(zui_instances[i], code);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_key_up(ui_instances[i], code);
 	}
 	#endif
 
@@ -532,9 +532,9 @@ void _key_up(int code, void *data) {
 void _key_press(unsigned int character, void *data) {
 	krom_key_press(character);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_key_press(zui_instances[i], character);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_key_press(ui_instances[i], character);
 	}
 	#endif
 
@@ -546,9 +546,9 @@ void _key_press(unsigned int character, void *data) {
 void _mouse_down(int window, int button, int x, int y, void *data) {
 	krom_mouse_down(button, x, y);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_mouse_down(zui_instances[i], button, x, y);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_mouse_down(ui_instances[i], button, x, y);
 	}
 	#endif
 
@@ -561,9 +561,9 @@ void _mouse_down(int window, int button, int x, int y, void *data) {
 void _mouse_up(int window, int button, int x, int y, void *data) {
 	krom_mouse_up(button, x, y);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_mouse_up(zui_instances[i], button, x, y);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_mouse_up(ui_instances[i], button, x, y);
 	}
 	#endif
 
@@ -576,9 +576,9 @@ void _mouse_up(int window, int button, int x, int y, void *data) {
 void _mouse_move(int window, int x, int y, int mx, int my, void *data) {
 	krom_mouse_move(x, y, mx, my);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_mouse_move(zui_instances[i], x, y, mx, my);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_mouse_move(ui_instances[i], x, y, mx, my);
 	}
 	#endif
 
@@ -590,9 +590,9 @@ void _mouse_move(int window, int x, int y, int mx, int my, void *data) {
 void _mouse_wheel(int window, int delta, void *data) {
 	krom_mouse_wheel(delta);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_mouse_wheel(zui_instances[i], delta);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_mouse_wheel(ui_instances[i], delta);
 	}
 	#endif
 
@@ -604,10 +604,10 @@ void _mouse_wheel(int window, int delta, void *data) {
 void _touch_move(int index, int x, int y) {
 	krom_touch_move(index, x, y);
 
-	#ifdef WITH_ZUI
+	#ifdef WITH_UI
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_touch_move(zui_instances[i], index, x, y);
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_touch_move(ui_instances[i], index, x, y);
 	}
 	#endif
 	#endif
@@ -620,10 +620,10 @@ void _touch_move(int index, int x, int y) {
 void _touch_down(int index, int x, int y) {
 	krom_touch_down(index, x, y);
 
-	#ifdef WITH_ZUI
+	#ifdef WITH_UI
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_touch_down(zui_instances[i], index, x, y);
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_touch_down(ui_instances[i], index, x, y);
 	}
 	#endif
 	#endif
@@ -637,10 +637,10 @@ void _touch_down(int index, int x, int y) {
 void _touch_up(int index, int x, int y) {
 	krom_touch_up(index, x, y);
 
-	#ifdef WITH_ZUI
+	#ifdef WITH_UI
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_touch_up(zui_instances[i], index, x, y);
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_touch_up(ui_instances[i], index, x, y);
 	}
 	#endif
 	#endif
@@ -654,9 +654,9 @@ void _touch_up(int index, int x, int y) {
 void _pen_down(int window, int x, int y, float pressure) {
 	krom_pen_down(x, y, pressure);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_pen_down(zui_instances[i], x, y, pressure);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_pen_down(ui_instances[i], x, y, pressure);
 	}
 	#endif
 
@@ -669,9 +669,9 @@ void _pen_down(int window, int x, int y, float pressure) {
 void _pen_up(int window, int x, int y, float pressure) {
 	krom_pen_up(x, y, pressure);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_pen_up(zui_instances[i], x, y, pressure);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_pen_up(ui_instances[i], x, y, pressure);
 	}
 	#endif
 
@@ -684,9 +684,9 @@ void _pen_up(int window, int x, int y, float pressure) {
 void _pen_move(int window, int x, int y, float pressure) {
 	krom_pen_move(x, y, pressure);
 
-	#ifdef WITH_ZUI
-	for (int i = 0; i < zui_instances_count; ++i) {
-		zui_pen_move(zui_instances[i], x, y, pressure);
+	#ifdef WITH_UI
+	for (int i = 0; i < ui_instances_count; ++i) {
+		ui_pen_move(ui_instances[i], x, y, pressure);
 	}
 	#endif
 

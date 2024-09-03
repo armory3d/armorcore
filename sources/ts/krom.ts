@@ -1,5 +1,3 @@
-// @ts-nocheck
-///if 0
 
 declare type i8 = number;
 declare type i16 = number;
@@ -151,7 +149,7 @@ declare function json_encode_begin_array(k: string): void;
 declare function json_encode_end_array(): void;
 declare function json_encode_begin_object(): void;
 declare function json_encode_end_object(): void;
-declare function json_encode_map(m: map<string, string>): void;
+declare function json_encode_map(m: map_t<string, string>): void;
 declare function uri_decode(s: string): string;
 
 declare function js_eval(js: string): f32;
@@ -380,5 +378,3 @@ declare function armpack_size_string(str: string): i32;
 declare function armpack_size_i32(): i32;
 declare function armpack_size_f32(): i32;
 declare function armpack_size_bool(): i32;
-
-///end
