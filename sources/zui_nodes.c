@@ -236,10 +236,12 @@ void zui_nodes_bake_elements() {
 	kinc_g4_render_target_init(&zui_socket_image, 24, 24, KINC_G4_RENDER_TARGET_FORMAT_32BIT, 0, 0);
 	arm_g2_set_render_target(&zui_socket_image);
 	kinc_g4_clear(KINC_G4_CLEAR_COLOR, 0x00000000, 0, 0);
-	arm_g2_set_color(0xff000000);
+
+	arm_g2_set_color(0xff111111);
 	arm_g2_fill_circle(12, 12, 11, 0);
 	arm_g2_set_color(0xffffffff);
 	arm_g2_fill_circle(12, 12, 9, 0);
+
 	arm_g2_restore_render_target();
 	zui_nodes_elements_baked = true;
 }
@@ -399,6 +401,18 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 		}
 	}
 
+	// Shadow
+	if (current->ops->theme->SHADOWS) {
+		const float max_offset = 4.0 * ZUI_SCALE();
+		const int layers = 4;
+		for (int i = 0; i < layers; i++) {
+			float offset = (max_offset / layers) * (i + 1);
+			float alpha = 0.1 - (0.1 / layers) * i;
+			arm_g2_set_color(zui_color(0, 0, 0, alpha * 255));
+			zui_draw_rect(true, nx + offset, ny + offset, w + (max_offset - offset) * 2, h + (max_offset - offset) * 2);
+		}
+	}
+
 	// Outline
 	arm_g2_set_color(zui_is_selected(node) ? current->ops->theme->LABEL_COL : current->ops->theme->CONTEXT_COL);
 	zui_draw_rect(true, nx - 1, ny - 1, w + 2, h + 2);
@@ -412,7 +426,7 @@ void zui_draw_node(zui_node_t *node, zui_node_canvas_t *canvas) {
 	arm_g2_fill_rect(nx, ny + lineh - zui_p(3), w, zui_p(3));
 
 	// Title
-	arm_g2_set_color(current->ops->theme->LABEL_COL);
+	arm_g2_set_color(current->ops->theme->TEXT_COL);
 	float textw = arm_g2_string_width(current->ops->font->font_, current->font_size, text);
 	arm_g2_draw_string(text, nx + zui_p(10), ny + zui_p(6));
 	ny += lineh * 0.5;

@@ -231,6 +231,7 @@ static zui_handle_t temp1;
 static zui_handle_t temp2;
 
 int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool color_preview, void (*picker)(void *), void *data) {
+
 	zui_t *current = zui_get_current();
 	if (w < 0) w = current->_w;
 	float r = zui_color_r(handle->color) / 255.0f;
@@ -241,6 +242,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 	float csat = ar[1];
 	float cval = ar[2];
 	float calpha = zui_color_a(handle->color) / 255.0f;
+
 	// Wheel
 	float px = current->_x;
 	float py = current->_y;
@@ -265,6 +267,7 @@ int zui_color_wheel(zui_handle_t *handle, bool alpha, float w, float h, bool col
 
 	uint32_t col = zui_color(round(cval * 255.0f), round(cval * 255.0f), round(cval * 255.0f), 255);
 	zui_image(current->ops->color_wheel, false, col, -1);
+
 	// Picker
 	float ph = current->_y - py;
 	float ox = px + w / 2.0;

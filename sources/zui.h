@@ -61,6 +61,7 @@ typedef PACK(struct zui_theme {
 	int LINK_STYLE;
 	/*bool*/int FULL_TABS; // Make tabs take full window width
 	/*bool*/int ROUND_CORNERS;
+	/*bool*/int SHADOWS;
 }) zui_theme_t;
 
 typedef struct zui_options {

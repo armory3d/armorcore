@@ -162,11 +162,14 @@ void zui_rect(float x, float y, float w, float h, uint32_t color, float strength
 
 void zui_draw_rect(bool fill, float x, float y, float w, float h) {
 	float strength = 1.0;
-	if (!current->enabled) zui_fade_color(0.25);
+	if (!current->enabled) {
+		zui_fade_color(0.25);
+	}
 	x = (int)x;
 	y = (int)y;
 	w = (int)w;
 	h = (int)h;
+
 	if (fill) {
 		int r = current->filled_round_corner_image.width;
 		if (current->ops->theme->ROUND_CORNERS && current->enabled && r > 0 && w >= r * 2.0) {
@@ -2421,9 +2424,6 @@ void zui_theme_default(zui_theme_t *t) {
 	t->FILL_ACCENT_BG = false;
 	t->LINK_STYLE = ZUI_LINK_STYLE_LINE;
 	t->FULL_TABS = false;
-	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	t->ROUND_CORNERS = true;
-	#else
-	t->ROUND_CORNERS = false;
-	#endif
+	t->SHADOWS = true;
 }
