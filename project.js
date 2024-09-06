@@ -336,6 +336,7 @@ project.addDefine('IRON_C_PATH="' + os_cwd() + '/build/iron.c' + '"');
 
 if (flags.with_audio) {
 	project.addDefine('WITH_AUDIO');
+	project.addDefine("arm_audio");
 }
 
 if (flags.with_eval) {

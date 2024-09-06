@@ -26,6 +26,9 @@
 #if defined(IDLE_SLEEP) && !defined(KINC_WINDOWS)
 #include <unistd.h>
 #endif
+#ifdef WITH_AUDIO
+#include <kinc/audio2/audio.h>
+#endif
 #ifdef WITH_G2
 #include <kinc/graphics2/g2.h>
 #include <kinc/graphics2/g2_ext.h>
@@ -308,7 +311,6 @@ string_t *iron_get_arg(i32 index) {
 #ifdef WITH_AUDIO
 #include <kinc/audio1/audio.h>
 #include <kinc/audio1/sound.h>
-#include <kinc/audio2/audio.h>
 #endif
 int LZ4_decompress_safe(const char *source, char *dest, int compressed_size, int maxOutputSize);
 #define STB_IMAGE_IMPLEMENTATION
