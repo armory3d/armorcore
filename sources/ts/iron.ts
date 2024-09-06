@@ -159,6 +159,14 @@ declare function js_call_ptr_str(f: any, arg0: any, arg1: string): string;
 declare function js_pcall_str(f: any, arg0: string): any;
 declare function array_remove(ar: any[], e: any): void;
 declare function trim_end(str: string): string;
+declare function gc_run(): void;
+declare function gc_pause(): void;
+declare function gc_resume(): void;
+declare function gc_free(ptr: any): void;
+declare function gc_root(ptr: any): void;
+declare function gc_unroot(ptr: any): void;
+declare function sizeof(ptr: any): i32;
+declare function memcpy(dst: any, src: any, n: i32): void;
 
 declare function color_from_floats(r: f32, g: f32, b: f32, a: f32): i32;
 declare function color_get_rb(c: i32): u8;
