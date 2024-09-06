@@ -2348,6 +2348,7 @@ function load_project(directory, is_root_project) {
 			with_iron: false,
 			with_ui: false,
 			with_eval: false,
+			embed: false
 		};
 	}
 
@@ -2456,18 +2457,18 @@ class AssetConverter {
 					let export_info = AssetConverter.create_export_info(file, false, options, ".");
 					let images;
 					if (options.noprocessing) {
-						images = self.exporter.copy_blob(file, export_info.destination, options);
+						images = self.exporter.copy_blob(file, export_info.destination, globalThis.flags.embed && !options.noembed);
 					}
 					else {
-						images = self.exporter.copy_image(file, export_info.destination);
+						images = self.exporter.copy_image(file, export_info.destination, globalThis.flags.embed && !options.noembed);
 					}
-					parsed_files.push({ name: export_info.name, from: file, type: 'image', files: images, original_width: options.original_width, original_height: options.original_height, readable: options.readable, embed: options.embed });
+					parsed_files.push({ name: export_info.name, from: file, type: 'image', files: images, original_width: options.original_width, original_height: options.original_height, readable: options.readable, noembed: options.noembed });
 					break;
 				}
 				default: {
 					let export_info = AssetConverter.create_export_info(file, true, options, ".");
-					let blobs = self.exporter.copy_blob(file, export_info.destination, options);
-					parsed_files.push({ name: export_info.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined, embed: options.embed });
+					let blobs = self.exporter.copy_blob(file, export_info.destination, globalThis.flags.embed && !options.noembed);
+					parsed_files.push({ name: export_info.name, from: file, type: 'blob', files: blobs, original_width: undefined, original_height: undefined, readable: undefined, noembed: options.noembed });
 					break;
 				}
 			}
@@ -2489,7 +2490,6 @@ class AssetConverter {
 class CompiledShader {
 	constructor() {
 		this.files = [];
-		this.embed = false;
 	}
 }
 
@@ -2610,13 +2610,10 @@ class ShaderCompiler {
 				console.log(error);
 			}
 			if (compiled_shader === null) {
-				compiled_shader = new CompiledShader();
-				compiled_shader.embed = options.embed;
-				compiled_shader.files = null;
+				compiled_shader = new CompiledShader();;
 			}
-			if (compiled_shader.files != null && compiled_shader.files.length === 0) {
-				compiled_shader.files.push('data/' + path_basename_noext(shader) + '.' + self.type);
-			}
+			compiled_shader.files = [path_resolve('build', 'temp', path_basename_noext(shader) + '.' + self.type)];
+
 			compiled_shader.name = AssetConverter.create_export_info(shader, false, options, ".").name;
 			compiled_shaders.push(compiled_shader);
 			++index;
@@ -2647,7 +2644,6 @@ class ShaderCompiler {
 				fs_copyfile(from, to);
 			}
 			let compiled_shader = new CompiledShader();
-			compiled_shader.embed = options.embed;
 			return compiled_shader;
 		}
 
@@ -2676,7 +2672,6 @@ class ShaderCompiler {
 			}
 
 			let compiled_shader = new CompiledShader();
-			compiled_shader.embed = options.embed;
 			return compiled_shader;
 		}
 	}
@@ -2713,8 +2708,8 @@ class ArmorCoreExporter {
 				graphics = "opengl";
 			}
 		}
-		defines.push("iron_" + graphics);
-		defines.push("iron_" + goptions.target);
+		defines.push("arm_" + graphics);
+		defines.push("arm_" + goptions.target);
 		return {
 			from: ".",
 			sources: this.sources,
@@ -2726,14 +2721,28 @@ class ArmorCoreExporter {
 		fs_ensuredir(path_join("build", "out"));
 	}
 
-	copy_image(from, to) {
-		export_k(from, path_join("build", "out", to));
+	copy_image(from, to, embed) {
+		let to_full = path_join("build", "out", to);
+		if (embed) {
+			to_full = path_join("build", "temp", to);
+		}
+		export_k(from, to_full);
 		return [to + ".k"];
 	}
 
-	copy_blob(from, to) {
+	copy_blob(from, to, embed) {
 		fs_ensuredir(path_join("build", "out", path_dirname(to)));
-		fs_copyfile(from, path_join("build", "out", to));
+		let to_full = path_join("build", "out", to);
+		if (embed &&
+			!to.endsWith(".txt") &&
+			!to.endsWith(".md") &&
+			!to.endsWith(".json") &&
+			!to.endsWith(".js")
+		) {
+			fs_ensuredir(path_join("build", "temp", path_dirname(to)));
+			to_full = path_join("build", "temp", to);
+		}
+		fs_copyfile(from, to_full);
 		return [to];
 	}
 
@@ -2876,10 +2885,11 @@ function export_project_files(name, options, exporter, defines) {
 }
 
 function export_armorcore_project(project, options) {
-	let temp = path_join("build", 'temp');
+	let temp = path_join("build", "temp");
+	fs_ensuredir(temp);
 
 	let exporter = new ArmorCoreExporter(project, options);
-	fs_ensuredir(path_join("build", 'out'));
+	fs_ensuredir(path_join("build", "out"));
 
 	for (let source of project.sources) {
 		exporter.add_source_directory(source);
@@ -2887,33 +2897,60 @@ function export_armorcore_project(project, options) {
 
 	let asset_converter = new AssetConverter(exporter, options, project.asset_matchers);
 	let assets = asset_converter.run();
-	let shaderdir = path_join("build", 'out', 'data');
+
+	let shaderdir = path_join("build", "out", "data");
+	if (globalThis.flags.embed) {
+		shaderdir = path_join("build", "temp");
+	}
 	fs_ensuredir(shaderdir);
 
 	let exported_shaders = [];
-	let krafix = path_join(armorcoredir, 'tools', 'bin', sys_dir(), 'krafix' + exe_ext());
+	let krafix = path_join(armorcoredir, "tools", "bin", sys_dir(), "krafix" + exe_ext());
 	let shader_compiler = new ShaderCompiler(exporter, krafix, shaderdir, temp, options, project.shader_matchers);
 	exported_shaders = shader_compiler.run();
 
-	let embed_files = [];
-	for (let asset of assets) {
-		if (asset.embed) {
-			embed_files.push(file);
+	// Write embed.h
+	if (globalThis.flags.embed) {
+		let embed_files = [];
+		for (let asset of assets) {
+			if (asset.noembed ||
+				asset.from.endsWith(".txt") ||
+				asset.from.endsWith(".md") ||
+				asset.from.endsWith(".json") ||
+				asset.from.endsWith(".js")) {
+				continue;
+			}
+			embed_files.push(path_resolve("build", "temp", asset.files[0]));
 		}
-	}
-	for (let shader of exported_shaders) {
-		if (shader.embed) {
-			embed_files.push(shader);
+		for (let shader of exported_shaders) {
+			embed_files.push(shader.files[0]);
 		}
-	}
 
-	if (embed_files.length > 0) {
-		let embed_string = "";
-		for (let file of embed_files) {
-			embed_string += file.files[0] + '\n';
+		if (embed_files.length > 0) {
+			let embed_header = "#pragma once\n";
+			for (let file of embed_files) {
+				embed_header += "const unsigned char " + path_basename(file).replaceAll(".", "_") + "[] = {\n"
+				embed_header += "#embed \"" + file + "\"\n";
+				embed_header += "};\n"
+			}
+			embed_header += "char *embed_keys[] = {\n"
+			for (let file of embed_files) {
+				embed_header += "\"./data/" + path_basename(file) + "\",\n";
+			}
+			embed_header += "};\n"
+			embed_header += "const unsigned char *embed_values[] = {\n"
+			for (let file of embed_files) {
+				embed_header += path_basename(file).replaceAll(".", "_") + ",\n";
+			}
+			embed_header += "};\n"
+			embed_header += "const int embed_sizes[] = {\n";
+			for (let file of embed_files) {
+				embed_header += "sizeof(" + path_basename(file).replaceAll(".", "_") + "),\n"
+			}
+			embed_header += "};\n"
+			embed_header += "int embed_count = " + embed_files.length + ";\n";
+			fs_writefile(path_join("build", "embed.h"), embed_header);
 		}
-		fs_ensuredir(path_join("build", 'out', 'data'));
-		fs_writefile(path_join("build", 'out', 'data', 'embed.txt'), embed_string);
 	}
 
 	export_project_files(project.name, options, exporter, project.defines);
@@ -3406,10 +3443,6 @@ let goptions = {
 	js: false,
 	hlslbin: false,
 };
-
-if (os_env("ARM_EMBED")) {
-	os_argv().push("--embed");
-}
 
 let args = scriptArgs;
 for (let i = 1; i < args.length; ++i) {

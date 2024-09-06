@@ -333,6 +333,7 @@ project.addFile('sources/libs/gc.c');
 project.addIncludeDir('sources');
 project.addFile('sources/iron.c');
 project.addDefine('IRON_C_PATH="' + os_cwd() + '/build/iron.c' + '"');
+project.addDefine('EMBED_H_PATH="' + os_cwd() + '/build/embed.h' + '"');
 
 if (flags.with_audio) {
 	project.addDefine('WITH_AUDIO');

@@ -38,6 +38,9 @@
 #include "iron_ui_ext.h"
 #include "iron_ui_nodes.h"
 #endif
+#ifdef WITH_EMBED
+#include EMBED_H_PATH
+#endif
 
 int _argc;
 char **_argv;
@@ -116,6 +119,20 @@ void *js_pcall_str(void *p, char *arg0) {
 
 char *js_call(void *p) {
 	return (char *)JS_ToCString(js_ctx, *js_call_arg(p, 0, NULL));
+}
+#endif
+
+#ifdef WITH_EMBED
+buffer_t *embed_get(char *key) {
+	for (int i = 0; i < embed_count; ++i) {
+		if (strcmp(embed_keys[i], key) == 0) {
+			buffer_t *buffer = buffer_create(0);
+			buffer->buffer = embed_values[i];
+			buffer->length = embed_sizes[i];
+			return buffer;
+		}
+	}
+	return NULL;
 }
 #endif
 
@@ -1601,7 +1618,17 @@ bool _load_image(kinc_file_reader_t *reader, const char *filename, unsigned char
 	return success;
 }
 
+kinc_g4_texture_t *iron_g4_create_texture_from_encoded_bytes(buffer_t *data, string_t *format, bool readable);
+
 kinc_g4_texture_t *iron_load_image(string_t *file, bool readable) {
+	#ifdef WITH_EMBED
+	buffer_t *b = embed_get(file);
+	if (b != NULL) {
+		kinc_g4_texture_t *texture = iron_g4_create_texture_from_encoded_bytes(b, ".k", readable);
+		return texture;
+	}
+	#endif
+
 	kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 	kinc_file_reader_t reader;
 	if (kinc_file_reader_open(&reader, file, KINC_FILE_TYPE_ASSET)) {
@@ -1679,6 +1706,13 @@ void iron_stop_sound(kinc_a1_sound_t *sound) {
 #endif
 
 buffer_t *iron_load_blob(string_t *file) {
+	#ifdef WITH_EMBED
+	buffer_t *b = embed_get(file);
+	if (b != NULL) {
+		return b;
+	}
+	#endif
+
 	kinc_file_reader_t reader;
 	if (!kinc_file_reader_open(&reader, file, KINC_FILE_TYPE_ASSET)) {
 		return NULL;

@@ -142,16 +142,6 @@ function data_get_image(file: string, readable: bool = false): image_t {
 		return cached;
 	}
 
-	///if arm_image_embed
-	let image_blob: buffer_t = map_get(data_cached_blobs, file);
-	if (image_blob != null) {
-		let b: image_t = image_from_encoded_bytes(image_blob, ".k", readable);
-		map_set(data_cached_images, file, b);
-		data_assets_loaded++;
-		return b;
-	}
-	///end
-
 	let image_: any = iron_load_image(data_resolve_path(file), readable);
 	if (image_ == null) {
 		return null;
@@ -315,7 +305,7 @@ function data_delete_all() {
 }
 
 function data_sep(): string {
-	///if iron_windows
+	///if arm_windows
 	return "\\";
 	///else
 	return "/";
@@ -323,7 +313,7 @@ function data_sep(): string {
 }
 
 function data_path(): string {
-	///if iron_android
+	///if arm_android
 	return "data" + data_sep();
 	///else
 	return "." + data_sep() + "data" + data_sep();

@@ -224,19 +224,19 @@ function sys_mouse_wheel_callback(delta: i32) {
 }
 
 function sys_touch_down_callback(index: i32, x: i32, y: i32) {
-	///if (iron_android || iron_ios)
+	///if (arm_android || arm_ios)
 	mouse_on_touch_down(index, x, y);
 	///end
 }
 
 function sys_touch_up_callback(index: i32, x: i32, y: i32) {
-	///if (iron_android || iron_ios)
+	///if (arm_android || arm_ios)
 	mouse_on_touch_up(index, x, y);
 	///end
 }
 
 function sys_touch_move_callback(index: i32, x: i32, y: i32) {
-	///if (iron_android || iron_ios)
+	///if (arm_android || arm_ios)
 	mouse_on_touch_move(index, x, y);
 	///end
 }
@@ -364,25 +364,16 @@ function sys_string_to_buffer(str: string): buffer_t {
 }
 
 function sys_shader_ext(): string {
-	///if iron_vulkan
+	///if arm_vulkan
 	return ".spirv";
-	///elseif (iron_android || iron_wasm)
+	///elseif (arm_android || arm_wasm)
 	return ".essl";
-	///elseif iron_opengl
+	///elseif arm_opengl
 	return ".glsl";
-	///elseif iron_metal
+	///elseif arm_metal
 	return ".metal";
 	///else
 	return ".d3d11";
-	///end
-}
-
-function sys_get_shader_buffer(name: string): buffer_t {
-	///if arm_shader_embed
-	let global: any = globalThis;
-	return global["data/" + name + sys_shader_ext()];
-	///else
-	return iron_load_blob("data/" + name + sys_shader_ext());
 	///end
 }
 
@@ -390,7 +381,7 @@ function sys_get_shader(name: string): shader_t {
 	let shader: shader_t = map_get(_sys_shaders, name);
 	if (shader == null) {
 		shader = g4_shader_create(
-			sys_get_shader_buffer(name),
+			iron_load_blob("./data/" + name + sys_shader_ext()),
 			ends_with(name, ".frag") ? shader_type_t.FRAGMENT : ends_with(name, ".vert") ? shader_type_t.VERTEX : shader_type_t.GEOMETRY);
 			map_set(_sys_shaders, name, shader);
 	}
