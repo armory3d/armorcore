@@ -199,10 +199,10 @@ static bool pnpoly(float v0x, float v0y, float v1x, float v1y, float v2x, float 
 }
 
 kinc_vector4_t calc_normal(kinc_vector4_t a, kinc_vector4_t b, kinc_vector4_t c) {
-	kinc_vector4_t cb = vec4_sub(c, b);
-	kinc_vector4_t ab = vec4_sub(a, b);
-	cb = vec4_cross(cb, ab);
-	cb = vec4_normalize(cb);
+	kinc_vector4_t cb = vec4_sub(&c, &b);
+	kinc_vector4_t ab = vec4_sub(&a, &b);
+	cb = vec4_cross(&cb, &ab);
+	cb = vec4_normalize(&cb);
 	return cb;
 }
 

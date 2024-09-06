@@ -15,12 +15,12 @@ void vec2_set(kinc_vector2_t *v, float x, float y) {
 	v->y = y;
 }
 
-float vec2_length(kinc_vector2_t v) {
-	return (float)sqrt(v.x * v.x + v.y * v.y);
+float vec2_length(kinc_vector2_t *v) {
+	return (float)sqrt(v->x * v->x + v->y * v->y);
 }
 
 void vec2_set_length(kinc_vector2_t *v, float length) {
-	float current_length = vec2_length(*v);
+	float current_length = vec2_length(v);
 	if (current_length == 0)
 		return;
 	float mul = length / current_length;
@@ -28,9 +28,9 @@ void vec2_set_length(kinc_vector2_t *v, float length) {
 	v->y *= mul;
 }
 
-kinc_vector2_t vec2_sub(kinc_vector2_t a, kinc_vector2_t b) {
+kinc_vector2_t vec2_sub(kinc_vector2_t *a, kinc_vector2_t *b) {
 	kinc_vector2_t v;
-	v.x = a.x - b.x;
-	v.y = a.y - b.y;
+	v.x = a->x - b->x;
+	v.y = a->y - b->y;
 	return v;
 }
