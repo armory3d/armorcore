@@ -78,6 +78,11 @@ void any_array_push(any_array_t *a, void *e) {
 	a->buffer[a->length++] = e;
 }
 
+void char_ptr_array_push(char_ptr_array_t *a, void *e) {
+	array_alloc(a, sizeof(uintptr_t));
+	a->buffer[a->length++] = e;
+}
+
 void i8_array_resize(i8_array_t *a, int32_t size) {
 	a->capacity = size;
 	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(int8_t));
@@ -121,6 +126,11 @@ void f32_array_resize(f32_array_t *a, int32_t size) {
 }
 
 void any_array_resize(any_array_t *a, int32_t size) {
+	a->capacity = size;
+	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(void *));
+}
+
+void char_ptr_array_resize(char_ptr_array_t *a, int32_t size) {
 	a->capacity = size;
 	a->buffer = gc_realloc(a->buffer, a->capacity * sizeof(void *));
 }
@@ -565,6 +575,15 @@ any_array_t *any_array_create_from_raw(void **raw, int length) {
 	any_array_t *a = any_array_create(length);
 	for (int i = 0; i < length; ++i) {
 		a->buffer[i] = raw[i];
+	}
+	return a;
+}
+
+char_ptr_array_t *char_ptr_array_create(int32_t length) {
+	char_ptr_array_t *a = gc_alloc(sizeof(char_ptr_array_t));
+	if (length > 0) {
+		char_ptr_array_resize(a, length);
+		a->length = length;
 	}
 	return a;
 }

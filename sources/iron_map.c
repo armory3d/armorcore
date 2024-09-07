@@ -18,7 +18,7 @@ static size_t hash(const char *k) {
 static void resize(any_map_t *m) {
 	int cap = m->keys->capacity == 0 ? 16 : m->keys->capacity * 2;
 	any_map_t *tmp = any_map_create();
-	any_array_resize(tmp->keys, cap);
+	char_ptr_array_resize(tmp->keys, cap);
 	any_array_resize(tmp->values, cap);
 
 	any_array_t *old_keys = map_keys(m);
@@ -114,10 +114,10 @@ void map_delete(any_map_t *m, char *k) {
 
 any_array_t *map_keys(any_map_t *m) {
 	char_ptr_array_t *keys = gc_alloc(sizeof(char_ptr_array_t));
-	any_array_resize(keys, m->keys->length);
+	char_ptr_array_resize(keys, m->keys->length);
 	for (int i = 0; i < m->keys->capacity; ++i) {
 		if (m->keys->buffer[i] != NULL) {
-			any_array_push(keys, m->keys->buffer[i]);
+			char_ptr_array_push(keys, m->keys->buffer[i]);
 		}
 	}
 	return keys;
