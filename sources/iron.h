@@ -177,11 +177,11 @@ int last_window_height = 0;
 #endif
 
 char temp_string[4096];
-char temp_string_vs[1024 * 1024];
-char temp_string_fs[1024 * 1024];
+char temp_string_vs[1024 * 128];
+char temp_string_fs[1024 * 128];
 char temp_string_vstruct[4][32][32];
 #ifdef KINC_WINDOWS
-wchar_t temp_wstring[1024];
+wchar_t temp_wstring[4096];
 bool show_window = false;
 #endif
 
@@ -2546,9 +2546,9 @@ char *iron_read_directory(char *path, bool folders_only) {
 	#endif
 
 	#ifdef KINC_WINDOWS
-	wchar_t *files = malloc(1024 * sizeof(wchar_t));
+	wchar_t *files = temp_wstring;
 	#else
-	char *files = malloc(1024);
+	char *files = temp_string;
 	#endif
 	files[0] = 0;
 
