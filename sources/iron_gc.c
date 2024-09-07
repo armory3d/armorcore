@@ -72,7 +72,6 @@ void *gc_alloc(size_t size) {
 }
 
 void gc_leaf(void *ptr) {
-	// TODO: mark strings as leaves
 	_gc_leaf(ptr);
 }
 

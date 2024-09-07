@@ -353,7 +353,7 @@ static void gc_mark_roots() {
 	for (size_t i = 0; i < gc->allocs->capacity; ++i) {
 		gc_allocation_t *chunk = gc->allocs->allocs[i];
 		while (chunk) {
-			if (chunk->tag & GC_TAG_ROOT) {
+ 			if (chunk->tag & GC_TAG_ROOT) {
 				gc_mark_alloc(chunk->ptr);
 			}
 			chunk = chunk->next;

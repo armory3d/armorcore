@@ -32,6 +32,9 @@ static void array_alloc(void *a, uint8_t element_size) {
 			tmp->capacity *= 2;
 			tmp->buffer = gc_realloc(tmp->buffer, tmp->capacity * element_size);
 		}
+		if (element_size < 8) {
+			gc_leaf(tmp->buffer);
+		}
 	}
 }
 

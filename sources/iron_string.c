@@ -6,9 +6,16 @@
 #include <ctype.h>
 
 void *gc_alloc(size_t size);
+void *gc_leaf(void *ptr);
+
+char *string_alloc(int size) {
+	char *r = gc_alloc(size);
+	gc_leaf(r);
+	return r;
+}
 
 char *string_join(char *a, char *b) {
-	char *r = gc_alloc(strlen(a) + strlen(b) + 1);
+	char *r = string_alloc(strlen(a) + strlen(b) + 1);
 	strcpy(r, a);
 	strcat(r, b);
 	return r;
@@ -18,7 +25,7 @@ char *string_copy(char *a) {
 	if (a == NULL) {
 		return NULL;
 	}
-	char *r = gc_alloc(strlen(a) + 1);
+	char *r = string_alloc(strlen(a) + 1);
 	strcpy(r, a);
 	return r;
 }
@@ -36,35 +43,35 @@ bool string_equals(char *a, char *b) {
 
 char *i32_to_string(int32_t i) {
 	int l = snprintf(NULL, 0, "%d", i);
-	char *r = gc_alloc(l + 1);
+	char *r = string_alloc(l + 1);
 	sprintf(r, "%d", i);
 	return r;
 }
 
 char *i32_to_string_hex(int32_t i) {
 	int l = snprintf(NULL, 0, "%X", i);
-	char *r = gc_alloc(l + 1);
+	char *r = string_alloc(l + 1);
 	sprintf(r, "%X", i);
 	return r;
 }
 
 char *i64_to_string(int64_t i) {
 	int l = snprintf(NULL, 0, "%ld", i);
-	char *r = gc_alloc(l + 1);
+	char *r = string_alloc(l + 1);
 	sprintf(r, "%ld", i);
 	return r;
 }
 
 char *u64_to_string(uint64_t i) {
 	int l = snprintf(NULL, 0, "%lu", i);
-	char *r = gc_alloc(l + 1);
+	char *r = string_alloc(l + 1);
 	sprintf(r, "%lu", i);
 	return r;
 }
 
 char *f32_to_string_with_zeros(float f) {
 	int l = snprintf(NULL, 0, "%f", f);
-	char *r = gc_alloc(l + 1);
+	char *r = string_alloc(l + 1);
 	sprintf(r, "%f", f);
 	return r;
 }
@@ -115,7 +122,7 @@ int32_t string_last_index_of(char *str, char *search) {
 }
 
 any_array_t *string_split(char *s, char *sep) {
-	char *r = gc_alloc(strlen(s) + 1); // Modified by strtok
+	char *r = string_alloc(strlen(s) + 1); // Modified by strtok
 	any_array_t *a = gc_alloc(sizeof(any_array_t));
 
 	strcpy(r, s);
@@ -152,7 +159,7 @@ char *string_array_join(any_array_t *a, char *separator) {
 		}
 	}
 
-	char *r = gc_alloc(len + 1);
+	char *r = string_alloc(len + 1);
 	for (int i = 0; i < a->length; ++i) {
 		strcat(r, a->buffer[i]);
 		if (i < a->length - 1) {
@@ -163,7 +170,7 @@ char *string_array_join(any_array_t *a, char *separator) {
 }
 
 char *string_replace_all(char *s, char *search, char *replace) {
-	char *buffer = gc_alloc(1024);
+	char *buffer = string_alloc(1024);
     char *buffer_pos = buffer;
     size_t search_len = strlen(search);
     size_t replace_len = strlen(replace);
@@ -183,7 +190,7 @@ char *string_replace_all(char *s, char *search, char *replace) {
 }
 
 char *substring(char *s, int32_t start, int32_t end) {
-	char *buffer = gc_alloc(end - start + 1);
+	char *buffer = string_alloc(end - start + 1);
 	for (int i = 0; i < end - start; ++i) {
 		buffer[i] = s[start + i];
 	}
@@ -191,7 +198,7 @@ char *substring(char *s, int32_t start, int32_t end) {
 }
 
 char *string_from_char_code(int32_t c) {
-	char *r = gc_alloc(2);
+	char *r = string_alloc(2);
 	r[0] = c;
 	r[1] = '\0';
 	return r;
@@ -202,7 +209,7 @@ int32_t char_code_at(char *s, int32_t i) {
 }
 
 char *char_at(char *s, int32_t i) {
-	char *r = gc_alloc(2);
+	char *r = string_alloc(2);
 	r[0] = s[i];
 	r[1] = '\0';
 	return r;
@@ -219,7 +226,7 @@ bool ends_with(char *s, char *end) {
 }
 
 char *to_lower_case(char *s) {
-	char *r = gc_alloc(strlen(s) + 1);
+	char *r = string_alloc(strlen(s) + 1);
 	strcpy(r, s);
 	int len = string_length(r);
 	for (int i = 0; i < len; ++i) {
@@ -229,7 +236,7 @@ char *to_lower_case(char *s) {
 }
 
 char *to_upper_case(char *s) {
-	char *r = gc_alloc(strlen(s) + 1);
+	char *r = string_alloc(strlen(s) + 1);
 	strcpy(r, s);
 	int len = string_length(r);
 	for (int i = 0; i < len; ++i) {
