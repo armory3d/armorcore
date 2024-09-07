@@ -175,6 +175,7 @@ let strings: string[] = [];
 let tabs: i32 = 0;
 let new_line: bool = false;
 let basic_types: string[] = ["i8", "u8", "i16", "u16", "i32", "u32", "f32", "i64", "u64", "f64", "bool"];
+let pass_by_value_types: string[] = ["vec4_t", "vec2_t"];
 let enums: string[] = [];
 let value_types: map_t<string, string> = map_create();
 type string_map_t = map_t<string, string>;
@@ -357,7 +358,7 @@ function read_type(): string { // Cursor at ":"
 		pos += 2; // Skip "[]"
 	}
 
-	if (is_struct(type)) {
+	if (is_struct(type) && array_index_of(pass_by_value_types, type) == -1) {
 		type += " *";
 	}
 
@@ -419,8 +420,40 @@ function struct_access(s: string): string {
 	if (starts_with(s, "GC_ALLOC_INIT")) {
 		return s;
 	}
-	s = string_replace_all(s, ".", "->");
-	return s;
+
+	// Accessing pass_by_value_types struct like vec4.x
+	let has_minus: bool = starts_with(s, "-");
+	let base: string = substring(s, has_minus ? 1 : 0, dot);
+	let type: string = map_get(value_types, base);
+	if (type != null) {
+		let dot_last: i32 = string_last_index_of(s, ".");
+		if (dot != dot_last) { // a.vec4.x
+			let parts: string[] = string_split(s, ".");
+			for (let i: i32 = 1; i < parts.length - 1; ++i) {
+				let struct_value_types: map_t<string, string> = map_get(struct_types, type);
+				if (struct_value_types != null) {
+					type = map_get(struct_value_types, parts[i]);
+
+					// struct my_struct -> my_struct_t
+					// my_struct * -> my_struct
+					if (starts_with(type, "struct ") && ends_with(type, " *")) {
+						type = substring(type, 0, type.length - 2);
+						type = substring(type, 7, type.length) + "_t *";
+					}
+				}
+			}
+			if (!ends_with(type, " *")) { // vec4_t
+				let first: string = string_replace_all(substring(s, 0, dot_last), ".", "->");
+				let last: string = substring(s, dot_last, s.length);
+				return first + last; // a->vec4.x
+			}
+		}
+		else if (!ends_with(type, " *")) { // vec4.x
+			return s;
+		}
+	}
+
+	return string_replace_all(s, ".", "->");
 }
 
 function struct_alloc(token: string, type: string = null): string {
@@ -1397,6 +1430,7 @@ function write_globals() {
 			let type: string = read_type();
 
 			if (array_index_of(basic_types, type) == -1 &&
+				array_index_of(pass_by_value_types, type) == -1 &&
 				array_index_of(enums, type) == -1) {
 				array_push(global_ptrs, name);
 			}

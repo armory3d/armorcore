@@ -1,6 +1,6 @@
 
 let flags = globalThis.flags;
-if (flags === null) {
+if (flags == null) {
 	flags = {};
 	flags.alang_source = null;
 	flags.alang_output = "./test.c";
@@ -177,6 +177,7 @@ let strings = [];
 let tabs = 0;
 let new_line = false;
 let basic_types = ["i8", "u8", "i16", "u16", "i32", "u32", "f32", "i64", "u64", "f64", "bool"];
+let pass_by_value_types = ["vec4_t", "vec2_t"];
 let enums = [];
 let value_types = new Map();
 let struct_types = new Map();
@@ -355,7 +356,7 @@ function read_type() { // Cursor at ":"
 		pos += 2; // Skip "[]"
 	}
 
-	if (is_struct(type)) {
+	if (is_struct(type) && pass_by_value_types.indexOf(type) === -1) {
 		type += " *";
 	}
 
@@ -416,14 +417,47 @@ function struct_access(s) {
 	if (s.startsWith("GC_ALLOC_INIT")) {
 		return s;
 	}
-	s = s.replaceAll(".", "->");
-	return s;
+
+	// Accessing pass_by_value_types struct like vec4.x
+	let has_minus = s.startsWith("-");
+	let base = s.substring(has_minus ? 1 : 0, dot);
+	let type = value_types.get(base);
+	if (type != null) {
+		let dot_last = s.lastIndexOf(".");
+		if (dot != dot_last) { // a.vec4.x
+			let parts = s.split(".");
+			for (let i = 1; i < parts.length - 1; ++i) {
+				let struct_value_types = struct_types.get(type);
+				if (struct_value_types != null) {
+					type = struct_value_types.get(parts[i]);
+
+					// struct my_struct -> my_struct_t
+					// my_struct * -> my_struct
+					if (type.startsWith("struct ") && type.endsWith(" *")) {
+						type = type.substring(0, type.length - 2);
+						type = type.substring(7, type.length) + "_t *";
+					}
+				}
+			}
+
+			if (!type.endsWith(" *")) { // vec4_t
+				let first = s.substring(0, dot_last).replaceAll(".", "->");
+				let last = s.substring(dot_last, s.length);
+				return first + last; // a->vec4.x
+			}
+		}
+		else if (!type.endsWith(" *")) { // vec4.x
+			return s;
+		}
+	}
+
+	return s.replaceAll(".", "->");
 }
 
 function struct_alloc(token, type = null) {
 	// "= { a: b, ... }" -> GC_ALLOC_INIT
 	if ((get_token(-1) === "=" && token === "{" && get_token(-3) != "type") || type != null) {
-		if (type === null) {
+		if (type == null) {
 			// let a: b = {, a = {, a.b = {
 			let i = get_token(-3) === ":" ? -4 : -2;
 			let t = struct_access(get_token(i));
@@ -560,7 +594,7 @@ function array_create(token, name, content_type = null) {
 		let type = array_type(member);
 
 		// = [], = [1, 2, ..] -> any/i32/.._array_create_from_raw
-		if (content_type === null) {
+		if (content_type == null) {
 			name = struct_access(name);
 			content_type = value_type(name);
 			if (content_type != null) {
@@ -1359,6 +1393,7 @@ function write_globals() {
 			let type = read_type();
 
 			if (basic_types.indexOf(type) === -1 &&
+				pass_by_value_types.indexOf(type) === -1 &&
 				enums.indexOf(type) === -1) {
 				global_ptrs.push(name);
 			}
