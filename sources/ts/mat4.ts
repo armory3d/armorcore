@@ -114,9 +114,9 @@ function mat4_decompose(self: mat4_t, loc: vec4_t, quat: quat_t, scale: vec4_t):
 	loc.x = self.m[12];
 	loc.y = self.m[13];
 	loc.z = self.m[14];
-	scale.x = vec4_len(vec4_set(_mat4_vec, self.m[0], self.m[1], self.m[2]));
-	scale.y = vec4_len(vec4_set(_mat4_vec, self.m[4], self.m[5], self.m[6]));
-	scale.z = vec4_len(vec4_set(_mat4_vec, self.m[8], self.m[9], self.m[10]));
+	scale.x = vec4_len(vec4_new(self.m[0], self.m[1], self.m[2]));
+	scale.y = vec4_len(vec4_new(self.m[4], self.m[5], self.m[6]));
+	scale.z = vec4_len(vec4_new(self.m[8], self.m[9], self.m[10]));
 	if (mat4_determinant(self) < 0.0) {
 		scale.x = -scale.x;
 	}
@@ -607,15 +607,15 @@ function mat4_mult(self: mat4_t, s: f32): mat4_t {
 }
 
 function mat4_to_rot(self: mat4_t): mat4_t {
-	let scale: f32 = 1.0 / vec4_len(vec4_set(_mat4_vec, self.m[0], self.m[1], self.m[2]));
+	let scale: f32 = 1.0 / vec4_len(vec4_new(self.m[0], self.m[1], self.m[2]));
 	self.m[0] = self.m[0] * scale;
 	self.m[1] = self.m[1] * scale;
 	self.m[2] = self.m[2] * scale;
-	scale = 1.0 / vec4_len(vec4_set(_mat4_vec, self.m[4], self.m[5], self.m[6]));
+	scale = 1.0 / vec4_len(vec4_new(self.m[4], self.m[5], self.m[6]));
 	self.m[4] = self.m[4] * scale;
 	self.m[5] = self.m[5] * scale;
 	self.m[6] = self.m[6] * scale;
-	scale = 1.0 / vec4_len(vec4_set(_mat4_vec, self.m[8], self.m[9], self.m[10]));
+	scale = 1.0 / vec4_len(vec4_new(self.m[8], self.m[9], self.m[10]));
 	self.m[8] = self.m[8] * scale;
 	self.m[9] = self.m[9] * scale;
 	self.m[10] = self.m[10] * scale;

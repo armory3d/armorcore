@@ -193,18 +193,18 @@ function quat_from_to(self: quat_t, v1: vec4_t, v2: vec4_t): quat_t {
 	let a: vec4_t = _quat_vec;
 	let dot: f32 = vec4_dot(v1, v2);
 	if (dot < -0.999999) {
-		vec4_cross_vecs(a, _quat_x_axis, v1);
+		a = vec4_cross(_quat_x_axis, v1);
 		if (vec4_len(a) < 0.000001) {
-			vec4_cross_vecs(a, _quat_y_axis, v1);
+			a = vec4_cross(_quat_y_axis, v1);
 		}
-		vec4_normalize(a);
+		vec4_norm(a);
 		quat_from_axis_angle(self, a, math_pi());
 	}
 	else if (dot > 0.999999) {
 		quat_set(self, 0, 0, 0, 1);
 	}
 	else {
-		vec4_cross_vecs(a, v1, v2);
+		a = vec4_cross(v1, v2);
 		quat_set(self, a.x, a.y, a.z, 1 + dot);
 		quat_normalize(self);
 	}

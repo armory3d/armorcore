@@ -102,7 +102,7 @@ void gc_resume() {
 }
 
 void gc_run() {
-	_gc_run();
+	size_t garbage = _gc_run();
 }
 
 void gc_start(void *bos) {

@@ -38,16 +38,16 @@ void arm_g2_draw_inner_line(float x1, float y1, float x2, float y2, float streng
 
 	kinc_vector2_t vec;
 	if (y2 == y1) {
-		vec2_set(&vec, 0, -1);
+		vec = vec2_new(0, -1);
 	}
 	else {
-		vec2_set(&vec, 1, -(x2 - x1) / (y2 - y1));
+		vec = vec2_new(1, -(x2 - x1) / (y2 - y1));
 	}
-	vec2_set_length(&vec, strength);
+	vec = vec2_set_len(vec, strength);
 	kinc_vector2_t p1 = {x1 + side * vec.x, y1 + side * vec.y};
 	kinc_vector2_t p2 = {x2 + side * vec.x, y2 + side * vec.y};
-	kinc_vector2_t p3 = vec2_sub(&p1, &vec);
-	kinc_vector2_t p4 = vec2_sub(&p2, &vec);
+	kinc_vector2_t p3 = vec2_sub(p1, vec);
+	kinc_vector2_t p4 = vec2_sub(p2, vec);
 	arm_g2_fill_triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
 	arm_g2_fill_triangle(p3.x, p3.y, p2.x, p2.y, p4.x, p4.y);
 }

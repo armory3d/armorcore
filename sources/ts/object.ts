@@ -7,7 +7,9 @@ type object_t = {
 	transform?: transform_t;
 	parent?: object_t;
 	children?: object_t[];
+	///if arm_anim
 	animation?: anim_raw_t;
+	///end
 	visible?: bool; // Skip render, keep updating
 	culled?: bool; // base_object_t was culled last frame
 	is_empty?: bool;
@@ -60,9 +62,11 @@ function object_remove_super(raw: object_t) {
 	if (raw.is_empty && _scene_ready) {
 		array_remove(scene_empties, raw);
 	}
+	///if arm_anim
 	if (raw.animation != null) {
 		anim_remove(raw.animation);
 	}
+	///end
 	while (raw.children.length > 0) {
 		object_remove(raw.children[0]);
 	}
@@ -121,6 +125,8 @@ function object_get_children(raw: object_t, recursive: bool = false): object_t[]
 	return ret_children;
 }
 
+///if arm_anim
+
 function object_setup_animation_super(raw: object_t, oactions: scene_t[] = null) {
 	// Parented to bone
 	///if arm_skin
@@ -161,3 +167,5 @@ function object_setup_animation(raw: object_t, oactions: scene_t[] = null) {
 		object_setup_animation_super(raw, oactions);
 	}
 }
+
+///end

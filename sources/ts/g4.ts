@@ -319,7 +319,7 @@ function g4_set_vec2(loc: kinc_const_loc_t, v: vec2_t) {
 	iron_g4_set_float2(loc, v.x, v.y);
 }
 
-function g4_set_vec3(loc: kinc_const_loc_t, v: vec3_t) {
+function g4_set_vec3(loc: kinc_const_loc_t, v: vec4_t) {
 	iron_g4_set_float3(loc, v.x, v.y, v.z);
 }
 

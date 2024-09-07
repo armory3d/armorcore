@@ -8,7 +8,9 @@ let scene_cameras: camera_object_t[];
 let scene_speakers: speaker_object_t[];
 ///end
 let scene_empties: object_t[];
+///if arm_anim
 let scene_animations: anim_raw_t[];
+///end
 ///if arm_skin
 let scene_armatures: armature_t[];
 ///end
@@ -32,7 +34,9 @@ function scene_create(format: scene_t): object_t {
 	scene_speakers = [];
 	///end
 	scene_empties = [];
+	///if arm_anim
 	scene_animations = [];
+	///end
 	///if arm_skin
 	scene_armatures = [];
 	///end
@@ -101,10 +105,12 @@ function scene_update_frame() {
 	if (!_scene_ready) {
 		return;
 	}
+	///if arm_anim
 	for (let i: i32 = 0; i < scene_animations.length; ++i) {
 		let anim: anim_raw_t = scene_animations[i];
 		anim_update(anim, time_delta());
 	}
+	///end
 	for (let i: i32 = 0; i < scene_empties.length; ++i) {
 		let e: object_t = scene_empties[i];
 		if (e != null && e.parent != null) {
@@ -417,6 +423,7 @@ function scene_return_mesh_object(object_file: string, data_ref: string, scene_n
 
 function scene_return_object(object: object_t, o: obj_t): object_t {
 	// Load object actions
+	///if arm_anim
 	if (object != null && o.anim != null && o.anim.object_actions != null) {
 		let oactions: scene_t[] = [];
 		while (oactions.length < o.anim.object_actions.length) {
@@ -434,8 +441,11 @@ function scene_return_object(object: object_t, o: obj_t): object_t {
 		return scene_return_object_loaded(object, o, oactions);
 	}
 	else {
+	///end
 		return scene_return_object_loaded(object, o, null);
+	///if arm_anim
 	}
+	///end
 }
 
 function scene_return_object_loaded(object: object_t, o: obj_t, oactions: scene_t[]): object_t {
@@ -444,7 +454,9 @@ function scene_return_object_loaded(object: object_t, o: obj_t, oactions: scene_
 		object.name = o.name;
 		object.visible = o.visible;
 		scene_gen_transform(o, object.transform);
+		///if arm_anim
 		object_setup_animation(object, oactions);
+		///end
 	}
 	return object;
 }

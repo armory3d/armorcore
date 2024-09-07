@@ -271,8 +271,8 @@ function anim_bone_update_skin_gpu(raw: anim_bone_t) {
 			mat4_decompose(_anim_bone_m, _anim_bone_vpos2, _anim_bone_q2, _anim_bone_vscale2);
 
 			// Lerp
-			vec4_lerp(_anim_bone_v1, _anim_bone_vpos, _anim_bone_vpos2, s);
-			vec4_lerp(_anim_bone_v2, _anim_bone_vscale, _anim_bone_vscale2, s);
+			_anim_bone_v1 = vec4_lerp(_anim_bone_vpos, _anim_bone_vpos2, s);
+			_anim_bone_v2 = vec4_lerp(_anim_bone_vscale, _anim_bone_vscale2, s);
 			quat_lerp(_anim_bone_q3, _anim_bone_q1, _anim_bone_q2, s);
 
 			// Compose
@@ -462,12 +462,12 @@ function anim_bone_solve_ik(raw: anim_bone_t, effector: obj_t, goal: vec4_t, pre
 	if (dist > total_length) {
 		// Calculate unit vector from root to goal
 		let new_look: vec4_t = vec4_clone(goal);
-		vec4_sub(new_look, mat4_get_loc(root_world_mat));
-		vec4_normalize(new_look);
+		new_look = vec4_sub(new_look, mat4_get_loc(root_world_mat));
+		new_look = vec4_norm(new_look);
 
 		// Rotate root bone to point at goal
 		mat4_decompose(root_world_mat, temp_loc, temp_rot, temp_scale);
-		quat_from_to(temp_rot2, vec4_normalize(mat4_look(root_world_mat)), new_look);
+		quat_from_to(temp_rot2, vec4_norm(mat4_look(root_world_mat)), new_look);
 		quat_mult(temp_rot2, temp_rot);
 		quat_mult(temp_rot2, roll);
 		mat4_compose(root_world_mat, temp_loc, temp_rot2, temp_scale);
@@ -500,31 +500,31 @@ function anim_bone_solve_ik(raw: anim_bone_t, effector: obj_t, goal: vec4_t, pre
 
 	for (let iter: i32 = 0; iter < max_iters; ++iter) {
 		// Backward
-		vec4_set_from(vec, goal);
-		vec4_sub(vec, bone_world_locs[l - 1]);
-		vec4_normalize(vec);
-		vec4_mult(vec, lengths[0]);
-		vec4_set_from(bone_world_locs[l - 1], goal);
-		vec4_sub(bone_world_locs[l - 1], vec);
+		vec = vec4_clone(goal);
+		vec = vec4_sub(vec, bone_world_locs[l - 1]);
+		vec = vec4_norm(vec);
+		vec = vec4_mult(vec, lengths[0]);
+		bone_world_locs[l - 1] = vec4_clone(goal);
+		bone_world_locs[l - 1] = vec4_sub(bone_world_locs[l - 1], vec);
 
 		for (let j: i32 = 1; j < l; ++j) {
-			vec4_set_from(vec, bone_world_locs[l - 1 - j]);
-			vec4_sub(vec, bone_world_locs[l - j]);
-			vec4_normalize(vec);
-			vec4_mult(vec, lengths[j]);
-			vec4_set_from(bone_world_locs[l - 1 - j], bone_world_locs[l - j]);
-			vec4_add(bone_world_locs[l - 1 - j], vec);
+			vec = vec4_clone(bone_world_locs[l - 1 - j]);
+			vec = vec4_sub(vec, bone_world_locs[l - j]);
+			vec = vec4_norm(vec);
+			vec = vec4_mult(vec, lengths[j]);
+			bone_world_locs[l - 1 - j] = vec4_clone(bone_world_locs[l - j]);
+			bone_world_locs[l - 1 - j] = vec4_add(bone_world_locs[l - 1 - j], vec);
 		}
 
 		// Forward
-		vec4_set_from(bone_world_locs[0], start_loc);
+		bone_world_locs[0] = vec4_clone(start_loc);
 		for (let j: i32 = 1; j < l; ++j) {
-			vec4_set_from(vec, bone_world_locs[j]);
-			vec4_sub(vec, bone_world_locs[j - 1]);
-			vec4_normalize(vec, );
-			vec4_mult(vec, lengths[l - j]);
-			vec4_set_from(bone_world_locs[j], bone_world_locs[j - 1]);
-			vec4_add(bone_world_locs[j], vec);
+			vec = vec4_clone(bone_world_locs[j]);
+			vec = vec4_sub(vec, bone_world_locs[j - 1]);
+			vec = vec4_norm(vec);
+			vec = vec4_mult(vec, lengths[l - j]);
+			bone_world_locs[j] = vec4_clone(bone_world_locs[j - 1]);
+			bone_world_locs[j] = vec4_add(bone_world_locs[j], vec);
 		}
 
 		if (vec4_dist(bone_world_locs[l - 1], goal) - lengths[0] <= precision) {
@@ -542,11 +542,11 @@ function anim_bone_solve_ik(raw: anim_bone_t, effector: obj_t, goal: vec4_t, pre
 		mat4_decompose(bone_world_mats[i], temp_loc, temp_rot, temp_scale);
 
 		// Rotate to point to parent bone
-		vec4_set_from(temp_loc2, bone_world_locs[i + 1]);
-		vec4_sub(temp_loc2, bone_world_locs[i]);
-		vec4_normalize(temp_loc2, );
-		vec4_set_from(temp_look, mat4_look(bone_world_mats[i]));
-		vec4_normalize(temp_look);
+		temp_loc2 = vec4_clone(bone_world_locs[i + 1]);
+		temp_loc2 = vec4_sub(temp_loc2, bone_world_locs[i]);
+		temp_loc2 = vec4_norm(temp_loc2);
+		temp_look = vec4_clone(mat4_look(bone_world_mats[i]));
+		temp_look = vec4_norm(temp_look);
 		quat_from_to(temp_rot2, temp_look, temp_loc2);
 		quat_mult(temp_rot2, temp_rot);
 		quat_mult(temp_rot2, roll);
@@ -562,11 +562,11 @@ function anim_bone_solve_ik(raw: anim_bone_t, effector: obj_t, goal: vec4_t, pre
 	mat4_decompose(bone_world_mats[l - 1], temp_loc, temp_rot, temp_scale);
 
 	// Rotate to point to goal
-	vec4_set_from(temp_loc2, goal);
-	vec4_sub(temp_loc2, temp_loc);
-	vec4_normalize(temp_loc2, );
-	vec4_set_from(temp_look, mat4_look(bone_world_mats[l - 1]));
-	vec4_normalize(temp_look);
+	temp_loc2 = vec4_clone(goal);
+	temp_loc2 = vec4_sub(temp_loc2, temp_loc);
+	temp_loc2 = vec4_norm(temp_loc2);
+	temp_look = vec4_clone(mat4_look(bone_world_mats[l - 1]));
+	temp_look = vec4_norm(temp_look);
 	quat_from_to(temp_rot2, temp_look, temp_loc2);
 	quat_mult(temp_rot2, temp_rot);
 	quat_mult(temp_rot2, roll);

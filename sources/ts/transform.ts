@@ -16,6 +16,7 @@ type transform_t = {
 	bone_parent?: mat4_t;
 	last_world?: mat4_t;
 
+	///if arm_anim
 	// Wrong order returned from get_euler(), store last state for animation
 	_euler_x?: f32;
 	_euler_y?: f32;
@@ -28,8 +29,7 @@ type transform_t = {
 	_deuler_x?: f32;
 	_deuler_y?: f32;
 	_deuler_z?: f32;
-
-	type?: string;
+	///end
 };
 
 let _transform_tmp: mat4_t = mat4_identity();
@@ -37,7 +37,6 @@ let _transform_q: quat_t = quat_create();
 
 function transform_create(object: object_t): transform_t {
 	let raw: transform_t = {};
-	raw.type = "transform_t";
 	raw.local_only = false;
 	raw.scale_world = 1.0;
 	raw.object = object;
@@ -63,22 +62,24 @@ function transform_update(raw: transform_t) {
 	}
 }
 
+///if arm_anim
 function transform_compose_delta(raw: transform_t) {
 	// Delta transform
-	vec4_add_vecs(raw.dloc, raw.loc, raw.dloc);
-	vec4_add_vecs(raw.dscale, raw.dscale, raw.scale);
+	raw.dloc = vec4_add(raw.loc, raw.dloc);
+	raw.dscale = vec4_add(raw.dscale, raw.scale);
 	quat_from_euler(raw.drot, raw._deuler_x, raw._deuler_y, raw._deuler_z);
 	quat_mult_quats(raw.drot, raw.rot, raw.drot);
 	mat4_compose(raw.local, raw.dloc, raw.drot, raw.dscale);
 }
+///end
 
 function transform_build_matrix(raw: transform_t) {
-	if (raw.dloc == null) {
+	// if (vec4_isnan(raw.dloc)) {
 		mat4_compose(raw.local, raw.loc, raw.rot, raw.scale);
-	}
-	else {
-		transform_compose_delta(raw);
-	}
+	// }
+	// else {
+		// transform_compose_delta(raw);
+	// }
 
 	if (raw.bone_parent != null) {
 		mat4_mult_mats(raw.local, raw.bone_parent, raw.local);
@@ -148,15 +149,17 @@ function transform_rotate(raw: transform_t, axis: vec4_t, f: f32) {
 }
 
 function transform_move(raw: transform_t, axis: vec4_t, f: f32 = 1.0) {
-	vec4_add_f(raw.loc, axis.x * f, axis.y * f, axis.z * f);
+	raw.loc = vec4_fadd(raw.loc, axis.x * f, axis.y * f, axis.z * f);
 	transform_build_matrix(raw);
 }
 
 function transform_set_rot(raw: transform_t, x: f32, y: f32, z: f32) {
 	quat_from_euler(raw.rot, x, y, z);
+	///if arm_anim
 	raw._euler_x = x;
 	raw._euler_y = y;
 	raw._euler_z = z;
+	///end
 	raw.dirty = true;
 }
 
@@ -171,10 +174,10 @@ function transform_compute_dim(raw: transform_t) {
 	}
 	let d: f32_array_t = raw.object.raw.dimensions;
 	if (d == null) {
-		vec4_set(raw.dim, 2 * raw.scale.x, 2 * raw.scale.y, 2 * raw.scale.z);
+		raw.dim = vec4_new(2 * raw.scale.x, 2 * raw.scale.y, 2 * raw.scale.z);
 	}
 	else {
-		vec4_set(raw.dim, d[0] * raw.scale.x, d[1] * raw.scale.y, d[2] * raw.scale.z);
+		raw.dim = vec4_new(d[0] * raw.scale.x, d[1] * raw.scale.y, d[2] * raw.scale.z);
 	}
 	transform_compute_radius(raw);
 }

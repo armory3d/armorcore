@@ -1,4 +1,5 @@
 
+///if arm_anim
 
 type anim_raw_t = {
 	ext?: any; // anim_bone_t | anim_object_t
@@ -229,8 +230,8 @@ function anim_update_anim_sampled(raw: anim_raw_t, anim: anim_t, m: mat4_t) {
 	mat4_decompose(_anim_m2, _anim_vpos2, _anim_q2, _anim_vscale2);
 
 	// Lerp
-	vec4_lerp(_anim_vp, _anim_vpos, _anim_vpos2, s);
-	vec4_lerp(_anim_vs, _anim_vscale, _anim_vscale2, s);
+	_anim_vp = vec4_lerp(_anim_vpos, _anim_vpos2, s);
+	_anim_vs = vec4_lerp(_anim_vscale, _anim_vscale2, s);
 	quat_lerp(_anim_q3, _anim_q1, _anim_q2, s);
 
 	// Compose
@@ -270,3 +271,5 @@ function anim_current_frame(raw: anim_raw_t): i32 {
 function anim_total_frames(raw: anim_raw_t): i32 {
 	return 0;
 }
+
+///end

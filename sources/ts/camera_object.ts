@@ -91,7 +91,7 @@ function camera_object_build_mat(raw: camera_object_t) {
 	// TODO: discards position affected by scaled camera parent
 	let sc: vec4_t = mat4_get_scale(raw.base.transform.world);
 	if (sc.x != 1.0 || sc.y != 1.0 || sc.z != 1.0) {
-		vec4_set(_camera_object_v, 1.0 / sc.x, 1.0 / sc.y, 1.0 / sc.z);
+		_camera_object_v = vec4_new(1.0 / sc.x, 1.0 / sc.y, 1.0 / sc.z);
 		mat4_scale(raw.base.transform.world, _camera_object_v);
 	}
 
@@ -158,7 +158,7 @@ function camera_object_sphere_in_frustum(frustum_planes: frustum_plane_t[], t: t
 	let radius: f32 = t.radius * radius_scale;
 	for (let i: i32 = 0; i < frustum_planes.length; ++i) {
 		let plane: frustum_plane_t = frustum_planes[i];
-		vec4_set(_camera_object_sphere_center, transform_world_x(t) + offset_x, transform_world_y(t) + offset_y, transform_world_z(t) + offset_z);
+		_camera_object_sphere_center = vec4_new(transform_world_x(t) + offset_x, transform_world_y(t) + offset_y, transform_world_z(t) + offset_z);
 		// Outside the frustum
 		if (frustum_plane_dist_to_sphere(plane, _camera_object_sphere_center, radius) + radius * 2 < 0) {
 			return false;
@@ -181,7 +181,7 @@ function frustum_plane_create(): frustum_plane_t {
 
 function frustum_plane_normalize(raw: frustum_plane_t) {
 	let inv_normal_length: f32 = 1.0 / vec4_len(raw.normal);
-	vec4_mult(raw.normal, inv_normal_length);
+	raw.normal = vec4_mult(raw.normal, inv_normal_length);
 	raw.constant *= inv_normal_length;
 }
 
@@ -190,6 +190,6 @@ function frustum_plane_dist_to_sphere(raw: frustum_plane_t, sphere_center: vec4_
 }
 
 function frustum_plane_set_components(raw: frustum_plane_t, x: f32, y: f32, z: f32, w: f32) {
-	vec4_set(raw.normal, x, y, z);
+	raw.normal = vec4_new(x, y, z);
 	raw.constant = w;
 }

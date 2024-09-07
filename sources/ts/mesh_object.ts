@@ -86,7 +86,9 @@ function mesh_object_setup_animation(raw: mesh_object_t, oactions: scene_t[] = n
 	}
 	///end
 
+	///if arm_anim
 	object_setup_animation_super(raw.base, oactions);
+	///end
 }
 
 ///if arm_particles
@@ -291,7 +293,7 @@ function mesh_object_valid_context(raw: mesh_object_t, mats: material_data_t[], 
 
 function mesh_object_compute_camera_dist(raw: mesh_object_t, cam_x: f32, cam_y: f32, cam_z: f32) {
 	// Render path mesh sorting
-	raw.camera_dist = vec4_dist_f(cam_x, cam_y, cam_z, transform_world_x(raw.base.transform), transform_world_y(raw.base.transform), transform_world_z(raw.base.transform));
+	raw.camera_dist = vec4_fdist(cam_x, cam_y, cam_z, transform_world_x(raw.base.transform), transform_world_y(raw.base.transform), transform_world_z(raw.base.transform));
 }
 
 function mesh_object_compute_screen_size(raw: mesh_object_t, camera: camera_object_t) {

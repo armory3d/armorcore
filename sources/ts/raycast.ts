@@ -19,8 +19,8 @@ function raycast_get_ray(input_x: f32, input_y: f32, camera: camera_object_t): r
 	raycast_get_dir(start, end, input_x, input_y, camera);
 
 	// Find direction from start to end
-	vec4_sub(end, start);
-	vec4_normalize(end);
+	end = vec4_sub(end, start);
+	end = vec4_norm(end);
 	end.x *= camera.data.far_plane;
 	end.y *= camera.data.far_plane;
 	end.z *= camera.data.far_plane;
@@ -41,8 +41,8 @@ function raycast_get_dir(start: vec4_t, end: vec4_t, input_x: f32, input_y: f32,
 	mat4_get_inv(_raycast_p_inv, camera.p);
 	mat4_get_inv(_raycast_v_inv, camera.v);
 	mat4_mult_mats(_raycast_vp_inv, _raycast_v_inv, _raycast_p_inv);
-	vec4_apply_proj(start, _raycast_vp_inv);
-	vec4_apply_proj(end, _raycast_vp_inv);
+	start = vec4_apply_proj(start, _raycast_vp_inv);
+	end = vec4_apply_proj(end, _raycast_vp_inv);
 }
 
 function raycast_box_intersect(transform: transform_t, input_x: f32, input_y: f32, camera: camera_object_t): vec4_t {
@@ -61,7 +61,7 @@ function raycast_closest_box_intersect(transforms: transform_t[], input_x: f32, 
 	for (let i: i32 = 0; i < transforms.length; ++i) {
 		let t: transform_t = transforms[i];
 		let intersect: vec4_t = raycast_box_intersect(t, input_x, input_y, camera);
-		if (intersect != null) {
+		if (!vec4_isnan(intersect)) {
 			array_push(intersects, t);
 		}
 	}
@@ -103,30 +103,29 @@ function raycast_plane_intersect(normal: vec4_t, a: vec4_t, input_x: f32, input_
 	return ray_intersect_plane(ray, plane);
 }
 
-function ray_create(origin: vec4_t = null, dir: vec4_t = null): ray_t {
+function ray_create(origin: vec4_t, dir: vec4_t): ray_t {
 	let raw: ray_t = {};
-	raw.origin = origin == null ? vec4_create() : origin;
-	raw.dir = dir == null ? vec4_create() : dir;
+	raw.origin = origin;
+	raw.dir = dir;
 	return raw;
 }
 
 function ray_at(raw: ray_t, t: f32): vec4_t {
-	let result: vec4_t = vec4_create();
-	return vec4_add(vec4_mult(vec4_set_from(result, raw.dir), t), raw.origin);
+	return vec4_add(vec4_mult(raw.dir, t), raw.origin);
 }
 
 function ray_dist_to_point(raw: ray_t, point: vec4_t): f32 {
 	let v1: vec4_t = vec4_create();
-	let dir_dist: f32 = vec4_dot(vec4_sub_vecs(v1, point, raw.origin), raw.dir);
+	let dir_dist: f32 = vec4_dot(vec4_sub(point, raw.origin), raw.dir);
 
 	// Point behind the ray
 	if (dir_dist < 0) {
-		return vec4_dist_to(raw.origin, point);
+		return vec4_dist(raw.origin, point);
 	}
 
-	vec4_add(vec4_mult(vec4_set_from(v1, raw.dir), dir_dist), raw.origin);
+	vec4_add(vec4_mult(raw.dir, dir_dist), raw.origin);
 
-	return vec4_dist_to(v1, point);
+	return vec4_dist(v1, point);
 }
 
 function ray_intersects_sphere(raw: ray_t, sphere_center: vec4_t, sphere_radius: f32): bool {
@@ -169,7 +168,7 @@ function ray_dist_to_plane(raw: ray_t, plane: plane_t): f32 {
 function ray_intersect_plane(raw: ray_t, plane: plane_t): vec4_t {
 	let t: f32 = ray_dist_to_plane(raw, plane);
 	if (t == -1) {
-		return null;
+		return vec4_nan();
 	}
 	return ray_at(raw, t);
 }
@@ -218,7 +217,7 @@ function ray_intersect_box(raw: ray_t, center: vec4_t, dim: vec4_t): vec4_t {
 	}
 
 	if ((tmin > tymax) || (tymin > tmax)) {
-		return null;
+		return vec4_nan();
 	}
 
 	// These lines also handle the case where tmin or tmax is nan
@@ -240,7 +239,7 @@ function ray_intersect_box(raw: ray_t, center: vec4_t, dim: vec4_t): vec4_t {
 	}
 
 	if ((tmin > tzmax) || (tzmin > tmax)) {
-		return null;
+		return vec4_nan();
 	}
 	if (tzmin > tmin || tmin != tmin) {
 		tmin = tzmin;
@@ -251,7 +250,7 @@ function ray_intersect_box(raw: ray_t, center: vec4_t, dim: vec4_t): vec4_t {
 
 	// Return point closest to the ray (positive side)
 	if (tmax < 0) {
-		return null;
+		return vec4_nan();
 	}
 
 	return ray_at(raw, tmin >= 0 ? tmin : tmax);
@@ -265,16 +264,16 @@ function ray_intersect_triangle(raw: ray_t, a: vec4_t, b: vec4_t, c: vec4_t, cul
 	let normal: vec4_t = vec4_create();
 
 	// from http://www.geometrictools.com/LibMathematics/Intersection/Wm5IntrRay3Triangle3.cpp
-	vec4_sub_vecs(edge1, b, a);
-	vec4_sub_vecs(edge2, c, a);
-	vec4_cross_vecs(normal, edge1, edge2);
+	edge1 = vec4_sub(b, a);
+	edge2 = vec4_sub(c, a);
+	normal = vec4_cross(edge1, edge2);
 
 	let ddn: f32 = vec4_dot(raw.dir, normal);
 	let sign: i32;
 
 	if (ddn > 0) {
 		if (cull_backface) {
-			return null;
+			return vec4_nan();
 		}
 		sign = 1;
 	}
@@ -283,27 +282,27 @@ function ray_intersect_triangle(raw: ray_t, a: vec4_t, b: vec4_t, c: vec4_t, cul
 		ddn = -ddn;
 	}
 	else {
-		return null;
+		return vec4_nan();
 	}
 
-	vec4_sub_vecs(diff, raw.origin, a);
-	let ddqxe2: f32 = sign * vec4_dot(raw.dir, vec4_cross_vecs(edge2, diff, edge2));
+	diff = vec4_sub(raw.origin, a);
+	let ddqxe2: f32 = sign * vec4_dot(raw.dir, vec4_cross(diff, edge2));
 
 	// b1 < 0, no intersection
 	if (ddqxe2 < 0) {
-		return null;
+		return vec4_nan();
 	}
 
 	let dde1xq: f32 = sign * vec4_dot(raw.dir, vec4_cross(edge1, diff));
 
 	// b2 < 0, no intersection
 	if (dde1xq < 0) {
-		return null;
+		return vec4_nan();
 	}
 
 	// b1+b2 > 1, no intersection
 	if (ddqxe2 + dde1xq > ddn) {
-		return null;
+		return vec4_nan();
 	}
 
 	// Line intersects triangle, check if ray does.
@@ -311,7 +310,7 @@ function ray_intersect_triangle(raw: ray_t, a: vec4_t, b: vec4_t, c: vec4_t, cul
 
 	// t < 0, no intersection
 	if (qdn < 0) {
-		return null;
+		return vec4_nan();
 	}
 
 	// Ray intersects triangle.
@@ -323,7 +322,7 @@ function plane_dist_to_point(raw: plane_t, point: vec4_t): f32 {
 }
 
 function plane_set(raw: plane_t, normal: vec4_t, point: vec4_t): plane_t {
-	vec4_set_from(raw.normal, normal);
+	raw.normal = vec4_clone(normal);
 	raw.constant = -vec4_dot(point, raw.normal);
 	return raw;
 }

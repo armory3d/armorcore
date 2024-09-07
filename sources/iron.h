@@ -20,6 +20,8 @@
 #include "iron_json.h"
 #include "iron_gc.h"
 #include "iron_obj.h"
+#include "iron_vec2.h"
+#include "iron_vec4.h"
 #ifdef KINC_WINDOWS
 #include <Windows.h>
 #endif

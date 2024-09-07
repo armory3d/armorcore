@@ -2,8 +2,12 @@
 
 #include <kinc/math/vector.h>
 
-kinc_vector2_t vec2_new(float x, float y);
-void vec2_set(kinc_vector2_t *v, float x, float y);
-float vec2_length(kinc_vector2_t *v);
-void vec2_set_length(kinc_vector2_t *v, float length);
-kinc_vector2_t vec2_sub(kinc_vector2_t *a, kinc_vector2_t *b);
+#define vec2_t kinc_vector2_t
+
+vec2_t vec2_new(float x, float y);
+vec2_t vec2_create(float x, float y);
+float vec2_len(vec2_t v);
+vec2_t vec2_set_len(vec2_t v, float length);
+vec2_t vec2_sub(vec2_t a, vec2_t b);
+vec2_t vec2_nan();
+bool vec2_isnan(vec2_t v);

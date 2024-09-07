@@ -1,4 +1,6 @@
 
+///if arm_anim
+
 type anim_object_t = {
 	base?: anim_raw_t;
 	object?: object_t;
@@ -53,13 +55,13 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 
 	if (anim.has_delta) {
 		let t: transform_t = transform;
-		if (t.dloc == null) {
+		if (vec4_isnan(t.dloc)) {
 			t.dloc = vec4_create();
 			t.drot = quat_create();
 			t.dscale = vec4_create();
 		}
-		vec4_set(t.dloc, 0, 0, 0);
-		vec4_set(t.dscale, 0, 0, 0);
+		t.dloc = vec4_new(0, 0, 0);
+		t.dscale = vec4_new(0, 0, 0);
 		t._deuler_x = t._deuler_y = t._deuler_z = 0.0;
 	}
 
@@ -224,3 +226,5 @@ function anim_object_total_frames(raw: anim_object_t): i32 {
 	}
 	return raw.oaction.anim.end - raw.oaction.anim.begin;
 }
+
+///end

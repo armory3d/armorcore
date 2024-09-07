@@ -9,7 +9,7 @@ let _uniforms_quat: quat_t = quat_create();
 let uniforms_tex_links: (o: object_t, md: material_data_t, s: string)=>image_t = null;
 let uniforms_mat4_links: (o: object_t, md: material_data_t, s: string)=>mat4_t = null;
 let uniforms_vec4_links: (o: object_t, md: material_data_t, s: string)=>vec4_t = null;
-let uniforms_vec3_links: (o: object_t, md: material_data_t, s: string)=>vec3_t = null;
+let uniforms_vec3_links: (o: object_t, md: material_data_t, s: string)=>vec4_t = null;
 let uniforms_vec2_links: (o: object_t, md: material_data_t, s: string)=>vec2_t = null;
 let uniforms_f32_links: (o: object_t, md: material_data_t, s: string)=>f32 = null;
 let uniforms_f32_array_links: (o: object_t, md: material_data_t, s: string)=>f32_array_t = null;
@@ -201,9 +201,9 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		}
 		else if (c.link == "_skydome_matrix") {
 			let tr: transform_t = camera.base.transform;
-			vec4_set(_uniforms_vec, transform_world_x(tr), transform_world_y(tr), transform_world_z(tr) - 3.5); // Sky
+			_uniforms_vec = vec4_new(transform_world_x(tr), transform_world_y(tr), transform_world_z(tr) - 3.5); // Sky
 			let bounds: f32 = camera.data.far_plane * 0.95;
-			vec4_set(_uniforms_vec2, bounds, bounds, bounds);
+			_uniforms_vec2 = vec4_new(bounds, bounds, bounds);
 			mat4_compose(_uniforms_mat, _uniforms_vec, _uniforms_quat, _uniforms_vec2);
 			mat4_mult_mat(_uniforms_mat, camera.v);
 			mat4_mult_mat(_uniforms_mat, camera.p);
@@ -217,14 +217,14 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		return true;
 	}
 	else if (c.type == "vec4") {
-		let v: vec4_t = null;
-		vec4_set(_uniforms_vec, 0, 0, 0, 0);
+		let v: vec4_t = vec4_nan();
+		_uniforms_vec = vec4_new(0, 0, 0, 0);
 		// if (c.link == "") {}
 		// else {
 			return false;
 		// }
 
-		if (v != null) {
+		if (!vec4_isnan(v)) {
 			g4_set_float4(location, v.x, v.y, v.z, v.w);
 		}
 		else {
@@ -233,19 +233,19 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		return true;
 	}
 	else if (c.type == "vec3") {
-		let v: vec4_t = null;
-		vec4_set(_uniforms_vec, 0, 0, 0);
+		let v: vec4_t = vec4_nan();
+		_uniforms_vec = vec4_new(0, 0, 0);
 
 		if (c.link == "_light_dir") {
 			if (light != null) {
-				_uniforms_vec = vec4_normalize(light_object_look(light));
+				_uniforms_vec = vec4_norm(light_object_look(light));
 				v = _uniforms_vec;
 			}
 		}
 		else if (c.link == "_light_pos") {
 			let light: light_object_t = _render_path_light;
 			if (light != null) {
-				vec4_set(_uniforms_vec, transform_world_x(light.base.transform), transform_world_y(light.base.transform), transform_world_z(light.base.transform));
+				_uniforms_vec = vec4_new(transform_world_x(light.base.transform), transform_world_y(light.base.transform), transform_world_z(light.base.transform));
 				v = _uniforms_vec;
 			}
 		}
@@ -253,7 +253,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			let light: light_object_t = _render_path_light;
 			if (light != null) {
 				let str: f32 = light.base.visible ? light.data.strength : 0.0;
-				vec4_set(_uniforms_vec,
+				_uniforms_vec = vec4_new(
 					(color_get_rb(light.data.color) / 255) * str,
 					(color_get_gb(light.data.color) / 255) * str,
 					(color_get_bb(light.data.color) / 255) * str);
@@ -265,8 +265,8 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
-				vec4_set(_uniforms_vec, -sx, sy, 0.0);
-				vec4_apply_mat(_uniforms_vec, light.base.transform.world);
+				_uniforms_vec = vec4_new(-sx, sy, 0.0);
+				_uniforms_vec = vec4_apply_mat(_uniforms_vec, light.base.transform.world);
 				v = _uniforms_vec;
 			}
 		}
@@ -275,8 +275,8 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
-				vec4_set(_uniforms_vec, sx, sy, 0.0);
-				vec4_apply_mat(_uniforms_vec, light.base.transform.world);
+				_uniforms_vec = vec4_new(sx, sy, 0.0);
+				_uniforms_vec = vec4_apply_mat(_uniforms_vec, light.base.transform.world);
 				v = _uniforms_vec;
 			}
 		}
@@ -285,8 +285,8 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
-				vec4_set(_uniforms_vec, sx, -sy, 0.0);
-				vec4_apply_mat(_uniforms_vec, light.base.transform.world);
+				_uniforms_vec = vec4_new(sx, -sy, 0.0);
+				_uniforms_vec = vec4_apply_mat(_uniforms_vec, light.base.transform.world);
 				v = _uniforms_vec;
 			}
 		}
@@ -295,24 +295,24 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
-				vec4_set(_uniforms_vec, -sx, -sy, 0.0);
-				vec4_apply_mat(_uniforms_vec, light.base.transform.world);
+				_uniforms_vec = vec4_new(-sx, -sy, 0.0);
+				_uniforms_vec = vec4_apply_mat(_uniforms_vec, light.base.transform.world);
 				v = _uniforms_vec;
 			}
 		}
 		else if (c.link == "_camera_pos") {
-			vec4_set(_uniforms_vec, transform_world_x(camera.base.transform), transform_world_y(camera.base.transform), transform_world_z(camera.base.transform));
+			_uniforms_vec = vec4_new(transform_world_x(camera.base.transform), transform_world_y(camera.base.transform), transform_world_z(camera.base.transform));
 			v = _uniforms_vec;
 		}
 		else if (c.link == "_camera_look") {
-			_uniforms_vec = vec4_normalize(camera_object_look_world(camera));
+			_uniforms_vec = vec4_norm(camera_object_look_world(camera));
 			v = _uniforms_vec;
 		}
 		else {
 			return false;
 		}
 
-		if (v != null) {
+		if (!vec4_isnan(v)) {
 			g4_set_float3(location, v.x, v.y, v.z);
 		}
 		else {
@@ -321,8 +321,8 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		return true;
 	}
 	else if (c.type == "vec2") {
-		let v: vec4_t = null;
-		vec4_set(_uniforms_vec, 0, 0, 0);
+		let v: vec4_t = vec4_nan();
+		_uniforms_vec = vec4_new(0, 0, 0);
 
 		if (c.link == "_vec2x") {
 			v = _uniforms_vec;
@@ -331,7 +331,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		}
 		else if (c.link == "_vec2x_inv") {
 			v = _uniforms_vec;
-			v.x = 1.0 /render_path_current_w;
+			v.x = 1.0 / render_path_current_w;
 			v.y = 0.0;
 		}
 		else if (c.link == "_vec2x2") {
@@ -341,7 +341,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		}
 		else if (c.link == "_vec2x2_inv") {
 			v = _uniforms_vec;
-			v.x = 2.0 /render_path_current_w;
+			v.x = 2.0 / render_path_current_w;
 			v.y = 0.0;
 		}
 		else if (c.link == "_vec2y") {
@@ -352,7 +352,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		else if (c.link == "_vec2y_inv") {
 			v = _uniforms_vec;
 			v.x = 0.0;
-			v.y = 1.0 /render_path_current_h;
+			v.y = 1.0 / render_path_current_h;
 		}
 		else if (c.link == "_vec2y2") {
 			v = _uniforms_vec;
@@ -362,7 +362,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		else if (c.link == "_vec2y2_inv") {
 			v = _uniforms_vec;
 			v.x = 0.0;
-			v.y = 2.0 /render_path_current_h;
+			v.y = 2.0 / render_path_current_h;
 		}
 		else if (c.link == "_vec2y3") {
 			v = _uniforms_vec;
@@ -372,7 +372,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		else if (c.link == "_vec2y3_inv") {
 			v = _uniforms_vec;
 			v.x = 0.0;
-			v.y = 3.0 /render_path_current_h;
+			v.y = 3.0 / render_path_current_h;
 		}
 		else if (c.link == "_screen_size") {
 			v = _uniforms_vec;
@@ -381,8 +381,8 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		}
 		else if (c.link == "_screen_size_inv") {
 			v = _uniforms_vec;
-			v.x = 1.0 /render_path_current_w;
-			v.y = 1.0 /render_path_current_h;
+			v.x = 1.0 / render_path_current_w;
+			v.y = 1.0 / render_path_current_h;
 		}
 		else if (c.link == "_camera_plane_proj") {
 			let znear: f32 = camera.data.near_plane;
@@ -395,7 +395,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			return false;
 		}
 
-		if (v != null) {
+		if (!vec4_isnan(v)) {
 			g4_set_float2(location, v.x, v.y);
 		}
 		else {
@@ -522,49 +522,49 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 		g4_set_mat3(loc, m);
 	}
 	else if (c.type == "vec4") {
-		let v: vec4_t = null;
+		let v: vec4_t = vec4_nan();
 
 		if (uniforms_vec4_links != null) {
 			v = uniforms_vec4_links(obj, current_material(obj), c.link);
 		}
 
-		if (v == null) {
+		if (vec4_isnan(v)) {
 			return;
 		}
 		g4_set_float4(loc, v.x, v.y, v.z, v.w);
 	}
 	else if (c.type == "vec3") {
-		let v: vec3_t = null;
+		let v: vec4_t = vec4_nan();
 
 		if (c.link == "_dim") { // Model space
 			let d: vec4_t = obj.transform.dim;
 			let s: vec4_t = obj.transform.scale;
-			vec4_set(_uniforms_vec, (d.x / s.x), (d.y / s.y), (d.z / s.z));
+			_uniforms_vec = vec4_new((d.x / s.x), (d.y / s.y), (d.z / s.z));
 			v = _uniforms_vec;
 		}
 		else if (c.link == "_half_dim") { // Model space
 			let d: vec4_t = obj.transform.dim;
 			let s: vec4_t = obj.transform.scale;
-			vec4_set(_uniforms_vec, (d.x / s.x) / 2, (d.y / s.y) / 2, (d.z / s.z) / 2);
+			_uniforms_vec = vec4_new((d.x / s.x) / 2, (d.y / s.y) / 2, (d.z / s.z) / 2);
 			v = _uniforms_vec;
 		}
 		else if (uniforms_vec3_links != null) {
 			v = uniforms_vec3_links(obj, current_material(obj), c.link);
 		}
 
-		if (v == null) {
+		if (vec4_isnan(v)) {
 			return;
 		}
 		g4_set_float3(loc, v.x, v.y, v.z);
 	}
 	else if (c.type == "vec2") {
-		let v: vec2_t = null;
+		let v: vec2_t = vec2_nan();
 
 		if (uniforms_vec2_links != null) {
 			v = uniforms_vec2_links(obj, current_material(obj), c.link);
 		}
 
-		if (v == null) {
+		if (vec2_isnan(v)) {
 			return;
 		}
 		g4_set_float2(loc, v.x, v.y);
