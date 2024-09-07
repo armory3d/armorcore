@@ -165,6 +165,7 @@ declare function gc_resume(): void;
 declare function gc_free(ptr: any): void;
 declare function gc_root(ptr: any): void;
 declare function gc_unroot(ptr: any): void;
+declare function gc_leaf(ptr: any): void;
 declare function sizeof(ptr: any): i32;
 declare function memcpy(dst: any, src: any, n: i32): void;
 

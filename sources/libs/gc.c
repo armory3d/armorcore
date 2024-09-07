@@ -140,9 +140,7 @@ static void gc_allocation_map_delete(gc_allocation_map_t *am) {
 }
 
 static size_t gc_hash(void *ptr) {
-	// return ((uintptr_t)ptr) >> 3;
-	uintptr_t ad = (uintptr_t)ptr;
-	return (size_t)((13 * ad) ^ (ad >> 15));
+	return ((uintptr_t)ptr) >> 3;
 }
 
 static void gc_allocation_map_resize(gc_allocation_map_t *am, size_t new_capacity) {
