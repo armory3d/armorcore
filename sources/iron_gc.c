@@ -1,5 +1,7 @@
 
 #include "iron_gc.h"
+// #include <kinc/log.h>
+// #include <kinc/system.h>
 
 #ifdef NO_GC
 
@@ -102,7 +104,9 @@ void gc_resume() {
 }
 
 void gc_run() {
+	// double t = kinc_time();
 	size_t garbage = _gc_run();
+	// kinc_log(KINC_LOG_LEVEL_INFO, "gc took %fms, freed %db.\n", (kinc_time() - t) * 1000, garbage);
 }
 
 void gc_start(void *bos) {

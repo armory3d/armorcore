@@ -367,6 +367,9 @@ if (flags.with_iron) {
 	project.addFile('sources/iron_armpack.c');
 	project.addFile('sources/iron_vec2.c');
 	project.addFile('sources/iron_vec4.c');
+	project.addFile('sources/iron_quat.c');
+	project.addFile('sources/iron_mat3.c');
+	project.addFile('sources/iron_mat4.c');
 	project.addFile('sources/iron_gc.c');
 	project.addFile('sources/iron_json.c');
 	project.addFile('sources/iron_obj.c');
