@@ -46,3 +46,5 @@ float mat4_cofactor(float m0, float m1, float m2, float m3, float m4, float m5, 
 float mat4_determinant(mat4_t m);
 mat4_t mat4_nan();
 bool mat4_isnan(mat4_t m);
+
+#define mat4nan (mat4_nan())

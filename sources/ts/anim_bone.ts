@@ -68,7 +68,7 @@ function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 			raw.skin_buffer[i] = 0;
 		}
 		// Rotation is already applied to skin at export
-		quat_set(raw.object.base.transform.rot, 0, 0, 0, 1);
+		raw.object.base.transform.rot = quat_new(0, 0, 0, 1);
 		transform_build_matrix(raw.object.base.transform);
 
 		let refs: string[] = mo.base.parent.raw.anim.bone_actions;
@@ -277,10 +277,10 @@ function anim_bone_update_skin_gpu(raw: anim_bone_t) {
 
 			// Compose
 			_anim_bone_m = mat4_from_quat(_anim_bone_q3);
-			_anim_bone_m = mat4_scale(_anim_bone_v2);
-			_anim_bone_m.m[12] = _anim_bone_v1.x;
-			_anim_bone_m.m[13] = _anim_bone_v1.y;
-			_anim_bone_m.m[14] = _anim_bone_v1.z;
+			_anim_bone_m = mat4_scale(_anim_bone_m, _anim_bone_v2);
+			_anim_bone_m.m30 = _anim_bone_v1.x;
+			_anim_bone_m.m31 = _anim_bone_v1.y;
+			_anim_bone_m.m32 = _anim_bone_v1.z;
 		}
 
 		if (raw.abs_mats != null && i < raw.abs_mats.length) {
@@ -299,7 +299,7 @@ function anim_bone_update_skin_buffer(raw: anim_bone_t, m: mat4_t, i: i32) {
 	// Dual quat skinning
 	mat4_decompose(m, _anim_bone_vpos, _anim_bone_q1, _anim_bone_vscale);
 	_anim_bone_q1 = quat_norm(_anim_bone_q1);
-	quat_set(_anim_bone_q2, _anim_bone_vpos.x, _anim_bone_vpos.y, _anim_bone_vpos.z, 0.0);
+	_anim_bone_q2 = quat_new(_anim_bone_vpos.x, _anim_bone_vpos.y, _anim_bone_vpos.z, 0.0);
 	_anim_bone_q2 = quat_mult(_anim_bone_q2, _anim_bone_q1);
 	raw.skin_buffer[i * 8] = _anim_bone_q1.x; // Real
 	raw.skin_buffer[i * 8 + 1] = _anim_bone_q1.y;

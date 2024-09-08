@@ -54,6 +54,7 @@ mat3_t mat3_set_from4(mat4_t m4) {
 	m.m[6] = m4.m[8];
 	m.m[7] = m4.m[9];
 	m.m[8] = m4.m[10];
+	return m;
 }
 
 mat3_t mat3_multmat(mat3_t a, mat3_t b) {

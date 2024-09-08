@@ -60,6 +60,7 @@ declare function mat4_cofactor(m0: f32, m1: f32, m2: f32, m3: f32, m4: f32, m5: 
 declare function mat4_determinant(m: mat4_t): f32;
 declare function mat4_nan(): mat4_t;
 declare function mat4_isnan(m: mat4_t): bool;
+declare let mat4nan: mat4_t;
 
 type mat4_box_t = {
 	v: mat4_t;

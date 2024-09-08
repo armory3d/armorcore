@@ -237,9 +237,9 @@ function anim_update_anim_sampled(raw: anim_raw_t, anim: anim_t, m: mat4_t) {
 	// Compose
 	m = mat4_from_quat(_anim_q3);
 	m = mat4_scale(m, _anim_vs);
-	m.m[12] = _anim_vp.x;
-	m.m[13] = _anim_vp.y;
-	m.m[14] = _anim_vp.z;
+	m.m30 = _anim_vp.x;
+	m.m31 = _anim_vp.y;
+	m.m32 = _anim_vp.z;
 }
 
 function anim_set_frame(raw: anim_raw_t, frame: i32) {

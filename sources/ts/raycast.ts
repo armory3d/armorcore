@@ -16,19 +16,7 @@ let _raycast_v_inv: mat4_t = mat4_identity();
 function raycast_get_ray(input_x: f32, input_y: f32, camera: camera_object_t): ray_t {
 	let start: vec4_t = vec4_create();
 	let end: vec4_t = vec4_create();
-	raycast_get_dir(start, end, input_x, input_y, camera);
 
-	// Find direction from start to end
-	end = vec4_sub(end, start);
-	end = vec4_norm(end);
-	end.x *= camera.data.far_plane;
-	end.y *= camera.data.far_plane;
-	end.z *= camera.data.far_plane;
-
-	return ray_create(start, end);
-}
-
-function raycast_get_dir(start: vec4_t, end: vec4_t, input_x: f32, input_y: f32, camera: camera_object_t) {
 	// Get 3D point form screen coords
 	// Set two vectors with opposing z values
 	start.x = (input_x / app_w()) * 2.0 - 1.0;
@@ -43,6 +31,15 @@ function raycast_get_dir(start: vec4_t, end: vec4_t, input_x: f32, input_y: f32,
 	_raycast_vp_inv = mat4_mult_mats(_raycast_v_inv, _raycast_p_inv);
 	start = vec4_apply_proj(start, _raycast_vp_inv);
 	end = vec4_apply_proj(end, _raycast_vp_inv);
+
+	// Find direction from start to end
+	end = vec4_sub(end, start);
+	end = vec4_norm(end);
+	end.x *= camera.data.far_plane;
+	end.y *= camera.data.far_plane;
+	end.z *= camera.data.far_plane;
+
+	return ray_create(start, end);
 }
 
 function raycast_box_intersect(transform: transform_t, input_x: f32, input_y: f32, camera: camera_object_t): vec4_t {
@@ -123,7 +120,8 @@ function ray_dist_to_point(raw: ray_t, point: vec4_t): f32 {
 		return vec4_dist(raw.origin, point);
 	}
 
-	vec4_add(vec4_mult(raw.dir, dir_dist), raw.origin);
+	raw.dir = vec4_mult(raw.dir, dir_dist);
+	raw.dir = vec4_add(raw.dir, raw.origin);
 
 	return vec4_dist(v1, point);
 }

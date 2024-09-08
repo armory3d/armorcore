@@ -127,22 +127,22 @@ function particle_sys_update(raw: particle_sys_t, object: mesh_object_t, owner: 
 
 function particle_sys_get_data(raw: particle_sys_t): mat4_t {
 	let hair: bool = raw.r.type == 1;
-	raw.m.m[0] = raw.r.loop ? raw.animtime : -raw.animtime;
-	raw.m.m[1] = hair ? 1 / raw.particles.length : raw.spawn_rate;
-	raw.m.m[2] = hair ? 1 : raw.lifetime;
-	raw.m.m[3] = raw.particles.length;
-	raw.m.m[4] = hair ? 0 : raw.alignx;
-	raw.m.m[5] = hair ? 0 : raw.aligny;
-	raw.m.m[6] = hair ? 0 : raw.alignz;
-	raw.m.m[7] = hair ? 0 : raw.r.factor_random;
-	raw.m.m[8] = hair ? 0 : raw.gx * raw.r.mass;
-	raw.m.m[9] = hair ? 0 : raw.gy * raw.r.mass;
-	raw.m.m[10] = hair ? 0 : raw.gz * raw.r.mass;
-	raw.m.m[11] = hair ? 0 : raw.r.lifetime_random;
-	raw.m.m[12] = 1; // tilesx
-	raw.m.m[13] = 1; // tilesy
-	raw.m.m[14] = 1; // tilesframerate
-	raw.m.m[15] = hair ? 1 : raw.lap_time;
+	raw.m.m00 = raw.r.loop ? raw.animtime : -raw.animtime;
+	raw.m.m01 = hair ? 1 / raw.particles.length : raw.spawn_rate;
+	raw.m.m02 = hair ? 1 : raw.lifetime;
+	raw.m.m03 = raw.particles.length;
+	raw.m.m10 = hair ? 0 : raw.alignx;
+	raw.m.m11 = hair ? 0 : raw.aligny;
+	raw.m.m12 = hair ? 0 : raw.alignz;
+	raw.m.m13 = hair ? 0 : raw.r.factor_random;
+	raw.m.m20 = hair ? 0 : raw.gx * raw.r.mass;
+	raw.m.m21 = hair ? 0 : raw.gy * raw.r.mass;
+	raw.m.m22 = hair ? 0 : raw.gz * raw.r.mass;
+	raw.m.m23 = hair ? 0 : raw.r.lifetime_random;
+	raw.m.m30 = 1; // tilesx
+	raw.m.m31 = 1; // tilesy
+	raw.m.m32 = 1; // tilesframerate
+	raw.m.m33 = hair ? 1 : raw.lap_time;
 	return raw.m;
 }
 
