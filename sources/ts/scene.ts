@@ -463,7 +463,10 @@ function scene_return_object_loaded(object: object_t, o: obj_t, oactions: scene_
 
 function scene_gen_transform(object: obj_t, transform: transform_t) {
 	transform.world = object.transform != null ? mat4_from_f32_array(object.transform) : mat4_identity();
-	mat4_decompose(transform.world, transform.loc, transform.rot, transform.scale);
+	let dec: mat4_decomposed_t = mat4_decompose(transform.world);
+	transform.loc = dec.loc;
+	transform.rot = dec.rot;
+	transform.scale = dec.scl;
 	if (transform.object.parent != null) {
 		transform_update(transform);
 	}

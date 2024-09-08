@@ -13,8 +13,9 @@ type transform_t = {
 	dim?: vec4_t;
 	radius?: f32;
 
+	///if arm_skin
 	bone_parent?: mat4_t;
-	last_world?: mat4_t;
+	///end
 
 	///if arm_anim
 	// Wrong order returned from get_euler(), store last state for animation
@@ -81,9 +82,11 @@ function transform_build_matrix(raw: transform_t) {
 		// transform_compose_delta(raw);
 	// }
 
+	///if arm_skin
 	if (raw.bone_parent != null) {
 		mat4_mult_mats(raw.local, raw.bone_parent, raw.local);
 	}
+	///end
 
 	if (raw.object.parent != null && !raw.local_only) {
 		mat4_mult_mats3x4(raw.world, raw.local, raw.object.parent.transform.world);
@@ -139,7 +142,10 @@ function transform_mult_matrix(raw: transform_t, mat: mat4_t) {
 }
 
 function transform_decompose(raw: transform_t) {
-	mat4_decompose(raw.local, raw.loc, raw.rot, raw.scale);
+	let dec: mat4_decomposed_t = mat4_decompose(raw.local);
+	raw.loc = dec.loc;
+	raw.rot = dec.rot;
+	raw.scale = dec.scl;
 }
 
 function transform_rotate(raw: transform_t, axis: vec4_t, f: f32) {

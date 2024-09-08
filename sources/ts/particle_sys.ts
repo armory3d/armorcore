@@ -99,7 +99,10 @@ function particle_sys_update(raw: particle_sys_t, object: mesh_object_t, owner: 
 	}
 
 	// Copy owner world transform but discard scale
-	mat4_decompose(owner.base.transform.world, raw.owner_loc, raw.owner_rot, raw.owner_scale);
+	let dec: mat4_decomposed_t = mat4_decompose(owner.base.transform.world);
+	raw.owner_loc = dec.loc;
+	raw.owner_rot = dec.rot;
+	raw.owner_scale = dec.scl;
 	object.base.transform.loc = raw.owner_loc;
 	object.base.transform.rot = raw.owner_rot;
 

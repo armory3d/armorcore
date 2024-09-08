@@ -35,3 +35,7 @@ declare function vec4_y_axis(): vec4_t;
 declare function vec4_z_axis(): vec4_t;
 declare function vec4_nan(): vec4_t;
 declare function vec4_isnan(a: vec4_t): bool;
+
+type vec4_box_t = {
+	v: vec4_t;
+};

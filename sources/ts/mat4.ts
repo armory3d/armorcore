@@ -20,6 +20,12 @@ type mat4_t = {
 	m?: f32_array_t;
 };
 
+type mat4_decomposed_t = {
+	loc: vec4_t;
+	rot: quat_t;
+	scl: vec4_t;
+}
+
 let _mat4_vec: vec4_t = vec4_create();
 let _mat4_mat: mat4_t = mat4_identity();
 
@@ -110,30 +116,35 @@ function mat4_compose(self: mat4_t, loc: vec4_t, quat: quat_t, sc: vec4_t): mat4
 	return self;
 }
 
-function mat4_decompose(self: mat4_t, loc: vec4_t, quat: quat_t, scale: vec4_t): mat4_t {
-	loc.x = self.m[12];
-	loc.y = self.m[13];
-	loc.z = self.m[14];
-	scale.x = vec4_len(vec4_new(self.m[0], self.m[1], self.m[2]));
-	scale.y = vec4_len(vec4_new(self.m[4], self.m[5], self.m[6]));
-	scale.z = vec4_len(vec4_new(self.m[8], self.m[9], self.m[10]));
-	if (mat4_determinant(self) < 0.0) {
-		scale.x = -scale.x;
+function mat4_decompose(m: mat4_t): mat4_decomposed_t {
+	let loc: vec4_t;
+	let rot: quat_t = quat_create();
+	let scl: vec4_t;
+	loc.x = m.m[12];
+	loc.y = m.m[13];
+	loc.z = m.m[14];
+	scl.x = vec4_len(vec4_new(m.m[0], m.m[1], m.m[2]));
+	scl.y = vec4_len(vec4_new(m.m[4], m.m[5], m.m[6]));
+	scl.z = vec4_len(vec4_new(m.m[8], m.m[9], m.m[10]));
+	if (mat4_determinant(m) < 0.0) {
+		scl.x = -scl.x;
 	}
-	let invs: f32 = 1.0 / scale.x; // Scale the rotation part
-	_mat4_mat.m[0] = self.m[0] * invs;
-	_mat4_mat.m[1] = self.m[1] * invs;
-	_mat4_mat.m[2] = self.m[2] * invs;
-	invs = 1.0 / scale.y;
-	_mat4_mat.m[4] = self.m[4] * invs;
-	_mat4_mat.m[5] = self.m[5] * invs;
-	_mat4_mat.m[6] = self.m[6] * invs;
-	invs = 1.0 / scale.z;
-	_mat4_mat.m[8] = self.m[8] * invs;
-	_mat4_mat.m[9] = self.m[9] * invs;
-	_mat4_mat.m[10] = self.m[10] * invs;
-	quat_from_rot_mat(quat, _mat4_mat);
-	return self;
+	let invs: f32 = 1.0 / scl.x; // Scale the rotation part
+	_mat4_mat.m[0] = m.m[0] * invs;
+	_mat4_mat.m[1] = m.m[1] * invs;
+	_mat4_mat.m[2] = m.m[2] * invs;
+	invs = 1.0 / scl.y;
+	_mat4_mat.m[4] = m.m[4] * invs;
+	_mat4_mat.m[5] = m.m[5] * invs;
+	_mat4_mat.m[6] = m.m[6] * invs;
+	invs = 1.0 / scl.z;
+	_mat4_mat.m[8] = m.m[8] * invs;
+	_mat4_mat.m[9] = m.m[9] * invs;
+	_mat4_mat.m[10] = m.m[10] * invs;
+	quat_from_rot_mat(rot, _mat4_mat);
+
+	let dec: mat4_decomposed_t = { loc: loc, rot: rot, scl: scl };
+	return dec;
 }
 
 function mat4_set_loc(self: mat4_t, v: vec4_t): mat4_t {
