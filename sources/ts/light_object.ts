@@ -31,13 +31,13 @@ function light_object_build_mat(raw: light_object_t, camera: camera_object_t) {
 }
 
 function light_object_right(raw: light_object_t): vec4_t {
-	return vec4_create(raw.v.m[0], raw.v.m[4], raw.v.m[8]);
+	return vec4_create(raw.v.m00, raw.v.m10, raw.v.m20);
 }
 
 function light_object_up(raw: light_object_t): vec4_t {
-	return vec4_create(raw.v.m[1], raw.v.m[5], raw.v.m[9]);
+	return vec4_create(raw.v.m01, raw.v.m11, raw.v.m21);
 }
 
 function light_object_look(raw: light_object_t): vec4_t {
-	return vec4_create(raw.v.m[2], raw.v.m[6], raw.v.m[10]);
+	return vec4_create(raw.v.m02, raw.v.m12, raw.v.m22);
 }

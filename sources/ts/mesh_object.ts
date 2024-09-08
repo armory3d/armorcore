@@ -278,7 +278,7 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 		}
 	}
 
-	mat4_set_from(raw.prev_matrix, raw.base.transform.world_unpack);
+	raw.prev_matrix = mat4_clone(raw.base.transform.world_unpack);
 }
 
 function mesh_object_valid_context(raw: mesh_object_t, mats: material_data_t[], context: string): bool {

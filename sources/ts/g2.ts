@@ -3,7 +3,7 @@ let _g2_color: color_t;
 let _g2_font: g2_font_t;
 let _g2_font_size: i32 = 0;
 let _g2_pipeline: pipeline_t;
-let _g2_transformation: mat3_t = null;
+let _g2_transformation: mat3_t = mat3_nan();
 let _g2_render_target: image_t;
 
 let _g2_current: image_t = null;
@@ -48,19 +48,19 @@ function g2_set_bilinear_filter(bilinear: bool) {
 }
 
 function g2_set_transformation(m: mat3_t) {
-	if (m == null) {
+	if (mat3_isnan(m)) {
 		iron_g2_set_transform(null);
 	}
 	else {
-		_g2_mat[0] = m.m[0];
-		_g2_mat[1] = m.m[1];
-		_g2_mat[2] = m.m[2];
-		_g2_mat[3] = m.m[3];
-		_g2_mat[4] = m.m[4];
-		_g2_mat[5] = m.m[5];
-		_g2_mat[6] = m.m[6];
-		_g2_mat[7] = m.m[7];
-		_g2_mat[8] = m.m[8];
+		_g2_mat[0] = m.m00;
+		_g2_mat[1] = m.m01;
+		_g2_mat[2] = m.m02;
+		_g2_mat[3] = m.m10;
+		_g2_mat[4] = m.m11;
+		_g2_mat[5] = m.m12;
+		_g2_mat[6] = m.m20;
+		_g2_mat[7] = m.m21;
+		_g2_mat[8] = m.m22;
 		iron_g2_set_transform(_g2_mat);
 	}
 }

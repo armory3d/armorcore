@@ -1,8 +1,7 @@
 #pragma once
 
 #include <kinc/math/vector.h>
-
-#define vec2_t kinc_vector2_t
+#include "iron_vec4.h"
 
 vec2_t vec2_new(float x, float y);
 vec2_t vec2_create(float x, float y);

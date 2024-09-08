@@ -21,7 +21,11 @@
 #include "iron_gc.h"
 #include "iron_obj.h"
 #include "iron_vec2.h"
+#include "iron_vec3.h"
 #include "iron_vec4.h"
+#include "iron_quat.h"
+#include "iron_mat3.h"
+#include "iron_mat4.h"
 #ifdef KINC_WINDOWS
 #include <Windows.h>
 #endif
@@ -1810,12 +1814,12 @@ void iron_g4_set_floats(kinc_g4_constant_location_t *location, buffer_t *values)
 	kinc_g4_set_floats(*location, (float *)values->buffer, (int)(values->length / 4));
 }
 
-void iron_g4_set_matrix4(kinc_g4_constant_location_t *location, /*buffer_t*/ float *matrix) {
-	kinc_g4_set_matrix4(*location, (kinc_matrix4x4_t *)matrix);
+void iron_g4_set_matrix4(kinc_g4_constant_location_t *location, mat4_t m) {
+	kinc_g4_set_matrix4(*location, &m);
 }
 
-void iron_g4_set_matrix3(kinc_g4_constant_location_t *location, /*buffer_t*/ float *matrix) {
-	kinc_g4_set_matrix3(*location, (kinc_matrix3x3_t *)matrix);
+void iron_g4_set_matrix3(kinc_g4_constant_location_t *location, mat3_t m) {
+	kinc_g4_set_matrix3(*location, &m);
 }
 
 

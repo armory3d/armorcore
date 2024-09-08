@@ -256,8 +256,8 @@ declare function iron_g4_set_float2(location: any, value1: f32, value2: f32): vo
 declare function iron_g4_set_float3(location: any, value1: f32, value2: f32, value3: f32): void;
 declare function iron_g4_set_float4(location: any, value1: f32, value2: f32, value3: f32, value4: f32): void;
 declare function iron_g4_set_floats(location: any, values: buffer_t): void;
-declare function iron_g4_set_matrix4(location: any, matrix: buffer_t): void;
-declare function iron_g4_set_matrix3(location: any, matrix: buffer_t): void;
+declare function iron_g4_set_matrix4(location: any, matrix: mat4_t): void;
+declare function iron_g4_set_matrix3(location: any, matrix: mat3_t): void;
 
 declare function iron_get_time(): f32;
 declare function iron_window_width(): i32;

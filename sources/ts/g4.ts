@@ -328,11 +328,11 @@ function g4_set_vec4(loc: kinc_const_loc_t, v: vec4_t) {
 }
 
 function g4_set_mat(loc: kinc_const_loc_t, mat: mat4_t) {
-	iron_g4_set_matrix4(loc, mat.m.buffer);
+	iron_g4_set_matrix4(loc, mat);
 }
 
 function g4_set_mat3(loc: kinc_const_loc_t, mat: mat3_t) {
-	iron_g4_set_matrix3(loc, mat.m.buffer);
+	iron_g4_set_matrix3(loc, mat);
 }
 
 function g4_draw(start: i32 = 0, count: i32 = -1) {

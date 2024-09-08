@@ -1,10 +1,17 @@
 #pragma once
 
+#define mat4_t kinc_matrix4x4_t
+#define mat3_t kinc_matrix3x3_t
+#define quat_t kinc_quaternion_t
+#define vec4_t kinc_vector4_t
+#define vec3_t kinc_vector3_t
+#define vec2_t kinc_vector2_t
+
 #include <kinc/math/vector.h>
 #include <kinc/math/quaternion.h>
 #include <kinc/math/matrix.h>
 
-#define vec4_t kinc_vector4_t
+#include "iron_mat4.h"
 
 vec4_t vec4_new(float x, float y, float z, float w);
 vec4_t vec4_create(float x, float y, float z, float w); //
@@ -16,11 +23,11 @@ vec4_t vec4_mult(vec4_t v, float f);
 float vec4_dot(vec4_t a, vec4_t b);
 vec4_t vec4_clone(vec4_t v);
 vec4_t vec4_lerp(vec4_t from, vec4_t to, float s);
-vec4_t vec4_apply_proj(vec4_t a, kinc_matrix4x4_t *m);
-vec4_t vec4_apply_mat(vec4_t a, kinc_matrix4x4_t *m);
-vec4_t vec4_apply_mat4(vec4_t a, kinc_matrix4x4_t *m);
+vec4_t vec4_apply_proj(vec4_t a, mat4_t m);
+vec4_t vec4_apply_mat(vec4_t a, mat4_t m);
+vec4_t vec4_apply_mat4(vec4_t a, mat4_t m);
 vec4_t vec4_apply_axis_angle(vec4_t a, vec4_t axis, float angle);
-vec4_t vec4_apply_quat(vec4_t a, kinc_quaternion_t *q);
+vec4_t vec4_apply_quat(vec4_t a, quat_t q);
 bool vec4_equals(vec4_t a, vec4_t b);
 bool vec4_almost_equals(vec4_t a, vec4_t b, float prec);
 float vec4_len(vec4_t a);

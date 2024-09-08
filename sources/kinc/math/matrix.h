@@ -12,8 +12,19 @@
 extern "C" {
 #endif
 
-typedef struct kinc_matrix3x3 {
+typedef union kinc_matrix3x3 {
 	float m[3 * 3];
+	struct {
+		float m00;
+		float m01;
+		float m02;
+		float m10;
+		float m11;
+		float m12;
+		float m20;
+		float m21;
+		float m22;
+	};
 } kinc_matrix3x3_t;
 
 KINC_FUNC float kinc_matrix3x3_get(kinc_matrix3x3_t *matrix, int x, int y);
@@ -27,8 +38,26 @@ KINC_FUNC kinc_matrix3x3_t kinc_matrix3x3_translation(float x, float y);
 KINC_FUNC kinc_matrix3x3_t kinc_matrix3x3_multiply(kinc_matrix3x3_t *a, kinc_matrix3x3_t *b);
 KINC_FUNC kinc_vector3_t kinc_matrix3x3_multiply_vector(kinc_matrix3x3_t *a, kinc_vector3_t b);
 
-typedef struct kinc_matrix4x4 {
+typedef union kinc_matrix4x4 {
 	float m[4 * 4];
+	struct {
+		float m00;
+		float m01;
+		float m02;
+		float m03;
+		float m10;
+		float m11;
+		float m12;
+		float m13;
+		float m20;
+		float m21;
+		float m22;
+		float m23;
+		float m30;
+		float m31;
+		float m32;
+		float m33;
+	};
 } kinc_matrix4x4_t;
 
 KINC_FUNC float kinc_matrix4x4_get(kinc_matrix4x4_t *matrix, int x, int y);

@@ -38,9 +38,9 @@ function raycast_get_dir(start: vec4_t, end: vec4_t, input_x: f32, input_y: f32,
 	end.y = start.y;
 	end.z = 1.0;
 
-	mat4_get_inv(_raycast_p_inv, camera.p);
-	mat4_get_inv(_raycast_v_inv, camera.v);
-	mat4_mult_mats(_raycast_vp_inv, _raycast_v_inv, _raycast_p_inv);
+	_raycast_p_inv = mat4_get_inv(camera.p);
+	_raycast_v_inv = mat4_get_inv(camera.v);
+	_raycast_vp_inv = mat4_mult_mats(_raycast_v_inv, _raycast_p_inv);
 	start = vec4_apply_proj(start, _raycast_vp_inv);
 	end = vec4_apply_proj(end, _raycast_vp_inv);
 }

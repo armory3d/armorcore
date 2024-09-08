@@ -179,7 +179,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 	let light: light_object_t = _render_path_light;
 
 	if (c.type == "mat4") {
-		let m: mat4_t = null;
+		let m: mat4_t = mat4_nan();
 		if (c.link == "_view_matrix") {
 			m = camera.v;
 		}
@@ -187,16 +187,16 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			m = camera.p;
 		}
 		else if (c.link == "_inv_proj_matrix") {
-			mat4_get_inv(_uniforms_mat, camera.p);
+			_uniforms_mat = mat4_get_inv(camera.p);
 			m = _uniforms_mat;
 		}
 		else if (c.link == "_view_proj_matrix") {
 			m = camera.vp;
 		}
 		else if (c.link == "_inv_view_proj_matrix") {
-			mat4_set_from(_uniforms_mat, camera.v);
-			mat4_mult_mat(_uniforms_mat, camera.p);
-			mat4_get_inv(_uniforms_mat, _uniforms_mat);
+			_uniforms_mat = mat4_clone(camera.v);
+			_uniforms_mat = mat4_mult_mat(_uniforms_mat, camera.p);
+			_uniforms_mat = mat4_get_inv(_uniforms_mat);
 			m = _uniforms_mat;
 		}
 		else if (c.link == "_skydome_matrix") {
@@ -204,9 +204,9 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			_uniforms_vec = vec4_new(transform_world_x(tr), transform_world_y(tr), transform_world_z(tr) - 3.5); // Sky
 			let bounds: f32 = camera.data.far_plane * 0.95;
 			_uniforms_vec2 = vec4_new(bounds, bounds, bounds);
-			mat4_compose(_uniforms_mat, _uniforms_vec, _uniforms_quat, _uniforms_vec2);
-			mat4_mult_mat(_uniforms_mat, camera.v);
-			mat4_mult_mat(_uniforms_mat, camera.p);
+			_uniforms_mat = mat4_compose(_uniforms_vec, _uniforms_quat, _uniforms_vec2);
+			_uniforms_mat = mat4_mult_mat(_uniforms_mat, camera.v);
+			_uniforms_mat = mat4_mult_mat(_uniforms_mat, camera.p);
 			m = _uniforms_mat;
 		}
 		else { // Unknown uniform
@@ -457,32 +457,32 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 	let light: light_object_t = _render_path_light;
 
 	if (c.type == "mat4") {
-		let m: mat4_t = null;
+		let m: mat4_t = mat4_nan();
 
 		if (c.link == "_world_matrix") {
 			m = obj.transform.world_unpack;
 		}
 		else if (c.link == "_inv_world_matrix") {
-			mat4_get_inv(_uniforms_mat, obj.transform.world_unpack);
+			_uniforms_mat = mat4_get_inv(obj.transform.world_unpack);
 			m = _uniforms_mat;
 		}
 		else if (c.link == "_world_view_proj_matrix") {
-			mat4_set_from(_uniforms_mat, obj.transform.world_unpack);
-			mat4_mult_mat(_uniforms_mat, camera.v);
-			mat4_mult_mat(_uniforms_mat, camera.p);
+			_uniforms_mat = mat4_clone(obj.transform.world_unpack);
+			_uniforms_mat = mat4_mult_mat(_uniforms_mat, camera.v);
+			_uniforms_mat = mat4_mult_mat(_uniforms_mat, camera.p);
 			m = _uniforms_mat;
 		}
 		else if (c.link == "_world_wiew_matrix") {
-			mat4_set_from(_uniforms_mat, obj.transform.world_unpack);
-			mat4_mult_mat(_uniforms_mat, camera.v);
+			_uniforms_mat = mat4_clone(obj.transform.world_unpack);
+			_uniforms_mat = mat4_mult_mat(_uniforms_mat, camera.v);
 			m = _uniforms_mat;
 		}
 		else if (c.link == "_prev_world_view_proj_matrix") {
 			let mo: mesh_object_t = obj.ext;
-			mat4_set_from(_uniforms_mat, mo.prev_matrix);
-			mat4_mult_mat(_uniforms_mat, camera.prev_v);
-			// mat4_mult_mat(_uniforms_mat. camera.prev_p);
-			mat4_mult_mat(_uniforms_mat, camera.p);
+			_uniforms_mat = mat4_clone(mo.prev_matrix);
+			_uniforms_mat = mat4_mult_mat(_uniforms_mat, camera.prev_v);
+			// _uniforms_mat = mat4_mult_mat(_uniforms_mat. camera.prev_p);
+			_uniforms_mat = mat4_mult_mat(_uniforms_mat, camera.p);
 			m = _uniforms_mat;
 		}
 		///if arm_particles
@@ -497,26 +497,26 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 			m = uniforms_mat4_links(obj, current_material(obj), c.link);
 		}
 
-		if (m == null) {
+		if (mat4_isnan(m)) {
 			return;
 		}
 		g4_set_mat(loc, m);
 	}
 	else if (c.type == "mat3") {
-		let m: mat3_t = null;
+		let m: mat3_t = mat3_nan();
 
 		if (c.link == "_normal_matrix") {
-			mat4_get_inv(_uniforms_mat, obj.transform.world);
-			mat4_transpose3x3(_uniforms_mat);
-			mat3_set_from4(_uniforms_mat3, _uniforms_mat);
+			_uniforms_mat = mat4_get_inv(obj.transform.world);
+			_uniforms_mat = mat4_transpose3x3(_uniforms_mat);
+			_uniforms_mat3 = mat3_set_from4(_uniforms_mat);
 			m = _uniforms_mat3;
 		}
 		else if (c.link == "_view_matrix3") {
-			mat3_set_from4(_uniforms_mat3, camera.v);
+			_uniforms_mat3 = mat3_set_from4(camera.v);
 			m = _uniforms_mat3;
 		}
 
-		if (m == null) {
+		if (mat3_isnan(m)) {
 			return;
 		}
 		g4_set_mat3(loc, m);
