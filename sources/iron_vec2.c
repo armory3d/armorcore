@@ -29,10 +29,37 @@ vec2_t vec2_set_len(vec2_t v, float length) {
 	return v;
 }
 
+vec2_t vec2_mult(vec2_t v, float f) {
+	v.x *= f;
+	v.y *= f;
+	return v;
+}
+
+vec2_t vec2_add(vec2_t a, vec2_t b) {
+	a.x += b.x;
+	a.y += b.y;
+	return a;
+}
+
 vec2_t vec2_sub(vec2_t a, vec2_t b) {
 	a.x -= b.x;
 	a.y -= b.y;
 	return a;
+}
+
+float vec2_cross(vec2_t a, vec2_t b) {
+	return a.x * b.y - a.y * b.x;
+}
+
+vec2_t vec2_norm(vec2_t v) {
+	float length = vec2_len(v);
+    v.x /= length;
+	v.y /= length;
+	return v;
+}
+
+float vec2_dot(vec2_t a, vec2_t b) {
+    return a.x * b.x + a.y * b.y;
 }
 
 vec2_t vec2_nan() {
