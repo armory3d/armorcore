@@ -19,6 +19,8 @@ type mesh_object_t = {
 };
 
 let _mesh_object_last_pipeline: pipeline_t = null;
+let _mesh_object_material_contexts: material_context_t[] = [];
+let _mesh_object_shader_contexts: shader_context_t[] = [];
 
 function mesh_object_create(data: mesh_data_t, materials: material_data_t[]): mesh_object_t {
 	let raw: mesh_object_t = {};
@@ -223,8 +225,10 @@ function mesh_object_render(raw: mesh_object_t, context: string, bind_params: st
 	}
 
 	// Get context
-	let material_contexts: material_context_t[] = [];
-	let shader_contexts: shader_context_t[] = [];
+	let material_contexts: material_context_t[] = _mesh_object_material_contexts;
+	let shader_contexts: shader_context_t[] = _mesh_object_shader_contexts;
+	material_contexts.length = 0;
+	shader_contexts.length = 0;
 	mesh_object_get_contexts(raw, context, raw.materials, material_contexts, shader_contexts);
 
 	uniforms_pos_unpack = raw.data.scale_pos;

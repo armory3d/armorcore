@@ -1,7 +1,5 @@
 
 #include "iron_gc.h"
-// #include <kinc/log.h>
-// #include <kinc/system.h>
 
 #ifdef NO_GC
 
@@ -20,6 +18,9 @@ void *gc_alloc(size_t size) {
 	#else
 	return calloc(size, 1);
 	#endif
+}
+
+void gc_array(void *ptr, void *ar) {
 }
 
 void gc_leaf(void *ptr) {
@@ -73,6 +74,10 @@ void *gc_alloc(size_t size) {
 	return _gc_calloc(size, sizeof(uint8_t));
 }
 
+void gc_array(void *ptr, int *length) {
+	_gc_array(ptr, length);
+}
+
 void gc_leaf(void *ptr) {
 	_gc_leaf(ptr);
 }
@@ -104,9 +109,7 @@ void gc_resume() {
 }
 
 void gc_run() {
-	// double t = kinc_time();
-	size_t garbage = _gc_run();
-	// kinc_log(KINC_LOG_LEVEL_INFO, "gc took %fms, freed %db.\n", (kinc_time() - t) * 1000, garbage);
+	_gc_run();
 }
 
 void gc_start(void *bos) {

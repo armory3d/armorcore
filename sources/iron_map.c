@@ -21,6 +21,10 @@ static void resize(any_map_t *m) {
 	char_ptr_array_resize(tmp->keys, cap);
 	any_array_resize(tmp->values, cap);
 
+	// For map, array values are spread across the whole capacity, not from 0 to length
+	gc_array(tmp->keys->buffer, NULL);
+	gc_array(tmp->values->buffer, NULL);
+
 	any_array_t *old_keys = map_keys(m);
 	for (int i = 0; i < old_keys->length; ++i) {
 		char *k = old_keys->buffer[i];
