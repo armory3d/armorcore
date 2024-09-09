@@ -158,7 +158,10 @@ function camera_object_sphere_in_frustum(frustum_planes: frustum_plane_t[], t: t
 	let radius: f32 = t.radius * radius_scale;
 	for (let i: i32 = 0; i < frustum_planes.length; ++i) {
 		let plane: frustum_plane_t = frustum_planes[i];
-		_camera_object_sphere_center = vec4_new(transform_world_x(t) + offset_x, transform_world_y(t) + offset_y, transform_world_z(t) + offset_z);
+		_camera_object_sphere_center = vec4_new(
+			transform_world_x(t) + offset_x,
+			transform_world_y(t) + offset_y,
+			transform_world_z(t) + offset_z);
 		// Outside the frustum
 		if (frustum_plane_dist_to_sphere(plane, _camera_object_sphere_center, radius) + radius * 2 < 0) {
 			return false;

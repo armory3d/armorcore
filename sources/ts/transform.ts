@@ -33,9 +33,6 @@ type transform_t = {
 	///end
 };
 
-let _transform_tmp: mat4_t = mat4_identity();
-let _transform_q: quat_t = quat_create();
-
 function transform_create(object: object_t): transform_t {
 	let raw: transform_t = {};
 	raw.local_only = false;
@@ -149,8 +146,8 @@ function transform_decompose(raw: transform_t) {
 }
 
 function transform_rotate(raw: transform_t, axis: vec4_t, f: f32) {
-	_transform_q = quat_from_axis_angle(axis, f);
-	raw.rot = quat_mult(_transform_q, raw.rot);
+	let q: quat_t = quat_from_axis_angle(axis, f);
+	raw.rot = quat_mult(q, raw.rot);
 	transform_build_matrix(raw);
 }
 
@@ -191,8 +188,8 @@ function transform_compute_dim(raw: transform_t) {
 function transform_apply_parent_inv(raw: transform_t) {
 	let pt: transform_t = raw.object.parent.transform;
 	transform_build_matrix(pt);
-	_transform_tmp = mat4_get_inv(pt.world);
-	raw.local = mat4_mult_mat(raw.local, _transform_tmp);
+	let pinv: mat4_t = mat4_get_inv(pt.world);
+	raw.local = mat4_mult_mat(raw.local, pinv);
 	transform_decompose(raw);
 	transform_build_matrix(raw);
 }
