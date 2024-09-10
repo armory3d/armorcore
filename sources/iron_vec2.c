@@ -52,9 +52,12 @@ float vec2_cross(vec2_t a, vec2_t b) {
 }
 
 vec2_t vec2_norm(vec2_t v) {
-	float length = vec2_len(v);
-	v.x /= length;
-	v.y /= length;
+	float n = vec2_len(v);
+	if (n > 0.0) {
+		float inv_n = 1.0f / n;
+		v.x *= inv_n;
+		v.y *= inv_n;
+	}
 	return v;
 }
 
