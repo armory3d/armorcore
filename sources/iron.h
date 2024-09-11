@@ -1693,6 +1693,9 @@ void iron_unload_image(image_t *image) {
 }
 
 #ifdef WITH_AUDIO
+
+typedef kinc_a1_channel_t audio_channel_t;
+
 any iron_load_sound(string_t *file) {
 	kinc_a1_sound_t *sound = kinc_a1_sound_create(file);
 	return sound;
@@ -1702,13 +1705,18 @@ void iron_unload_sound(kinc_a1_sound_t *sound) {
 	kinc_a1_sound_destroy(sound);
 }
 
-void iron_play_sound(kinc_a1_sound_t *sound, bool loop) {
-	kinc_a1_play_sound(sound, loop, 1.0, false);
+audio_channel_t *iron_play_sound(kinc_a1_sound_t *sound, bool loop, float pitch, bool unique) {
+	return kinc_a1_play_sound(sound, loop, pitch, unique);
 }
 
 void iron_stop_sound(kinc_a1_sound_t *sound) {
 	kinc_a1_stop_sound(sound);
 }
+
+void iron_sound_set_pitch(audio_channel_t *channel, float pitch) {
+	kinc_a1_channel_set_pitch(channel, pitch);
+}
+
 #endif
 
 buffer_t *iron_load_blob(string_t *file) {

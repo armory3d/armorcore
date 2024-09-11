@@ -251,3 +251,7 @@ float kinc_a1_channel_get_volume(kinc_a1_channel_t *channel) {
 void kinc_a1_channel_set_volume(kinc_a1_channel_t *channel, float volume) {
 	KINC_ATOMIC_EXCHANGE_FLOAT(&channel->volume, volume);
 }
+
+void kinc_a1_channel_set_pitch(kinc_a1_channel_t *channel, float pitch) {
+	KINC_ATOMIC_EXCHANGE_FLOAT(&channel->pitch, pitch);
+}

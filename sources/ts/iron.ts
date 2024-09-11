@@ -235,8 +235,9 @@ declare function iron_load_image(file: string, readable: bool): any;
 declare function iron_unload_image(image: image_t): void;
 declare function iron_load_sound(file: string): any;
 declare function iron_unload_sound(sound: any): void;
-declare function iron_play_sound(sound: any, loop: bool): void;
+declare function iron_play_sound(sound: any, loop: bool, pitch: f32, unique: bool): audio_channel_t;
 declare function iron_stop_sound(sound: any): void;
+declare function iron_sound_set_pitch(channel: audio_channel_t, pitch: f32): void;
 declare function iron_load_blob(file: string): buffer_t;
 declare function iron_load_url(url: string): void;
 declare function iron_copy_to_clipboard(text: string): void;
@@ -387,3 +388,11 @@ declare function armpack_size_string(str: string): i32;
 declare function armpack_size_i32(): i32;
 declare function armpack_size_f32(): i32;
 declare function armpack_size_bool(): i32;
+
+declare type audio_channel_t {
+	sound: any; // kinc_a1_sound_t
+	position: f32;
+	loop: bool;
+	volume: f32;
+	pitch: f32;
+};

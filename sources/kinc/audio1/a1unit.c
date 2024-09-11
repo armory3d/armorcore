@@ -7,7 +7,7 @@ struct kinc_a1_channel {
 	float position;
 	bool loop;
 	volatile float volume;
-	float pitch;
+	volatile float pitch;
 };
 
 struct kinc_a1_stream_channel {

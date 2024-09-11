@@ -92,7 +92,7 @@ static void splitMono16(int16_t *data, int size, int16_t *left, int16_t *right) 
 	}
 }
 
-#define MAXIMUM_SOUNDS 4096
+#define MAXIMUM_SOUNDS 1024
 static kinc_a1_sound_t sounds[MAXIMUM_SOUNDS] = {0};
 
 static kinc_a1_sound_t *find_sound(void) {

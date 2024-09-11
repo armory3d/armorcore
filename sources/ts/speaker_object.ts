@@ -43,12 +43,12 @@ function speaker_object_play(raw: speaker_object_t) {
 	if (raw.paused) {
 		for (let i: i32 = 0; i < raw.channels.length; ++i) {
 			let c: audio_channel_t = raw.channels[i];
-			audio_play(c);
+			// audio_play(c);
 		}
 		raw.paused = false;
 		return;
 	}
-	let channel: audio_channel_t = audio_channel(raw.sound, raw.data.loop, raw.data.stream);
+	let channel: audio_channel_t = null; // audio_channel(raw.sound, raw.data.loop, raw.data.stream);
 	if (channel != null) {
 		array_push(raw.channels, channel);
 		if (raw.data.attenuation > 0 && raw.channels.length == 1) {
@@ -60,7 +60,7 @@ function speaker_object_play(raw: speaker_object_t) {
 function speaker_object_pause(raw: speaker_object_t) {
 	for (let i: i32 = 0; i < raw.channels.length; ++i) {
 		let c: audio_channel_t = raw.channels[i];
-		audio_pause(c);
+		// audio_pause(c);
 	}
 	raw.paused = true;
 }
@@ -68,7 +68,7 @@ function speaker_object_pause(raw: speaker_object_t) {
 function speaker_object_stop(raw: speaker_object_t) {
 	for (let i: i32 = 0; i < raw.channels.length; ++i) {
 		let c: audio_channel_t = raw.channels[i];
-		audio_stop(c);
+		// audio_stop(c);
 	}
 	array_splice(raw.channels, 0, raw.channels.length);
 }
@@ -79,9 +79,9 @@ function speaker_object_update(raw: speaker_object_t) {
 	}
 	for (let i: i32 = 0; i < raw.channels.length; ++i) {
 		let c: audio_channel_t = raw.channels[i];
-		if (c.finished) {
-			array_remove(raw.channels, c);
-		}
+		// if (c.finished) {
+			// array_remove(raw.channels, c);
+		// }
 	}
 	if (raw.channels.length == 0) {
 		app_remove_update(speaker_object_update);
@@ -99,7 +99,7 @@ function speaker_object_update(raw: speaker_object_t) {
 
 	for (let i: i32 = 0; i < raw.channels.length; ++i) {
 		let c: audio_channel_t = raw.channels[i];
-		c.volume = raw.volume;
+		// c.volume = raw.volume;
 	}
 }
 
