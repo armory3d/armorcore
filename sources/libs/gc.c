@@ -35,6 +35,7 @@
 #define GC_TAG_NONE 0x0
 #define GC_TAG_LEAF 0x1
 #define GC_TAG_MARK 0x2
+#define GC_TAG_ROOT 0x4
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #define __builtin_frame_address(x)  ((void)(x), _AddressOfReturnAddress())
@@ -62,7 +63,7 @@ typedef struct gc_allocation_map {
 
 typedef struct garbage_collector {
     struct gc_allocation_map *allocs; // allocation map
-    struct gc_allocation_map *roots; // root map
+    // struct gc_allocation_map *roots; // root map
     bool paused; // (temporarily) switch gc on/off
     void *bos; // bottom of stack
 } garbage_collector_t;
@@ -171,14 +172,13 @@ static gc_allocation_t *gc_allocation_map_get(gc_allocation_map_t *am, void *ptr
 	return NULL;
 }
 
-static gc_allocation_t *gc_allocation_map_put(gc_allocation_map_t *am, void *ptr, size_t size) {
-	size_t index = gc_hash(ptr) & (am->capacity - 1);
-	gc_allocation_t *alloc = gc_allocation_new(ptr, size);
+static gc_allocation_t *gc_allocation_map_put(gc_allocation_map_t *am, gc_allocation_t *alloc) {
+	size_t index = gc_hash(alloc->ptr) & (am->capacity - 1);
 	gc_allocation_t *cur = am->allocs[index];
 	gc_allocation_t *prev = NULL;
 	/* Upsert if ptr is already known */
 	while (cur != NULL) {
-		if (cur->ptr == ptr) {
+		if (cur->ptr == alloc->ptr) {
 			// found it
 			alloc->next = cur->next;
 			if (!prev) {
@@ -263,7 +263,7 @@ static void *gc_allocate(size_t count, size_t size) {
 	}
 	/* Start managing the memory we received from the system */
 	if (ptr) {
-		gc_allocation_t *alloc = gc_allocation_map_put(gc->allocs, ptr, alloc_size);
+		gc_allocation_t *alloc = gc_allocation_map_put(gc->allocs, gc_allocation_new(ptr, alloc_size));
 		/* Deal with metadata allocation failure */
 		if (alloc) {
 			ptr = alloc->ptr;
@@ -295,7 +295,7 @@ void _gc_root(void *ptr) {
 	gc_allocation_t *alloc = gc_allocation_map_get(gc->allocs, ptr);
 	if (alloc) {
 		alloc->roots++;
-		gc_allocation_map_put(gc->roots, alloc->ptr, alloc->size);
+		alloc->tag |= GC_TAG_ROOT;
 	}
 }
 
@@ -304,7 +304,7 @@ void _gc_unroot(void *ptr) {
 	if (alloc) {
 		alloc->roots--;
 		if (alloc->roots == 0) {
-			gc_allocation_map_remove(gc->roots, alloc->ptr, false);
+			alloc->tag &= ~GC_TAG_ROOT;
 		}
 	}
 }
@@ -335,10 +335,12 @@ static void gc_mark_stack() {
 }
 
 static void gc_mark_roots() {
-	for (size_t i = 0; i < gc->roots->capacity; ++i) {
-		gc_allocation_t *chunk = gc->roots->allocs[i];
+	for (size_t i = 0; i < gc->allocs->capacity; ++i) {
+		gc_allocation_t *chunk = gc->allocs->allocs[i];
 		while (chunk) {
-			gc_mark_alloc(chunk->ptr);
+			if (chunk->tag & GC_TAG_ROOT) {
+				gc_mark_alloc(chunk->ptr);
+			}
 			chunk = chunk->next;
 		}
 	}
@@ -400,7 +402,7 @@ void *_gc_realloc(void *p, size_t size) {
 	}
 	if (!p) {
 		// allocation, not reallocation
-		gc_allocation_t *alloc = gc_allocation_map_put(gc->allocs, q, size);
+		gc_allocation_t *alloc = gc_allocation_map_put(gc->allocs, gc_allocation_new(q, size));
 		return alloc->ptr;
 	}
 	if (p == q) {
@@ -410,7 +412,7 @@ void *_gc_realloc(void *p, size_t size) {
 	else {
 		// successful reallocation w/ copy
 		gc_allocation_map_remove(gc->allocs, p, true);
-		gc_allocation_map_put(gc->allocs, q, size);
+		gc_allocation_map_put(gc->allocs, gc_allocation_new(q, size));
 	}
 	return q;
 }
@@ -429,7 +431,7 @@ void _gc_start(void *bos) {
 	// Create allocation map with no downsizing
 	// Capacity must be a power of two
 	gc->allocs = gc_allocation_map_new(1024 * 1024, 1024 * 1024, 0.5, 0.0, 0.8);
-	gc->roots = gc_allocation_map_new(1024, 1024, 0.5, 0.0, 0.8);
+	// gc->roots = gc_allocation_map_new(1024, 1024, 0.5, 0.0, 0.8);
 }
 
 void _gc_pause() {
