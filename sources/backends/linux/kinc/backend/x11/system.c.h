@@ -974,7 +974,8 @@ void kinc_x11_mouse_set_cursor(int cursorIndex) {
 		Cursor cursor;
 		switch (cursorIndex) {
 		case 0: {
-			cursor = xlib.XcursorLibraryLoadCursor(x11_ctx.display, "arrow");
+			// cursor = xlib.XcursorLibraryLoadCursor(x11_ctx.display, "arrow");
+			cursor = xlib.XcursorLibraryLoadCursor(x11_ctx.display, "left_ptr");
 			break;
 		}
 		case 1: {
