@@ -674,7 +674,13 @@ void ui_draw_combo(bool begin /*= true*/) {
 
 	ui_begin_region(current, current->combo_selected_x, current->combo_selected_y, current->combo_selected_w);
 
-	ui_draw_shadow(current->_x, current->_y, current->_w, combo_h);
+	if (unroll_up) {
+		float off = current->combo_selected_label != NULL ? UI_ELEMENT_H() / UI_SCALE() : 0.0;
+		ui_draw_shadow(current->_x, current->_y - combo_h - off, current->_w, combo_h);
+	}
+	else {
+		ui_draw_shadow(current->_x, current->_y, current->_w, combo_h);
+	}
 
 	if (current->is_key_pressed || current->input_wheel_delta != 0) {
 		int arrow_up = current->is_key_pressed && current->key_code == (unroll_up ? KINC_KEY_DOWN : KINC_KEY_UP);
