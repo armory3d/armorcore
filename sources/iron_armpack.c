@@ -490,3 +490,108 @@ int armpack_size_f32() {
 int armpack_size_bool() {
 	return 1; // u8 tag
 }
+
+static char *read_string_alloc() {
+	char *s = read_string();
+	char *allocated = gc_alloc(string_length + 1);
+	memcpy(allocated, s, string_length);
+	allocated[string_length] = '\0';
+	return allocated;
+}
+
+any_map_t *_armpack_decode_to_map() {
+	any_map_t *result = any_map_create();
+	int32_t count = read_i32();
+
+	for (int i = 0; i < count; i++) {
+		read_u8(); // 0xdb string
+		char *key = read_string_alloc();
+
+		uint8_t flag = read_u8();
+		switch (flag) {
+			case 0xc0: // NULL
+				any_map_set(result, key, NULL);
+				break;
+			case 0xc2: // false
+				any_map_set(result, key, (void *)0);
+				break;
+			case 0xc3: // true
+				any_map_set(result, key, (void *)1);
+				break;
+			case 0xca: { // f32
+				float *fvalue = gc_alloc(sizeof(float));
+				*fvalue = read_f32();
+				any_map_set(result, key, fvalue);
+				break;
+			}
+			case 0xd2: { // i32
+				int32_t *ivalue = gc_alloc(sizeof(int32_t));
+				*ivalue = read_i32();
+				any_map_set(result, key, ivalue);
+				break;
+			}
+			case 0xdb: // string
+				any_map_set(result, key, read_string_alloc());
+				break;
+			case 0xdf: { // map
+				any_map_t *nested_map = _armpack_decode_to_map();
+				any_map_set(result, key, nested_map);
+				break;
+			}
+			case 0xdd: { // array
+				int32_t array_count = read_i32();
+				uint8_t element_flag = read_u8();
+				if (element_flag == 0xca) { // f32
+					f32_array_t *array = f32_array_create(array_count);
+					for (int j = 0; j < array_count; j++) {
+						array->buffer[j] = read_f32();
+					}
+					any_map_set(result, key, array);
+				}
+				else if (element_flag == 0xd2) { // i32
+					i32_array_t *array = i32_array_create(array_count);
+					for (int j = 0; j < array_count; j++) {
+						array->buffer[j] = read_i32();
+					}
+					any_map_set(result, key, array);
+				}
+				else if (element_flag == 0xdb) { // string
+					ei--;
+					char_ptr_array_t *array = char_ptr_array_create(array_count);
+					for (int j = 0; j < array_count; j++) {
+						read_u8(); // flag
+						array->buffer[j] = read_string_alloc();
+					}
+					any_map_set(result, key, array);
+				}
+				else if (element_flag == 0xdf) { // map
+					ei--;
+					any_array_t *array = any_array_create(array_count);
+					for (int j = 0; j < array_count; j++) {
+						read_u8(); // flag
+						array->buffer[j] = _armpack_decode_to_map();
+					}
+					any_map_set(result, key, array);
+				}
+				break;
+			}
+			case 0xc6: { // buffer_t (deprecated)
+				int32_t buffer_size = read_i32();
+				buffer_t *buffer = buffer_create(buffer_size);
+				for (int j = 0; j < buffer_size; j++) {
+					buffer->buffer[j] = read_u8();
+				}
+				any_map_set(result, key, buffer);
+			}
+		}
+	}
+
+	return result;
+}
+
+any_map_t *armpack_decode_to_map(buffer_t *b) {
+	encoded = b->buffer;
+	ei = 0;
+	read_u8(); // Must be 0xdf for a map
+	return _armpack_decode_to_map();
+}

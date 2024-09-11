@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "iron_array.h"
+#include "iron_map.h"
 
 #ifdef __GNUC__
 #define PACK(__Declaration__) __Declaration__ __attribute__((__packed__))
@@ -17,6 +18,7 @@
 #endif
 
 void *armpack_decode(buffer_t *b);
+any_map_t *armpack_decode_to_map(buffer_t *b);
 
 void armpack_encode_start(void *encoded);
 int armpack_encode_end();
