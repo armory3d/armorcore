@@ -402,16 +402,7 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 	}
 
 	// Shadow
-	if (current->ops->theme->SHADOWS) {
-		const float max_offset = 4.0 * UI_SCALE();
-		const int layers = 4;
-		for (int i = 0; i < layers; i++) {
-			float offset = (max_offset / layers) * (i + 1);
-			float alpha = 0.1 - (0.1 / layers) * i;
-			arm_g2_set_color(ui_color(0, 0, 0, alpha * 255));
-			ui_draw_rect(true, nx + offset, ny + offset, w + (max_offset - offset) * 2, h + (max_offset - offset) * 2);
-		}
-	}
+	ui_draw_shadow(nx, ny, w, h);
 
 	// Outline
 	arm_g2_set_color(ui_is_selected(node) ? current->ops->theme->LABEL_COL : current->ops->theme->CONTEXT_COL);

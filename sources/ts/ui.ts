@@ -249,7 +249,9 @@ declare function ui_row(r: f32[]): void;
 declare function ui_handle_create(): ui_handle_t;
 declare function ui_fill(x: i32, y: i32, w: i32, h: i32, color: i32): void;
 declare function ui_rect(x: i32, y: i32, w: i32, h: i32, color: i32, strength: f32): void;
+declare function ui_draw_shadow(x: i32, y: i32, w: i32, h: i32): void;
 declare function ui_draw_rect(filled: bool, x: i32, y: i32, w: i32, h: i32): void;
+declare function ui_draw_round_bottom(x: i32, y: i32, w: i32): void;
 declare function ui_begin_menu(): void;
 declare function ui_end_menu(): void;
 declare function ui_menu_button(s: string): bool;
@@ -454,20 +456,15 @@ enum ui_state_t {
 
 let ui_theme_keys: string[] = [
 	"WINDOW_BG_COL",
-	"WINDOW_TINT_COL",
-	"ACCENT_COL",
-	"ACCENT_HOVER_COL",
+	"HOVER_COL",
 	"ACCENT_SELECT_COL",
 	"BUTTON_COL",
-	"BUTTON_TEXT_COL",
-	"BUTTON_HOVER_COL",
 	"BUTTON_PRESSED_COL",
 	"TEXT_COL",
 	"LABEL_COL",
 	"SEPARATOR_COL",
 	"HIGHLIGHT_COL",
 	"CONTEXT_COL",
-	"PANEL_BG_COL",
 	"FONT_SIZE",
 	"ELEMENT_W",
 	"ELEMENT_H",
@@ -482,7 +479,6 @@ let ui_theme_keys: string[] = [
 	"TAB_W",
 	"FILL_WINDOW_BG",
 	"FILL_BUTTON_BG",
-	"FILL_ACCENT_BG",
 	"LINK_STYLE",
 	"FULL_TABS",
 	"ROUND_CORNERS",

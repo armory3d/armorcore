@@ -185,12 +185,12 @@ int ui_inline_radio(ui_handle_t *handle, char_ptr_array_t *texts, int align) {
 
 	for (int i = 0; i < texts->length; ++i) {
 		if (handle->position == i) {
-			arm_g2_set_color(current->ops->theme->ACCENT_HOVER_COL);
+			arm_g2_set_color(current->ops->theme->HIGHLIGHT_COL);
 			if (!current->enabled) ui_fade_color(0.25);
 			ui_draw_rect(true, current->_x + step * i, current->_y + current->button_offset_y, step, UI_BUTTON_H());
 		}
 		else if (hovered == i) {
-			arm_g2_set_color(current->ops->theme->ACCENT_COL);
+			arm_g2_set_color(current->ops->theme->BUTTON_COL);
 			if (!current->enabled) ui_fade_color(0.25);
 			ui_draw_rect(false, current->_x + step * i, current->_y + current->button_offset_y, step, UI_BUTTON_H());
 		}
@@ -550,7 +550,7 @@ char *ui_text_area(ui_handle_t *handle, int align, bool editable, char *label, b
 	if (ui_text_area_line_numbers) {
 		float _y = current->_y;
 		int _TEXT_COL = current->ops->theme->TEXT_COL;
-		current->ops->theme->TEXT_COL = current->ops->theme->ACCENT_COL;
+		current->ops->theme->TEXT_COL = current->ops->theme->BUTTON_COL;
 		int max_length = ceil(log(line_count + 0.5) / log(10)); // Express log_10 with natural log
 		char s[64];
 		for (int i = 0; i < line_count; ++i) {
