@@ -1199,8 +1199,9 @@ void ui_node_canvas(ui_nodes_t *nodes, ui_node_canvas_t *canvas) {
 		current->_y = ui_popup_y;
 		current->_w = ui_popup_w;
 
-		ui_fill(-6, -6, current->_w / UI_SCALE() + 12, ui_popup_h + 12, current->ops->theme->ACCENT_SELECT_COL);
-		ui_fill(-5, -5, current->_w / UI_SCALE() + 10, ui_popup_h + 10, current->ops->theme->SEPARATOR_COL);
+		ui_draw_shadow(current->_x - 5, current->_y - 5, current->_w + 10, ui_popup_h * UI_SCALE() + 10);
+		arm_g2_set_color(current->ops->theme->SEPARATOR_COL);
+		ui_draw_rect(true, current->_x - 5, current->_y - 5, current->_w + 10, ui_popup_h * UI_SCALE() + 10);
 		(*ui_popup_commands)(current, ui_popup_data, ui_popup_data2);
 
 		bool hide = (current->input_started || current->input_started_r) && (current->input_x - wx < ui_popup_x - 6 || current->input_x - wx > ui_popup_x + ui_popup_w + 6 || current->input_y - wy < ui_popup_y - 6 || current->input_y - wy > ui_popup_y + ui_popup_h * UI_SCALE() + 6);
