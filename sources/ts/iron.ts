@@ -366,7 +366,6 @@ declare function iron_language(): string;
 declare function iron_obj_parse(file_bytes: buffer_t, split_code: i32, start_pos: i32, udim: bool): any;
 
 declare function armpack_decode(b: buffer_t): any;
-declare function armpack_decode_to_map(b: buffer_t): map_t<string, any>;
 declare function armpack_encode_start(encoded: any): void;
 declare function armpack_encode_end(): i32;
 declare function armpack_encode_map(count: u32): void;
@@ -389,8 +388,11 @@ declare function armpack_size_string(str: string): i32;
 declare function armpack_size_i32(): i32;
 declare function armpack_size_f32(): i32;
 declare function armpack_size_bool(): i32;
+declare function armpack_decode_to_map(b: buffer_t): map_t<string, any>;
+declare function armpack_map_get_f64(map: map_t<string, any>, key: string): f64;
+declare function armpack_map_get_i64(map: map_t<string, any>, key: string): i64;
 
-declare type audio_channel_t {
+declare type audio_channel_t = {
 	sound: any; // kinc_a1_sound_t
 	position: f32;
 	loop: bool;

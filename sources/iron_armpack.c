@@ -499,6 +499,12 @@ static char *read_string_alloc() {
 	return allocated;
 }
 
+typedef union ptr_storage {
+	void *p;
+	double f;
+	int64_t i;
+} ptr_storage_t;
+
 any_map_t *_armpack_decode_to_map() {
 	any_map_t *result = any_map_create();
 	int32_t count = read_i32();
@@ -509,30 +515,38 @@ any_map_t *_armpack_decode_to_map() {
 
 		uint8_t flag = read_u8();
 		switch (flag) {
-			case 0xc0: // NULL
+			case 0xc0: { // NULL
 				any_map_set(result, key, NULL);
 				break;
-			case 0xc2: // false
-				any_map_set(result, key, (void *)0);
+			}
+			case 0xc2: { // false
+				ptr_storage_t s;
+				s.i = 0;
+				any_map_set(result, key, s.p);
 				break;
-			case 0xc3: // true
-				any_map_set(result, key, (void *)1);
+			}
+			case 0xc3: { // true
+				ptr_storage_t s;
+				s.i = 1;
+				any_map_set(result, key, s.p);
 				break;
+			}
 			case 0xca: { // f32
-				float *fvalue = gc_alloc(sizeof(float));
-				*fvalue = read_f32();
-				any_map_set(result, key, fvalue);
+				ptr_storage_t s;
+				s.f = read_f32();
+				any_map_set(result, key, s.p);
 				break;
 			}
 			case 0xd2: { // i32
-				int32_t *ivalue = gc_alloc(sizeof(int32_t));
-				*ivalue = read_i32();
-				any_map_set(result, key, ivalue);
+				ptr_storage_t s;
+				s.i = read_i32();
+				any_map_set(result, key, s.p);
 				break;
 			}
-			case 0xdb: // string
+			case 0xdb: { // string
 				any_map_set(result, key, read_string_alloc());
 				break;
+			}
 			case 0xdf: { // map
 				any_map_t *nested_map = _armpack_decode_to_map();
 				any_map_set(result, key, nested_map);
@@ -555,6 +569,13 @@ any_map_t *_armpack_decode_to_map() {
 					}
 					any_map_set(result, key, array);
 				}
+				else if (element_flag == 0xc4) { // u8
+					u8_array_t *array = u8_array_create(array_count);
+					for (int j = 0; j < array_count; j++) {
+						array->buffer[j] = read_u8();
+					}
+					any_map_set(result, key, array);
+				}
 				else if (element_flag == 0xdb) { // string
 					ei--;
 					char_ptr_array_t *array = char_ptr_array_create(array_count);
@@ -570,6 +591,20 @@ any_map_t *_armpack_decode_to_map() {
 					for (int j = 0; j < array_count; j++) {
 						read_u8(); // flag
 						array->buffer[j] = _armpack_decode_to_map();
+					}
+					any_map_set(result, key, array);
+				}
+				else if (element_flag == 0xc6) { // buffer_t (deprecated)
+				ei--;
+					any_array_t *array = any_array_create(array_count);
+					for (int j = 0; j < array_count; j++) {
+						read_u8(); // flag
+						int32_t buffer_size = read_i32();
+						buffer_t *buffer = buffer_create(buffer_size);
+						for (int k = 0; k < buffer_size; k++) {
+							buffer->buffer[k] = read_u8();
+						}
+						array->buffer[j] = buffer;
 					}
 					any_map_set(result, key, array);
 				}
@@ -594,4 +629,22 @@ any_map_t *armpack_decode_to_map(buffer_t *b) {
 	ei = 0;
 	read_u8(); // Must be 0xdf for a map
 	return _armpack_decode_to_map();
+}
+
+double armpack_map_get_f64(any_map_t *map, char *key) {
+	ptr_storage_t ps;
+	ps.p = any_map_get(map, key);
+	if (ps.p == NULL) {
+		return 0.0;
+	}
+	return ps.f;
+}
+
+int64_t armpack_map_get_i64(any_map_t *map, char *key) {
+	ptr_storage_t ps;
+	ps.p = any_map_get(map, key);
+	if (ps.p == NULL) {
+		return 0;
+	}
+	return ps.i;
 }

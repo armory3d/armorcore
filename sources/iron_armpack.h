@@ -18,7 +18,6 @@
 #endif
 
 void *armpack_decode(buffer_t *b);
-any_map_t *armpack_decode_to_map(buffer_t *b);
 
 void armpack_encode_start(void *encoded);
 int armpack_encode_end();
@@ -43,6 +42,10 @@ int armpack_size_string(char *str);
 int armpack_size_i32();
 int armpack_size_f32();
 int armpack_size_bool();
+
+any_map_t *armpack_decode_to_map(buffer_t *b);
+double armpack_map_get_f64(any_map_t *map, char *key);
+int64_t armpack_map_get_i64(any_map_t *map, char *key);
 
 /* JS object:
 
