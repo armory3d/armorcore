@@ -3208,28 +3208,28 @@ class Project {
 		}
 	}
 
-	addFile(file, options) {
+	add_cfiles(file, options) {
 		this.includes.push({ file: file, options: options });
 	}
 
-	addDefine(define) {
+	add_define(define) {
 		if (contains_define(this.defines, define)) {
 			return;
 		}
 		this.defines.push(define);
 	}
 
-	addIncludeDir(include) {
+	add_include_dir(include) {
 		if (this.includedirs.includes(include))
 			return;
 		this.includedirs.push(include);
 	}
 
-	addLib(lib) {
+	add_lib(lib) {
 		this.libs.push(lib);
 	}
 
-	addAssets(match, options) {
+	add_assets(match, options) {
 		if (!options)
 			options = {};
 		if (!path_isabs(match)) {
@@ -3242,11 +3242,11 @@ class Project {
 		this.asset_matchers.push({ match: match, options: options });
 	}
 
-	addSources(source) {
+	add_tsfiles(source) {
 		this.sources.push(path_resolve(path_join(this.basedir, source)));
 	}
 
-	addShaders(match, options) {
+	add_shaders(match, options) {
 		if (!options)
 			options = {};
 		if (!path_isabs(match)) {
@@ -3287,7 +3287,7 @@ class Project {
 		return this.debugdir;
 	}
 
-	addProject(directory) {
+	add_project(directory) {
 		let from = path_isabs(directory) ? directory : path_join(this.basedir, directory);
 		let project = load_project(from, false);
 		this.subProjects.push(project);
@@ -3302,7 +3302,7 @@ class Project {
 		let project = load_project(path_resolve(directory), true);
 		let defines = [];
 		for (let define of defines) {
-			project.addDefine(define);
+			project.add_define(define);
 		}
 		return project;
 	}
@@ -3313,7 +3313,7 @@ function export_koremake_project() {
 
 	let project = Project.create(".");
 	if (shader_lang(goptions.target) === 'metal') {
-		project.addFile(path_join("build", 'sources', '*'), {});
+		project.add_cfiles(path_join("build", 'sources', '*'), {});
 	}
 	project.search_files(undefined);
 	project.internal_flatten();

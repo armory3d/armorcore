@@ -1,9 +1,9 @@
 let project = new Project('to_spirv');
 
-project.addDefine('KRAFIX_LIBRARY');
-project.addFile('to_spirv.cpp');
+project.add_define('KRAFIX_LIBRARY');
+project.add_cfiles('to_spirv.cpp');
 
-project.addIncludeDir('glslang');
-project.addFile('glslang/**');
+project.add_include_dir('glslang');
+project.add_cfiles('glslang/**');
 
 return project;

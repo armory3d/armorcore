@@ -3,43 +3,43 @@ let project = new Project("amake");
 
 {
 	// alang
-	project.addDefine("NO_GC");
-	project.addDefine("NO_IRON_API");
-	project.addDefine("NO_KINC_START");
-	project.addSources("./"); // alang.ts
-	project.addIncludeDir("./"); // iron.h
-	project.addFile("build/iron.c");
-	project.addIncludeDir("../../sources");
-	project.addFile("../../sources/iron_string.c");
-	project.addFile("../../sources/iron_array.c");
-	project.addFile("../../sources/iron_map.c");
-	project.addFile("../../sources/iron_armpack.c");
-	project.addFile("../../sources/iron_json.c");
-	project.addFile("../../sources/iron_gc.c");
+	project.add_define("NO_GC");
+	project.add_define("NO_IRON_API");
+	project.add_define("NO_KINC_START");
+	project.add_tsfiles("./"); // alang.ts
+	project.add_include_dir("./"); // iron.h
+	project.add_cfiles("build/iron.c");
+	project.add_include_dir("../../sources");
+	project.add_cfiles("../../sources/iron_string.c");
+	project.add_cfiles("../../sources/iron_array.c");
+	project.add_cfiles("../../sources/iron_map.c");
+	project.add_cfiles("../../sources/iron_armpack.c");
+	project.add_cfiles("../../sources/iron_json.c");
+	project.add_cfiles("../../sources/iron_gc.c");
 }
 
-project.addIncludeDir("../../sources/libs");
-project.addFile("../../sources/libs/quickjs/*.c");
-project.addFile("main.c");
+project.add_include_dir("../../sources/libs");
+project.add_cfiles("../../sources/libs/quickjs/*.c");
+project.add_cfiles("main.c");
 
 if (platform === 'linux') {
 	// quickjs
-	project.addLib("m");
-	project.addDefine("_GNU_SOURCE");
-	project.addDefine("environ=__environ");
-	project.addDefine("sighandler_t=__sighandler_t");
+	project.add_lib("m");
+	project.add_define("_GNU_SOURCE");
+	project.add_define("environ=__environ");
+	project.add_define("sighandler_t=__sighandler_t");
 }
 else if (platform === "windows") {
 	// quickjs
-	project.addDefine("WIN32_LEAN_AND_MEAN");
-	project.addDefine("_WIN32_WINNT=0x0602");
+	project.add_define("WIN32_LEAN_AND_MEAN");
+	project.add_define("_WIN32_WINNT=0x0602");
 
 	// hlslbin
-	project.addLib("d3dcompiler");
-	project.addLib("dxguid");
+	project.add_lib("d3dcompiler");
+	project.add_lib("dxguid");
 }
 else if (platform === "macos") {
-	project.addFile("../../sources/backends/macos/kinc/backend/mac.plist");
+	project.add_cfiles("../../sources/backends/macos/kinc/backend/mac.plist");
 }
 
 // QuickJS changes:
