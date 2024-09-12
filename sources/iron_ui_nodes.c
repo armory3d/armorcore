@@ -163,12 +163,20 @@ float ui_p(float f) {
 }
 
 ui_node_t *ui_get_node(ui_node_array_t *nodes, int id) {
-	for (int i = 0; i < nodes->length; ++i) if (nodes->buffer[i]->id == id) return nodes->buffer[i];
+	for (int i = 0; i < nodes->length; ++i) {
+		if (nodes->buffer[i]->id == id) {
+			return nodes->buffer[i];
+		}
+	}
 	return NULL;
 }
 
 int ui_get_node_index(ui_node_t **nodes, int nodes_count, int id) {
-	for (int i = 0; i < nodes_count; ++i) if (nodes[i]->id == id) return i;
+	for (int i = 0; i < nodes_count; ++i) {
+		if (nodes[i]->id == id) {
+			return i;
+		}
+	}
 	return -1;
 }
 
@@ -258,7 +266,7 @@ ui_canvas_control_t *ui_on_default_canvas_control() {
 void ui_draw_link(float x1, float y1, float x2, float y2, bool highlight) {
 	ui_t *current = ui_get_current();
 	int c1 = current->ops->theme->LABEL_COL;
-	int c2 = current->ops->theme->ACCENT_SELECT_COL;
+	int c2 = current->ops->theme->ACCENT_COL;
 	int c = highlight ? c1 : c2;
 	arm_g2_set_color(ui_color(ui_color_r(c), ui_color_g(c), ui_color_b(c), 210));
 	if (current->ops->theme->LINK_STYLE == UI_LINK_STYLE_LINE) {
@@ -300,7 +308,9 @@ void ui_remove_node(ui_node_t *n, ui_node_canvas_t *canvas) {
 		if (l->from_id == n->id || l->to_id == n->id) {
 			ui_remove_link_at(canvas, i);
 		}
-		else i++;
+		else {
+			i++;
+		}
 	}
 	ui_remove_node_at(canvas, ui_get_node_index(canvas->nodes->buffer, canvas->nodes->length, n->id));
 	if (ui_nodes_on_node_remove != NULL) {
@@ -405,7 +415,7 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 	ui_draw_shadow(nx, ny, w, h);
 
 	// Outline
-	arm_g2_set_color(ui_is_selected(node) ? current->ops->theme->LABEL_COL : current->ops->theme->CONTEXT_COL);
+	arm_g2_set_color(ui_is_selected(node) ? current->ops->theme->LABEL_COL : current->ops->theme->PRESSED_COL);
 	ui_draw_rect(true, nx - 1, ny - 1, w + 2, h + 2);
 
 	// Body
@@ -477,11 +487,17 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 
 			ui_handle_t *h = ui_nest(nhandle, buti);
 			ui_handle_t *h0 = ui_nest(h, 0);
-			if (h0->init) h0->value = val[0];
+			if (h0->init) {
+				h0->value = val[0];
+			}
 			ui_handle_t *h1 = ui_nest(h, 1);
-			if (h1->init) h1->value = val[1];
+			if (h1->init) {
+				h1->value = val[1];
+			}
 			ui_handle_t *h2 = ui_nest(h, 2);
-			if (h2->init) h2->value = val[2];
+			if (h2->init) {
+				h2->value = val[2];
+			}
 
 			val[0] = ui_slider(h0, "X", min, max, true, 100, true, UI_ALIGN_LEFT, true);
 			val[1] = ui_slider(h1, "Y", min, max, true, 100, true, UI_ALIGN_LEFT, true);
@@ -504,7 +520,9 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 			float text_off = current->ops->theme->TEXT_OFFSET;
 			current->ops->theme->TEXT_OFFSET = 6;
 			ui_handle_t *soc_handle = ui_nest(nhandle, buti);
-			if (soc_handle->init) soc_handle->value = ((float *)soc->default_value->buffer)[0];
+			if (soc_handle->init) {
+				soc_handle->value = ((float *)soc->default_value->buffer)[0];
+			}
 			((float *)soc->default_value->buffer)[0] = ui_slider(soc_handle, "Value", min, max, true, prec, true, UI_ALIGN_LEFT, true);
 			current->ops->theme->TEXT_OFFSET = text_off;
 		}
@@ -515,7 +533,9 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 			current->_w = w;
 			ui_node_socket_t *soc = but->output >= 0 ? node->outputs->buffer[but->output] : NULL;
 			ui_handle_t *h = ui_nest(nhandle, buti);
-			if (h->init) h->text = soc != NULL ? soc->default_value->buffer : but->default_value->buffer != NULL ? but->default_value->buffer : "";
+			if (h->init) {
+				h->text = soc != NULL ? soc->default_value->buffer : but->default_value->buffer != NULL ? but->default_value->buffer : "";
+			}
 			but->default_value->buffer = ui_text_input(h, ui_tr(but->name), UI_ALIGN_LEFT, true, false);
 			but->default_value->length = strlen(but->default_value->buffer) + 1;
 			if (soc != NULL) {
@@ -580,7 +600,9 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 			current->_y = ny;
 			current->_w = w;
 			ui_handle_t *h = ui_nest(nhandle, buti);
-			if (h->init) h->selected = ((uint8_t *)but->default_value->buffer)[0];
+			if (h->init) {
+				h->selected = ((uint8_t *)but->default_value->buffer)[0];
+			}
 			((uint8_t *)but->default_value->buffer)[0] = ui_check(h, ui_tr(but->name), "");
 		}
 		else if (strcmp(but->type, "CUSTOM") == 0) { // Calls external function for custom button drawing
@@ -614,7 +636,9 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 
 			ui_handle_t *_handle = ui_nest(nhandle, ui_max_buttons);
 			ui_handle_t *soc_handle = ui_nest(_handle, i);
-			if (soc_handle->init) soc_handle->value = ((float *)soc->default_value->buffer)[0];
+			if (soc_handle->init) {
+				soc_handle->value = ((float *)soc->default_value->buffer)[0];
+			}
 			((float *)soc->default_value->buffer)[0] = ui_slider(soc_handle, ui_tr(inp->name), min, max, true, prec, true, UI_ALIGN_LEFT, true);
 			current->ops->theme->TEXT_OFFSET = text_off;
 		}
@@ -627,7 +651,9 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 			current->ops->theme->TEXT_OFFSET = 6;
 			ui_handle_t *_handle = ui_nest(nhandle, ui_max_buttons);
 			ui_handle_t *h = ui_nest(_handle, i);
-			if (h->init) strcpy(h->text, soc->default_value->buffer);
+			if (h->init) {
+				strcpy(h->text, soc->default_value->buffer);
+			}
 			soc->default_value->buffer = ui_text_input(h, ui_tr(inp->name), UI_ALIGN_LEFT, true, false);
 			current->ops->theme->TEXT_OFFSET = text_off;
 		}
@@ -673,11 +699,17 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 			ui_handle_t *h = ui_nest(nhandle, ui_max_buttons);
 			ui_handle_t *hi = ui_nest(h, i);
 			ui_handle_t *h0 = ui_nest(hi, 0);
-			if (h0->init) h0->value = val[0];
+			if (h0->init) {
+				h0->value = val[0];
+			}
 			ui_handle_t *h1 = ui_nest(hi, 1);
-			if (h1->init) h1->value = val[1];
+			if (h1->init) {
+				h1->value = val[1];
+			}
 			ui_handle_t *h2 = ui_nest(hi, 2);
-			if (h2->init) h2->value = val[2];
+			if (h2->init) {
+				h2->value = val[2];
+			}
 			val[0] = ui_slider(h0, "X", min, max, true, 100, true, UI_ALIGN_LEFT, true);
 			val[1] = ui_slider(h1, "Y", min, max, true, 100, true, UI_ALIGN_LEFT, true);
 			val[2] = ui_slider(h2, "Z", min, max, true, 100, true, UI_ALIGN_LEFT, true);
@@ -852,7 +884,9 @@ void ui_node_canvas(ui_nodes_t *nodes, ui_node_canvas_t *canvas) {
 		// Cull
 		if (UI_NODE_X(node) > current->_window_w || UI_NODE_X(node) + UI_NODE_W(node) < 0 ||
 			UI_NODE_Y(node) > current->_window_h || UI_NODE_Y(node) + UI_NODE_H(canvas, node) < 0) {
-			if (!ui_is_selected(node)) continue;
+			if (!ui_is_selected(node)) {
+				continue;
+			}
 		}
 
 		ui_node_socket_t **inps = node->inputs->buffer;
@@ -925,7 +959,9 @@ void ui_node_canvas(ui_nodes_t *nodes, ui_node_canvas_t *canvas) {
 								break;
 							}
 						}
-						if (current_nodes->link_drag_id != -1) break;
+						if (current_nodes->link_drag_id != -1) {
+							break;
+						}
 						// New link from input
 						ui_node_link_t *l = (ui_node_link_t *)malloc(sizeof(ui_node_link_t));
 						l->id = ui_next_link_id(canvas->links);

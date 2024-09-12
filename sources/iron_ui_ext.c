@@ -99,12 +99,16 @@ char *ui_file_browser(ui_handle_t *handle, bool folders_only) {
 	const char *system_id = kinc_system_id();
 	if (strcmp(system_id, "Windows") == 0) {
 		strcpy(cmd, "dir /b ");
-		if (folders_only) strcat(cmd, "/ad ");
+		if (folders_only) {
+			strcat(cmd, "/ad ");
+		}
 		sep = "\\";
 		handle->text = string_replace_all(handle->text, "\\\\", "\\");
 		handle->text = string_replace_all(handle->text, "\r", "");
 	}
-	if (handle->text[0] == '\0') ui_init_path(handle, system_id);
+	if (handle->text[0] == '\0') {
+		ui_init_path(handle, system_id);
+	}
 
 	char save[256];
 	strcpy(save, kinc_internal_get_files_location());
@@ -123,7 +127,9 @@ char *ui_file_browser(ui_handle_t *handle, bool folders_only) {
 	strcpy(last_path, handle->text);
 
 	kinc_file_reader_t reader;
-	if (!kinc_file_reader_open(&reader, save, KINC_FILE_TYPE_ASSET)) return NULL;
+	if (!kinc_file_reader_open(&reader, save, KINC_FILE_TYPE_ASSET)) {
+		return NULL;
+	}
 	int reader_size = (int)kinc_file_reader_size(&reader);
 
 	char str[2048]; // reader_size
@@ -141,7 +147,9 @@ char *ui_file_browser(ui_handle_t *handle, bool folders_only) {
 		handle->changed = current->changed = true;
 		handle->text[strrchr(handle->text, sep[0]) - handle->text] = 0;
 		// Drive root
-		if (strlen(handle->text) == 2 && handle->text[1] == ':') strcat(handle->text, sep);
+		if (strlen(handle->text) == 2 && handle->text[1] == ':') {
+			strcat(handle->text, sep);
+		}
 	}
 
 	// Directory contents
@@ -151,7 +159,9 @@ char *ui_file_browser(ui_handle_t *handle, bool folders_only) {
 		if (f[0] == '\0' || f[0] == '.') continue; // Skip hidden
 		if (ui_button(f, UI_ALIGN_LEFT, "")) {
 			handle->changed = current->changed = true;
-			if (handle->text[strlen(handle->text) - 1] != sep[0]) strcat(handle->text, sep);
+			if (handle->text[strlen(handle->text) - 1] != sep[0]) {
+				strcat(handle->text, sep);
+			}
 			strcat(handle->text, f);
 		}
 	}
@@ -181,17 +191,23 @@ int ui_inline_radio(ui_handle_t *handle, char_ptr_array_t *texts, int align) {
 		handle->position = hovered;
 		handle->changed = current->changed = true;
 	}
-	else handle->changed = false;
+	else {
+		handle->changed = false;
+	}
 
 	for (int i = 0; i < texts->length; ++i) {
 		if (handle->position == i) {
 			arm_g2_set_color(current->ops->theme->HIGHLIGHT_COL);
-			if (!current->enabled) ui_fade_color(0.25);
+			if (!current->enabled) {
+				ui_fade_color(0.25);
+			}
 			ui_draw_rect(true, current->_x + step * i, current->_y + current->button_offset_y, step, UI_BUTTON_H());
 		}
 		else if (hovered == i) {
 			arm_g2_set_color(current->ops->theme->BUTTON_COL);
-			if (!current->enabled) ui_fade_color(0.25);
+			if (!current->enabled) {
+				ui_fade_color(0.25);
+			}
 			ui_draw_rect(false, current->_x + step * i, current->_y + current->button_offset_y, step, UI_BUTTON_H());
 		}
 		arm_g2_set_color(current->ops->theme->TEXT_COL); // Text
@@ -227,7 +243,6 @@ uint32_t ui_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 }
 
 int ui_color_wheel(ui_handle_t *handle, bool alpha, float w, float h, bool color_preview, void (*picker)(void *), void *data) {
-
 	ui_t *current = ui_get_current();
 	if (w < 0) w = current->_w;
 	float r = ui_color_r(handle->color) / 255.0f;
@@ -308,19 +323,31 @@ int ui_color_wheel(ui_handle_t *handle, bool alpha, float w, float h, bool color
 	// Mouse picking for color wheel
 	float gx = ox + current->_window_x;
 	float gy = oy + current->_window_y;
-	if (current->input_started && ui_input_in_rect(gx - cwh, gy - cwh, cw, cw)) wheel_selected_handle = handle;
-	if (current->input_released && wheel_selected_handle != NULL) { wheel_selected_handle = NULL; handle->changed = current->changed = true; }
+	if (current->input_started && ui_input_in_rect(gx - cwh, gy - cwh, cw, cw)) {
+		wheel_selected_handle = handle;
+	}
+	if (current->input_released && wheel_selected_handle != NULL) {
+		wheel_selected_handle = NULL;
+		handle->changed = current->changed = true;
+	}
 	if (current->input_down && wheel_selected_handle == handle) {
 		csat = fmin(ui_dist(gx, gy, current->input_x, current->input_y), cwh) / cwh;
 		float angle = atan2(current->input_x - gx, current->input_y - gy);
-		if (angle < 0) angle = MATH_PI + (MATH_PI - fabs(angle));
+		if (angle < 0) {
+			angle = MATH_PI + (MATH_PI - fabs(angle));
+		}
 		angle = MATH_PI * 2.0 - angle;
 		chue = angle / (MATH_PI * 2.0);
 		handle->changed = current->changed = true;
 	}
 	// Mouse picking for cval
-	if (current->input_started && ui_input_in_rect(grad_tx + current->_window_x, grad_ty + current->_window_y, grad_w, grad_h)) gradient_selected_handle = handle;
-	if (current->input_released && gradient_selected_handle != NULL) { gradient_selected_handle = NULL; handle->changed = current->changed = true; }
+	if (current->input_started && ui_input_in_rect(grad_tx + current->_window_x, grad_ty + current->_window_y, grad_w, grad_h)) {
+		gradient_selected_handle = handle;
+	}
+	if (current->input_released && gradient_selected_handle != NULL) {
+		gradient_selected_handle = NULL;
+		handle->changed = current->changed = true;
+	}
 	if (current->input_down && gradient_selected_handle == handle) {
 		cval = fmax(0.01, fmin(1.0, 1.0 - (current->input_y - grad_ty - current->_window_y) / grad_h));
 		handle->changed = current->changed = true;
@@ -329,7 +356,9 @@ int ui_color_wheel(ui_handle_t *handle, bool alpha, float w, float h, bool color
 	ui_hsv_to_rgb(chue, csat, cval, ar);
 	handle->color = ui_color(round(ar[0] * 255.0), round(ar[1] * 255.0), round(ar[2] * 255.0), round(calpha * 255.0));
 
-	if (color_preview) ui_text("", UI_ALIGN_RIGHT, handle->color);
+	if (color_preview) {
+		ui_text("", UI_ALIGN_RIGHT, handle->color);
+	}
 
 	char *strings[] = {"RGB", "HSV", "Hex"};
 	char_ptr_array_t car;
@@ -398,7 +427,9 @@ int ui_color_wheel(ui_handle_t *handle, bool alpha, float w, float h, bool color
 		}
 		handle->color = strtol(hex_code, NULL, 16);
 	}
-	if (h0->changed || h1->changed || h2->changed) handle->changed = current->changed = true;
+	if (h0->changed || h1->changed || h2->changed) {
+		handle->changed = current->changed = true;
+	}
 
 	// Do not close if user clicks
 	if (current->input_released && ui_input_in_rect(current->_window_x + px, current->_window_y + py, w, h < 0 ? (current->_y - py) : h) && current->input_released) {
@@ -439,11 +470,15 @@ static void handle_line_select(ui_t *current, ui_handle_t *handle) {
 }
 
 static int ui_word_count(char *str) {
-	if (str == NULL || str[0] == '\0') return 0;
+	if (str == NULL || str[0] == '\0') {
+		return 0;
+	}
 	int i = 0;
 	int count = 1;
 	while (str[i] != '\0') {
-		if (str[i] == ' ' || str[i] == '\n') count++;
+		if (str[i] == ' ' || str[i] == '\n') {
+			count++;
+		}
 		i++;
 	}
 	return count;
@@ -456,9 +491,16 @@ static char *ui_extract_word(char *str, int word) {
 	int len = strlen(str);
 	int word_i = 0;
 	for (int i = 0; i < len; ++i) {
-		if (str[i] == ' ' || str[i] == '\n') { word_i++; continue; }
-		if (word_i < word) continue;
-		if (word_i > word) break;
+		if (str[i] == ' ' || str[i] == '\n') {
+			word_i++;
+			continue;
+		}
+		if (word_i < word) {
+			continue;
+		}
+		if (word_i > word) {
+			break;
+		}
 		temp[pos++] = str[i];
 	}
 	temp[pos] = 0;
@@ -532,7 +574,9 @@ char *ui_text_area(ui_handle_t *handle, int align, bool editable, char *label, b
 				current->cursor_x = current->highlight_anchor = cursor_pos - lines_len;
 			}
 		}
-		if (new_lines[0] != '\0') strcat(new_lines, "\n");
+		if (new_lines[0] != '\0') {
+			strcat(new_lines, "\n");
+		}
 		strcat(new_lines, line);
 		if (selected) {
 			strcpy(handle->text, ui_extract_line(new_lines, handle->position));
@@ -567,7 +611,9 @@ char *ui_text_area(ui_handle_t *handle, int align, bool editable, char *label, b
 	ui_text_coloring_t *_text_coloring = current->text_coloring;
 	current->text_coloring = ui_text_area_coloring;
 
-	if (current->input_started) text_area_selection_start = -1;
+	if (current->input_started) {
+		text_area_selection_start = -1;
+	}
 
 	for (int i = 0; i < line_count; ++i) { // Draw lines
 		char *line = ui_extract_line(lines, i);
@@ -600,7 +646,7 @@ char *ui_text_area(ui_handle_t *handle, int align, bool editable, char *label, b
 					int line_height = UI_ELEMENT_H();
 					int cursor_height = line_height - current->button_offset_y * 3.0;
 					int linew = arm_g2_string_width(current->ops->font->font_, current->font_size, line);
-					arm_g2_set_color(current->ops->theme->ACCENT_SELECT_COL);
+					arm_g2_set_color(current->ops->theme->ACCENT_COL);
 					arm_g2_fill_rect(current->_x + UI_ELEMENT_OFFSET() * 2.0, current->_y + current->button_offset_y * 1.5, linew, cursor_height);
 				}
 				ui_text(line, align, 0x00000000);

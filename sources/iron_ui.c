@@ -16,6 +16,7 @@
 #include "iron_gc.h"
 
 static ui_t *current = NULL;
+static ui_theme_t *theme;
 static bool ui_key_repeat = true; // Emulate key repeat for non-character keys
 static bool ui_dynamic_glyph_load = true; // Allow text input fields to push new glyphs into the font atlas
 static float ui_key_repeat_time = 0.0;
@@ -47,51 +48,51 @@ float UI_SCALE() {
 }
 
 float UI_ELEMENT_W() {
-	return current->ops->theme->ELEMENT_W * UI_SCALE();
+	return theme->ELEMENT_W * UI_SCALE();
 }
 
 float UI_ELEMENT_H() {
-	return current->ops->theme->ELEMENT_H * UI_SCALE();
+	return theme->ELEMENT_H * UI_SCALE();
 }
 
 float UI_ELEMENT_OFFSET() {
-	return current->ops->theme->ELEMENT_OFFSET * UI_SCALE();
+	return theme->ELEMENT_OFFSET * UI_SCALE();
 }
 
 float UI_ARROW_SIZE() {
-	return current->ops->theme->ARROW_SIZE * UI_SCALE();
+	return theme->ARROW_SIZE * UI_SCALE();
 }
 
 float UI_BUTTON_H() {
-	return current->ops->theme->BUTTON_H * UI_SCALE();
+	return theme->BUTTON_H * UI_SCALE();
 }
 
 float UI_CHECK_SIZE() {
-	return current->ops->theme->CHECK_SIZE * UI_SCALE();
+	return theme->CHECK_SIZE * UI_SCALE();
 }
 
 float UI_CHECK_SELECT_SIZE() {
-	return current->ops->theme->CHECK_SELECT_SIZE * UI_SCALE();
+	return theme->CHECK_SELECT_SIZE * UI_SCALE();
 }
 
 float UI_FONT_SIZE() {
-	return current->ops->theme->FONT_SIZE * UI_SCALE();
+	return theme->FONT_SIZE * UI_SCALE();
 }
 
 float UI_SCROLL_W() {
-	return current->ops->theme->SCROLL_W * UI_SCALE();
+	return theme->SCROLL_W * UI_SCALE();
 }
 
 float UI_SCROLL_MINI_W() {
-	return current->ops->theme->SCROLL_MINI_W * UI_SCALE();
+	return theme->SCROLL_MINI_W * UI_SCALE();
 }
 
 float UI_TEXT_OFFSET() {
-	return current->ops->theme->TEXT_OFFSET * UI_SCALE();
+	return theme->TEXT_OFFSET * UI_SCALE();
 }
 
 float UI_TAB_W() {
-	return current->ops->theme->TAB_W * UI_SCALE();
+	return theme->TAB_W * UI_SCALE();
 }
 
 float UI_HEADER_DRAG_H() {
@@ -108,6 +109,7 @@ ui_t *ui_get_current() {
 
 void ui_set_current(ui_t *_current) {
 	current = _current;
+	theme = current->ops->theme;
 }
 
 ui_handle_t *ui_handle_create() {
@@ -148,20 +150,30 @@ void ui_fade_color(float alpha) {
 
 void ui_fill(float x, float y, float w, float h, uint32_t color) {
 	arm_g2_set_color(color);
-	if (!current->enabled) ui_fade_color(0.25);
+	if (!current->enabled) {
+		ui_fade_color(0.25);
+	}
 	arm_g2_fill_rect(current->_x + x * UI_SCALE(), current->_y + y * UI_SCALE() - 1, w * UI_SCALE(), h * UI_SCALE());
 	arm_g2_set_color(0xffffffff);
 }
 
 void ui_rect(float x, float y, float w, float h, uint32_t color, float strength) {
 	arm_g2_set_color(color);
-	if (!current->enabled) ui_fade_color(0.25);
+	if (!current->enabled) {
+		ui_fade_color(0.25);
+	}
 	arm_g2_draw_rect(current->_x + x * UI_SCALE(), current->_y + y * UI_SCALE(), w * UI_SCALE(), h * UI_SCALE(), strength);
 	arm_g2_set_color(0xffffffff);
 }
 
 void ui_draw_shadow(float x, float y, float w, float h) {
-	if (current->ops->theme->SHADOWS) {
+	if (theme->SHADOWS) {
+		// for (int i = 0; i < 8; i++) {
+		// 	float offset = i * UI_SCALE();
+		// 	float a = (8 - i + 1) * 0.01;
+		// 	arm_g2_set_color(((uint8_t)(a * 255) << 24) | (0 << 16) | (0 << 8) | 0);
+		// 	ui_draw_rect(true, x - offset, y - offset, w + offset * 2, h + offset * 2);
+		// }
 		float max_offset = 4.0 * UI_SCALE();
 		for (int i = 0; i < 4; i++) {
 			float offset = (max_offset / 4) * (i + 1);
@@ -184,7 +196,7 @@ void ui_draw_rect(bool fill, float x, float y, float w, float h) {
 
 	if (fill) {
 		int r = current->filled_round_corner_image.width;
-		if (current->ops->theme->ROUND_CORNERS && current->enabled && r > 0 && w >= r * 2.0) {
+		if (theme->ROUND_CORNERS && current->enabled && r > 0 && w >= r * 2.0) {
 			y -= 1; // Make it pixel perfect with non-round draw
 			h += 1;
 			arm_g2_draw_scaled_render_target(&current->filled_round_corner_image, x, y, r, r);
@@ -200,7 +212,7 @@ void ui_draw_rect(bool fill, float x, float y, float w, float h) {
 	}
 	else {
 		int r = current->round_corner_image.width;
-		if (current->ops->theme->ROUND_CORNERS && current->enabled && r > 0) {
+		if (theme->ROUND_CORNERS && current->enabled && r > 0) {
 			x -= 1;
 			w += 1;
 			y -= 1;
@@ -221,12 +233,12 @@ void ui_draw_rect(bool fill, float x, float y, float w, float h) {
 }
 
 void ui_draw_round_bottom(float x, float y, float w) {
-	if (current->ops->theme->ROUND_CORNERS) {
+	if (theme->ROUND_CORNERS) {
 		int r = current->filled_round_corner_image.width;
 		int h = 4;
 		y -= 1; // Make it pixel perfect with non-round draw
 		h += 1;
-		arm_g2_set_color(current->ops->theme->SEPARATOR_COL);
+		arm_g2_set_color(theme->SEPARATOR_COL);
 		arm_g2_draw_scaled_render_target(&current->filled_round_corner_image, x, y + h, r, -r);
 		arm_g2_draw_scaled_render_target(&current->filled_round_corner_image, x + w, y + h, -r, -r);
 		arm_g2_fill_rect(x + r, y, w - r * 2.0, h);
@@ -331,7 +343,7 @@ void ui_draw_string(char *text, float x_offset, float y_offset, int align, bool 
 	}
 
 	if (x_offset < 0) {
-		x_offset = current->ops->theme->TEXT_OFFSET;
+		x_offset = theme->TEXT_OFFSET;
 	}
 	x_offset *= UI_SCALE();
 	arm_g2_set_font(current->ops->font->font_, current->font_size);
@@ -462,9 +474,15 @@ void ui_end_element() {
 
 void ui_resize(ui_handle_t *handle, int w, int h) {
 	handle->redraws = 2;
-	if (handle->texture.width != 0) kinc_g4_render_target_destroy(&handle->texture);
-	if (w < 1) w = 1;
-	if (h < 1) h = 1;
+	if (handle->texture.width != 0) {
+		kinc_g4_render_target_destroy(&handle->texture);
+	}
+	if (w < 1) {
+		w = 1;
+	}
+	if (h < 1) {
+		h = 1;
+	}
 	kinc_g4_render_target_init(&handle->texture, w, h, KINC_G4_RENDER_TARGET_FORMAT_32BIT, 0, 0);
 }
 
@@ -532,9 +550,15 @@ char *ui_extract_line(char *str, int line) {
 	int len = strlen(str);
 	int line_i = 0;
 	for (int i = 0; i < len; ++i) {
-		if (str[i] == '\n') { line_i++; continue; }
-		if (line_i < line) continue;
-		if (line_i > line) break;
+		if (str[i] == '\n') {
+			line_i++; continue;
+		}
+		if (line_i < line) {
+			continue;
+		}
+		if (line_i > line) {
+			break;
+		}
 		temp[pos++] = str[i];
 	}
 	temp[pos] = 0;
@@ -551,12 +575,14 @@ char *ui_lower_case(char *dest, char *src) {
 }
 
 void ui_draw_tooltip_text(bool bind_global_g) {
-	arm_g2_set_color(current->ops->theme->TEXT_COL);
+	arm_g2_set_color(theme->TEXT_COL);
 	int line_count = ui_line_count(current->tooltip_text);
 	float tooltip_w = 0.0;
 	for (int i = 0; i < line_count; ++i) {
 		float line_tooltip_w = arm_g2_string_width(current->ops->font->font_, current->font_size, ui_extract_line(current->tooltip_text, i));
-		if (line_tooltip_w > tooltip_w) tooltip_w = line_tooltip_w;
+		if (line_tooltip_w > tooltip_w) {
+			tooltip_w = line_tooltip_w;
+		}
 	}
 	current->tooltip_x = fmin(current->tooltip_x, kinc_window_width(0) - tooltip_w - 20);
 	if (bind_global_g) arm_g2_restore_render_target();
@@ -564,17 +590,21 @@ void ui_draw_tooltip_text(bool bind_global_g) {
 	float off = 0;
 	if (current->tooltip_img != NULL) {
 		float w = current->tooltip_img->tex_width;
-		if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) w = current->tooltip_img_max_width;
+		if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) {
+			w = current->tooltip_img_max_width;
+		}
 		off = current->tooltip_img->tex_height * (w / current->tooltip_img->tex_width);
 	}
 	else if (current->tooltip_rt != NULL) {
 		float w = current->tooltip_rt->width;
-		if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) w = current->tooltip_img_max_width;
+		if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) {
+			w = current->tooltip_img_max_width;
+		}
 		off = current->tooltip_rt->height * (w / current->tooltip_rt->width);
 	}
 	arm_g2_fill_rect(current->tooltip_x, current->tooltip_y + off, tooltip_w + 20, font_height * line_count);
 	arm_g2_set_font(current->ops->font->font_, current->font_size);
-	arm_g2_set_color(current->ops->theme->BUTTON_COL);
+	arm_g2_set_color(theme->BUTTON_COL);
 	for (int i = 0; i < line_count; ++i) {
 		arm_g2_draw_string(ui_extract_line(current->tooltip_text, i), current->tooltip_x + 5, current->tooltip_y + off + i * current->font_size);
 	}
@@ -582,11 +612,15 @@ void ui_draw_tooltip_text(bool bind_global_g) {
 
 void ui_draw_tooltip_image(bool bind_global_g) {
 	float w = current->tooltip_img->tex_width;
-	if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) w = current->tooltip_img_max_width;
+	if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) {
+		w = current->tooltip_img_max_width;
+	}
 	float h = current->tooltip_img->tex_height * (w / current->tooltip_img->tex_width);
 	current->tooltip_x = fmin(current->tooltip_x, kinc_window_width(0) - w - 20);
 	current->tooltip_y = fmin(current->tooltip_y, kinc_window_height(0) - h - 20);
-	if (bind_global_g) arm_g2_restore_render_target();
+	if (bind_global_g) {
+		arm_g2_restore_render_target();
+	}
 	arm_g2_set_color(0xff000000);
 	arm_g2_fill_rect(current->tooltip_x, current->tooltip_y, w, h);
 	arm_g2_set_color(0xffffffff);
@@ -597,11 +631,15 @@ void ui_draw_tooltip_image(bool bind_global_g) {
 
 void ui_draw_tooltip_rt(bool bind_global_g) {
 	float w = current->tooltip_rt->width;
-	if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) w = current->tooltip_img_max_width;
+	if (current->tooltip_img_max_width != 0 && w > current->tooltip_img_max_width) {
+		w = current->tooltip_img_max_width;
+	}
 	float h = current->tooltip_rt->height * (w / current->tooltip_rt->width);
 	current->tooltip_x = fmin(current->tooltip_x, kinc_window_width(0) - w - 20);
 	current->tooltip_y = fmin(current->tooltip_y, kinc_window_height(0) - h - 20);
-	if (bind_global_g) arm_g2_restore_render_target();
+	if (bind_global_g) {
+		arm_g2_restore_render_target();
+	}
 	arm_g2_set_color(0xff000000);
 	arm_g2_fill_rect(current->tooltip_x, current->tooltip_y, w, h);
 	arm_g2_set_color(0xffffffff);
@@ -613,7 +651,9 @@ void ui_draw_tooltip_rt(bool bind_global_g) {
 void ui_draw_tooltip(bool bind_global_g) {
 	static char temp[1024];
 	if (current->slider_tooltip) {
-		if (bind_global_g) arm_g2_restore_render_target();
+		if (bind_global_g) {
+			arm_g2_restore_render_target();
+		}
 		arm_g2_set_font(current->ops->font->font_, current->font_size * 2);
 		sprintf(temp, "%f", round(current->scroll_handle->value * 100.0) / 100.0);
 		string_strip_trailing_zeros(temp);
@@ -621,21 +661,23 @@ void ui_draw_tooltip(bool bind_global_g) {
 		float x_off = arm_g2_string_width(current->ops->font->font_, current->font_size * 2.0, text) / 2.0;
 		float y_off = arm_g2_font_height(current->ops->font->font_, current->font_size * 2.0);
 		float x = fmin(fmax(current->slider_tooltip_x, current->input_x), current->slider_tooltip_x + current->slider_tooltip_w);
-		arm_g2_set_color(current->ops->theme->BUTTON_COL);
+		arm_g2_set_color(theme->BUTTON_COL);
 		arm_g2_fill_rect(x - x_off, current->slider_tooltip_y - y_off, x_off * 2.0, y_off);
-		arm_g2_set_color(current->ops->theme->TEXT_COL);
+		arm_g2_set_color(theme->TEXT_COL);
 		arm_g2_draw_string(text, x - x_off, current->slider_tooltip_y - y_off);
 	}
 	if (ui_touch_tooltip && current->text_selected_handle != NULL) {
-		if (bind_global_g) arm_g2_restore_render_target();
+		if (bind_global_g) {
+			arm_g2_restore_render_target();
+		}
 		arm_g2_set_font(current->ops->font->font_, current->font_size * 2.0);
 		float x_off = arm_g2_string_width(current->ops->font->font_, current->font_size * 2.0, current->text_selected) / 2.0;
 		float y_off = arm_g2_font_height(current->ops->font->font_, current->font_size * 2.0) / 2.0;
 		float x = kinc_window_width(0) / 2.0;
 		float y = kinc_window_height(0) / 3.0;
-		arm_g2_set_color(current->ops->theme->BUTTON_COL);
+		arm_g2_set_color(theme->BUTTON_COL);
 		arm_g2_fill_rect(x - x_off, y - y_off, x_off * 2.0, y_off * 2.0);
-		arm_g2_set_color(current->ops->theme->TEXT_COL);
+		arm_g2_set_color(theme->TEXT_COL);
 		arm_g2_draw_string(current->text_selected, x - x_off, y - y_off);
 	}
 
@@ -650,9 +692,15 @@ void ui_draw_tooltip(bool bind_global_g) {
 			current->tooltip_time = kinc_time();
 		}
 		if (!current->tooltip_wait && kinc_time() - current->tooltip_time > UI_TOOLTIP_DELAY()) {
-			if (current->tooltip_img != NULL) ui_draw_tooltip_image(bind_global_g);
-			else if (current->tooltip_rt != NULL) ui_draw_tooltip_rt(bind_global_g);
-			if (current->tooltip_text[0] != '\0') ui_draw_tooltip_text(bind_global_g);
+			if (current->tooltip_img != NULL) {
+				ui_draw_tooltip_image(bind_global_g);
+			}
+			else if (current->tooltip_rt != NULL) {
+				ui_draw_tooltip_rt(bind_global_g);
+			}
+			if (current->tooltip_text[0] != '\0') {
+				ui_draw_tooltip_text(bind_global_g);
+			}
 		}
 	}
 	else current->tooltip_shown = false;
@@ -662,7 +710,7 @@ void ui_draw_combo(bool begin /*= true*/) {
 	if (current->combo_selected_handle == NULL) {
 		return;
 	}
-	arm_g2_set_color(current->ops->theme->SEPARATOR_COL);
+	arm_g2_set_color(theme->SEPARATOR_COL);
 	if (begin) {
 		arm_g2_restore_render_target();
 	}
@@ -744,9 +792,9 @@ void ui_draw_combo(bool begin /*= true*/) {
 	}
 
 	current->input_enabled = true;
-	int _BUTTON_COL = current->ops->theme->BUTTON_COL;
-	int _ELEMENT_OFFSET = current->ops->theme->ELEMENT_OFFSET;
-	current->ops->theme->ELEMENT_OFFSET = 0;
+	int _BUTTON_COL = theme->BUTTON_COL;
+	int _ELEMENT_OFFSET = theme->ELEMENT_OFFSET;
+	theme->ELEMENT_OFFSET = 0;
 	float unroll_right = current->_x + current->combo_selected_w * 2.0 < kinc_window_width(0) - current->window_border_right ? 1 : -1;
 	bool reset_position = false;
 	char search[512];
@@ -758,7 +806,7 @@ void ui_draw_combo(bool begin /*= true*/) {
 		if (ui_combo_first) {
 			ui_combo_search_handle->text = "";
 		}
-		ui_fill(0, 0, current->_w / UI_SCALE(), UI_ELEMENT_H() / UI_SCALE(), current->ops->theme->SEPARATOR_COL);
+		ui_fill(0, 0, current->_w / UI_SCALE(), UI_ELEMENT_H() / UI_SCALE(), theme->SEPARATOR_COL);
 		strcpy(search, ui_text_input(ui_combo_search_handle, "", UI_ALIGN_LEFT, true, true));
 		ui_lower_case(search, search);
 		if (current->is_released) {
@@ -787,10 +835,10 @@ void ui_draw_combo(bool begin /*= true*/) {
 		if (unroll_up) {
 			current->_y -= UI_ELEMENT_H() * 2.0;
 		}
-		current->ops->theme->BUTTON_COL = i == current->combo_selected_handle->position ?
-			current->ops->theme->HIGHLIGHT_COL :
-			current->ops->theme->SEPARATOR_COL;
-		ui_fill(0, 0, current->_w / UI_SCALE(), UI_ELEMENT_H() / UI_SCALE(), current->ops->theme->SEPARATOR_COL);
+		theme->BUTTON_COL = i == current->combo_selected_handle->position ?
+			theme->HIGHLIGHT_COL :
+			theme->SEPARATOR_COL;
+		ui_fill(0, 0, current->_w / UI_SCALE(), UI_ELEMENT_H() / UI_SCALE(), theme->SEPARATOR_COL);
 		if (ui_button(current->combo_selected_texts->buffer[i], current->combo_selected_align, "")) {
 			current->combo_to_submit = i;
 			current->submit_combo_handle = current->combo_selected_handle;
@@ -804,23 +852,23 @@ void ui_draw_combo(bool begin /*= true*/) {
 			current->_y = current->combo_selected_y;
 		}
 	}
-	current->ops->theme->BUTTON_COL = _BUTTON_COL;
-	current->ops->theme->ELEMENT_OFFSET = _ELEMENT_OFFSET;
+	theme->BUTTON_COL = _BUTTON_COL;
+	theme->ELEMENT_OFFSET = _ELEMENT_OFFSET;
 
 	if (current->combo_selected_label != NULL) { // Unroll down
 		if (unroll_up) {
 			current->_y -= UI_ELEMENT_H() * 2.0;
-			ui_fill(0, 0, current->_w / UI_SCALE(), UI_ELEMENT_H() / UI_SCALE(), current->ops->theme->SEPARATOR_COL);
-			arm_g2_set_color(current->ops->theme->LABEL_COL);
-			ui_draw_string(current->combo_selected_label, current->ops->theme->TEXT_OFFSET, 0, UI_ALIGN_RIGHT, true);
+			ui_fill(0, 0, current->_w / UI_SCALE(), UI_ELEMENT_H() / UI_SCALE(), theme->SEPARATOR_COL);
+			arm_g2_set_color(theme->LABEL_COL);
+			ui_draw_string(current->combo_selected_label, theme->TEXT_OFFSET, 0, UI_ALIGN_RIGHT, true);
 			current->_y += UI_ELEMENT_H();
-			ui_fill(0, 0, current->_w / UI_SCALE(), 1.0 * UI_SCALE(), current->ops->theme->ACCENT_SELECT_COL); // Separator
+			ui_fill(0, 0, current->_w / UI_SCALE(), 1.0 * UI_SCALE(), theme->ACCENT_COL); // Separator
 		}
 		else {
-			ui_fill(0, 0, current->_w / UI_SCALE(), UI_ELEMENT_H() / UI_SCALE(), current->ops->theme->SEPARATOR_COL);
-			ui_fill(0, 0, current->_w / UI_SCALE(), 1.0 * UI_SCALE(), current->ops->theme->ACCENT_SELECT_COL); // Separator
-			arm_g2_set_color(current->ops->theme->LABEL_COL);
-			ui_draw_string(current->combo_selected_label, current->ops->theme->TEXT_OFFSET, 0, UI_ALIGN_RIGHT, true);
+			ui_fill(0, 0, current->_w / UI_SCALE(), UI_ELEMENT_H() / UI_SCALE(), theme->SEPARATOR_COL);
+			ui_fill(0, 0, current->_w / UI_SCALE(), 1.0 * UI_SCALE(), theme->ACCENT_COL); // Separator
+			arm_g2_set_color(theme->LABEL_COL);
+			ui_draw_string(current->combo_selected_label, theme->TEXT_OFFSET, 0, UI_ALIGN_RIGHT, true);
 			current->_y += UI_ELEMENT_H();
 			ui_draw_round_bottom(current->_x, current->_y - 1, current->_w);
 		}
@@ -876,7 +924,7 @@ void ui_bake_elements() {
 	arm_g2_fill_circle(r / 2.0, r / 2.0, 4.0 * UI_SCALE(), 0);
 	arm_g2_end();
 
-	if (current->ops->theme->ROUND_CORNERS) {
+	if (theme->ROUND_CORNERS) {
 		if (current->filled_round_corner_image.width != 0) {
 			kinc_g4_render_target_destroy(&current->filled_round_corner_image);
 		}
@@ -904,7 +952,7 @@ void ui_bake_elements() {
 }
 
 void ui_begin_region(ui_t *ui, int x, int y, int w) {
-	current = ui;
+	ui_set_current(ui);
 	if (!current->elements_baked) {
 		ui_bake_elements();
 	}
@@ -1020,10 +1068,14 @@ void ui_update_text_edit(int align, bool editable, bool live_update) {
 	strcpy(text, current->text_selected);
 	if (current->is_key_pressed) { // Process input
 		if (current->key_code == KINC_KEY_LEFT) { // Move cursor
-			if (current->cursor_x > 0) current->cursor_x--;
+			if (current->cursor_x > 0) {
+				current->cursor_x--;
+			}
 		}
 		else if (current->key_code == KINC_KEY_RIGHT) {
-			if (current->cursor_x < strlen(text)) current->cursor_x++;
+			if (current->cursor_x < strlen(text)) {
+				current->cursor_x++;
+			}
 		}
 		else if (editable && current->key_code == KINC_KEY_BACKSPACE) { // Remove char
 			if (current->cursor_x > 0 && current->highlight_anchor == current->cursor_x) {
@@ -1150,7 +1202,7 @@ void ui_update_text_edit(int align, bool editable, bool live_update) {
 		if (align == UI_ALIGN_RIGHT) {
 			hl_start -= arm_g2_sub_string_width(current->ops->font->font_, current->font_size, text, iend, strlen(text));
 		}
-		arm_g2_set_color(current->ops->theme->ACCENT_SELECT_COL);
+		arm_g2_set_color(theme->ACCENT_COL);
 		arm_g2_fill_rect(hl_start, current->_y + current->button_offset_y * 1.5, hlstrw, cursor_height);
 	}
 
@@ -1159,7 +1211,7 @@ void ui_update_text_edit(int align, bool editable, bool live_update) {
 	int str_length = align == UI_ALIGN_LEFT ? current->cursor_x : (strlen(text) - current->cursor_x);
 	float strw = arm_g2_sub_string_width(current->ops->font->font_, current->font_size, text, str_start, str_length);
 	float cursor_x = align == UI_ALIGN_LEFT ? current->_x + strw + off : current->_x + current->_w - strw - off;
-	arm_g2_set_color(current->ops->theme->TEXT_COL); // Cursor
+	arm_g2_set_color(theme->TEXT_COL); // Cursor
 	arm_g2_fill_rect(cursor_x, current->_y + current->button_offset_y * 1.5, 1.0 * UI_SCALE(), cursor_height);
 
 	strcpy(current->text_selected, text);
@@ -1182,26 +1234,32 @@ void ui_set_hovered_tab_name(char *name) {
 void ui_draw_tabs() {
 	current->input_x = current->restore_x;
 	current->input_y = current->restore_y;
-	if (current->current_window == NULL) return;
+	if (current->current_window == NULL) {
+		return;
+	}
 	float tab_x = 0.0;
 	float tab_y = 0.0;
 	float tab_h_min = UI_BUTTON_H() * 1.1;
 	float header_h = current->current_window->drag_enabled ? UI_HEADER_DRAG_H() : 0;
-	float tab_h = (current->ops->theme->FULL_TABS && current->tab_vertical) ? ((current->_window_h - header_h) / current->tab_count) : tab_h_min;
+	float tab_h = (theme->FULL_TABS && current->tab_vertical) ? ((current->_window_h - header_h) / current->tab_count) : tab_h_min;
 	float orig_y = current->_y;
 	current->_y = header_h;
 	current->tab_handle->changed = false;
 
 	if (current->is_ctrl_down && current->is_tab_down) { // Next tab
 		current->tab_handle->position++;
-		if (current->tab_handle->position >= current->tab_count) current->tab_handle->position = 0;
+		if (current->tab_handle->position >= current->tab_count) {
+			current->tab_handle->position = 0;
+		}
 		current->tab_handle->changed = true;
 		current->is_tab_down = false;
 	}
 
-	if (current->tab_handle->position >= current->tab_count) current->tab_handle->position = current->tab_count - 1;
+	if (current->tab_handle->position >= current->tab_count) {
+		current->tab_handle->position = current->tab_count - 1;
+	}
 
-	arm_g2_set_color(current->ops->theme->SEPARATOR_COL); // Tab background
+	arm_g2_set_color(theme->SEPARATOR_COL); // Tab background
 	if (current->tab_vertical) {
 		arm_g2_fill_rect(0, current->_y, UI_ELEMENT_W(), current->_window_h);
 	}
@@ -1209,7 +1267,7 @@ void ui_draw_tabs() {
 		arm_g2_fill_rect(0, current->_y, current->_window_w, current->button_offset_y + tab_h + 2);
 	}
 
-	arm_g2_set_color(current->ops->theme->BUTTON_COL); // Underline tab buttons
+	arm_g2_set_color(theme->BUTTON_COL); // Underline tab buttons
 	if (current->tab_vertical) {
 		arm_g2_fill_rect(UI_ELEMENT_W(), current->_y, 1, current->_window_h);
 	}
@@ -1225,7 +1283,7 @@ void ui_draw_tabs() {
 		current->_x = tab_x;
 		current->_y = base_y + tab_y;
 		current->_w = current->tab_vertical ? (UI_ELEMENT_W() - 1 * UI_SCALE()) :
-			 		  current->ops->theme->FULL_TABS ? (current->_window_w / current->tab_count) :
+			 		  theme->FULL_TABS ? (current->_window_w / current->tab_count) :
 					  (arm_g2_string_width(current->ops->font->font_, current->font_size, current->tab_names[i]) + current->button_offset_y * 2.0 + 18.0 * UI_SCALE());
 		bool released = ui_get_released(tab_h);
 		bool started = ui_get_started(tab_h);
@@ -1252,10 +1310,10 @@ void ui_draw_tabs() {
 		}
 		bool selected = current->tab_handle->position == i;
 
-		arm_g2_set_color((pushed || hover) ? current->ops->theme->HOVER_COL :
+		arm_g2_set_color((pushed || hover) ? theme->HOVER_COL :
 			current->tab_colors[i] != -1 ? current->tab_colors[i] :
-			selected ? current->ops->theme->WINDOW_BG_COL :
-			current->ops->theme->SEPARATOR_COL);
+			selected ? theme->WINDOW_BG_COL :
+			theme->SEPARATOR_COL);
 		if (current->tab_vertical) {
 			tab_y += tab_h + 1;
 		}
@@ -1264,32 +1322,34 @@ void ui_draw_tabs() {
 		}
 		// ui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w, tab_h); // Round corners
 		arm_g2_fill_rect(current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w, tab_h);
-		arm_g2_set_color(current->ops->theme->TEXT_COL);
-		if (!selected) ui_fade_color(0.65);
-		ui_draw_string(current->tab_names[i], current->ops->theme->TEXT_OFFSET, (tab_h - tab_h_min) / 2.0, (current->ops->theme->FULL_TABS || !current->tab_vertical) ? UI_ALIGN_CENTER : UI_ALIGN_LEFT, true);
+		arm_g2_set_color(theme->TEXT_COL);
+		if (!selected) {
+			ui_fade_color(0.65);
+		}
+		ui_draw_string(current->tab_names[i], theme->TEXT_OFFSET, (tab_h - tab_h_min) / 2.0, (theme->FULL_TABS || !current->tab_vertical) ? UI_ALIGN_CENTER : UI_ALIGN_LEFT, true);
 
 		if (selected) { // Hide underline for active tab
 			if (current->tab_vertical) {
 				// Hide underline
-				// arm_g2_set_color(current->ops->theme->WINDOW_BG_COL);
+				// arm_g2_set_color(theme->WINDOW_BG_COL);
 				// arm_g2_fill_rect(current->_x + current->button_offset_y + current->_w - 1, current->_y + current->button_offset_y - 1, 2, tab_h + current->button_offset_y);
 				// Highlight
-				arm_g2_set_color(current->ops->theme->HIGHLIGHT_COL);
+				arm_g2_set_color(theme->HIGHLIGHT_COL);
 				arm_g2_fill_rect(current->_x + current->button_offset_y, current->_y + current->button_offset_y - 1, 2, tab_h + current->button_offset_y);
 			}
 			else {
 				// Hide underline
-				arm_g2_set_color(current->ops->theme->WINDOW_BG_COL);
+				arm_g2_set_color(theme->WINDOW_BG_COL);
 				arm_g2_fill_rect(current->_x + current->button_offset_y, current->_y + current->button_offset_y + tab_h, current->_w, 1);
 				// Highlight
-				arm_g2_set_color(current->ops->theme->HIGHLIGHT_COL);
+				arm_g2_set_color(theme->HIGHLIGHT_COL);
 				arm_g2_fill_rect(current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w, 2);
 			}
 		}
 
 		// Tab separator
 		if (i < current->tab_count - 1) {
-			arm_g2_set_color(current->ops->theme->SEPARATOR_COL - 0x00050505);
+			arm_g2_set_color(theme->SEPARATOR_COL - 0x00050505);
 			if (current->tab_vertical) {
 				arm_g2_fill_rect(current->_x, current->_y + tab_h, current->_w, 1);
 			}
@@ -1310,7 +1370,7 @@ void ui_draw_tabs() {
 void ui_draw_arrow(bool selected) {
 	float x = current->_x + current->arrow_offset_x;
 	float y = current->_y + current->arrow_offset_y;
-	arm_g2_set_color(current->ops->theme->TEXT_COL);
+	arm_g2_set_color(theme->TEXT_COL);
 	if (selected) {
 		arm_g2_fill_triangle(x, y,
 						 x + UI_ARROW_SIZE(), y,
@@ -1327,7 +1387,7 @@ void ui_draw_tree(bool selected) {
 	float SIGN_W = 7.0 * UI_SCALE();
 	float x = current->_x + current->arrow_offset_x + 1;
 	float y = current->_y + current->arrow_offset_y + 1;
-	arm_g2_set_color(current->ops->theme->TEXT_COL);
+	arm_g2_set_color(theme->TEXT_COL);
 	if (selected) {
 		arm_g2_fill_rect(x, y + SIGN_W / 2.0 - 1, SIGN_W, SIGN_W / 8.0);
 	}
@@ -1341,15 +1401,17 @@ void ui_draw_check(bool selected, bool hover) {
 	float x = current->_x + current->check_offset_x;
 	float y = current->_y + current->check_offset_y;
 
-	arm_g2_set_color(selected ? current->ops->theme->HIGHLIGHT_COL : current->ops->theme->BUTTON_PRESSED_COL);
+	arm_g2_set_color(selected ? theme->HIGHLIGHT_COL : theme->PRESSED_COL);
 	ui_draw_rect(true, x, y, UI_CHECK_SIZE(), UI_CHECK_SIZE()); // Bg
 
-	arm_g2_set_color(hover ? current->ops->theme->HOVER_COL : current->ops->theme->BUTTON_COL);
+	arm_g2_set_color(hover ? theme->HOVER_COL : theme->BUTTON_COL);
 	ui_draw_rect(false, x, y, UI_CHECK_SIZE(), UI_CHECK_SIZE()); // Bg
 
 	if (selected) { // Check
-		arm_g2_set_color(hover ? current->ops->theme->TEXT_COL : current->ops->theme->LABEL_COL);
-		if (!current->enabled) ui_fade_color(0.25);
+		arm_g2_set_color(hover ? theme->TEXT_COL : theme->LABEL_COL);
+		if (!current->enabled) {
+			ui_fade_color(0.25);
+		}
 		int size = UI_CHECK_SELECT_SIZE();
 		arm_g2_draw_scaled_render_target(&current->check_select_image, x + current->check_select_offset_x, y + current->check_select_offset_y, size, size);
 	}
@@ -1358,12 +1420,14 @@ void ui_draw_check(bool selected, bool hover) {
 void ui_draw_radio(bool selected, bool hover) {
 	float x = current->_x + current->radio_offset_x;
 	float y = current->_y + current->radio_offset_y;
-	arm_g2_set_color(selected ? current->ops->theme->HIGHLIGHT_COL : hover ? current->ops->theme->HOVER_COL : current->ops->theme->BUTTON_COL);
+	arm_g2_set_color(selected ? theme->HIGHLIGHT_COL : hover ? theme->HOVER_COL : theme->BUTTON_COL);
 	arm_g2_draw_render_target(&current->radio_image, x, y); // Circle bg
 
 	if (selected) { // Check
-		arm_g2_set_color(current->ops->theme->LABEL_COL);
-		if (!current->enabled) ui_fade_color(0.25);
+		arm_g2_set_color(theme->LABEL_COL);
+		if (!current->enabled) {
+			ui_fade_color(0.25);
+		}
 		arm_g2_draw_render_target(&current->radio_select_image, x + current->radio_select_offset_x, y + current->radio_select_offset_y); // Circle
 	}
 }
@@ -1373,15 +1437,15 @@ void ui_draw_slider(float value, float from, float to, bool filled, bool hover) 
 	float y = current->_y + current->button_offset_y;
 	float w = current->_w - current->button_offset_y * 2.0;
 
-	arm_g2_set_color(current->ops->theme->BUTTON_PRESSED_COL);
+	arm_g2_set_color(theme->PRESSED_COL);
 	ui_draw_rect(true, x, y, w, UI_BUTTON_H()); // Bg
 
 	if (hover) {
-		arm_g2_set_color(current->ops->theme->HOVER_COL);
+		arm_g2_set_color(theme->HOVER_COL);
 		ui_draw_rect(false, x, y, w, UI_BUTTON_H()); // Bg
 	}
 
-	arm_g2_set_color(hover ? current->ops->theme->HOVER_COL : current->ops->theme->BUTTON_COL);
+	arm_g2_set_color(hover ? theme->HOVER_COL : theme->BUTTON_COL);
 	float offset = (value - from) / (to - from);
 	float bar_w = 8.0 * UI_SCALE(); // Unfilled bar
 	float slider_x = filled ? x : x + (w - bar_w) * offset;
@@ -1413,10 +1477,10 @@ void ui_set_scale(float factor) {
 
 void ui_init(ui_t *ui, ui_options_t *ops) {
 	assert(ui_instances_count < UI_MAX_INSTANCES);
+	memset(ui, 0, sizeof(ui_t));
 	ui_instances[ui_instances_count++] = ui;
-	current = ui;
-	memset(current, 0, sizeof(ui_t));
-	current->ops = ops;
+	ui->ops = ops;
+	ui_set_current(ui);
 	ui_set_scale(ops->scale_factor);
 	current->enabled = true;
 	current->scroll_enabled = true;
@@ -1435,7 +1499,7 @@ void ui_init(ui_t *ui, ui_options_t *ops) {
 }
 
 void ui_begin(ui_t *ui) {
-	current = ui;
+	ui_set_current(ui);
 	if (!current->elements_baked) {
 		ui_bake_elements();
 	}
@@ -1450,7 +1514,9 @@ void ui_begin(ui_t *ui) {
 void ui_begin_sticky() {
 	current->sticky = true;
 	current->_y -= current->current_window->scroll_offset;
-	if (current->current_window->scroll_enabled) current->_w += UI_SCROLL_W(); // Use full width since there is no scroll bar in sticky region
+	if (current->current_window->scroll_enabled) {
+		current->_w += UI_SCROLL_W(); // Use full width since there is no scroll bar in sticky region
+	}
 }
 
 void ui_end_sticky() {
@@ -1461,7 +1527,9 @@ void ui_end_sticky() {
 	current->window_header_h += current->_y - current->window_header_h;
 	current->_y += current->current_window->scroll_offset;
 	current->is_hovered = false;
-	if (current->current_window->scroll_enabled) current->_w -= UI_SCROLL_W();
+	if (current->current_window->scroll_enabled) {
+		current->_w -= UI_SCROLL_W();
+	}
 }
 
 void ui_end_window(bool bind_global_g) {
@@ -1473,10 +1541,12 @@ void ui_end_window(bool bind_global_g) {
 			kinc_g4_disable_scissor();
 		}
 
-		if (current->tab_count > 0) ui_draw_tabs();
+		if (current->tab_count > 0) {
+			ui_draw_tabs();
+		}
 
 		if (handle->drag_enabled) { // Draggable header
-			arm_g2_set_color(current->ops->theme->SEPARATOR_COL);
+			arm_g2_set_color(theme->SEPARATOR_COL);
 			arm_g2_fill_rect(0, 0, current->_window_w, UI_HEADER_DRAG_H());
 		}
 
@@ -1534,7 +1604,7 @@ void ui_end_window(bool bind_global_g) {
 			}
 
 			if (handle->layout == UI_LAYOUT_VERTICAL) {
-				arm_g2_set_color(current->ops->theme->BUTTON_COL); // Bar
+				arm_g2_set_color(theme->BUTTON_COL); // Bar
 				bool scrollbar_focus = ui_input_in_rect(current->_window_x + current->_window_w - UI_SCROLL_W(), wy, UI_SCROLL_W(), window_size);
 				float bar_w = (scrollbar_focus || handle == current->scroll_handle) ? UI_SCROLL_W() : UI_SCROLL_MINI_W();
 				ui_draw_rect(true, current->_window_w - bar_w - current->scroll_align, bar_y, bar_w, bar_h);
@@ -1543,8 +1613,12 @@ void ui_end_window(bool bind_global_g) {
 
 		handle->last_max_x = current->_x;
 		handle->last_max_y = current->_y;
-		if (handle->layout == UI_LAYOUT_VERTICAL) handle->last_max_x += current->_window_w;
-		else handle->last_max_y += current->_window_h;
+		if (handle->layout == UI_LAYOUT_VERTICAL) {
+			handle->last_max_x += current->_window_w;
+		}
+		else {
+			handle->last_max_y += current->_window_h;
+		}
 		handle->redraws--;
 	}
 
@@ -1552,10 +1626,14 @@ void ui_end_window(bool bind_global_g) {
 
 	// Draw window texture
 	if (ui_always_redraw_window || handle->redraws > -4) {
-		if (bind_global_g) arm_g2_restore_render_target();
+		if (bind_global_g) {
+			arm_g2_restore_render_target();
+		}
 		arm_g2_set_color(0xffffffff);
 		arm_g2_draw_render_target(&handle->texture, current->_window_x, current->_window_y);
-		if (handle->redraws <= 0) handle->redraws--;
+		if (handle->redraws <= 0) {
+			handle->redraws--;
+		}
 	}
 }
 
@@ -1571,7 +1649,9 @@ bool ui_window(ui_handle_t *handle, int x, int y, int w, int h, bool drag) {
 		ui_resize(handle, w, h);
 	}
 
-	if (!current->window_ended) ui_end_window(true); // End previous window if necessary
+	if (!current->window_ended) {
+		ui_end_window(true); // End previous window if necessary
+	}
 	current->window_ended = false;
 
 	arm_g2_set_render_target(&handle->texture);
@@ -1622,12 +1702,12 @@ bool ui_window(ui_handle_t *handle, int x, int y, int w, int h, bool drag) {
 	current->tooltip_rt = NULL;
 	current->tab_count = 0;
 
-	if (current->ops->theme->FILL_WINDOW_BG) {
-		kinc_g4_clear(KINC_G4_CLEAR_COLOR, current->ops->theme->WINDOW_BG_COL, 0, 0);
+	if (theme->FILL_WINDOW_BG) {
+		kinc_g4_clear(KINC_G4_CLEAR_COLOR, theme->WINDOW_BG_COL, 0, 0);
 	}
 	else {
 		kinc_g4_clear(KINC_G4_CLEAR_COLOR, 0x00000000, 0, 0);
-		arm_g2_set_color(current->ops->theme->WINDOW_BG_COL);
+		arm_g2_set_color(theme->WINDOW_BG_COL);
 		arm_g2_fill_rect(current->_x, current->_y - handle->scroll_offset, handle->last_max_x, handle->last_max_y);
 	}
 
@@ -1659,23 +1739,25 @@ bool ui_button(char *text, int align, char *label/*, kinc_g4_texture_t *icon, in
 	bool released = ui_get_released(UI_ELEMENT_H());
 	bool pushed = ui_get_pushed(UI_ELEMENT_H());
 	bool hover = ui_get_hover(UI_ELEMENT_H());
-	if (released) current->changed = true;
+	if (released) {
+		current->changed = true;
+	}
 
-	arm_g2_set_color(pushed ? current->ops->theme->BUTTON_PRESSED_COL :
-		(!current->ops->theme->FILL_BUTTON_BG && hover) ? current->ops->theme->HIGHLIGHT_COL :
-				 	  hover ? current->ops->theme->HOVER_COL :
-				 	  current->ops->theme->BUTTON_COL);
+	arm_g2_set_color(pushed ? theme->PRESSED_COL :
+		(!theme->FILL_BUTTON_BG && hover) ? theme->HIGHLIGHT_COL :
+				 	  hover ? theme->HOVER_COL :
+				 	  theme->BUTTON_COL);
 
-	if (current->ops->theme->FILL_BUTTON_BG || pushed || hover) {
+	if (theme->FILL_BUTTON_BG || pushed || hover) {
 		ui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y,
 			current->_w - current->button_offset_y * 2, UI_BUTTON_H());
 	}
 
-	arm_g2_set_color(current->ops->theme->TEXT_COL);
-	ui_draw_string(text, current->ops->theme->TEXT_OFFSET, 0, align, true);
+	arm_g2_set_color(theme->TEXT_COL);
+	ui_draw_string(text, theme->TEXT_OFFSET, 0, align, true);
 	if (label != NULL) {
-		arm_g2_set_color(current->ops->theme->LABEL_COL);
-		ui_draw_string(label, current->ops->theme->TEXT_OFFSET, 0, align == UI_ALIGN_RIGHT ? UI_ALIGN_LEFT : UI_ALIGN_RIGHT, true);
+		arm_g2_set_color(theme->LABEL_COL);
+		ui_draw_string(label, theme->TEXT_OFFSET, 0, align == UI_ALIGN_RIGHT ? UI_ALIGN_LEFT : UI_ALIGN_RIGHT, true);
 	}
 
 	/*
@@ -1696,7 +1778,9 @@ bool ui_button(char *text, int align, char *label/*, kinc_g4_texture_t *icon, in
 
 void ui_split_text(char *lines, int align, int bg) {
 	int count = ui_line_count(lines);
-	for (int i = 0; i < count; ++i) ui_text(ui_extract_line(lines, i), align, bg);
+	for (int i = 0; i < count; ++i) {
+		ui_text(ui_extract_line(lines, i), align, bg);
+	}
 }
 
 int ui_text(char *text, int align, int bg) {
@@ -1717,8 +1801,8 @@ int ui_text(char *text, int align, int bg) {
 		arm_g2_set_color(bg);
 		arm_g2_fill_rect(current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w - current->button_offset_y * 2, UI_BUTTON_H());
 	}
-	arm_g2_set_color(current->ops->theme->TEXT_COL);
-	ui_draw_string(text, current->ops->theme->TEXT_OFFSET, 0, align, true);
+	arm_g2_set_color(theme->TEXT_COL);
+	ui_draw_string(text, theme->TEXT_OFFSET, 0, align, true);
 
 	ui_end_element_of_size(h + UI_ELEMENT_OFFSET());
 	return started ? UI_STATE_STARTED : released ? UI_STATE_RELEASED : down ? UI_STATE_DOWN : UI_STATE_IDLE;
@@ -1773,7 +1857,7 @@ bool ui_panel(ui_handle_t *handle, char *text, bool is_tree, bool filled) {
 		ui_draw_arrow(handle->selected);
 	}
 
-	arm_g2_set_color(current->ops->theme->LABEL_COL); // Title
+	arm_g2_set_color(theme->LABEL_COL); // Title
 	ui_draw_string(text, current->title_offset_x, 0, UI_ALIGN_LEFT, true);
 
 	ui_end_element();
@@ -1831,7 +1915,9 @@ int ui_sub_image(/*kinc_g4_texture_t kinc_g4_render_target_t*/ void *image, bool
 			x += UI_SCROLL_W() * r / 2.0;
 		}
 	}
-	else if (scroll) w += UI_SCROLL_W() * r;
+	else if (scroll) {
+		w += UI_SCROLL_W() * r;
+	}
 
 	// Image size
 	float ratio = h == -1 ?
@@ -1861,7 +1947,9 @@ int ui_sub_image(/*kinc_g4_texture_t kinc_g4_render_target_t*/ void *image, bool
 	// }
 
 	arm_g2_set_color(tint);
-	if (!current->enabled) ui_fade_color(0.25);
+	if (!current->enabled) {
+		ui_fade_color(0.25);
+	}
 	if (sw > 0) { // Source rect specified
 		if (current->image_invert_y) {
 			draw_scaled_sub_image(image, is_rt, sx, sy, sw, sh, x, current->_y + h, w, -h);
@@ -1897,7 +1985,7 @@ char *ui_text_input(ui_handle_t *handle, char *label, int align, bool editable, 
 	if (hover && ui_on_text_hover != NULL) {
 		ui_on_text_hover();
 	}
-	arm_g2_set_color(hover ? current->ops->theme->HOVER_COL : current->ops->theme->BUTTON_COL); // Text bg
+	arm_g2_set_color(hover ? theme->HOVER_COL : theme->BUTTON_COL); // Text bg
 	ui_draw_rect(false, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w - current->button_offset_y * 2, UI_BUTTON_H());
 
 	bool released = ui_get_released(UI_ELEMENT_H());
@@ -1921,17 +2009,17 @@ char *ui_text_input(ui_handle_t *handle, char *label, int align, bool editable, 
 	}
 
 	if (label[0] != '\0') {
-		arm_g2_set_color(current->ops->theme->LABEL_COL); // Label
+		arm_g2_set_color(theme->LABEL_COL); // Label
 		int label_align = align == UI_ALIGN_RIGHT ? UI_ALIGN_LEFT : UI_ALIGN_RIGHT;
-		ui_draw_string(label, label_align == UI_ALIGN_LEFT ? current->ops->theme->TEXT_OFFSET : 0, 0, label_align, true);
+		ui_draw_string(label, label_align == UI_ALIGN_LEFT ? theme->TEXT_OFFSET : 0, 0, label_align, true);
 	}
 
-	arm_g2_set_color(current->ops->theme->TEXT_COL); // Text
+	arm_g2_set_color(theme->TEXT_COL); // Text
 	if (current->text_selected_handle != handle) {
-		ui_draw_string(handle->text, current->ops->theme->TEXT_OFFSET, 0, align, true);
+		ui_draw_string(handle->text, theme->TEXT_OFFSET, 0, align, true);
 	}
 	else {
-		ui_draw_string(current->text_selected, current->ops->theme->TEXT_OFFSET, 0, align, false);
+		ui_draw_string(current->text_selected, theme->TEXT_OFFSET, 0, align, false);
 	}
 
 	ui_end_element();
@@ -1952,12 +2040,12 @@ bool ui_check(ui_handle_t *handle, char *text, char *label) {
 	bool hover = ui_get_hover(UI_ELEMENT_H());
 	ui_draw_check(handle->selected, hover); // Check
 
-	arm_g2_set_color(current->ops->theme->TEXT_COL); // Text
+	arm_g2_set_color(theme->TEXT_COL); // Text
 	ui_draw_string(text, current->title_offset_x, 0, UI_ALIGN_LEFT, true);
 
 	if (label[0] != '\0') {
-		arm_g2_set_color(current->ops->theme->LABEL_COL);
-		ui_draw_string(label, current->ops->theme->TEXT_OFFSET, 0, UI_ALIGN_RIGHT, true);
+		arm_g2_set_color(theme->LABEL_COL);
+		ui_draw_string(label, theme->TEXT_OFFSET, 0, UI_ALIGN_RIGHT, true);
 	}
 
 	ui_end_element();
@@ -1981,12 +2069,12 @@ bool ui_radio(ui_handle_t *handle, int position, char *text, char *label) {
 	bool hover = ui_get_hover(UI_ELEMENT_H());
 	ui_draw_radio(handle->position == position, hover); // Radio
 
-	arm_g2_set_color(current->ops->theme->TEXT_COL); // Text
+	arm_g2_set_color(theme->TEXT_COL); // Text
 	ui_draw_string(text, current->title_offset_x, 0, UI_ALIGN_LEFT, true);
 
 	if (label[0] != '\0') {
-		arm_g2_set_color(current->ops->theme->LABEL_COL);
-		ui_draw_string(label, current->ops->theme->TEXT_OFFSET, 0, UI_ALIGN_RIGHT, true);
+		arm_g2_set_color(theme->LABEL_COL);
+		ui_draw_string(label, theme->TEXT_OFFSET, 0, UI_ALIGN_RIGHT, true);
 	}
 
 	ui_end_element();
@@ -2041,17 +2129,17 @@ int ui_combo(ui_handle_t *handle, char_ptr_array_t *texts, char *label, bool sho
 		handle->changed = false;
 	}
 
-	arm_g2_set_color(current->ops->theme->BUTTON_PRESSED_COL); // Bg
+	arm_g2_set_color(theme->PRESSED_COL); // Bg
 	ui_draw_rect(true, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w - current->button_offset_y * 2, UI_BUTTON_H());
 
 	bool hover = ui_get_hover(UI_ELEMENT_H());
-	arm_g2_set_color(hover ? current->ops->theme->HOVER_COL : current->ops->theme->BUTTON_COL);
+	arm_g2_set_color(hover ? theme->HOVER_COL : theme->BUTTON_COL);
 	ui_draw_rect(false, current->_x + current->button_offset_y, current->_y + current->button_offset_y, current->_w - current->button_offset_y * 2, UI_BUTTON_H());
 
 	int x = current->_x + current->_w - current->arrow_offset_x - 8;
 	int y = current->_y + current->arrow_offset_y + 3;
 
-	arm_g2_set_color(current->ops->theme->HOVER_COL);
+	arm_g2_set_color(theme->HOVER_COL);
 	// if (handle == current->combo_selected_handle) {
 	//	// Flip arrow when combo is open
 	//	arm_g2_fill_triangle(x, y, x + UI_ARROW_SIZE(), y, x + UI_ARROW_SIZE() / 2.0, y - UI_ARROW_SIZE() / 2.0);
@@ -2064,8 +2152,8 @@ int ui_combo(ui_handle_t *handle, char_ptr_array_t *texts, char *label, bool sho
 		if (align == UI_ALIGN_LEFT) {
 			current->_x -= 15;
 		}
-		arm_g2_set_color(current->ops->theme->LABEL_COL);
-		ui_draw_string(label, current->ops->theme->TEXT_OFFSET, 0, align == UI_ALIGN_LEFT ? UI_ALIGN_RIGHT : UI_ALIGN_LEFT, true);
+		arm_g2_set_color(theme->LABEL_COL);
+		ui_draw_string(label, theme->TEXT_OFFSET, 0, align == UI_ALIGN_LEFT ? UI_ALIGN_RIGHT : UI_ALIGN_LEFT, true);
 		if (align == UI_ALIGN_LEFT) {
 			current->_x += 15;
 		}
@@ -2074,9 +2162,9 @@ int ui_combo(ui_handle_t *handle, char_ptr_array_t *texts, char *label, bool sho
 	if (align == UI_ALIGN_RIGHT) {
 		current->_x -= 15;
 	}
-	arm_g2_set_color(current->ops->theme->TEXT_COL); // Value
+	arm_g2_set_color(theme->TEXT_COL); // Value
 	if (handle->position < texts->length) {
-		ui_draw_string(texts->buffer[handle->position], current->ops->theme->TEXT_OFFSET, 0, align, true);
+		ui_draw_string(texts->buffer[handle->position], theme->TEXT_OFFSET, 0, align, true);
 	}
 	if (align == UI_ALIGN_RIGHT) {
 		current->_x += 15;
@@ -2103,7 +2191,9 @@ float ui_slider(ui_handle_t *handle, char *text, float from, float to, bool fill
 			current->slider_tooltip_w = current->_w;
 		}
 	}
-	else handle->changed = false;
+	else {
+		handle->changed = false;
+	}
 
 	#if !defined(KINC_ANDROID) && !defined(KINC_IOS)
 	if (handle == current->scroll_handle && current->input_dx != 0) { // Scroll
@@ -2116,8 +2206,12 @@ float ui_slider(ui_handle_t *handle, char *text, float from, float to, bool fill
 		float step = range / slider_w;
 		float value = from + (current->input_x - slider_x) * step;
 		handle->value = round(value * precision) / precision;
-		if (handle->value < from) handle->value = from; // Stay in bounds
-		else if (handle->value > to) handle->value = to;
+		if (handle->value < from) {
+			handle->value = from; // Stay in bounds
+		}
+		else if (handle->value > to) {
+			handle->value = to;
+		}
 		handle->changed = current->changed = true;
 	}
 
@@ -2148,18 +2242,18 @@ float ui_slider(ui_handle_t *handle, char *text, float from, float to, bool fill
 		handle->changed = current->changed = true;
 	}
 
-	arm_g2_set_color(current->ops->theme->LABEL_COL); // Text
-	ui_draw_string(text, current->ops->theme->TEXT_OFFSET, 0, align, true);
+	arm_g2_set_color(theme->LABEL_COL); // Text
+	ui_draw_string(text, theme->TEXT_OFFSET, 0, align, true);
 
 	if (display_value) {
-		arm_g2_set_color(current->ops->theme->TEXT_COL); // Value
+		arm_g2_set_color(theme->TEXT_COL); // Value
 		if (current->text_selected_handle != handle) {
 			sprintf(temp, "%.2f", round(handle->value * precision) / precision);
 			string_strip_trailing_zeros(temp);
-			ui_draw_string(temp, current->ops->theme->TEXT_OFFSET, 0, lalign, true);
+			ui_draw_string(temp, theme->TEXT_OFFSET, 0, lalign, true);
 		}
 		else {
-			ui_draw_string(current->text_selected, current->ops->theme->TEXT_OFFSET, 0, lalign, true);
+			ui_draw_string(current->text_selected, theme->TEXT_OFFSET, 0, lalign, true);
 		}
 	}
 
@@ -2173,7 +2267,7 @@ void ui_separator(int h, bool fill) {
 		return;
 	}
 	if (fill) {
-		arm_g2_set_color(current->ops->theme->SEPARATOR_COL);
+		arm_g2_set_color(theme->SEPARATOR_COL);
 		arm_g2_fill_rect(current->_x, current->_y, current->_w, h * UI_SCALE());
 	}
 	current->_y += h * UI_SCALE();
@@ -2224,9 +2318,15 @@ char *ui_hovered_tab_name() {
 }
 
 void ui_mouse_down(ui_t *ui, int button, int x, int y) {
-	if (ui->pen_in_use) return;
-	if (button == 0) { ui->input_started = ui->input_down = true; }
-	else { ui->input_started_r = ui->input_down_r = true; }
+	if (ui->pen_in_use) {
+		return;
+	}
+	if (button == 0) {
+		ui->input_started = ui->input_down = true;
+	}
+	else {
+		ui->input_started_r = ui->input_down_r = true;
+	}
 	ui->input_started_time = kinc_time();
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	ui_set_input_position(ui, x, y);
@@ -2242,7 +2342,9 @@ void ui_mouse_move(ui_t *ui, int x, int y, int movement_x, int movement_y) {
 }
 
 void ui_mouse_up(ui_t *ui, int button, int x, int y) {
-	if (ui->pen_in_use) return;
+	if (ui->pen_in_use) {
+		return;
+	}
 
 	if (ui->touch_hold_activated) {
 		ui->touch_hold_activated = false;
@@ -2259,12 +2361,20 @@ void ui_mouse_up(ui_t *ui, int button, int x, int y) {
 		}
 	}
 	else {
-		if (button == 0) ui->input_released = true;
-		else ui->input_released_r = true;
+		if (button == 0) {
+			ui->input_released = true;
+		}
+		else {
+			ui->input_released_r = true;
+		}
 	}
 
-	if (button == 0) ui->input_down = false;
-	else ui->input_down_r = false;
+	if (button == 0) {
+		ui->input_down = false;
+	}
+	else {
+		ui->input_down_r = false;
+	}
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	ui_set_input_position(ui, x, y);
 	#endif
@@ -2288,7 +2398,11 @@ void ui_pen_up(ui_t *ui, int x, int y, float pressure) {
 	return;
 	#endif
 
-	if (ui->input_started) { ui->input_started = false; ui->pen_in_use = true; return; }
+	if (ui->input_started) {
+		ui->input_started = false;
+		ui->pen_in_use = true;
+		return;
+	}
 	ui_mouse_up(ui, 0, x, y);
 	ui->pen_in_use = true; // On pen release, additional mouse down & up events are fired at once - filter those out
 }
@@ -2391,11 +2505,15 @@ void ui_touch_down(ui_t *ui, int index, int x, int y) {
 }
 
 void ui_touch_up(ui_t *ui, int index, int x, int y) {
-	if (index == 1) ui_mouse_up(ui, 1, ui->input_x, ui->input_y);
+	if (index == 1) {
+		ui_mouse_up(ui, 1, ui->input_x, ui->input_y);
+	}
 }
 
 void ui_touch_move(ui_t *ui, int index, int x, int y) {
-	if (index == 0) ui_set_input_position(ui, x, y);
+	if (index == 0) {
+		ui_set_input_position(ui, x, y);
+	}
 
 	// Pinch to zoom - mouse wheel
 	if (index == 1) {
@@ -2433,14 +2551,13 @@ void ui_paste(char *s) {
 void ui_theme_default(ui_theme_t *t) {
 	t->WINDOW_BG_COL = 0xff292929;
 	t->HOVER_COL = 0xff434343;
-	t->ACCENT_SELECT_COL = 0xff606060;
+	t->ACCENT_COL = 0xff606060;
 	t->BUTTON_COL = 0xff383838;
-	t->BUTTON_PRESSED_COL = 0xff222222;
+	t->PRESSED_COL = 0xff222222;
 	t->TEXT_COL = 0xffe8e8e8;
 	t->LABEL_COL = 0xffc8c8c8;
 	t->SEPARATOR_COL = 0xff202020;
 	t->HIGHLIGHT_COL = 0xff205d9c;
-	t->CONTEXT_COL = 0xff222222;
 	t->FONT_SIZE = 13;
 	t->ELEMENT_W = 100;
 	t->ELEMENT_H = 24;

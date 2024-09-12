@@ -22,22 +22,16 @@
 #define UI_LINK_STYLE_LINE 0
 #define UI_LINK_STYLE_CUBIC_BEZIER 1
 
-// typedef enum ui_link_style {
-// 	UI_LINK_STYLE_LINE,
-// 	UI_LINK_STYLE_CUBIC_BEZIER
-// } ui_link_style_t;
-
 typedef PACK(struct ui_theme {
 	int WINDOW_BG_COL;
 	int HOVER_COL;
-	int ACCENT_SELECT_COL;
+	int ACCENT_COL;
 	int BUTTON_COL;
-	int BUTTON_PRESSED_COL;
+	int PRESSED_COL;
 	int TEXT_COL;
 	int LABEL_COL;
 	int SEPARATOR_COL;
 	int HIGHLIGHT_COL;
-	int CONTEXT_COL;
 	int FONT_SIZE;
 	int ELEMENT_W;
 	int ELEMENT_H;
