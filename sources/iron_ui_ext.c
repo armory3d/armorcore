@@ -226,10 +226,6 @@ uint32_t ui_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
 	return (a << 24) | (r << 16) | (g << 8) | b;
 }
 
-static ui_handle_t temp0;
-static ui_handle_t temp1;
-static ui_handle_t temp2;
-
 int ui_color_wheel(ui_handle_t *handle, bool alpha, float w, float h, bool color_preview, void (*picker)(void *), void *data) {
 
 	ui_t *current = ui_get_current();
@@ -303,9 +299,7 @@ int ui_color_wheel(ui_handle_t *handle, bool alpha, float w, float h, bool color
 
 	if (alpha) {
 		ui_handle_t *alpha_handle = ui_nest(handle, 1);
-		static bool first = true;
-		if (first) {
-			first = false;
+		if (alpha_handle->init) {
 			alpha_handle->value = round(calpha * 100.0) / 100.0;
 		}
 		calpha = ui_slider(alpha_handle, "Alpha", 0.0, 1.0, true, 100, true, UI_ALIGN_LEFT, true);
@@ -342,9 +336,10 @@ int ui_color_wheel(ui_handle_t *handle, bool alpha, float w, float h, bool color
 	car.buffer = strings;
 	car.length = 3;
 	int pos = ui_inline_radio(&radio_handle, &car, UI_ALIGN_LEFT);
-	ui_handle_t *h0 = &temp0;
-	ui_handle_t *h1 = &temp1;
-	ui_handle_t *h2 = &temp2;
+
+	ui_handle_t *h0 = ui_nest(ui_nest(handle, 0), 0);
+	ui_handle_t *h1 = ui_nest(ui_nest(handle, 0), 1);
+	ui_handle_t *h2 = ui_nest(ui_nest(handle, 0), 2);
 	if (pos == 0) {
 		h0->value = ui_color_r(handle->color) / 255.0f;
 		float r = ui_slider(h0, "R", 0, 1, true, 100, true, UI_ALIGN_LEFT, true);
