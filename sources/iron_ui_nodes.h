@@ -51,13 +51,13 @@ typedef PACK(struct ui_node {
 	int id;
 	char *name;
 	char *type;
-	int x; // float x;
-	int y; // float y;
+	float x;
+	float y;
 	uint32_t color;
 	ui_node_socket_array_t *inputs;
 	ui_node_socket_array_t *outputs;
 	ui_node_button_array_t *buttons;
-	int width; // float width
+	float width;
 }) ui_node_t;
 
 typedef PACK(struct ui_node_link {
