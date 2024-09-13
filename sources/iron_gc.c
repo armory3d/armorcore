@@ -20,7 +20,7 @@ void *gc_alloc(size_t size) {
 	#endif
 }
 
-void gc_array(void *ptr, void *ar) {
+void gc_array(void *ptr, int *length) {
 }
 
 void gc_leaf(void *ptr) {
