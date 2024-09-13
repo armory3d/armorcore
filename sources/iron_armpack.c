@@ -296,8 +296,7 @@ static void read_store() {
 	uint8_t flag = read_u8();
 	switch (flag) {
 	case 0xc0:
-		store_i32(0); // NULL
-		store_i32(0);
+		store_ptr_abs(NULL);
 		break;
 	case 0xc2:
 		store_u8(false);
@@ -324,7 +323,7 @@ static void read_store() {
 }
 
 void *armpack_decode(buffer_t *b) {
-	capacity = b->length * 4;
+	capacity = b->length * 3;
 	decoded = gc_alloc(capacity);
 	encoded = b->buffer;
 	di = 0;
