@@ -1,5 +1,5 @@
 
-// ../../make --compiler gcc --compile --alangjs
+// ../../make --compile --alangjs --ccompiler gcc
 // (gcc has lto enabled)
 
 #include <stdio.h>

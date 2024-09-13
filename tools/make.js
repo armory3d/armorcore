@@ -620,14 +620,8 @@ class VisualStudioExporter extends Exporter {
 
 	cppStd(project) {
 		switch (project.cppStd.toLowerCase()) {
-			case "c++11":
-				return "";
-			case "c++14":
-				return "stdcpp14";
 			case "c++17":
 				return "stdcpp17";
-			case "c++20":
-				return "stdcpp20";
 			case "c++23":
 				return "stdcpplatest";
 		}
@@ -651,18 +645,11 @@ class VisualStudioExporter extends Exporter {
 		if (config === 'Develop') {
 			this.p('<BasicRuntimeChecks>Default</BasicRuntimeChecks>', indent + 2);
 		}
-		if (project.cStd !== '') {
-			let cStd = this.cStd(project);
-			if (cStd !== '') {
-				this.p('<LanguageStandard_C>' + cStd + '</LanguageStandard_C>', indent + 2);
-			}
-		}
-		if (project.cppStd !== '') {
-			let cppStd = this.cppStd(project);
-			if (cppStd !== '') {
-				this.p('<LanguageStandard>' + cppStd + '</LanguageStandard>', indent + 2);
-			}
-		}
+		let cStd = this.cStd(project);
+		this.p('<LanguageStandard_C>' + cStd + '</LanguageStandard_C>', indent + 2);
+		let cppStd = this.cppStd(project);
+		this.p('<LanguageStandard>' + cppStd + '</LanguageStandard>', indent + 2);
+
 		this.p('</ClCompile>', indent + 1);
 		this.p('<Link>', indent + 1);
 		if (project.name == "amake") { // TODO
@@ -1478,12 +1465,7 @@ class XCodeExporter extends Exporter {
 		this.p('isa = XCBuildConfiguration;', 3);
 		this.p('buildSettings = {', 3);
 		this.p('ALWAYS_SEARCH_USER_PATHS = NO;', 4);
-		if (project.cppStd !== '') {
-			this.p('CLANG_CXX_LANGUAGE_STANDARD = "' + project.cppStd + '";', 4);
-		}
-		else {
-			this.p('CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";', 4);
-		}
+		this.p('CLANG_CXX_LANGUAGE_STANDARD = "' + project.cppStd + '";', 4);
 		this.p('CLANG_CXX_LIBRARY = "compiler-default";', 4);
 		this.p('CLANG_ENABLE_MODULES = YES;', 4);
 		this.p('CLANG_ENABLE_OBJC_ARC = YES;', 4);
@@ -1516,12 +1498,7 @@ class XCodeExporter extends Exporter {
 		this.p('COPY_PHASE_STRIP = NO;', 4);
 		this.p('ENABLE_STRICT_OBJC_MSGSEND = YES;', 4);
 		this.p('ENABLE_TESTABILITY = YES;', 4);
-		if (project.cStd !== '' && project.cStd !== 'c99') {
-			this.p('GCC_C_LANGUAGE_STANDARD = "' + project.cStd + '";', 4);
-		}
-		else {
-			this.p('GCC_C_LANGUAGE_STANDARD = "gnu99";', 4);
-		}
+		this.p('GCC_C_LANGUAGE_STANDARD = "' + project.cStd + '";', 4);
 		this.p('GCC_DYNAMIC_NO_PIC = NO;', 4);
 		this.p('GCC_NO_COMMON_BLOCKS = YES;', 4);
 		this.p('GCC_OPTIMIZATION_LEVEL = 0;', 4);
@@ -1564,12 +1541,7 @@ class XCodeExporter extends Exporter {
 		this.p('isa = XCBuildConfiguration;', 3);
 		this.p('buildSettings = {', 3);
 		this.p('ALWAYS_SEARCH_USER_PATHS = NO;', 4);
-		if (project.cppStd !== '') {
-			this.p('CLANG_CXX_LANGUAGE_STANDARD = "' + project.cppStd + '";', 4);
-		}
-		else {
-			this.p('CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";', 4);
-		}
+		this.p('CLANG_CXX_LANGUAGE_STANDARD = "' + project.cppStd + '";', 4);
 		this.p('CLANG_CXX_LIBRARY = "compiler-default";', 4);
 		this.p('CLANG_ENABLE_MODULES = YES;', 4);
 		this.p('CLANG_ENABLE_OBJC_ARC = YES;', 4);
@@ -1605,12 +1577,7 @@ class XCodeExporter extends Exporter {
 		}
 		this.p('ENABLE_NS_ASSERTIONS = NO;', 4);
 		this.p('ENABLE_STRICT_OBJC_MSGSEND = YES;', 4);
-		if (project.cStd !== '' && project.cStd !== 'c99') {
-			this.p('GCC_C_LANGUAGE_STANDARD = "' + project.cStd + '";', 4);
-		}
-		else {
-			this.p('GCC_C_LANGUAGE_STANDARD = "gnu99";', 4);
-		}
+		this.p('GCC_C_LANGUAGE_STANDARD = "' + project.cStd + '";', 4);
 		this.p('GCC_NO_COMMON_BLOCKS = YES;', 4);
 		this.p('GCC_PREPROCESSOR_DEFINITIONS = (', 4);
 		this.p('NDEBUG,', 5);
@@ -1875,17 +1842,13 @@ class MakeExporter extends Exporter {
 		this.p("DEF=" + defline);
 		this.p();
 		let cline = this.cFlags;
-		if (project.cStd !== "") {
-			cline = "-std=" + project.cStd + " ";
-		}
+		cline = "-std=" + project.cStd + " ";
 		for (let flag of project.cFlags) {
 			cline += flag + ' ';
 		}
 		this.p("CFLAGS=" + cline);
 		let cppline = this.cppFlags;
-		if (project.cppStd !== "") {
-			cppline = "-std=" + project.cppStd + " ";
-		}
+		cppline = "-std=" + project.cppStd + " ";
 		for (let flag of project.cppFlags) {
 			cppline += flag + " ";
 		}
@@ -1943,23 +1906,11 @@ class LinuxExporter extends Exporter {
 	}
 
 	getCCompiler() {
-		switch (goptions.compiler) {
-			case "default":
-			case "clang":
-				return "clang";
-			case "gcc":
-				return "gcc";
-		}
+		return goptions.ccompiler;
 	}
 
 	getCPPCompiler() {
-		switch (goptions.compiler) {
-			case "default":
-			case "clang":
-				return "clang++";
-			case "gcc":
-				return "g++";
-		}
+		return goptions.cppcompiler;
 	}
 }
 
@@ -2071,9 +2022,7 @@ class AndroidExporter extends Exporter {
 		gradle = gradle.replace(/{architecture}/g, arch);
 		gradle = gradle.replace(/{cflags}/g, cflags);
 		cppflags = '-frtti -fexceptions ' + cppflags;
-		if (project.cppStd !== '') {
-			cppflags = '-std=' + project.cppStd + ' ' + cppflags;
-		}
+		cppflags = '-std=' + project.cppStd + ' ' + cppflags;
 		gradle = gradle.replace(/{cppflags}/g, cppflags);
 		let javasources = '';
 		for (let dir of project.getJavaDirs()) {
@@ -2610,7 +2559,7 @@ class ShaderCompiler {
 				console.log(error);
 			}
 			if (compiled_shader === null) {
-				compiled_shader = new CompiledShader();;
+				compiled_shader = new CompiledShader();
 			}
 			compiled_shader.files = [path_resolve('build', 'temp', path_basename_noext(shader) + '.' + self.type)];
 
@@ -2651,7 +2600,7 @@ class ShaderCompiler {
 			return null;
 		}
 		else {
-			let parameters = [this.type, from, to, this.temp, ''];
+			let parameters = [this.type, from, to, this.temp, "iron"];
 			fs_ensuredir(this.temp);
 			if (this.options.shaderversion) {
 				parameters.push('--version');
@@ -2958,8 +2907,8 @@ function export_armorcore_project(project, options) {
 
 class Project {
 	constructor(name) {
-		this.cppStd = "";
-		this.cStd = "";
+		this.cppStd = "c++17";
+		this.cStd = "c11";
 		this.cmdArgs = [];
 		this.cFlags = [];
 		this.cppFlags = [];
@@ -3015,9 +2964,6 @@ class Project {
 				out.push(sub);
 			}
 			else {
-				if (sub.cStd !== "") {
-					this.cStd = sub.cStd;
-				}
 				if (!sub.lto) {
 					this.lto = false;
 				}
@@ -3436,7 +3382,8 @@ let goptions = {
 	compile: false,
 	run: false,
 	debug: false,
-	compiler: 'default',
+	ccompiler: 'clang',
+	cppcompiler: 'clang++',
 	arch: 'default',
 	shaderversion: null,
 	alangjs: false,
