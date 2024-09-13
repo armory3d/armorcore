@@ -374,6 +374,7 @@ if (flags.with_iron) {
 	project.add_cfiles('sources/iron_gc.c');
 	project.add_cfiles('sources/iron_json.c');
 	project.add_cfiles('sources/iron_obj.c');
+	project.add_cfiles('sources/const_data.c');
 	project.add_include_dir('sources/libs');
 }
 
