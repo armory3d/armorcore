@@ -280,7 +280,7 @@ static void *gc_allocate(size_t count, size_t size) {
 void _gc_array(void *ptr, int *length) {
 	gc_allocation_t *alloc = gc_allocation_map_get(gc->allocs, ptr);
 	if (alloc) {
-		alloc->array_length = length;
+		// alloc->array_length = length;
 	}
 }
 
