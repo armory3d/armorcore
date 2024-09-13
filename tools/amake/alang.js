@@ -1217,8 +1217,7 @@ function write_types() {
 			}
 
 			// "type x = {};"
-			// Use PACK() for armpack support (use only when " _: " is present?)
-			out("typedef PACK(struct " + stuct_name_short + "{\n");
+			out("typedef struct " + stuct_name_short + "{\n");
 
 			let struct_value_types = new Map();
 			struct_types.set(struct_name + " *", struct_value_types);
@@ -1229,7 +1228,7 @@ function write_types() {
 				let name = get_token();
 
 				if (name === "}") { // Struct end
-					out("})" + struct_name + ";\n");
+					out("}" + struct_name + ";\n");
 					break;
 				}
 
@@ -1289,8 +1288,8 @@ function write_array_types() {
 			}
 			if (is_struct(type)) {
 				if (!array_structs.has(type)) {
-					let as = "typedef PACK(struct " + type + "_array{" +
-						type + "**buffer;int length;int capacity;})" +
+					let as = "typedef struct " + type + "_array{" +
+						type + "**buffer;int length;int capacity;}" +
 						type + "_array_t;";
 					array_structs.set(type, as);
 				}

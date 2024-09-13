@@ -18,22 +18,29 @@ static uint32_t wi; // write index
 static uint32_t bottom;
 static int array_count;
 
+static inline uint64_t pad(int di, int n) {
+	return (n - (di % n)) % n;
+}
+
 static void store_u8(uint8_t u8) {
 	*(uint8_t *)(decoded + wi) = u8;
 	wi += 1;
 }
 
 static void store_i32(int32_t i32) {
+	wi += pad(wi, 4);
 	*(int32_t *)(decoded + wi) = i32;
 	wi += 4;
 }
 
 static void store_f32(float f32) {
+	wi += pad(wi, 4);
 	*(float *)(decoded + wi) = f32;
 	wi += 4;
 }
 
 static void store_ptr(uint32_t ptr) {
+	wi += pad(wi, PTR_SIZE);
 	*(uint64_t *)(decoded + wi) = (uint64_t)decoded + (uint64_t)ptr;
 	wi += PTR_SIZE;
 }
@@ -58,13 +65,13 @@ static jsmntok_t get_token() {
 	return t;
 }
 
-static int traverse() {
+static int traverse(int wi) {
 	jsmntok_t t = get_token();
 	if (t.type == JSMN_OBJECT) {
 		ti++;
 		int size = 0;
 		for (int i = 0; i < t.size; ++i) {
-			size += traverse();
+			size += traverse(wi + size);
 		}
 		return size;
 	}
@@ -74,22 +81,22 @@ static int traverse() {
 			return 1;
 		}
 		else if (source[t.start] == 'n') { // null
-			return PTR_SIZE;
+			return pad(wi, PTR_SIZE) + PTR_SIZE;
 		}
 		else { // number
-			return 4;
+			return pad(wi, 4) + 4;
 		}
 	}
 	else if (t.type == JSMN_ARRAY) {
 		ti++;
 		for (int i = 0; i < t.size; ++i) {
-			traverse();
+			traverse(0);
 		}
-		return PTR_SIZE;
+		return pad(wi, PTR_SIZE) + PTR_SIZE;
 	}
 	else if (t.type == JSMN_STRING) {
 		ti++;
-		return PTR_SIZE;
+		return pad(wi, PTR_SIZE) + PTR_SIZE;
 	}
 
 	return 0;
@@ -97,7 +104,7 @@ static int traverse() {
 
 static int token_size() {
 	uint32_t _ti = ti;
-	uint32_t len = traverse();
+	uint32_t len = traverse(0);
 	ti = _ti;
 	return len;
 }
@@ -147,7 +154,7 @@ static void token_write() {
 		store_ptr(bottom + PTR_SIZE + 4 + 4); // Pointer to buffer contents
 		store_i32(t.size); // Element count
 		store_i32(0); // Capacity = 0 -> do not free on first realloc
-		bottom = wi;
+		bottom = pad(wi, PTR_SIZE) + wi;
 
 		if (t.size == 0) {
 			wi = _wi;
@@ -166,7 +173,7 @@ static void token_write() {
 			}
 
 			// Struct contents
-			bottom = wi;
+			bottom = pad(wi, PTR_SIZE) + wi;
 			for (int i = 0; i < count; ++i) {
 				token_write();
 			}
@@ -192,14 +199,14 @@ static void token_write() {
 				ti++;
 				t = get_token();
 			}
-			bottom = wi;
+			bottom = pad(wi, PTR_SIZE) + wi;
 		}
 		else {
 			// Array contents
 			for (int i = 0; i < count; ++i) {
 				token_write();
 			}
-			bottom = wi;
+			bottom = pad(wi, PTR_SIZE) + wi;
 		}
 
 		wi = _wi;
@@ -212,7 +219,7 @@ static void token_write() {
 		uint32_t _wi = wi;
 		wi = bottom;
 		store_string_bytes(source + t.start, t.end - t.start);
-		bottom = wi;
+		bottom = pad(wi, PTR_SIZE) + wi;
 		wi = _wi;
 	}
 }

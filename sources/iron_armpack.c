@@ -18,32 +18,41 @@ static uint32_t string_length;
 static uint32_t array_count;
 static void read_store();
 
+static inline uint64_t pad(int di, int n) {
+	return (n - (di % n)) % n;
+}
+
 static void store_u8(uint8_t u8) {
 	*(uint8_t *)(decoded + di) = u8;
 	di += 1;
 }
 
 static void store_i16(int16_t i16) {
+	di += pad(di, 2);
 	*(int16_t *)(decoded + di) = i16;
-	di += 4;
+	di += 2;
 }
 
 static void store_i32(int32_t i32) {
+	di += pad(di, 4);
 	*(int32_t *)(decoded + di) = i32;
 	di += 4;
 }
 
 static void store_f32(float f32) {
+	di += pad(di, 4);
 	*(float *)(decoded + di) = f32;
 	di += 4;
 }
 
 static void store_ptr(uint32_t ptr) {
+	di += pad(di, PTR_SIZE);
 	*(uint64_t *)(decoded + di) = (uint64_t)decoded + (uint64_t)ptr;
 	di += PTR_SIZE;
 }
 
 static void store_ptr_abs(void *ptr) {
+	di += pad(di, PTR_SIZE);
 	*(uint64_t *)(decoded + di) = (uint64_t)ptr;
 	di += PTR_SIZE;
 }
@@ -61,7 +70,7 @@ static void store_string(char *str) {
 	uint32_t _di = di;
 	di = bottom;
 	store_string_bytes(str);
-	bottom = di;
+	bottom = pad(di, PTR_SIZE) + di;
 	di = _di;
 }
 
@@ -102,30 +111,30 @@ static char *read_string() {
 	return str;
 }
 
-static uint32_t traverse() {
+static uint32_t traverse(int di) {
 	uint8_t flag = read_u8();
 	switch (flag) {
 	case 0xc0: // NULL
-		return PTR_SIZE;
+		return pad(di, PTR_SIZE) + PTR_SIZE;
 	case 0xc2: // false
 		return 1;
 	case 0xc3: // true
 		return 1;
 	case 0xca: // f32
 		ei += 4;
-		return 4;
+		return pad(di, 4) + 4;
 	case 0xd2: // i32
 		ei += 4;
-		return 4;
+		return pad(di, 4) + 4;
 	case 0xdf: { // map
 		uint32_t len = 0;
 		int count = read_i32();
 		for (int i = 0; i < count; ++i) {
 			read_u8(); // 0xdb string
 			read_string(); // key
-			len += traverse(); // value
+			len += traverse(di + len); // value
 		}
-		len += PTR_SIZE; // void *_
+		len += pad(di + len, PTR_SIZE) + PTR_SIZE; // void *_
 		return len;
 	}
 	case 0xdd: { // array
@@ -147,15 +156,15 @@ static uint32_t traverse() {
 		default: // Dynamic type-value
 			ei -= 1; // Undo flag2 read
 			for (int j = 0; j < count; ++j) {
-				traverse();
+				traverse(0);
 			}
 		}
 		// ptr (to array_t)
-		return PTR_SIZE;
+		return pad(di, PTR_SIZE) + PTR_SIZE;
 	}
 	case 0xdb: // string
 		ei += read_u32(); // string_length
-		return PTR_SIZE;
+		return pad(di, PTR_SIZE) + PTR_SIZE;
 	default:
 		return 0;
 	}
@@ -163,7 +172,7 @@ static uint32_t traverse() {
 
 static uint32_t get_struct_length() {
 	uint32_t _ei = ei;
-	uint32_t len = traverse();
+	uint32_t len = traverse(0);
 	ei = _ei;
 	return len;
 }
@@ -178,6 +187,7 @@ static void read_store_map(int count) {
 		read_string(); // key
 		read_store(); // value
 	}
+	di += pad(di, PTR_SIZE);
 	di += PTR_SIZE; // void *_ for runtime storage
 }
 
@@ -220,7 +230,7 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 	}
 	store_i32(count); // Element count
 	store_i32(0); // Capacity = 0 -> do not free on first realloc
-	bottom = di;
+	bottom = pad(di, PTR_SIZE) + di;
 
 	if (count == 0) {
 		di = _di;
@@ -230,7 +240,7 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 	uint8_t flag = read_u8();
 	if (is_typed_array(flag)) {
 		store_typed_array(flag, count);
-		bottom = di;
+		bottom = pad(di, PTR_SIZE) + di;
 	}
 	// Dynamic (type - value)
 	else {
@@ -259,7 +269,7 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 				ei += 1; // String flag
 				store_string_bytes(read_string());
 			}
-			bottom = di;
+			bottom = pad(di, PTR_SIZE) + di;
 		}
 		// Structs
 		else {
@@ -270,7 +280,7 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 			}
 
 			// Struct contents
-			bottom = di;
+			bottom = pad(di, PTR_SIZE) + di;
 			for (int i = 0; i < count; ++i) {
 				read_store();
 			}

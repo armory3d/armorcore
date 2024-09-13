@@ -10,7 +10,7 @@ typedef struct ui_canvas_control {
 	bool controls_down;
 } ui_canvas_control_t;
 
-typedef PACK(struct ui_node_socket {
+typedef struct ui_node_socket {
 	int id;
 	int node_id;
 	char *name;
@@ -21,9 +21,9 @@ typedef PACK(struct ui_node_socket {
 	float max;
 	float precision;
 	int display;
-}) ui_node_socket_t;
+} ui_node_socket_t;
 
-typedef PACK(struct ui_node_button {
+typedef struct ui_node_button {
 	char *name;
 	char *type;
 	int output;
@@ -33,7 +33,7 @@ typedef PACK(struct ui_node_button {
 	float max;
 	float precision;
 	float height;
-}) ui_node_button_t;
+} ui_node_button_t;
 
 typedef struct ui_node_socket_array {
 	ui_node_socket_t **buffer;
@@ -47,7 +47,7 @@ typedef struct ui_node_button_array {
 	int capacity;
 } ui_node_button_array_t;
 
-typedef PACK(struct ui_node {
+typedef struct ui_node {
 	int id;
 	char *name;
 	char *type;
@@ -58,15 +58,15 @@ typedef PACK(struct ui_node {
 	ui_node_socket_array_t *outputs;
 	ui_node_button_array_t *buttons;
 	float width;
-}) ui_node_t;
+} ui_node_t;
 
-typedef PACK(struct ui_node_link {
+typedef struct ui_node_link {
 	int id;
 	int from_id;
 	int from_socket;
 	int to_id;
 	int to_socket;
-}) ui_node_link_t;
+} ui_node_link_t;
 
 typedef struct ui_node_array {
 	ui_node_t **buffer;
@@ -80,11 +80,11 @@ typedef struct ui_node_link_array {
 	int capacity;
 } ui_node_link_array_t;
 
-typedef PACK(struct ui_node_canvas {
+typedef struct ui_node_canvas {
 	char *name;
 	ui_node_array_t *nodes;
 	ui_node_link_array_t *links;
-}) ui_node_canvas_t;
+} ui_node_canvas_t;
 
 typedef struct ui_nodes {
 	bool nodes_drag;

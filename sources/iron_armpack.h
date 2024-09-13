@@ -9,14 +9,6 @@
 #include "iron_array.h"
 #include "iron_map.h"
 
-#ifdef __GNUC__
-#define PACK(__Declaration__) __Declaration__ __attribute__((__packed__))
-#endif
-
-#ifdef _MSC_VER
-#define PACK(__Declaration__) __pragma(pack(push, 1)) __Declaration__ __pragma(pack(pop))
-#endif
-
 void *armpack_decode(buffer_t *b);
 
 void armpack_encode_start(void *encoded);
@@ -58,18 +50,18 @@ int64_t armpack_map_get_i64(any_map_t *map, char *key);
 
 /* C struct:
 
-	typedef PACK(struct point {
+	typedef struct point {
 		int x;
 		int y;
-	}) point_t;
+	} point_t;
 
-	typedef PACK(struct test {
+	typedef struct test {
 		char *name;
 		point_t point;
 		int32_array_t *array;
 		// Optional pointer for storing runtime data
 		void *_;
-	}) test_t;
+	} test_t;
 */
 
 /*
@@ -97,3 +89,11 @@ int64_t armpack_map_get_i64(any_map_t *map, char *key);
 		point_t *decoded = armpack_decode(b);
 	}
 */
+
+// #ifdef __GNUC__
+// #define PACK(__Declaration__) __Declaration__ __attribute__((__packed__))
+// #endif
+
+// #ifdef _MSC_VER
+// #define PACK(__Declaration__) __pragma(pack(push, 1)) __Declaration__ __pragma(pack(pop))
+// #endif

@@ -22,7 +22,7 @@
 #define UI_LINK_STYLE_LINE 0
 #define UI_LINK_STYLE_CUBIC_BEZIER 1
 
-typedef PACK(struct ui_theme {
+typedef struct ui_theme {
 	int WINDOW_BG_COL;
 	int HOVER_COL;
 	int ACCENT_COL;
@@ -50,7 +50,7 @@ typedef PACK(struct ui_theme {
 	/*bool*/int FULL_TABS; // Make tabs take full window width
 	/*bool*/int ROUND_CORNERS;
 	/*bool*/int SHADOWS;
-}) ui_theme_t;
+} ui_theme_t;
 
 typedef struct ui_options {
 	g2_font_t *font;
@@ -92,12 +92,12 @@ typedef struct ui_text_extract {
 	char uncolored[128];
 } ui_text_extract_t;
 
-typedef PACK(struct ui_coloring {
+typedef struct ui_coloring {
 	uint32_t color;
 	char_ptr_array_t *start;
 	char *end;
 	bool separated;
-}) ui_coloring_t;
+} ui_coloring_t;
 
 typedef struct ui_coloring_array {
 	ui_coloring_t **buffer;
@@ -105,10 +105,10 @@ typedef struct ui_coloring_array {
 	int capacity;
 } ui_coloring_array_t;
 
-typedef PACK(struct ui_text_coloring {
+typedef struct ui_text_coloring {
 	ui_coloring_array_t *colorings;
 	uint32_t default_color;
-}) ui_text_coloring_t;
+} ui_text_coloring_t;
 
 typedef struct ui {
 	bool is_scrolling; // Use to limit other activities
