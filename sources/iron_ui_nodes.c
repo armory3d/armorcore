@@ -20,7 +20,6 @@ static bool ui_box_select = false;
 static int ui_box_select_x = 0;
 static int ui_box_select_y = 0;
 static const int ui_max_buttons = 9;
-static ui_handle_t *handle = NULL;
 static void (*ui_on_header_released)(ui_node_t *) = NULL;
 static void (*ui_nodes_on_node_remove)(ui_node_t *) = NULL;
 static int ui_node_id = -1;
@@ -59,10 +58,7 @@ void ui_nodes_init(ui_nodes_t *nodes) {
 	current_nodes->snap_to_id = -1;
 	current_nodes->link_drag_id = -1;
 	current_nodes->nodes_selected_id = gc_alloc(sizeof(i32_array_t));
-	if (handle == NULL) {
-		handle = ui_handle_create();
-		gc_root(handle);
-	}
+	current_nodes->handle = ui_handle_create();
 }
 
 float UI_NODES_SCALE() {
@@ -456,7 +452,7 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 	}
 
 	// Buttons
-	ui_handle_t *nhandle = ui_nest(handle, node->id);
+	ui_handle_t *nhandle = ui_nest(current_nodes->handle, node->id);
 	ny -= lineh / 3.0; // Fix align
 	for (int buti = 0; buti < node->buttons->length; ++buti) {
 		ui_node_button_t *but = node->buttons->buffer[buti];

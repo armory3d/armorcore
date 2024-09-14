@@ -108,6 +108,7 @@ typedef struct ui_nodes {
 	int snap_socket;
 	float snap_x;
 	float snap_y;
+	ui_handle_t *handle;
 } ui_nodes_t;
 
 void ui_nodes_init(ui_nodes_t *nodes);
