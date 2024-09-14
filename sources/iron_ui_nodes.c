@@ -597,9 +597,9 @@ void ui_draw_node(ui_node_t *node, ui_node_canvas_t *canvas) {
 			current->_w = w;
 			ui_handle_t *h = ui_nest(nhandle, buti);
 			if (h->init) {
-				h->selected = ((uint8_t *)but->default_value->buffer)[0];
+				h->selected = ((float *)but->default_value->buffer)[0];
 			}
-			((uint8_t *)but->default_value->buffer)[0] = ui_check(h, ui_tr(but->name), "");
+			((float *)but->default_value->buffer)[0] = ui_check(h, ui_tr(but->name), "");
 		}
 		else if (strcmp(but->type, "CUSTOM") == 0) { // Calls external function for custom button drawing
 			ny += lineh;
