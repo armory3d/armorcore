@@ -36,8 +36,8 @@ int armpack_size_f32();
 int armpack_size_bool();
 
 any_map_t *armpack_decode_to_map(buffer_t *b);
-double armpack_map_get_f64(any_map_t *map, char *key);
-int64_t armpack_map_get_i64(any_map_t *map, char *key);
+float armpack_map_get_f32(any_map_t *map, char *key);
+int armpack_map_get_i32(any_map_t *map, char *key);
 
 /* JS object:
 

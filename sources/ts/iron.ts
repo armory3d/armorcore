@@ -389,8 +389,8 @@ declare function armpack_size_i32(): i32;
 declare function armpack_size_f32(): i32;
 declare function armpack_size_bool(): i32;
 declare function armpack_decode_to_map(b: buffer_t): map_t<string, any>;
-declare function armpack_map_get_f64(map: map_t<string, any>, key: string): f64;
-declare function armpack_map_get_i64(map: map_t<string, any>, key: string): i64;
+declare function armpack_map_get_f32(map: map_t<string, any>, key: string): f32;
+declare function armpack_map_get_i32(map: map_t<string, any>, key: string): i32;
 
 declare type audio_channel_t = {
 	sound: any; // kinc_a1_sound_t

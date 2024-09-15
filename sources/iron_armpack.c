@@ -510,8 +510,11 @@ static char *read_string_alloc() {
 
 typedef union ptr_storage {
 	void *p;
-	double f;
-	int64_t i;
+	struct {
+		float f;
+		int type; // 0 - float, 1 - int
+	};
+	int i;
 } ptr_storage_t;
 
 any_map_t *_armpack_decode_to_map() {
@@ -531,24 +534,28 @@ any_map_t *_armpack_decode_to_map() {
 			case 0xc2: { // false
 				ptr_storage_t s;
 				s.i = 0;
+				s.type = 1;
 				any_map_set(result, key, s.p);
 				break;
 			}
 			case 0xc3: { // true
 				ptr_storage_t s;
 				s.i = 1;
+				s.type = 1;
 				any_map_set(result, key, s.p);
 				break;
 			}
 			case 0xca: { // f32
 				ptr_storage_t s;
 				s.f = read_f32();
+				s.type = 0;
 				any_map_set(result, key, s.p);
 				break;
 			}
 			case 0xd2: { // i32
 				ptr_storage_t s;
 				s.i = read_i32();
+				s.type = 1;
 				any_map_set(result, key, s.p);
 				break;
 			}
@@ -640,20 +647,20 @@ any_map_t *armpack_decode_to_map(buffer_t *b) {
 	return _armpack_decode_to_map();
 }
 
-double armpack_map_get_f64(any_map_t *map, char *key) {
+float armpack_map_get_f32(any_map_t *map, char *key) {
 	ptr_storage_t ps;
 	ps.p = any_map_get(map, key);
 	if (ps.p == NULL) {
 		return 0.0;
 	}
-	return ps.f;
+	return ps.type == 0 ? ps.f : (float)ps.i;
 }
 
-int64_t armpack_map_get_i64(any_map_t *map, char *key) {
+int armpack_map_get_i32(any_map_t *map, char *key) {
 	ptr_storage_t ps;
 	ps.p = any_map_get(map, key);
 	if (ps.p == NULL) {
 		return 0;
 	}
-	return ps.i;
+	return ps.type == 1 ? ps.i : (int)ps.f;
 }
