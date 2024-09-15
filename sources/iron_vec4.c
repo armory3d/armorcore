@@ -4,17 +4,13 @@
 #include <math.h>
 #include <kinc/math/core.h>
 
-vec4_t vec4_new(float x, float y, float z, float w) {
+vec4_t vec4_create(float x, float y, float z, float w) {
 	vec4_t v;
 	v.x = x;
 	v.y = y;
 	v.z = z;
 	v.w = w;
 	return v;
-}
-
-vec4_t vec4_create(float x, float y, float z, float w) {
-	return vec4_new(x, y, z, w);
 }
 
 vec4_t vec4_cross(vec4_t a, vec4_t b) {
@@ -128,7 +124,7 @@ bool vec4_almost_equals(vec4_t a, vec4_t b, float prec) {
 }
 
 float vec4_len(vec4_t a) {
-	return (float)sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+	return sqrtf(a.x * a.x + a.y * a.y + a.z * a.z);
 }
 
 vec4_t vec4_sub(vec4_t a, vec4_t b) {
@@ -153,7 +149,7 @@ float vec4_fdist(float v1x, float v1y, float v1z, float v2x, float v2y, float v2
 	float vx = v1x - v2x;
 	float vy = v1y - v2y;
 	float vz = v1z - v2z;
-	return (float)sqrt(vx * vx + vy * vy + vz * vz);
+	return sqrtf(vx * vx + vy * vy + vz * vz);
 }
 
 vec4_t vec4_reflect(vec4_t a, vec4_t n) {
@@ -176,15 +172,15 @@ vec4_t vec4_clamp(vec4_t a, float min, float max) {
 }
 
 vec4_t vec4_x_axis() {
-	return vec4_new(1.0, 0.0, 0.0, 1.0);
+	return vec4_create(1.0, 0.0, 0.0, 1.0);
 }
 
 vec4_t vec4_y_axis() {
-	return vec4_new(0.0, 1.0, 0.0, 1.0);
+	return vec4_create(0.0, 1.0, 0.0, 1.0);
 }
 
 vec4_t vec4_z_axis() {
-	return vec4_new(0.0, 0.0, 1.0, 1.0);
+	return vec4_create(0.0, 0.0, 1.0, 1.0);
 }
 
 vec4_t vec4_nan() {

@@ -13,10 +13,6 @@ quat_t quat_create(float x, float y, float z, float w) {
 	return q;
 }
 
-quat_t quat_new(float x, float y, float z, float w) {
-    return quat_create(x, y, z, w);
-}
-
 quat_t quat_from_axis_angle(vec4_t axis, float angle) {
 	float s = sinf(angle * 0.5);
     quat_t q;
@@ -48,28 +44,28 @@ quat_t quat_from_rot_mat(mat4_t m) {
     quat_t q;
 
 	if (tr > 0) {
-		s = 0.5 / sqrt(tr + 1.0);
+		s = 0.5 / sqrtf(tr + 1.0);
 		q.w = 0.25 / s;
 		q.x = (m32 - m23) * s;
 		q.y = (m13 - m31) * s;
 		q.z = (m21 - m12) * s;
 	}
 	else if (m11 > m22 && m11 > m33) {
-		s = 2.0 * sqrt(1.0 + m11 - m22 - m33);
+		s = 2.0 * sqrtf(1.0 + m11 - m22 - m33);
 		q.w = (m32 - m23) / s;
 		q.x = 0.25 * s;
 		q.y = (m12 + m21) / s;
 		q.z = (m13 + m31) / s;
 	}
 	else if (m22 > m33) {
-		s = 2.0 * sqrt(1.0 + m22 - m11 - m33);
+		s = 2.0 * sqrtf(1.0 + m22 - m11 - m33);
 		q.w = (m13 - m31) / s;
 		q.x = (m12 + m21) / s;
 		q.y = 0.25 * s;
 		q.z = (m23 + m32) / s;
 	}
 	else {
-		s = 2.0 * sqrt(1.0 + m33 - m11 - m22);
+		s = 2.0 * sqrtf(1.0 + m33 - m11 - m22);
 		q.w = (m21 - m12) / s;
 		q.x = (m13 + m31) / s;
 		q.y = (m23 + m32) / s;
@@ -88,7 +84,7 @@ quat_t quat_mult(quat_t a, quat_t b) {
 }
 
 quat_t quat_norm(quat_t q) {
-	float l = sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+	float l = sqrtf(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
 	if (l == 0.0) {
 		q.x = 0;
 		q.y = 0;
@@ -169,11 +165,11 @@ quat_t quat_from_to(vec4_t v0, vec4_t v1) {
 		return quat_from_axis_angle(a, MATH_PI);
 	}
 	else if (dot > 0.999999) {
-		return quat_new(0, 0, 0, 1);
+		return quat_create(0, 0, 0, 1);
 	}
 	else {
 		vec4_t a = vec4_cross(v0, v1);
-		quat_t q = quat_new(a.x, a.y, a.z, 1.0 + dot);
+		quat_t q = quat_create(a.x, a.y, a.z, 1.0 + dot);
 		return quat_norm(q);
 	}
 }

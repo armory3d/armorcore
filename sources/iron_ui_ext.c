@@ -24,7 +24,7 @@ ui_text_coloring_t *ui_text_area_coloring = NULL;
 float ui_dist(float x1, float y1, float x2, float y2) {
 	float vx = x1 - x2;
 	float vy = y1 - y2;
-	return sqrt(vx * vx + vy * vy);
+	return sqrtf(vx * vx + vy * vy);
 }
 
 float ui_fract(float f) {

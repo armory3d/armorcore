@@ -187,20 +187,20 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 			m = camera.p;
 		}
 		else if (c.link == "_inv_proj_matrix") {
-			m = mat4_get_inv(camera.p);
+			m = mat4_inv(camera.p);
 		}
 		else if (c.link == "_view_proj_matrix") {
 			m = camera.vp;
 		}
 		else if (c.link == "_inv_view_proj_matrix") {
 			m = mat4_mult_mat(camera.v, camera.p);
-			m = mat4_get_inv(m);
+			m = mat4_inv(m);
 		}
 		else if (c.link == "_skydome_matrix") {
 			let tr: transform_t = camera.base.transform;
-			let v: vec4_t = vec4_new(transform_world_x(tr), transform_world_y(tr), transform_world_z(tr) - 3.5); // Sky
+			let v: vec4_t = vec4_create(transform_world_x(tr), transform_world_y(tr), transform_world_z(tr) - 3.5); // Sky
 			let bounds: f32 = camera.data.far_plane * 0.95;
-			let v2: vec4_t = vec4_new(bounds, bounds, bounds);
+			let v2: vec4_t = vec4_create(bounds, bounds, bounds);
 			m = mat4_compose(v, _uniforms_quat, v2);
 			m = mat4_mult_mat(m, camera.v);
 			m = mat4_mult_mat(m, camera.p);
@@ -238,14 +238,14 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 		else if (c.link == "_light_pos") {
 			let light: light_object_t = _render_path_light;
 			if (light != null) {
-				v = vec4_new(transform_world_x(light.base.transform), transform_world_y(light.base.transform), transform_world_z(light.base.transform));
+				v = vec4_create(transform_world_x(light.base.transform), transform_world_y(light.base.transform), transform_world_z(light.base.transform));
 			}
 		}
 		else if (c.link == "_light_color") {
 			let light: light_object_t = _render_path_light;
 			if (light != null) {
 				let str: f32 = light.base.visible ? light.data.strength : 0.0;
-				v = vec4_new(
+				v = vec4_create(
 					(color_get_rb(light.data.color) / 255) * str,
 					(color_get_gb(light.data.color) / 255) * str,
 					(color_get_bb(light.data.color) / 255) * str);
@@ -256,7 +256,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
-				v = vec4_new(-sx, sy, 0.0);
+				v = vec4_create(-sx, sy, 0.0);
 				v = vec4_apply_mat(v, light.base.transform.world);
 			}
 		}
@@ -265,7 +265,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
-				v = vec4_new(sx, sy, 0.0);
+				v = vec4_create(sx, sy, 0.0);
 				v = vec4_apply_mat(v, light.base.transform.world);
 			}
 		}
@@ -274,7 +274,7 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
-				v = vec4_new(sx, -sy, 0.0);
+				v = vec4_create(sx, -sy, 0.0);
 				v = vec4_apply_mat(v, light.base.transform.world);
 			}
 		}
@@ -283,12 +283,12 @@ function uniforms_set_context_const(location: kinc_const_loc_t, c: shader_const_
 				let f2: f32 = 0.5;
 				let sx: f32 = light.data.size * f2;
 				let sy: f32 = light.data.size_y * f2;
-				v = vec4_new(-sx, -sy, 0.0);
+				v = vec4_create(-sx, -sy, 0.0);
 				v = vec4_apply_mat(v, light.base.transform.world);
 			}
 		}
 		else if (c.link == "_camera_pos") {
-			v = vec4_new(transform_world_x(camera.base.transform), transform_world_y(camera.base.transform), transform_world_z(camera.base.transform));
+			v = vec4_create(transform_world_x(camera.base.transform), transform_world_y(camera.base.transform), transform_world_z(camera.base.transform));
 		}
 		else if (c.link == "_camera_look") {
 			v = vec4_norm(camera_object_look_world(camera));
@@ -432,7 +432,7 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 			m = obj.transform.world_unpack;
 		}
 		else if (c.link == "_inv_world_matrix") {
-			m = mat4_get_inv(obj.transform.world_unpack);
+			m = mat4_inv(obj.transform.world_unpack);
 		}
 		else if (c.link == "_world_view_proj_matrix") {
 			m = mat4_mult_mat(obj.transform.world_unpack, camera.v);
@@ -468,7 +468,7 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 		let m: mat3_t = mat3_nan();
 
 		if (c.link == "_normal_matrix") {
-			let m4: mat4_t = mat4_get_inv(obj.transform.world);
+			let m4: mat4_t = mat4_inv(obj.transform.world);
 			m4 = mat4_transpose3x3(m4);
 			m = mat3_set_from4(m4);
 		}
@@ -499,12 +499,12 @@ function uniforms_set_obj_const(obj: object_t, loc: kinc_const_loc_t, c: shader_
 		if (c.link == "_dim") { // Model space
 			let d: vec4_t = obj.transform.dim;
 			let s: vec4_t = obj.transform.scale;
-			v = vec4_new((d.x / s.x), (d.y / s.y), (d.z / s.z));
+			v = vec4_create((d.x / s.x), (d.y / s.y), (d.z / s.z));
 		}
 		else if (c.link == "_half_dim") { // Model space
 			let d: vec4_t = obj.transform.dim;
 			let s: vec4_t = obj.transform.scale;
-			v = vec4_new((d.x / s.x) / 2, (d.y / s.y) / 2, (d.z / s.z) / 2);
+			v = vec4_create((d.x / s.x) / 2, (d.y / s.y) / 2, (d.z / s.z) / 2);
 		}
 		else if (uniforms_vec3_links != null) {
 			v = uniforms_vec3_links(obj, current_material(obj), c.link);

@@ -3,19 +3,15 @@
 #include <math.h>
 #include <kinc/math/core.h>
 
-vec2_t vec2_new(float x, float y) {
+vec2_t vec2_create(float x, float y) {
 	vec2_t v;
 	v.x = x;
 	v.y = y;
 	return v;
 }
 
-vec2_t vec2_create(float x, float y) {
-	return vec2_new(x, y);
-}
-
 float vec2_len(vec2_t v) {
-	return (float)sqrt(v.x * v.x + v.y * v.y);
+	return sqrtf(v.x * v.x + v.y * v.y);
 }
 
 vec2_t vec2_set_len(vec2_t v, float length) {

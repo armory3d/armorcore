@@ -119,7 +119,7 @@ function app_ready() {
 function scene_ready() {
 	// Set camera
 	let t: transform_t = scene_camera.base.transform;
-	t.loc = vec4_new(0, -6, 0);
+	t.loc = vec4_create(0, -6, 0);
 	t.rot = quat_from_to(vec4_create(0, 0, 1), vec4_create(0, -1, 0));
 	transform_build_matrix(t);
 

@@ -92,12 +92,12 @@ function camera_object_build_mat(raw: camera_object_t) {
 	// TODO: discards position affected by scaled camera parent
 	let sc: vec4_t = mat4_get_scale(raw.base.transform.world);
 	if (sc.x != 1.0 || sc.y != 1.0 || sc.z != 1.0) {
-		_camera_object_v = vec4_new(1.0 / sc.x, 1.0 / sc.y, 1.0 / sc.z);
+		_camera_object_v = vec4_create(1.0 / sc.x, 1.0 / sc.y, 1.0 / sc.z);
 		raw.base.transform.world = mat4_scale(raw.base.transform.world, _camera_object_v);
 	}
 
-	raw.v = mat4_get_inv(raw.base.transform.world);
-	raw.vp = mat4_mult_mats(raw.p, raw.v);
+	raw.v = mat4_inv(raw.base.transform.world);
+	raw.vp = mat4_mult_mat(raw.v, raw.p);
 
 	if (raw.data.frustum_culling) {
 		camera_object_build_view_frustum(raw.vp, raw.frustum_planes);
@@ -110,27 +110,27 @@ function camera_object_build_mat(raw: camera_object_t) {
 }
 
 function camera_object_right(raw: camera_object_t): vec4_t {
-	return vec4_create(raw.base.transform.local.m00, raw.base.transform.local.m01, raw.base.transform.local.m02);
+	return vec4_norm(vec4_create(raw.base.transform.local.m00, raw.base.transform.local.m01, raw.base.transform.local.m02));
 }
 
 function camera_object_up(raw: camera_object_t): vec4_t {
-	return vec4_create(raw.base.transform.local.m10, raw.base.transform.local.m11, raw.base.transform.local.m12);
+	return vec4_norm(vec4_create(raw.base.transform.local.m10, raw.base.transform.local.m11, raw.base.transform.local.m12));
 }
 
 function camera_object_look(raw: camera_object_t): vec4_t {
-	return vec4_create(-raw.base.transform.local.m20, -raw.base.transform.local.m21, -raw.base.transform.local.m22);
+	return vec4_norm(vec4_create(-raw.base.transform.local.m20, -raw.base.transform.local.m21, -raw.base.transform.local.m22));
 }
 
 function camera_object_right_world(raw: camera_object_t): vec4_t {
-	return vec4_create(raw.base.transform.world.m00, raw.base.transform.world.m01, raw.base.transform.world.m02);
+	return vec4_norm(vec4_create(raw.base.transform.world.m00, raw.base.transform.world.m01, raw.base.transform.world.m02));
 }
 
 function camera_object_up_world(raw: camera_object_t): vec4_t {
-	return vec4_create(raw.base.transform.world.m10, raw.base.transform.world.m11, raw.base.transform.world.m12);
+	return vec4_norm(vec4_create(raw.base.transform.world.m10, raw.base.transform.world.m11, raw.base.transform.world.m12));
 }
 
 function camera_object_look_world(raw: camera_object_t): vec4_t {
-	return vec4_create(-raw.base.transform.world.m20, -raw.base.transform.world.m21, -raw.base.transform.world.m22);
+	return vec4_norm(vec4_create(-raw.base.transform.world.m20, -raw.base.transform.world.m21, -raw.base.transform.world.m22));
 }
 
 function camera_object_build_view_frustum(vp: mat4_t, frustum_planes: frustum_plane_t[]) {
@@ -158,7 +158,7 @@ function camera_object_sphere_in_frustum(frustum_planes: frustum_plane_t[], t: t
 	let radius: f32 = t.radius * radius_scale;
 	for (let i: i32 = 0; i < frustum_planes.length; ++i) {
 		let plane: frustum_plane_t = frustum_planes[i];
-		_camera_object_sphere_center = vec4_new(
+		_camera_object_sphere_center = vec4_create(
 			transform_world_x(t) + offset_x,
 			transform_world_y(t) + offset_y,
 			transform_world_z(t) + offset_z);
@@ -193,6 +193,6 @@ function frustum_plane_dist_to_sphere(raw: frustum_plane_t, sphere_center: vec4_
 }
 
 function frustum_plane_set_components(raw: frustum_plane_t, x: f32, y: f32, z: f32, w: f32) {
-	raw.normal = vec4_new(x, y, z);
+	raw.normal = vec4_create(x, y, z);
 	raw.constant = w;
 }

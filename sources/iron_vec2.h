@@ -3,7 +3,6 @@
 #include <kinc/math/vector.h>
 #include "iron_vec4.h"
 
-vec2_t vec2_new(float x, float y);
 vec2_t vec2_create(float x, float y);
 float vec2_len(vec2_t v);
 vec2_t vec2_set_len(vec2_t v, float length);

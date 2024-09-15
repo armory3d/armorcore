@@ -2520,7 +2520,7 @@ void ui_touch_move(ui_t *ui, int index, int x, int y) {
 		float last_distance = ui_pinch_distance;
 		float dx = ui->input_x - x;
 		float dy = ui->input_y - y;
-		ui_pinch_distance = sqrt(dx * dx + dy * dy);
+		ui_pinch_distance = sqrtf(dx * dx + dy * dy);
 		ui_pinch_total += last_distance != 0 ? last_distance - ui_pinch_distance : 0;
 		if (!ui_pinch_started) {
 			ui->input_wheel_delta = ui_pinch_total / 50;

@@ -26,9 +26,9 @@ function raycast_get_ray(input_x: f32, input_y: f32, camera: camera_object_t): r
 	end.y = start.y;
 	end.z = 1.0;
 
-	_raycast_p_inv = mat4_get_inv(camera.p);
-	_raycast_v_inv = mat4_get_inv(camera.v);
-	_raycast_vp_inv = mat4_mult_mats(_raycast_v_inv, _raycast_p_inv);
+	_raycast_p_inv = mat4_inv(camera.p);
+	_raycast_v_inv = mat4_inv(camera.v);
+	_raycast_vp_inv = mat4_mult_mat(_raycast_p_inv, _raycast_v_inv);
 	start = vec4_apply_proj(start, _raycast_vp_inv);
 	end = vec4_apply_proj(end, _raycast_vp_inv);
 

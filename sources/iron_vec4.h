@@ -13,8 +13,7 @@
 
 #include "iron_mat4.h"
 
-vec4_t vec4_new(float x, float y, float z, float w);
-vec4_t vec4_create(float x, float y, float z, float w); //
+vec4_t vec4_create(float x, float y, float z, float w);
 vec4_t vec4_cross(vec4_t a, vec4_t b);
 vec4_t vec4_add(vec4_t a, vec4_t b);
 vec4_t vec4_fadd(vec4_t a, float x, float y, float z, float w);

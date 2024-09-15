@@ -96,9 +96,9 @@ mat4_decomposed_t *mat4_decompose(mat4_t m) {
 	loc.x = m.m[12];
 	loc.y = m.m[13];
 	loc.z = m.m[14];
-	scl.x = vec4_len(vec4_new(m.m[0], m.m[1], m.m[2], 1.0));
-	scl.y = vec4_len(vec4_new(m.m[4], m.m[5], m.m[6], 1.0));
-	scl.z = vec4_len(vec4_new(m.m[8], m.m[9], m.m[10], 1.0));
+	scl.x = vec4_len(vec4_create(m.m[0], m.m[1], m.m[2], 1.0));
+	scl.y = vec4_len(vec4_create(m.m[4], m.m[5], m.m[6], 1.0));
+	scl.z = vec4_len(vec4_create(m.m[8], m.m[9], m.m[10], 1.0));
 	if (mat4_determinant(m) < 0.0) {
 		scl.x = -scl.x;
 	}
@@ -221,7 +221,7 @@ mat4_t mat4_scale(mat4_t m, vec4_t v) {
 	return m;
 }
 
-mat4_t mat4_mult_mats3x4(mat4_t a, mat4_t b) {
+mat4_t mat4_mult_mat3x4(mat4_t a, mat4_t b) {
 	float a00 = a.m[0];
 	float a01 = a.m[1];
 	float a02 = a.m[2];
@@ -272,65 +272,6 @@ mat4_t mat4_mult_mats3x4(mat4_t a, mat4_t b) {
 	m.m[7] = 0;
 	m.m[11] = 0;
 	m.m[15] = 1;
-	return m;
-}
-
-mat4_t mat4_mult_mats(mat4_t b, mat4_t a) {
-	float a00 = a.m[0];
-	float a01 = a.m[1];
-	float a02 = a.m[2];
-	float a03 = a.m[3];
-	float a10 = a.m[4];
-	float a11 = a.m[5];
-	float a12 = a.m[6];
-	float a13 = a.m[7];
-	float a20 = a.m[8];
-	float a21 = a.m[9];
-	float a22 = a.m[10];
-	float a23 = a.m[11];
-	float a30 = a.m[12];
-	float a31 = a.m[13];
-	float a32 = a.m[14];
-	float a33 = a.m[15];
-
-	float b0 = b.m[0];
-	float b1 = b.m[4];
-	float b2 = b.m[8];
-	float b3 = b.m[12];
-
-	mat4_t m;
-	m.m[0] = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
-	m.m[4] = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
-	m.m[8] = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
-	m.m[12] = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
-
-	b0 = b.m[1];
-	b1 = b.m[5];
-	b2 = b.m[9];
-	b3 = b.m[13];
-	m.m[1] = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
-	m.m[5] = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
-	m.m[9] = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
-	m.m[13] = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
-
-	b0 = b.m[2];
-	b1 = b.m[6];
-	b2 = b.m[10];
-	b3 = b.m[14];
-	m.m[2] = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
-	m.m[6] = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
-	m.m[10] = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
-	m.m[14] = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
-
-	b0 = b.m[3];
-	b1 = b.m[7];
-	b2 = b.m[11];
-	b3 = b.m[15];
-	m.m[3] = a00 * b0 + a01 * b1 + a02 * b2 + a03 * b3;
-	m.m[7] = a10 * b0 + a11 * b1 + a12 * b2 + a13 * b3;
-	m.m[11] = a20 * b0 + a21 * b1 + a22 * b2 + a23 * b3;
-	m.m[15] = a30 * b0 + a31 * b1 + a32 * b2 + a33 * b3;
-
 	return m;
 }
 
@@ -391,7 +332,7 @@ mat4_t mat4_mult_mat(mat4_t a, mat4_t b) {
 	return a;
 }
 
-mat4_t mat4_get_inv(mat4_t a) {
+mat4_t mat4_inv(mat4_t a) {
 	float a00 = a.m[0];
 	float a01 = a.m[1];
 	float a02 = a.m[2];
@@ -507,9 +448,9 @@ vec4_t mat4_get_loc(mat4_t m) {
 
 vec4_t mat4_get_scale(mat4_t m) {
 	return vec4_create(
-		sqrt(m.m[0] * m.m[0] + m.m[4] * m.m[4] + m.m[8] * m.m[8]),
-		sqrt(m.m[1] * m.m[1] + m.m[5] * m.m[5] + m.m[9] * m.m[9]),
-		sqrt(m.m[2] * m.m[2] + m.m[6] * m.m[6] + m.m[10] * m.m[10]),
+		sqrtf(m.m[0] * m.m[0] + m.m[4] * m.m[4] + m.m[8] * m.m[8]),
+		sqrtf(m.m[1] * m.m[1] + m.m[5] * m.m[5] + m.m[9] * m.m[9]),
+		sqrtf(m.m[2] * m.m[2] + m.m[6] * m.m[6] + m.m[10] * m.m[10]),
 		1.0
 	);
 }
@@ -535,15 +476,15 @@ mat4_t mat4_mult(mat4_t m, float s) {
 }
 
 mat4_t mat4_to_rot(mat4_t m) {
-	float scale = 1.0 / vec4_len(vec4_new(m.m[0], m.m[1], m.m[2], 1.0));
+	float scale = 1.0 / vec4_len(vec4_create(m.m[0], m.m[1], m.m[2], 1.0));
 	m.m[0] = m.m[0] * scale;
 	m.m[1] = m.m[1] * scale;
 	m.m[2] = m.m[2] * scale;
-	scale = 1.0 / vec4_len(vec4_new(m.m[4], m.m[5], m.m[6], 1.0));
+	scale = 1.0 / vec4_len(vec4_create(m.m[4], m.m[5], m.m[6], 1.0));
 	m.m[4] = m.m[4] * scale;
 	m.m[5] = m.m[5] * scale;
 	m.m[6] = m.m[6] * scale;
-	scale = 1.0 / vec4_len(vec4_new(m.m[8], m.m[9], m.m[10], 1.0));
+	scale = 1.0 / vec4_len(vec4_create(m.m[8], m.m[9], m.m[10], 1.0));
 	m.m[8] = m.m[8] * scale;
 	m.m[9] = m.m[9] * scale;
 	m.m[10] = m.m[10] * scale;
@@ -558,15 +499,15 @@ mat4_t mat4_to_rot(mat4_t m) {
 }
 
 vec4_t mat4_right(mat4_t m) {
-	return vec4_create(m.m[0], m.m[1], m.m[2], 1.0);
+	return vec4_norm(vec4_create(m.m[0], m.m[1], m.m[2], 1.0));
 }
 
 vec4_t mat4_look(mat4_t m) {
-	return vec4_create(m.m[4], m.m[5], m.m[6], 1.0);
+	return vec4_norm(vec4_create(m.m[4], m.m[5], m.m[6], 1.0));
 }
 
 vec4_t mat4_up(mat4_t m) {
-	return vec4_create(m.m[8], m.m[9], m.m[10], 1.0);
+	return vec4_norm(vec4_create(m.m[8], m.m[9], m.m[10], 1.0));
 }
 
 f32_array_t *mat4_to_f32_array(mat4_t m) {

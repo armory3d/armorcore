@@ -81,12 +81,12 @@ function transform_build_matrix(raw: transform_t) {
 
 	///if arm_skin
 	if (raw.bone_parent != null) {
-		raw.local = mat4_mult_mats(raw.bone_parent, raw.local);
+		raw.local = mat4_mult_mat(raw.local, raw.bone_parent);
 	}
 	///end
 
 	if (raw.object.parent != null && !raw.local_only) {
-		raw.world = mat4_mult_mats3x4(raw.local, raw.object.parent.transform.world);
+		raw.world = mat4_mult_mat3x4(raw.local, raw.object.parent.transform.world);
 	}
 	else {
 		raw.world = mat4_clone(raw.local);
@@ -177,10 +177,10 @@ function transform_compute_dim(raw: transform_t) {
 	}
 	let d: f32_array_t = raw.object.raw.dimensions;
 	if (d == null) {
-		raw.dim = vec4_new(2 * raw.scale.x, 2 * raw.scale.y, 2 * raw.scale.z);
+		raw.dim = vec4_create(2 * raw.scale.x, 2 * raw.scale.y, 2 * raw.scale.z);
 	}
 	else {
-		raw.dim = vec4_new(d[0] * raw.scale.x, d[1] * raw.scale.y, d[2] * raw.scale.z);
+		raw.dim = vec4_create(d[0] * raw.scale.x, d[1] * raw.scale.y, d[2] * raw.scale.z);
 	}
 	transform_compute_radius(raw);
 }
@@ -188,7 +188,7 @@ function transform_compute_dim(raw: transform_t) {
 function transform_apply_parent_inv(raw: transform_t) {
 	let pt: transform_t = raw.object.parent.transform;
 	transform_build_matrix(pt);
-	let pinv: mat4_t = mat4_get_inv(pt.world);
+	let pinv: mat4_t = mat4_inv(pt.world);
 	raw.local = mat4_mult_mat(raw.local, pinv);
 	transform_decompose(raw);
 	transform_build_matrix(raw);

@@ -7,7 +7,6 @@ declare type quat_t = {
 };
 
 declare function quat_create(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): quat_t;
-declare function quat_new(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): quat_t;
 declare function quat_from_axis_angle(axis: vec4_t, angle: f32): quat_t;
 declare function quat_from_mat(m: mat4_t): quat_t;
 declare function quat_from_rot_mat(m: mat4_t): quat_t;

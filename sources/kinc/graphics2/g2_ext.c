@@ -8,12 +8,12 @@
 
 void arm_g2_fill_circle(float cx, float cy, float radius, int segments) {
 	if (segments <= 0) {
-		segments = (int)floor(10 * sqrt(radius));
+		segments = (int)floor(10 * sqrtf(radius));
 	}
 
-	float theta = 2 * (float)MATH_PI / segments;
-	float c = (float)cos(theta);
-	float s = (float)sin(theta);
+	float theta = 2.0 * (float)MATH_PI / segments;
+	float c = cosf(theta);
+	float s = sinf(theta);
 
 	float x = radius;
 	float y = 0.0;
@@ -38,10 +38,10 @@ void arm_g2_draw_inner_line(float x1, float y1, float x2, float y2, float streng
 
 	kinc_vector2_t vec;
 	if (y2 == y1) {
-		vec = vec2_new(0, -1);
+		vec = vec2_create(0, -1);
 	}
 	else {
-		vec = vec2_new(1, -(x2 - x1) / (y2 - y1));
+		vec = vec2_create(1, -(x2 - x1) / (y2 - y1));
 	}
 	vec = vec2_set_len(vec, strength);
 	kinc_vector2_t p1 = {x1 + side * vec.x, y1 + side * vec.y};
@@ -56,12 +56,12 @@ void arm_g2_draw_circle(float cx, float cy, float radius, int segments, float st
 	radius += strength / 2;
 
 	if (segments <= 0) {
-		segments = (int)floor(10 * sqrt(radius));
+		segments = (int)floor(10 * sqrtf(radius));
 	}
 
 	float theta = 2 * (float)MATH_PI / segments;
-	float c = (float)cos(theta);
-	float s = (float)sin(theta);
+	float c = cosf(theta);
+	float s = sinf(theta);
 
 	float x = radius;
 	float y = 0.0;

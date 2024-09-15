@@ -4,7 +4,6 @@ declare type vec2_t = {
 	y: f32;
 };
 
-declare function vec2_new(x: f32 = 0.0, y: f32 = 0.0): vec2_t;
 declare function vec2_create(x: f32 = 0.0, y: f32 = 0.0): vec2_t;
 declare function vec2_len(v: vec2_t): f32;
 declare function vec2_set_len(v: vec2_t, length: f32): vec2_t;

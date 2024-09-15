@@ -5,7 +5,6 @@
 #include "iron_mat4.h"
 
 quat_t quat_create(float x, float y, float z, float w);
-quat_t quat_new(float x, float y, float z, float w);
 quat_t quat_from_axis_angle(vec4_t axis, float angle);
 quat_t quat_from_mat(mat4_t m);
 quat_t quat_from_rot_mat(mat4_t m);

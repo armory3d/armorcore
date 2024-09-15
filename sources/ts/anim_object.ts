@@ -60,8 +60,8 @@ function anim_object_update_transform_anim(raw: anim_object_t, anim: anim_t, tra
 			t.drot = quat_create();
 			t.dscale = vec4_create();
 		}
-		t.dloc = vec4_new(0, 0, 0);
-		t.dscale = vec4_new(0, 0, 0);
+		t.dloc = vec4_create(0, 0, 0);
+		t.dscale = vec4_create(0, 0, 0);
 		t._deuler_x = t._deuler_y = t._deuler_z = 0.0;
 	}
 

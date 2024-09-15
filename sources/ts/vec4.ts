@@ -6,8 +6,7 @@ declare type vec4_t = {
 	w: f32;
 };
 
-declare function vec4_new(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): vec4_t;
-declare function vec4_create(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): vec4_t; //
+declare function vec4_create(x: f32 = 0.0, y: f32 = 0.0, z: f32 = 0.0, w: f32 = 1.0): vec4_t;
 declare function vec4_cross(a: vec4_t, b: vec4_t): vec4_t;
 declare function vec4_add(a: vec4_t, b: vec4_t): vec4_t;
 declare function vec4_fadd(a: vec4_t, x: f32, y: f32, z: f32, w: f32 = 0.0): vec4_t;

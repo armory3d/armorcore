@@ -68,7 +68,7 @@ function anim_bone_set_skin(raw: anim_bone_t, mo: mesh_object_t) {
 			raw.skin_buffer[i] = 0;
 		}
 		// Rotation is already applied to skin at export
-		raw.object.base.transform.rot = quat_new(0, 0, 0, 1);
+		raw.object.base.transform.rot = quat_create(0, 0, 0, 1);
 		transform_build_matrix(raw.object.base.transform);
 
 		let refs: string[] = mo.base.parent.raw.anim.bone_actions;
@@ -213,7 +213,7 @@ function anim_bone_mult_parent(raw: anim_bone_t, i: i32, fasts: mat4_t[], bones:
 		f = mat4_clone(mats[i]);
 	}
 	else {
-		f = mat4_mult_mats(fasts[bi], mats[i]);
+		f = mat4_mult_mat(mats[i], fasts[bi]);
 	}
 }
 
@@ -290,7 +290,7 @@ function anim_bone_update_skin_gpu(raw: anim_bone_t) {
 			anim_bone_update_bone_children(raw, bones[i], _anim_bone_m);
 		}
 
-		_anim_bone_m = mat4_mult_mats(_anim_bone_m, raw.data._skeleton_transforms_inv[i]);
+		_anim_bone_m = mat4_mult_mat(raw.data._skeleton_transforms_inv[i], _anim_bone_m);
 		anim_bone_update_skin_buffer(raw, _anim_bone_m, i);
 	}
 }
@@ -299,7 +299,7 @@ function anim_bone_update_skin_buffer(raw: anim_bone_t, m: mat4_t, i: i32) {
 	// Dual quat skinning
 	mat4_decompose(m, _anim_bone_vpos, _anim_bone_q1, _anim_bone_vscale);
 	_anim_bone_q1 = quat_norm(_anim_bone_q1);
-	_anim_bone_q2 = quat_new(_anim_bone_vpos.x, _anim_bone_vpos.y, _anim_bone_vpos.z, 0.0);
+	_anim_bone_q2 = quat_create(_anim_bone_vpos.x, _anim_bone_vpos.y, _anim_bone_vpos.z, 0.0);
 	_anim_bone_q2 = quat_mult(_anim_bone_q2, _anim_bone_q1);
 	raw.skin_buffer[i * 8] = _anim_bone_q1.x; // Real
 	raw.skin_buffer[i * 8 + 1] = _anim_bone_q1.y;
@@ -598,7 +598,7 @@ function anim_bone_get_world_mats_fast(raw: anim_bone_t, tip: obj_t, chain_len: 
 function anim_bone_set_bone_mat_from_world_mat(raw: anim_bone_t, wm: mat4_t, bone: obj_t) {
 	let inv_mat: mat4_t = mat4_identity();
 	let temp_mat: mat4_t = mat4_clone(wm);
-	inv_mat = mat4_get_inv(raw.object.base.parent.transform.world);
+	inv_mat = mat4_inv(raw.object.base.parent.transform.world);
 	temp_mat = mat4_mult_mat(temp_mat, inv_mat);
 	let bones: obj_t[] = [];
 	let p_bone: obj_t = bone;
@@ -609,7 +609,7 @@ function anim_bone_set_bone_mat_from_world_mat(raw: anim_bone_t, wm: mat4_t, bon
 
 	for (let i: i32 = 0; i < bones.length; ++i) {
 		let x: i32 = bones.length - 1;
-		inv_mat = mat4_get_inv(anim_bone_get_bone_mat(raw, bones[x - i]));
+		inv_mat = mat4_inv(anim_bone_get_bone_mat(raw, bones[x - i]));
 		temp_mat = mat4_mult_mat(temp_mat, inv_mat);
 	}
 
