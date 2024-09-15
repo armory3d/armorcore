@@ -382,7 +382,8 @@ function scene_create_mesh_object(o: obj_t, format: scene_t, parent: object_t, p
 			// Unique name if armature was already instantiated for different object
 			for (let j: i32 = 0; j < scene_armatures.length; ++j) {
 				let a: armature_t = scene_armatures[j];
-				if (a.name == parent.name) {
+				let aname: string = a.name;
+				if (aname == parent.name) {
 					parent.name += "." + parent.uid;
 					break;
 				}
