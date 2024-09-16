@@ -254,7 +254,10 @@ void kinc_internal_texture_set_image(kinc_g4_texture_t *texture, kinc_g4_texture
 		    dx_ctx.device->lpVtbl->CreateUnorderedAccessView(dx_ctx.device, (ID3D11Resource *)texture->impl.texture3D, &du, &texture->impl.computeView));
 	}
 
-	if (unit.stages[KINC_G4_SHADER_TYPE_FRAGMENT] >= 0) {
+	dx_ctx.context->lpVtbl->OMSetRenderTargetsAndUnorderedAccessViews(dx_ctx.context, 0, NULL, NULL, unit.stages[KINC_G4_SHADER_TYPE_FRAGMENT], 1,
+	                                                                  &texture->impl.computeView, NULL);
+
+	/*if (unit.stages[KINC_G4_SHADER_TYPE_FRAGMENT] >= 0) {
 		ID3D11ShaderResourceView *nullView = NULL;
 		dx_ctx.context->lpVtbl->PSSetShaderResources(dx_ctx.context, 0, 1, &nullView);
 
@@ -271,7 +274,7 @@ void kinc_internal_texture_set_image(kinc_g4_texture_t *texture, kinc_g4_texture
 		dx_ctx.context->lpVtbl->PSSetShaderResources(dx_ctx.context, 0, 1, &nullView);
 
 		dx_ctx.context->lpVtbl->CSSetUnorderedAccessViews(dx_ctx.context, unit.stages[KINC_G4_SHADER_TYPE_COMPUTE], 1, &texture->impl.computeView, NULL);
-	}
+	}*/
 }
 
 void kinc_internal_texture_unset(kinc_g4_texture_t *texture) {
