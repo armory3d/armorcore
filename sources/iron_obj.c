@@ -598,7 +598,7 @@ raw_mesh_t *obj_parse(buffer_t *file_bytes, char split_code, uint64_t start_pos,
 		part->texa->length = part->texa->capacity = uv_indices.length * 2;
 		part->texa->buffer = malloc(part->texa->capacity * sizeof(int16_t));
 
-		for (int i = 0; i < pos_indices.length; ++i) {
+		for (int i = 0; i < uv_indices.length; ++i) {
 			float uvx = uv_temp.buffer[uv_indices.buffer[i] * 2];
 			if (uvx > 1.0) {
 				uvx = uvx - (int)(uvx);
