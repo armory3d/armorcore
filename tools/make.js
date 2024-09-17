@@ -3298,26 +3298,26 @@ function compile_project(make, project) {
 	if (project.get_executable_name()) {
 		executable_name = project.get_executable_name();
 	}
-	if (goptions.target === 'linux') {
+	if (goptions.target === "linux") {
 		let from = path_resolve(path_join("build", goptions.build_path), executable_name);
 		let to = path_resolve(".", project.get_debug_dir(), executable_name);
 		fs_copyfile(from, to);
 		os_chmod(to, "+x");
 	}
-	else if (goptions.target === 'windows') {
-		let extension = '.exe';
-		let from = path_join("build", 'x64', goptions.debug ? 'Debug' : 'Release', executable_name + extension);
-		let dir = path_isabs(project.get_debug_dir())
-			? project.get_debug_dir()
-			: path_join(".", project.get_debug_dir());
-		fs_copyfile(from, path_join(dir, executable_name + extension));
+	else if (goptions.target === "windows") {
+		let from = path_join("x64", goptions.debug ? "Debug" : "Release", executable_name + ".exe");
+		let to = path_resolve("..", project.get_debug_dir(), executable_name + ".exe");
+		fs_copyfile(from, to);
 	}
 	if (goptions.run) {
-		if (goptions.target === 'macos') {
-			os_exec('build/' + (goptions.debug ? 'Debug' : 'Release') + '/' + project.name + '.app/Contents/MacOS/' + project.name, [], { cwd: "build" });
+		if (goptions.target === "macos") {
+			os_exec("build/" + (goptions.debug ? "Debug" : "Release") + "/" + project.name + ".app/Contents/MacOS/" + project.name, [], { cwd: "build" });
 		}
-		else if (goptions.target === 'linux' || goptions.target === 'windows') {
+		else if (goptions.target === "linux") {
 			os_exec(path_resolve(".", project.get_debug_dir(), executable_name), [], { cwd: path_resolve(".", project.get_debug_dir()) });
+		}
+		else if (goptions.target === "windows") {
+			os_exec(path_resolve("..", project.get_debug_dir(), executable_name), [], { cwd: path_resolve(".", project.get_debug_dir()) });
 		}
 	}
 }
