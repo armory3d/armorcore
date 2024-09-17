@@ -2583,11 +2583,14 @@ char *iron_read_directory(char *path, bool folders_only) {
 			if (i < dir.n_files - 1) {
 				wcscat(files, L"\n"); // Separator
 			}
+
 			#else
+
 			if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0) {
 				continue;
 			}
 			strcat(files, file.name);
+
 			if (i < dir.n_files - 1) {
 				strcat(files, "\n");
 			}
@@ -2596,7 +2599,13 @@ char *iron_read_directory(char *path, bool folders_only) {
 	}
 
 	tinydir_close(&dir);
+
+	#ifdef KINC_WINDOWS
+	wcstombs(temp_string, files, sizeof(temp_string));
+	return temp_string;
+	#else
 	return files;
+	#endif
 }
 #endif
 
