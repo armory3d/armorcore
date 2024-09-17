@@ -45,6 +45,12 @@ static void store_ptr(uint32_t ptr) {
 	wi += PTR_SIZE;
 }
 
+static void store_ptr_abs(void *ptr) {
+	wi += pad(wi, PTR_SIZE);
+	*(uint64_t *)(decoded + wi) = (uint64_t)ptr;
+	wi += PTR_SIZE;
+}
+
 static void store_string_bytes(char *str, int len) {
 	for (int i = 0; i < len; ++i) {
 		store_u8(str[i]);
@@ -73,7 +79,7 @@ static int traverse(int wi) {
 		for (int i = 0; i < t.size; ++i) {
 			size += traverse(wi + size);
 		}
-		return size;
+		return pad(wi, PTR_SIZE) + size;
 	}
 	else if (t.type == JSMN_PRIMITIVE) {
 		ti++;
@@ -124,7 +130,9 @@ static void token_write() {
 	if (t.type == JSMN_OBJECT) {
 		// TODO: Object containing another object
 		// Write object contents
-		bottom += token_size() * array_count;
+		int size = token_size();
+		size += pad(size, PTR_SIZE);
+		bottom += size * array_count;
 		ti++;
 		for (int i = 0; i < t.size; ++i) {
 			token_write();
@@ -136,8 +144,7 @@ static void token_write() {
 			store_u8(source[t.start] == 't' ? 1 : 0);
 		}
 		else if (source[t.start] == 'n') { // null
-			store_i32(0);
-			store_i32(0);
+			store_ptr_abs(NULL);
 		}
 		else {
 			has_dot(source + t.start, t.end - t.start) ?
@@ -154,7 +161,7 @@ static void token_write() {
 		store_ptr(bottom + PTR_SIZE + 4 + 4); // Pointer to buffer contents
 		store_i32(t.size); // Element count
 		store_i32(0); // Capacity = 0 -> do not free on first realloc
-		bottom = pad(wi, PTR_SIZE) + wi;
+		bottom = wi;
 
 		if (t.size == 0) {
 			wi = _wi;
@@ -168,6 +175,8 @@ static void token_write() {
 		if (t.type == JSMN_OBJECT) {
 			// Struct pointers
 			uint32_t size = token_size();
+			size += pad(size, PTR_SIZE);
+
 			for (int i = 0; i < count; ++i) {
 				store_ptr(bottom + count * PTR_SIZE + i * size);
 			}
@@ -175,6 +184,7 @@ static void token_write() {
 			// Struct contents
 			bottom = pad(wi, PTR_SIZE) + wi;
 			for (int i = 0; i < count; ++i) {
+				wi = pad(wi, PTR_SIZE) + wi;
 				token_write();
 			}
 		}

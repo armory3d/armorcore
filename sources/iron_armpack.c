@@ -180,7 +180,9 @@ static uint32_t get_struct_length() {
 static void read_store_map(int count) {
 	// TODO: Map containing another map
 	ei -= 5; // u8 map, i32 count
-	bottom += get_struct_length() * array_count;
+	uint32_t size = get_struct_length();
+	size += pad(size, PTR_SIZE);
+	bottom += size * array_count;
 	ei += 5;
 	for (int i = 0; i < count; ++i) {
 		read_u8(); // 0xdb string
@@ -230,7 +232,7 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 	}
 	store_i32(count); // Element count
 	store_i32(0); // Capacity = 0 -> do not free on first realloc
-	bottom = pad(di, PTR_SIZE) + di;
+	bottom = di;
 
 	if (count == 0) {
 		di = _di;
@@ -274,6 +276,8 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 		// Structs
 		else {
 			uint32_t size = get_struct_length();
+			size += pad(size, PTR_SIZE);
+
 			// Struct pointers
 			for (int i = 0; i < count; ++i) {
 				store_ptr(bottom + count * PTR_SIZE + i * size);
@@ -282,6 +286,7 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 			// Struct contents
 			bottom = pad(di, PTR_SIZE) + di;
 			for (int i = 0; i < count; ++i) {
+				di = pad(di, PTR_SIZE) + di;
 				read_store();
 			}
 		}
