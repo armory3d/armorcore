@@ -242,7 +242,7 @@ function g4_set_vertex_buffer(vb: vertex_buffer_t) {
 	g4_vertex_buffer_set(vb);
 }
 
-function g4_set_vertex_buffers(vbs: vertex_buffer_t[]) {
+function g4_set_vertex_buffers(vbs: any_array_t[]) {
 	iron_g4_set_vertex_buffers(vbs);
 }
 
