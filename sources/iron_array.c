@@ -545,7 +545,7 @@ u8_array_t *u8_array_create_from_string(char *s) {
 }
 
 char *u8_array_to_string(u8_array_t *a) {
-	char *r = gc_alloc(a->length);
+	char *r = gc_alloc(a->length + 1);
 	memcpy(r, a->buffer, a->length);
     return r;
 }
