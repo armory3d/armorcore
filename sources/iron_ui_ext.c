@@ -425,7 +425,11 @@ int ui_color_wheel(ui_handle_t *handle, bool alpha, float w, float h, bool color
 			hex_code[0] = 'f';
 			hex_code[1] = 'f';
 		}
+		#ifdef _WIN32
+		handle->color = _strtoi64(hex_code, NULL, 16);
+		#else
 		handle->color = strtol(hex_code, NULL, 16);
+		#endif
 	}
 	if (h0->changed || h1->changed || h2->changed) {
 		handle->changed = current->changed = true;

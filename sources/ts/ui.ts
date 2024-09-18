@@ -354,7 +354,7 @@ declare type ui_options_t = {
 };
 
 declare type ui_coloring_t = {
-	color?: i32;
+	color?: u32;
 	start?: string[];
 	end?: string;
 	separated?: bool;
@@ -362,7 +362,7 @@ declare type ui_coloring_t = {
 
 declare type ui_text_coloring_t = {
 	colorings?: ui_coloring_t[];
-	default_color?: i32;
+	default_color?: u32;
 };
 
 declare type ui_canvas_control_t = {
@@ -384,7 +384,7 @@ declare type ui_node_t = {
 	type?: string;
 	x?: f32;
 	y?: f32;
-	color?: i32;
+	color?: u32;
 	inputs?: ui_node_socket_t[];
 	outputs?: ui_node_socket_t[];
 	buttons?: ui_node_button_t[];
@@ -396,7 +396,7 @@ declare type ui_node_socket_t = {
 	node_id?: i32;
 	name?: string;
 	type?: string;
-	color?: i32;
+	color?: u32;
 	default_value?: f32_array_t;
 	min?: f32;
 	max?: f32;

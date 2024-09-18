@@ -28,6 +28,9 @@ static void store_u8(uint8_t u8) {
 }
 
 static void store_i32(int32_t i32) {
+	// TODO: signed overflow is UB
+	// if (i32 > INT32_MAX)
+	// 	i32 = (int32_t)(i32 - INT32_MAX - 1) - INT32_MAX - 1;
 	wi += pad(wi, 4);
 	*(int32_t *)(decoded + wi) = i32;
 	wi += 4;
@@ -149,7 +152,11 @@ static void token_write() {
 		else {
 			has_dot(source + t.start, t.end - t.start) ?
 				store_f32(strtof(source + t.start, NULL)) :
+				#ifdef _WIN32
+				store_i32(_strtoi64(source + t.start, NULL, 10));
+				#else
 				store_i32(strtol(source + t.start, NULL, 10));
+				#endif
 		}
 	}
 	else if (t.type == JSMN_ARRAY) {
