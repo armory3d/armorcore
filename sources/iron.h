@@ -130,6 +130,9 @@ char *js_call(void *p) {
 
 #ifdef WITH_EMBED
 buffer_t *embed_get(char *key) {
+	#ifdef KINC_WINDOWS
+	key = string_replace_all(key, "\\", "/");
+	#endif
 	for (int i = 0; i < embed_count; ++i) {
 		if (strcmp(embed_keys[i], key) == 0) {
 			buffer_t *buffer = buffer_create(0);
