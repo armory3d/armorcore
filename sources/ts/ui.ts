@@ -125,6 +125,13 @@ function _ui_end_element(element_size: f32 = -1.0) {
 	}
 }
 
+function _ui_end_input(ui: ui_t) {
+	let current: ui_t = ui_get_current();
+	ui_set_current(ui);
+	ui_end_input();
+	ui_set_current(current);
+}
+
 function ui_handle(s: string): ui_handle_t {
 	let h: ui_handle_t = map_get(ui_children, s);
 	if (h == null) {
