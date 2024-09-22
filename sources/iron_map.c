@@ -3,8 +3,6 @@
 #include "iron_gc.h"
 #include "iron_string.h"
 
-static size_t index_map_set(any_map_t *m, char *k);
-
 static size_t hash(const char *k) {
 	// fnv1a
     size_t hash = 0x811c9dc5;
@@ -15,49 +13,7 @@ static size_t hash(const char *k) {
     return hash;
 }
 
-static void resize(any_map_t *m) {
-	int cap = m->keys->capacity == 0 ? 16 : m->keys->capacity * 2;
-	any_map_t *tmp = any_map_create();
-	char_ptr_array_resize(tmp->keys, cap);
-	any_array_resize(tmp->values, cap);
-
-	// For map, array values are spread across the whole capacity, not from 0 to length
-	gc_array(tmp->keys->buffer, NULL);
-	gc_array(tmp->values->buffer, NULL);
-
-	any_array_t *old_keys = map_keys(m);
-	for (int i = 0; i < old_keys->length; ++i) {
-		char *k = old_keys->buffer[i];
-		size_t j = index_map_set(tmp, k);
-		tmp->keys->buffer[j] = k;
-		tmp->values->buffer[j] = any_map_get(m, k);
-	}
-
-	m->keys = tmp->keys;
-	m->values = tmp->values;
-}
-
-static size_t index_map_get(char_ptr_array_t *keys, char *k) {
-	if (k == NULL || keys->capacity == 0) {
-		return -1;
-	}
-	size_t i = hash(k) % keys->capacity;
-	while (!string_equals(k, keys->buffer[i])) {
-		if (keys->buffer[i] == NULL) {
-			return -1;
-		}
-		++i;
-		if (i > keys->capacity - 1) {
-			i = 0;
-		}
-	}
-	return i;
-}
-
-static size_t index_map_set(any_map_t *m, char *k) {
-	if (m->keys->length >= m->keys->capacity * 0.5) {
-		resize(m);
-	}
+static size_t index_set(any_map_t *m, char *k) {
 	size_t i = hash(k) & (m->keys->capacity - 1); // % m->keys->capacity
 	while (true) {
 		if (m->keys->buffer[i] == NULL) {
@@ -75,41 +31,95 @@ static size_t index_map_set(any_map_t *m, char *k) {
 	return i;
 }
 
+static size_t index_get(char_ptr_array_t *keys, char *k) {
+	if (k == NULL || keys->capacity == 0) {
+		return -1;
+	}
+	size_t i = hash(k) & (keys->capacity - 1);
+	while (!string_equals(k, keys->buffer[i])) {
+		if (keys->buffer[i] == NULL) {
+			return -1;
+		}
+		++i;
+		if (i > keys->capacity - 1) {
+			i = 0;
+		}
+	}
+	return i;
+}
+
+static void resize(any_map_t *m, int elem_size) {
+	if (m->keys->length < m->keys->capacity * 0.5) {
+		return;
+	}
+
+	int cap = m->keys->capacity == 0 ? 16 : m->keys->capacity * 2;
+	any_map_t *tmp = any_map_create();
+	tmp->keys->capacity = cap;
+	tmp->keys->buffer = gc_realloc(tmp->keys->buffer, cap * sizeof(void *));
+	tmp->values->capacity = cap;
+	tmp->values->buffer = gc_realloc(tmp->values->buffer, cap * elem_size);
+	if (elem_size < 8) {
+		gc_leaf(tmp->values->buffer);
+	}
+
+	any_array_t *old_keys = map_keys(m);
+	for (int i = 0; i < old_keys->length; ++i) {
+		char *k = old_keys->buffer[i];
+		size_t j = index_set(tmp, k);
+		tmp->keys->buffer[j] = k;
+		if (elem_size == 8) {
+			void **buf = tmp->values->buffer;
+			buf[j] = any_map_get(m, k);
+		}
+		else {
+			int32_t *buf = tmp->values->buffer;
+			buf[j] = i32_map_get(m, k);
+		}
+	}
+
+	m->keys = tmp->keys;
+	m->values = tmp->values;
+}
+
 void i32_map_set(i32_map_t *m, char *k, int v) {
-	size_t i = index_map_set(m, k);
+	resize(m, 4);
+	size_t i = index_set(m, k);
 	m->keys->buffer[i] = k;
 	m->values->buffer[i] = v;
 }
 
 void f32_map_set(f32_map_t *m, char *k, float v) {
-	size_t i = index_map_set(m, k);
+	resize(m, 4);
+	size_t i = index_set(m, k);
 	m->keys->buffer[i] = k;
 	m->values->buffer[i] = v;
 }
 
 void any_map_set(any_map_t *m, char *k, void *v) {
-	size_t i = index_map_set(m, k);
+	resize(m, 8);
+	size_t i = index_set(m, k);
 	m->keys->buffer[i] = k;
 	m->values->buffer[i] = v;
 }
 
 int32_t i32_map_get(i32_map_t *m, char *k) {
-	size_t i = index_map_get(m->keys, k);
+	size_t i = index_get(m->keys, k);
 	return i == -1 ? -1 : m->values->buffer[i];
 }
 
 float f32_map_get(f32_map_t *m, char *k) {
-	size_t i = index_map_get(m->keys, k);
+	size_t i = index_get(m->keys, k);
 	return i == -1 ? -1.0 : m->values->buffer[i];
 }
 
 void *any_map_get(any_map_t *m, char *k) {
-	size_t i = index_map_get(m->keys, k);
+	size_t i = index_get(m->keys, k);
 	return i == -1 ? NULL : m->values->buffer[i];
 }
 
 void map_delete(any_map_t *m, char *k) {
-	size_t i = index_map_get(m->keys, k);
+	size_t i = index_get(m->keys, k);
 	if (i != -1) {
 		m->keys->buffer[i] = NULL;
 		m->keys->length--;
