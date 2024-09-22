@@ -221,15 +221,24 @@ void array_insert(any_array_t *a, int at, void *e) {
 }
 
 void array_remove(any_array_t *ar, void *e) {
-	array_splice(ar, array_index_of(ar, e), 1);
+	int i = array_index_of(ar, e);
+	if (i > -1) {
+		array_splice(ar, i, 1);
+	}
 }
 
 void char_ptr_array_remove(char_ptr_array_t *ar, char *e) {
-	array_splice(ar, char_ptr_array_index_of(ar, e), 1);
+	int i = char_ptr_array_index_of(ar, e);
+	if (i > -1) {
+		array_splice(ar, i, 1);
+	}
 }
 
 void i32_array_remove(i32_array_t *ar, int e) {
-	i32_array_splice(ar, i32_array_index_of(ar, e), 1);
+	int i = i32_array_index_of(ar, e);
+	if (i > -1) {
+		i32_array_splice(ar, i, 1);
+	}
 }
 
 int array_index_of(any_array_t *ar, void *e) {
