@@ -185,12 +185,12 @@ int last_window_width = 0;
 int last_window_height = 0;
 #endif
 
-char temp_string[1024 * 8];
+char temp_string[1024 * 32];
 char temp_string_vs[1024 * 128];
 char temp_string_fs[1024 * 128];
 char temp_string_vstruct[4][32][32];
 #ifdef KINC_WINDOWS
-wchar_t temp_wstring[1024 * 8];
+wchar_t temp_wstring[1024 * 32];
 bool show_window = false;
 #endif
 
