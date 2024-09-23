@@ -181,7 +181,7 @@ static uint32_t traverse(int di, bool count_arrays) {
 		len += pad(di, PTR_SIZE) + PTR_SIZE;
 		return len;
 	}
-	case 0xdb: // string
+	case 0xdb: { // string
 		uint32_t len = read_u32(); // string_length
 		ei += len;
 		len += 1; // '\0'
@@ -190,6 +190,7 @@ static uint32_t traverse(int di, bool count_arrays) {
 		}
 		len += pad(di, PTR_SIZE) + PTR_SIZE;
 		return len;
+	}
 	default:
 		return 0;
 	}
