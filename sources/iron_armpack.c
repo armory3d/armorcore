@@ -4,8 +4,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-
-void *gc_alloc(size_t size);
+#include "iron_gc.h"
 
 static const int PTR_SIZE = 8;
 static uint32_t di; // Decoded index
@@ -14,8 +13,8 @@ static uint32_t bottom; // Decoded bottom
 static uint8_t *decoded;
 static uint8_t *encoded;
 static uint32_t capacity;
-static uint32_t string_length;
 static uint32_t array_count;
+static uint32_t string_length;
 static void read_store();
 
 static inline uint64_t pad(int di, int n) {
@@ -111,7 +110,7 @@ static char *read_string() {
 	return str;
 }
 
-static uint32_t traverse(int di) {
+static uint32_t traverse(int di, bool count_arrays) {
 	uint8_t flag = read_u8();
 	switch (flag) {
 	case 0xc0: // NULL
@@ -132,39 +131,65 @@ static uint32_t traverse(int di) {
 		for (int i = 0; i < count; ++i) {
 			read_u8(); // 0xdb string
 			read_string(); // key
-			len += traverse(di + len); // value
+			len += traverse(di + len, count_arrays); // value
 		}
 		len += pad(di + len, PTR_SIZE) + PTR_SIZE; // void *_
 		return len;
 	}
 	case 0xdd: { // array
+		uint32_t len = 0;
 		int count = read_i32();
 		uint8_t flag2 = read_u8();
 		switch (flag2) {
 		case 0xca: // Typed f32
 			ei += 4 * count;
+			len += 4 * count;
 			break;
 		case 0xd2: // Typed i32
 			ei += 4 * count;
+			len += 4 * count;
 			break;
 		case 0xd1: // Typed i16
 			ei += 2 * count;
+			len += 2 * count;
 			break;
 		case 0xc4: // Typed u8
 			ei += count;
+			len += count;
 			break;
-		default: // Dynamic type-value
+		case 0xc2: // Bool array
+			ei -= 1;
+			ei += count;
+			len += count;
+			break;
+		case 0xc3: // Bool array
+			ei -= 1;
+			ei += count;
+			len += count;
+			break;
+		default: // Dynamic (type - value)
 			ei -= 1; // Undo flag2 read
 			for (int j = 0; j < count; ++j) {
-				traverse(0);
+				len += traverse(0, count_arrays);
 			}
 		}
+		len += 32; // buffer ptr, length, capacity + align?
+		if (!count_arrays) {
+			len = 0;
+		}
 		// ptr (to array_t)
-		return pad(di, PTR_SIZE) + PTR_SIZE;
+		len += pad(di, PTR_SIZE) + PTR_SIZE;
+		return len;
 	}
 	case 0xdb: // string
-		ei += read_u32(); // string_length
-		return pad(di, PTR_SIZE) + PTR_SIZE;
+		uint32_t len = read_u32(); // string_length
+		ei += len;
+		len += 1; // '\0'
+		if (!count_arrays) {
+			len = 0;
+		}
+		len += pad(di, PTR_SIZE) + PTR_SIZE;
+		return len;
 	default:
 		return 0;
 	}
@@ -172,18 +197,20 @@ static uint32_t traverse(int di) {
 
 static uint32_t get_struct_length() {
 	uint32_t _ei = ei;
-	uint32_t len = traverse(0);
+	uint32_t len = traverse(0, false);
 	ei = _ei;
 	return len;
 }
 
 static void read_store_map(int count) {
-	// TODO: Map containing another map
+
 	ei -= 5; // u8 map, i32 count
 	uint32_t size = get_struct_length();
 	size += pad(size, PTR_SIZE);
 	bottom += size * array_count;
+	array_count = 0;
 	ei += 5;
+
 	for (int i = 0; i < count; ++i) {
 		read_u8(); // 0xdb string
 		read_string(); // key
@@ -194,7 +221,7 @@ static void read_store_map(int count) {
 }
 
 static bool is_typed_array(uint8_t flag) {
-	return flag == 0xca || flag == 0xd2 || flag == 0xd1 || flag == 0xc4;
+	return flag == 0xca || flag == 0xd2 || flag == 0xd1 || flag == 0xc4 || flag == 0xc2 || flag == 0xc3;
 }
 
 static uint8_t flag_to_byte_size(uint8_t flag) {
@@ -202,12 +229,17 @@ static uint8_t flag_to_byte_size(uint8_t flag) {
 	if (flag == 0xd2) return 4; // i32
 	if (flag == 0xd1) return 2; // i16
 	if (flag == 0xc4) return 1; // u8
+	if (flag == 0xc2) return 1; // u8 (true)
+	if (flag == 0xc3) return 1; // u8 (false)
 	return 0;
 }
 
 static void store_typed_array(uint8_t flag, uint32_t count) {
 	uint32_t size = flag_to_byte_size(flag) * count;
 	memcpy(decoded + di, encoded + ei, size);
+	if (size > 4096) {
+		gc_cut(decoded, di, size);
+	}
 	ei += size;
 	di += size;
 }
@@ -241,13 +273,15 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 
 	uint8_t flag = read_u8();
 	if (is_typed_array(flag)) {
+		if (flag == 0xc2 || flag == 0xc3) {
+			ei--; // Bool array
+		}
 		store_typed_array(flag, count);
 		bottom = pad(di, PTR_SIZE) + di;
 	}
 	// Dynamic (type - value)
 	else {
 		ei -= 1; // Undo flag read
-		array_count = count;
 
 		// Strings
 		if (flag == 0xdb) {
@@ -285,13 +319,15 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 
 			// Struct contents
 			bottom = pad(di, PTR_SIZE) + di;
+
+			array_count = count;
+
 			for (int i = 0; i < count; ++i) {
 				di = pad(di, PTR_SIZE) + di;
-				read_store();
+				uint8_t flag = read_u8();
+				read_store_map(read_i32());
 			}
 		}
-
-		array_count = 1;
 	}
 
 	di = _di;
@@ -315,9 +351,11 @@ static void read_store() {
 	case 0xd2:
 		store_i32(read_i32());
 		break;
-	case 0xdf:
+	case 0xdf: {
+		array_count = 1;
 		read_store_map(read_i32());
 		break;
+	}
 	case 0xdd:
 		read_store_array(read_i32());
 		break;
@@ -327,14 +365,18 @@ static void read_store() {
 	}
 }
 
-void *armpack_decode(buffer_t *b) {
-	capacity = b->length * 3;
-	decoded = gc_alloc(capacity);
-	encoded = b->buffer;
+static void reset() {
 	di = 0;
 	ei = 0;
 	bottom = 0;
-	array_count = 1;
+}
+
+void *armpack_decode(buffer_t *b) {
+	reset();
+	encoded = b->buffer;
+	capacity = traverse(0, true);
+	reset();
+	decoded = gc_alloc(capacity);
 	read_store();
 	return decoded;
 }
