@@ -10,6 +10,7 @@ void gc_array(void *ptr, int *length);
 void gc_leaf(void *ptr);
 void gc_root(void *ptr);
 void gc_unroot(void *ptr);
+void *gc_cut(void *ptr, size_t pos, size_t size);
 void *gc_realloc(void *ptr, size_t size);
 void gc_free(void *ptr);
 void gc_pause();

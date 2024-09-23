@@ -32,6 +32,9 @@ void gc_root(void *ptr) {
 void gc_unroot(void *ptr) {
 }
 
+void *gc_cut(void *ptr, size_t pos, size_t size) {
+}
+
 void *gc_realloc(void *ptr, size_t size) {
 	#ifdef HEAP_SIZE
 	// NOTE: gc_realloc is not implemented when HEAP_SIZE is defined
@@ -88,6 +91,10 @@ void gc_root(void *ptr) {
 
 void gc_unroot(void *ptr) {
 	_gc_unroot(ptr);
+}
+
+void *gc_cut(void *ptr, size_t pos, size_t size) {
+	_gc_cut(ptr, pos, size);
 }
 
 void *gc_realloc(void *ptr, size_t size) {
