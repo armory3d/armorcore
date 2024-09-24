@@ -807,15 +807,21 @@ int arm_g2_font_get_char_index_internal(arm_g2_font_image_t *img, int char_index
 		return 0;
 	}
 	int offset = g2_font_glyph_blocks[0];
-	if (char_index < offset) return 0;
+	if (char_index < offset) {
+		return 0;
+	}
 
 	for (int i = 1; i < g2_font_num_glyph_blocks / 2; ++i) {
 		int prev_end = g2_font_glyph_blocks[i * 2 - 1];
 		int start = g2_font_glyph_blocks[i * 2];
-		if (char_index > start - 1) offset += start - 1 - prev_end;
+		if (char_index > start - 1) {
+			offset += start - 1 - prev_end;
+		}
 	}
 
-	if (char_index - offset >= g2_font_num_glyphs) return 0;
+	if (char_index - offset >= g2_font_num_glyphs) {
+		return 0;
+	}
 	return char_index - offset;
 }
 
@@ -1030,7 +1036,8 @@ float arm_g2_font_height(arm_g2_font_t *font, int font_size) {
 }
 
 float arm_g2_font_get_char_width_internal(arm_g2_font_image_t *img, int char_index) {
-	return img->chars[arm_g2_font_get_char_index_internal(img, char_index)].xadvance;
+	int i = arm_g2_font_get_char_index_internal(img, char_index);
+	return img->chars[i].xadvance;
 }
 
 float arm_g2_sub_string_width(arm_g2_font_t *font, int font_size, const char *text, int start, int end) {
