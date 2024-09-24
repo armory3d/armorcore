@@ -636,8 +636,11 @@ LRESULT WINAPI KoreWindowsMessageProcedure(HWND hWnd, UINT msg, WPARAM wParam, L
 				}
 #endif
 			}
+			// No auto-repeat
+			kinc_internal_keyboard_trigger_key_down(keyTranslated[wParam]);
 		}
-		kinc_internal_keyboard_trigger_key_down(keyTranslated[wParam]);
+		// Auto-repeat
+		// kinc_internal_keyboard_trigger_key_down(keyTranslated[wParam]);
 		break;
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
