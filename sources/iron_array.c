@@ -150,6 +150,10 @@ void array_sort(any_array_t *ar, int (*compare)(const void *, const void *)) {
 	qsort(ar->buffer, ar->length, sizeof(ar->buffer[0]), compare);
 }
 
+void i32_array_sort(i32_array_t *ar, int (*compare)(const void *, const void *)) {
+	qsort(ar->buffer, ar->length, sizeof(ar->buffer[0]), compare);
+}
+
 void *array_pop(any_array_t *ar) {
 	ar->length--;
 	return ar->buffer[ar->length];

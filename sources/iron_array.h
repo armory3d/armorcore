@@ -81,6 +81,7 @@ void char_ptr_array_resize(char_ptr_array_t *a, int32_t size);
 void buffer_resize(buffer_t *b, int32_t size);
 
 void array_sort(any_array_t *ar, int (*compare)(const void *, const void *));
+void i32_array_sort(i32_array_t *ar, int (*compare)(const void *, const void *));
 void *array_pop(any_array_t *ar);
 void *array_shift(any_array_t *ar);
 void array_splice(any_array_t *ar, int32_t start, int32_t delete_count);
