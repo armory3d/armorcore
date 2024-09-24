@@ -31,3 +31,4 @@ bool ends_with(char *s, char *end);
 char *to_lower_case(char *s);
 char *to_upper_case(char *s);
 char *trim_end(char *str);
+int string_utf8_decode(char *str, int *i);

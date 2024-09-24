@@ -252,3 +252,22 @@ char *trim_end(char *str) {
 	}
 	return substring(str, 0, pos + 1);
 }
+
+// Per Lowgren, CC BY-SA 3.0
+// https://stackoverflow.com/a/35332046
+#define is_unicode(c) (((c) & 0xc0) == 0xc0)
+int string_utf8_decode(char *str, int *i) {
+	const unsigned char *s = (const unsigned char *)str;
+	int u = *s, l = 1;
+	if (is_unicode(u)) {
+		int a = (u & 0x20) ? ((u & 0x10) ? ((u & 0x08) ? ((u & 0x04) ? 6 : 5) : 4) : 3) : 2;
+		if (a < 6 || !(u & 0x02)) {
+			int b, p = 0;
+			u = ((u << (a + 1)) & 0xff) >> (a + 1);
+			for (b = 1; b < a; ++b)
+				u = (u << 6) | (s[l++] & 0x3f);
+		}
+	}
+	if (i) *i += l;
+	return u;
+}

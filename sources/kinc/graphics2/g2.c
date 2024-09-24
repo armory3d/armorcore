@@ -17,6 +17,7 @@
 #include <kinc/simd/float32x4.h>
 #include <kinc/color.h>
 #include <kinc/window.h>
+#include <iron_string.h>
 
 #define G2_BUFFER_SIZE 1000
 
@@ -850,25 +851,6 @@ bool arm_g2_font_get_baked_quad(arm_g2_font_t *font, int size, arm_g2_font_align
 	return true;
 }
 
-// Per Lowgren, CC BY-SA 3.0
-// https://stackoverflow.com/a/35332046
-#define is_unicode(c) (((c) & 0xc0) == 0xc0)
-static int utf8_decode(const char *str, int *i) {
-	const unsigned char *s = (const unsigned char *)str;
-	int u = *s, l = 1;
-	if (is_unicode(u)) {
-		int a = (u & 0x20) ? ((u & 0x10) ? ((u & 0x08) ? ((u & 0x04) ? 6 : 5) : 4) : 3) : 2;
-		if (a < 6 || !(u & 0x02)) {
-			int b, p = 0;
-			u = ((u << (a + 1)) & 0xff) >> (a + 1);
-			for (b = 1; b < a; ++b)
-				u = (u << 6) | (s[l++] & 0x3f);
-		}
-	}
-	if (i) *i += l;
-	return u;
-}
-
 void arm_g2_draw_string(const char *text, float x, float y) {
 	arm_g2_image_end();
 	arm_g2_colored_end();
@@ -884,7 +866,7 @@ void arm_g2_draw_string(const char *text, float x, float y) {
 	arm_g2_font_aligned_quad_t q;
 	for (int i = 0; text[i] != 0; ) {
 		int l = 0;
-		int codepoint = utf8_decode(&text[i], &l);
+		int codepoint = string_utf8_decode(&text[i], &l);
 		i += l;
 
 		if (arm_g2_font_get_baked_quad(g2_font, g2_font_size, &q, codepoint, xpos, ypos)) {
