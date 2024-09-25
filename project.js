@@ -322,9 +322,9 @@ let project = new Project(flags.name);
 }
 
 if (fs_exists(os_cwd() + '/icon.png')) {
-	project.icon = os_cwd() + '/icon.png';
+	project.icon = 'icon.png';
 	if (platform === 'macos' && fs_exists(os_cwd() + '/icon_macos.png')) {
-		project.icon = os_cwd() + '/icon_macos.png';
+		project.icon = 'icon_macos.png';
 	}
 }
 

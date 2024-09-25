@@ -1179,10 +1179,10 @@ class XCodeExporter extends Exporter {
 			frameworks.push(new Framework(lib));
 		}
 		let target_options = {
-			bundle: 'tech.kode.$(PRODUCT_NAME:rfc1034identifier)',
+			bundle: 'org.$(PRODUCT_NAME)',
 			version: "1.0",
 			build: "1",
-			organizationName: "the Kore Development Team",
+			organizationName: "Armory3D",
 			developmentTeam: ""
 		};
 		if (project.target_options && project.target_options.ios) {
@@ -1494,6 +1494,7 @@ class XCodeExporter extends Exporter {
 		}
 		else {
 			this.p('CODE_SIGN_IDENTITY = "-";', 4);
+			// this.p('"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";', 4);
 		}
 		this.p('COPY_PHASE_STRIP = NO;', 4);
 		this.p('ENABLE_STRICT_OBJC_MSGSEND = YES;', 4);
@@ -1570,6 +1571,7 @@ class XCodeExporter extends Exporter {
 		}
 		else {
 			this.p('CODE_SIGN_IDENTITY = "-";', 4);
+			// this.p('"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";', 4);
 		}
 		this.p('COPY_PHASE_STRIP = YES;', 4);
 		if (platform === 'macos') {
@@ -1602,6 +1604,7 @@ class XCodeExporter extends Exporter {
 			this.p('MACOSX_DEPLOYMENT_TARGET = 13.0;', 4);
 		}
 		this.p('MTL_ENABLE_DEBUG_INFO = NO;', 4);
+		this.p('ONLY_ACTIVE_ARCH = YES;', 4);
 		if (platform === 'ios') {
 			this.p('SDKROOT = iphoneos;', 4);
 			this.p('TARGETED_DEVICE_FAMILY = "1,2";', 4);
@@ -1618,9 +1621,11 @@ class XCodeExporter extends Exporter {
 		this.p('buildSettings = {', 3);
 		this.p('ARCHS = arm64;', 4);
 		this.p('ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;', 4);
+		this.p('CODE_SIGN_STYLE = Automatic;', 4);
 		if (platform === 'macos') {
 			this.p('COMBINE_HIDPI_IMAGES = YES;', 4);
 		}
+		this.p('ENABLE_HARDENED_RUNTIME = YES;', 4);
 		this.p('FRAMEWORK_SEARCH_PATHS = (', 4);
 		this.p('"$(inherited)",', 5);
 		// Search paths to local frameworks
@@ -1682,9 +1687,11 @@ class XCodeExporter extends Exporter {
 		this.p('buildSettings = {', 3);
 		this.p('ARCHS = arm64;', 4);
 		this.p('ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;', 4);
+		this.p('CODE_SIGN_STYLE = Automatic;', 4);
 		if (platform === 'macos') {
 			this.p('COMBINE_HIDPI_IMAGES = YES;', 4);
 		}
+		this.p('ENABLE_HARDENED_RUNTIME = YES;', 4);
 		this.p('FRAMEWORK_SEARCH_PATHS = (', 4);
 		this.p('"$(inherited)",', 5);
 		// Search paths to local frameworks
@@ -1927,7 +1934,7 @@ class AndroidExporter extends Exporter {
 		let outdir = path_join(to.toString(), this.safe_name);
 		fs_ensuredir(outdir);
 		let target_options = {
-			package: "tech.kinc",
+			package: "org.armory3d",
 			installLocation: "internalOnly",
 			versionCode: 1,
 			versionName: "1.0",
@@ -2978,6 +2985,9 @@ class Project {
 				else if (sub.shaderVersion) {
 					this.shaderVersion = sub.shaderVersion;
 				}
+				if (sub.icon) {
+					this.icon = sub.icon;
+				}
 				let subbasedir = sub.basedir;
 				for (let tkey of Object.keys(sub.target_options)) {
 					let target = sub.target_options[tkey];
@@ -3028,14 +3038,8 @@ class Project {
 					if (!this.javadirs.includes(path_resolve(subbasedir, j)))
 						this.javadirs.push(path_resolve(subbasedir, j));
 				for (let lib of sub.libs) {
-					// if (lib.indexOf("/") < 0 && lib.indexOf("\\") < 0) {
-						if (!this.libs.includes(lib))
-							this.libs.push(lib);
-					// }
-					// else {
-						// if (!this.libs.includes(path_resolve(subbasedir, lib)))
-							// this.libs.push(path_resolve(subbasedir, lib));
-					// }
+					if (!this.libs.includes(lib))
+						this.libs.push(lib);
 				}
 				for (let flag of sub.cFlags) {
 					if (!this.cFlags.includes(flag)) {
@@ -3268,10 +3272,6 @@ function export_koremake_project() {
 	project.internal_flatten();
 	fs_ensuredir("build");
 
-	// Run again to find new shader files for Metal
-	// project.search_files(undefined);
-	// project.internal_flatten();
-
 	let exporter = null;
 	if (goptions.target === 'ios' || goptions.target === 'macos') {
 		exporter = new XCodeExporter();
@@ -3340,11 +3340,6 @@ function main() {
 		}
 		else if (goptions.target == 'macos' || goptions.target == 'ios') {
 			let xcode_options = ['-configuration', goptions.debug ? 'Debug' : 'Release', '-project', project_name + '.xcodeproj'];
-			if (goptions.nosigning) {
-				xcode_options.push('CODE_SIGN_IDENTITY=""');
-				xcode_options.push('CODE_SIGNING_REQUIRED=NO');
-				xcode_options.push('CODE_SIGNING_ALLOWED=NO');
-			}
 			make = os_exec('xcodebuild', xcode_options, { cwd: "build" });
 		}
 		else if (goptions.target == 'windows') {
