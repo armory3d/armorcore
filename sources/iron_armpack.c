@@ -81,7 +81,7 @@ static uint8_t read_u8() {
 
 static int16_t read_i16() {
 	int16_t i16 = *(int16_t *)(encoded + ei);
-	ei += 4;
+	ei += 2;
 	return i16;
 }
 
@@ -658,6 +658,13 @@ any_map_t *_armpack_decode_to_map() {
 					i32_array_t *array = i32_array_create(array_count);
 					for (int j = 0; j < array_count; j++) {
 						array->buffer[j] = read_i32();
+					}
+					any_map_set(result, key, array);
+				}
+				else if (element_flag == 0xd1) { // i16
+					i16_array_t *array = i16_array_create(array_count);
+					for (int j = 0; j < array_count; j++) {
+						array->buffer[j] = read_i16();
 					}
 					any_map_set(result, key, array);
 				}
