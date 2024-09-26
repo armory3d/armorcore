@@ -308,6 +308,34 @@ static void read_store_array(int count) { // Store in any/i32/../_array_t format
 			}
 			bottom = pad(di, PTR_SIZE) + di;
 		}
+		// Arrays
+		else if (flag == 0xdd) {
+			// Array pointers
+			uint32_t _ei = ei;
+			uint32_t arrays_length = 0;
+			for (int i = 0; i < count; ++i) {
+				store_ptr(bottom + count * PTR_SIZE + arrays_length);
+				if (i < count - 1) {
+					ei += 1; // Array flag
+					uint32_t length = read_u32(); // Array length
+					ei += length;
+					length += pad(length, PTR_SIZE);
+					arrays_length += length;
+					arrays_length += 8 + 8 + 4 + 4;
+				}
+			}
+			ei = _ei;
+
+			// Array contents
+			bottom = pad(di, PTR_SIZE) + di;
+
+			array_count = count;
+
+			for (int i = 0; i < count; ++i) {
+				uint8_t flag = read_u8();
+				read_store_array(read_i32());
+			}
+		}
 		// Structs
 		else {
 			uint32_t size = get_struct_length();
@@ -659,7 +687,7 @@ any_map_t *_armpack_decode_to_map() {
 					any_map_set(result, key, array);
 				}
 				else if (element_flag == 0xc6) { // buffer_t (deprecated)
-				ei--;
+					ei--;
 					any_array_t *array = any_array_create(array_count);
 					for (int j = 0; j < array_count; j++) {
 						read_u8(); // flag
