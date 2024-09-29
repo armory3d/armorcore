@@ -330,6 +330,7 @@ if (fs_exists(os_cwd() + '/icon.png')) {
 
 project.add_include_dir('sources/libs');
 project.add_cfiles('sources/libs/gc.c');
+project.add_cfiles('sources/libs/dir.c');
 project.add_include_dir('sources');
 project.add_cfiles('sources/iron.c');
 project.add_define('IRON_C_PATH="' + os_cwd() + '/build/iron.c' + '"');
@@ -375,7 +376,6 @@ if (flags.with_iron) {
 	project.add_cfiles('sources/iron_json.c');
 	project.add_cfiles('sources/iron_obj.c');
 	project.add_cfiles('sources/const_data.c');
-	project.add_include_dir('sources/libs');
 }
 
 if (flags.with_ui) {
@@ -445,11 +445,6 @@ if (flags.with_nfd && (platform === 'windows' || platform === 'linux' || platfor
 	}
 }
 
-if (flags.with_tinydir) {
-	project.add_define('WITH_TINYDIR');
-	project.add_include_dir("sources/libs");
-}
-
 if (flags.with_zlib) {
 	project.add_define('WITH_ZLIB');
 	project.add_include_dir("sources/libs/zlib");
@@ -459,12 +454,10 @@ if (flags.with_zlib) {
 
 if (flags.with_stb_image_write) {
 	project.add_define('WITH_STB_IMAGE_WRITE');
-	project.add_include_dir("sources/libs");
 }
 
 if (flags.with_mpeg_write) {
 	project.add_define('WITH_MPEG_WRITE');
-	project.add_include_dir("sources/libs");
 }
 
 project.flatten();

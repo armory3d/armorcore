@@ -376,9 +376,7 @@ struct HWND__ *kinc_windows_window_handle(int window_index);
 #include <wchar.h>
 #include <kinc/backend/ios_file_dialog.h>
 #endif
-#ifdef WITH_TINYDIR
-#include <tinydir.h>
-#endif
+#include "dir.h"
 #ifdef WITH_STB_IMAGE_WRITE
 #ifdef WITH_ZLIB
 unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
@@ -2557,65 +2555,31 @@ char *iron_save_dialog(char *filter_list, char *default_path) {
 }
 #endif
 
-#ifdef WITH_TINYDIR
-char *iron_read_directory(char *path, bool folders_only) {
-	tinydir_dir dir;
-	#ifdef KINC_WINDOWS
-	MultiByteToWideChar(CP_UTF8, 0, path, -1, temp_wstring, 1023);
-	tinydir_open_sorted(&dir, temp_wstring);
-	#else
-	tinydir_open_sorted(&dir, path);
-	#endif
-
-	#ifdef KINC_WINDOWS
-	wchar_t *files = temp_wstring;
-	#else
+char *iron_read_directory(char *path) {
 	char *files = temp_string;
-	#endif
 	files[0] = 0;
 
-	for (int i = 0; i < dir.n_files; i++) {
-		tinydir_file file;
-		tinydir_readfile_n(&dir, &file, i);
-
-		if (!file.is_dir || !folders_only) {
-			#ifdef KINC_WINDOWS
-			if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesW(file.path)) {
-				continue; // Skip hidden files
-			}
-			if (wcscmp(file.name, L".") == 0 || wcscmp(file.name, L"..") == 0) {
-				continue;
-			}
-			wcscat(files, file.name);
-
-			if (i < dir.n_files - 1) {
-				wcscat(files, L"\n"); // Separator
-			}
-
-			#else
-
-			if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0) {
-				continue;
-			}
-			strcat(files, file.name);
-
-			if (i < dir.n_files - 1) {
-				strcat(files, "\n");
-			}
-			#endif
+	directory dir = open_dir(path);
+	while (true) {
+		file f = read_next_file(&dir);
+		if (!f.valid) {
+			break;
 		}
+
+		#ifdef KINC_WINDOWS
+		if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesW(f.name)) {
+			continue; // Skip hidden files
+		}
+		#endif
+
+		if (files[0] != '\0') {
+			strcat(files, "\n");
+		}
+		strcat(files, f.name);
 	}
-
-	tinydir_close(&dir);
-
-	#ifdef KINC_WINDOWS
-	wcstombs(temp_string, files, sizeof(temp_string));
-	return temp_string;
-	#else
+	close_dir(&dir);
 	return files;
-	#endif
 }
-#endif
 
 bool iron_file_exists(char *path) {
 	kinc_file_reader_t reader;
