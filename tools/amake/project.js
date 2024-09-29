@@ -22,6 +22,13 @@ project.add_include_dir("../../sources/libs");
 project.add_cfiles("../../sources/libs/quickjs/*.c");
 project.add_cfiles("main.c");
 
+{
+	project.add_cfiles("ashader.c");
+	// if (platform === 'linux') {
+		// project.add_project("../to_spirv"); // Replace with https://github.com/Kode/Kongruent
+	// }
+}
+
 if (platform === 'linux') {
 	// quickjs
 	project.add_lib("m");
