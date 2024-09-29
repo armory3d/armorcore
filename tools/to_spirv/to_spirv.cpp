@@ -1,3 +1,6 @@
+
+// To be replaced with https://github.com/Kode/Kongruent
+
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013-2016 LunarG, Inc.
