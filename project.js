@@ -445,11 +445,8 @@ if (flags.with_nfd && (platform === 'windows' || platform === 'linux' || platfor
 	}
 }
 
-if (flags.with_zlib) {
-	project.add_define('WITH_ZLIB');
-	project.add_include_dir("sources/libs/zlib");
-	project.add_cfiles("sources/libs/zlib/*.h");
-	project.add_cfiles("sources/libs/zlib/*.c");
+if (flags.with_compress) {
+	project.add_define('WITH_COMPRESS');
 }
 
 if (flags.with_stb_image_write) {

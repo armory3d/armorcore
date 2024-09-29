@@ -378,9 +378,9 @@ struct HWND__ *kinc_windows_window_handle(int window_index);
 #endif
 #include "dir.h"
 #ifdef WITH_STB_IMAGE_WRITE
-#ifdef WITH_ZLIB
-unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
-#define STBIW_ZLIB_COMPRESS stbiw_zlib_compress
+#ifdef WITH_COMPRESS
+unsigned char *iron_deflate_raw(unsigned char *data, int data_len, int *out_len, int quality);
+#define STBIW_ZLIB_COMPRESS iron_deflate_raw
 #endif
 #define STBI_WINDOWS_UTF8
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -389,8 +389,11 @@ unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_l
 #ifdef WITH_MPEG_WRITE
 #include <jo_mpeg.h>
 #endif
-#ifdef WITH_ZLIB
-#include <zlib.h>
+#ifdef WITH_COMPRESS
+#define SDEFL_IMPLEMENTATION
+#include "sdefl.h"
+#define SINFL_IMPLEMENTATION
+#include "sinfl.h"
 #endif
 #ifdef WITH_ONNX
 #include <onnxruntime_c_api.h>
@@ -2608,59 +2611,38 @@ void iron_delete_file(char *path) {
 	#endif
 }
 
-#ifdef WITH_ZLIB
+#ifdef WITH_COMPRESS
 buffer_t *iron_inflate(buffer_t *bytes, bool raw) {
-	unsigned char *inflated = (unsigned char *)malloc(bytes->length);
-	z_stream infstream;
-	infstream.zalloc = Z_NULL;
-	infstream.zfree = Z_NULL;
-	infstream.opaque = Z_NULL;
-	infstream.avail_in = (uInt)bytes->length;
-	infstream.next_in = (Bytef *)bytes->buffer;
-	infstream.avail_out = (uInt)bytes->length;
-	infstream.next_out = (Bytef *)inflated;
-	inflateInit2(&infstream, raw ? -15 : 15 + 32);
-
-	int i = 2;
-	while (true) {
-		int res = inflate(&infstream, Z_NO_FLUSH);
-		if (res == Z_STREAM_END) {
-			break;
-		}
-		if (infstream.avail_out == 0) {
-			inflated = (unsigned char *)realloc(inflated, bytes->length * i);
-			infstream.avail_out = (uInt)bytes->length;
-			infstream.next_out = (Bytef *)(inflated + bytes->length * (i - 1));
-			i++;
-		}
+	unsigned char *inflated;
+	int inflated_len = bytes->length * 2;
+	int out_len = -1;
+	while (out_len == -1) {
+		inflated_len *= 2;
+		inflated = (unsigned char *)realloc(inflated, inflated_len);
+		out_len = sinflate(inflated, inflated_len, bytes->buffer, bytes->length);
 	}
-	inflateEnd(&infstream);
-
-	buffer_t *output = buffer_create(infstream.total_out);
-	memcpy(output->buffer, inflated, infstream.total_out);
-	free(inflated);
+	buffer_t *output = buffer_create(0);
+	output->buffer = inflated;
+	output->length = out_len;
 	return output;
 }
 
 buffer_t *iron_deflate(buffer_t *bytes, bool raw) {
-	int deflated_size = compressBound((uInt)bytes->length);
-	void *deflated = malloc(deflated_size);
-	z_stream defstream;
-	defstream.zalloc = Z_NULL;
-	defstream.zfree = Z_NULL;
-	defstream.opaque = Z_NULL;
-	defstream.avail_in = (uInt)bytes->length;
-	defstream.next_in = (Bytef *)bytes->buffer;
-	defstream.avail_out = deflated_size;
-	defstream.next_out = (Bytef *)deflated;
-	deflateInit2(&defstream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, raw ? -15 : 15, 5, Z_DEFAULT_STRATEGY);
-	deflate(&defstream, Z_FINISH);
-	deflateEnd(&defstream);
-
-	buffer_t *output = buffer_create(defstream.total_out);
-	memcpy(output->buffer, deflated, defstream.total_out);
-	free(deflated);
+	struct sdefl sdefl;
+	void *deflated = malloc(sdefl_bound(bytes->length));
+	// raw == sdeflate
+	int out_len = zsdeflate(&sdefl, deflated, bytes->buffer, bytes->length, SDEFL_LVL_MIN);
+	buffer_t *output = buffer_create(0);
+	output->buffer = deflated;
+	output->length = out_len;
 	return output;
+}
+
+unsigned char *iron_deflate_raw(unsigned char *data, int data_len, int *out_len, int quality) {
+	struct sdefl sdefl;
+	void *deflated = malloc(sdefl_bound(data_len));
+	*out_len = zsdeflate(&sdefl, deflated, data, data_len, SDEFL_LVL_MIN);
+	return (unsigned char *)deflated;
 }
 #endif
 
@@ -2748,26 +2730,6 @@ buffer_t *iron_encode_jpg(buffer_t *bytes, i32 w, i32 h, i32 format, i32 quality
 buffer_t *iron_encode_png(buffer_t *bytes, i32 w, i32 h, i32 format) {
 	return _encode_image(bytes, w, h, 1, 100);
 }
-
-#ifdef WITH_ZLIB
-unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality) {
-	int deflatedSize = compressBound((uInt)data_len);
-	void *deflated = malloc(deflatedSize);
-	z_stream defstream;
-	defstream.zalloc = Z_NULL;
-	defstream.zfree = Z_NULL;
-	defstream.opaque = Z_NULL;
-	defstream.avail_in = (uInt)data_len;
-	defstream.next_in = (Bytef *)data;
-	defstream.avail_out = deflatedSize;
-	defstream.next_out = (Bytef *)deflated;
-	deflateInit2(&defstream, Z_BEST_SPEED, Z_DEFLATED, 15, 5, Z_DEFAULT_STRATEGY);
-	deflate(&defstream, Z_FINISH);
-	deflateEnd(&defstream);
-	*out_len = defstream.total_out;
-	return (unsigned char *)deflated;
-	}
-#endif
 #endif
 
 #ifdef WITH_MPEG_WRITE

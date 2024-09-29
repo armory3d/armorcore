@@ -2295,7 +2295,7 @@ function load_project(directory, is_root_project) {
 			release: os_argv().indexOf("--debug") == -1,
 			with_d3dcompiler: false,
 			with_nfd: false,
-			with_zlib: false,
+			with_compress: false,
 			with_stb_image_write: false,
 			with_mpeg_write: false,
 			with_audio: false,
