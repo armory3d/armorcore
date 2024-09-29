@@ -24,12 +24,12 @@ project.add_cfiles("main.c");
 
 {
 	project.add_cfiles("ashader.c");
-	// if (platform === 'linux') {
+	// if (platform === "linux") {
 		// project.add_project("../to_spirv"); // Replace with https://github.com/Kode/Kongruent
 	// }
 }
 
-if (platform === 'linux') {
+if (platform === "linux") {
 	// quickjs
 	project.add_lib("m");
 	project.add_define("_GNU_SOURCE");
