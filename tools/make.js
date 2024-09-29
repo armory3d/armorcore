@@ -2514,7 +2514,7 @@ function shader_find_type(options) {
 			return 'metal';
 		}
 		else {
-			return options.shaderversion == 300 ? 'essl' : 'glsl';
+			return 'glsl';
 		}
 	}
 	else if (options.graphics === 'vulkan') {
@@ -2524,7 +2524,7 @@ function shader_find_type(options) {
 		return 'metal';
 	}
 	else if (options.graphics === 'opengl') {
-		return options.shaderversion == 300 ? 'essl' : 'glsl';
+		return 'glsl';
 	}
 	else if (options.graphics === 'direct3d11' || options.graphics === 'direct3d12') {
 		return 'd3d11';
@@ -2609,15 +2609,12 @@ class ShaderCompiler {
 		else {
 			let parameters = [this.type, from, to, this.temp, "iron"];
 			fs_ensuredir(this.temp);
-			if (this.options.shaderversion) {
+			////
+			if (goptions.target === "android" || goptions.target === "wasm") {
 				parameters.push('--version');
-				parameters.push(this.options.shaderversion);
+				parameters.push(300);
 			}
-			if (options.defines) {
-				for (let define of options.defines) {
-					parameters.push('-D' + define);
-				}
-			}
+			////
 			parameters[1] = path_resolve(parameters[1]);
 			parameters[2] = path_resolve(parameters[2]);
 			parameters[3] = path_resolve(parameters[3]);
@@ -2976,14 +2973,6 @@ class Project {
 			else {
 				if (!sub.lto) {
 					this.lto = false;
-				}
-				if (this.shaderVersion) {
-					if (sub.shaderVersion && sub.shaderVersion > this.shaderVersion) {
-						this.shaderVersion = sub.shaderVersion;
-					}
-				}
-				else if (sub.shaderVersion) {
-					this.shaderVersion = sub.shaderVersion;
 				}
 				if (sub.icon) {
 					this.icon = sub.icon;
@@ -3383,7 +3372,6 @@ let goptions = {
 	ccompiler: 'clang',
 	cppcompiler: 'clang++',
 	arch: 'default',
-	shaderversion: null,
 	alangjs: false,
 	js: false,
 	hlslbin: false,
@@ -3421,10 +3409,6 @@ if (goptions.hlslbin) {
 
 if (goptions.run) {
 	goptions.compile = true;
-}
-
-if (goptions.target === "android" || goptions.target === "wasm") {
-	goptions.shaderversion = 300;
 }
 
 let start = Date.now();
