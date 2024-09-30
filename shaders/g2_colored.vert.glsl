@@ -1,8 +1,9 @@
 #version 450
 
+uniform mat4 P;
+
 in vec3 pos;
 in vec4 col;
-uniform mat4 P;
 out vec4 fragment_color;
 
 void main() {

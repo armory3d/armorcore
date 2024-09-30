@@ -903,20 +903,20 @@ class VisualStudioExporter extends Exporter {
 		}
 		this.p('</ItemGroup>', 1);
 		if (platform === "windows") {
-			this.p('<ItemGroup>', 1);
-			for (let file of project.getFiles()) {
-				if (file.file.endsWith(".glsl")) {
-					this.p('<CustomBuild Include="' + this.nice_path(from, to, file.file) + '">', 2);
-					this.p('<FileType>Document</FileType>', 2);
-					let shaderdir = path_isabs(project.get_debug_dir()) ? project.get_debug_dir() : path_join(from, project.get_debug_dir());
-					let krafix = path_join(toolsdir, "krafix.exe");
-					this.p('<Command>"' + path_relative(to, krafix) + '" ' + shader_lang("windows") + ' "%(FullPath)" ' + path_relative(to, path_join(shaderdir, '%(Filename)')).replace(/\//g, '\\') + ' .\\ ' + platform + ' --quiet</Command>', 2);
-					this.p('<Outputs>' + path_relative(to, path_join(shaderdir, '%(Filename)')).replace(/\//g, '\\') + ';%(Outputs)</Outputs>', 2);
-					this.p('<Message>%(Filename)%(Extension)</Message>', 2);
-					this.p('</CustomBuild>', 2);
-				}
-			}
-			this.p('</ItemGroup>', 1);
+			// this.p('<ItemGroup>', 1);
+			// for (let file of project.getFiles()) {
+			// 	if (file.file.endsWith(".glsl")) {
+			// 		this.p('<CustomBuild Include="' + this.nice_path(from, to, file.file) + '">', 2);
+			// 		this.p('<FileType>Document</FileType>', 2);
+			// 		let shaderdir = path_isabs(project.get_debug_dir()) ? project.get_debug_dir() : path_join(from, project.get_debug_dir());
+			// 		let krafix = path_join(toolsdir, "krafix.exe");
+			// 		this.p('<Command>"' + path_relative(to, krafix) + '" ' + shader_lang("windows") + ' "%(FullPath)" ' + path_relative(to, path_join(shaderdir, '%(Filename)')).replace(/\//g, '\\') + ' .\\ ' + platform + ' --quiet</Command>', 2);
+			// 		this.p('<Outputs>' + path_relative(to, path_join(shaderdir, '%(Filename)')).replace(/\//g, '\\') + ';%(Outputs)</Outputs>', 2);
+			// 		this.p('<Message>%(Filename)%(Extension)</Message>', 2);
+			// 		this.p('</CustomBuild>', 2);
+			// 	}
+			// }
+			// this.p('</ItemGroup>', 1);
 			this.p('<ItemGroup>', 1);
 			for (let file of project.customs) {
 				this.p('<CustomBuild Include="' + this.nice_path(from, to, file.file) + '">', 2);
@@ -2450,37 +2450,29 @@ function shader_lang(platform) {
 	switch (platform) {
 		case "windows":
 			switch (goptions.graphics) {
-				case "opengl":
-					return "glsl";
 				case "direct3d11":
 				case "direct3d12":
 				case "default":
 					return "d3d11";
-				case "vulkan":
-					return "spirv";
 			}
 		case "ios":
 			switch (goptions.graphics) {
 				case "default":
 				case "metal":
 					return "metal";
-				case "opengl":
-					return "essl";
 			}
 		case "macos":
 			switch (goptions.graphics) {
 				case "default":
 				case "metal":
 					return "metal";
-				case "opengl":
-					return "glsl";
 			}
 		case "android":
 			switch (goptions.graphics) {
-				case "default":
 				case "vulkan":
 					return "spirv";
 				case "opengl":
+				case "default":
 					return "essl";
 			}
 		case "linux":
@@ -2615,6 +2607,8 @@ class ShaderCompiler {
 			parameters[1] = path_resolve(parameters[1]);
 			parameters[2] = path_resolve(parameters[2]);
 			parameters[3] = path_resolve(parameters[3]);
+
+			// amake.ashader(this.type, from, to);
 
 			let child = os_exec(this.compiler, parameters);
 			if (child.status !== 0) {
