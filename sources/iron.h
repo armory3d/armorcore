@@ -26,6 +26,9 @@
 #include "iron_quat.h"
 #include "iron_mat3.h"
 #include "iron_mat4.h"
+#include "iron_ui.h"
+#include "iron_ui_ext.h"
+#include "iron_ui_nodes.h"
 #ifdef KINC_WINDOWS
 #include <Windows.h>
 #endif
@@ -35,15 +38,8 @@
 #ifdef WITH_AUDIO
 #include <kinc/audio2/audio.h>
 #endif
-#ifdef WITH_G2
 #include <kinc/graphics2/g2.h>
 #include <kinc/graphics2/g2_ext.h>
-#endif
-#ifdef WITH_UI
-#include "iron_ui.h"
-#include "iron_ui_ext.h"
-#include "iron_ui_nodes.h"
-#endif
 #ifdef WITH_EMBED
 #include EMBED_H_PATH
 #endif
@@ -377,7 +373,7 @@ struct HWND__ *kinc_windows_window_handle(int window_index);
 #include <kinc/backend/ios_file_dialog.h>
 #endif
 #include "dir.h"
-#ifdef WITH_STB_IMAGE_WRITE
+#ifdef WITH_IMAGE_WRITE
 #ifdef WITH_COMPRESS
 unsigned char *iron_deflate_raw(unsigned char *data, int data_len, int *out_len, int quality);
 #define STBIW_ZLIB_COMPRESS iron_deflate_raw
@@ -481,28 +477,19 @@ void _update(void *data) {
 
 char *_copy(void *data) {
 	// strcpy(temp_string, iron_copy());
-
-	#ifdef WITH_UI
 	strcpy(temp_string, ui_copy());
-	#endif
 	return temp_string;
 }
 
 char *_cut(void *data) {
 	// strcpy(temp_string, iron_cut());
-
-	#ifdef WITH_UI
 	strcpy(temp_string, ui_cut());
-	#endif
 	return temp_string;
 }
 
 void _paste(char *text, void *data) {
 	// iron_paste(text);
-
-	#ifdef WITH_UI
 	ui_paste(text);
-	#endif
 }
 
 void _foreground(void *data) {
@@ -531,11 +518,9 @@ void _shutdown(void *data) {
 void _key_down(int code, void *data) {
 	iron_key_down(code);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_key_down(ui_instances[i], code);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	input_down = true;
@@ -546,11 +531,9 @@ void _key_down(int code, void *data) {
 void _key_up(int code, void *data) {
 	iron_key_up(code);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_key_up(ui_instances[i], code);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	input_down = false;
@@ -561,11 +544,9 @@ void _key_up(int code, void *data) {
 void _key_press(unsigned int character, void *data) {
 	iron_key_press(character);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_key_press(ui_instances[i], character);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	paused_frames = 0;
@@ -575,11 +556,9 @@ void _key_press(unsigned int character, void *data) {
 void _mouse_down(int window, int button, int x, int y, void *data) {
 	iron_mouse_down(button, x, y);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_mouse_down(ui_instances[i], button, x, y);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	input_down = true;
@@ -590,11 +569,9 @@ void _mouse_down(int window, int button, int x, int y, void *data) {
 void _mouse_up(int window, int button, int x, int y, void *data) {
 	iron_mouse_up(button, x, y);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_mouse_up(ui_instances[i], button, x, y);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	input_down = false;
@@ -605,11 +582,9 @@ void _mouse_up(int window, int button, int x, int y, void *data) {
 void _mouse_move(int window, int x, int y, int mx, int my, void *data) {
 	iron_mouse_move(x, y, mx, my);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_mouse_move(ui_instances[i], x, y, mx, my);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	paused_frames = 0;
@@ -619,11 +594,9 @@ void _mouse_move(int window, int x, int y, int mx, int my, void *data) {
 void _mouse_wheel(int window, int delta, void *data) {
 	iron_mouse_wheel(delta);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_mouse_wheel(ui_instances[i], delta);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	paused_frames = 0;
@@ -633,12 +606,10 @@ void _mouse_wheel(int window, int delta, void *data) {
 void _touch_move(int index, int x, int y) {
 	iron_touch_move(index, x, y);
 
-	#ifdef WITH_UI
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_touch_move(ui_instances[i], index, x, y);
 	}
-	#endif
 	#endif
 
 	#ifdef IDLE_SLEEP
@@ -649,12 +620,10 @@ void _touch_move(int index, int x, int y) {
 void _touch_down(int index, int x, int y) {
 	iron_touch_down(index, x, y);
 
-	#ifdef WITH_UI
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_touch_down(ui_instances[i], index, x, y);
 	}
-	#endif
 	#endif
 
 	#ifdef IDLE_SLEEP
@@ -666,12 +635,10 @@ void _touch_down(int index, int x, int y) {
 void _touch_up(int index, int x, int y) {
 	iron_touch_up(index, x, y);
 
-	#ifdef WITH_UI
 	#if defined(KINC_ANDROID) || defined(KINC_IOS)
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_touch_up(ui_instances[i], index, x, y);
 	}
-	#endif
 	#endif
 
 	#ifdef IDLE_SLEEP
@@ -683,11 +650,9 @@ void _touch_up(int index, int x, int y) {
 void _pen_down(int window, int x, int y, float pressure) {
 	iron_pen_down(x, y, pressure);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_pen_down(ui_instances[i], x, y, pressure);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	input_down = true;
@@ -698,11 +663,9 @@ void _pen_down(int window, int x, int y, float pressure) {
 void _pen_up(int window, int x, int y, float pressure) {
 	iron_pen_up(x, y, pressure);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_pen_up(ui_instances[i], x, y, pressure);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	input_down = false;
@@ -713,11 +676,9 @@ void _pen_up(int window, int x, int y, float pressure) {
 void _pen_move(int window, int x, int y, float pressure) {
 	iron_pen_move(x, y, pressure);
 
-	#ifdef WITH_UI
 	for (int i = 0; i < ui_instances_count; ++i) {
 		ui_pen_move(ui_instances[i], x, y, pressure);
 	}
-	#endif
 
 	#ifdef IDLE_SLEEP
 	paused_frames = 0;
@@ -2315,7 +2276,6 @@ void iron_http_request(string_t *url, i32 size, void (*callback)(char *, buffer_
 	#endif
 }
 
-#ifdef WITH_G2
 void iron_g2_init(buffer_t *image_vert, buffer_t *image_frag, buffer_t *colored_vert, buffer_t *colored_frag, buffer_t *text_vert, buffer_t *text_frag) {
 	arm_g2_init(image_vert->buffer, image_vert->length, image_frag->buffer, image_frag->length, colored_vert->buffer, colored_vert->length, colored_frag->buffer, colored_frag->length, text_vert->buffer, text_vert->length, text_frag->buffer, text_frag->length);
 }
@@ -2429,8 +2389,6 @@ void iron_g2_draw_circle(f32 cx, f32 cy, f32 radius, i32 segments, f32 strength)
 void iron_g2_draw_cubic_bezier(f32_array_t *x, f32_array_t *y, i32 segments, f32 strength) {
 	arm_g2_draw_cubic_bezier(x->buffer, y->buffer, segments, strength);
 }
-
-#endif
 
 bool _window_close_callback(void *data) {
 	#ifdef KINC_WINDOWS
@@ -2646,7 +2604,7 @@ unsigned char *iron_deflate_raw(unsigned char *data, int data_len, int *out_len,
 }
 #endif
 
-#ifdef WITH_STB_IMAGE_WRITE
+#ifdef WITH_IMAGE_WRITE
 void _write_image(char *path, buffer_t *bytes, i32 w, i32 h, i32 format, int image_format, int quality) {
 	int comp = 0;
 	unsigned char *pixels = NULL;

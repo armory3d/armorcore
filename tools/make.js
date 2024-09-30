@@ -2296,12 +2296,10 @@ function load_project(directory, is_root_project) {
 			with_d3dcompiler: false,
 			with_nfd: false,
 			with_compress: false,
-			with_stb_image_write: false,
+			with_image_write: false,
 			with_mpeg_write: false,
 			with_audio: false,
-			with_g2: false,
 			with_iron: false,
-			with_ui: false,
 			with_eval: false,
 			embed: false
 		};

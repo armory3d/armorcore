@@ -6,7 +6,6 @@ let project = new Project(flags.name);
 	project.add_define("KINC_A2");
 	project.add_define("KINC_G1");
 	project.add_define("KINC_G2");
-	let g4 = false;
 	let g5 = false;
 
 	project.add_cfiles("sources/kinc/**");
@@ -30,38 +29,18 @@ let project = new Project(flags.name);
 		project.add_lib("wbemuuid");
 
 		if (graphics === "direct3d11") {
-			g4 = true;
 			add_backend("direct3d11");
 			project.add_define("KINC_DIRECT3D");
 			project.add_define("KINC_DIRECT3D11");
 			project.add_lib("d3d11");
 		}
 		else if (graphics === "direct3d12" || graphics === "default") {
-			g4 = true;
 			g5 = true;
 			add_backend("direct3d12");
 			project.add_define("KINC_DIRECT3D");
 			project.add_define("KINC_DIRECT3D12");
 			project.add_lib("dxgi");
 			project.add_lib("d3d12");
-		}
-		else if (graphics === "vulkan") {
-			g4 = true;
-			g5 = true;
-			add_backend("vulkan");
-			project.add_define("KINC_VULKAN");
-			project.add_define("VK_USE_PLATFORM_WIN32_KHR");
-			if (!os_env(VULKAN_SDK)) {
-				throw "Could not find a Vulkan SDK";
-			}
-			project.add_lib(path_join(os_env(VULKAN_SDK), "Lib", "vulkan-1"));
-			let libs = fs_readdir(path_join(os_env(VULKAN_SDK), "Lib"));
-			for (const lib of libs) {
-				if (lib.startsWith("VkLayer_")) {
-					project.add_lib(path_join(os_env(VULKAN_SDK), "Lib", lib.substr(0, lib.length - 4)));
-				}
-			}
-			project.add_include_dir(path_join(os_env(VULKAN_SDK), "Include"));
 		}
 		else {
 			throw new Error("Graphics API " + graphics + " is not available for Windows.");
@@ -74,18 +53,11 @@ let project = new Project(flags.name);
 		add_backend("macos");
 		add_backend("posix");
 		if (graphics === "metal" || graphics === "default") {
-			g4 = true;
 			g5 = true;
 			add_backend("metal");
 			project.add_define("KINC_METAL");
 			project.add_lib("Metal");
 			project.add_lib("MetalKit");
-		}
-		else if (graphics === "opengl") {
-			g4 = true;
-			add_backend("opengl");
-			project.add_define("KINC_OPENGL");
-			project.add_lib("OpenGL");
 		}
 		else {
 			throw new Error("Graphics API " + graphics + " is not available for macOS.");
@@ -105,18 +77,10 @@ let project = new Project(flags.name);
 		add_backend("ios");
 		add_backend("posix");
 		if (graphics === "metal" || graphics === "default") {
-			g4 = true;
 			g5 = true;
 			add_backend("metal");
 			project.add_define("KINC_METAL");
 			project.add_lib("Metal");
-		}
-		else if (graphics === "opengl") {
-			g4 = true;
-			add_backend("opengl");
-			project.add_define("KINC_OPENGL");
-			project.add_define("KINC_OPENGL_ES");
-			project.add_lib("OpenGLES");
 		}
 		else {
 			throw new Error("Graphics API " + graphics + " is not available for iOS.");
@@ -137,8 +101,7 @@ let project = new Project(flags.name);
 		project.add_define("KINC_ANDROID");
 		add_backend("android");
 		add_backend("posix");
-		if (graphics === "vulkan" || graphics === "default") {
-			g4 = true;
+		if (graphics === "vulkan") {
 			g5 = true;
 			add_backend("vulkan");
 			project.add_define("KINC_VULKAN");
@@ -146,8 +109,7 @@ let project = new Project(flags.name);
 			project.add_lib("vulkan");
 			project.add_define("KINC_ANDROID_API=24");
 		}
-		else if (graphics === "opengl") {
-			g4 = true;
+		else if (graphics === "opengl" || graphics === "default") {
 			add_backend("opengl");
 			project.add_define("KINC_OPENGL");
 			project.add_define("KINC_OPENGL_ES");
@@ -170,13 +132,11 @@ let project = new Project(flags.name);
 		project.add_include_dir("miniClib");
 		project.add_cfiles("sources/libs/miniClib/**");
 		if (graphics === "webgpu") {
-			g4 = true;
 			g5 = true;
 			add_backend("webgpu");
 			project.add_define("KINC_WEBGPU");
 		}
 		else if (graphics === "opengl" || graphics === "default") {
-			g4 = true;
 			add_backend("opengl");
 			project.add_define("KINC_OPENGL");
 			project.add_define("KINC_OPENGL_ES");
@@ -286,14 +246,12 @@ let project = new Project(flags.name);
 		// }
 
 		if (graphics === "vulkan" || graphics === "default") {
-			g4 = true;
 			g5 = true;
 			add_backend("vulkan");
 			project.add_lib("vulkan");
 			project.add_define("KINC_VULKAN");
 		}
 		else if (graphics === "opengl") {
-			g4 = true;
 			add_backend("opengl");
 			project.add_lib("GL");
 			project.add_define("KINC_OPENGL");
@@ -356,39 +314,15 @@ if (flags.with_eval) {
 	}
 }
 
-if (flags.with_g2) {
-	project.add_define("WITH_G2");
-}
-
 if (flags.with_iron) {
 	project.add_define("WITH_IRON");
-	project.add_cfiles("sources/iron_map.c");
-	project.add_cfiles("sources/iron_array.c");
-	project.add_cfiles("sources/iron_string.c");
-	project.add_cfiles("sources/iron_armpack.c");
-	project.add_cfiles("sources/iron_vec2.c");
-	project.add_cfiles("sources/iron_vec3.c");
-	project.add_cfiles("sources/iron_vec4.c");
-	project.add_cfiles("sources/iron_quat.c");
-	project.add_cfiles("sources/iron_mat3.c");
-	project.add_cfiles("sources/iron_mat4.c");
-	project.add_cfiles("sources/iron_gc.c");
-	project.add_cfiles("sources/iron_json.c");
-	project.add_cfiles("sources/iron_obj.c");
-	project.add_cfiles("sources/const_data.c");
-}
-
-if (flags.with_ui) {
-	project.add_define("WITH_UI");
-	project.add_cfiles("sources/iron_ui.c");
-	project.add_cfiles("sources/iron_ui_ext.c");
-	project.add_cfiles("sources/iron_ui_nodes.c");
+	project.add_cfiles("sources/*.c");
 }
 
 if (platform === "windows") {
 	project.add_lib("Dbghelp"); // Stack walk
 	project.add_lib("Dwmapi"); // DWMWA_USE_IMMERSIVE_DARK_MODE
-	if (flags.with_d3dcompiler && (graphics === "direct3d11" || graphics === "direct3d12")) {
+	if (flags.with_d3dcompiler) {
 		project.add_define("WITH_D3DCOMPILER");
 		project.add_lib("d3d11");
 		project.add_lib("d3dcompiler");
@@ -396,9 +330,6 @@ if (platform === "windows") {
 }
 else if (platform === "linux") {
 	project.add_define("KINC_NO_WAYLAND"); // TODO: kinc_wayland_display_init() not implemented
-}
-else if (platform === "macos") {
-
 }
 else if (platform === "android") {
 	// In app/build.gradle:
@@ -449,8 +380,8 @@ if (flags.with_compress) {
 	project.add_define("WITH_COMPRESS");
 }
 
-if (flags.with_stb_image_write) {
-	project.add_define("WITH_STB_IMAGE_WRITE");
+if (flags.with_image_write) {
+	project.add_define("WITH_IMAGE_WRITE");
 }
 
 if (flags.with_mpeg_write) {
