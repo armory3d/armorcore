@@ -2528,7 +2528,11 @@ char *iron_read_directory(char *path) {
 		}
 
 		#ifdef KINC_WINDOWS
-		if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesW(f.name)) {
+		char file_path[512];
+		strcpy(file_path, path);
+		strcat(file_path, "\\");
+		strcat(file_path, f.name);
+		if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesA(file_path)) {
 			continue; // Skip hidden files
 		}
 		#endif
