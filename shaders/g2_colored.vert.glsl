@@ -7,6 +7,6 @@ in vec4 col;
 out vec4 fragment_color;
 
 void main() {
-	gl_Position = P * vec4(pos, 1.0);
+	gl_Position = mul(vec4(pos, 1.0), P);
 	fragment_color = col;
 }
