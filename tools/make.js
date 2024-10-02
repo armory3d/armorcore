@@ -903,20 +903,6 @@ class VisualStudioExporter extends Exporter {
 		}
 		this.p('</ItemGroup>', 1);
 		if (platform === "windows") {
-			// this.p('<ItemGroup>', 1);
-			// for (let file of project.getFiles()) {
-			// 	if (file.file.endsWith(".glsl")) {
-			// 		this.p('<CustomBuild Include="' + this.nice_path(from, to, file.file) + '">', 2);
-			// 		this.p('<FileType>Document</FileType>', 2);
-			// 		let shaderdir = path_isabs(project.get_debug_dir()) ? project.get_debug_dir() : path_join(from, project.get_debug_dir());
-			// 		let krafix = path_join(toolsdir, "krafix.exe");
-			// 		this.p('<Command>"' + path_relative(to, krafix) + '" ' + shader_lang("windows") + ' "%(FullPath)" ' + path_relative(to, path_join(shaderdir, '%(Filename)')).replace(/\//g, '\\') + ' .\\ ' + platform + ' --quiet</Command>', 2);
-			// 		this.p('<Outputs>' + path_relative(to, path_join(shaderdir, '%(Filename)')).replace(/\//g, '\\') + ';%(Outputs)</Outputs>', 2);
-			// 		this.p('<Message>%(Filename)%(Extension)</Message>', 2);
-			// 		this.p('</CustomBuild>', 2);
-			// 	}
-			// }
-			// this.p('</ItemGroup>', 1);
 			this.p('<ItemGroup>', 1);
 			for (let file of project.customs) {
 				this.p('<CustomBuild Include="' + this.nice_path(from, to, file.file) + '">', 2);
@@ -2446,61 +2432,13 @@ class CompiledShader {
 	}
 }
 
-function shader_lang(platform) {
-	switch (platform) {
-		case "windows":
-			switch (goptions.graphics) {
-				case "direct3d11":
-				case "direct3d12":
-				case "default":
-					return "d3d11";
-			}
-		case "ios":
-			switch (goptions.graphics) {
-				case "default":
-				case "metal":
-					return "metal";
-			}
-		case "macos":
-			switch (goptions.graphics) {
-				case "default":
-				case "metal":
-					return "metal";
-			}
-		case "android":
-			switch (goptions.graphics) {
-				case "vulkan":
-					return "spirv";
-				case "opengl":
-				case "default":
-					return "essl";
-			}
-		case "linux":
-			switch (goptions.graphics) {
-				case "default":
-				case "vulkan":
-					return "spirv";
-				case "opengl":
-					return "glsl";
-			}
-		case "wasm":
-			switch (goptions.graphics) {
-				case "webgpu":
-					return "spirv";
-				case "opengl":
-				case "default":
-					return "essl";
-			}
-	}
-}
-
 function shader_find_type(options) {
 	if (options.graphics === 'default') {
 		if (os_platform() === 'win32') {
-			return 'd3d11';
+			return 'hlsl';
 		}
 		else if (os_platform() === 'darwin') {
-			return 'metal';
+			return 'msl';
 		}
 		else {
 			return 'glsl';
@@ -2510,13 +2448,13 @@ function shader_find_type(options) {
 		return 'spirv';
 	}
 	else if (options.graphics === 'metal') {
-		return 'metal';
+		return 'msl';
 	}
 	else if (options.graphics === 'opengl') {
 		return 'glsl';
 	}
 	else if (options.graphics === 'direct3d11' || options.graphics === 'direct3d12') {
-		return 'd3d11';
+		return 'hlsl';
 	}
 }
 
@@ -2598,22 +2536,21 @@ class ShaderCompiler {
 		else {
 			let parameters = [this.type, from, to, this.temp, "iron"];
 			fs_ensuredir(this.temp);
-			////
+
 			if (goptions.target === "android" || goptions.target === "wasm") {
-				parameters.push('--version');
-				parameters.push(300);
+				parameters[0] = "essl";
 			}
-			////
+
 			parameters[1] = path_resolve(parameters[1]);
 			parameters[2] = path_resolve(parameters[2]);
 			parameters[3] = path_resolve(parameters[3]);
 
-			// amake.ashader(this.type, from, to);
+			amake.ashader(this.type, from, to);
 
-			let child = os_exec(this.compiler, parameters);
-			if (child.status !== 0) {
-				console.log('Shader compiler error.')
-			}
+			// let child = os_exec(this.compiler, parameters);
+			// if (child.status !== 0) {
+			// 	console.log('Shader compiler error.')
+			// }
 
 			let compiled_shader = new CompiledShader();
 			return compiled_shader;
@@ -3245,7 +3182,7 @@ function export_koremake_project() {
 	console.log('Creating ' + goptions.target + ' project files.');
 
 	let project = Project.create(".");
-	if (shader_lang(goptions.target) === 'metal') {
+	if (goptions.graphics === "metal") {
 		project.add_cfiles(path_join("build", 'sources', '*'), {});
 	}
 	project.search_files(undefined);
@@ -3365,6 +3302,7 @@ let goptions = {
 	arch: 'default',
 	alangjs: false,
 	js: false,
+	ashader: false,
 	hlslbin: false,
 };
 
@@ -3392,10 +3330,19 @@ if (goptions.js) {
 	std.exit();
 }
 
+if (goptions.ashader) {
+	let type = args[3];
+	let from = args[4];
+	let to = args[5];
+	amake.ashader(type, from, to);
+	std.exit();
+}
+
 if (goptions.hlslbin) {
 	let from = args[3];
 	let to = args[4];
 	amake.hlslbin(from, to);
+	std.exit();
 }
 
 if (goptions.run) {

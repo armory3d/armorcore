@@ -21,12 +21,13 @@ let project = new Project("amake");
 project.add_include_dir("../../sources/libs");
 project.add_cfiles("../../sources/libs/quickjs/*.c");
 project.add_cfiles("main.c");
+project.add_cfiles("aimage.c");
 
 {
 	project.add_cfiles("ashader.c");
-	// if (platform === "linux") {
-		// project.add_project("../to_spirv"); // Replace with https://github.com/Kode/Kongruent
-	// }
+	if (platform === "linux") {
+		project.add_project("../to_spirv"); // Replace with https://github.com/Kode/Kongruent
+	}
 }
 
 if (platform === "linux") {
@@ -54,5 +55,7 @@ else if (platform === "macos") {
 // #define USE_WORKER -> //#define USE_WORKER
 // "quickjs.h#259" (fixes "Maximum call stack size exceeded" in alang):
 // #define JS_DEFAULT_STACK_SIZE (256 * 1024) -> #define JS_DEFAULT_STACK_SIZE (8 * 1024 * 1024)
+
+project.flatten();
 
 return project;
