@@ -2495,7 +2495,11 @@ class ShaderCompiler {
 			if (compiled_shader === null) {
 				compiled_shader = new CompiledShader();
 			}
-			compiled_shader.files = [path_resolve('build', 'temp', path_basename_noext(shader) + '.' + self.type)];
+			let type = self.type;
+			if (type == "hlsl") {
+				type = "d3d11";
+			}
+			compiled_shader.files = [path_resolve('build', 'temp', path_basename_noext(shader) + '.' + type)];
 
 			compiled_shader.name = AssetConverter.create_export_info(shader, false, options, ".").name;
 			compiled_shaders.push(compiled_shader);
