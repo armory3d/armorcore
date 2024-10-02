@@ -13,8 +13,17 @@ int krafix_compile(const char *source, char *output, int *length, const char *ta
 #ifdef _WIN32
 #include <d3d11.h>
 #include <D3Dcompiler.h>
-#include <iron_array.h>
-#include <iron_map.h>
+
+static void write_attrib(char *file, int *output_len, const char *attrib, int index) {
+	if (index > -1) {
+		strcpy(file + (*output_len), attrib);
+		(*output_len) += strlen(attrib);
+		file[(*output_len)] = 0;
+		(*output_len) += 1;
+		file[(*output_len)] = index;
+		(*output_len) += 1;
+	}
+}
 
 char *hlsl_to_bin(char *source, char *shader_type, char *to) {
 
@@ -36,7 +45,7 @@ char *hlsl_to_bin(char *source, char *shader_type, char *to) {
 	HRESULT hr = D3DCompile(source, strlen(source) + 1, NULL, NULL, NULL, "main", type, flags, 0, &shader_buffer, &error_message);
 	if (hr != S_OK) {
 		printf("%s\n", (char *)error_message->lpVtbl->GetBufferPointer(error_message));
-		return JS_UNDEFINED;
+		return NULL;
 	}
 
 	ID3D11ShaderReflection *reflector = NULL;
@@ -46,33 +55,36 @@ char *hlsl_to_bin(char *source, char *shader_type, char *to) {
 	char *file = malloc(len * 2);
 	int output_len = 0;
 
-	bool has_bone = strstr(source, " bone :") != NULL;
-	bool has_col = strstr(source, " col :") != NULL;
-	bool has_nor = strstr(source, " nor :") != NULL;
-	bool has_pos = strstr(source, " pos :") != NULL;
-	bool has_tex = strstr(source, " tex :") != NULL;
+	bool has_bone = strstr(source, " bone:") != NULL;
+	bool has_col = strstr(source, " col:") != NULL;
+	bool has_nor = strstr(source, " nor:") != NULL;
+	bool has_pos = strstr(source, " pos:") != NULL;
+	bool has_tex = strstr(source, " tex:") != NULL;
 
-	i32_map_t *attributes = i32_map_create();
+	int ibone = -1;
+	int icol = -1;
+	int inor = -1;
+	int ipos = -1;
+	int itex = -1;
+	int iweight = -1;
+
 	int index = 0;
-	if (has_bone) i32_map_set(attributes, "bone", index++);
-	if (has_col) i32_map_set(attributes, "col", index++);
-	if (has_nor) i32_map_set(attributes, "nor", index++);
-	if (has_pos) i32_map_set(attributes, "pos", index++);
-	if (has_tex) i32_map_set(attributes, "tex", index++);
-	if (has_bone) i32_map_set(attributes, "weight", index++);
+	if (has_bone) ibone = index++;
+	if (has_col) icol = index++;
+	if (has_nor) inor = index++;
+	if (has_pos) ipos = index++;
+	if (has_tex) itex = index++;
+	if (has_bone) iweight = index++;
 
 	file[output_len] = (char)index;
 	output_len += 1;
 
-	any_array_t *keys = map_keys(attributes);
-	for (int i = 0; i < keys->length; ++i) {
-		strcpy(file + output_len, keys->buffer[i]);
-		output_len += strlen(keys->buffer[i]);
-		file[output_len] = 0;
-		output_len += 1;
-		file[output_len] = i32_map_get(attributes, keys->buffer[i]);
-		output_len += 1;
-	}
+	write_attrib(file, &output_len, "bone", ibone);
+	write_attrib(file, &output_len, "col", icol);
+	write_attrib(file, &output_len, "nor", inor);
+	write_attrib(file, &output_len, "pos", ipos);
+	write_attrib(file, &output_len, "tex", itex);
+	write_attrib(file, &output_len, "weight", iweight);
 
 	D3D11_SHADER_DESC desc;
 	reflector->lpVtbl->GetDesc(reflector, &desc);
@@ -198,24 +210,15 @@ const char *version_essl = "#version 300 es\n";
 const char *precision_essl = "precision highp float;\nprecision mediump int;\n";
 
 const char *header_glsl = "#define GLSL\n\
-#define textureArg(tex) sampler2D tex \n\
-#define texturePass(tex) tex \n\
 #define mul(a, b) b * a \n\
-#define textureShared texture \n\
-#define textureLodShared textureLod \n\
 #define atan2(x, y) atan(y, x) \n\
 ";
 
-// shared_sampler
 const char *header_hlsl = "#define HLSL\n\
-#define textureArg(tex) Texture2D tex,SamplerState tex ## _sampler\n\
-#define texturePass(tex) tex,tex ## _sampler\n\
 #define sampler2D Texture2D\n\
 #define sampler3D Texture3D\n\
 #define texture(tex, coord) tex.Sample(tex ## _sampler, coord)\n\
-#define textureShared(tex, coord) tex.Sample(\" + shared_sampler + \", coord)\n\
 #define textureLod(tex, coord, lod) tex.SampleLevel(tex ## _sampler, coord, lod)\n\
-#define textureLodShared(tex, coord, lod) tex.SampleLevel(\" + shared_sampler + \", coord, lod)\n\
 #define texelFetch(tex, coord, lod) tex.Load(float3(coord.xy, lod))\n\
 uint2 _GetDimensions(Texture2D tex, uint lod) { uint x, y; tex.GetDimensions(x, y); return uint2(x, y); }\n\
 #define textureSize _GetDimensions\n\
@@ -236,19 +239,14 @@ uint2 _GetDimensions(Texture2D tex, uint lod) { uint x, y; tex.GetDimensions(x, 
 #define mix lerp\n\
 ";
 
-// shared_sampler
 const char *header_msl = "#define METAL\n\
 #include <metal_stdlib>\n\
 #include <simd/simd.h>\n\
 using namespace metal;\n\
-#define textureArg(tex) texture2d<float> tex,sampler tex ## _sampler\n\
-#define texturePass(tex) tex,tex ## _sampler\n\
 #define sampler2D texture2d<float>\n\
 #define sampler3D texture3d<float>\n\
 #define texture(tex, coord) tex.sample(tex ## _sampler, coord)\n\
-#define textureShared(tex, coord) tex.sample(\" + shared_sampler + \", coord)\n\
 #define textureLod(tex, coord, lod) tex.sample(tex ## _sampler, coord, level(lod))\n\
-#define textureLodShared(tex, coord, lod) tex.sample(\" + shared_sampler + \", coord, level(lod))\n\
 #define texelFetch(tex, coord, lod) tex.read(uint2(coord), uint(lod))\n\
 float2 _getDimensions(texture2d<float> tex, uint lod) { return float2(tex.get_width(lod), tex.get_height(lod)); }\n\
 #define textureSize _getDimensions\n\
@@ -280,11 +278,21 @@ static char *read_line() {
 		i++;
 		pos++;
 
+		#ifdef _WIN32
+		if (buffer[pos - 1] == '\r') {
+			line[i - 1] = '\n';
+			pos++; // Skip \n
+			break;
+		}
+		#endif
+
 		if (buffer[pos - 1] == '\n') {
 			break;
 		}
 	}
+
 	line[i] = '\0';
+
 	return &line[0];
 }
 
@@ -348,7 +356,9 @@ static void add_header(char *shader_lang) {
 	}
 }
 
-static int sort_vars(var_t *a, var_t *b) {
+static int sort_vars(const void *_a, const void *_b) {
+	var_t *a = _a;
+	var_t *b = _b;
 	return strcmp(a->name, b->name);
 }
 
@@ -385,11 +395,11 @@ static char *add_inputs(char *line) {
 	}
 
 	if (string_index_of(buffer, "gl_VertexID") > -1) {
-		strcat(out, "uint gl_VertexID: SV_VertexID\n");
+		strcat(out, "\tuint gl_VertexID: SV_VertexID;\n");
 	}
 
 	if (string_index_of(buffer, "gl_InstanceID") > -1) {
-		strcat(out, "uint gl_InstanceID: SV_InstanceID\n");
+		strcat(out, "\tuint gl_InstanceID: SV_InstanceID;\n");
 	}
 
 	strcat(out, "};\n");
@@ -445,6 +455,28 @@ static char *add_outputs(char *line, char *shader_type) {
 	return line;
 }
 
+static void write_return(const char *shader_type) {
+	strcat(out, "\tshader_output stage_output;\n");
+	if (strcmp(shader_type, "vert") == 0) {
+		strcat(out, "\tgl_Position.z = (gl_Position.z + gl_Position.w) * 0.5;\n");
+		strcat(out, "\tstage_output.gl_Position = gl_Position;\n");
+	}
+	for (int i = 0; i < outputs_count; ++i) {
+		strcat(out, "\tstage_output.");
+		strcat(out, outputs[i].name);
+		if (out[strlen(out) - 1] == ']') {
+			out[strlen(out) - 3] = '\0';
+		}
+		strcat(out, " = ");
+		strcat(out, outputs[i].name);
+		if (out[strlen(out) - 1] == ']') {
+			out[strlen(out) - 3] = '\0';
+		}
+		strcat(out, ";\n");
+	}
+	strcat(out, "\treturn stage_output;\n");
+}
+
 static void to_hlsl(const char *shader_type) {
 	buffer = malloc(128 * 1024);
 	strcpy(buffer, out);
@@ -460,10 +492,38 @@ static void to_hlsl(const char *shader_type) {
 
 		if (starts_with(line, "in ")) {
 			line = add_inputs(line);
+
+			for (int i = 0; i < inputs_count; ++i) {
+				strcat(out, "static ");
+				strcat(out, inputs[i].type);
+				strcat(out, " ");
+				strcat(out, inputs[i].name);
+				strcat(out, ";\n");
+			}
+
+			if (string_index_of(buffer, "gl_VertexID") > -1) {
+				strcat(out, "static uint gl_VertexID;\n");
+			}
+
+			if (string_index_of(buffer, "gl_InstanceID") > -1) {
+				strcat(out, "static uint gl_InstanceID;\n");
+			}
 		}
 
 		if (starts_with(line, "out ")) {
 			line = add_outputs(line, shader_type);
+
+			if (strcmp(shader_type, "vert") == 0) {
+				strcat(out, "static vec4 gl_Position;\n");
+			}
+
+			for (int i = 0; i < outputs_count; ++i) {
+				strcat(out, "static ");
+				strcat(out, outputs[i].type);
+				strcat(out, " ");
+				strcat(out, outputs[i].name);
+				strcat(out, ";\n");
+			}
 		}
 
 		if (starts_with(line, "uniform sampler")) {
@@ -475,25 +535,22 @@ static void to_hlsl(const char *shader_type) {
 			strcat(out, tmp);
 		}
 
+		if (starts_with(line, "const ")) {
+			strcat(out, "static ");
+		}
+
+		if (starts_with(line, "vec") || starts_with(line, "float ") || starts_with(line, "int ")) {
+			if (ends_with(line, ";\n")) {
+				strcat(out, "static ");
+			}
+		}
+
+		if (ends_with(line, "return;\n")) {
+			write_return(shader_type);
+			line = "";
+		}
+
 		if (starts_with(line, "void main")) {
-			for (int i = 0; i < inputs_count; ++i) {
-				strcat(out, inputs[i].type);
-				strcat(out, " ");
-				strcat(out, inputs[i].name);
-				strcat(out, ";\n");
-			}
-
-			if (strcmp(shader_type, "vert") == 0) {
-				strcat(out, "vec4 gl_Position;\n");
-			}
-
-			for (int i = 0; i < outputs_count; ++i) {
-				strcat(out, outputs[i].type);
-				strcat(out, " ");
-				strcat(out, outputs[i].name);
-				strcat(out, ";\n");
-			}
-
 			strcat(out, "shader_output main(shader_input stage_input) {\n");
 			line = "";
 
@@ -504,22 +561,18 @@ static void to_hlsl(const char *shader_type) {
 				strcat(out, inputs[i].name);
 				strcat(out, ";\n");
 			}
+
+			if (string_index_of(buffer, "gl_VertexID") > -1) {
+				strcat(out, "\tgl_VertexID = stage_input.gl_VertexID;\n");
+			}
+
+			if (string_index_of(buffer, "gl_InstanceID") > -1) {
+				strcat(out, "\tgl_InstanceID = stage_input.gl_InstanceID;\n");
+			}
 		}
 
 		if (starts_with(line, "}") && pos == buffer_size) {
-			strcat(out, "\tshader_output stage_output;\n");
-			if (strcmp(shader_type, "vert") == 0) {
-				strcat(out, "\tgl_Position.z = (gl_Position.z + gl_Position.w) * 0.5;\n");
-				strcat(out, "\ttstage_output.gl_Position = gl_Position;\n");
-			}
-			for (int i = 0; i < outputs_count; ++i) {
-				strcat(out, "\tstage_output.");
-				strcat(out, outputs[i].name);
-				strcat(out, " = ");
-				strcat(out, outputs[i].name);
-				strcat(out, ";\n");
-			}
-			strcat(out, "\treturn stage_output;\n");
+			write_return(shader_type);
 		}
 
 		strcat(out, line);
@@ -532,13 +585,25 @@ int ashader(char *shader_lang, char *from, char *to) {
 	// shader_lang == glsl || essl || hlsl || msl || spirv
 	const char *shader_type = string_index_of(from, ".vert") != -1 ? "vert" : "frag";
 
+	#ifdef _WIN32
+	char from_[512];
+	strcpy(from_, from);
+	int len = strlen(from_);
+	for (int i = 0; i < len; ++i) {
+		if (from_[i] == '\\') {
+			from_[i] = '/';
+		}
+	}
+	from = from_;
+	#endif
+
 	add_header(shader_lang);
 	add_includes(from, 13); // Skip #version 450\n
 
-	FILE *fp = fopen(to, "wb");
-
 	if (strcmp(shader_lang, "glsl") == 0 || strcmp(shader_lang, "essl") == 0) {
+		FILE *fp = fopen(to, "wb");
 		fwrite(out, 1, strlen(out), fp);
+		fclose(fp);
 	}
 
 	#ifdef __linux__
@@ -546,14 +611,26 @@ int ashader(char *shader_lang, char *from, char *to) {
 		char *buf = malloc(1024 * 1024);
 		int buf_len;
 		krafix_compile(out, buf, &buf_len, "spirv", "linux", shader_type, -1);
+
+		FILE *fp = fopen(to, "wb");
 		fwrite(buf, 1, buf_len, fp);
+		fclose(fp);
 	}
 	#endif
 
 	#ifdef _WIN32
 	else if (strcmp(shader_lang, "hlsl") == 0) {
 		to_hlsl(shader_type);
-		hlsl_to_bin(out, shader_type, to);
+
+		// FILE *fp = fopen(to, "wb");
+		// fwrite(out, 1, strlen(out), fp); // Write .hlsl
+		// fclose(fp);
+
+		char to_[512];
+		strcpy(to_, to);
+		to_[strlen(to_) - 4] = '\0';
+		strcat(to_, "d3d11");
+		hlsl_to_bin(out, shader_type, to_);
 	}
 	#endif
 
