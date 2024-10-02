@@ -33,6 +33,7 @@ project.add_cfiles("aimage.c");
 if (platform === "linux") {
 	// quickjs
 	project.add_lib("m");
+	project.add_lib("dl");
 	project.add_define("_GNU_SOURCE");
 	project.add_define("environ=__environ");
 	project.add_define("sighandler_t=__sighandler_t");
