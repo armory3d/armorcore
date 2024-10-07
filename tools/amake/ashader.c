@@ -197,13 +197,16 @@ typedef struct var {
 	char type[16];
 } var_t;
 
-char *numbers[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
+static char *numbers[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
-var_t inputs[8];
-int inputs_count = 0;
+static var_t inputs[8];
+static var_t outputs[8];
+static var_t uniforms[16];
+static int inputs_count;
+static int outputs_count;
+static int uniforms_count;
 
-var_t outputs[8];
-int outputs_count;
+static char *shader_type;
 
 const char *version_glsl = "#version 450\n";
 const char *version_essl = "#version 300 es\n";
@@ -390,7 +393,42 @@ static void read_vars(char *line, var_t *vars, int *vars_count, char *start) {
 	qsort(vars, *vars_count, sizeof(var_t), sort_vars);
 }
 
-static char *write_inputs(char *line) {
+static void init_buffer() {
+	buffer = malloc(128 * 1024);
+	strcpy(buffer, out);
+	buffer_size = strlen(buffer);
+	buffer_pos = 0;
+	out[0] = '\0';
+	out_pos = 0;
+
+	inputs_count = 0;
+	outputs_count = 0;
+	uniforms_count = 0;
+}
+
+static void write_hlsl_return() {
+	w("\tshader_output stage_output;\n");
+	if (string_equals(shader_type, "vert")) {
+		w("\tgl_Position.z = (gl_Position.z + gl_Position.w) * 0.5;\n");
+		w("\tstage_output.gl_Position = gl_Position;\n");
+	}
+	for (int i = 0; i < outputs_count; ++i) {
+		w("\tstage_output.");
+		w(outputs[i].name);
+		if (out[out_pos - 1] == ']') {
+			out_pos -= 3; // Erase [i]
+		}
+		w(" = ");
+		w(outputs[i].name);
+		if (out[out_pos - 1] == ']') {
+			out_pos -= 3;
+		}
+		w(";\n");
+	}
+	w("\treturn stage_output;\n");
+}
+
+static char *write_hlsl_inputs(char *line) {
 	read_vars(line, inputs, &inputs_count, "in ");
 
 	w("struct shader_input {\n");
@@ -416,7 +454,7 @@ static char *write_inputs(char *line) {
 	return line;
 }
 
-static char *write_outputs(char *line, char *shader_type) {
+static char *write_hlsl_outputs(char *line) {
 	read_vars(line, outputs, &outputs_count, "out ");
 
 	w("struct shader_output {\n");
@@ -446,35 +484,8 @@ static char *write_outputs(char *line, char *shader_type) {
 	return line;
 }
 
-static void write_return(const char *shader_type) {
-	w("\tshader_output stage_output;\n");
-	if (string_equals(shader_type, "vert")) {
-		w("\tgl_Position.z = (gl_Position.z + gl_Position.w) * 0.5;\n");
-		w("\tstage_output.gl_Position = gl_Position;\n");
-	}
-	for (int i = 0; i < outputs_count; ++i) {
-		w("\tstage_output.");
-		w(outputs[i].name);
-		if (out[out_pos - 1] == ']') {
-			out_pos -= 3; // Erase [i]
-		}
-		w(" = ");
-		w(outputs[i].name);
-		if (out[out_pos - 1] == ']') {
-			out_pos -= 3;
-		}
-		w(";\n");
-	}
-	w("\treturn stage_output;\n");
-}
-
-static void to_hlsl(const char *shader_type) {
-	buffer = malloc(128 * 1024);
-	strcpy(buffer, out);
-	buffer_size = strlen(buffer);
-	buffer_pos = 0;
-	out[0] = '\0';
-	out_pos = 0;
+static void to_hlsl() {
+	init_buffer();
 
 	while (true) {
 		char *line = read_line();
@@ -483,7 +494,7 @@ static void to_hlsl(const char *shader_type) {
 		}
 
 		if (starts_with(line, "in ")) {
-			line = write_inputs(line);
+			line = write_hlsl_inputs(line);
 
 			for (int i = 0; i < inputs_count; ++i) {
 				w("static ");
@@ -502,7 +513,7 @@ static void to_hlsl(const char *shader_type) {
 		}
 
 		if (starts_with(line, "out ")) {
-			line = write_outputs(line, shader_type);
+			line = write_hlsl_outputs(line);
 
 			if (string_equals(shader_type, "vert")) {
 				w("static vec4 gl_Position;\n");
@@ -540,7 +551,7 @@ static void to_hlsl(const char *shader_type) {
 		}
 
 		if (ends_with(line, "return;\n")) {
-			write_return(shader_type);
+			write_hlsl_return();
 			line = "";
 		}
 
@@ -566,7 +577,7 @@ static void to_hlsl(const char *shader_type) {
 		}
 
 		if (starts_with(line, "}") && buffer_pos == buffer_size) {
-			write_return(shader_type);
+			write_hlsl_return();
 		}
 
 		w(line);
@@ -575,14 +586,208 @@ static void to_hlsl(const char *shader_type) {
 	free(buffer);
 }
 
-#ifdef __APPLE__
-static void to_msl(const char *shader_type) {
+static char *write_msl_inputs(char *line) {
+	read_vars(line, inputs, &inputs_count, "in ");
+
+	w("struct shader_input {\n");
+
+	for (int i = 0; i < inputs_count; ++i) {
+		w("\t");
+		w(inputs[i].type);
+		w(" ");
+		w(inputs[i].name);
+		if (string_equals(shader_type, "vert")) {
+			w(" [[attribute(");
+		}
+		else {
+			w(" [[user(locn");
+		}
+		w(numbers[i]);
+		w(")]];\n");
+	}
+
+	w("};\n");
+
+	return line;
 }
-#endif
+
+static char *write_msl_outputs(char *line) {
+	read_vars(line, outputs, &outputs_count, "out ");
+
+	w("struct shader_output {\n");
+	for (int i = 0; i < outputs_count; ++i) {
+		w("\t");
+		w(outputs[i].type);
+		w(" ");
+		w(outputs[i].name);
+		if (string_equals(shader_type, "vert")) {
+			w(" [[user(locn");
+		}
+		else {
+			// "float4 frag_color_" // mrt
+			w(" [[color(");
+		}
+		w(numbers[i]);
+		w(")]];\n");
+	}
+
+	if (string_equals(shader_type, "vert")) {
+		w("\tvec4 gl_Position [[position]];\n");
+	}
+
+	w("};\n");
+
+	return line;
+}
+
+static char *write_msl_uniforms(char *line) {
+	read_vars(line, uniforms, &uniforms_count, "uniform ");
+
+	w("struct shader_uniforms {\n");
+
+	for (int i = 0; i < uniforms_count; ++i) {
+
+		if (starts_with(uniforms[i].type, "sampler") {
+			continue;
+		}
+
+		w("\t");
+		w(uniforms[i].type);
+		w(" ");
+		w(uniforms[i].name);
+		w(";\n");
+	}
+
+	w("};\n");
+
+	return line;
+}
+
+static void to_msl() {
+	init_buffer();
+
+	while (true) {
+		char *line = read_line();
+		if (line == NULL) {
+			break;
+		}
+
+		if (starts_with(line, "in ")) {
+			line = write_msl_inputs(line);
+		}
+
+		if (starts_with(line, "out ")) {
+			line = write_msl_outputs(line);
+		}
+
+		if (starts_with(line, "uniform ")) {
+			line = write_msl_uniforms(line);
+		}
+
+		if (starts_with(line, "void main")) {
+
+			w("#undef texture\n");
+
+			if (string_equals(shader_type, "vert")) {
+				w("vertex ");
+			}
+			else {
+				w("fragment ");
+			}
+
+			w("shader_out ");
+
+			w("my_main(");
+
+			w("shader_input in [[stage_in]]");
+
+			if (uniforms_count > 0) {
+				w(", constant main_uniforms& uniforms [[buffer(");
+				if (string_equals(shader_type, "vert")) {
+					w("1");
+				}
+				else {
+					w("0");
+				}
+				w(")]]");
+			}
+
+			if (samplers_count > 0) {
+				for (int i = 0; i < samplers_count; ++i) {
+					w(", ");
+					w(samplers[i]);
+					w(" [[texture(");
+					w(numbers[i]);
+					w(")]]");
+
+					w(", sampler ");
+					w(string_split(samplers[i], " ")[1]);
+					w("_sampler [[sampler(");
+					w(numbers[i]);
+					w(")]]");
+				}
+			}
+
+			if (string_equals(shader_type, "vert")) {
+				if (string_index_of(buffer, "gl_VertexID") > -1) {
+					w(", uint gl_VertexID [[vertex_id]]");
+				}
+				if (string_index_of(buffer, "gl_InstanceID") > -1) {
+					w(", uint gl_InstanceID: [[instance_id]]");
+				}
+			}
+
+			w(") {\n");
+			w("#define texture(tex, coord) tex.sample(tex ## _sampler, coord)\n");
+
+			line = "";
+
+			for (int i = 0; i < inputs_count; ++i) {
+				w("\t");
+				w(inputs[i].name);
+				w(" = stage_input.");
+				w(inputs[i].name);
+				w(";\n");
+			}
+
+			if (string_index_of(buffer, "gl_VertexID") > -1) {
+				w("\tgl_VertexID = stage_input.gl_VertexID;\n");
+			}
+
+			if (string_index_of(buffer, "gl_InstanceID") > -1) {
+				w("\tgl_InstanceID = stage_input.gl_InstanceID;\n");
+			}
+
+			for (int i = 0; i < uniforms_count; ++i) {
+				if (starts_with(uniforms[i], "sampler")) {
+					continue;
+				}
+
+				// let b: string = string_split(uniforms[i], " ")[1]; // Remove type "vec4 "
+				// if (string_index_of(b, "[") >= 0) {
+				// 	b = substring(b, 0, string_index_of(b, "["));
+				// 	let type: string = string_split(a, " ")[0];
+				// 	s += "constant " + type + " *" + b + " = uniforms." + b + ";\n";
+				// }
+				// else {
+				// 	s += a + " = uniforms." + b + ";\n";
+				// }
+			}
+		}
+
+		if (starts_with(line, "}") && buffer_pos == buffer_size) {
+			write_hlsl_return();
+		}
+
+		w(line);
+	}
+
+	free(buffer);
+}
 
 int ashader(char *shader_lang, char *from, char *to) {
 	// shader_lang == glsl || essl || hlsl || msl || spirv
-	const char *shader_type = string_index_of(from, ".vert") != -1 ? "vert" : "frag";
+	shader_type = string_index_of(from, ".vert") != -1 ? "vert" : "frag";
 
 	#ifdef _WIN32
 	char from_[512];
@@ -621,27 +826,25 @@ int ashader(char *shader_lang, char *from, char *to) {
 	}
 	#endif
 
-	#ifdef _WIN32
 	else if (string_equals(shader_lang, "hlsl")) {
-		to_hlsl(shader_type);
+		to_hlsl();
 
-		FILE *fp = fopen(to, "wb");
-		fwrite(out, 1, strlen(out), fp); // Write .hlsl
-		fclose(fp);
+		// FILE *fp = fopen(to, "wb");
+		// fwrite(out, 1, strlen(out), fp); // Write .hlsl
+		// fclose(fp);
 
+		#ifdef _WIN32
 		char to_[512];
 		strcpy(to_, to);
 		to_[strlen(to_) - 4] = '\0';
 		strcat(to_, "d3d11");
 		hlsl_to_bin(out, shader_type, to_);
+		#endif
 	}
-	#endif
 
-	#ifdef __APPLE__
 	else if (string_equals(shader_lang, "msl")) {
-		to_msl(shader_type);
+		to_msl();
 	}
-	#endif
 
 	return 0;
 }
