@@ -202,9 +202,11 @@ static char *numbers[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 static var_t inputs[8];
 static var_t outputs[8];
 static var_t uniforms[16];
+static var_t samplers[8];
 static int inputs_count;
 static int outputs_count;
 static int uniforms_count;
+static int samplers_count;
 
 static char *shader_type;
 
@@ -404,6 +406,7 @@ static void init_buffer() {
 	inputs_count = 0;
 	outputs_count = 0;
 	uniforms_count = 0;
+	samplers_count = 0;
 }
 
 static void write_hlsl_return() {
@@ -647,7 +650,10 @@ static char *write_msl_uniforms(char *line) {
 
 	for (int i = 0; i < uniforms_count; ++i) {
 
-		if (starts_with(uniforms[i].type, "sampler") {
+		if (starts_with(uniforms[i].type, "sampler")) {
+			strcpy(samplers[samplers_count].type, uniforms[i].type);
+			strcpy(samplers[samplers_count].name, uniforms[i].name);
+			samplers_count++;
 			continue;
 		}
 
@@ -662,6 +668,8 @@ static char *write_msl_uniforms(char *line) {
 
 	return line;
 }
+
+#define write_msl_return write_hlsl_return
 
 static void to_msl() {
 	init_buffer();
@@ -715,13 +723,15 @@ static void to_msl() {
 			if (samplers_count > 0) {
 				for (int i = 0; i < samplers_count; ++i) {
 					w(", ");
-					w(samplers[i]);
+					w(samplers[i].type);
+					w(" ");
+					w(samplers[i].name);
 					w(" [[texture(");
 					w(numbers[i]);
 					w(")]]");
 
 					w(", sampler ");
-					w(string_split(samplers[i], " ")[1]);
+					w(samplers[i].name);
 					w("_sampler [[sampler(");
 					w(numbers[i]);
 					w(")]]");
@@ -759,24 +769,39 @@ static void to_msl() {
 			}
 
 			for (int i = 0; i < uniforms_count; ++i) {
-				if (starts_with(uniforms[i], "sampler")) {
+				if (starts_with(uniforms[i].type, "sampler")) {
 					continue;
 				}
 
-				// let b: string = string_split(uniforms[i], " ")[1]; // Remove type "vec4 "
-				// if (string_index_of(b, "[") >= 0) {
-				// 	b = substring(b, 0, string_index_of(b, "["));
-				// 	let type: string = string_split(a, " ")[0];
-				// 	s += "constant " + type + " *" + b + " = uniforms." + b + ";\n";
-				// }
-				// else {
-				// 	s += a + " = uniforms." + b + ";\n";
-				// }
+				char *name = uniforms[i].name;
+				int pos = string_index_of(name, "[");
+				if (pos >= 0) {
+					char tmp[64];
+					strcpy(tmp, name);
+					tmp[pos] = '\0';
+					char *type = uniforms[i].type;
+					w("\tconstant ");
+					w(uniforms[i].type);
+					w(" *");
+					w(tmp);
+					w(" = uniforms.");
+					w(tmp);
+					w(";\n");
+				}
+				else {
+					w("\t");
+					w(uniforms[i].type);
+					w(" ");
+					w(uniforms[i].name);
+					w(" = uniforms.");
+					w(uniforms[i].name);
+					w(";\n");
+				}
 			}
 		}
 
 		if (starts_with(line, "}") && buffer_pos == buffer_size) {
-			write_hlsl_return();
+			write_msl_return();
 		}
 
 		w(line);
