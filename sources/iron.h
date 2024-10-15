@@ -2521,6 +2521,10 @@ char *iron_read_directory(char *path) {
 	files[0] = 0;
 
 	directory dir = open_dir(path);
+    if (dir.handle == NULL) {
+        return files;
+    }
+
 	while (true) {
 		file f = read_next_file(&dir);
 		if (!f.valid) {
