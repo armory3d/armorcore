@@ -197,12 +197,17 @@ typedef struct var {
 	char type[16];
 } var_t;
 
+static char defines[32][64];
+static int defines_count;
+static bool is_defined[8];
+static int is_defined_index;
+
 static char *numbers[] = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
 static var_t inputs[8];
 static var_t outputs[8];
-static var_t uniforms[16];
-static var_t samplers[8];
+static var_t uniforms[32];
+static var_t samplers[32];
 static int inputs_count;
 static int outputs_count;
 static int uniforms_count;
@@ -215,8 +220,9 @@ const char *version_essl = "#version 300 es\n";
 const char *precision_essl = "precision highp float;\nprecision mediump int;\n";
 
 const char *header_glsl = "#define GLSL\n\
-#define mul(a, b) b * a \n\
-#define atan2(x, y) atan(y, x) \n\
+#define mul(a, b) b * a\n\
+#define atan2(x, y) atan(y, x)\n\
+#define OUT(t, v) out t v\n\
 ";
 
 const char *header_hlsl = "#define HLSL\n\
@@ -242,9 +248,11 @@ uint2 _GetDimensions(Texture2D tex, uint lod) { uint x, y; tex.GetDimensions(x, 
 #define inversesqrt rsqrt\n\
 #define fract frac\n\
 #define mix lerp\n\
+#define OUT(t, v) out t v\n\
 ";
 
-const char *header_msl = "#define METAL\n\
+const char *header_msl = "// my_main\n\
+#define METAL\n\
 #include <metal_stdlib>\n\
 #include <simd/simd.h>\n\
 using namespace metal;\n\
@@ -270,6 +278,9 @@ float2 _getDimensions(texture2d<float> tex, uint lod) { return float2(tex.get_wi
 #define inversesqrt rsqrt\n\
 #define mul(a, b) b * a\n\
 #define discard discard_fragment()\n\
+#define OUT(t, v) thread t &v\n\
+class my_class {\n\
+public:\n\
 ";
 
 static char *read_line() {
@@ -305,6 +316,15 @@ static void w(char *str) {
 	out_pos += strlen(str);
 }
 
+static bool is_undefined() {
+	for (int i = 0; i <= is_defined_index; ++i) {
+		if (!is_defined[i]) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static void write_includes(char *file, int off) {
 	char *_buffer = buffer;
 	int _pos = buffer_pos;
@@ -329,6 +349,7 @@ static void write_includes(char *file, int off) {
 			char *rel = line + 10; // #include "
 			rel[strlen(rel) - 1 - 1] = '\0'; // trailing "
 
+			char tmp[512];
 			int last = string_last_index_of(file, "/") + 1;
 			strncpy(tmp, file, last);
 			tmp[last] = '\0';
@@ -336,6 +357,37 @@ static void write_includes(char *file, int off) {
 
 			write_includes(tmp, 0);
 			line[0] = '\0';
+		}
+
+		if (starts_with(line, "#define ")) {
+			strcpy(defines[defines_count++], line + 8);
+		}
+
+		if (starts_with(line, "#ifdef ")) {
+			line += 7;
+			is_defined_index++;
+			is_defined[is_defined_index] = false;
+			for (int i = 0; i < defines_count; ++i) {
+				if (string_equals(line, defines[i])) {
+					is_defined[is_defined_index] = true;
+					break;
+				}
+			}
+			continue;
+		}
+
+		if (starts_with(line, "#else")) {
+			is_defined[is_defined_index] = !is_defined[is_defined_index];
+			continue;
+		}
+
+		if (starts_with(line, "#endif")) {
+			is_defined_index--;
+			continue;
+		}
+
+		if (starts_with(line, "//") || is_undefined()) {
+			continue;
 		}
 
 		w(line);
@@ -359,12 +411,21 @@ static void write_header(char *shader_lang) {
 			w(version_glsl);
 		}
 		w(header_glsl);
+
+		if (string_equals(shader_lang, "spirv")) {
+			strcpy(defines[defines_count++], "SPIRV\n");
+		}
+		else {
+			strcpy(defines[defines_count++], "GLSL\n");
+		}
 	}
 	else if (string_equals(shader_lang, "hlsl")) {
 		w(header_hlsl);
+		strcpy(defines[defines_count++], "HLSL\n");
 	}
 	else if (string_equals(shader_lang, "msl")) {
 		w(header_msl);
+		strcpy(defines[defines_count++], "METAL\n");
 	}
 }
 
@@ -390,6 +451,11 @@ static void read_vars(char *line, var_t *vars, int *vars_count, char *start) {
 
 		(*vars_count)++;
 		line = read_line();
+
+		while (starts_with(line, "#")) {
+			w(line);
+			line = read_line();
+		}
 	}
 
 	qsort(vars, *vars_count, sizeof(var_t), sort_vars);
@@ -619,19 +685,35 @@ static char *write_msl_outputs(char *line) {
 
 	w("struct shader_output {\n");
 	for (int i = 0; i < outputs_count; ++i) {
-		w("\t");
-		w(outputs[i].type);
-		w(" ");
-		w(outputs[i].name);
-		if (string_equals(shader_type, "vert")) {
-			w(" [[user(locn");
+		int pos = string_index_of(outputs[i].name, "[");
+		if (pos > -1) {
+			int n = outputs[i].name[pos + 1] - '0';
+			for (int j = 0; j < n; ++j) {
+				w("\t");
+				w(outputs[i].type);
+				w(" ");
+				// w(outputs[i].name);
+				w("frag_color");
+				w(numbers[j]);
+				w(" [[color(");
+				w(numbers[j]);
+				w(")]];\n");
+			}
 		}
 		else {
-			// "float4 frag_color_" // mrt
-			w(" [[color(");
+			w("\t");
+			w(outputs[i].type);
+			w(" ");
+			w(outputs[i].name);
+			if (string_equals(shader_type, "vert")) {
+				w(" [[user(locn");
+				w(numbers[i]);
+				w(")]];\n");
+			}
+			else {
+				w(" [[color(0)]];\n");
+			}
 		}
-		w(numbers[i]);
-		w(")]];\n");
 	}
 
 	if (string_equals(shader_type, "vert")) {
@@ -669,12 +751,50 @@ static char *write_msl_uniforms(char *line) {
 	return line;
 }
 
-#define write_msl_return write_hlsl_return
+static void write_msl_return() {
+	w("\tshader_output stage_output;\n");
+	if (string_equals(shader_type, "vert")) {
+		w("\tgl_Position.z = (gl_Position.z + gl_Position.w) * 0.5;\n");
+		w("\tstage_output.gl_Position = gl_Position;\n");
+	}
+	for (int i = 0; i < outputs_count; ++i) {
+		int pos = string_index_of(outputs[i].name, "[");
+		if (pos > -1) {
+			int n = outputs[i].name[pos + 1] - '0';
+			char tmp[64];
+			strcpy(tmp, outputs[i].name);
+			tmp[pos] = '\0';
+			for (int j = 0; j < n; ++j) {
+				w("\tstage_output.");
+				w(tmp);
+				w(numbers[j]);
+				w(" = ");
+				w(tmp);
+				w("[");
+				w(numbers[j]);
+				w("];\n");
+			}
+		}
+		else {
+			w("\tstage_output.");
+			w(outputs[i].name);
+			w(" = ");
+			w(outputs[i].name);
+			w(";\n");
+		}
+	}
+	w("\treturn stage_output;\n");
+}
 
 static void to_msl() {
 	init_buffer();
+	char main_header[1024];
+	char main_body[1024];
+	strcpy(main_header, "#undef texture\n");
+	strcpy(main_body, "\tmy_class c;\n\treturn c.my_main(stage_input");
 
 	while (true) {
+
 		char *line = read_line();
 		if (line == NULL) {
 			break;
@@ -682,42 +802,77 @@ static void to_msl() {
 
 		if (starts_with(line, "in ")) {
 			line = write_msl_inputs(line);
+
+			for (int i = 0; i < inputs_count; ++i) {
+				w(inputs[i].type);
+				w(" ");
+				w(inputs[i].name);
+				w(";\n");
+			}
+
+			if (string_index_of(buffer, "gl_VertexID") > -1) {
+				w("uint gl_VertexID;\n");
+			}
+			if (string_index_of(buffer, "gl_InstanceID") > -1) {
+				w("uint gl_InstanceID;\n");
+			}
 		}
 
 		if (starts_with(line, "out ")) {
 			line = write_msl_outputs(line);
+
+			if (string_equals(shader_type, "vert")) {
+				w("vec4 gl_Position;\n");
+			}
+
+			for (int i = 0; i < outputs_count; ++i) {
+				w(outputs[i].type);
+				w(" ");
+				w(outputs[i].name);
+				w(";\n");
+			}
 		}
 
 		if (starts_with(line, "uniform ")) {
 			line = write_msl_uniforms(line);
+
+			for (int i = 0; i < uniforms_count; ++i) {
+				w(uniforms[i].type);
+				w(" ");
+				w(uniforms[i].name);
+				w(";\n");
+
+				if (starts_with(uniforms[i].type, "sampler")) {
+					w("sampler ");
+					w(uniforms[i].name);
+					w("_sampler;\n");
+				}
+			}
 		}
 
 		if (starts_with(line, "void main")) {
 
-			w("#undef texture\n");
-
 			if (string_equals(shader_type, "vert")) {
-				w("vertex ");
+				strcat(main_header, "vertex ");
 			}
 			else {
-				w("fragment ");
+				strcat(main_header, "fragment ");
 			}
 
-			w("shader_out ");
-
-			w("my_main(");
-
-			w("shader_input in [[stage_in]]");
+			w("shader_output my_main(shader_input stage_input");
+			strcat(main_header, "my_class::shader_output my_main(my_class::shader_input stage_input [[stage_in]]");
 
 			if (uniforms_count > 0) {
-				w(", constant main_uniforms& uniforms [[buffer(");
+				w(", constant shader_uniforms& uniforms");
+				strcat(main_header, ", constant my_class::shader_uniforms& uniforms [[buffer(");
 				if (string_equals(shader_type, "vert")) {
-					w("1");
+					strcat(main_header, "1");
 				}
 				else {
-					w("0");
+					strcat(main_header, "0");
 				}
-				w(")]]");
+				strcat(main_header, ")]]");
+				strcat(main_body, ", uniforms");
 			}
 
 			if (samplers_count > 0) {
@@ -726,29 +881,49 @@ static void to_msl() {
 					w(samplers[i].type);
 					w(" ");
 					w(samplers[i].name);
-					w(" [[texture(");
-					w(numbers[i]);
-					w(")]]");
 
 					w(", sampler ");
 					w(samplers[i].name);
-					w("_sampler [[sampler(");
-					w(numbers[i]);
-					w(")]]");
+					w("_sampler");
+
+					strcat(main_header, ", ");
+					strcat(main_header, samplers[i].type);
+					strcat(main_header, " ");
+					strcat(main_header, samplers[i].name);
+					strcat(main_header, " [[texture(");
+					strcat(main_header, numbers[i]);
+					strcat(main_header, ")]]");
+
+					strcat(main_header, ", sampler ");
+					strcat(main_header, samplers[i].name);
+					strcat(main_header, "_sampler [[sampler(");
+					strcat(main_header, numbers[i]);
+					strcat(main_header, ")]]");
+
+					strcat(main_body, ", ");
+					strcat(main_body, samplers[i].name);
+					strcat(main_body, ", ");
+					strcat(main_body, samplers[i].name);
+					strcat(main_body, "_sampler");
 				}
 			}
 
 			if (string_equals(shader_type, "vert")) {
 				if (string_index_of(buffer, "gl_VertexID") > -1) {
-					w(", uint gl_VertexID [[vertex_id]]");
+					w(", uint gl_VertexID");
+					strcat(main_header, ", uint gl_VertexID [[vertex_id]]");
+					strcat(main_body, ", gl_VertexID");
 				}
 				if (string_index_of(buffer, "gl_InstanceID") > -1) {
-					w(", uint gl_InstanceID: [[instance_id]]");
+					w(", uint gl_InstanceID");
+					strcat(main_header, ", uint gl_InstanceID [[instance_id]]");
+					strcat(main_body, ", gl_InstanceID");
 				}
 			}
 
 			w(") {\n");
-			w("#define texture(tex, coord) tex.sample(tex ## _sampler, coord)\n");
+			strcat(main_header, ") {\n");
+			strcat(main_body, ");\n}\n");
 
 			line = "";
 
@@ -761,37 +936,48 @@ static void to_msl() {
 			}
 
 			if (string_index_of(buffer, "gl_VertexID") > -1) {
-				w("\tgl_VertexID = stage_input.gl_VertexID;\n");
+				w("\tthis->gl_VertexID = gl_VertexID;\n");
 			}
 
 			if (string_index_of(buffer, "gl_InstanceID") > -1) {
-				w("\tgl_InstanceID = stage_input.gl_InstanceID;\n");
+				w("\tthis->gl_InstanceID = gl_InstanceID;\n");
 			}
 
 			for (int i = 0; i < uniforms_count; ++i) {
-				if (starts_with(uniforms[i].type, "sampler")) {
-					continue;
-				}
-
-				char *name = uniforms[i].name;
-				int pos = string_index_of(name, "[");
-				if (pos >= 0) {
+				int pos = string_index_of(uniforms[i].name, "[");
+				if (pos > -1) {
 					char tmp[64];
-					strcpy(tmp, name);
+					strcpy(tmp, uniforms[i].name);
 					tmp[pos] = '\0';
-					char *type = uniforms[i].type;
-					w("\tconstant ");
-					w(uniforms[i].type);
-					w(" *");
-					w(tmp);
-					w(" = uniforms.");
-					w(tmp);
+
+					int n = uniforms[i].name[pos + 1] - '0';
+					for (int j = 0; j < n; ++j) {
+						w("\tthis->");
+						w(tmp);
+						w("[");
+						w(numbers[j]);
+						w("] = uniforms.");
+						w(tmp);
+						w("[");
+						w(numbers[j]);
+						w("];\n");
+					}
+				}
+				else if (starts_with(uniforms[i].type, "sampler")) {
+					w("\tthis->");
+					w(uniforms[i].name);
+					w(" = ");
+					w(uniforms[i].name);
 					w(";\n");
+
+					w("\tthis->");
+					w(uniforms[i].name);
+					w("_sampler = ");
+					w(uniforms[i].name);
+					w("_sampler;\n");
 				}
 				else {
-					w("\t");
-					w(uniforms[i].type);
-					w(" ");
+					w("\tthis->");
 					w(uniforms[i].name);
 					w(" = uniforms.");
 					w(uniforms[i].name);
@@ -806,6 +992,10 @@ static void to_msl() {
 
 		w(line);
 	}
+
+	w("};\n"); // class my_class
+	w(main_header);
+	w(main_body);
 
 	free(buffer);
 }
@@ -828,7 +1018,11 @@ int ashader(char *shader_lang, char *from, char *to) {
 
 	out[0] = '\0';
 	out_pos = 0;
+	defines_count = 0;
+	is_defined[0] = true;
+	is_defined_index = 0;
 	write_header(shader_lang);
+
 	write_includes(from, 13); // Skip #version 450\n
 
 	if (string_equals(shader_lang, "glsl") ||
@@ -869,6 +1063,15 @@ int ashader(char *shader_lang, char *from, char *to) {
 
 	else if (string_equals(shader_lang, "msl")) {
 		to_msl();
+
+		char to_[512];
+		strcpy(to_, to);
+		to_[strlen(to_) - 3] = '\0';
+		strcat(to_, "metal");
+
+		FILE *fp = fopen(to_, "wb");
+		fwrite(out, 1, strlen(out), fp);
+		fclose(fp);
 	}
 
 	return 0;
