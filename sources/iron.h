@@ -43,6 +43,18 @@
 #ifdef WITH_EMBED
 #include EMBED_H_PATH
 #endif
+#ifdef WITH_ONNX
+#include <onnxruntime_c_api.h>
+#ifdef KINC_WINDOWS
+#include <dml_provider_factory.h>
+#elif defined(KINC_MACOS)
+#include <coreml_provider_factory.h>
+#endif
+const OrtApi *ort = NULL;
+OrtEnv *ort_env;
+OrtSessionOptions *ort_session_options;
+OrtSession *session = NULL;
+#endif
 
 int _argc;
 char **_argv;
@@ -390,14 +402,6 @@ unsigned char *iron_deflate_raw(unsigned char *data, int data_len, int *out_len,
 #include "sdefl.h"
 #define SINFL_IMPLEMENTATION
 #include "sinfl.h"
-#endif
-#ifdef WITH_ONNX
-#include <onnxruntime_c_api.h>
-#ifdef KINC_WINDOWS
-#include <dml_provider_factory.h>
-#elif defined(KINC_MACOS)
-#include <coreml_provider_factory.h>
-#endif
 #endif
 #if defined(IDLE_SLEEP) && !defined(KINC_WINDOWS)
 #include <unistd.h>
@@ -842,13 +846,6 @@ i32 color_set_ab(i32 c, u8 i) {
 // ██╔═██╗     ██╔══██╗    ██║   ██║    ██║╚██╔╝██║
 // ██║  ██╗    ██║  ██║    ╚██████╔╝    ██║ ╚═╝ ██║
 // ╚═╝  ╚═╝    ╚═╝  ╚═╝     ╚═════╝     ╚═╝     ╚═╝
-
-#ifdef WITH_ONNX
-const OrtApi *ort = NULL;
-OrtEnv *ort_env;
-OrtSessionOptions *ort_session_options;
-OrtSession *session = NULL;
-#endif
 
 void iron_init(string_t *title, i32 width, i32 height, bool vsync, i32 window_mode, i32 window_features, i32 x, i32 y, i32 frequency) {
 	kinc_window_options_t win;
@@ -2707,7 +2704,7 @@ buffer_t *iron_write_mpeg() {
 #endif
 
 #ifdef WITH_ONNX
-buffer_t *iron_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]*/ any_array_t *input_shape, i32_array_t output_shape, bool use_gpu) {
+buffer_t *iron_ml_inference(buffer_t *model, any_array_t *tensors, any_array_t *input_shape, i32_array_t *output_shape, bool use_gpu) {
 	OrtStatus *onnx_status = NULL;
 	static bool use_gpu_last = false;
 	if (ort == NULL || use_gpu_last != use_gpu) {
@@ -2738,19 +2735,19 @@ buffer_t *iron_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]
 	}
 
 	static void *content_last = 0;
-	if (content_last != model->data || session == NULL) {
+	if (content_last != model->buffer || session == NULL) {
 		if (session != NULL) {
 			ort->ReleaseSession(session);
 			session = NULL;
 		}
-		onnx_status = ort->CreateSessionFromArray(ort_env, model->data, (int)model->length, ort_session_options, &session);
+		onnx_status = ort->CreateSessionFromArray(ort_env, model->buffer, (int)model->length, ort_session_options, &session);
 		if (onnx_status != NULL) {
 			const char* msg = ort->GetErrorMessage(onnx_status);
 			kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
 			ort->ReleaseStatus(onnx_status);
 		}
 	}
-	content_last = model->data;
+	content_last = model->buffer;
 
 	OrtAllocator *allocator;
 	ort->GetAllocatorWithDefaultOptions(&allocator);
@@ -2772,20 +2769,22 @@ buffer_t *iron_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]
 		ort->CastTypeInfoToTensorInfo(input_type_info, &input_tensor_info);
 		size_t num_input_dims;
 		ort->GetDimensionsCount(input_tensor_info, &num_input_dims);
-		std::vector<int64_t> input_node_dims(num_input_dims);
+		int64_t input_node_dims[32];
 
 		if (input_shape != NULL) {
 			for (int32_t j = 0; j < num_input_dims; ++j) {
-				input_node_dims[j] = input_shape->buffer[i]->data[j];
+				i32_array_t *a = input_shape->buffer[i];
+				input_node_dims[j] = a->buffer[j];
 			}
 		}
 		else {
-			ort->GetDimensions(input_tensor_info, (int64_t *)input_node_dims.data(), num_input_dims);
+			ort->GetDimensions(input_tensor_info, (int64_t *)input_node_dims, num_input_dims);
 		}
 		ONNXTensorElementDataType tensor_element_type;
 		ort->GetTensorElementType(input_tensor_info, &tensor_element_type);
 
-		ort->CreateTensorWithDataAsOrtValue(memory_info, tensors->buffer[i]->data, (int)tensors->buffer[i]->length, input_node_dims.data(), num_input_dims,  tensor_element_type, &input_tensors[i]);
+		buffer_t *b = tensors->buffer[i];
+		ort->CreateTensorWithDataAsOrtValue(memory_info, b->buffer, (int)b->length, input_node_dims, num_input_dims,  tensor_element_type, &input_tensors[i]);
 		ort->ReleaseTypeInfo(input_type_info);
 	}
 
@@ -2805,7 +2804,7 @@ buffer_t *iron_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]
 	if (output_shape != NULL) {
 		int32_t length = output_shape->length;
 		for (int i = 0; i < length; ++i) {
-			output_byte_length *= output_shape->data[i];
+			output_byte_length *= output_shape->buffer[i];
 		}
 	}
 	else {
@@ -2815,8 +2814,8 @@ buffer_t *iron_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]
 		ort->CastTypeInfoToTensorInfo(output_type_info, &output_tensor_info);
 		size_t num_output_dims;
 		ort->GetDimensionsCount(output_tensor_info, &num_output_dims);
-		std::vector<int64_t> output_node_dims(num_output_dims);
-		ort->GetDimensions(output_tensor_info, (int64_t *)output_node_dims.data(), num_output_dims);
+		int64_t output_node_dims[32];
+		ort->GetDimensions(output_tensor_info, (int64_t *)output_node_dims, num_output_dims);
 		ort->ReleaseTypeInfo(output_type_info);
 		for (int i = 0; i < num_output_dims; ++i) {
 			if (output_node_dims[i] > 1) {
@@ -2826,7 +2825,7 @@ buffer_t *iron_ml_inference(buffer_t *model, buffer_t_array_t tensors, /*i32[][]
 	}
 
 	buffer_t *output = buffer_create(output_byte_length);
-	memcpy(output->data, float_array, output_byte_length);
+	memcpy(output->buffer, float_array, output_byte_length);
 
 	ort->ReleaseMemoryInfo(memory_info);
 	ort->ReleaseValue(output_tensor);
