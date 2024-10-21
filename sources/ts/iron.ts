@@ -38,6 +38,7 @@ declare function ADDRESS(a: any): any;
 declare function ARRAY_ACCESS(a: any, i: i32): any;
 declare function map_create<K, V>(): map_t<K, V>;
 declare function buffer_create(length: i32): buffer_t;
+declare function buffer_create_from_raw(from: u8_ptr, length: i32): buffer_t;
 declare function f32_array_create(length: i32): f32_array_t;
 declare function f32_array_create_from_buffer(b: buffer_t): f32_array_t;
 declare function f32_array_create_from_array(a: f32[]): f32_array_t;

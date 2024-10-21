@@ -359,6 +359,14 @@ buffer_t *buffer_create(int32_t length) {
 	return b;
 }
 
+buffer_t *buffer_create_from_raw(char *raw, int length) {
+	buffer_t * b = gc_alloc(sizeof(buffer_t));
+	b->buffer = raw;
+	b->length = length;
+	b->capacity = length;
+	return b;
+}
+
 f32_array_t *f32_array_create(int32_t length) {
 	f32_array_t *a = gc_alloc(sizeof(f32_array_t));
 	if (length > 0) {
