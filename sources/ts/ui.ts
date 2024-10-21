@@ -155,7 +155,7 @@ function ui_theme_create(): ui_theme_t {
 	return raw;
 }
 
-let ui_nodes_custom_buttons: map_t<string, (i: i32)=>void>;
+let ui_nodes_custom_buttons: map_t<string, (i: i32)=>void> = map_create();
 
 function nodes_on_custom_button(node_id: i32, button_name: string) {
 	let f: (i: i32) => void = map_get(ui_nodes_custom_buttons, button_name);
