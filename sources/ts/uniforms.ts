@@ -118,18 +118,9 @@ function uniforms_bind_render_target(rt: render_target_t, context: shader_contex
 	for (let j: i32 = 0; j < tus.length; ++j) { // Set texture
 		if (sampler_id == tus[j].name) {
 			let is_image: bool = tus[j].image_uniform;
-			let params_set: bool = false;
-
-			if (rt.depth > 1) { // sampler3D
-				g4_set_tex_3d_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.ANISOTROPIC, mip_map_filter_t.LINEAR);
-				params_set = true;
-			}
 
 			if (is_image) {
 				g4_set_image_tex(context._.tex_units[j], rt._image); // image2D/3D
-				// Multiple voxel volumes, always set params
-				g4_set_tex_3d_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.POINT, mip_map_filter_t.LINEAR);
-				params_set = true;
 			}
 			else if (attach_depth) {
 				g4_set_tex_depth(context._.tex_units[j], rt._image); // sampler2D
@@ -138,33 +129,40 @@ function uniforms_bind_render_target(rt: render_target_t, context: shader_contex
 				g4_set_tex(context._.tex_units[j], rt._image); // sampler2D
 			}
 
-			if (!params_set && rt.mipmaps == true && !is_image) {
+			if (rt.depth > 1) { // sampler3D
+				g4_set_tex_3d_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.ANISOTROPIC, mip_map_filter_t.LINEAR);
+				continue;
+			}
+
+			if (is_image) {
+				// Multiple voxel volumes, always set params
+				g4_set_tex_3d_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.POINT, mip_map_filter_t.LINEAR);
+				continue;
+			}
+
+			if (rt.mipmaps) {
 				g4_set_tex_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
-				params_set = true;
+				continue;
 			}
 
-			if (!params_set) {
-				if (starts_with(rt.name, "bloom")) {
-					// Use bilinear filter for bloom mips to get correct blur
-					g4_set_tex_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
-					params_set = true;
-				}
-				else if (attach_depth) {
-					g4_set_tex_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.POINT, tex_filter_t.POINT, mip_map_filter_t.NONE);
-					params_set = true;
-				}
+			if (starts_with(rt.name, "bloom")) {
+				// Use bilinear filter for bloom mips to get correct blur
+				g4_set_tex_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.LINEAR, tex_filter_t.LINEAR, mip_map_filter_t.LINEAR);
+				continue;
 			}
 
-			if (!params_set) {
-				// No filtering when sampling render targets
-				let oc: _shader_override_t = context._.override_context;
-				let allow_params: bool = oc == null || oc.shared_sampler == null || oc.shared_sampler == sampler_id;
-				if (allow_params) {
-					let addressing: tex_addressing_t = (oc != null && oc.addressing == "repeat") ? tex_addressing_t.REPEAT : tex_addressing_t.CLAMP;
-					let filter: tex_filter_t = (oc != null && oc.filter == "point") ? tex_filter_t.POINT : tex_filter_t.LINEAR;
-					g4_set_tex_params(context._.tex_units[j], addressing, addressing, filter, filter, mip_map_filter_t.NONE);
-				}
-				params_set = true;
+			if (attach_depth) {
+				g4_set_tex_params(context._.tex_units[j], tex_addressing_t.CLAMP, tex_addressing_t.CLAMP, tex_filter_t.POINT, tex_filter_t.POINT, mip_map_filter_t.NONE);
+				continue;
+			}
+
+			// No filtering when sampling render targets
+			let oc: _shader_override_t = context._.override_context;
+			let allow_params: bool = oc == null || oc.shared_sampler == null || oc.shared_sampler == sampler_id;
+			if (allow_params) {
+				let addressing: tex_addressing_t = (oc != null && oc.addressing == "repeat") ? tex_addressing_t.REPEAT : tex_addressing_t.CLAMP;
+				let filter: tex_filter_t = (oc != null && oc.filter == "point") ? tex_filter_t.POINT : tex_filter_t.LINEAR;
+				g4_set_tex_params(context._.tex_units[j], addressing, addressing, filter, filter, mip_map_filter_t.NONE);
 			}
 		}
 	}
