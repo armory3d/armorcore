@@ -141,7 +141,7 @@ typedef struct kinc_g4_vertex_structure {
 /// </summary>
 /// <param name="structure">The structure to initialize</param>
 /// <returns></returns>
-KINC_FUNC void kinc_g4_vertex_structure_init(kinc_g4_vertex_structure_t *structure);
+void kinc_g4_vertex_structure_init(kinc_g4_vertex_structure_t *structure);
 
 /// <summary>
 /// Adds an element to a vertex-structure.
@@ -150,7 +150,7 @@ KINC_FUNC void kinc_g4_vertex_structure_init(kinc_g4_vertex_structure_t *structu
 /// <param name="name">The name to use for the new element</param>
 /// <param name="data">The type of data to assign for the new element</param>
 /// <returns></returns>
-KINC_FUNC void kinc_g4_vertex_structure_add(kinc_g4_vertex_structure_t *structure, const char *name, kinc_g4_vertex_data_t data);
+void kinc_g4_vertex_structure_add(kinc_g4_vertex_structure_t *structure, const char *name, kinc_g4_vertex_data_t data);
 
 #ifdef __cplusplus
 }

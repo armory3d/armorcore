@@ -171,13 +171,6 @@ kinc_g4_texture_unit_t kinc_g4_compute_shader_get_texture_unit(kinc_g4_compute_s
 	return unit;
 }
 
-void kinc_g4_set_shader_storage_buffer(kinc_shader_storage_buffer_t *buffer, int index) {
-#ifdef HAS_COMPUTE
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, buffer->impl.bufferId);
-	glCheckErrors();
-#endif
-}
-
 void kinc_g4_set_compute_shader(kinc_g4_compute_shader *shader) {
 #ifdef HAS_COMPUTE
 	glUseProgram(shader->impl._programid);

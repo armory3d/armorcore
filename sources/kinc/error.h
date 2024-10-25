@@ -30,7 +30,7 @@ extern "C" {
 /// Exits the program if condition is false,
 /// otherwise does nothing.
 /// </param>
-KINC_FUNC void kinc_affirm(bool condition);
+void kinc_affirm(bool condition);
 
 /// <summary>
 /// Exits the program when a condition is untrue and shows
@@ -50,7 +50,7 @@ KINC_FUNC void kinc_affirm(bool condition);
 /// <param name="...">
 /// The parameter is equivalent to the second printf parameter.
 /// </param>
-KINC_FUNC void kinc_affirm_message(bool condition, const char *format, ...);
+void kinc_affirm_message(bool condition, const char *format, ...);
 
 /// <summary>
 /// Equivalent to kinc_affirm_message but uses a va_list parameter.
@@ -68,7 +68,7 @@ KINC_FUNC void kinc_affirm_message(bool condition, const char *format, ...);
 /// <param name="...">
 /// The parameter is equivalent to the second vprintf parameter.
 /// </param>
-KINC_FUNC void kinc_affirm_args(bool condition, const char *format, va_list args);
+void kinc_affirm_args(bool condition, const char *format, va_list args);
 
 /// <summary>
 /// Exits the program and shows a generic error message
@@ -77,7 +77,7 @@ KINC_FUNC void kinc_affirm_args(bool condition, const char *format, va_list args
 /// Mainly this just calls exit(EXIT_FAILURE) but will also use
 /// Kore's log function and on Windows show an error message box.
 /// </remarks>
-KINC_FUNC void kinc_error(void);
+void kinc_error(void);
 
 /// <summary>
 /// Exits the program and shows a provided error message.
@@ -92,7 +92,7 @@ KINC_FUNC void kinc_error(void);
 /// <param name="...">
 /// The parameter is equivalent to the second printf parameter.
 /// </param>
-KINC_FUNC void kinc_error_message(const char *format, ...);
+void kinc_error_message(const char *format, ...);
 
 /// <summary>
 /// Equivalent to kinc_error_message but uses a va_list parameter.
@@ -106,7 +106,7 @@ KINC_FUNC void kinc_error_message(const char *format, ...);
 /// <param name="...">
 /// The parameter is equivalent to the second vprintf parameter.
 /// </param>
-KINC_FUNC void kinc_error_args(const char *format, va_list args);
+void kinc_error_args(const char *format, va_list args);
 
 #ifdef KINC_IMPLEMENTATION_ROOT
 #define KINC_IMPLEMENTATION

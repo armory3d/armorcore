@@ -541,10 +541,6 @@ void kinc_g5_begin(kinc_g5_render_target_t *renderTarget, int windowId) {
 	window->fence_values[window->current_backbuffer] = fenceValue;
 	++window->current_fence_value;
 
-#ifdef KINC_WINDOWSAPP
-	context->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
-#endif
-
 	waitForFence(window->frame_fences[window->current_backbuffer], window->fence_values[window->current_backbuffer],
 	             window->frame_fence_events[window->current_backbuffer]);
 

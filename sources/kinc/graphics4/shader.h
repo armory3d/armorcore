@@ -35,7 +35,7 @@ typedef struct kinc_g4_shader {
 /// <param name="data">The system-specific shader-data</param>
 /// <param name="length">The length of the system-specific shader-data in bytes</param>
 /// <param name="type">The type of the shader</param>
-KINC_FUNC void kinc_g4_shader_init(kinc_g4_shader_t *shader, const void *data, size_t length, kinc_g4_shader_type_t type);
+void kinc_g4_shader_init(kinc_g4_shader_t *shader, const void *data, size_t length, kinc_g4_shader_type_t type);
 
 /// <summary>
 /// Initializes a shader from GLSL-source-code. This only works on some platforms and only if KRAFIX_LIBRARY define has been set and the krafix-shader-compiler
@@ -45,13 +45,13 @@ KINC_FUNC void kinc_g4_shader_init(kinc_g4_shader_t *shader, const void *data, s
 /// <param name="source">The GLSL-shader-source-code</param>
 /// <param name="type">The type of the shader</param>
 /// <returns>The number of errors the compiler encountered - hopefully it's zero.</returns>
-KINC_FUNC int kinc_g4_shader_init_from_source(kinc_g4_shader_t *shader, const char *source, kinc_g4_shader_type_t type);
+int kinc_g4_shader_init_from_source(kinc_g4_shader_t *shader, const char *source, kinc_g4_shader_type_t type);
 
 /// <summary>
 /// Destroys a shader.
 /// </summary>
 /// <param name="shader">The shader to destroy</param>
-KINC_FUNC void kinc_g4_shader_destroy(kinc_g4_shader_t *shader);
+void kinc_g4_shader_destroy(kinc_g4_shader_t *shader);
 
 #ifdef __cplusplus
 }

@@ -312,20 +312,6 @@ void kinc_g5_command_list_set_image_texture(kinc_g5_command_list_t *list, kinc_g
 	kinc_g5_command_list_set_texture(list, unit, texture);
 }
 
-bool kinc_g5_command_list_init_occlusion_query(kinc_g5_command_list_t *list, unsigned *occlusionQuery) {
-	return false;
-}
-
-void kinc_g5_command_list_delete_occlusion_query(kinc_g5_command_list_t *list, unsigned occlusionQuery) {}
-
-void kinc_g5_command_list_render_occlusion_query(kinc_g5_command_list_t *list, unsigned occlusionQuery, int triangles) {}
-
-bool kinc_g5_command_list_are_query_results_available(kinc_g5_command_list_t *list, unsigned occlusionQuery) {
-	return false;
-}
-
-void kinc_g5_command_list_get_query_result(kinc_g5_command_list_t *list, unsigned occlusionQuery, unsigned *pixelCount) {}
-
 void kinc_g5_command_list_set_render_target_face(kinc_g5_command_list_t *list, kinc_g5_render_target_t *texture, int face) {}
 
 void kinc_g5_command_list_set_texture_from_render_target(kinc_g5_command_list_t *list, kinc_g5_texture_unit_t unit, kinc_g5_render_target_t *target) {
@@ -367,14 +353,14 @@ void kinc_g5_command_list_set_compute_shader(kinc_g5_command_list_t *list, kinc_
 		end_render_pass();
 		compute_command_encoder = [command_buffer computeCommandEncoder];
 	}
-	
+
 	id<MTLComputePipelineState> pipeline = (__bridge id<MTLComputePipelineState>)shader->impl._pipeline;
 	[compute_command_encoder setComputePipelineState:pipeline];
 }
 
 void kinc_g5_command_list_compute(kinc_g5_command_list_t *list, int x, int y, int z) {
 	assert(compute_command_encoder != nil);
-	
+
 	MTLSize perGrid;
 	perGrid.width = x;
 	perGrid.height = y;
@@ -386,7 +372,7 @@ void kinc_g5_command_list_compute(kinc_g5_command_list_t *list, int x, int y, in
 	[compute_command_encoder dispatchThreadgroups:perGrid threadsPerThreadgroup:perGroup];
 
 	[compute_command_encoder endEncoding];
-	
+
 	compute_command_encoder = nil;
 
 	start_render_pass();

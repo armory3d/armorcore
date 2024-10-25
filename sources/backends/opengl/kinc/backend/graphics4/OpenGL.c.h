@@ -7,12 +7,10 @@
 
 #include <kinc/backend/graphics4/vertexbuffer.h>
 
-#include <kinc/graphics4/constantbuffer.h>
 #include <kinc/graphics4/indexbuffer.h>
 #include <kinc/graphics4/pipeline.h>
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
-#include <kinc/graphics4/texturearray.h>
 #include <kinc/graphics4/vertexbuffer.h>
 
 #include <kinc/error.h>
@@ -122,9 +120,6 @@ void kinc_internal_resize(int window, int width, int height) {
 void kinc_internal_change_framebuffer(int window, kinc_framebuffer_options_t *frame) {
 #ifdef KINC_WINDOWS
 	if (window == 0) {
-#ifdef KINC_VR
-		frame->vertical_sync = false;
-#endif
 		if (wglSwapIntervalEXT != NULL)
 			wglSwapIntervalEXT(frame->vertical_sync);
 	}
@@ -214,12 +209,11 @@ void kinc_g4_internal_init() {
 	kinc_egl_init();
 #endif
 
-#ifndef VR_RIFT
 	for (int i = 0; i < 32; ++i) {
 		minFilters[i] = KINC_G4_TEXTURE_FILTER_LINEAR;
 		mipFilters[i] = KINC_G4_MIPMAP_FILTER_NONE;
 	}
-#endif
+
 	for (int i = 0; i < 256; ++i) {
 		texModesU[i] = GL_CLAMP_TO_EDGE;
 		texModesV[i] = GL_CLAMP_TO_EDGE;
@@ -249,9 +243,6 @@ void kinc_g4_internal_init_window(int windowId, int depthBufferBits, int stencil
 
 #ifdef KINC_WINDOWS
 	if (windowId == 0) {
-#ifdef KINC_VR
-		vsync = false;
-#endif
 		if (wglSwapIntervalEXT != NULL)
 			wglSwapIntervalEXT(vsync);
 	}
@@ -791,19 +782,11 @@ void kinc_g4_set_index_buffer(kinc_g4_index_buffer_t *indexBuffer) {
 
 void Kinc_G4_Internal_TextureImageSet(kinc_g4_texture_t *texture, kinc_g4_texture_unit_t unit);
 
-#ifdef KINC_KONG
-void Kinc_G4_Internal_TextureSet(kinc_g4_texture_t *texture, uint32_t unit);
-
-void kinc_g4_set_texture(uint32_t unit, kinc_g4_texture_t *texture) {
-	Kinc_G4_Internal_TextureSet(texture, unit);
-}
-#else
 void Kinc_G4_Internal_TextureSet(kinc_g4_texture_t *texture, kinc_g4_texture_unit_t unit);
 
 void kinc_g4_set_texture(kinc_g4_texture_unit_t unit, kinc_g4_texture_t *texture) {
 	Kinc_G4_Internal_TextureSet(texture, unit);
 }
-#endif
 
 void kinc_g4_set_image_texture(kinc_g4_texture_unit_t unit, kinc_g4_texture_t *texture) {
 	Kinc_G4_Internal_TextureImageSet(texture, unit);
@@ -874,15 +857,6 @@ static void setTextureAddressingInternal(GLenum target, kinc_g4_texture_unit_t u
 	glCheckErrors();
 }
 
-#ifdef KINC_KONG
-int Kinc_G4_Internal_TextureAddressingU(uint32_t unit) {
-	return texModesU[unit];
-}
-
-int Kinc_G4_Internal_TextureAddressingV(uint32_t unit) {
-	return texModesV[unit];
-}
-#else
 int Kinc_G4_Internal_TextureAddressingU(kinc_g4_texture_unit_t unit) {
 	return texModesU[unit.stages[KINC_G4_SHADER_TYPE_FRAGMENT]];
 }
@@ -890,7 +864,6 @@ int Kinc_G4_Internal_TextureAddressingU(kinc_g4_texture_unit_t unit) {
 int Kinc_G4_Internal_TextureAddressingV(kinc_g4_texture_unit_t unit) {
 	return texModesV[unit.stages[KINC_G4_SHADER_TYPE_FRAGMENT]];
 }
-#endif
 
 void kinc_g4_set_texture_addressing(kinc_g4_texture_unit_t unit, kinc_g4_texture_direction_t dir, kinc_g4_texture_addressing_t addressing) {
 	setTextureAddressingInternal(GL_TEXTURE_2D, unit, dir, addressing);
@@ -1117,73 +1090,6 @@ void kinc_g4_restore_render_target() {
 #endif
 }
 
-#if (defined(KINC_OPENGL) && !defined(KINC_RASPBERRY_PI) && !defined(KINC_ANDROID)) || (defined(KINC_ANDROID) && KINC_ANDROID_API >= 18)
-bool kinc_g4_init_occlusion_query(unsigned *occlusionQuery) {
-#if defined(KINC_OPENGL_ES) && defined(KINC_ANDROID) && KINC_ANDROID_API >= 18
-	if (gles_version >= 3 && glesGenQueries) {
-		glesGenQueries(1, occlusionQuery);
-	}
-#else
-	glGenQueries(1, occlusionQuery);
-#endif
-	return true;
-}
-
-void kinc_g4_delete_occlusion_query(unsigned occlusionQuery) {
-#if defined(KINC_OPENGL_ES) && defined(KINC_ANDROID) && KINC_ANDROID_API >= 18
-	if (gles_version >= 3 && glesGenQueries) {
-		glesDeleteQueries(1, &occlusionQuery);
-	}
-#else
-	glDeleteQueries(1, &occlusionQuery);
-#endif
-}
-
-#if defined(KINC_OPENGL_ES)
-#define SAMPLES_PASSED GL_ANY_SAMPLES_PASSED
-#else
-#define SAMPLES_PASSED GL_SAMPLES_PASSED
-#endif
-
-void kinc_g4_render_occlusion_query(unsigned occlusionQuery, int triangles) {
-#if defined(KINC_OPENGL_ES) && defined(KINC_ANDROID) && KINC_ANDROID_API >= 18
-	if (gles_version >= 3 && glesGenQueries) {
-		glesBeginQuery(SAMPLES_PASSED, occlusionQuery);
-		glDrawArrays(GL_TRIANGLES, 0, triangles);
-		glCheckErrors();
-		glesEndQuery(SAMPLES_PASSED);
-	}
-#else
-	glBeginQuery(SAMPLES_PASSED, occlusionQuery);
-	glDrawArrays(GL_TRIANGLES, 0, triangles);
-	glCheckErrors();
-	glEndQuery(SAMPLES_PASSED);
-#endif
-}
-
-bool kinc_g4_are_query_results_available(unsigned occlusionQuery) {
-	unsigned available = 0;
-#if defined(KINC_OPENGL_ES) && defined(KINC_ANDROID) && KINC_ANDROID_API >= 18
-	if (gles_version >= 3 && glesGetQueryObjectuiv) {
-		glesGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &available);
-	}
-#else
-	glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &available);
-#endif
-	return available != 0;
-}
-
-void kinc_g4_get_query_results(unsigned occlusionQuery, unsigned *pixelCount) {
-#if defined(KINC_OPENGL_ES) && defined(KINC_ANDROID) && KINC_ANDROID_API >= 18
-	if (gles_version >= 3 && glesGetQueryObjectuiv) {
-		glesGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, pixelCount);
-	}
-#else
-	glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT, pixelCount);
-#endif
-}
-#endif
-
 void kinc_g4_flush() {
 	glFlush();
 	glCheckErrors();
@@ -1201,12 +1107,6 @@ void kinc_g4_set_blend_constant(float r, float g, float b, float a) {
 void kinc_g4_set_stencil_reference_value(int value) {
 	glStencilFuncSeparate(GL_FRONT, Kinc_G4_Internal_StencilFunc(lastPipeline->stencil_front_mode), value, lastPipeline->stencil_read_mask);
 	glStencilFuncSeparate(GL_BACK, Kinc_G4_Internal_StencilFunc(lastPipeline->stencil_back_mode), value, lastPipeline->stencil_read_mask);
-}
-
-void Kinc_G4_Internal_TextureArraySet(kinc_g4_texture_array_t *array, kinc_g4_texture_unit_t unit);
-
-void kinc_g4_set_texture_array(kinc_g4_texture_unit_t unit, kinc_g4_texture_array_t *array) {
-	Kinc_G4_Internal_TextureArraySet(array, unit);
 }
 
 int Kinc_G4_Internal_StencilFunc(kinc_g4_compare_mode_t mode) {
@@ -1264,14 +1164,3 @@ bool kinc_g4_supports_non_pow2_textures() {
 bool kinc_g4_render_targets_inverted_y(void) {
 	return true;
 }
-
-#ifdef KINC_KONG
-void kinc_g4_set_constant_buffer(uint32_t id, struct kinc_g4_constant_buffer *buffer) {
-	glBindBufferBase(GL_UNIFORM_BUFFER, id, buffer->impl.buffer);
-}
-
-void kinc_g4_internal_opengl_setup_uniform_block(unsigned program, const char *name, unsigned binding) {
-	unsigned index = glGetUniformBlockIndex(program, name);
-	glUniformBlockBinding(program, index, binding);
-}
-#endif

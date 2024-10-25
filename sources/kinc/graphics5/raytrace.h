@@ -26,25 +26,25 @@ typedef struct kinc_raytrace_pipeline {
 	kinc_raytrace_pipeline_impl_t impl;
 } kinc_raytrace_pipeline_t;
 
-KINC_FUNC bool kinc_raytrace_supported(void);
-KINC_FUNC void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, struct kinc_g5_command_list *command_list, void *ray_shader, int ray_shader_size,
+bool kinc_raytrace_supported(void);
+void kinc_raytrace_pipeline_init(kinc_raytrace_pipeline_t *pipeline, struct kinc_g5_command_list *command_list, void *ray_shader, int ray_shader_size,
                                            struct kinc_g5_constant_buffer *constant_buffer);
-KINC_FUNC void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline);
+void kinc_raytrace_pipeline_destroy(kinc_raytrace_pipeline_t *pipeline);
 
 typedef struct kinc_raytrace_acceleration_structure {
 	kinc_raytrace_acceleration_structure_impl_t impl;
 } kinc_raytrace_acceleration_structure_t;
 
-KINC_FUNC void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, struct kinc_g5_command_list *command_list,
+void kinc_raytrace_acceleration_structure_init(kinc_raytrace_acceleration_structure_t *accel, struct kinc_g5_command_list *command_list,
                                                          struct kinc_g5_vertex_buffer *vb, struct kinc_g5_index_buffer *ib, float scale);
-KINC_FUNC void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_structure_t *accel);
-KINC_FUNC void kinc_raytrace_set_textures(struct kinc_g5_render_target *texpaint0, struct kinc_g5_render_target *texpaint1, struct kinc_g5_render_target *texpaint2, struct kinc_g5_texture *texenv, struct kinc_g5_texture *texsobol, struct kinc_g5_texture *texscramble, struct kinc_g5_texture *texrank);
+void kinc_raytrace_acceleration_structure_destroy(kinc_raytrace_acceleration_structure_t *accel);
+void kinc_raytrace_set_textures(struct kinc_g5_render_target *texpaint0, struct kinc_g5_render_target *texpaint1, struct kinc_g5_render_target *texpaint2, struct kinc_g5_texture *texenv, struct kinc_g5_texture *texsobol, struct kinc_g5_texture *texscramble, struct kinc_g5_texture *texrank);
 
-KINC_FUNC void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *accel);
-KINC_FUNC void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *pipeline);
-KINC_FUNC void kinc_raytrace_set_target(struct kinc_g5_render_target *output);
-KINC_FUNC void kinc_raytrace_dispatch_rays(struct kinc_g5_command_list *command_list);
-KINC_FUNC void kinc_raytrace_copy(struct kinc_g5_command_list *command_list, struct kinc_g5_render_target *target, struct kinc_g5_texture *source);
+void kinc_raytrace_set_acceleration_structure(kinc_raytrace_acceleration_structure_t *accel);
+void kinc_raytrace_set_pipeline(kinc_raytrace_pipeline_t *pipeline);
+void kinc_raytrace_set_target(struct kinc_g5_render_target *output);
+void kinc_raytrace_dispatch_rays(struct kinc_g5_command_list *command_list);
+void kinc_raytrace_copy(struct kinc_g5_command_list *command_list, struct kinc_g5_render_target *target, struct kinc_g5_texture *source);
 
 #ifdef __cplusplus
 }

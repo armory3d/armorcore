@@ -14,25 +14,25 @@ extern "C" {
 /// Initializes the randomizer with a seed. This is optional but helpful.
 /// </summary>
 /// <param name="seed">A value which should ideally be pretty random</param>
-KINC_FUNC void kinc_random_init(int64_t seed);
+void kinc_random_init(int64_t seed);
 
 /// <summary>
 /// Returns a random value.
 /// </summary>
 /// <returns>A random value</returns>
-KINC_FUNC int64_t kinc_random_get(void);
+int64_t kinc_random_get(void);
 
 /// <summary>
 /// Returns a value between 0 and max (both inclusive).
 /// </summary>
 /// <returns>A random value</returns>
-KINC_FUNC int64_t kinc_random_get_max(int64_t max);
+int64_t kinc_random_get_max(int64_t max);
 
 /// <summary>
 /// Returns a value between min and max (both inclusive).
 /// </summary>
 /// <returns>A random value</returns>
-KINC_FUNC int64_t kinc_random_get_in(int64_t min, int64_t max);
+int64_t kinc_random_get_in(int64_t min, int64_t max);
 
 #ifdef KINC_IMPLEMENTATION_MATH
 #define KINC_IMPLEMENTATION

@@ -279,11 +279,7 @@ void kinc_g5_command_list_execute(kinc_g5_command_list_t *list) {
 			assert(KINC_G4_SHADER_TYPE_COUNT == KINC_G5_SHADER_TYPE_COUNT);
 			kinc_g4_texture_unit_t g4_unit;
 			memcpy(&g4_unit.stages[0], &unit.stages[0], KINC_G4_SHADER_TYPE_COUNT * sizeof(int));
-#ifdef KINC_KONG
-			kinc_g4_set_texture(g4_unit.stages[0], &texture->impl.texture);
-#else
 			kinc_g4_set_texture(g4_unit, &texture->impl.texture);
-#endif
 			break;
 		}
 		case SetImageTexture: {
@@ -382,20 +378,6 @@ void kinc_g5_command_list_set_image_texture(kinc_g5_command_list_t *list, kinc_g
 	WRITE(kinc_g5_texture_unit_t, unit);
 	WRITE(kinc_g5_texture_t *, texture);
 }
-
-bool kinc_g5_command_list_init_occlusion_query(kinc_g5_command_list_t *list, unsigned *occlusionQuery) {
-	return false;
-}
-
-void kinc_g5_command_list_delete_occlusion_query(kinc_g5_command_list_t *list, unsigned occlusionQuery) {}
-
-void kinc_g5_command_list_render_occlusion_query(kinc_g5_command_list_t *list, unsigned occlusionQuery, int triangles) {}
-
-bool kinc_g5_command_list_are_query_results_available(kinc_g5_command_list_t *list, unsigned occlusionQuery) {
-	return false;
-}
-
-void kinc_g5_command_list_get_query_result(kinc_g5_command_list_t *list, unsigned occlusionQuery, unsigned *pixelCount) {}
 
 void kinc_g5_command_list_set_compute_shader(kinc_g5_command_list_t *list, struct kinc_g5_compute_shader *shader) {}
 

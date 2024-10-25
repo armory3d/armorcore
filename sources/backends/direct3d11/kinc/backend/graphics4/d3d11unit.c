@@ -48,12 +48,8 @@
 
 #include <kinc/backend/SystemMicrosoft.h>
 
-#ifdef KINC_WINDOWSAPP
-#include <d3d11_1.h>
-#else
 #pragma warning(disable : 4005)
 #include <d3d11.h>
-#endif
 
 #include "Direct3D11.h"
 
@@ -103,11 +99,9 @@ static size_t get_multiple_of_16(size_t value) {
 #include "Direct3D11.c.h"
 #include "ShaderHash.c.h"
 #include "compute.c.h"
-#include "constantbuffer.c.h"
 #include "indexbuffer.c.h"
 #include "pipeline.c.h"
 #include "rendertarget.c.h"
 #include "shader.c.h"
 #include "texture.c.h"
-#include "texturearray.c.h"
 #include "vertexbuffer.c.h"

@@ -46,7 +46,7 @@ typedef struct kinc_g4_render_target {
 /// <param name="format"></param>
 /// <param name="depthBufferBits"></param>
 /// <param name="stencilBufferBits"></param>
-KINC_FUNC void kinc_g4_render_target_init(kinc_g4_render_target_t *renderTarget, int width, int height, kinc_g4_render_target_format_t format,
+void kinc_g4_render_target_init(kinc_g4_render_target_t *renderTarget, int width, int height, kinc_g4_render_target_format_t format,
                                           int depthBufferBits, int stencilBufferBits);
 
 /// <summary>
@@ -60,7 +60,7 @@ KINC_FUNC void kinc_g4_render_target_init(kinc_g4_render_target_t *renderTarget,
 /// <param name="depthBufferBits"></param>
 /// <param name="stencilBufferBits"></param>
 /// <param name="samples_per_pixel"></param>
-KINC_FUNC void kinc_g4_render_target_init_with_multisampling(kinc_g4_render_target_t *renderTarget, int width, int height,
+void kinc_g4_render_target_init_with_multisampling(kinc_g4_render_target_t *renderTarget, int width, int height,
                                                              kinc_g4_render_target_format_t format, int depthBufferBits, int stencilBufferBits,
                                                              int samples_per_pixel);
 
@@ -72,7 +72,7 @@ KINC_FUNC void kinc_g4_render_target_init_with_multisampling(kinc_g4_render_targ
 /// <param name="format"></param>
 /// <param name="depthBufferBits"></param>
 /// <param name="stencilBufferBits"></param>
-KINC_FUNC void kinc_g4_render_target_init_cube(kinc_g4_render_target_t *renderTarget, int cubeMapSize, kinc_g4_render_target_format_t format,
+void kinc_g4_render_target_init_cube(kinc_g4_render_target_t *renderTarget, int cubeMapSize, kinc_g4_render_target_format_t format,
                                                int depthBufferBits, int stencilBufferBits);
 
 /// <summary>
@@ -85,37 +85,28 @@ KINC_FUNC void kinc_g4_render_target_init_cube(kinc_g4_render_target_t *renderTa
 /// <param name="depthBufferBits"></param>
 /// <param name="stencilBufferBits"></param>
 /// <param name="samples_per_pixel"></param>
-KINC_FUNC void kinc_g4_render_target_init_cube_with_multisampling(kinc_g4_render_target_t *renderTarget, int cubeMapSize, kinc_g4_render_target_format_t format,
+void kinc_g4_render_target_init_cube_with_multisampling(kinc_g4_render_target_t *renderTarget, int cubeMapSize, kinc_g4_render_target_format_t format,
                                                                   int depthBufferBits, int stencilBufferBits, int samples_per_pixel);
 
 /// <summary>
 /// Deallocates and destroys a render-target.
 /// </summary>
 /// <param name="renderTarget">The render-target to destroy</param>
-KINC_FUNC void kinc_g4_render_target_destroy(kinc_g4_render_target_t *renderTarget);
+void kinc_g4_render_target_destroy(kinc_g4_render_target_t *renderTarget);
 
-#ifdef KINC_KONG
 /// <summary>
 /// Uses the color-component of a render-target as a texture.
 /// </summary>
 /// <param name="renderTarget">The render-target to use</param>
 /// <param name="unit">The texture-unit to assign the render-target to</param>
-KINC_FUNC void kinc_g4_render_target_use_color_as_texture(kinc_g4_render_target_t *renderTarget, uint32_t unit);
-#else
-/// <summary>
-/// Uses the color-component of a render-target as a texture.
-/// </summary>
-/// <param name="renderTarget">The render-target to use</param>
-/// <param name="unit">The texture-unit to assign the render-target to</param>
-KINC_FUNC void kinc_g4_render_target_use_color_as_texture(kinc_g4_render_target_t *renderTarget, kinc_g4_texture_unit_t unit);
-#endif
+void kinc_g4_render_target_use_color_as_texture(kinc_g4_render_target_t *renderTarget, kinc_g4_texture_unit_t unit);
 
 /// <summary>
 /// Uses the depth-component of a render-target as a texture.
 /// </summary>
 /// <param name="renderTarget">The render-target to use</param>
 /// <param name="unit">The texture-unit to assign the render-target to</param>
-KINC_FUNC void kinc_g4_render_target_use_depth_as_texture(kinc_g4_render_target_t *renderTarget, kinc_g4_texture_unit_t unit);
+void kinc_g4_render_target_use_depth_as_texture(kinc_g4_render_target_t *renderTarget, kinc_g4_texture_unit_t unit);
 
 /// <summary>
 /// Copies the depth and stencil-components of one render-target into another one.
@@ -123,21 +114,21 @@ KINC_FUNC void kinc_g4_render_target_use_depth_as_texture(kinc_g4_render_target_
 /// <param name="renderTarget">The render-target to copy the data into</param>
 /// <param name="source">The render-target from which to copy the data</param>
 /// <returns></returns>
-KINC_FUNC void kinc_g4_render_target_set_depth_stencil_from(kinc_g4_render_target_t *renderTarget, kinc_g4_render_target_t *source);
+void kinc_g4_render_target_set_depth_stencil_from(kinc_g4_render_target_t *renderTarget, kinc_g4_render_target_t *source);
 
 /// <summary>
 /// Copies out the color-data from a render-target. Beware, this is very slow.
 /// </summary>
 /// <param name="renderTarget">The render-target to copy the color-data from</param>
 /// <param name="data">A pointer to where the data will be copied to</param>
-KINC_FUNC void kinc_g4_render_target_get_pixels(kinc_g4_render_target_t *renderTarget, uint8_t *data);
+void kinc_g4_render_target_get_pixels(kinc_g4_render_target_t *renderTarget, uint8_t *data);
 
 /// <summary>
 /// Generates the mipmap-chain for a render-target.
 /// </summary>
 /// <param name="renderTarget">The render-target to create the mipmaps for</param>
 /// <param name="levels">The number of mipmap-levels to generate</param>
-KINC_FUNC void kinc_g4_render_target_generate_mipmaps(kinc_g4_render_target_t *renderTarget, int levels);
+void kinc_g4_render_target_generate_mipmaps(kinc_g4_render_target_t *renderTarget, int levels);
 
 #ifdef __cplusplus
 }

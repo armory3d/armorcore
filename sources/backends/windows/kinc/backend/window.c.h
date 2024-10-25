@@ -4,10 +4,6 @@
 
 #include <kinc/backend/Windows.h>
 
-#ifdef KINC_VR
-#include <kinc/vr/vrinterface.h>
-#endif
-
 #undef CreateWindow
 
 struct HWND__;
@@ -193,17 +189,6 @@ static int createWindow(const wchar_t *title, int x, int y, int width, int heigh
 
 	int display_index = target_display_index == -1 ? kinc_primary_display() : target_display_index;
 
-#ifdef KINC_VR
-	int dstx = 0;
-	int dsty = 0;
-
-	char titleutf8[1024];
-	char classNameutf8[1024];
-	WideCharToMultiByte(CP_UTF8, 0, title, -1, titleutf8, 1024 - 1, NULL, NULL);
-	WideCharToMultiByte(CP_UTF8, 0, windowClassName, -1, classNameutf8, 1024 - 1, NULL, NULL);
-
-	HWND hwnd = (HWND)kinc_vr_interface_init(inst, titleutf8, classNameutf8);
-#else
 	RECT WindowRect;
 	WindowRect.left = 0;
 	WindowRect.right = width;
@@ -240,7 +225,6 @@ static int createWindow(const wchar_t *title, int x, int y, int width, int heigh
 
 	HWND hwnd = CreateWindowExW(getDwExStyle(windowMode, features), windowClassName, title, getDwStyle(windowMode, features), dstx, dsty, dstw, dsth, NULL, NULL,
 	                            inst, NULL);
-#endif
 
 	SetCursor(LoadCursor(NULL, IDC_ARROW));
 	DragAcceptFiles(hwnd, true);

@@ -45,7 +45,7 @@ typedef struct kinc_file_reader {
 /// <param name="filepath">A filepath to identify a file</param>
 /// <param name="type">Looks for a regular file (KINC_FILE_TYPE_ASSET) or a save-file (KINC_FILE_TYPE_SAVE)</param>
 /// <returns>Whether the file could be opened</returns>
-KINC_FUNC bool kinc_file_reader_open(kinc_file_reader_t *reader, const char *filepath, int type);
+bool kinc_file_reader_open(kinc_file_reader_t *reader, const char *filepath, int type);
 
 /// <summary>
 /// Opens a memory area for reading using the file reader API.
@@ -54,20 +54,20 @@ KINC_FUNC bool kinc_file_reader_open(kinc_file_reader_t *reader, const char *fil
 /// <param name="data">A pointer to the memory area to read</param>
 /// <param name="size">The size of the memory area</param>
 /// <returns>This function always returns true</returns>
-KINC_FUNC bool kinc_file_reader_from_memory(kinc_file_reader_t *reader, void *data, size_t size);
+bool kinc_file_reader_from_memory(kinc_file_reader_t *reader, void *data, size_t size);
 
 /// <summary>
 /// Registers a file reader callback.
 /// </summary>
 /// <param name="callback">The function to call when opening a file</param>
-KINC_FUNC void kinc_file_reader_set_callback(bool (*callback)(kinc_file_reader_t *reader, const char *filename, int type));
+void kinc_file_reader_set_callback(bool (*callback)(kinc_file_reader_t *reader, const char *filename, int type));
 
 /// <summary>
 /// Closes a file.
 /// </summary>
 /// <param name="reader">The file to close</param>
 /// <returns>Whether the file could be closed</returns>
-KINC_FUNC bool kinc_file_reader_close(kinc_file_reader_t *reader);
+bool kinc_file_reader_close(kinc_file_reader_t *reader);
 
 /// <summary>
 /// Reads data from a file starting from the current reading-position and increases the reading-position accordingly.
@@ -76,21 +76,21 @@ KINC_FUNC bool kinc_file_reader_close(kinc_file_reader_t *reader);
 /// <param name="data">A pointer to write the data to</param>
 /// <param name="size">The amount of data to read in bytes</param>
 /// <returns>The number of bytes that were read - can be less than size if there is not enough data in the file</returns>
-KINC_FUNC size_t kinc_file_reader_read(kinc_file_reader_t *reader, void *data, size_t size);
+size_t kinc_file_reader_read(kinc_file_reader_t *reader, void *data, size_t size);
 
 /// <summary>
 /// Figures out the size of a file.
 /// </summary>
 /// <param name="reader">The reader which's file-size to figure out</param>
 /// <returns>The size in bytes</returns>
-KINC_FUNC size_t kinc_file_reader_size(kinc_file_reader_t *reader);
+size_t kinc_file_reader_size(kinc_file_reader_t *reader);
 
 /// <summary>
 /// Figures out the current reading-position in the file.
 /// </summary>
 /// <param name="reader">The reader which's reading-position to figure out</param>
 /// <returns>The current reading-position</returns>
-KINC_FUNC size_t kinc_file_reader_pos(kinc_file_reader_t *reader);
+size_t kinc_file_reader_pos(kinc_file_reader_t *reader);
 
 /// <summary>
 /// Sets the reading-position manually.
@@ -98,87 +98,87 @@ KINC_FUNC size_t kinc_file_reader_pos(kinc_file_reader_t *reader);
 /// <param name="reader">The reader which's reading-position to set</param>
 /// <param name="pos">The reading-position to set</param>
 /// <returns>Whether the reading position could be set</returns>
-KINC_FUNC bool kinc_file_reader_seek(kinc_file_reader_t *reader, size_t pos);
+bool kinc_file_reader_seek(kinc_file_reader_t *reader, size_t pos);
 
 /// <summary>
 /// Interprets four bytes starting at the provided pointer as a little-endian float.
 /// </summary>
-KINC_FUNC float kinc_read_f32le(uint8_t *data);
+float kinc_read_f32le(uint8_t *data);
 
 /// <summary>
 /// Interprets four bytes starting at the provided pointer as a big-endian float.
 /// </summary>
-KINC_FUNC float kinc_read_f32be(uint8_t *data);
+float kinc_read_f32be(uint8_t *data);
 
 /// <summary>
 /// Interprets eight bytes starting at the provided pointer as a little-endian uint64.
 /// </summary>
-KINC_FUNC uint64_t kinc_read_u64le(uint8_t *data);
+uint64_t kinc_read_u64le(uint8_t *data);
 
 /// <summary>
 /// Interprets eight bytes starting at the provided pointer as a big-endian uint64.
 /// </summary>
-KINC_FUNC uint64_t kinc_read_u64be(uint8_t *data);
+uint64_t kinc_read_u64be(uint8_t *data);
 
 /// <summary>
 /// Interprets eight bytes starting at the provided pointer as a little-endian int64.
 /// </summary>
-KINC_FUNC int64_t kinc_read_s64le(uint8_t *data);
+int64_t kinc_read_s64le(uint8_t *data);
 
 /// <summary>
 /// Interprets eight bytes starting at the provided pointer as a big-endian int64.
 /// </summary>
-KINC_FUNC int64_t kinc_read_s64be(uint8_t *data);
+int64_t kinc_read_s64be(uint8_t *data);
 
 /// <summary>
 /// Interprets four bytes starting at the provided pointer as a little-endian uint32.
 /// </summary>
-KINC_FUNC uint32_t kinc_read_u32le(uint8_t *data);
+uint32_t kinc_read_u32le(uint8_t *data);
 
 /// <summary>
 /// Interprets four bytes starting at the provided pointer as a big-endian uint32.
 /// </summary>
-KINC_FUNC uint32_t kinc_read_u32be(uint8_t *data);
+uint32_t kinc_read_u32be(uint8_t *data);
 
 /// <summary>
 /// Interprets four bytes starting at the provided pointer as a little-endian int32.
 /// </summary>
-KINC_FUNC int32_t kinc_read_s32le(uint8_t *data);
+int32_t kinc_read_s32le(uint8_t *data);
 
 /// <summary>
 /// Interprets four bytes starting at the provided pointer as a big-endian int32.
 /// </summary>
-KINC_FUNC int32_t kinc_read_s32be(uint8_t *data);
+int32_t kinc_read_s32be(uint8_t *data);
 
 /// <summary>
 /// Interprets two bytes starting at the provided pointer as a little-endian uint16.
 /// </summary>
-KINC_FUNC uint16_t kinc_read_u16le(uint8_t *data);
+uint16_t kinc_read_u16le(uint8_t *data);
 
 /// <summary>
 /// Interprets two bytes starting at the provided pointer as a big-endian uint16.
 /// </summary>
-KINC_FUNC uint16_t kinc_read_u16be(uint8_t *data);
+uint16_t kinc_read_u16be(uint8_t *data);
 
 /// <summary>
 /// Interprets two bytes starting at the provided pointer as a little-endian int16.
 /// </summary>
-KINC_FUNC int16_t kinc_read_s16le(uint8_t *data);
+int16_t kinc_read_s16le(uint8_t *data);
 
 /// <summary>
 /// Interprets two bytes starting at the provided pointer as a big-endian int16.
 /// </summary>
-KINC_FUNC int16_t kinc_read_s16be(uint8_t *data);
+int16_t kinc_read_s16be(uint8_t *data);
 
 /// <summary>
 /// Interprets one byte starting at the provided pointer as a uint8.
 /// </summary>
-KINC_FUNC uint8_t kinc_read_u8(uint8_t *data);
+uint8_t kinc_read_u8(uint8_t *data);
 
 /// <summary>
 /// Interprets one byte starting at the provided pointer as an int8.
 /// </summary>
-KINC_FUNC int8_t kinc_read_s8(uint8_t *data);
+int8_t kinc_read_s8(uint8_t *data);
 
 void kinc_internal_set_files_location(char *dir);
 char *kinc_internal_get_files_location(void);
@@ -248,7 +248,7 @@ const char *iphonegetresourcepath(void);
 const char *macgetresourcepath(void);
 #endif
 
-#if defined(KINC_WINDOWS) || defined(KINC_WINDOWSAPP)
+#if defined(KINC_WINDOWS)
 #include <kinc/backend/MiniWindows.h>
 #endif
 
@@ -273,10 +273,6 @@ char *kinc_internal_get_files_location(void) {
 bool kinc_internal_file_reader_callback(kinc_file_reader_t *reader, const char *filename, int type) {
 	return file_reader_callback ? file_reader_callback(reader, filename, type) : false;
 }
-
-#ifdef KINC_WINDOWSAPP
-void kinc_internal_uwp_installed_location_path(char *path);
-#endif
 
 #if defined(KINC_WINDOWS)
 static size_t kinc_libc_file_reader_read(kinc_file_reader_t *reader, void *data, size_t size) {
@@ -360,11 +356,6 @@ bool kinc_internal_file_reader_open(kinc_file_reader_t *reader, const char *file
 	for (size_t i = 0; i < filepathlength; ++i)
 		if (filepath[i] == '/')
 			filepath[i] = '\\';
-#endif
-#ifdef KINC_WINDOWSAPP
-	kinc_internal_uwp_installed_location_path(filepath);
-	strcat(filepath, "\\");
-	strcat(filepath, filename);
 #endif
 #if defined(KINC_LINUX) || defined(KINC_ANDROID)
 	if (type == KINC_FILE_TYPE_SAVE) {

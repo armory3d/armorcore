@@ -7,13 +7,11 @@
 #include <kinc/backend/graphics4/vertexbuffer.h>
 #include <kinc/color.h>
 #include <kinc/graphics4/compute.h>
-#include <kinc/graphics4/constantbuffer.h>
 #include <kinc/graphics4/indexbuffer.h>
 #include <kinc/graphics4/pipeline.h>
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/shader.h>
 #include <kinc/graphics4/texture.h>
-#include <kinc/graphics4/texturearray.h>
 #include <kinc/graphics4/vertexbuffer.h>
 #include <kinc/graphics5/commandlist.h>
 #include <kinc/graphics5/compute.h>
@@ -691,38 +689,6 @@ void kinc_g4_set_index_buffer(kinc_g4_index_buffer_t *buffer) {
 	kinc_g5_command_list_set_index_buffer(&commandList, g5_index_buffer);
 }
 
-#ifdef KINC_KONG
-void kinc_g4_set_texture(uint32_t unit, kinc_g4_texture_t *texture) {
-	if (!texture->impl._uploaded) {
-		kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
-		texture->impl._uploaded = true;
-	}
-
-	assert(KINC_G4_SHADER_TYPE_COUNT == KINC_G5_SHADER_TYPE_COUNT);
-	kinc_g5_texture_unit_t g5_unit = {0};
-	for (int i = 0; i < KINC_G5_SHADER_TYPE_COUNT; ++i) {
-		g5_unit.stages[i] = unit;
-	}
-
-	bool found = false;
-	for (int i = 0; i < current_state.texture_count; ++i) {
-		if (kinc_g5_texture_unit_equals(&current_state.texture_units[i], &g5_unit)) {
-			current_state.textures[i] = &texture->impl._texture;
-			current_state.texture_units[i] = g5_unit;
-			found = true;
-			break;
-		}
-	}
-	if (!found) {
-		assert(current_state.texture_count < MAX_TEXTURES);
-		current_state.textures[current_state.texture_count] = &texture->impl._texture;
-		current_state.texture_units[current_state.texture_count] = g5_unit;
-		current_state.texture_count += 1;
-	}
-
-	kinc_g5_command_list_set_texture(&commandList, g5_unit, &texture->impl._texture);
-}
-#else
 void kinc_g4_set_texture(kinc_g4_texture_unit_t unit, kinc_g4_texture_t *texture) {
 	if (!texture->impl._uploaded) {
 		kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
@@ -751,7 +717,6 @@ void kinc_g4_set_texture(kinc_g4_texture_unit_t unit, kinc_g4_texture_t *texture
 
 	kinc_g5_command_list_set_texture(&commandList, g5_unit, &texture->impl._texture);
 }
-#endif
 
 void kinc_g4_set_image_texture(kinc_g4_texture_unit_t unit, kinc_g4_texture_t *texture) {
 	assert(KINC_G4_SHADER_TYPE_COUNT == KINC_G5_SHADER_TYPE_COUNT);
@@ -781,22 +746,6 @@ int kinc_g4_max_bound_textures(void) {
 	return kinc_g5_max_bound_textures();
 }
 
-bool kinc_g4_init_occlusion_query(unsigned *occlusionQuery) {
-	return kinc_g5_command_list_init_occlusion_query(&commandList, occlusionQuery);
-}
-
-void kinc_g4_delete_occlusion_query(unsigned occlusionQuery) {
-	kinc_g5_command_list_delete_occlusion_query(&commandList, occlusionQuery);
-}
-
-bool kinc_g4_are_query_results_available(unsigned occlusionQuery) {
-	return kinc_g5_command_list_are_query_results_available(&commandList, occlusionQuery);
-}
-
-void kinc_g4_get_query_result(unsigned occlusionQuery, unsigned *pixelCount) {
-	kinc_g5_command_list_get_query_result(&commandList, occlusionQuery, pixelCount);
-}
-
 void kinc_g4_set_pipeline(kinc_g4_pipeline_t *pipeline) {
 	kinc_g5_pipeline_t *g5_pipeline = &pipeline->impl._pipeline;
 	current_state.pipeline = g5_pipeline;
@@ -811,8 +760,6 @@ void kinc_g4_set_blend_constant(float r, float g, float b, float a) {
 	current_state.blend_constant_a = a;
 	kinc_g5_command_list_set_blend_constant(&commandList, r, g, b, a);
 }
-
-void kinc_g4_set_texture_array(kinc_g4_texture_unit_t unit, struct kinc_g4_texture_array *array) {}
 
 bool kinc_g4_supports_instanced_rendering(void) {
 	return kinc_g5_supports_instanced_rendering();
@@ -834,38 +781,6 @@ bool kinc_g4_render_targets_inverted_y(void) {
 	return kinc_g5_render_targets_inverted_y();
 }
 
-#ifdef KINC_KONG
-void kinc_g4_render_target_use_color_as_texture(kinc_g4_render_target_t *render_target, uint32_t unit) {
-	if (render_target->impl.state != KINC_INTERNAL_RENDER_TARGET_STATE_TEXTURE) {
-		kinc_g5_command_list_render_target_to_texture_barrier(&commandList, &render_target->impl._renderTarget);
-		render_target->impl.state = KINC_INTERNAL_RENDER_TARGET_STATE_TEXTURE;
-	}
-
-	assert(KINC_G4_SHADER_TYPE_COUNT == KINC_G5_SHADER_TYPE_COUNT);
-	kinc_g5_texture_unit_t g5_unit = {0};
-	for (int i = 0; i < KINC_G5_SHADER_TYPE_COUNT; ++i) {
-		g5_unit.stages[i] = unit;
-	}
-
-	bool found = false;
-	for (int i = 0; i < current_state.render_target_count; ++i) {
-		if (kinc_g5_texture_unit_equals(&current_state.render_target_units[i], &g5_unit)) {
-			current_state.render_targets[i] = &render_target->impl._renderTarget;
-			current_state.render_target_units[i] = g5_unit;
-			found = true;
-			break;
-		}
-	}
-	if (!found) {
-		assert(current_state.render_target_count < MAX_TEXTURES);
-		current_state.render_targets[current_state.render_target_count] = &render_target->impl._renderTarget;
-		current_state.render_target_units[current_state.render_target_count] = g5_unit;
-		current_state.render_target_count += 1;
-	}
-
-	kinc_g5_command_list_set_texture_from_render_target(&commandList, g5_unit, &render_target->impl._renderTarget);
-}
-#else
 void kinc_g4_render_target_use_color_as_texture(kinc_g4_render_target_t *render_target, kinc_g4_texture_unit_t unit) {
 	if (render_target->impl.state != KINC_INTERNAL_RENDER_TARGET_STATE_TEXTURE) {
 		kinc_g5_command_list_render_target_to_texture_barrier(&commandList, &render_target->impl._renderTarget);
@@ -894,7 +809,6 @@ void kinc_g4_render_target_use_color_as_texture(kinc_g4_render_target_t *render_
 
 	kinc_g5_command_list_set_texture_from_render_target(&commandList, g5_unit, &render_target->impl._renderTarget);
 }
-#endif
 
 void kinc_g4_render_target_use_depth_as_texture(kinc_g4_render_target_t *render_target, kinc_g4_texture_unit_t unit) {
 	if (render_target->impl.state != KINC_INTERNAL_RENDER_TARGET_STATE_TEXTURE) {
@@ -924,12 +838,6 @@ void kinc_g4_render_target_use_depth_as_texture(kinc_g4_render_target_t *render_
 
 	kinc_g5_command_list_set_texture_from_render_target_depth(&commandList, g5_unit, &render_target->impl._renderTarget);
 }
-
-#ifdef KINC_KONG
-void kinc_g4_set_constant_buffer(uint32_t id, struct kinc_g4_constant_buffer *buffer) {
-	kinc_g5_command_list_set_vertex_constant_buffer(&commandList, &buffer->impl.buffer, 0, kinc_g5_constant_buffer_size(&buffer->impl.buffer));
-}
-#endif
 
 void kinc_g4_set_compute_shader(kinc_g4_compute_shader *shader) {
 	kinc_g5_compute_shader *g5_shader = &shader->impl.shader;

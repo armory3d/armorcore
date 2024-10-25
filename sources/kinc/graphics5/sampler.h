@@ -56,7 +56,7 @@ typedef struct kinc_g5_sampler {
 /// Initializes the passed options-object with the default-options.
 /// </summary>
 /// <param name="options">The options-object for which the default-options will be set</param>
-KINC_FUNC void kinc_g5_sampler_options_set_defaults(kinc_g5_sampler_options_t *options);
+void kinc_g5_sampler_options_set_defaults(kinc_g5_sampler_options_t *options);
 
 /// <summary>
 /// Creates a sampler-object.
@@ -65,13 +65,13 @@ KINC_FUNC void kinc_g5_sampler_options_set_defaults(kinc_g5_sampler_options_t *o
 /// </summary>
 /// <param name="sampler">Pointer to the sampler object to initialize</param>
 /// <param name="descriptor">Options for the sampler</param>
-KINC_FUNC void kinc_g5_sampler_init(kinc_g5_sampler_t *sampler, const kinc_g5_sampler_options_t *options);
+void kinc_g5_sampler_init(kinc_g5_sampler_t *sampler, const kinc_g5_sampler_options_t *options);
 
 /// <summary>
 /// Destroys a sampler-object.
 /// </summary>
 /// <param name="sampler">The sampler-object to destroy</param>
-KINC_FUNC void kinc_g5_sampler_destroy(kinc_g5_sampler_t *sampler);
+void kinc_g5_sampler_destroy(kinc_g5_sampler_t *sampler);
 
 #ifdef __cplusplus
 }

@@ -32,7 +32,6 @@ void Kinc_Internal_initWindowsGLContext(int window, int depthBufferBits, int ste
 
 	Kinc_Internal_windows[window].depthBufferBits = depthBufferBits;
 
-#ifndef VR_RIFT
 	PIXELFORMATDESCRIPTOR pfd = {sizeof(PIXELFORMATDESCRIPTOR),
 	                             1,
 	                             PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
@@ -93,14 +92,6 @@ void Kinc_Internal_initWindowsGLContext(int window, int depthBufferBits, int ste
 	else {
 		Kinc_Internal_windows[window].glContext = tempGlContext;
 	}
-#else
-	deviceContexts[window] = GetDC(windowHandle);
-	glContexts[window] = wglGetCurrentContext();
-	if (!glewInitialized) {
-		glewInit();
-		glewInitialized = true;
-	}
-#endif
 
 	if (window != 0) {
 		wglShareLists(Kinc_Internal_windows[0].glContext, Kinc_Internal_windows[window].glContext);

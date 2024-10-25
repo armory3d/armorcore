@@ -45,7 +45,7 @@ typedef struct kinc_g5_render_target {
 /// <param name="depthBufferBits"></param>
 /// <param name="stencilBufferBits"></param>
 /// <returns></returns>
-KINC_FUNC void kinc_g5_render_target_init(kinc_g5_render_target_t *target, int width, int height, kinc_g5_render_target_format_t format, int depthBufferBits,
+void kinc_g5_render_target_init(kinc_g5_render_target_t *target, int width, int height, kinc_g5_render_target_format_t format, int depthBufferBits,
                                           int stencilBufferBits);
 
 /// <summary>
@@ -59,7 +59,7 @@ KINC_FUNC void kinc_g5_render_target_init(kinc_g5_render_target_t *target, int w
 /// <param name="stencilBufferBits"></param>
 /// <param name="samples_per_pixel"></param>
 /// <returns></returns>
-KINC_FUNC void kinc_g5_render_target_init_with_multisampling(kinc_g5_render_target_t *target, int width, int height, kinc_g5_render_target_format_t format,
+void kinc_g5_render_target_init_with_multisampling(kinc_g5_render_target_t *target, int width, int height, kinc_g5_render_target_format_t format,
                                                              int depthBufferBits, int stencilBufferBits, int samples_per_pixel);
 
 /// <summary>
@@ -72,7 +72,7 @@ KINC_FUNC void kinc_g5_render_target_init_with_multisampling(kinc_g5_render_targ
 /// <param name="depthBufferBits"></param>
 /// <param name="stencilBufferBits"></param>
 /// <returns></returns>
-KINC_FUNC void kinc_g5_render_target_init_framebuffer(kinc_g5_render_target_t *target, int width, int height, kinc_g5_render_target_format_t format,
+void kinc_g5_render_target_init_framebuffer(kinc_g5_render_target_t *target, int width, int height, kinc_g5_render_target_format_t format,
                                                       int depthBufferBits, int stencilBufferBits);
 
 /// <summary>
@@ -86,7 +86,7 @@ KINC_FUNC void kinc_g5_render_target_init_framebuffer(kinc_g5_render_target_t *t
 /// <param name="stencilBufferBits"></param>
 /// <param name="samples_per_pixel"></param>
 /// <returns></returns>
-KINC_FUNC void kinc_g5_render_target_init_framebuffer_with_multisampling(kinc_g5_render_target_t *target, int width, int height,
+void kinc_g5_render_target_init_framebuffer_with_multisampling(kinc_g5_render_target_t *target, int width, int height,
                                                                          kinc_g5_render_target_format_t format, int depthBufferBits, int stencilBufferBits,
                                                                          int samples_per_pixel);
 
@@ -99,7 +99,7 @@ KINC_FUNC void kinc_g5_render_target_init_framebuffer_with_multisampling(kinc_g5
 /// <param name="depthBufferBits"></param>
 /// <param name="stencilBufferBits"></param>
 /// <returns></returns>
-KINC_FUNC void kinc_g5_render_target_init_cube(kinc_g5_render_target_t *target, int cubeMapSize, kinc_g5_render_target_format_t format, int depthBufferBits,
+void kinc_g5_render_target_init_cube(kinc_g5_render_target_t *target, int cubeMapSize, kinc_g5_render_target_format_t format, int depthBufferBits,
                                                int stencilBufferBits);
 
 /// <summary>
@@ -112,14 +112,14 @@ KINC_FUNC void kinc_g5_render_target_init_cube(kinc_g5_render_target_t *target, 
 /// <param name="stencilBufferBits"></param>
 /// <param name="samples_per_pixel"></param>
 /// <returns></returns>
-KINC_FUNC void kinc_g5_render_target_init_cube_with_multisampling(kinc_g5_render_target_t *target, int cubeMapSize, kinc_g5_render_target_format_t format,
+void kinc_g5_render_target_init_cube_with_multisampling(kinc_g5_render_target_t *target, int cubeMapSize, kinc_g5_render_target_format_t format,
                                                                   int depthBufferBits, int stencilBufferBits, int samples_per_pixel);
 
 /// <summary>
 /// Deallocates and destroys a render-target.
 /// </summary>
 /// <param name="renderTarget">The render-target to destroy</param>
-KINC_FUNC void kinc_g5_render_target_destroy(kinc_g5_render_target_t *target);
+void kinc_g5_render_target_destroy(kinc_g5_render_target_t *target);
 
 /// <summary>
 /// Copies the depth and stencil-components of one render-target into another one.
@@ -127,7 +127,7 @@ KINC_FUNC void kinc_g5_render_target_destroy(kinc_g5_render_target_t *target);
 /// <param name="renderTarget">The render-target to copy the data into</param>
 /// <param name="source">The render-target from which to copy the data</param>
 /// <returns></returns>
-KINC_FUNC void kinc_g5_render_target_set_depth_stencil_from(kinc_g5_render_target_t *target, kinc_g5_render_target_t *source);
+void kinc_g5_render_target_set_depth_stencil_from(kinc_g5_render_target_t *target, kinc_g5_render_target_t *source);
 
 #ifdef __cplusplus
 }

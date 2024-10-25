@@ -6,9 +6,7 @@
 // #include <Kore/Application.h>
 #include <kinc/graphics4/pipeline.h>
 #include <kinc/graphics4/shader.h>
-#include <kinc/graphics4/texturearray.h>
 
-#include <kinc/graphics4/constantbuffer.h>
 #include <kinc/graphics4/graphics.h>
 #include <kinc/graphics4/indexbuffer.h>
 #include <kinc/graphics4/rendertarget.h>
@@ -27,16 +25,6 @@
 int antialiasingSamples(void) {
 	return 1;
 }
-#endif
-
-#ifdef KINC_WINDOWSAPP
-IUnknown *kinc_winapp_internal_get_window(void);
-#endif
-
-#ifdef KINC_HOLOLENS
-#include "DeviceResources.winrt.h"
-#include "Hololens.winrt.h"
-#include <windows.graphics.directx.direct3d11.interop.h>
 #endif
 
 // MinGW workaround for missing defines
@@ -60,11 +48,7 @@ bool kinc_internal_scissoring = false;
 // static bool vsync;
 
 static D3D_FEATURE_LEVEL featureLevel;
-// #ifdef KINC_WINDOWSAPP
-// static IDXGISwapChain1 *swapChain = NULL;
-// #else
 // static IDXGISwapChain *swapChain = NULL;
-// #endif
 static D3D11_SAMPLER_DESC lastSamplers[16];
 
 struct Sampler {
@@ -202,9 +186,6 @@ static bool isWindows10OrGreater(void) {
 
 void kinc_g4_internal_init(void) {
 	D3D_FEATURE_LEVEL featureLevels[] = {
-#ifdef KINC_WINDOWSAPP
-	    D3D_FEATURE_LEVEL_11_1,
-#endif
 	    D3D_FEATURE_LEVEL_11_0,
 	    D3D_FEATURE_LEVEL_10_1,
 	    D3D_FEATURE_LEVEL_10_0,
@@ -216,9 +197,6 @@ void kinc_g4_internal_init(void) {
 #endif
 
 	IDXGIAdapter *adapter = NULL;
-#ifdef KINC_HOLOLENS
-	adapter = holographicFrameController->getCompatibleDxgiAdapter().Get();
-#endif
 	HRESULT result = D3D11CreateDevice(adapter, D3D_DRIVER_TYPE_HARDWARE, NULL, flags, featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION,
 	                                   &dx_ctx.device, &featureLevel, &dx_ctx.context);
 
@@ -248,7 +226,6 @@ void kinc_g4_internal_init_window(int windowId, int depthBufferBits, int stencil
 		fragmentConstants[i] = 0;
 
 	struct dx_window *window = &dx_ctx.windows[windowId];
-	// TODO: make WindowsApp actually work again
 #ifdef KINC_WINDOWS
 	window->hwnd = kinc_windows_window_handle(windowId);
 #endif
@@ -335,11 +312,7 @@ void kinc_g4_internal_init_window(int windowId, int depthBufferBits, int stencil
 	rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
 	rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
 	rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-#ifdef KINC_WINDOWSAPP
-	rtbd.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-#else
 	rtbd.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
-#endif
 
 	blendDesc.AlphaToCoverageEnable = false;
 	blendDesc.RenderTarget[0] = rtbd;
@@ -474,10 +447,6 @@ void kinc_g4_begin(int windowId) {
 		createBackbuffer(window, kinc_g4_antialiasing_samples());
 	}
 	kinc_g4_restore_render_target();
-	// #ifdef KINC_WINDOWSAPP
-	// 	// TODO (DK) do i need to do something here?
-	// 	dx_ctx.context->lpVtbl->OMSetRenderTargets(dx_ctx.context, 1, &renderTargetView, depthStencilView);
-	// #endif
 }
 
 void kinc_g4_viewport(int x, int y, int width, int height) {
@@ -1207,100 +1176,16 @@ void kinc_g4_set_index_buffer(kinc_g4_index_buffer_t *buffer) {
 	kinc_internal_g4_index_buffer_set(buffer);
 }
 
-#ifdef KINC_KONG
-void kinc_internal_texture_set(kinc_g4_texture_t *texture, uint32_t unit);
-
-void kinc_g4_set_texture(uint32_t unit, kinc_g4_texture_t *texture) {
-	kinc_internal_texture_set(texture, unit);
-}
-#else
 void kinc_internal_texture_set(kinc_g4_texture_t *texture, kinc_g4_texture_unit_t unit);
 
 void kinc_g4_set_texture(kinc_g4_texture_unit_t unit, kinc_g4_texture_t *texture) {
 	kinc_internal_texture_set(texture, unit);
 }
-#endif
 
 void kinc_internal_texture_set_image(kinc_g4_texture_t *texture, kinc_g4_texture_unit_t unit);
 
 void kinc_g4_set_image_texture(kinc_g4_texture_unit_t unit, kinc_g4_texture_t *texture) {
 	kinc_internal_texture_set_image(texture, unit);
-}
-
-static unsigned queryCount = 0;
-#define QUERY_POOL_MAX_SIZE 256
-static uint32_t query_pool_size = 0;
-static ID3D11Query *queryPool[QUERY_POOL_MAX_SIZE];
-
-bool kinc_g4_init_occlusion_query(unsigned *occlusionQuery) {
-	D3D11_QUERY_DESC queryDesc;
-	queryDesc.Query = D3D11_QUERY_OCCLUSION;
-	queryDesc.MiscFlags = 0;
-	ID3D11Query *pQuery = NULL;
-	HRESULT result = dx_ctx.device->lpVtbl->CreateQuery(dx_ctx.device, &queryDesc, &pQuery);
-
-	if (FAILED(result)) {
-		kinc_log(KINC_LOG_LEVEL_INFO, "Internal query creation failed, result: 0x%X.", result);
-		return false;
-	}
-
-	assert(query_pool_size < QUERY_POOL_MAX_SIZE);
-	queryPool[query_pool_size++] = pQuery;
-	*occlusionQuery = queryCount;
-	++queryCount;
-
-	return true;
-}
-
-void kinc_g4_delete_occlusion_query(unsigned occlusionQuery) {
-	if (occlusionQuery < query_pool_size) {
-		queryPool[occlusionQuery] = NULL;
-	}
-}
-
-void kinc_g4_start_occlusion_query(unsigned occlusionQuery) {
-	ID3D11Query *pQuery = queryPool[occlusionQuery];
-	if (pQuery != NULL) {
-		dx_ctx.context->lpVtbl->Begin(dx_ctx.context, (ID3D11Asynchronous *)pQuery);
-	}
-}
-
-void kinc_g4_end_occlusion_query(unsigned occlusionQuery) {
-	ID3D11Query *pQuery = queryPool[occlusionQuery];
-	if (pQuery != NULL) {
-		dx_ctx.context->lpVtbl->End(dx_ctx.context, (ID3D11Asynchronous *)pQuery);
-	}
-}
-
-bool kinc_g4_are_query_results_available(unsigned occlusionQuery) {
-	ID3D11Query *pQuery = queryPool[occlusionQuery];
-	if (pQuery != NULL) {
-		if (S_OK == dx_ctx.context->lpVtbl->GetData(dx_ctx.context, (ID3D11Asynchronous *)pQuery, 0, 0, 0)) {
-			return true;
-		}
-	}
-	return false;
-}
-
-void kinc_g4_get_query_results(unsigned occlusionQuery, unsigned *pixelCount) {
-	ID3D11Query *pQuery = queryPool[occlusionQuery];
-	if (pQuery != NULL) {
-		UINT64 numberOfPixelsDrawn;
-		HRESULT result = dx_ctx.context->lpVtbl->GetData(dx_ctx.context, (ID3D11Asynchronous *)pQuery, &numberOfPixelsDrawn, sizeof(UINT64), 0);
-		if (S_OK == result) {
-			*pixelCount = (unsigned)numberOfPixelsDrawn;
-		}
-		else {
-			kinc_log(KINC_LOG_LEVEL_INFO, "Check first if results are available");
-			*pixelCount = 0;
-		}
-	}
-}
-
-void kinc_internal_texture_array_set(kinc_g4_texture_array_t *array, kinc_g4_texture_unit_t unit);
-
-void kinc_g4_set_texture_array(kinc_g4_texture_unit_t unit, kinc_g4_texture_array_t *array) {
-	kinc_internal_texture_array_set(array, unit);
 }
 
 void kinc_internal_resize(int windowId, int width, int height) {
@@ -1339,10 +1224,3 @@ bool kinc_g4_supports_non_pow2_textures(void) {
 bool kinc_g4_render_targets_inverted_y(void) {
 	return false;
 }
-
-#ifdef KINC_KONG
-void kinc_g4_set_constant_buffer(uint32_t id, struct kinc_g4_constant_buffer *buffer) {
-	dx_ctx.context->lpVtbl->VSSetConstantBuffers(dx_ctx.context, id, 1, &buffer->impl.buffer);
-	dx_ctx.context->lpVtbl->PSSetConstantBuffers(dx_ctx.context, id, 1, &buffer->impl.buffer);
-}
-#endif

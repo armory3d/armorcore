@@ -25,73 +25,73 @@ struct kinc_framebuffer_options;
 /// optionally be initialized beforehand using kinc_display_init.
 /// </summary>
 /// <returns>The id of the initial window</returns>
-KINC_FUNC int kinc_init(const char *name, int width, int height, struct kinc_window_options *win, struct kinc_framebuffer_options *frame);
+int kinc_init(const char *name, int width, int height, struct kinc_window_options *win, struct kinc_framebuffer_options *frame);
 
 /// <summary>
 /// Returns the current application name as set by kinc_init or kinc_set_application_name.
 /// </summary>
 /// <returns>The current name of the application</returns>
-KINC_FUNC const char *kinc_application_name(void);
+const char *kinc_application_name(void);
 
 /// <summary>
 /// Changes the application-name that was initially set by kinc_init.
 /// </summary>
 /// <param name="name">The new application-name</param>
-KINC_FUNC void kinc_set_application_name(const char *name);
+void kinc_set_application_name(const char *name);
 
 /// <summary>
 /// Returns the current width of the initial application-window which is equivalent to calling kinc_window_width(0).
 /// </summary>
 /// <returns>The width of the initial window</returns>
-KINC_FUNC int kinc_width(void);
+int kinc_width(void);
 
 /// <summary>
 /// Returns the current height of the initial application-window which is equivalent to calling kinc_window_height(0).
 /// </summary>
 /// <returns>The height of the initial window</returns>
-KINC_FUNC int kinc_height(void);
+int kinc_height(void);
 
 /// <summary>
 /// Instruct the system to load up the provided URL which will usually open it in the system's default browser.
 /// </summary>
 /// <param name="url">The URL to open</param>
-KINC_FUNC void kinc_load_url(const char *url);
+void kinc_load_url(const char *url);
 
 /// <summary>
 /// Returns an ID representing the current type of target-system.
 /// </summary>
 /// <returns>The ID representing the target system</returns>
-KINC_FUNC const char *kinc_system_id(void);
+const char *kinc_system_id(void);
 
 /// <summary>
 /// Returns the current system-language.
 /// </summary>
 /// <returns>The current system-language as a two-letter language code</returns>
-KINC_FUNC const char *kinc_language(void);
+const char *kinc_language(void);
 
 /// <summary>
 /// Vibrates the whole system if supported. This is primarily supported on mobile phones but don't blame us if your computer falls over.
 /// </summary>
-KINC_FUNC void kinc_vibrate(int milliseconds);
+void kinc_vibrate(int milliseconds);
 
 /// <summary>
 /// Returns the portion of the screen which can be safely used for important content. This is mostly relevant for TVs which often scale the image by default and
 /// thefore cut off some of the content.
 /// </summary>
 /// <returns>The safe-zone which can be multiplied with the width or height of the display to convert it to pixels</returns>
-KINC_FUNC float kinc_safe_zone(void);
+float kinc_safe_zone(void);
 
 /// <summary>
 /// Returns whether the system itself handles configuration of the safe-zone.
 /// </summary>
 /// <returns>Whether the safe-zone is handlet by the syste</returns>
-KINC_FUNC bool kinc_automatic_safe_zone(void);
+bool kinc_automatic_safe_zone(void);
 
 /// <summary>
 /// Sets the safe-zone for systems which return false for kinc_automatic_safe_zone.
 /// </summary>
 /// <param name="value">The safe-zone for width and height as a ratio of the full display-resolution.</param>
-KINC_FUNC void kinc_set_safe_zone(float value);
+void kinc_set_safe_zone(float value);
 
 typedef uint64_t kinc_ticks_t;
 
@@ -99,74 +99,74 @@ typedef uint64_t kinc_ticks_t;
 /// Returns the frequency of system-timestamps.
 /// </summary>
 /// <returns>The frequency of the system's timestamps in 1 / second</returns>
-KINC_FUNC double kinc_frequency(void);
+double kinc_frequency(void);
 
 /// <summary>
 /// Returns a timestamp for right now in a system-specific unit.
 /// </summary>
 /// <returns>The current timestamp</returns>
-KINC_FUNC kinc_ticks_t kinc_timestamp(void);
+kinc_ticks_t kinc_timestamp(void);
 
 /// <summary>
 /// Returns the number of proper CPU-cores (not the number of hardware-threads)
 /// </summary>
 /// <returns>Number of cores</returns>
-KINC_FUNC int kinc_cpu_cores(void);
+int kinc_cpu_cores(void);
 
 /// <summary>
 /// Returns the number of hardware-threads
 /// </summary>
 /// <returns>Number of hardware-threads</returns>
-KINC_FUNC int kinc_hardware_threads(void);
+int kinc_hardware_threads(void);
 
 /// <summary>
 /// Returns the current time. This can also be calculated ala kinc_timestamp() / kinc_frequency() but kinc_time is a little more precise on some systems.
 /// </summary>
 /// <returns>The current time in seconds</returns>
-KINC_FUNC double kinc_time(void);
+double kinc_time(void);
 
 /// <summary>
 /// Starts Kinc's main-loop. kinc_set_update_callback should be called before kinc_start so the main-loop actually has something to do.
 /// </summary>
-KINC_FUNC void kinc_start(void);
+void kinc_start(void);
 
 /// <summary>
 /// Stops Kinc's main loop and thereby returns to the function which called kinc_start.
 /// </summary>
-KINC_FUNC void kinc_stop(void);
+void kinc_stop(void);
 
 /// <summary>
 /// Instructs the system to login a user if that is supported.
 /// </summary>
-KINC_FUNC void kinc_login(void);
+void kinc_login(void);
 
 /// <summary>
 /// Returns true if kinc_login was called and the login-process is still ongoing.
 /// </summary>
 /// <returns>Whether a login-process is still in progress</returns>
-KINC_FUNC bool kinc_waiting_for_login(void);
+bool kinc_waiting_for_login(void);
 
 /// <summary>
 /// Unlocks an achievement or trophy or however you prefer to call it.
 /// </summary>
 /// <param name="id">The id of the achievement/tropy</param>
-KINC_FUNC void kinc_unlock_achievement(int id);
+void kinc_unlock_achievement(int id);
 
 /// <summary>
 /// Disallows the system to logout the current user.
 /// </summary>
-KINC_FUNC void kinc_disallow_user_change(void);
+void kinc_disallow_user_change(void);
 
 /// <summary>
 /// Allows the system to logout the current user.
 /// </summary>
-KINC_FUNC void kinc_allow_user_change(void);
+void kinc_allow_user_change(void);
 
 /// <summary>
 /// Instructs the system whether it is allowed to turn off the screen while the application is running.
 /// </summary>
 /// <param name="on">Whether turning off the screen is allowed</param>
-KINC_FUNC void kinc_set_keep_screen_on(bool on);
+void kinc_set_keep_screen_on(bool on);
 
 /// <summary>
 /// Tries to halt program-execution in an attached debugger when compiled in debug-mode (aka when NDEBUG is not defined).
@@ -193,62 +193,62 @@ KINC_INLINE void kinc_debug_break(void) {
 /// Returns whether a debugger is currently attached to the running program. This is not yet working though.
 /// </summary>
 /// <returns>Whether a debugger is currently attached</returns>
-KINC_FUNC bool kinc_debugger_attached(void);
+bool kinc_debugger_attached(void);
 
 /// <summary>
 /// Copies the provided string to the system's clipboard.
 /// </summary>
 /// <param name="text">The text to be copied into the clipboard</param>
-KINC_FUNC void kinc_copy_to_clipboard(const char *text);
+void kinc_copy_to_clipboard(const char *text);
 
 /// <summary>
 /// Sets the update-callback which drives the application and is called for every frame.
 /// </summary>
 /// <param name="callback">The callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_update_callback(void (*callback)(void *), void *data);
+void kinc_set_update_callback(void (*callback)(void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called whenever the application is brought to the foreground.
 /// </summary>
 /// <param name="callback">The foreground-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_foreground_callback(void (*callback)(void *), void *data);
+void kinc_set_foreground_callback(void (*callback)(void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called whenever the application was paused and is being resumed.
 /// </summary>
 /// <param name="callback">The resume-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_resume_callback(void (*callback)(void *), void *data);
+void kinc_set_resume_callback(void (*callback)(void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called whenever the application is paused.
 /// </summary>
 /// <param name="callback">The pause-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_pause_callback(void (*callback)(void *), void *data);
+void kinc_set_pause_callback(void (*callback)(void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called whenever the application is brought to the background.
 /// </summary>
 /// <param name="callback">The background-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_background_callback(void (*callback)(void *), void *data);
+void kinc_set_background_callback(void (*callback)(void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called whenever the application is about to shut down.
 /// </summary>
 /// <param name="callback">The shutdown-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_shutdown_callback(void (*callback)(void *), void *data);
+void kinc_set_shutdown_callback(void (*callback)(void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called when files are dropped on the application-window.
 /// </summary>
 /// <param name="callback">The drop-files-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_drop_files_callback(void (*callback)(wchar_t *, void *), void *data);
+void kinc_set_drop_files_callback(void (*callback)(wchar_t *, void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called when the application is instructed to cut, typically via ctrl+x or cmd+x.
@@ -256,7 +256,7 @@ KINC_FUNC void kinc_set_drop_files_callback(void (*callback)(wchar_t *, void *),
 /// </summary>
 /// <param name="callback">The cut-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_cut_callback(char *(*callback)(void *), void *data);
+void kinc_set_cut_callback(char *(*callback)(void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called when the application is instructed to copy, typically via ctrl+c or cmd+c.
@@ -264,7 +264,7 @@ KINC_FUNC void kinc_set_cut_callback(char *(*callback)(void *), void *data);
 /// </summary>
 /// <param name="callback">The copy-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_copy_callback(char *(*callback)(void *), void *data);
+void kinc_set_copy_callback(char *(*callback)(void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called when the application is instructed to paste, typically via ctrl+v or cmd+v.
@@ -272,78 +272,21 @@ KINC_FUNC void kinc_set_copy_callback(char *(*callback)(void *), void *data);
 /// </summary>
 /// <param name="callback">The paste-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_paste_callback(void (*callback)(char *, void *), void *data);
+void kinc_set_paste_callback(void (*callback)(char *, void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called when a user logs in.
 /// </summary>
 /// <param name="callback">The login-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_login_callback(void (*callback)(void *), void *data);
+void kinc_set_login_callback(void (*callback)(void *), void *data);
 
 /// <summary>
 /// Sets a callback which is called when a user logs out.
 /// </summary>
 /// <param name="callback">The logout-callback</param>
 /// <param name="data">Arbitrary data-pointer that's passed to the callback</param>
-KINC_FUNC void kinc_set_logout_callback(void (*callback)(void *), void *data);
-
-#ifdef KINC_VTUNE
-#include <ittnotify.h>
-
-extern __itt_domain *kinc_itt_domain;
-#endif
-
-#ifdef KINC_SUPERLUMINAL
-#include <Superluminal/PerformanceAPI_capi.h>
-#endif
-
-/// <summary>
-/// Starts a marker for profiling. Please match it with a marker_end-call in the same function.
-/// </summary>
-/// <param name="name">A unique name that will be shown in the profiler</param>
-/// <param name="color">A nice color in RGBX that will show up in the profiler</param>
-static inline void kinc_marker_start(const char *name, uint32_t color) {
-#ifdef KINC_VTUNE
-	__itt_task_begin(kinc_itt_domain, __itt_null, __itt_null, __itt_string_handle_create(name));
-#endif
-
-#ifdef KINC_SUPERLUMINAL
-	PerformanceAPI_BeginEvent(name, NULL, color);
-#endif
-}
-
-/// <summary>
-/// Ends the previously started marker of the same function.
-/// </summary>
-static inline void kinc_marker_end(const char *name) {
-#ifdef KINC_VTUNE
-	__itt_task_end(kinc_itt_domain);
-#endif
-
-#ifdef KINC_SUPERLUMINAL
-	PerformanceAPI_EndEvent();
-#endif
-}
-
-/// <summary>
-/// Currently only supported on Windows.
-/// Starts up Live++ (see https://liveplusplus.tech), typically called right before kinc_start().
-/// After calling this you can hit Ctrl+Alt+F11 to hot-reload.
-/// Call Project.addLivePP(path) in your kfile to make this do something.
-/// The path-parameter for addLivePP is the path to the unpacked Live++-archive that has to contain a LivePP-subdirectory.
-/// This will set the appropricate compiler- and linker-options and set the KINC_LIVEPP-define
-/// for the Debug- and Develop-configs (it does not touch the Release-config).
-/// </summary>
-/// <returns></returns>
-KINC_FUNC void kinc_LivePP_start(void);
-
-/// <summary>
-/// Stops Live++, typically called right after kinc_start().
-/// </summary>
-/// <param name=""></param>
-/// <returns></returns>
-KINC_FUNC void kinc_LivePP_stop(void);
+void kinc_set_logout_callback(void (*callback)(void *), void *data);
 
 bool kinc_internal_frame(void);
 const char *kinc_internal_save_path(void);

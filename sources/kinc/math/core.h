@@ -14,14 +14,14 @@ extern "C" {
 #define KINC_PI 3.141592654
 #define KINC_TAU 6.283185307
 
-KINC_FUNC float kinc_cot(float x);
-KINC_FUNC float kinc_round(float value);
-KINC_FUNC float kinc_abs(float value);
-KINC_FUNC float kinc_min(float a, float b);
-KINC_FUNC float kinc_max(float a, float b);
-KINC_FUNC int kinc_mini(int a, int b);
-KINC_FUNC int kinc_maxi(int a, int b);
-KINC_FUNC float kinc_clamp(float value, float minValue, float maxValue);
+float kinc_cot(float x);
+float kinc_round(float value);
+float kinc_abs(float value);
+float kinc_min(float a, float b);
+float kinc_max(float a, float b);
+int kinc_mini(int a, int b);
+int kinc_maxi(int a, int b);
+float kinc_clamp(float value, float minValue, float maxValue);
 
 #ifdef KINC_IMPLEMENTATION_MATH
 #define KINC_IMPLEMENTATION

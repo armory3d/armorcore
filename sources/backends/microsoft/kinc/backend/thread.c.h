@@ -1,13 +1,5 @@
 #include <kinc/threads/thread.h>
 
-#ifdef KINC_VTUNE
-#include <ittnotify.h>
-#endif
-
-#ifdef KINC_SUPERLUMINAL
-#include <Superluminal/PerformanceAPI_capi.h>
-#endif
-
 void kinc_threads_init() {}
 
 void kinc_threads_quit() {}
@@ -72,14 +64,6 @@ void kinc_thread_set_name(const char *name) {
 		MultiByteToWideChar(CP_ACP, 0, name, -1, wide_name, 256);
 		MySetThreadDescription(GetCurrentThread(), wide_name);
 	}
-
-#ifdef KINC_VTUNE
-	__itt_thread_set_name(name);
-#endif
-
-#ifdef KINC_SUPERLUMINAL
-	PerformanceAPI_SetCurrentThreadName(name);
-#endif
 }
 
 void kinc_thread_sleep(int milliseconds) {

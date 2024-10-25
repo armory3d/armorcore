@@ -10,7 +10,7 @@
 
 static const int heapSize = 1024;
 
-#if defined(KINC_WINDOWS) || defined(KINC_WINDOWSAPP)
+#if defined(KINC_WINDOWS)
 /*static int d3d12_textureAlignment() {
     return D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
 }*/

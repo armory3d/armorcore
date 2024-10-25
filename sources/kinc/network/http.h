@@ -22,7 +22,7 @@ typedef void (*kinc_http_callback_t)(int error, int response, const char *body, 
 /// <summary>
 /// Fires off an http request.
 /// </summary>
-KINC_FUNC void kinc_http_request(const char *url, const char *path, const char *data, int port, bool secure, int method, const char *header,
+void kinc_http_request(const char *url, const char *path, const char *data, int port, bool secure, int method, const char *header,
                                  kinc_http_callback_t callback, void *callbackdata);
 
 #ifdef KINC_IMPLEMENTATION_NETWORK

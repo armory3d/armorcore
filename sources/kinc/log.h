@@ -38,7 +38,7 @@ typedef enum { KINC_LOG_LEVEL_INFO, KINC_LOG_LEVEL_WARNING, KINC_LOG_LEVEL_ERROR
 /// </param>
 /// <param name="format">The parameter is equivalent to the first printf parameter.</param>
 /// <param name="...">The parameter is equivalent to the second printf parameter.</param>
-KINC_FUNC void kinc_log(kinc_log_level_t log_level, const char *format, ...);
+void kinc_log(kinc_log_level_t log_level, const char *format, ...);
 
 /// <summary>
 /// Equivalent to kinc_log but uses a va_list parameter
@@ -52,7 +52,7 @@ KINC_FUNC void kinc_log(kinc_log_level_t log_level, const char *format, ...);
 /// </param>
 /// <param name="format">The parameter is equivalent to the first vprintf parameter.</param>
 /// <param name="args">The parameter is equivalent to the second vprintf parameter.</param>
-KINC_FUNC void kinc_log_args(kinc_log_level_t log_level, const char *format, va_list args);
+void kinc_log_args(kinc_log_level_t log_level, const char *format, va_list args);
 
 #ifdef KINC_IMPLEMENTATION_ROOT
 #define KINC_IMPLEMENTATION
