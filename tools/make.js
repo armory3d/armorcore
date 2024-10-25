@@ -80,12 +80,8 @@ function fs_readfile(p) {
 }
 
 function fs_writefile(p, data) {
-	let u8 = new Uint8Array(data.length);
-	for (let i = 0; i < data.length; ++i) {
-		u8[i] = data.charCodeAt(i);
-	}
 	let f = std.open(p, "w");
-	f.write(u8.buffer, 0, u8.length);
+	f.puts(data); // utf8
 	f.close();
 }
 
