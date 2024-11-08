@@ -2,6 +2,22 @@
 let ui_children: map_t<string, ui_handle_t> = map_create();
 // let ui_tr: (id: string, vars: map_t<string, string>)=>string;
 
+let _ui_row2: f32[] = [1.0 / 2.0, 1.0 / 2.0];
+let _ui_row3: f32[] = [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0];
+let _ui_row4: f32[] = [1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0];
+
+function ui_row2() {
+	ui_row(_ui_row2);
+}
+
+function ui_row3() {
+	ui_row(_ui_row3);
+}
+
+function ui_row4() {
+	ui_row(_ui_row4);
+}
+
 function ui_SCALE(ui: ui_t): f32 {
 	let current: ui_t = ui_get_current();
 	ui_set_current(ui);
