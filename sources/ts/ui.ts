@@ -5,6 +5,9 @@ let ui_children: map_t<string, ui_handle_t> = map_create();
 let _ui_row2: f32[] = [1.0 / 2.0, 1.0 / 2.0];
 let _ui_row3: f32[] = [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0];
 let _ui_row4: f32[] = [1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0, 1.0 / 4.0];
+let _ui_row5: f32[] = [1.0 / 5.0, 1.0 / 5.0, 1.0 / 5.0, 1.0 / 5.0, 1.0 / 5.0];
+let _ui_row6: f32[] = [1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0];
+let _ui_row7: f32[] = [1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0, 1.0 / 7.0];
 
 function ui_row2() {
 	ui_row(_ui_row2);
@@ -16,6 +19,18 @@ function ui_row3() {
 
 function ui_row4() {
 	ui_row(_ui_row4);
+}
+
+function ui_row5() {
+	ui_row(_ui_row5);
+}
+
+function ui_row6() {
+	ui_row(_ui_row6);
+}
+
+function ui_row7() {
+	ui_row(_ui_row7);
 }
 
 function ui_SCALE(ui: ui_t): f32 {
