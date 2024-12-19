@@ -29,24 +29,14 @@
 #include <kinc/graphics4/pipeline.h>
 #include <kinc/graphics4/rendertarget.h>
 #include <kinc/graphics4/texture.h>
-#ifdef KORE_LZ4X
-extern "C" int LZ4_decompress_safe(const char *source, char *dest, int compressedSize, int maxOutputSize);
-#else
-#include <kinc/io/lz4/lz4.h>
+#ifdef WITH_COMPUTE
+#include <kinc/graphics4/compute.h>
 #endif
+#include <kinc/io/lz4/lz4.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <kinc/libs/stb_image.h>
 #ifdef KORE_DIRECT3D11
 #include <d3d11.h>
-#endif
-#ifdef KORE_DIRECT3D12
-#include <d3d12.h>
-extern "C" bool waitAfterNextDraw;
-#endif
-#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
-#include <kinc/graphics5/constantbuffer.h>
-#include <kinc/graphics5/commandlist.h>
-#include <kinc/graphics5/raytrace.h>
 #endif
 
 #include <libplatform/libplatform.h>
@@ -71,99 +61,14 @@ bool show_window = false;
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
-#ifdef WITH_D3DCOMPILER
-#include <d3d11.h>
-#include <D3Dcompiler.h>
-#include <sstream>
-#endif
-#ifdef WITH_NFD
-#include <nfd.h>
-#elif defined(KORE_ANDROID)
-#include "android/android_file_dialog.h"
-#include "android/android_http_request.h"
-#elif defined(KORE_IOS)
-#include "ios/ios_file_dialog.h"
-#endif
-#ifdef WITH_TINYDIR
-#include <tinydir.h>
-#endif
-#ifdef WITH_STB_IMAGE_WRITE
-#ifdef WITH_ZLIB
-extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality);
-#define STBIW_ZLIB_COMPRESS stbiw_zlib_compress
-#endif
-#define STBI_WINDOWS_UTF8
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
-#endif
-#ifdef WITH_MPEG_WRITE
-#include <jo_mpeg.h>
-#endif
-#ifdef WITH_ZLIB
-#include <zlib.h>
-#endif
-#ifdef WITH_ONNX
-#include <onnxruntime_c_api.h>
-#ifdef KORE_WINDOWS
-#include <dml_provider_factory.h>
-#elif defined(KORE_MACOS)
-#include <coreml_provider_factory.h>
-#endif
-#endif
-#if defined(IDLE_SLEEP) && !defined(KORE_WINDOWS)
-#include <unistd.h>
-#endif
 #ifdef WITH_WORKER
 #include "worker.h"
-#endif
-#ifdef WITH_G2
-extern "C" {
-	#include "g2/g2.h"
-	#include "g2/g2_ext.h"
-}
-#endif
-#ifdef WITH_IRON
-extern "C" {
-	#include "iron/io_obj.h"
-	#include "iron/iron_armpack.h"
-}
-#endif
-#ifdef WITH_ZUI
-extern "C" {
-	#include "zui/zui.h"
-	#include "zui/zui_ext.h"
-	#include "zui/zui_nodes.h"
-}
 #endif
 
 using namespace v8;
 
-#ifdef WITH_PLUGIN_EMBED
-void plugin_embed(v8::Isolate *isolate, Local<ObjectTemplate> global);
-#endif
 #ifdef KORE_MACOS
 extern "C" const char *macgetresourcepath();
-#endif
-#ifdef KORE_IOS
-extern "C" const char *iphonegetresourcepath();
-#endif
-
-#if defined(KORE_IOS) || defined(KORE_ANDROID)
-char mobile_title[1024];
-#endif
-
-#if defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
-extern "C" int krafix_compile(const char *source, char *output, int *length, const char *targetlang, const char *system, const char *shadertype, int version);
-#endif
-
-#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
-extern "C" kinc_g5_command_list_t commandList;
-static kinc_g5_constant_buffer_t constant_buffer;
-static kinc_g4_render_target_t *render_target;
-static kinc_raytrace_pipeline_t pipeline;
-static kinc_raytrace_acceleration_structure_t accel;
-static bool accel_created = false;
-const int constant_buffer_size = 24;
 #endif
 
 namespace {
@@ -177,12 +82,6 @@ namespace {
 	bool stderr_created = false;
 	bool in_background = false;
 	int paused_frames = 0;
-	bool armorcore = false;
-	#ifdef IDLE_SLEEP
-	bool input_down = false;
-	int last_window_width = 0;
-	int last_window_height = 0;
-	#endif
 
 	Isolate *isolate;
 	std::unique_ptr<Platform> plat;
@@ -213,18 +112,13 @@ namespace {
 	Global<Function> gamepad_axis_func;
 	Global<Function> gamepad_button_func;
 	Global<Function> save_and_quit_func;
-	Global<Function> picker_func;
-	#ifdef WITH_ZUI
-	Global<Function> on_border_hover_func;
-	Global<Function> on_text_hover_func;
-	Global<Function> on_deselect_text_func;
-	Global<Function> on_tab_drop_func;
-	Global<Function> enum_texts_func;
-	Global<Function> on_custom_button_func;
-	Global<Function> on_canvas_control_func;
-	Global<Function> on_canvas_released_func;
-	Global<Function> on_socket_released_func;
-	Global<Function> on_link_drag_func;
+
+	#ifdef WITH_AUDIO
+	Global<Function> audio_func;
+	kinc_mutex_t mutex;
+	kinc_a2_buffer_t audio_buffer;
+	int audio_read_location = 0;
+	void update_audio(kinc_a2_buffer_t *buffer, int samples);
 	#endif
 
 	bool save_and_quit_func_set = false;
@@ -262,15 +156,6 @@ namespace {
 	#ifdef KORE_WINDOWS
 	wchar_t temp_wstring[1024];
 	wchar_t temp_wstring1[1024];
-	#endif
-	#ifdef ARM_PROFILE
-	double startup_time = 0.0;
-	#endif
-	#ifdef WITH_ONNX
-	const OrtApi *ort = NULL;
-	OrtEnv *ort_env;
-	OrtSessionOptions *ort_session_options;
-	OrtSession *session = NULL;
 	#endif
 
 	class KromCallbackdata {
@@ -324,12 +209,6 @@ namespace {
 		int x = -1;
 		int y = -1;
 		int frequency = 60;
-		if (args.Length() > 8) {
-			armorcore = true;
-			x = args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			y = args[9]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			frequency = args[10]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		}
 
 		kinc_window_options_t win;
 		win.title = *title;
@@ -372,8 +251,14 @@ namespace {
 
 		#ifdef WITH_AUDIO
 		if (enable_audio) {
+			kinc_mutex_init(&mutex);
 			kinc_a1_init();
 			kinc_a2_init();
+			kinc_a2_set_callback(update_audio);
+			audio_buffer.read_location = 0;
+			audio_buffer.write_location = 0;
+			audio_buffer.data_size = 128 * 1024;
+			audio_buffer.data = new uint8_t[audio_buffer.data_size];
 		}
 		#endif
 
@@ -403,10 +288,6 @@ namespace {
 		kinc_pen_set_release_callback(pen_up);
 		kinc_gamepad_set_axis_callback(gamepad_axis);
 		kinc_gamepad_set_button_callback(gamepad_button);
-
-		#ifdef KORE_ANDROID
-		android_check_permissions();
-		#endif
 	}
 
 	void krom_set_application_name(const FunctionCallbackInfo<Value> &args) {
@@ -463,16 +344,16 @@ namespace {
 	}
 
 	void krom_set_cut_copy_paste_callback(const FunctionCallbackInfo<Value> &args) {
-		// HandleScope scope(args.GetIsolate());
-		// Local<Value> cutArg = args[0];
-		// Local<Function> cutFunc = Local<Function>::Cast(cutArg);
-		// cut_func.Reset(isolate, cutFunc);
-		// Local<Value> copyArg = args[1];
-		// Local<Function> copyFunc = Local<Function>::Cast(copyArg);
-		// copy_func.Reset(isolate, copyFunc);
-		// Local<Value> pasteArg = args[2];
-		// Local<Function> pasteFunc = Local<Function>::Cast(pasteArg);
-		// paste_func.Reset(isolate, pasteFunc);
+		HandleScope scope(args.GetIsolate());
+		Local<Value> cutArg = args[0];
+		Local<Function> cutFunc = Local<Function>::Cast(cutArg);
+		cut_func.Reset(isolate, cutFunc);
+		Local<Value> copyArg = args[1];
+		Local<Function> copyFunc = Local<Function>::Cast(copyArg);
+		copy_func.Reset(isolate, copyFunc);
+		Local<Value> pasteArg = args[2];
+		Local<Function> pasteFunc = Local<Function>::Cast(pasteArg);
+		paste_func.Reset(isolate, pasteFunc);
 	}
 
 	void krom_set_application_state_callback(const FunctionCallbackInfo<Value> &args) {
@@ -863,10 +744,6 @@ namespace {
 	}
 
 	void krom_draw_indexed_vertices_fast(Local<Object> receiver, int start, int count) {
-		#ifdef KORE_DIRECT3D12
-		// TODO: Prevent heapIndex overflow in texture.c.h/kinc_g5_internal_set_textures
-		waitAfterNextDraw = true;
-		#endif
 		if (count < 0) kinc_g4_draw_indexed_vertices();
 		else kinc_g4_draw_indexed_vertices_from_to(start, count);
 	}
@@ -911,138 +788,10 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 
-		#ifdef WITH_D3DCOMPILER
-
-		strcpy(temp_string_vs, *utf8_value);
-
-		ID3DBlob *error_message;
-		ID3DBlob *shader_buffer;
-		UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
-		HRESULT hr = D3DCompile(temp_string_vs, strlen(*utf8_value) + 1, nullptr, nullptr, nullptr, "main", "vs_5_0", flags, 0, &shader_buffer, &error_message);
-		if (hr != S_OK) {
-			kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->GetBufferPointer());
-			return;
-		}
-
-		bool hasBone = strstr(temp_string_vs, "bone :") != NULL;
-		bool hasCol = strstr(temp_string_vs, "col :") != NULL;
-		bool hasNor = strstr(temp_string_vs, "nor :") != NULL;
-		bool hasPos = strstr(temp_string_vs, "pos :") != NULL;
-		bool hasTex = strstr(temp_string_vs, "tex :") != NULL;
-
-		std::map<std::string, int> attributes;
-		int index = 0;
-		if (hasBone) attributes["bone"] = index++;
-		if (hasCol) attributes["col"] = index++;
-		if (hasNor) attributes["nor"] = index++;
-		if (hasPos) attributes["pos"] = index++;
-		if (hasTex) attributes["tex"] = index++;
-		if (hasBone) attributes["weight"] = index++;
-
-		std::ostringstream file;
-		size_t output_len = 0;
-
-		file.put((char)attributes.size());
-		output_len += 1;
-		for (std::map<std::string, int>::const_iterator attribute = attributes.begin(); attribute != attributes.end(); ++attribute) {
-			(file) << attribute->first.c_str();
-			output_len += attribute->first.length();
-			file.put(0);
-			output_len += 1;
-			file.put(attribute->second);
-			output_len += 1;
-		}
-
-		ID3D11ShaderReflection *reflector = nullptr;
-		D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
-
-		D3D11_SHADER_DESC desc;
-		reflector->GetDesc(&desc);
-
-		file.put(desc.BoundResources);
-		output_len += 1;
-		for (unsigned i = 0; i < desc.BoundResources; ++i) {
-			D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-			reflector->GetResourceBindingDesc(i, &bindDesc);
-			(file) << bindDesc.Name;
-			output_len += strlen(bindDesc.Name);
-			file.put(0);
-			output_len += 1;
-			file.put(bindDesc.BindPoint);
-			output_len += 1;
-		}
-
-		ID3D11ShaderReflectionConstantBuffer *constants = reflector->GetConstantBufferByName("$Globals");
-		D3D11_SHADER_BUFFER_DESC bufferDesc;
-		hr = constants->GetDesc(&bufferDesc);
-		if (hr == S_OK) {
-			file.put(bufferDesc.Variables);
-			output_len += 1;
-			for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
-				ID3D11ShaderReflectionVariable *variable = constants->GetVariableByIndex(i);
-				D3D11_SHADER_VARIABLE_DESC variableDesc;
-				hr = variable->GetDesc(&variableDesc);
-				if (hr == S_OK) {
-					(file) << variableDesc.Name;
-					output_len += strlen(variableDesc.Name);
-					file.put(0);
-					output_len += 1;
-					file.write((char *)&variableDesc.StartOffset, 4);
-					output_len += 4;
-					file.write((char *)&variableDesc.Size, 4);
-					output_len += 4;
-					D3D11_SHADER_TYPE_DESC typeDesc;
-					hr = variable->GetType()->GetDesc(&typeDesc);
-					if (hr == S_OK) {
-						file.put(typeDesc.Columns);
-						output_len += 1;
-						file.put(typeDesc.Rows);
-						output_len += 1;
-					}
-					else {
-						file.put(0);
-						output_len += 1;
-						file.put(0);
-						output_len += 1;
-					}
-				}
-			}
-		}
-		else {
-			file.put(0);
-			output_len += 1;
-		}
-		file.write((char *)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
-		output_len += shader_buffer->GetBufferSize();
-		shader_buffer->Release();
-		reflector->Release();
-
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_VERTEX);
-
-		#elif defined(KORE_METAL)
-
-		strcpy(temp_string_vs, "// my_main\n");
-		strcat(temp_string_vs, *utf8_value);
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, temp_string_vs, strlen(temp_string_vs), KINC_G4_SHADER_TYPE_VERTEX);
-
-		#elif defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
-
-		char *output = new char[1024 * 1024];
-		int length;
-		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "vert", -1);
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_VERTEX);
-
-		#else
-
 		char *source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, source, strlen(source), KINC_G4_SHADER_TYPE_VERTEX);
-
-		#endif
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -1074,117 +823,10 @@ namespace {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 
-		#ifdef WITH_D3DCOMPILER
-
-		strcpy(temp_string_fs, *utf8_value);
-
-		ID3DBlob *error_message;
-		ID3DBlob *shader_buffer;
-		UINT flags = D3DCOMPILE_SKIP_OPTIMIZATION | D3DCOMPILE_SKIP_VALIDATION;// D3DCOMPILE_OPTIMIZATION_LEVEL0
-		HRESULT hr = D3DCompile(temp_string_fs, strlen(*utf8_value) + 1, nullptr, nullptr, nullptr, "main", "ps_5_0", flags, 0, &shader_buffer, &error_message);
-		if (hr != S_OK) {
-			kinc_log(KINC_LOG_LEVEL_INFO, "%s", (char *)error_message->GetBufferPointer());
-			return;
-		}
-
-		std::map<std::string, int> attributes;
-
-		std::ostringstream file;
-		size_t output_len = 0;
-
-		file.put((char)attributes.size());
-		output_len += 1;
-
-		ID3D11ShaderReflection *reflector = nullptr;
-		D3DReflect(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), IID_ID3D11ShaderReflection, (void **)&reflector);
-
-		D3D11_SHADER_DESC desc;
-		reflector->GetDesc(&desc);
-
-		file.put(desc.BoundResources);
-		output_len += 1;
-		for (unsigned i = 0; i < desc.BoundResources; ++i) {
-			D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-			reflector->GetResourceBindingDesc(i, &bindDesc);
-			(file) << bindDesc.Name;
-			output_len += strlen(bindDesc.Name);
-			file.put(0);
-			output_len += 1;
-			file.put(bindDesc.BindPoint);
-			output_len += 1;
-		}
-
-		ID3D11ShaderReflectionConstantBuffer *constants = reflector->GetConstantBufferByName("$Globals");
-		D3D11_SHADER_BUFFER_DESC bufferDesc;
-		hr = constants->GetDesc(&bufferDesc);
-		if (hr == S_OK) {
-			file.put(bufferDesc.Variables);
-			output_len += 1;
-			for (unsigned i = 0; i < bufferDesc.Variables; ++i) {
-				ID3D11ShaderReflectionVariable *variable = constants->GetVariableByIndex(i);
-				D3D11_SHADER_VARIABLE_DESC variableDesc;
-				hr = variable->GetDesc(&variableDesc);
-				if (hr == S_OK) {
-					(file) << variableDesc.Name;
-					output_len += strlen(variableDesc.Name);
-					file.put(0);
-					output_len += 1;
-					file.write((char *)&variableDesc.StartOffset, 4);
-					output_len += 4;
-					file.write((char *)&variableDesc.Size, 4);
-					output_len += 4;
-					D3D11_SHADER_TYPE_DESC typeDesc;
-					hr = variable->GetType()->GetDesc(&typeDesc);
-					if (hr == S_OK) {
-						file.put(typeDesc.Columns);
-						output_len += 1;
-						file.put(typeDesc.Rows);
-						output_len += 1;
-					}
-					else {
-						file.put(0);
-						output_len += 1;
-						file.put(0);
-						output_len += 1;
-					}
-				}
-			}
-		}
-		else {
-			file.put(0);
-			output_len += 1;
-		}
-		file.write((char *)shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize());
-		output_len += shader_buffer->GetBufferSize();
-		shader_buffer->Release();
-		reflector->Release();
-
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, (void *)file.str().c_str(), (int)output_len, KINC_G4_SHADER_TYPE_FRAGMENT);
-
-		#elif defined(KORE_METAL)
-
-		strcpy(temp_string_fs, "// my_main\n");
-		strcat(temp_string_fs, *utf8_value);
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, temp_string_fs, strlen(temp_string_fs), KINC_G4_SHADER_TYPE_FRAGMENT);
-
-		#elif defined(KORE_VULKAN) && defined(KRAFIX_LIBRARY)
-
-		char *output = new char[1024 * 1024];
-		int length;
-		krafix_compile(*utf8_value, output, &length, "spirv", "windows", "frag", -1);
-		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
-		kinc_g4_shader_init(shader, output, length, KINC_G4_SHADER_TYPE_FRAGMENT);
-
-		#else
-
 		char *source = new char[strlen(*utf8_value) + 1];
 		strcpy(source, *utf8_value);
 		kinc_g4_shader_t *shader = (kinc_g4_shader_t *)malloc(sizeof(kinc_g4_shader_t));
 		kinc_g4_shader_init(shader, source, strlen(source), KINC_G4_SHADER_TYPE_FRAGMENT);
-
-		#endif
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
@@ -1369,17 +1011,6 @@ namespace {
 			pipeline->color_write_mask_alpha[i] = maskAlphaArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->BooleanValue(isolate);
 		}
 
-		if (armorcore) {
-			pipeline->color_attachment_count = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachmentCount").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-			Local<Object> colorAttachmentArray = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "colorAttachments").ToLocalChecked()).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-			for (int i = 0; i < 8; ++i) {
-				pipeline->color_attachment[i] = (kinc_g4_render_target_format_t)colorAttachmentArray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-			}
-
-			pipeline->depth_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "depthAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-			pipeline->stencil_attachment_bits = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "stencilAttachmentBits").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		}
-
 		pipeline->conservative_rasterization = args11->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "conservativeRasterization").ToLocalChecked()).ToLocalChecked()->BooleanValue(isolate);
 
 		kinc_g4_pipeline_compile(pipeline);
@@ -1430,19 +1061,6 @@ namespace {
 				output = (unsigned char *)malloc(outputSize);
 				LZ4_decompress_safe((char *)(data + 12), (char *)output, compressedSize, outputSize);
 				format = KINC_IMAGE_FORMAT_RGBA128;
-
-				#ifdef KORE_IOS // No RGBA128 filtering, convert to RGBA64
-				uint32_t *_output32 = (uint32_t *)output;
-				unsigned char *_output = (unsigned char *)malloc(outputSize / 2);
-				uint16_t *_output16 = (uint16_t *)_output;
-				for (int i = 0; i < outputSize / 4; ++i) {
-					uint32_t x = *((uint32_t *)&_output32[i]);
-					_output16[i] = ((x >> 16) & 0x8000) | ((((x & 0x7f800000) - 0x38000000) >> 13) & 0x7c00) | ((x >> 13) & 0x03ff);
-				}
-				format = KINC_IMAGE_FORMAT_RGBA64;
-				free(output);
-				output = _output;
-				#endif
 			}
 			else {
 				success = false;
@@ -1475,7 +1093,7 @@ namespace {
 
 		kinc_image_t *image = (kinc_image_t *)malloc(sizeof(kinc_image_t));
 
-		if (armorcore) {
+		// if (armorcore) {
 			kinc_file_reader_t reader;
 			if (kinc_file_reader_open(&reader, *utf8_value, KINC_FILE_TYPE_ASSET)) {
 				unsigned char *image_data;
@@ -1490,18 +1108,18 @@ namespace {
 			else {
 				success = false;
 			}
-		}
-		else {
-			// TODO: make kinc_image load faster
-			size_t byte_size = kinc_image_size_from_file(*utf8_value);
-			if (byte_size == 0) {
-				success = false;
-			}
-			else {
-				void *memory = malloc(byte_size);
-				kinc_image_init_from_file(image, memory, *utf8_value);
-			}
-		}
+		// }
+		// else {
+		// 	// TODO: make kinc_image load faster
+		// 	size_t byte_size = kinc_image_size_from_file(*utf8_value);
+		// 	if (byte_size == 0) {
+		// 		success = false;
+		// 	}
+		// 	else {
+		// 		void *memory = malloc(byte_size);
+		// 		kinc_image_init_from_file(image, memory, *utf8_value);
+		// 	}
+		// }
 
 		if (!success) {
 			free(image);
@@ -1524,10 +1142,8 @@ namespace {
 		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		if (!armorcore) {
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		}
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -1553,38 +1169,110 @@ namespace {
 	}
 
 	#ifdef WITH_AUDIO
+	void krom_set_audio_callback(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<Value> arg = args[0];
+		Local<Function> func = Local<Function>::Cast(arg);
+		audio_func.Reset(isolate, func);
+	}
+
+	void krom_audio_thread(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		bool lock = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		if (lock) kinc_mutex_lock(&mutex);    //Locker::Locker(isolate);
+		else kinc_mutex_unlock(&mutex);       //Unlocker(args.GetIsolate());
+	}
+
 	void krom_load_sound(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
 		kinc_a1_sound_t *sound = kinc_a1_sound_create(*utf8_value);
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, sound));
-		args.GetReturnValue().Set(obj);
-	}
 
-	void krom_unload_sound(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_a1_sound_t *sound = (kinc_a1_sound_t *)field->Value();
+		if (sound == nullptr) {
+			return;
+		}
+
+		Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, sound->size * 2 * sizeof(float));
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *to = (float *)content->Data();
+
+		int16_t *left = (int16_t *)&sound->left[0];
+		int16_t *right = (int16_t *)&sound->right[0];
+		for (int i = 0; i < sound->size; i += 1) {
+			to[i * 2    ] = (float)(left [i] / 32767.0);
+			to[i * 2 + 1] = (float)(right[i] / 32767.0);
+		}
+		args.GetReturnValue().Set(buffer);
 		kinc_a1_sound_destroy(sound);
 	}
 
-	void krom_play_sound(const FunctionCallbackInfo<Value> &args) {
+	void krom_write_audio_buffer(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_a1_sound_t *sound = (kinc_a1_sound_t *)field->Value();
-		bool loop = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		kinc_a1_play_sound(sound, loop, 1.0, false);
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		int samples = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+
+		for (int i = 0; i < samples; ++i) {
+			float *values = (float *)content->Data();
+			float value = values[audio_read_location / 4];
+			audio_read_location += 4;
+			if (audio_read_location >= content->ByteLength()) audio_read_location = 0;
+			*(float *)&audio_buffer.data[audio_buffer.write_location] = value;
+			audio_buffer.write_location += 4;
+			if (audio_buffer.write_location >= audio_buffer.data_size) audio_buffer.write_location = 0;
+		}
 	}
 
-	void krom_stop_sound(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_a1_sound_t *sound = (kinc_a1_sound_t *)field->Value();
-		kinc_a1_stop_sound(sound);
+	void update_audio(kinc_a2_buffer_t *buffer, int samples) {
+		// kinc_mutex_lock(&mutex);
+		Locker locker{isolate};
+
+		Isolate::Scope isolate_scope(isolate);
+		MicrotasksScope microtasks_scope(isolate, MicrotasksScope::kRunMicrotasks);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
+
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, audio_func);
+		Local<Value> result;
+		const int argc = 1;
+		Local<Value> argv[argc] = {Int32::New(isolate, samples)};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+
+		for (int i = 0; i < samples; ++i) {
+			float sample = *(float *)&audio_buffer.data[audio_buffer.read_location];
+			audio_buffer.read_location += 4;
+			if (audio_buffer.read_location >= audio_buffer.data_size) {
+				audio_buffer.read_location = 0;
+			}
+
+			*(float *)&buffer->data[buffer->write_location] = sample;
+			buffer->write_location += 4;
+			if (buffer->write_location >= buffer->data_size) {
+				buffer->write_location = 0;
+			}
+		}
+
+		// kinc_mutex_unlock(&mutex);
 	}
+
+	#else
+
+	void krom_set_audio_callback(const FunctionCallbackInfo<Value> &args) {
+	}
+
+	void krom_audio_thread(const FunctionCallbackInfo<Value> &args) {
+	}
+
+	void krom_load_sound(const FunctionCallbackInfo<Value> &args) {
+	}
+
+	void krom_write_audio_buffer(const FunctionCallbackInfo<Value> &args) {
+	}
+
 	#endif
 
 	void krom_load_blob(const FunctionCallbackInfo<Value> &args) {
@@ -1846,9 +1534,6 @@ namespace {
 		int windowId = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
 		String::Utf8Value title(isolate, args[1]);
 		kinc_window_set_title(windowId, *title);
-		#if defined(KORE_IOS) || defined(KORE_ANDROID)
-		strcpy(mobile_title, *title);
-		#endif
 	}
 
 	void krom_get_window_mode(const FunctionCallbackInfo<Value> &args) {
@@ -2012,10 +1697,8 @@ namespace {
 		obj->SetInternalField(0, External::New(isolate, texture));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		if (!armorcore) {
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		}
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -2067,10 +1750,8 @@ namespace {
 		if (readable) obj->SetInternalField(1, External::New(isolate, image));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
 		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		if (!armorcore) {
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
-		}
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realWidth").ToLocalChecked(), Int32::New(isolate, texture->tex_width));
+		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "realHeight").ToLocalChecked(), Int32::New(isolate, texture->tex_height));
 		args.GetReturnValue().Set(obj);
 	}
 
@@ -2224,19 +1905,6 @@ namespace {
 
 		uint8_t *b = (uint8_t *)content->Data();
 		kinc_g4_render_target_get_pixels(rt, b);
-
-		// Release staging texture immediately to save memory
-		#ifdef KORE_DIRECT3D11
-		rt->impl.textureStaging->Release();
-		rt->impl.textureStaging = NULL;
-		#elif defined(KORE_DIRECT3D12)
-		rt->impl._renderTarget.impl.renderTargetReadback->Release();
-		rt->impl._renderTarget.impl.renderTargetReadback = NULL;
-		#elif defined(KORE_METAL)
-		// id<MTLTexture> texReadback = (__bridge_transfer id<MTLTexture>)rt->impl._renderTarget.impl._texReadback;
-		// texReadback = nil;
-		// rt->impl._renderTarget.impl._texReadback = NULL;
-		#endif
 	}
 
 	void krom_lock_texture(const FunctionCallbackInfo<Value> &args) {
@@ -2426,8 +2094,6 @@ namespace {
 		MultiByteToWideChar(CP_UTF8, 0, cmd, -1, wstr, wlen);
 		int result = _wsystem(wstr);
 		delete[] wstr;
-		#elif defined(KORE_IOS)
-		int result = 0;
 		#else
 		int result = system(cmd);
 		#endif
@@ -2466,20 +2132,13 @@ namespace {
 		strcat(path, KORE_DEBUGDIR);
 		strcat(path, "/");
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, path).ToLocalChecked());
-		#elif defined(KORE_IOS)
-		char path[1024];
-		strcpy(path, iphonegetresourcepath());
-		strcat(path, "/");
-		strcat(path, KORE_DEBUGDIR);
-		strcat(path, "/");
-		args.GetReturnValue().Set(String::NewFromUtf8(isolate, path).ToLocalChecked());
 		#else
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_internal_get_files_location()).ToLocalChecked());
 		#endif
 	}
 
 	void krom_http_callback(int error, int response, const char *body, void *callbackdata) {
-		#if defined(KORE_MACOS) || defined(KORE_IOS)
+		#if defined(KORE_MACOS)
 		Locker locker{isolate};
 		#endif
 
@@ -2528,328 +2187,242 @@ namespace {
 			url_path[j] = curl[i + 8 + j];
 		}
 		url_path[j] = 0;
-		#ifdef KORE_ANDROID // TODO: move to Kinc
-		android_http_request(curl, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, cbd);
-		#else
 		kinc_http_request(url_base, url_path, NULL, 443, true, 0, NULL, &krom_http_callback, cbd);
-		#endif
 	}
 
-	#ifdef WITH_G2
-	void krom_g2_init(const FunctionCallbackInfo<Value> &args) {
+	#ifdef WITH_COMPUTE
+	void krom_set_bool_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<ArrayBuffer> buffer_image_vert = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> content_image_vert = buffer_image_vert->GetBackingStore();
-		Local<ArrayBuffer> buffer_image_frag = Local<ArrayBuffer>::Cast(args[1]);
-		std::shared_ptr<BackingStore> content_image_frag = buffer_image_frag->GetBackingStore();
-		Local<ArrayBuffer> buffer_colored_vert = Local<ArrayBuffer>::Cast(args[2]);
-		std::shared_ptr<BackingStore> content_colored_vert = buffer_colored_vert->GetBackingStore();
-		Local<ArrayBuffer> buffer_colored_frag = Local<ArrayBuffer>::Cast(args[3]);
-		std::shared_ptr<BackingStore> content_colored_frag = buffer_colored_frag->GetBackingStore();
-		Local<ArrayBuffer> buffer_text_vert = Local<ArrayBuffer>::Cast(args[4]);
-		std::shared_ptr<BackingStore> content_text_vert = buffer_text_vert->GetBackingStore();
-		Local<ArrayBuffer> buffer_text_frag = Local<ArrayBuffer>::Cast(args[5]);
-		std::shared_ptr<BackingStore> content_text_frag = buffer_text_frag->GetBackingStore();
-
-		g2_init(content_image_vert->Data(), (int)content_image_vert->ByteLength(), content_image_frag->Data(), (int)content_image_frag->ByteLength(), content_colored_vert->Data(), (int)content_colored_vert->ByteLength(), content_colored_frag->Data(), (int)content_colored_frag->ByteLength(), content_text_vert->Data(), (int)content_text_vert->ByteLength(), content_text_frag->Data(), (int)content_text_frag->ByteLength());
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		int32_t value = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_bool(*location, value != 0);
 	}
 
-	void krom_g2_begin(const FunctionCallbackInfo<Value> &args) {
+	void krom_set_int_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		g2_begin();
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		int32_t value = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_int(*location, value);
 	}
 
-	void krom_g2_end(const FunctionCallbackInfo<Value> &args) {
+	void krom_set_float_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		g2_end();
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		float value = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_float(*location, value);
 	}
 
-	void krom_g2_draw_scaled_sub_image(const FunctionCallbackInfo<Value> &args) {
-		#ifdef KORE_DIRECT3D12
-		waitAfterNextDraw = true;
-		#endif
+	void krom_set_float2_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<Object> image = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		float sx = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float sy = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float sw = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float sh = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float dx = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float dy = (float)args[6]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float dw = (float)args[7]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float dh = (float)args[8]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		Local<Value> tex = image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
-		if (tex->IsObject()) {
-			Local<External> texfield = Local<External>::Cast(tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
-			g2_draw_scaled_sub_image(texture, sx, sy, sw, sh, dx, dy, dw, dh);
-		}
-		else {
-			Local<Value> rt = image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
-			Local<External> rtfield = Local<External>::Cast(rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
-			g2_draw_scaled_sub_render_target(render_target, sx, sy, sw, sh, dx, dy, dw, dh);
-		}
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_float2(*location, value1, value2);
 	}
 
-	void krom_g2_fill_triangle(const FunctionCallbackInfo<Value> &args) {
+	void krom_set_float3_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		float x0 = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y0 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float x1 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y1 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float x2 = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y2 = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		g2_fill_triangle(x0, y0, x1, y1, x2, y2);
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value3 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_float3(*location, value1, value2, value3);
 	}
 
-	void krom_g2_fill_rect(const FunctionCallbackInfo<Value> &args) {
+	void krom_set_float4_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float width = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float height = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		g2_fill_rect(x, y, width, height);
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		float value1 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value2 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value3 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		float value4 = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute_set_float4(*location, value1, value2, value3, value4);
 	}
 
-	void krom_g2_draw_rect(const FunctionCallbackInfo<Value> &args) {
+	void krom_set_floats_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float width = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float height = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float strength = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		g2_draw_rect(x, y, width, height, strength);
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
+		kinc_compute_set_floats(*location, from, int(content->ByteLength() / 4));
 	}
 
-	void krom_g2_draw_line(const FunctionCallbackInfo<Value> &args) {
+	void krom_set_matrix_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		float x0 = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y0 = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float x1 = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y1 = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float strength = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		g2_draw_line(x0, y0, x1, y1, strength);
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
+		kinc_compute_set_matrix4(*location, (kinc_matrix4x4_t *)from);
 	}
 
-	void krom_g2_draw_string(const FunctionCallbackInfo<Value> &args) {
+	void krom_set_matrix3_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		String::Utf8Value text(isolate, args[0]);
-		float x = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		g2_draw_string(*text, x, y);
+		Local<External> locationfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_constant_location_t *location = (kinc_compute_constant_location_t *)locationfield->Value();
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		float *from = (float *)content->Data();
+		kinc_compute_set_matrix3(*location, (kinc_matrix3x3_t *)from);
 	}
 
-	void krom_g2_set_font(const FunctionCallbackInfo<Value> &args) {
+	void krom_set_texture_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		g2_font_t *font = (g2_font_t *)field->Value();
-		int size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		g2_set_font(font, size);
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+		int access = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		kinc_compute_set_texture(*unit, texture, (kinc_compute_access_t)access);
 	}
 
-	void krom_g2_font_init(const FunctionCallbackInfo<Value> &args) {
+	void krom_set_render_target_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<ArrayBuffer> blob_buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> blob_content = blob_buffer->GetBackingStore();
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
+		int access = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
+		kinc_compute_set_render_target(*unit, render_target, (kinc_compute_access_t)access);
+	}
 
-		g2_font_t *font = (g2_font_t *)malloc(sizeof(g2_font_t));
-		g2_font_init(font, blob_content->Data(), args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
+	void krom_set_sampled_texture_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> texfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
+		kinc_compute_set_sampled_texture(*unit, texture);
+	}
+
+	void krom_set_sampled_render_target_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
+		kinc_compute_set_sampled_render_target(*unit, render_target);
+	}
+
+	void krom_set_sampled_depth_texture_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		Local<External> rtfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_g4_render_target_t *render_target = (kinc_g4_render_target_t *)rtfield->Value();
+		kinc_compute_set_sampled_depth_from_render_target(*unit, render_target);
+	}
+
+	void krom_set_texture_parameters_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		kinc_compute_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture_minification_filter(*unit, (kinc_g4_texture_filter_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture_magnification_filter(*unit, (kinc_g4_texture_filter_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+	}
+
+	void krom_set_texture3d_parameters_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> unitfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_texture_unit_t *unit = (kinc_compute_texture_unit_t *)unitfield->Value();
+		kinc_compute_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_U, (kinc_g4_texture_addressing_t)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_V, (kinc_g4_texture_addressing_t)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_addressing(*unit, KINC_G4_TEXTURE_DIRECTION_W, (kinc_g4_texture_addressing_t)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_minification_filter(*unit, (kinc_g4_texture_filter_t)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_magnification_filter(*unit, (kinc_g4_texture_filter_t)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+		kinc_compute_set_texture3d_mipmap_filter(*unit, (kinc_g4_mipmap_filter_t)args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust());
+	}
+
+	void krom_set_shader_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> shaderfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
+		kinc_compute_set_shader(shader);
+	}
+
+	void krom_create_shader_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
+		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
+		kinc_compute_shader *shader = (kinc_compute_shader *)malloc(sizeof(kinc_compute_shader));
+		kinc_compute_shader_init(shader, content->Data(), (int)content->ByteLength());
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
+
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, font));
+		obj->SetInternalField(0, External::New(isolate, shader));
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_g2_font_13(const FunctionCallbackInfo<Value> &args) {
+	void krom_delete_shader_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<ArrayBuffer> blob_buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> blob_content = blob_buffer->GetBackingStore();
+		Local<Object> shaderobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
+		Local<External> shaderfield = Local<External>::Cast(shaderobj->GetInternalField(0));
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
+		kinc_compute_shader_destroy(shader);
+		free(shader);
+	}
 
-		g2_font_t *font = (g2_font_t *)malloc(sizeof(g2_font_t));
-		g2_font_13(font, blob_content->Data());
+	void krom_get_constant_location_compute(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		Local<External> shaderfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
+
+		String::Utf8Value utf8_value(isolate, args[1]);
+		kinc_compute_constant_location_t location = kinc_compute_shader_get_constant_location(shader, *utf8_value);
 
 		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
 		templ->SetInternalFieldCount(1);
+
 		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, font));
+		kinc_compute_constant_location_t *location_copy = (kinc_compute_constant_location_t *)malloc(sizeof(kinc_compute_constant_location_t)); // TODO
+		memcpy(location_copy, &location, sizeof(kinc_compute_constant_location_t));
+		obj->SetInternalField(0, External::New(isolate, location_copy));
 		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_g2_font_set_glyphs(const FunctionCallbackInfo<Value> &args) {
+	void krom_get_texture_unit_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<Object> jsarray = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int *ar = (int *)malloc(sizeof(int) * length);
-		for (int i = 0; i < length; ++i) {
-			int32_t j = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			ar[i] = j;
-		}
-		g2_font_set_glyphs(ar, length);
-		free(ar);
+		Local<External> shaderfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
+		kinc_compute_shader *shader = (kinc_compute_shader *)shaderfield->Value();
+
+		String::Utf8Value utf8_value(isolate, args[1]);
+		kinc_compute_texture_unit_t unit = kinc_compute_shader_get_texture_unit(shader, *utf8_value);
+
+		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
+		templ->SetInternalFieldCount(1);
+
+		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
+		kinc_compute_texture_unit_t *unit_copy = (kinc_compute_texture_unit_t *)malloc(sizeof(kinc_compute_texture_unit_t)); // TODO
+		memcpy(unit_copy, &unit, sizeof(kinc_compute_texture_unit_t));
+		obj->SetInternalField(0, External::New(isolate, unit_copy));
+		args.GetReturnValue().Set(obj);
 	}
 
-	void krom_g2_font_count(const FunctionCallbackInfo<Value> &args) {
+	void krom_compute(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		g2_font_t *font = (g2_font_t *)field->Value();
-		int i = g2_font_count(font);
-		args.GetReturnValue().Set(Int32::New(isolate, i));
-	}
-
-	void krom_g2_font_height(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		g2_font_t *font = (g2_font_t *)field->Value();
-		int size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int i = (int)g2_font_height(font, size);
-		args.GetReturnValue().Set(Int32::New(isolate, i));
-	}
-
-	void krom_g2_string_width(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		g2_font_t *font = (g2_font_t *)field->Value();
-		int size = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		String::Utf8Value text(isolate, args[2]);
-		int i = (int)g2_string_width(font, size, *text);
-		args.GetReturnValue().Set(Int32::New(isolate, i));
-	}
-
-	void krom_g2_set_bilinear_filter(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		g2_set_bilinear_filter(args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
-	}
-
-	void krom_g2_restore_render_target(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		g2_restore_render_target();
-	}
-
-	void krom_g2_set_render_target(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_render_target_t *rt = (kinc_g4_render_target_t *)field->Value();
-		g2_set_render_target(rt);
-	}
-
-	void krom_g2_set_color(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int color = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		g2_set_color(color);
-	}
-
-	void krom_g2_set_pipeline(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		if (args[0]->IsNullOrUndefined()) {
-			g2_set_pipeline(NULL);
-		}
-		else {
-			Local<Object> pipeobj = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-			Local<External> pipefield = Local<External>::Cast(pipeobj->GetInternalField(0));
-			kinc_g4_pipeline_t *pipeline = (kinc_g4_pipeline_t *)pipefield->Value();
-			g2_set_pipeline(pipeline);
-		}
-	}
-
-	void krom_g2_set_transform(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		if (args[0]->IsNullOrUndefined()) {
-			g2_set_transform(NULL);
-		}
-		else {
-			Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-			std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-			float *from = (float *)content->Data();
-			g2_set_transform((kinc_matrix3x3_t *)from);
-		}
-	}
-
-	void krom_g2_fill_circle(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		float cx = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float cy = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float radius = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int segments = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		g2_fill_circle(cx, cy, radius, segments);
-	}
-
-	void krom_g2_draw_circle(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		float cx = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float cy = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float radius = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int segments = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float strength = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		g2_draw_circle(cx, cy, radius, segments, strength);
-	}
-
-	void krom_g2_draw_cubic_bezier(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-		Local<Object> jsarray_x = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		int32_t length = jsarray_x->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float *x = (float *)malloc(sizeof(float) * length);
-		for (int i = 0; i < length; ++i) {
-			float j = (float)jsarray_x->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			x[i] = j;
-		}
-
-		Local<Object> jsarray_y = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		length = jsarray_y->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float *y = (float *)malloc(sizeof(float) * length);
-		for (int i = 0; i < length; ++i) {
-			float j = (float)jsarray_y->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			y[i] = j;
-		}
-
-		int segments = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float strength = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		g2_draw_cubic_bezier(x, y, segments, strength);
-		free(x);
-		free(y);
+		int x = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int y = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		int z = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
+		kinc_compute(x, y, z);
 	}
 	#endif
 
 	bool window_close_callback(void *data) {
-		#ifdef KORE_WINDOWS
-		bool save = false;
-		Locker locker{isolate};
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, save_and_quit_func);
-		Local<Value> result;
-		const int argc = 1;
-
-		wchar_t title[1024];
-		GetWindowTextW(kinc_windows_window_handle(0), title, sizeof(title));
-		bool dirty = wcsstr(title, L"* - ArmorPaint") != NULL;
-		if (dirty) {
-			int res = MessageBox(kinc_windows_window_handle(0), L"Project has been modified, save changes?", L"Save Changes?", MB_YESNOCANCEL | MB_ICONEXCLAMATION);
-			if (res == IDYES)
-				save = true;
-			else if (res == IDNO)
-				save = false;
-			else // Cancel
-				return false;
-		}
-
-		if (save_and_quit_func_set) {
-			Local<Value> argv[argc] = { Int32::New(isolate, save) };
-			if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-				handle_exception(&try_catch);
-			}
-			return false;
-		}
-		#endif
-
 		return true;
 	}
 
@@ -2880,144 +2453,6 @@ namespace {
 		krom_delay_idle_sleep_fast(args.This());
 	}
 
-	#ifdef WITH_NFD
-	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value filterList(isolate, args[0]);
-		String::Utf8Value defaultPath(isolate, args[1]);
-		bool openMultiple = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		nfdpathset_t outPaths;
-		nfdchar_t* outPath;
-		nfdresult_t result = openMultiple ? NFD_OpenDialogMultiple(*filterList, *defaultPath, &outPaths) : NFD_OpenDialog(*filterList, *defaultPath, &outPath);
-
-		if (result == NFD_OKAY) {
-			int pathCount = openMultiple ? (int)NFD_PathSet_GetCount(&outPaths) : 1;
-			Local<Array> result = Array::New(isolate, pathCount);
-
-			if (openMultiple) {
-				for (int i = 0; i < pathCount; ++i) {
-					nfdchar_t* outPath = NFD_PathSet_GetPath(&outPaths, i);
-					(void)result->Set(isolate->GetCurrentContext(), i, String::NewFromUtf8(isolate, outPath).ToLocalChecked());
-				}
-				NFD_PathSet_Free(&outPaths);
-			}
-			else {
-				(void)result->Set(isolate->GetCurrentContext(), 0, String::NewFromUtf8(isolate, outPath).ToLocalChecked());
-				free(outPath);
-			}
-
-			args.GetReturnValue().Set(result);
-		}
-		else if (result == NFD_CANCEL) {}
-		else {
-			kinc_log(KINC_LOG_LEVEL_INFO, "Error: %s\n", NFD_GetError());
-		}
-	}
-
-	void krom_save_dialog(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value filterList(isolate, args[0]);
-		String::Utf8Value defaultPath(isolate, args[1]);
-		nfdchar_t *outPath = NULL;
-		nfdresult_t result = NFD_SaveDialog(*filterList, *defaultPath, &outPath);
-		if (result == NFD_OKAY) {
-			args.GetReturnValue().Set(String::NewFromUtf8(isolate, outPath).ToLocalChecked());
-			free(outPath);
-		}
-		else if (result == NFD_CANCEL) {}
-		else {
-			kinc_log(KINC_LOG_LEVEL_INFO, "Error: %s\n", NFD_GetError());
-		}
-	}
-	#elif defined(KORE_ANDROID)
-	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		AndroidFileDialogOpen();
-	}
-
-	void krom_save_dialog(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		wchar_t *outPath = AndroidFileDialogSave();
-		size_t len = wcslen(outPath);
-		uint16_t *str = new uint16_t[len + 1];
-		for (int i = 0; i < len; i++) str[i] = outPath[i];
-		str[len] = 0;
-		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)str).ToLocalChecked());
-		delete[] str;
-	}
-	#elif defined(KORE_IOS)
-	void krom_open_dialog(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		// String::Utf8Value filterList(isolate, args[0]);
-		// String::Utf8Value defaultPath(isolate, args[1]);
-		// Once finished drop_files callback is called
-		IOSFileDialogOpen();
-	}
-
-	void krom_save_dialog(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		// String::Utf8Value filterList(isolate, args[0]);
-		// String::Utf8Value defaultPath(isolate, args[1]);
-		// Path to app document directory
-		wchar_t *outPath = IOSFileDialogSave();
-		size_t len = wcslen(outPath);
-		uint16_t *str = new uint16_t[len + 1];
-		for (int i = 0; i < len; i++) str[i] = outPath[i];
-		str[len] = 0;
-		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)str).ToLocalChecked());
-		delete[] str;
-	}
-	#endif
-
-	#ifdef WITH_TINYDIR
-	void krom_read_directory(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value path(isolate, args[0]);
-		bool foldersOnly = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		tinydir_dir dir;
-		#ifdef KORE_WINDOWS
-		MultiByteToWideChar(CP_UTF8, 0, *path, -1, temp_wstring, 1023);
-		tinydir_open_sorted(&dir, temp_wstring);
-		#else
-		tinydir_open_sorted(&dir, *path);
-		#endif
-
-		#ifdef KORE_WINDOWS
-		std::wstring files;
-		#else
-		std::string files;
-		#endif
-
-		for (int i = 0; i < dir.n_files; i++) {
-			tinydir_file file;
-			tinydir_readfile_n(&dir, &file, i);
-
-			if (!file.is_dir || !foldersOnly) {
-				#ifdef KORE_WINDOWS
-				if (FILE_ATTRIBUTE_HIDDEN & GetFileAttributesW(file.path)) continue; // Skip hidden files
-				if (wcscmp(file.name, L".") == 0 || wcscmp(file.name, L"..") == 0) continue;
-				files += file.name;
-
-				if (i < dir.n_files - 1) files += L"\n"; // Separator
-				#else
-				if (strcmp(file.name, ".") == 0 || strcmp(file.name, "..") == 0) continue;
-				files += file.name;
-				if (i < dir.n_files - 1) files += "\n";
-				#endif
-			}
-		}
-
-		tinydir_close(&dir);
-		#ifdef KORE_WINDOWS
-		args.GetReturnValue().Set(String::NewFromTwoByte(isolate, (const uint16_t *)files.c_str()).ToLocalChecked());
-		#else
-		args.GetReturnValue().Set(String::NewFromUtf8(isolate, files.c_str()).ToLocalChecked());
-		#endif
-	}
-	#endif
-
 	void krom_file_exists(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		bool exists = false;
@@ -3035,9 +2470,7 @@ namespace {
 	void krom_delete_file(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
 		String::Utf8Value utf8_value(isolate, args[0]);
-		#ifdef KORE_IOS
-		IOSDeleteFile(*utf8_value);
-		#elif defined(KORE_WINDOWS)
+		#if defined(KORE_WINDOWS)
 		char path[1024];
 		strcpy(path, "del /f \"");
 		strcat(path, *utf8_value);
@@ -3051,541 +2484,6 @@ namespace {
 		sys_command(path);
 		#endif
 	}
-
-	#ifdef WITH_ZLIB
-	void krom_inflate(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		bool raw = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		unsigned char *inflated = (unsigned char *)malloc(content->ByteLength());
-
-		z_stream infstream;
-		infstream.zalloc = Z_NULL;
-		infstream.zfree = Z_NULL;
-		infstream.opaque = Z_NULL;
-		infstream.avail_in = (uInt)content->ByteLength();
-		infstream.next_in = (Bytef *)content->Data();
-		infstream.avail_out = (uInt)content->ByteLength();
-		infstream.next_out = (Bytef *)inflated;
-
-		inflateInit2(&infstream, raw ? -15 : 15 + 32);
-
-		int i = 2;
-		while (true) {
-			int res = inflate(&infstream, Z_NO_FLUSH);
-			if (res == Z_STREAM_END) break;
-			if (infstream.avail_out == 0) {
-				inflated = (unsigned char *)realloc(inflated, content->ByteLength() * i);
-				infstream.avail_out = (uInt)content->ByteLength();
-				infstream.next_out = (Bytef *)(inflated + content->ByteLength() * (i - 1));
-				i++;
-			}
-		}
-
-		inflateEnd(&infstream);
-
-		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, infstream.total_out);
-		std::shared_ptr<BackingStore> output_content = output->GetBackingStore();
-		memcpy(output_content->Data(), inflated, infstream.total_out);
-		free(inflated);
-
-		args.GetReturnValue().Set(output);
-	}
-
-	void krom_deflate(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		bool raw = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		int deflatedSize = compressBound((uInt)content->ByteLength());
-		void *deflated = malloc(deflatedSize);
-
-		z_stream defstream;
-		defstream.zalloc = Z_NULL;
-		defstream.zfree = Z_NULL;
-		defstream.opaque = Z_NULL;
-		defstream.avail_in = (uInt)content->ByteLength();
-		defstream.next_in = (Bytef *)content->Data();
-		defstream.avail_out = deflatedSize;
-		defstream.next_out = (Bytef *)deflated;
-
-		deflateInit2(&defstream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, raw ? -15 : 15, 5, Z_DEFAULT_STRATEGY);
-		deflate(&defstream, Z_FINISH);
-		deflateEnd(&defstream);
-
-		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, defstream.total_out);
-		std::shared_ptr<BackingStore> output_content = output->GetBackingStore();
-		memcpy(output_content->Data(), deflated, defstream.total_out);
-		free(deflated);
-
-		args.GetReturnValue().Set(output);
-	}
-	#endif
-
-	#ifdef WITH_STB_IMAGE_WRITE
-	void write_image(const FunctionCallbackInfo<Value> &args, int imageFormat, int quality) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value utf8_path(isolate, args[0]);
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		int w = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int h = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int format = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		int comp = 0;
-		unsigned char *pixels = NULL;
-		unsigned char *rgba = (unsigned char *)content->Data();
-		if (format == 0) { // RGBA
-			comp = 4;
-			pixels = rgba;
-		}
-		else if (format == 1) { // R
-			comp = 1;
-			pixels = rgba;
-		}
-		else if (format == 2) { // RGB1
-			comp = 3;
-			pixels = (unsigned char *)malloc(w * h * comp);
-			for (int i = 0; i < w * h; ++i) {
-				#if defined(KORE_METAL) || defined(KORE_VULKAN)
-				pixels[i * 3    ] = rgba[i * 4 + 2];
-				pixels[i * 3 + 1] = rgba[i * 4 + 1];
-				pixels[i * 3 + 2] = rgba[i * 4    ];
-				#else
-				pixels[i * 3    ] = rgba[i * 4    ];
-				pixels[i * 3 + 1] = rgba[i * 4 + 1];
-				pixels[i * 3 + 2] = rgba[i * 4 + 2];
-				#endif
-			}
-		}
-		else if (format > 2) { // RRR1, GGG1, BBB1, AAA1
-			comp = 1;
-			pixels = (unsigned char *)malloc(w * h * comp);
-			int off = format - 3;
-			#if defined(KORE_METAL) || defined(KORE_VULKAN)
-			off = 2 - off;
-			#endif
-			for (int i = 0; i < w * h; ++i) pixels[i] = rgba[i * 4 + off];
-		}
-
-		imageFormat == 0 ?
-			stbi_write_jpg(*utf8_path, w, h, comp, pixels, quality) :
-			stbi_write_png(*utf8_path, w, h, comp, pixels, w * comp);
-
-		if (pixels != rgba) free(pixels);
-	}
-
-	void krom_write_jpg(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int quality = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		write_image(args, 0, quality);
-	}
-
-	void krom_write_png(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		write_image(args, 1, 100);
-	}
-
-	unsigned char *encode_data;
-	int encode_size;
-	void encode_image_func(void *context, void *data, int size) {
-		memcpy(encode_data + encode_size, data, size);
-		encode_size += size;
-	}
-
-	void encode_image(const FunctionCallbackInfo<Value> &args, int imageFormat, int quality) {
-		HandleScope scope(args.GetIsolate());
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		int w = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int h = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int format = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		encode_data = (unsigned char *)malloc(w * h * 4);
-		encode_size = 0;
-
-		imageFormat == 0 ?
-			stbi_write_jpg_to_func(&encode_image_func, NULL, w, h, 4, content->Data(), quality) :
-			stbi_write_png_to_func(&encode_image_func, NULL, w, h, 4, content->Data(), w * 4);
-
-		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)encode_data, encode_size, [](void *, size_t, void *) {}, nullptr);
-		Local<ArrayBuffer> out = ArrayBuffer::New(isolate, std::move(backing));
-		args.GetReturnValue().Set(out);
-	}
-
-	void krom_encode_jpg(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int quality = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		encode_image(args, 0, quality);
-	}
-
-	void krom_encode_png(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		encode_image(args, 1, 100);
-	}
-
-	#ifdef WITH_ZLIB
-	extern "C" unsigned char *stbiw_zlib_compress(unsigned char *data, int data_len, int *out_len, int quality) {
-		int deflatedSize = compressBound((uInt)data_len);
-		void *deflated = malloc(deflatedSize);
-		z_stream defstream;
-		defstream.zalloc = Z_NULL;
-		defstream.zfree = Z_NULL;
-		defstream.opaque = Z_NULL;
-		defstream.avail_in = (uInt)data_len;
-		defstream.next_in = (Bytef *)data;
-		defstream.avail_out = deflatedSize;
-		defstream.next_out = (Bytef *)deflated;
-		deflateInit2(&defstream, Z_BEST_SPEED, Z_DEFLATED, 15, 5, Z_DEFAULT_STRATEGY);
-		deflate(&defstream, Z_FINISH);
-		deflateEnd(&defstream);
-		*out_len = defstream.total_out;
-		return (unsigned char *)deflated;
-	}
-	#endif
-	#endif
-
-	#ifdef WITH_MPEG_WRITE
-	void krom_write_mpeg(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-	}
-	#endif
-
-	#ifdef WITH_ONNX
-	void krom_ml_inference(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-		#ifdef ARM_PROFILE
-		double inference_time = kinc_time();
-		#endif
-
-		OrtStatus *onnx_status = NULL;
-
-		static bool use_gpu_last = false;
-		bool use_gpu = !(args.Length() > 4 && !args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value());
-		if (ort == NULL || use_gpu_last != use_gpu) {
-			use_gpu_last = use_gpu;
-			ort = OrtGetApiBase()->GetApi(ORT_API_VERSION);
-			ort->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "armorcore", &ort_env);
-
-			ort->CreateSessionOptions(&ort_session_options);
-			ort->SetIntraOpNumThreads(ort_session_options, 8);
-			ort->SetInterOpNumThreads(ort_session_options, 8);
-
-			if (use_gpu) {
-				#ifdef KORE_WINDOWS
-				ort->SetSessionExecutionMode(ort_session_options, ORT_SEQUENTIAL);
-				ort->DisableMemPattern(ort_session_options);
-				onnx_status = OrtSessionOptionsAppendExecutionProvider_DML(ort_session_options, 0);
-				#elif defined(KORE_LINUX)
-				// onnx_status = OrtSessionOptionsAppendExecutionProvider_CUDA(ort_session_options, 0);
-				#elif defined(KORE_MACOS)
-				onnx_status = OrtSessionOptionsAppendExecutionProvider_CoreML(ort_session_options, 0);
-				#endif
-				if (onnx_status != NULL) {
-					const char *msg = ort->GetErrorMessage(onnx_status);
-					kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
-					ort->ReleaseStatus(onnx_status);
-				}
-			}
-		}
-
-		Local<ArrayBuffer> model_buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> model_content = model_buffer->GetBackingStore();
-
-		static void *model_content_last = 0;
-		if (model_content_last != model_content->Data() || session == NULL) {
-			if (session != NULL) {
-				ort->ReleaseSession(session);
-				session = NULL;
-			}
-			onnx_status = ort->CreateSessionFromArray(ort_env, model_content->Data(), (int)model_content->ByteLength(), ort_session_options, &session);
-			if (onnx_status != NULL) {
-				const char* msg = ort->GetErrorMessage(onnx_status);
-				kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
-				ort->ReleaseStatus(onnx_status);
-			}
-		}
-		model_content_last = model_content->Data();
-
-		OrtAllocator *allocator;
-		ort->GetAllocatorWithDefaultOptions(&allocator);
-		OrtMemoryInfo *memory_info;
-		ort->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info);
-
-		Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		if (length > 4) length = 4;
-		char *input_node_names[4];
-		OrtValue *input_tensors[4];
-		for (int32_t i = 0; i < length; ++i) {
-			Local<Object> tensorobj = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-			Local<ArrayBuffer> tensor_buffer = Local<ArrayBuffer>::Cast(tensorobj);
-			std::shared_ptr<BackingStore> tensor_content = tensor_buffer->GetBackingStore();
-
-			ort->SessionGetInputName(session, i, allocator, &input_node_names[i]);
-
-			OrtTypeInfo *input_type_info;
-			ort->SessionGetInputTypeInfo(session, i, &input_type_info);
-			const OrtTensorTypeAndShapeInfo *input_tensor_info;
-			ort->CastTypeInfoToTensorInfo(input_type_info, &input_tensor_info);
-			size_t num_input_dims;
-			ort->GetDimensionsCount(input_tensor_info, &num_input_dims);
-			std::vector<int64_t> input_node_dims(num_input_dims);
-
-			if (args.Length() > 2 && !args[2]->IsNullOrUndefined()) {
-				Local<Object> jsarray = args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-				Local<Object> jsarray2 = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-				for (int32_t i = 0; i < num_input_dims; ++i) {
-					int32_t j = jsarray2->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-					input_node_dims[i] = j;
-				}
-			}
-			else {
-				ort->GetDimensions(input_tensor_info, (int64_t *)input_node_dims.data(), num_input_dims);
-			}
-			ONNXTensorElementDataType tensor_element_type;
-			ort->GetTensorElementType(input_tensor_info, &tensor_element_type);
-
-			ort->CreateTensorWithDataAsOrtValue(memory_info, tensor_content->Data(), (int)tensor_content->ByteLength(), input_node_dims.data(), num_input_dims,  tensor_element_type, &input_tensors[i]);
-			ort->ReleaseTypeInfo(input_type_info);
-		}
-
-		char *output_node_name;
-		ort->SessionGetOutputName(session, 0, allocator, &output_node_name);
-		OrtValue *output_tensor = NULL;
-		onnx_status = ort->Run(session, NULL, input_node_names, input_tensors, length, &output_node_name, 1, &output_tensor);
-		if (onnx_status != NULL) {
-			const char* msg = ort->GetErrorMessage(onnx_status);
-			kinc_log(KINC_LOG_LEVEL_ERROR, "%s", msg);
-			ort->ReleaseStatus(onnx_status);
-		}
-		float *float_array;
-		ort->GetTensorMutableData(output_tensor, (void **)&float_array);
-
-		size_t output_byte_length = 4;
-		if (args.Length() > 3 && !args[3]->IsNullOrUndefined()) {
-			Local<Object> jsarray = args[3]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-			int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			for (int i = 0; i < length; ++i) {
-				int32_t j = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-				output_byte_length *= j;
-			}
-		}
-		else {
-			OrtTypeInfo *output_type_info;
-			ort->SessionGetOutputTypeInfo(session, 0, &output_type_info);
-			const OrtTensorTypeAndShapeInfo *output_tensor_info;
-			ort->CastTypeInfoToTensorInfo(output_type_info, &output_tensor_info);
-			size_t num_output_dims;
-			ort->GetDimensionsCount(output_tensor_info, &num_output_dims);
-			std::vector<int64_t> output_node_dims(num_output_dims);
-			ort->GetDimensions(output_tensor_info, (int64_t *)output_node_dims.data(), num_output_dims);
-			ort->ReleaseTypeInfo(output_type_info);
-			for (int i = 0; i < num_output_dims; ++i) if (output_node_dims[i] > 1) output_byte_length *= output_node_dims[i];
-		}
-
-		Local<ArrayBuffer> output = ArrayBuffer::New(isolate, output_byte_length);
-		std::shared_ptr<BackingStore> output_content = output->GetBackingStore();
-		memcpy(output_content->Data(), float_array, output_byte_length);
-
-		ort->ReleaseMemoryInfo(memory_info);
-		ort->ReleaseValue(output_tensor);
-		for (int i = 0; i < length; ++i) ort->ReleaseValue(input_tensors[i]);
-		args.GetReturnValue().Set(output);
-	}
-
-	void krom_ml_unload(const FunctionCallbackInfo<Value> &args) {
-		if (session != NULL) {
-			ort->ReleaseSession(session);
-			session = NULL;
-		}
-	}
-	#endif
-
-	#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
-	void krom_raytrace_supported(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		#ifdef KORE_METAL
-		bool supported = kinc_raytrace_supported();
-		#else
-		bool supported = true;
-		#endif
-		args.GetReturnValue().Set(Int32::New(isolate, supported));
-	}
-
-	void krom_raytrace_init(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-		if (accel_created) {
-			kinc_g5_constant_buffer_destroy(&constant_buffer);
-			kinc_raytrace_acceleration_structure_destroy(&accel);
-			kinc_raytrace_pipeline_destroy(&pipeline);
-		}
-
-		Local<ArrayBuffer> shader_buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> shader_content = shader_buffer->GetBackingStore();
-
-		Local<External> vb_field = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_vertex_buffer_t *vertex_buffer4 = (kinc_g4_vertex_buffer_t *)vb_field->Value();
-		kinc_g5_vertex_buffer_t *vertex_buffer = &vertex_buffer4->impl._buffer;
-
-		Local<External> ib_field = Local<External>::Cast(args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_index_buffer_t *index_buffer4 = (kinc_g4_index_buffer_t *)ib_field->Value();
-		kinc_g5_index_buffer_t *index_buffer = &index_buffer4->impl._buffer;
-
-		float scale = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		kinc_g5_constant_buffer_init(&constant_buffer, constant_buffer_size * 4);
-
-		kinc_raytrace_pipeline_init(&pipeline, &commandList, shader_content->Data(), (int)shader_content->ByteLength(), &constant_buffer);
-
-		kinc_raytrace_acceleration_structure_init(&accel, &commandList, vertex_buffer, index_buffer, scale);
-		accel_created = true;
-	}
-
-	void krom_raytrace_set_textures(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-		kinc_g4_render_target_t *texpaint0;
-		kinc_g4_render_target_t *texpaint1;
-		kinc_g4_render_target_t *texpaint2;
-
-		Local<Object> texpaint0_image = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		Local<Value> texpaint0_tex = texpaint0_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
-		Local<Value> texpaint0_rt = texpaint0_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
-
-		if (texpaint0_tex->IsObject()) {
-			#ifdef KORE_DIRECT3D12
-			Local<External> texfield = Local<External>::Cast(texpaint0_tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
-			if (!texture->impl._uploaded) {
-				kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
-				texture->impl._uploaded = true;
-			}
-			texpaint0 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
-			texpaint0->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
-			#endif
-		}
-		else {
-			Local<External> rtfield = Local<External>::Cast(texpaint0_rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			texpaint0 = (kinc_g4_render_target_t *)rtfield->Value();
-		}
-
-		Local<Object> texpaint1_image = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		Local<Value> texpaint1_tex = texpaint1_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
-		Local<Value> texpaint1_rt = texpaint1_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
-
-		if (texpaint1_tex->IsObject()) {
-			#ifdef KORE_DIRECT3D12
-			Local<External> texfield = Local<External>::Cast(texpaint1_tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
-			if (!texture->impl._uploaded) {
-				kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
-				texture->impl._uploaded = true;
-			}
-			texpaint1 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
-			texpaint1->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
-			#endif
-		}
-		else {
-			Local<External> rtfield = Local<External>::Cast(texpaint1_rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			texpaint1 = (kinc_g4_render_target_t *)rtfield->Value();
-		}
-
-		Local<Object> texpaint2_image = args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		Local<Value> texpaint2_tex = texpaint2_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
-		Local<Value> texpaint2_rt = texpaint2_image->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
-
-		if (texpaint2_tex->IsObject()) {
-			#ifdef KORE_DIRECT3D12
-			Local<External> texfield = Local<External>::Cast(texpaint2_tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_texture_t *texture = (kinc_g4_texture_t *)texfield->Value();
-			if (!texture->impl._uploaded) {
-				kinc_g5_command_list_upload_texture(&commandList, &texture->impl._texture);
-				texture->impl._uploaded = true;
-			}
-			texpaint2 = (kinc_g4_render_target_t *)malloc(sizeof(kinc_g4_render_target_t));
-			texpaint2->impl._renderTarget.impl.srvDescriptorHeap = texture->impl._texture.impl.srvDescriptorHeap;
-			#endif
-		}
-		else {
-			Local<External> rtfield = Local<External>::Cast(texpaint2_rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			texpaint2 = (kinc_g4_render_target_t *)rtfield->Value();
-		}
-
-		Local<External> envfield = Local<External>::Cast(args[3]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t *texenv = (kinc_g4_texture_t *)envfield->Value();
-
-		Local<External> sobolfield = Local<External>::Cast(args[4]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t *texsobol = (kinc_g4_texture_t *)sobolfield->Value();
-
-		Local<External> scramblefield = Local<External>::Cast(args[5]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t *texscramble = (kinc_g4_texture_t *)scramblefield->Value();
-
-		Local<External> rankfield = Local<External>::Cast(args[6]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		kinc_g4_texture_t *texrank = (kinc_g4_texture_t *)rankfield->Value();
-
-		if (!texenv->impl._uploaded) {
-			kinc_g5_command_list_upload_texture(&commandList, &texenv->impl._texture);
-			texenv->impl._uploaded = true;
-		}
-		if (!texsobol->impl._uploaded) {
-			kinc_g5_command_list_upload_texture(&commandList, &texsobol->impl._texture);
-			texsobol->impl._uploaded = true;
-		}
-		if (!texscramble->impl._uploaded) {
-			kinc_g5_command_list_upload_texture(&commandList, &texscramble->impl._texture);
-			texscramble->impl._uploaded = true;
-		}
-		if (!texrank->impl._uploaded) {
-			kinc_g5_command_list_upload_texture(&commandList, &texrank->impl._texture);
-			texrank->impl._uploaded = true;
-		}
-
-		kinc_raytrace_set_textures(&texpaint0->impl._renderTarget, &texpaint1->impl._renderTarget, &texpaint2->impl._renderTarget, &texenv->impl._texture, &texsobol->impl._texture, &texscramble->impl._texture, &texrank->impl._texture);
-
-		if (texpaint0_tex->IsObject()) {
-			free(texpaint0);
-		}
-
-		if (texpaint1_tex->IsObject()) {
-			free(texpaint1);
-		}
-
-		if (texpaint2_tex->IsObject()) {
-			free(texpaint2);
-		}
-	}
-
-	void krom_raytrace_dispatch_rays(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-		Local<External> rtfield = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		render_target = (kinc_g4_render_target_t *)rtfield->Value();
-
-		Local<ArrayBuffer> cb_buffer = Local<ArrayBuffer>::Cast(args[1]);
-		std::shared_ptr<BackingStore> cb_content = cb_buffer->GetBackingStore();
-		float *cb = (float *)cb_content->Data();
-
-		kinc_g5_constant_buffer_lock_all(&constant_buffer);
-		for (int i = 0; i < constant_buffer_size; ++i) {
-			kinc_g5_constant_buffer_set_float(&constant_buffer, i * 4, cb[i]);
-		}
-		kinc_g5_constant_buffer_unlock(&constant_buffer);
-
-		kinc_raytrace_set_acceleration_structure(&accel);
-		kinc_raytrace_set_pipeline(&pipeline);
-		kinc_raytrace_set_target(&render_target->impl._renderTarget);
-		kinc_raytrace_dispatch_rays(&commandList);
-	}
-	#endif
 
 	void krom_window_x(const FunctionCallbackInfo<Value> &args) {
 		HandleScope scope(args.GetIsolate());
@@ -3604,1280 +2502,6 @@ namespace {
 		args.GetReturnValue().Set(String::NewFromUtf8(isolate, kinc_language()).ToLocalChecked());
 	}
 
-	#ifdef WITH_IRON
-	void krom_io_obj_parse(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-
-		int split_code = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int start_pos = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int udim = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		obj_part_t *part = io_obj_parse((uint8_t *)content->Data(), split_code, start_pos, udim);
-
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-
-		std::unique_ptr<v8::BackingStore> backing_posa = v8::ArrayBuffer::NewBackingStore((void *)part->posa, part->vertex_count * 4 * 2, [](void *data, size_t, void *) { free(data); }, nullptr);
-		Local<ArrayBuffer> buffer_posa = ArrayBuffer::New(isolate, std::move(backing_posa));
-		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "posa").ToLocalChecked(), Int16Array::New(buffer_posa, 0, buffer_posa->ByteLength() / 2));
-
-		std::unique_ptr<v8::BackingStore> backing_nora = v8::ArrayBuffer::NewBackingStore((void *)part->nora, part->vertex_count * 2 * 2, [](void *data, size_t, void *) { free(data); }, nullptr);
-		Local<ArrayBuffer> buffer_nora = ArrayBuffer::New(isolate, std::move(backing_nora));
-		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "nora").ToLocalChecked(), Int16Array::New(buffer_nora, 0, buffer_nora->ByteLength() / 2));
-
-		if (part->texa != NULL) {
-			std::unique_ptr<v8::BackingStore> backing_texa = v8::ArrayBuffer::NewBackingStore((void *)part->texa, part->vertex_count * 2 * 2, [](void *data, size_t, void *) { free(data); }, nullptr);
-			Local<ArrayBuffer> buffer_texa = ArrayBuffer::New(isolate, std::move(backing_texa));
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texa").ToLocalChecked(), Int16Array::New(buffer_texa, 0, buffer_texa->ByteLength() / 2));
-		}
-
-		std::unique_ptr<v8::BackingStore> backing_inda = v8::ArrayBuffer::NewBackingStore((void *)part->inda, part->index_count * 4, [](void *data, size_t, void *) { free(data); }, nullptr);
-		Local<ArrayBuffer> buffer_inda = ArrayBuffer::New(isolate, std::move(backing_inda));
-		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "inda").ToLocalChecked(), Uint32Array::New(buffer_inda, 0, buffer_inda->ByteLength() / 4));
-
-		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "name").ToLocalChecked(), String::NewFromUtf8(isolate, part->name).ToLocalChecked());
-		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "scalePos").ToLocalChecked(), Number::New(isolate, part->scale_pos));
-		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "has_next").ToLocalChecked(), Number::New(isolate, part->has_next));
-		(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "pos").ToLocalChecked(), Number::New(isolate, (int)part->pos));
-
-		if (udim) {
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "udims_u").ToLocalChecked(), Number::New(isolate, part->udims_u));
-
-			Local<Array> udims = Array::New(isolate, part->udims_u * part->udims_v);
-			for (int i = 0; i < part->udims_u * part->udims_v; ++i) {
-				std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)part->udims[i], part->udims_count[i] * 4, [](void *data, size_t, void *) { free(data); }, nullptr);
-				Local<ArrayBuffer> buffer = ArrayBuffer::New(isolate, std::move(backing));
-				(void) udims->Set(isolate->GetCurrentContext(), i, Uint32Array::New(buffer, 0, buffer->ByteLength() / 4));
-			}
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "udims").ToLocalChecked(), udims);
-		}
-
-		args.GetReturnValue().Set(obj);
-	}
-	#endif
-
-	#ifdef WITH_ZUI
-	extern "C" float krom_js_eval(char *str) {
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		Local<String> source = String::NewFromUtf8(isolate, str, NewStringType::kNormal).ToLocalChecked();
-		TryCatch try_catch(isolate);
-		Local<Script> compiled_script = Script::Compile(isolate->GetCurrentContext(), source).ToLocalChecked();
-		Local<Value> result;
-		if (!compiled_script->Run(context).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-		return (float)result->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-	}
-
-	void krom_zui_on_border_hover(zui_handle_t *handle, int side) {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, on_border_hover_func);
-		Local<Value> result;
-		const int argc = 2;
-		Local<Value> argv[argc] = {Number::New(isolate, (size_t)handle), Int32::New(isolate, side)};
-		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
-	void krom_zui_on_text_hover() {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, on_text_hover_func);
-		Local<Value> result;
-		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
-	void krom_zui_on_deselect_text() {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, on_deselect_text_func);
-		Local<Value> result;
-		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
-	void krom_zui_on_tab_drop(zui_handle_t *to, int to_pos, zui_handle_t *from, int from_pos) {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, on_tab_drop_func);
-		Local<Value> result;
-		const int argc = 4;
-		Local<Value> argv[argc] = {Number::New(isolate, (size_t)to), Int32::New(isolate, to_pos), Number::New(isolate, (size_t)from), Int32::New(isolate, from_pos)};
-		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
-	char enum_texts_data[32][64];
-	char *enum_texts[32];
-	char **krom_zui_nodes_enum_texts(char *type) {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, enum_texts_func);
-		Local<Value> result;
-		const int argc = 1;
-		Local<Value> argv[argc] = {String::NewFromUtf8(isolate, type).ToLocalChecked()};
-		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-
-		Local<Object> jsarray = result->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		assert(length <= 32);
-		for (int i = 0; i < length; ++i) {
-			String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-			strcpy(enum_texts_data[i], *str);
-			enum_texts[i] = enum_texts_data[i];
-		}
-		enum_texts[length] = NULL;
-		return enum_texts;
-	}
-
-	void krom_zui_nodes_on_custom_button(int node_id, char *button_name) {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, on_custom_button_func);
-		Local<Value> result;
-		const int argc = 2;
-		Local<Value> argv[argc] = {Int32::New(isolate, node_id), String::NewFromUtf8(isolate, button_name).ToLocalChecked()};
-		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
-	zui_canvas_control_t krom_zui_nodes_on_canvas_control() {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, on_canvas_control_func);
-		Local<Value> result;
-		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-
-		Local<Object> jso = result->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		zui_canvas_control_t c;
-		c.pan_x = jso->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "panX").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		c.pan_y = jso->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "panY").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		c.zoom = jso->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "zoom").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		return c;
-	}
-
-	void krom_zui_nodes_on_canvas_released() {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, on_canvas_released_func);
-		Local<Value> result;
-		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
-	void krom_zui_nodes_on_socket_released(int socket_id) {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, on_socket_released_func);
-		Local<Value> result;
-		const int argc = 1;
-		Local<Value> argv[argc] = {Int32::New(isolate, socket_id)};
-		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
-	void krom_zui_nodes_on_link_drag(int link_drag_id, bool is_new_link) {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, on_link_drag_func);
-		Local<Value> result;
-		const int argc = 2;
-		Local<Value> argv[argc] = {Int32::New(isolate, link_drag_id), Int32::New(isolate, is_new_link)};
-		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
-	void krom_zui_init(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Object> arg0 = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-
-		zui_options_t ops;
-		ops.scale_factor = (float)arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "scale_factor").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		Local<Value> theme = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "theme").ToLocalChecked()).ToLocalChecked();
-		Local<External> themefield = Local<External>::Cast(theme->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		ops.theme = (zui_theme_t *)themefield->Value();
-
-		Local<Value> font = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "font").ToLocalChecked()).ToLocalChecked();
-		Local<External> fontfield = Local<External>::Cast(font->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		ops.font = (g2_font_t *)fontfield->Value();
-
-		Local<Value> colorwheel = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "color_wheel").ToLocalChecked()).ToLocalChecked();
-		Local<External> colorwheelfield = Local<External>::Cast(colorwheel->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		ops.color_wheel = (kinc_g4_texture_t *)colorwheelfield->Value();
-
-		Local<Value> blackwhitegradient = arg0->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "black_white_gradient").ToLocalChecked()).ToLocalChecked();
-		Local<External> blackwhitegradientfield = Local<External>::Cast(blackwhitegradient->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		ops.black_white_gradient = (kinc_g4_texture_t *)blackwhitegradientfield->Value();
-
-		zui_t *ui = (zui_t *)malloc(sizeof(zui_t));
-		zui_init(ui, ops);
-
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, ui));
-		args.GetReturnValue().Set(obj);
-
-		zui_on_border_hover = &krom_zui_on_border_hover;
-		zui_on_text_hover = &krom_zui_on_text_hover;
-		zui_on_deselect_text = &krom_zui_on_deselect_text;
-		zui_on_tab_drop = &krom_zui_on_tab_drop;
-		zui_nodes_enum_texts = &krom_zui_nodes_enum_texts;
-		zui_nodes_on_custom_button = &krom_zui_nodes_on_custom_button;
-		zui_nodes_on_canvas_control = &krom_zui_nodes_on_canvas_control;
-		zui_nodes_on_canvas_released = &krom_zui_nodes_on_canvas_released;
-		zui_nodes_on_socket_released = &krom_zui_nodes_on_socket_released;
-		zui_nodes_on_link_drag = &krom_zui_nodes_on_link_drag;
-	}
-
-	void krom_zui_get_scale(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_t *ui = (zui_t *)field->Value();
-		zui_t *current = zui_get_current();
-		zui_set_current(ui);
-		args.GetReturnValue().Set(Number::New(isolate, ZUI_SCALE()));
-		zui_set_current(current);
-	}
-
-	void krom_zui_set_scale(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_t *ui = (zui_t *)field->Value();
-		zui_t *current = zui_get_current();
-		zui_set_current(ui);
-		float factor = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_set_scale(factor);
-		zui_set_current(current);
-	}
-
-	void krom_zui_set_font(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_t *ui = (zui_t *)field->Value();
-		Local<External> fontfield = Local<External>::Cast(args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		g2_font_t *font = (g2_font_t *)fontfield->Value();
-		ui->ops.font = font;
-	}
-
-	void krom_zui_begin(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_t *ui = (zui_t *)field->Value();
-		zui_begin(ui);
-	}
-
-	void krom_zui_end(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		bool last = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_end(last);
-	}
-
-	void krom_zui_begin_region(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_t *ui = (zui_t *)field->Value();
-		int x = (int)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int y = (int)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int w = (int)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_begin_region(ui, x, y, w);
-	}
-
-	void krom_zui_end_region(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		bool last = (bool)args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_end_region(last);
-	}
-
-	void krom_zui_begin_sticky(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		zui_begin_sticky();
-	}
-
-	void krom_zui_end_sticky(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		zui_end_sticky();
-	}
-
-	void krom_zui_end_input(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		zui_end_input();
-	}
-
-	void krom_zui_end_window(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		bool bing_global_g = args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_end_window(bing_global_g);
-	}
-
-	void krom_zui_end_element(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		float element_size = args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		if (element_size < 0) zui_end_element();
-		else zui_end_element_of_size(element_size);
-	}
-
-	void krom_zui_start_text_edit(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		int align = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_start_text_edit(handle, align);
-	}
-
-	void krom_zui_input_in_rect(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float w = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float h = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool b = zui_input_in_rect(x, y, w, h);
-		args.GetReturnValue().Set(Int32::New(isolate, b));
-	}
-
-	void krom_zui_window(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		int x = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int y = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int w = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int h = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int drag = args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool b = zui_window(handle, x, y, w, h, drag);
-		args.GetReturnValue().Set(Int32::New(isolate, b));
-	}
-
-	void krom_zui_button(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value text(isolate, args[0]);
-		int align = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		String::Utf8Value label(isolate, args[2]);
-		bool b = zui_button(*text, align, *label);
-		args.GetReturnValue().Set(Int32::New(isolate, b));
-	}
-
-	void krom_zui_check(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		String::Utf8Value text(isolate, args[1]);
-		String::Utf8Value label(isolate, args[2]);
-		bool b = zui_check(handle, *text, *label);
-		args.GetReturnValue().Set(Int32::New(isolate, b));
-	}
-
-	void krom_zui_radio(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		int position = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		String::Utf8Value text(isolate, args[2]);
-		String::Utf8Value label(isolate, args[3]);
-		bool b = zui_radio(handle, position, *text, *label);
-		args.GetReturnValue().Set(Int32::New(isolate, b));
-	}
-
-	char combo_label[32];
-	char combo_texts_data[32][64];
-	char *combo_texts[32];
-	void krom_zui_combo(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		String::Utf8Value utf8label(isolate, args[2]);
-		int show_label = (int)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int align = (int)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int search_bar = (int)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		assert(length <= 32);
-
-		char temp_label[32];
-		char temp_texts_data[32][64];
-		char *temp_texts[32];
-		bool combo_selected = zui_get_current()->combo_selected_handle != NULL;
-		char *label = combo_selected ? temp_label : combo_label;
-		char (*texts_data)[64] = combo_selected ? temp_texts_data : combo_texts_data;
-		char **texts = combo_selected ? temp_texts : combo_texts;
-		for (int i = 0; i < length; ++i) {
-			String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-			strcpy(texts_data[i], *str);
-			texts[i] = texts_data[i];
-		}
-		strcpy(label, *utf8label);
-		int i = zui_combo(handle, texts, length, label, show_label, align, search_bar);
-		args.GetReturnValue().Set(Int32::New(isolate, i));
-	}
-
-	void krom_zui_slider(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		String::Utf8Value text(isolate, args[1]);
-		float from = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float to = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool filled = (bool)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float precision = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool display_value = (bool)args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int align = (int)args[7]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool text_edit = (bool)args[8]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float f = zui_slider(handle, *text, from, to, filled, precision, display_value, align, text_edit);
-		args.GetReturnValue().Set(Number::New(isolate, f));
-	}
-
-	void krom_zui_image(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Object> image_object = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		int tint = (int)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int h = (int)args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int sx = (int)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int sy = (int)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int sw = (int)args[5]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int sh = (int)args[6]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		void *image;
-		bool is_rt;
-		Local<Value> tex = image_object->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
-		if (tex->IsObject()) {
-			Local<External> texfield = Local<External>::Cast(tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			image = (void *)texfield->Value();
-			is_rt = false;
-		}
-		else {
-			Local<Value> rt = image_object->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
-			Local<External> rtfield = Local<External>::Cast(rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			image = (void *)rtfield->Value();
-			is_rt = true;
-		}
-		int i = zui_sub_image(image, is_rt, tint, h, sx, sy, sw, sh);
-		args.GetReturnValue().Set(Int32::New(isolate, i));
-	}
-
-	void krom_zui_text(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value text(isolate, args[0]);
-		int align = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int bg = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int i = zui_text(*text, align, bg);
-		args.GetReturnValue().Set(Int32::New(isolate, i));
-	}
-
-	void krom_zui_text_input(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		String::Utf8Value label(isolate, args[1]);
-		int align = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int editable = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int live_update = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		char *str = zui_text_input(handle, *label, align, editable, live_update);
-		args.GetReturnValue().Set(String::NewFromUtf8(isolate, str).ToLocalChecked());
-	}
-
-	void krom_zui_tab(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		String::Utf8Value text(isolate, args[1]);
-		int vertical = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int color = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool b = zui_tab(handle, *text, vertical, color);
-		args.GetReturnValue().Set(Int32::New(isolate, b));
-	}
-
-	void krom_zui_panel(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		String::Utf8Value text(isolate, args[1]);
-		int is_tree = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int filled = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int pack = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool b = zui_panel(handle, *text, is_tree, filled, pack);
-		args.GetReturnValue().Set(Int32::New(isolate, b));
-	}
-
-	void krom_zui_handle(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Object> ops = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		zui_handle_t *handle = (zui_handle_t *)malloc(sizeof(zui_handle_t));
-		memset(handle, 0, sizeof(zui_handle_t));
-		handle->redraws = 2;
-		handle->selected = (bool)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "selected").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		handle->position = (int)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "position").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		handle->value = (float)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "value").ToLocalChecked()).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		Local<Value> str = ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "text").ToLocalChecked()).ToLocalChecked();
-		String::Utf8Value text(isolate, str);
-		assert(strlen(*text) < 128);
-		strcpy(handle->text, *text);
-		handle->color = (int)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "color").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		handle->layout = (int)ops->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "layout").ToLocalChecked()).ToLocalChecked()->Int32Value(isolate->GetCurrentContext()).FromJust();
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, handle));
-		args.GetReturnValue().Set(obj);
-	}
-
-	void krom_zui_separator(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int h = (int)args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool fill = (bool)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_separator(h, fill);
-	}
-
-	void krom_zui_tooltip(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value text(isolate, args[0]);
-		zui_tooltip(*text);
-	}
-
-	void krom_zui_tooltip_image(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		int max_width = (int)args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		Local<Object> image_object = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		Local<Value> tex = image_object->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "texture_").ToLocalChecked()).ToLocalChecked();
-		if (tex->IsObject()) {
-			Local<External> texfield = Local<External>::Cast(tex->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_texture_t *image = (kinc_g4_texture_t *)texfield->Value();
-			zui_tooltip_image(image, max_width);
-		}
-		else {
-			Local<Value> rt = image_object->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "renderTarget_").ToLocalChecked()).ToLocalChecked();
-			Local<External> rtfield = Local<External>::Cast(rt->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-			kinc_g4_render_target_t *image = (kinc_g4_render_target_t *)rtfield->Value();
-			zui_tooltip_render_target(image, max_width);
-		}
-	}
-
-	void krom_zui_row(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Object> jsarray = args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		assert(length <= 128);
-		float ratios[128];
-		for (int i = 0; i < length; ++i) {
-			ratios[i] = (float)jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		}
-		zui_row(ratios, length);
-	}
-
-	void krom_zui_fill(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float w = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float h = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int color = (int)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_fill(x, y, w, h, color);
-	}
-
-	void krom_zui_rect(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		float x = (float)args[0]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float w = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float h = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int color = (int)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float strength = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_rect(x, y, w, h, color, strength);
-	}
-
-	void krom_zui_draw_rect(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		bool fill = (bool)args[0]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float x = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float w = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float h = (float)args[4]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		// float strength = (float)args[5]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		// zui_draw_rect(fill, x, y, w, h, strength);
-		zui_draw_rect(fill, x, y, w, h);
-	}
-
-	void krom_zui_draw_string(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value text(isolate, args[0]);
-		float x_offset = (float)args[1]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float y_offset = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int align = (int)args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool truncation = (bool)args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_draw_string(*text, x_offset, y_offset, align, truncation);
-	}
-
-	void krom_zui_get_hovered_tab_name(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		char *str = zui_hovered_tab_name();
-		args.GetReturnValue().Set(String::NewFromUtf8(isolate, str).ToLocalChecked());
-	}
-
-	void krom_zui_set_hovered_tab_name(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value name(isolate, args[0]);
-		zui_set_hovered_tab_name(*name);
-	}
-
-	void krom_zui_begin_menu(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		zui_begin_menu();
-	}
-
-	void krom_zui_end_menu(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		zui_end_menu();
-	}
-
-	void krom_zui_menu_button(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value text(isolate, args[0]);
-		bool b = zui_menu_button(*text);
-		args.GetReturnValue().Set(Int32::New(isolate, b));
-	}
-
-	void krom_zui_float_input(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		String::Utf8Value label(isolate, args[1]);
-		int align = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float precision = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float f = zui_float_input(handle, *label, align, precision);
-		args.GetReturnValue().Set(Number::New(isolate, f));
-	}
-
-	char radio_texts[32][64];
-	char *radio_temp[32];
-	void krom_zui_inline_radio(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		int align = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-
-		Local<Object> jsarray = args[1]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-		int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		assert(length <= 32);
-		for (int i = 0; i < length; ++i) {
-			String::Utf8Value str(isolate, jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked());
-			strcpy(radio_texts[i], *str);
-			radio_temp[i] = radio_texts[i];
-		}
-
-		int i = zui_inline_radio(handle, radio_temp, length, align);
-		args.GetReturnValue().Set(Int32::New(isolate, i));
-	}
-
-	void krom_picker_callback(void *data) {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, picker_func);
-		Local<Value> result;
-		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
-	void krom_zui_color_wheel(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		bool alpha = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float w = (float)args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		float h = (float)args[3]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool color_preview = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		Local<Value> picker_arg = args[5];
-		Local<Function> pickerFunc = Local<Function>::Cast(picker_arg);
-		picker_func.Reset(isolate, pickerFunc);
-		int i = zui_color_wheel(handle, alpha, w, h, color_preview, &krom_picker_callback, NULL);
-		args.GetReturnValue().Set(Int32::New(isolate, i));
-	}
-
-	void krom_zui_text_area(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		int align = args[1]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		bool editable = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		String::Utf8Value label(isolate, args[3]);
-		bool word_wrap = args[4]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		char *str = zui_text_area(handle, align, editable, *label, word_wrap);
-		args.GetReturnValue().Set(String::NewFromUtf8(isolate, str).ToLocalChecked());
-	}
-
-	void krom_zui_text_area_coloring(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		if (zui_text_area_coloring != NULL) {
-			free(zui_text_area_coloring);
-		}
-		if (args[0]->IsNullOrUndefined()) {
-			zui_text_area_coloring = NULL;
-			return;
-		}
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[0]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		zui_text_area_coloring = (zui_text_coloring_t *)armpack_decode(content->Data(), (int)content->ByteLength());
-	}
-
-	void krom_zui_nodes_init(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-		zui_nodes_t *nodes = (zui_nodes_t *)malloc(sizeof(zui_nodes_t));
-		zui_nodes_init(nodes);
-
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, nodes));
-		args.GetReturnValue().Set(obj);
-
-		zui_nodes_exclude_remove[0] = (char *)"OUTPUT_MATERIAL_PBR";
-		zui_nodes_exclude_remove[1] = (char *)"GROUP_OUTPUT";
-		zui_nodes_exclude_remove[2] = (char *)"GROUP_INPUT";
-		zui_nodes_exclude_remove[3] = (char *)"BrushOutputNode";
-	}
-
-	void *encoded = NULL;
-	uint32_t encoded_size = 0;
-	void krom_zui_node_canvas(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_nodes_t *nodes = (zui_nodes_t *)field->Value();
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-
-		// TODO: decode on change
-		zui_node_canvas_t *decoded = (zui_node_canvas_t *)armpack_decode(content->Data(), (int)content->ByteLength());
-		zui_node_canvas(nodes, decoded);
-
-		int byteLength = zui_node_canvas_encoded_size(decoded);
-		if (byteLength > encoded_size) {
-			if (encoded != NULL) free(encoded);
-			encoded_size = byteLength;
-			encoded = malloc(byteLength);
-		}
-		zui_node_canvas_encode(encoded, decoded);
-
-		std::unique_ptr<v8::BackingStore> backing = v8::ArrayBuffer::NewBackingStore((void *)encoded, byteLength, [](void *, size_t, void *) {}, nullptr);
-		Local<ArrayBuffer> abuffer = ArrayBuffer::New(isolate, std::move(backing));
-		args.GetReturnValue().Set(abuffer);
-		free(decoded);
-	}
-
-	void krom_zui_nodes_rgba_popup(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		Local<ArrayBuffer> buffer = Local<ArrayBuffer>::Cast(args[1]);
-		std::shared_ptr<BackingStore> content = buffer->GetBackingStore();
-		float *val = (float *)content->Data();
-		int x = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		int y = args[3]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-		zui_nodes_rgba_popup(handle, val, x, y);
-	}
-
-	void krom_zui_nodes_scale(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		float f = ZUI_NODES_SCALE();
-		args.GetReturnValue().Set(Number::New(isolate, f));
-	}
-
-	void krom_zui_nodes_pan_x(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		float f = ZUI_NODES_PAN_X();
-		args.GetReturnValue().Set(Number::New(isolate, f));
-	}
-
-	void krom_zui_nodes_pan_y(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		float f = ZUI_NODES_PAN_Y();
-		args.GetReturnValue().Set(Number::New(isolate, f));
-	}
-
-	#define ZUI_GET_I32_GLOBAL(prop)\
-		if (strcmp(*name, #prop) == 0) {\
-			args.GetReturnValue().Set(Int32::New(isolate, prop));\
-			return;\
-		}
-
-	#define ZUI_GET_I32(obj, prop)\
-		if (strcmp(*name, #prop) == 0) {\
-			args.GetReturnValue().Set(Int32::New(isolate, obj->prop));\
-			return;\
-		}
-
-	#define ZUI_GET_PTR(obj, prop)\
-		if (strcmp(*name, #prop) == 0) {\
-			args.GetReturnValue().Set(Number::New(isolate, (size_t)obj->prop));\
-			return;\
-		}
-
-	#define ZUI_GET_F32(obj, prop)\
-		if (strcmp(*name, #prop) == 0) {\
-			args.GetReturnValue().Set(Number::New(isolate, obj->prop));\
-			return;\
-		}
-
-	#define ZUI_SET_I32_GLOBAL(prop)\
-		if (strcmp(*name, #prop) == 0) {\
-			prop = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();\
-			return;\
-		}
-
-	#define ZUI_SET_I32(obj, prop)\
-		if (strcmp(*name, #prop) == 0) {\
-			obj->prop = args[2]->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();\
-			return;\
-		}
-
-	#define ZUI_SET_F32(obj, prop)\
-		if (strcmp(*name, #prop) == 0) {\
-			obj->prop = args[2]->ToNumber(isolate->GetCurrentContext()).ToLocalChecked()->Value();\
-			return;\
-		}
-
-	void krom_zui_get(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value name(isolate, args[1]);
-		if (args[0]->IsNullOrUndefined()) {
-			ZUI_GET_I32_GLOBAL(zui_always_redraw_window)
-			ZUI_GET_I32_GLOBAL(zui_touch_scroll)
-			ZUI_GET_I32_GLOBAL(zui_touch_hold)
-			ZUI_GET_I32_GLOBAL(zui_touch_tooltip)
-			ZUI_GET_I32_GLOBAL(zui_is_paste)
-			return;
-		}
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_t *ui = (zui_t *)field->Value();
-		ZUI_GET_I32(ui, enabled)
-		ZUI_GET_I32(ui, changed)
-		ZUI_GET_I32(ui, is_hovered)
-		ZUI_GET_I32(ui, is_released)
-		ZUI_GET_I32(ui, is_scrolling)
-		ZUI_GET_I32(ui, is_typing)
-		ZUI_GET_I32(ui, input_enabled)
-		ZUI_GET_I32(ui, input_started)
-		ZUI_GET_I32(ui, input_started_r)
-		ZUI_GET_I32(ui, input_released)
-		ZUI_GET_I32(ui, input_released_r)
-		ZUI_GET_I32(ui, input_down)
-		ZUI_GET_I32(ui, input_down_r)
-		ZUI_GET_I32(ui, is_key_pressed)
-		ZUI_GET_I32(ui, is_ctrl_down)
-		ZUI_GET_I32(ui, is_delete_down)
-		ZUI_GET_I32(ui, is_escape_down)
-		ZUI_GET_I32(ui, is_return_down)
-		ZUI_GET_I32(ui, scissor)
-		ZUI_GET_I32(ui, current_ratio)
-		ZUI_GET_I32(ui, font_size)
-		ZUI_GET_I32(ui, _w)
-		ZUI_GET_I32(ui, key_code)
-		ZUI_GET_PTR(ui, text_selected_handle)
-		ZUI_GET_PTR(ui, submit_text_handle)
-		ZUI_GET_PTR(ui, combo_selected_handle)
-		ZUI_GET_F32(ui, input_x)
-		ZUI_GET_F32(ui, input_y)
-		ZUI_GET_F32(ui, input_started_x)
-		ZUI_GET_F32(ui, input_started_y)
-		ZUI_GET_F32(ui, input_dx)
-		ZUI_GET_F32(ui, input_dy)
-		ZUI_GET_F32(ui, input_wheel_delta)
-		ZUI_GET_F32(ui, font_offset_y)
-		ZUI_GET_F32(ui, _x)
-		ZUI_GET_F32(ui, _y)
-		ZUI_GET_F32(ui, _window_x)
-		ZUI_GET_F32(ui, _window_y)
-		ZUI_GET_F32(ui, _window_w)
-		ZUI_GET_F32(ui, _window_h)
-	}
-
-	void krom_zui_set(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value name(isolate, args[1]);
-		if (args[0]->IsNullOrUndefined()) {
-			ZUI_SET_I32_GLOBAL(zui_always_redraw_window)
-			ZUI_SET_I32_GLOBAL(zui_touch_scroll)
-			ZUI_SET_I32_GLOBAL(zui_touch_hold)
-			ZUI_SET_I32_GLOBAL(zui_touch_tooltip)
-			ZUI_SET_I32_GLOBAL(zui_is_cut)
-			ZUI_SET_I32_GLOBAL(zui_is_copy)
-			ZUI_SET_I32_GLOBAL(zui_is_paste)
-			ZUI_SET_I32_GLOBAL(zui_text_area_line_numbers)
-			ZUI_SET_I32_GLOBAL(zui_text_area_scroll_past_end)
-			return;
-		}
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_t *ui = (zui_t *)field->Value();
-		ZUI_SET_I32(ui, enabled)
-		ZUI_SET_I32(ui, changed)
-		ZUI_SET_I32(ui, image_invert_y)
-		ZUI_SET_I32(ui, is_hovered)
-		ZUI_SET_I32(ui, always_redraw)
-		ZUI_SET_I32(ui, scroll_enabled)
-		ZUI_SET_I32(ui, input_enabled)
-		ZUI_SET_I32(ui, input_started)
-		ZUI_SET_I32(ui, is_delete_down)
-		ZUI_SET_I32(ui, image_scroll_align)
-		ZUI_SET_I32(ui, scissor)
-		ZUI_SET_I32(ui, elements_baked)
-		ZUI_SET_I32(ui, window_border_top)
-		ZUI_SET_I32(ui, window_border_bottom)
-		ZUI_SET_I32(ui, window_border_right)
-		ZUI_SET_I32(ui, current_ratio)
-		ZUI_SET_I32(ui, font_size)
-		ZUI_SET_I32(ui, _w)
-		ZUI_SET_F32(ui, input_x)
-		ZUI_SET_F32(ui, input_y)
-		ZUI_SET_F32(ui, font_offset_y)
-		ZUI_SET_F32(ui, _x)
-		ZUI_SET_F32(ui, _y)
-	}
-
-	void krom_zui_handle_get(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value name(isolate, args[1]);
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		ZUI_GET_I32(handle, selected)
-		ZUI_GET_I32(handle, position)
-		ZUI_GET_I32(handle, color)
-		ZUI_GET_I32(handle, changed)
-		ZUI_GET_I32(handle, drag_x)
-		ZUI_GET_I32(handle, drag_y)
-		ZUI_GET_F32(handle, value)
-		ZUI_GET_F32(handle, scroll_offset)
-		if (strcmp(*name, "text") == 0) {
-			args.GetReturnValue().Set(String::NewFromUtf8(isolate, handle->text).ToLocalChecked());
-		}
-		else if (strcmp(*name, "texture") == 0) {
-			Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-			templ->SetInternalFieldCount(1);
-			Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-			obj->SetInternalField(0, External::New(isolate, &handle->texture));
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Int32::New(isolate, handle->texture.width));
-			(void) obj->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Int32::New(isolate, handle->texture.height));
-			args.GetReturnValue().Set(obj);
-		}
-	}
-
-	void krom_zui_handle_set(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value name(isolate, args[1]);
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		ZUI_SET_I32(handle, selected)
-		ZUI_SET_I32(handle, position)
-		ZUI_SET_I32(handle, color)
-		ZUI_SET_I32(handle, redraws)
-		ZUI_SET_I32(handle, changed)
-		ZUI_SET_I32(handle, drag_x)
-		ZUI_SET_I32(handle, drag_y)
-		ZUI_SET_F32(handle, value)
-		if (strcmp(*name, "text") == 0) {
-			String::Utf8Value text(isolate, args[2]);
-			strcpy(handle->text, *text);
-		}
-	}
-
-	void krom_zui_handle_ptr(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_handle_t *handle = (zui_handle_t *)field->Value();
-		args.GetReturnValue().Set(Number::New(isolate, (size_t)handle));
-	}
-
-	void krom_zui_theme_init(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-
-		zui_theme_t *theme = (zui_theme_t *)malloc(sizeof(zui_theme_t));
-		zui_theme_default(theme);
-
-		Local<ObjectTemplate> templ = ObjectTemplate::New(isolate);
-		templ->SetInternalFieldCount(1);
-		Local<Object> obj = templ->NewInstance(isolate->GetCurrentContext()).ToLocalChecked();
-		obj->SetInternalField(0, External::New(isolate, theme));
-		args.GetReturnValue().Set(obj);
-	}
-
-	void krom_zui_theme_get(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value name(isolate, args[1]);
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_theme_t *theme = (zui_theme_t *)field->Value();
-		ZUI_GET_I32(theme, WINDOW_BG_COL)
-		ZUI_GET_I32(theme, WINDOW_TINT_COL)
-		ZUI_GET_I32(theme, ACCENT_COL)
-		ZUI_GET_I32(theme, ACCENT_HOVER_COL)
-		ZUI_GET_I32(theme, ACCENT_SELECT_COL)
-		ZUI_GET_I32(theme, BUTTON_COL)
-		ZUI_GET_I32(theme, BUTTON_TEXT_COL)
-		ZUI_GET_I32(theme, BUTTON_HOVER_COL)
-		ZUI_GET_I32(theme, BUTTON_PRESSED_COL)
-		ZUI_GET_I32(theme, TEXT_COL)
-		ZUI_GET_I32(theme, LABEL_COL)
-		ZUI_GET_I32(theme, SEPARATOR_COL)
-		ZUI_GET_I32(theme, HIGHLIGHT_COL)
-		ZUI_GET_I32(theme, CONTEXT_COL)
-		ZUI_GET_I32(theme, PANEL_BG_COL)
-		ZUI_GET_I32(theme, FONT_SIZE)
-		ZUI_GET_I32(theme, ELEMENT_W)
-		ZUI_GET_I32(theme, ELEMENT_H)
-		ZUI_GET_I32(theme, ELEMENT_OFFSET)
-		ZUI_GET_I32(theme, ARROW_SIZE)
-		ZUI_GET_I32(theme, BUTTON_H)
-		ZUI_GET_I32(theme, CHECK_SIZE)
-		ZUI_GET_I32(theme, CHECK_SELECT_SIZE)
-		ZUI_GET_I32(theme, SCROLL_W)
-		ZUI_GET_I32(theme, SCROLL_MINI_W)
-		ZUI_GET_I32(theme, TEXT_OFFSET)
-		ZUI_GET_I32(theme, TAB_W)
-		ZUI_GET_I32(theme, FILL_WINDOW_BG)
-		ZUI_GET_I32(theme, FILL_BUTTON_BG)
-		ZUI_GET_I32(theme, FILL_ACCENT_BG)
-		ZUI_GET_I32(theme, LINK_STYLE)
-		ZUI_GET_I32(theme, FULL_TABS)
-		ZUI_GET_I32(theme, ROUND_CORNERS)
-	}
-
-	void krom_zui_theme_set(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value name(isolate, args[1]);
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_theme_t *theme = (zui_theme_t *)field->Value();
-		ZUI_SET_I32(theme, WINDOW_BG_COL)
-		ZUI_SET_I32(theme, WINDOW_TINT_COL)
-		ZUI_SET_I32(theme, ACCENT_COL)
-		ZUI_SET_I32(theme, ACCENT_HOVER_COL)
-		ZUI_SET_I32(theme, ACCENT_SELECT_COL)
-		ZUI_SET_I32(theme, BUTTON_COL)
-		ZUI_SET_I32(theme, BUTTON_TEXT_COL)
-		ZUI_SET_I32(theme, BUTTON_HOVER_COL)
-		ZUI_SET_I32(theme, BUTTON_PRESSED_COL)
-		ZUI_SET_I32(theme, TEXT_COL)
-		ZUI_SET_I32(theme, LABEL_COL)
-		ZUI_SET_I32(theme, SEPARATOR_COL)
-		ZUI_SET_I32(theme, HIGHLIGHT_COL)
-		ZUI_SET_I32(theme, CONTEXT_COL)
-		ZUI_SET_I32(theme, PANEL_BG_COL)
-		ZUI_SET_I32(theme, FONT_SIZE)
-		ZUI_SET_I32(theme, ELEMENT_W)
-		ZUI_SET_I32(theme, ELEMENT_H)
-		ZUI_SET_I32(theme, ELEMENT_OFFSET)
-		ZUI_SET_I32(theme, ARROW_SIZE)
-		ZUI_SET_I32(theme, BUTTON_H)
-		ZUI_SET_I32(theme, CHECK_SIZE)
-		ZUI_SET_I32(theme, CHECK_SELECT_SIZE)
-		ZUI_SET_I32(theme, SCROLL_W)
-		ZUI_SET_I32(theme, SCROLL_MINI_W)
-		ZUI_SET_I32(theme, TEXT_OFFSET)
-		ZUI_SET_I32(theme, TAB_W)
-		ZUI_SET_I32(theme, FILL_WINDOW_BG)
-		ZUI_SET_I32(theme, FILL_BUTTON_BG)
-		ZUI_SET_I32(theme, FILL_ACCENT_BG)
-		ZUI_SET_I32(theme, LINK_STYLE)
-		ZUI_SET_I32(theme, FULL_TABS)
-		ZUI_SET_I32(theme, ROUND_CORNERS)
-	}
-
-	void krom_zui_nodes_get(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value name(isolate, args[1]);
-		if (args[0]->IsNullOrUndefined()) {
-			ZUI_GET_I32_GLOBAL(zui_nodes_socket_released)
-			return;
-		}
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_nodes_t *nodes = (zui_nodes_t *)field->Value();
-		ZUI_GET_F32(nodes, pan_x)
-		ZUI_GET_F32(nodes, pan_y)
-		ZUI_GET_F32(nodes, link_drag_id)
-		if (strcmp(*name, "nodes_selected_id") == 0) {
-			Local<Array> result = Array::New(isolate, nodes->nodes_selected_count);
-			for (int i = 0; i < nodes->nodes_selected_count; ++i) {
-				(void)result->Set(isolate->GetCurrentContext(), i, Int32::New(isolate, nodes->nodes_selected_id[i]));
-			}
-			args.GetReturnValue().Set(result);
-		}
-	}
-
-	void krom_zui_nodes_set(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		String::Utf8Value name(isolate, args[1]);
-		Local<External> field = Local<External>::Cast(args[0]->ToObject(isolate->GetCurrentContext()).ToLocalChecked()->GetInternalField(0));
-		zui_nodes_t *nodes = (zui_nodes_t *)field->Value();
-		ZUI_SET_F32(nodes, pan_x)
-		ZUI_SET_F32(nodes, pan_y)
-		ZUI_SET_F32(nodes, zoom)
-		ZUI_SET_I32(nodes, _input_started)
-		ZUI_SET_I32(nodes, link_drag_id)
-		ZUI_SET_I32(nodes, nodes_drag)
-		if (strcmp(*name, "nodes_selected_id") == 0) {
-			Local<Object> jsarray = args[2]->ToObject(isolate->GetCurrentContext()).ToLocalChecked();
-			int32_t length = jsarray->Get(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "length").ToLocalChecked()).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-			for (int i = 0; i < length; ++i) {
-				int32_t j = jsarray->Get(isolate->GetCurrentContext(), i).ToLocalChecked()->ToInt32(isolate->GetCurrentContext()).ToLocalChecked()->Value();
-				nodes->nodes_selected_id[i] = j;
-			}
-			nodes->nodes_selected_count = length;
-		}
-	}
-
-	void krom_zui_set_on_border_hover(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		on_border_hover_func.Reset(isolate, func);
-	}
-
-	void krom_zui_set_on_text_hover(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		on_text_hover_func.Reset(isolate, func);
-	}
-
-	void krom_zui_set_on_deselect_text(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		on_deselect_text_func.Reset(isolate, func);
-	}
-
-	void krom_zui_set_on_tab_drop(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		on_tab_drop_func.Reset(isolate, func);
-	}
-
-	void krom_zui_nodes_set_enum_texts(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		enum_texts_func.Reset(isolate, func);
-	}
-
-	void krom_zui_nodes_set_on_custom_button(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		on_custom_button_func.Reset(isolate, func);
-	}
-
-	void krom_zui_nodes_set_on_canvas_control(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		on_canvas_control_func.Reset(isolate, func);
-	}
-
-	void krom_zui_nodes_set_on_canvas_released(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		on_canvas_released_func.Reset(isolate, func);
-	}
-
-	void krom_zui_nodes_set_on_socket_released(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		on_socket_released_func.Reset(isolate, func);
-	}
-
-	void krom_zui_nodes_set_on_link_drag(const FunctionCallbackInfo<Value> &args) {
-		HandleScope scope(args.GetIsolate());
-		Local<Value> arg = args[0];
-		Local<Function> func = Local<Function>::Cast(arg);
-		on_link_drag_func.Reset(isolate, func);
-	}
-	#endif
-
 	#define SET_FUNCTION_FAST(object, name, fn)\
 		CFunction fn ## _ = CFunction::Make(fn ## _fast);\
 		object->Set(String::NewFromUtf8(isolate, name).ToLocalChecked(),\
@@ -4894,9 +2518,6 @@ namespace {
 		V8::InitializePlatform(plat.get());
 
 		std::string flags = "";
-		#ifdef KORE_IOS
-		flags += "--jitless ";
-		#endif
 		V8::SetFlagsFromString(flags.c_str(), (int)flags.size());
 
 		V8::Initialize();
@@ -4972,12 +2593,12 @@ namespace {
 		SET_FUNCTION(krom, "setPipeline", krom_set_pipeline);
 		SET_FUNCTION(krom, "loadImage", krom_load_image);
 		SET_FUNCTION(krom, "unloadImage", krom_unload_image);
-		#ifdef WITH_AUDIO
+		// #ifdef WITH_AUDIO
 		SET_FUNCTION(krom, "loadSound", krom_load_sound);
-		SET_FUNCTION(krom, "unloadSound", krom_unload_sound);
-		SET_FUNCTION(krom, "playSound", krom_play_sound);
-		SET_FUNCTION(krom, "stopSound", krom_stop_sound);
-		#endif
+		SET_FUNCTION(krom, "setAudioCallback", krom_set_audio_callback);
+		SET_FUNCTION(krom, "audioThread", krom_audio_thread);
+		SET_FUNCTION(krom, "writeAudioBuffer", krom_write_audio_buffer);
+		// #endif
 		SET_FUNCTION(krom, "loadBlob", krom_load_blob);
 		SET_FUNCTION(krom, "loadUrl", krom_load_url);
 		SET_FUNCTION(krom, "copyToClipboard", krom_copy_to_clipboard);
@@ -5050,155 +2671,41 @@ namespace {
 		SET_FUNCTION(krom, "getArg", krom_get_arg);
 		SET_FUNCTION(krom, "getFilesLocation", krom_get_files_location);
 		SET_FUNCTION(krom, "httpRequest", krom_http_request);
-		// Extended
-		#ifdef WITH_G2
-		SET_FUNCTION(krom, "g2_init", krom_g2_init);
-		SET_FUNCTION(krom, "g2_begin", krom_g2_begin);
-		SET_FUNCTION(krom, "g2_end", krom_g2_end);
-		SET_FUNCTION(krom, "g2_draw_scaled_sub_image", krom_g2_draw_scaled_sub_image);
-		SET_FUNCTION(krom, "g2_fill_triangle", krom_g2_fill_triangle);
-		SET_FUNCTION(krom, "g2_fill_rect", krom_g2_fill_rect);
-		SET_FUNCTION(krom, "g2_draw_rect", krom_g2_draw_rect);
-		SET_FUNCTION(krom, "g2_draw_line", krom_g2_draw_line);
-		SET_FUNCTION(krom, "g2_draw_string", krom_g2_draw_string);
-		SET_FUNCTION(krom, "g2_set_font", krom_g2_set_font);
-		SET_FUNCTION(krom, "g2_font_init", krom_g2_font_init);
-		SET_FUNCTION(krom, "g2_font_13", krom_g2_font_13);
-		SET_FUNCTION(krom, "g2_font_set_glyphs", krom_g2_font_set_glyphs);
-		SET_FUNCTION(krom, "g2_font_count", krom_g2_font_count);
-		SET_FUNCTION(krom, "g2_font_height", krom_g2_font_height);
-		SET_FUNCTION(krom, "g2_string_width", krom_g2_string_width);
-		SET_FUNCTION(krom, "g2_set_bilinear_filter", krom_g2_set_bilinear_filter);
-		SET_FUNCTION(krom, "g2_restore_render_target", krom_g2_restore_render_target);
-		SET_FUNCTION(krom, "g2_set_render_target", krom_g2_set_render_target);
-		SET_FUNCTION(krom, "g2_set_color", krom_g2_set_color);
-		SET_FUNCTION(krom, "g2_set_pipeline", krom_g2_set_pipeline);
-		SET_FUNCTION(krom, "g2_set_transform", krom_g2_set_transform);
-		SET_FUNCTION(krom, "g2_fill_circle", krom_g2_fill_circle);
-		SET_FUNCTION(krom, "g2_draw_circle", krom_g2_draw_circle);
-		SET_FUNCTION(krom, "g2_draw_cubic_bezier", krom_g2_draw_cubic_bezier);
+		#ifdef WITH_COMPUTE
+		SET_FUNCTION(krom, "setBoolCompute", krom_set_bool_compute);
+		SET_FUNCTION(krom, "setIntCompute", krom_set_int_compute);
+		SET_FUNCTION(krom, "setFloatCompute", krom_set_float_compute);
+		SET_FUNCTION(krom, "setFloat2Compute", krom_set_float2_compute);
+		SET_FUNCTION(krom, "setFloat3Compute", krom_set_float3_compute);
+		SET_FUNCTION(krom, "setFloat4Compute", krom_set_float4_compute);
+		SET_FUNCTION(krom, "setFloatsCompute", krom_set_floats_compute);
+		SET_FUNCTION(krom, "setMatrixCompute", krom_set_matrix_compute);
+		SET_FUNCTION(krom, "setMatrix3Compute", krom_set_matrix3_compute);
+		SET_FUNCTION(krom, "setTextureCompute", krom_set_texture_compute);
+		SET_FUNCTION(krom, "setRenderTargetCompute", krom_set_render_target_compute);
+		SET_FUNCTION(krom, "setSampledTextureCompute", krom_set_sampled_texture_compute);
+		SET_FUNCTION(krom, "setSampledRenderTargetCompute", krom_set_sampled_render_target_compute);
+		SET_FUNCTION(krom, "setSampledDepthTextureCompute", krom_set_sampled_depth_texture_compute);
+		SET_FUNCTION(krom, "setTextureParametersCompute", krom_set_texture_parameters_compute);
+		SET_FUNCTION(krom, "setTexture3DParametersCompute", krom_set_texture3d_parameters_compute);
+		SET_FUNCTION(krom, "setShaderCompute", krom_set_shader_compute);
+		SET_FUNCTION(krom, "deleteShaderCompute", krom_delete_shader_compute);
+		SET_FUNCTION(krom, "createShaderCompute", krom_create_shader_compute);
+		SET_FUNCTION(krom, "getConstantLocationCompute", krom_get_constant_location_compute);
+		SET_FUNCTION(krom, "getTextureUnitCompute", krom_get_texture_unit_compute);
+		SET_FUNCTION(krom, "compute", krom_compute);
 		#endif
 		SET_FUNCTION(krom, "setSaveAndQuitCallback", krom_set_save_and_quit_callback);
 		SET_FUNCTION(krom, "setMouseCursor", krom_set_mouse_cursor);
 		SET_FUNCTION_FAST(krom, "delayIdleSleep", krom_delay_idle_sleep);
-		#if defined(WITH_NFD) || defined(KORE_IOS) || defined(KORE_ANDROID)
-		SET_FUNCTION(krom, "openDialog", krom_open_dialog);
-		SET_FUNCTION(krom, "saveDialog", krom_save_dialog);
-		#endif
-		#ifdef WITH_TINYDIR
-		SET_FUNCTION(krom, "readDirectory", krom_read_directory);
-		#endif
 		SET_FUNCTION(krom, "fileExists", krom_file_exists);
 		SET_FUNCTION(krom, "deleteFile", krom_delete_file);
-		#ifdef WITH_ZLIB
-		SET_FUNCTION(krom, "inflate", krom_inflate);
-		SET_FUNCTION(krom, "deflate", krom_deflate);
-		#endif
-		#ifdef WITH_STB_IMAGE_WRITE
-		SET_FUNCTION(krom, "writeJpg", krom_write_jpg);
-		SET_FUNCTION(krom, "writePng", krom_write_png);
-		SET_FUNCTION(krom, "encodeJpg", krom_encode_jpg);
-		SET_FUNCTION(krom, "encodePng", krom_encode_png);
-		#endif
-		#ifdef WITH_MPEG_WRITE
-		SET_FUNCTION(krom, "writeMpeg", krom_write_mpeg);
-		#endif
-		#ifdef WITH_ONNX
-		SET_FUNCTION(krom, "mlInference", krom_ml_inference);
-		SET_FUNCTION(krom, "mlUnload", krom_ml_unload);
-		#endif
-		#if defined(KORE_DIRECT3D12) || defined(KORE_VULKAN) || defined(KORE_METAL)
-		SET_FUNCTION(krom, "raytraceSupported", krom_raytrace_supported);
-		SET_FUNCTION(krom, "raytraceInit", krom_raytrace_init);
-		SET_FUNCTION(krom, "raytraceSetTextures", krom_raytrace_set_textures);
-		SET_FUNCTION(krom, "raytraceDispatchRays", krom_raytrace_dispatch_rays);
-		#endif
 		SET_FUNCTION(krom, "windowX", krom_window_x);
 		SET_FUNCTION(krom, "windowY", krom_window_y);
 		SET_FUNCTION(krom, "language", krom_language);
-		#ifdef WITH_IRON
-		SET_FUNCTION(krom, "io_obj_parse", krom_io_obj_parse);
-		#endif
-		#ifdef WITH_ZUI
-		SET_FUNCTION(krom, "zui_init", krom_zui_init);
-		SET_FUNCTION(krom, "zui_get_scale", krom_zui_get_scale);
-		SET_FUNCTION(krom, "zui_set_scale", krom_zui_set_scale);
-		SET_FUNCTION(krom, "zui_set_font", krom_zui_set_font);
-		SET_FUNCTION(krom, "zui_begin", krom_zui_begin);
-		SET_FUNCTION(krom, "zui_end", krom_zui_end);
-		SET_FUNCTION(krom, "zui_begin_region", krom_zui_begin_region);
-		SET_FUNCTION(krom, "zui_end_region", krom_zui_end_region);
-		SET_FUNCTION(krom, "zui_begin_sticky", krom_zui_begin_sticky);
-		SET_FUNCTION(krom, "zui_end_sticky", krom_zui_end_sticky);
-		SET_FUNCTION(krom, "zui_end_input", krom_zui_end_input);
-		SET_FUNCTION(krom, "zui_end_window", krom_zui_end_window);
-		SET_FUNCTION(krom, "zui_end_element", krom_zui_end_element);
-		SET_FUNCTION(krom, "zui_start_text_edit", krom_zui_start_text_edit);
-		SET_FUNCTION(krom, "zui_input_in_rect", krom_zui_input_in_rect);
-		SET_FUNCTION(krom, "zui_window", krom_zui_window);
-		SET_FUNCTION(krom, "zui_button", krom_zui_button);
-		SET_FUNCTION(krom, "zui_check", krom_zui_check);
-		SET_FUNCTION(krom, "zui_radio", krom_zui_radio);
-		SET_FUNCTION(krom, "zui_combo", krom_zui_combo);
-		SET_FUNCTION(krom, "zui_slider", krom_zui_slider);
-		SET_FUNCTION(krom, "zui_image", krom_zui_image);
-		SET_FUNCTION(krom, "zui_text", krom_zui_text);
-		SET_FUNCTION(krom, "zui_text_input", krom_zui_text_input);
-		SET_FUNCTION(krom, "zui_tab", krom_zui_tab);
-		SET_FUNCTION(krom, "zui_panel", krom_zui_panel);
-		SET_FUNCTION(krom, "zui_handle", krom_zui_handle);
-		SET_FUNCTION(krom, "zui_separator", krom_zui_separator);
-		SET_FUNCTION(krom, "zui_tooltip", krom_zui_tooltip);
-		SET_FUNCTION(krom, "zui_tooltip_image", krom_zui_tooltip_image);
-		SET_FUNCTION(krom, "zui_row", krom_zui_row);
-		SET_FUNCTION(krom, "zui_fill", krom_zui_fill);
-		SET_FUNCTION(krom, "zui_rect", krom_zui_rect);
-		SET_FUNCTION(krom, "zui_draw_rect", krom_zui_draw_rect);
-		SET_FUNCTION(krom, "zui_draw_string", krom_zui_draw_string);
-		SET_FUNCTION(krom, "zui_get_hovered_tab_name", krom_zui_get_hovered_tab_name);
-		SET_FUNCTION(krom, "zui_set_hovered_tab_name", krom_zui_set_hovered_tab_name);
-		SET_FUNCTION(krom, "zui_begin_menu", krom_zui_begin_menu);
-		SET_FUNCTION(krom, "zui_end_menu", krom_zui_end_menu);
-		SET_FUNCTION(krom, "zui_menu_button", krom_zui_menu_button);
-		SET_FUNCTION(krom, "zui_float_input", krom_zui_float_input);
-		SET_FUNCTION(krom, "zui_inline_radio", krom_zui_inline_radio);
-		SET_FUNCTION(krom, "zui_color_wheel", krom_zui_color_wheel);
-		SET_FUNCTION(krom, "zui_text_area", krom_zui_text_area);
-		SET_FUNCTION(krom, "zui_text_area_coloring", krom_zui_text_area_coloring);
-		SET_FUNCTION(krom, "zui_nodes_init", krom_zui_nodes_init);
-		SET_FUNCTION(krom, "zui_node_canvas", krom_zui_node_canvas);
-		SET_FUNCTION(krom, "zui_nodes_rgba_popup", krom_zui_nodes_rgba_popup);
-		SET_FUNCTION(krom, "zui_nodes_scale", krom_zui_nodes_scale);
-		SET_FUNCTION(krom, "zui_nodes_pan_x", krom_zui_nodes_pan_x);
-		SET_FUNCTION(krom, "zui_nodes_pan_y", krom_zui_nodes_pan_y);
-		SET_FUNCTION(krom, "zui_set", krom_zui_set);
-		SET_FUNCTION(krom, "zui_get", krom_zui_get);
-		SET_FUNCTION(krom, "zui_handle_get", krom_zui_handle_get);
-		SET_FUNCTION(krom, "zui_handle_set", krom_zui_handle_set);
-		SET_FUNCTION(krom, "zui_handle_ptr", krom_zui_handle_ptr);
-		SET_FUNCTION(krom, "zui_theme_init", krom_zui_theme_init);
-		SET_FUNCTION(krom, "zui_theme_get", krom_zui_theme_get);
-		SET_FUNCTION(krom, "zui_theme_set", krom_zui_theme_set);
-		SET_FUNCTION(krom, "zui_nodes_get", krom_zui_nodes_get);
-		SET_FUNCTION(krom, "zui_nodes_set", krom_zui_nodes_set);
-		SET_FUNCTION(krom, "zui_set_on_border_hover", krom_zui_set_on_border_hover);
-		SET_FUNCTION(krom, "zui_set_on_text_hover", krom_zui_set_on_text_hover);
-		SET_FUNCTION(krom, "zui_set_on_deselect_text", krom_zui_set_on_deselect_text);
-		SET_FUNCTION(krom, "zui_set_on_tab_drop", krom_zui_set_on_tab_drop);
-		SET_FUNCTION(krom, "zui_nodes_set_enum_texts", krom_zui_nodes_set_enum_texts);
-		SET_FUNCTION(krom, "zui_nodes_set_on_custom_button", krom_zui_nodes_set_on_custom_button);
-		SET_FUNCTION(krom, "zui_nodes_set_on_canvas_control", krom_zui_nodes_set_on_canvas_control);
-		SET_FUNCTION(krom, "zui_nodes_set_on_canvas_released", krom_zui_nodes_set_on_canvas_released);
-		SET_FUNCTION(krom, "zui_nodes_set_on_socket_released", krom_zui_nodes_set_on_socket_released);
-		SET_FUNCTION(krom, "zui_nodes_set_on_link_drag", krom_zui_nodes_set_on_link_drag);
-		#endif
 
 		Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 		global->Set(String::NewFromUtf8(isolate, "Krom").ToLocalChecked(), krom);
-
-		#ifdef WITH_PLUGIN_EMBED
-		plugin_embed(isolate, global);
-		#endif
 
 		Local<Context> context = Context::New(isolate, NULL, global);
 		global_context.Reset(isolate, context);
@@ -5259,32 +2766,6 @@ namespace {
 			show_window = false;
 			kinc_window_show(0);
 		}
-
-		if (in_background && ++paused_frames > 3 && armorcore) {
-			Sleep(1);
-			return;
-		}
-		#endif
-
-		#ifdef IDLE_SLEEP
-		if (last_window_width != kinc_window_width(0) || last_window_height != kinc_window_height(0)) {
-			last_window_width = kinc_window_width(0);
-			last_window_height = kinc_window_height(0);
-			paused_frames = 0;
-		}
-		#if defined(KORE_IOS) || defined(KORE_ANDROID)
-		int start_sleep = 1200;
-		#else
-		int start_sleep = 120;
-		#endif
-		if (++paused_frames > start_sleep && !input_down) {
-			#ifdef KORE_WINDOWS
-			Sleep(1);
-			#else
-			usleep(1000);
-			#endif
-			return;
-		}
 		#endif
 
 		#ifdef WITH_AUDIO
@@ -5301,13 +2782,6 @@ namespace {
 		run_v8();
 		kinc_g4_end(0);
 		kinc_g4_swap_buffers();
-
-		#ifdef ARM_PROFILE
-		if (startup_time > 0) {
-			kinc_log(KINC_LOG_LEVEL_INFO, "Startup time: %f", kinc_time() - startup_time);
-			startup_time = 0.0;
-		}
-		#endif
 	}
 
 	void drop_files(wchar_t *file_path, void *data) {
@@ -5347,80 +2821,64 @@ namespace {
 		}
 
 		in_background = false;
-
-		#ifdef IDLE_SLEEP
-		paused_frames = 0;
-		#endif
 	}
 
 	char *copy(void *data) {
-		// Locker locker{isolate};
+		Locker locker{isolate};
 
-		// Isolate::Scope isolate_scope(isolate);
-		// HandleScope handle_scope(isolate);
-		// Local<Context> context = Local<Context>::New(isolate, global_context);
-		// Context::Scope context_scope(context);
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
 
-		// TryCatch try_catch(isolate);
-		// Local<Function> func = Local<Function>::New(isolate, copy_func);
-		// Local<Value> result;
-		// if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-		// 	handle_exception(&try_catch);
-		// }
-		// String::Utf8Value cutCopyString(isolate, result);
-		// strcpy(temp_string, *cutCopyString);
-
-		#ifdef WITH_ZUI
-		strcpy(temp_string, zui_copy());
-		#endif
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, copy_func);
+		Local<Value> result;
+		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+		String::Utf8Value cutCopyString(isolate, result);
+		strcpy(temp_string, *cutCopyString);
 
 		return temp_string;
 	}
 
 	char *cut(void *data) {
-		// Locker locker{isolate};
+		Locker locker{isolate};
 
-		// Isolate::Scope isolate_scope(isolate);
-		// HandleScope handle_scope(isolate);
-		// Local<Context> context = Local<Context>::New(isolate, global_context);
-		// Context::Scope context_scope(context);
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
 
-		// TryCatch try_catch(isolate);
-		// Local<Function> func = Local<Function>::New(isolate, cut_func);
-		// Local<Value> result;
-		// if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-		// 	handle_exception(&try_catch);
-		// }
-		// String::Utf8Value cutCopyString(isolate, result);
-		// strcpy(temp_string, *cutCopyString);
-
-		#ifdef WITH_ZUI
-		strcpy(temp_string, zui_cut());
-		#endif
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, cut_func);
+		Local<Value> result;
+		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
+		String::Utf8Value cutCopyString(isolate, result);
+		strcpy(temp_string, *cutCopyString);
 
 		return temp_string;
 	}
 
 	void paste(char *text, void *data) {
-		// Locker locker{isolate};
+		Locker locker{isolate};
 
-		// Isolate::Scope isolate_scope(isolate);
-		// HandleScope handle_scope(isolate);
-		// Local<Context> context = Local<Context>::New(isolate, global_context);
-		// Context::Scope context_scope(context);
+		Isolate::Scope isolate_scope(isolate);
+		HandleScope handle_scope(isolate);
+		Local<Context> context = Local<Context>::New(isolate, global_context);
+		Context::Scope context_scope(context);
 
-		// TryCatch try_catch(isolate);
-		// Local<Function> func = Local<Function>::New(isolate, paste_func);
-		// Local<Value> result;
-		// const int argc = 1;
-		// Local<Value> argv[argc] = {String::NewFromUtf8(isolate, text).ToLocalChecked()};
-		// if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
-		// 	handle_exception(&try_catch);
-		// }
-
-		#ifdef WITH_ZUI
-		zui_paste(text);
-		#endif
+		TryCatch try_catch(isolate);
+		Local<Function> func = Local<Function>::New(isolate, paste_func);
+		Local<Value> result;
+		const int argc = 1;
+		Local<Value> argv[argc] = {String::NewFromUtf8(isolate, text).ToLocalChecked()};
+		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
+			handle_exception(&try_catch);
+		}
 	}
 
 	void foreground(void *data) {
@@ -5524,15 +2982,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_key_down(zui_instances[i], code);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		input_down = true;
-		paused_frames = 0;
-		#endif
 	}
 
 	void key_up(int code, void *data) {
@@ -5551,15 +3000,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_key_up(zui_instances[i], code);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		input_down = false;
-		paused_frames = 0;
-		#endif
 	}
 
 	void key_press(unsigned int character, void *data) {
@@ -5578,14 +3018,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_key_press(zui_instances[i], character);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		paused_frames = 0;
-		#endif
 	}
 
 	void mouse_move(int window, int x, int y, int mx, int my, void *data) {
@@ -5604,14 +3036,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_mouse_move(zui_instances[i], x, y, mx, my);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		paused_frames = 0;
-		#endif
 	}
 
 	void mouse_down(int window, int button, int x, int y, void *data) {
@@ -5630,15 +3054,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_mouse_down(zui_instances[i], button, x, y);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		input_down = true;
-		paused_frames = 0;
-		#endif
 	}
 
 	void mouse_up(int window, int button, int x, int y, void *data) {
@@ -5657,15 +3072,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_mouse_up(zui_instances[i], button, x, y);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		input_down = false;
-		paused_frames = 0;
-		#endif
 	}
 
 	void mouse_wheel(int window, int delta, void *data) {
@@ -5684,14 +3090,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_mouse_wheel(zui_instances[i], delta);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		paused_frames = 0;
-		#endif
 	}
 
 	void touch_move(int index, int x, int y) {
@@ -5710,16 +3108,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		#if defined(KORE_ANDROID) || defined(KORE_IOS)
-		for (int i = 0; i < zui_instances_count; ++i) zui_touch_move(zui_instances[i], index, x, y);
-		#endif
-		#endif
-
-		#ifdef IDLE_SLEEP
-		paused_frames = 0;
-		#endif
 	}
 
 	void touch_down(int index, int x, int y) {
@@ -5738,17 +3126,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		#if defined(KORE_ANDROID) || defined(KORE_IOS)
-		for (int i = 0; i < zui_instances_count; ++i) zui_touch_down(zui_instances[i], index, x, y);
-		#endif
-		#endif
-
-		#ifdef IDLE_SLEEP
-		input_down = true;
-		paused_frames = 0;
-		#endif
 	}
 
 	void touch_up(int index, int x, int y) {
@@ -5767,17 +3144,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		#if defined(KORE_ANDROID) || defined(KORE_IOS)
-		for (int i = 0; i < zui_instances_count; ++i) zui_touch_up(zui_instances[i], index, x, y);
-		#endif
-		#endif
-
-		#ifdef IDLE_SLEEP
-		input_down = false;
-		paused_frames = 0;
-		#endif
 	}
 
 	void pen_down(int window, int x, int y, float pressure) {
@@ -5796,15 +3162,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_pen_down(zui_instances[i], x, y, pressure);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		input_down = true;
-		paused_frames = 0;
-		#endif
 	}
 
 	void pen_up(int window, int x, int y, float pressure) {
@@ -5823,15 +3180,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_pen_up(zui_instances[i], x, y, pressure);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		input_down = false;
-		paused_frames = 0;
-		#endif
 	}
 
 	void pen_move(int window, int x, int y, float pressure) {
@@ -5850,14 +3198,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef WITH_ZUI
-		for (int i = 0; i < zui_instances_count; ++i) zui_pen_move(zui_instances[i], x, y, pressure);
-		#endif
-
-		#ifdef IDLE_SLEEP
-		paused_frames = 0;
-		#endif
 	}
 
 	void gamepad_axis(int gamepad, int axis, float value) {
@@ -5876,10 +3216,6 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef IDLE_SLEEP
-		paused_frames = 0;
-		#endif
 	}
 
 	void gamepad_button(int gamepad, int button, float value) {
@@ -5898,23 +3234,13 @@ namespace {
 		if (!func->Call(context, context->Global(), argc, argv).ToLocal(&result)) {
 			handle_exception(&try_catch);
 		}
-
-		#ifdef IDLE_SLEEP
-		paused_frames = 0;
-		#endif
 	}
 }
 
 int kickstart(int argc, char **argv) {
 	_argc = argc;
 	_argv = argv;
-#ifdef KORE_ANDROID
-	std::string bindir("/");
-#elif defined(KORE_IOS)
-	std::string bindir("");
-#else
 	std::string bindir(argv[0]);
-#endif
 
 #ifdef KORE_WINDOWS // Handle non-ascii path
 	HMODULE hModule = GetModuleHandleW(NULL);
@@ -5962,7 +3288,7 @@ int kickstart(int argc, char **argv) {
 		}
 	}
 
-#if !defined(KORE_MACOS) && !defined(KORE_IOS)
+#if !defined(KORE_MACOS)
 	kinc_internal_set_files_location(&assetsdir[0u]);
 #endif
 
@@ -5972,10 +3298,6 @@ int kickstart(int argc, char **argv) {
 	if (argc > 2) {
 		kinc_internal_set_files_location(&assetsdir[0u]);
 	}
-#endif
-
-#ifdef ARM_PROFILE
-	startup_time = kinc_time();
 #endif
 
 	bool snapshot_found = true;
@@ -6104,22 +3426,11 @@ int kickstart(int argc, char **argv) {
 	#endif
 	start_krom(snapshot_found ? NULL : code);
 
-	#ifdef ARM_PROFILE
-	kinc_log(KINC_LOG_LEVEL_INFO, "Parse time: %f", kinc_time() - startup_time);
-	#endif
-
 	kinc_start();
 
 	#ifdef WITH_AUDIO
 	if (enable_audio) {
 		kinc_a2_shutdown();
-	}
-	#endif
-
-	#ifdef WITH_ONNX
-	if (ort != NULL) {
-		ort->ReleaseEnv(ort_env);
-		ort->ReleaseSessionOptions(ort_session_options);
 	}
 	#endif
 
