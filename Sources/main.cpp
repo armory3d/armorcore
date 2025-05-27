@@ -1223,6 +1223,16 @@ namespace {
 		}
 	}
 
+	int krom_get_samples_per_second_fast(Local<Object> receiver) {
+		kinc_log(KINC_LOG_LEVEL_INFO, "Samples per second: %d Hz.", kinc_a2_samples_per_second);	
+		return kinc_a2_samples_per_second;
+	}
+
+	void krom_get_samples_per_second(const FunctionCallbackInfo<Value> &args) {
+		HandleScope scope(args.GetIsolate());
+		args.GetReturnValue().Set(Int32::New(isolate, krom_get_samples_per_second_fast(args.This())));
+	}
+
 	void update_audio(kinc_a2_buffer_t *buffer, int samples) {
 		// kinc_mutex_lock(&mutex);
 		Locker locker{isolate};
@@ -1271,6 +1281,9 @@ namespace {
 	}
 
 	void krom_write_audio_buffer(const FunctionCallbackInfo<Value> &args) {
+	}
+
+	void krom_get_samples_per_second(const FunctionCallbackInfo<Value> &args) {
 	}
 
 	#endif
@@ -2598,6 +2611,7 @@ namespace {
 		SET_FUNCTION(krom, "setAudioCallback", krom_set_audio_callback);
 		SET_FUNCTION(krom, "audioThread", krom_audio_thread);
 		SET_FUNCTION(krom, "writeAudioBuffer", krom_write_audio_buffer);
+		SET_FUNCTION(krom, "getSamplesPerSecond", krom_get_samples_per_second);
 		// #endif
 		SET_FUNCTION(krom, "loadBlob", krom_load_blob);
 		SET_FUNCTION(krom, "loadUrl", krom_load_url);
