@@ -1224,7 +1224,7 @@ namespace {
 	}
 
 	int krom_get_samples_per_second_fast(Local<Object> receiver) {
-		kinc_log(KINC_LOG_LEVEL_INFO, "Samples per second: %d Hz.", kinc_a2_samples_per_second);	
+		kinc_log(KINC_LOG_LEVEL_INFO, "Samples per second: %d Hz.", kinc_a2_samples_per_second);
 		return kinc_a2_samples_per_second;
 	}
 
@@ -2756,24 +2756,6 @@ namespace {
 		}
 	}
 
-	void run_v8() {
-		Locker locker{isolate};
-
-		Isolate::Scope isolate_scope(isolate);
-		MicrotasksScope microtasks_scope(isolate, MicrotasksScope::kRunMicrotasks);
-		HandleScope handle_scope(isolate);
-		Local<Context> context = Local<Context>::New(isolate, global_context);
-		Context::Scope context_scope(context);
-
-		TryCatch try_catch(isolate);
-		Local<Function> func = Local<Function>::New(isolate, update_func);
-		Local<Value> result;
-
-		if (!func->Call(context, context->Global(), 0, NULL).ToLocal(&result)) {
-			handle_exception(&try_catch);
-		}
-	}
-
 	void update(void *data) {
 		#ifdef KORE_WINDOWS
 		if (show_window && enable_window) {
@@ -2788,12 +2770,31 @@ namespace {
 		}
 		#endif
 
+		{ // FIXME: patch to prevent random crashes
+			v8::Locker locker{isolate};
+			v8::Isolate::Scope isolate_scope(isolate);
+			v8::HandleScope handle_scope(isolate);
+			v8::Local<v8::Context> context = v8::Local<v8::Context>::New(isolate, global_context);
+			v8::Context::Scope context_scope(context);
+
 		#ifdef WITH_WORKER
 		handle_worker_messages(isolate, global_context);
 		#endif
 
+			v8::MicrotasksScope microtasks(isolate, v8::MicrotasksScope::kDoNotRunMicrotasks);
+			{
+				v8::TryCatch tc(isolate);
+				v8::Local<v8::Function> func = v8::Local<v8::Function>::New(isolate, update_func);
+				v8::Local<v8::Value> result;
+				if (!func.IsEmpty()) {
+					(void)func->Call(context, context->Global(), 0, nullptr).ToLocal(&result);
+				}
+				if (tc.HasCaught()) handle_exception(&tc);
+			}
+			v8::MicrotasksScope::PerformCheckpoint(isolate);
+		}
+
 		kinc_g4_begin(0);
-		run_v8();
 		kinc_g4_end(0);
 		kinc_g4_swap_buffers();
 	}

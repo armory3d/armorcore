@@ -320,7 +320,7 @@ namespace {
 		delete[] code;
 		delete worker_data;
 		delete context_data;
-		isolate->TerminateExecution();
+		// isolate->TerminateExecution();
 	}
 
 	void owner_onmessage_get(Local<String> property,const PropertyCallbackInfo<Value>& info) {
@@ -495,11 +495,14 @@ void bind_worker_class(Isolate* isolate, const v8::Global<v8::Context>& context)
 }
 
 void handle_worker_messages(v8::Isolate* isolate, const v8::Global<v8::Context>& context) {
-	Isolate::Scope isolate_scope(isolate);
 	Locker locker(isolate);
+	Isolate::Scope isolate_scope(isolate);
 	HandleScope handle_scope(isolate);
 
 	ContextData* context_data = (ContextData*)(isolate->GetData(worker_data_slot));
+	if (!context_data) { // FIXME: patch to prevent crash when `context_data` is null
+		return;
+	}
 	if (context_data->workers.size() == 0) {
 		return;
 	}
